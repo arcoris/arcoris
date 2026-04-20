@@ -1,0 +1,266 @@
+# Copyright 2026 The ARCORIS Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+## ARCORIS Issue Form: Bug Report
+## Keep subsystem taxonomy aligned across all issue forms.
+
+name: "Bug Report"
+description: "Report a confirmed defect or regression in ARCORIS"
+title: "[Bug]: "
+labels:
+  - "kind/bug"
+  - "needs-triage"
+body:
+  - type: "markdown"
+    attributes:
+      value: |
+        Use this form for reproducible product defects and regressions in ARCORIS.
+
+        Do not use this form for usage questions, workload tuning help, deployment support, or open-ended design discussion. Those belong in GitHub Discussions.
+
+        Do not disclose vulnerabilities, credentials, customer data, or other sensitive information in a public issue.
+
+  - type: "checkboxes"
+    id: "preflight"
+    attributes:
+      label: "Before submitting"
+      options:
+        - label: "I searched existing issues and did not find the same defect"
+          required: true
+        - label: "I believe this is a product defect, not a usage, tuning, or support question"
+          required: true
+        - label: "I removed secrets, credentials, and other sensitive data"
+          required: true
+        - label: "I included enough context to reproduce, isolate, or diagnose the issue"
+          required: true
+
+  - type: "dropdown"
+    id: "area"
+    attributes:
+      label: "Affected subsystem"
+      description: "Select every subsystem that appears to be involved."
+      multiple: true
+      options:
+        - "Admission control"
+        - "Scheduling / dispatch"
+        - "Rate control / concurrency regulation"
+        - "Workload isolation / fairness"
+        - "Overload protection / shedding"
+        - "Workers / execution / leases / retries"
+        - "Queue / broker adapters"
+        - "Control plane / policy distribution"
+        - "Coordination / cluster state"
+        - "Observability / metrics / tracing / logging"
+        - "API / CLI / configuration schema"
+        - "Deployment / Kubernetes / Helm / CI"
+        - "Documentation"
+        - "Other / needs triage"
+    validations:
+      required: true
+
+  - type: "dropdown"
+    id: "failure-mode"
+    attributes:
+      label: "Failure mode"
+      description: "Choose the closest category for the visible failure."
+      options:
+        - "Incorrect admission, scheduling, or control decision"
+        - "Fairness or isolation regression"
+        - "Overload regulation failure"
+        - "Control-plane convergence or policy propagation failure"
+        - "Worker, lease, or retry failure"
+        - "Queue, broker, or adapter contract failure"
+        - "Observability signal missing or incorrect"
+        - "API, CLI, or configuration defect"
+        - "Deployment, startup, or upgrade failure"
+        - "Other / unsure"
+    validations:
+      required: true
+
+  - type: "dropdown"
+    id: "severity"
+    attributes:
+      label: "Operational severity"
+      description: "Choose Critical only for production outage, safety failure, or likely data loss."
+      options:
+        - "Critical - service unavailable, unsafe behavior, or likely data loss"
+        - "High - major production path is broken or materially violates SLOs"
+        - "Medium - incorrect behavior with bounded impact or an available mitigation"
+        - "Low - narrow scope, cosmetic issue, or low operational risk"
+    validations:
+      required: true
+
+  - type: "dropdown"
+    id: "reproducibility"
+    attributes:
+      label: "Reproducibility"
+      options:
+        - "Always"
+        - "Often"
+        - "Intermittent"
+        - "Seen once"
+        - "Unknown"
+    validations:
+      required: true
+
+  - type: "dropdown"
+    id: "regression"
+    attributes:
+      label: "Regression"
+      options:
+        - "Yes, a previously working path regressed"
+        - "No, this appears to be a long-standing defect"
+        - "Unknown"
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "summary"
+    attributes:
+      label: "Summary"
+      description: "Describe the defect in a few concrete sentences."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "actual-behavior"
+    attributes:
+      label: "Observed behavior"
+      description: "Describe what happened, where it surfaced, and what signals support the diagnosis."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "expected-behavior"
+    attributes:
+      label: "Expected behavior"
+      description: "Describe the behavior ARCORIS should have produced instead."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "steps"
+    attributes:
+      label: "Reproduction"
+      description: "Provide the smallest credible reproduction or investigation sequence."
+      placeholder: |
+        1. Deploy ARCORIS with the relevant configuration or policy
+        2. Apply the workload, queue, or control-plane condition
+        3. Observe the incorrect control decision, state transition, or failure
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "impact"
+    attributes:
+      label: "Operational impact"
+      description: "State the user, operator, reliability, fairness, or cost impact."
+    validations:
+      required: true
+
+  - type: "input"
+    id: "version"
+    attributes:
+      label: "Affected version or commit"
+      description: "Provide the release, image tag, branch, or commit that exhibits the defect."
+      placeholder: "v0.4.0, main@1a2b3c4, published image tag, or image digest"
+    validations:
+      required: true
+
+  - type: "input"
+    id: "last-known-good"
+    attributes:
+      label: "Last known good version"
+      description: "If this is a regression, provide the last version or commit that behaved correctly."
+    validations:
+      required: false
+
+  - type: "dropdown"
+    id: "deployment-model"
+    attributes:
+      label: "Deployment model"
+      options:
+        - "Kubernetes"
+        - "Managed Kubernetes"
+        - "Single node / local development"
+        - "VM / bare metal"
+        - "Hybrid / mixed"
+        - "Other"
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "environment"
+    attributes:
+      label: "Environment"
+      description: "Include only details that materially affect reproduction or diagnosis."
+      placeholder: |
+        - OS / kernel:
+        - Kubernetes version:
+        - Runtime / container engine:
+        - Cloud or infrastructure provider:
+        - Queue or broker:
+        - Database or storage:
+        - Observability stack:
+    validations:
+      required: false
+
+  - type: "textarea"
+    id: "workload-profile"
+    attributes:
+      label: "Workload profile"
+      description: "Describe the workload shape that triggers or amplifies the defect."
+      placeholder: |
+        - Workload class:
+        - Average and peak rate:
+        - Burst characteristics:
+        - Queue depth or backlog:
+        - Worker count:
+        - Relevant SLO or latency target:
+    validations:
+      required: false
+
+  - type: "textarea"
+    id: "config"
+    attributes:
+      label: "Relevant configuration or policy"
+      description: "Paste the smallest configuration or policy excerpt that still matters. Remove secrets."
+      render: "yaml"
+    validations:
+      required: false
+
+  - type: "textarea"
+    id: "signals"
+    attributes:
+      label: "Logs, traces, or metrics"
+      description: "Include the most useful log lines, stack traces, trace fragments, or metric snapshots."
+      render: "shell"
+    validations:
+      required: false
+
+  - type: "textarea"
+    id: "artifact-links"
+    attributes:
+      label: "Artifact links"
+      description: "Link dashboards, trace views, flame graphs, reproduction bundles, or other external artifacts."
+    validations:
+      required: false
+
+  - type: "textarea"
+    id: "workaround"
+    attributes:
+      label: "Known workaround"
+      description: "Describe any mitigation, rollback, or operator action that reduces impact."
+    validations:
+      required: false

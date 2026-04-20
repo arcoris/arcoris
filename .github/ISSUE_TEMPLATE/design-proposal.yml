@@ -1,0 +1,247 @@
+# Copyright 2026 The ARCORIS Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+## ARCORIS Issue Form: Design Proposal
+## This form is intentionally lightweight RFC intake for architecture and contract changes.
+
+name: "Design Proposal"
+description: "Propose an architectural, semantic, or cross-cutting design change for ARCORIS"
+title: "[Design]: "
+labels:
+  - "kind/design"
+  - "needs-triage"
+body:
+  - type: "markdown"
+    attributes:
+      value: |
+        Use this form for proposals that change architecture, subsystem boundaries, control-plane behavior, compatibility contracts, extension points, or other semantics that require explicit maintainer review.
+
+        If the request is a scoped product improvement that does not need RFC-level discussion, use the Feature Request form instead.
+
+  - type: "checkboxes"
+    id: "preflight"
+    attributes:
+      label: "Before submitting"
+      options:
+        - label: "I searched existing issues, discussions, and proposals for related design work"
+          required: true
+        - label: "This change is significant enough to require architecture, contract, or compatibility review"
+          required: true
+        - label: "I understand this form should cover trade-offs, rollout, and non-goals, not only the preferred design"
+          required: true
+        - label: "I removed sensitive data and internal-only references"
+          required: true
+
+  - type: "dropdown"
+    id: "proposal-class"
+    attributes:
+      label: "Proposal class"
+      options:
+        - "New subsystem or control loop"
+        - "Major behavior change in an existing subsystem"
+        - "Scheduling, admission, fairness, or overload algorithm change"
+        - "Control plane or policy model change"
+        - "API, CLI, or configuration contract change"
+        - "Adapter, integration, or external protocol design"
+        - "Deployment or operational architecture change"
+        - "Observability or debugging model change"
+        - "Other"
+    validations:
+      required: true
+
+  - type: "dropdown"
+    id: "stage"
+    attributes:
+      label: "Proposal maturity"
+      options:
+        - "Problem statement / exploration"
+        - "Draft design"
+        - "Review-ready proposal"
+    validations:
+      required: true
+
+  - type: "dropdown"
+    id: "champion-intent"
+    attributes:
+      label: "Champion intent"
+      options:
+        - "I plan to implement or co-implement this proposal"
+        - "I am seeking design feedback before implementation"
+        - "I need maintainer or co-author support to carry this forward"
+    validations:
+      required: true
+
+  - type: "dropdown"
+    id: "compatibility-risk"
+    attributes:
+      label: "Compatibility risk"
+      options:
+        - "Additive or low compatibility risk"
+        - "Behavior changes behind an explicit gate or opt-in path"
+        - "Behavior changes in the default execution path"
+        - "Breaking or migration-sensitive change"
+    validations:
+      required: true
+
+  - type: "dropdown"
+    id: "area"
+    attributes:
+      label: "Affected subsystem"
+      description: "Select every subsystem materially affected by the proposal."
+      multiple: true
+      options:
+        - "Admission control"
+        - "Scheduling / dispatch"
+        - "Rate control / concurrency regulation"
+        - "Workload isolation / fairness"
+        - "Overload protection / shedding"
+        - "Workers / execution / leases / retries"
+        - "Queue / broker adapters"
+        - "Control plane / policy distribution"
+        - "Coordination / cluster state"
+        - "Observability / metrics / tracing / logging"
+        - "API / CLI / configuration schema"
+        - "Deployment / Kubernetes / Helm / CI"
+        - "Documentation"
+        - "Other / needs triage"
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "background"
+    attributes:
+      label: "Context and background"
+      description: "Describe the system context, production pressure, or project direction that makes this proposal necessary."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "problem-statement"
+    attributes:
+      label: "Problem statement"
+      description: "Describe the concrete system problem and why a local fix or small feature request is insufficient."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "goals"
+    attributes:
+      label: "Goals"
+      description: "List the outcomes this proposal must achieve."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "non-goals"
+    attributes:
+      label: "Non-goals"
+      description: "List the problems or follow-on work this proposal does not attempt to solve."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "constraints"
+    attributes:
+      label: "Constraints and invariants"
+      description: "State the safety, fairness, compatibility, or operational constraints that must remain true."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "proposal-summary"
+    attributes:
+      label: "Proposal summary"
+      description: "Provide the shortest accurate description of the proposed design."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "detailed-design"
+    attributes:
+      label: "Detailed design"
+      description: "Describe the major components, control flow, state transitions, and interactions across subsystems."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "interfaces"
+    attributes:
+      label: "Interfaces and contracts"
+      description: "Describe API, CLI, configuration, policy, or extension-point changes. Write \"None\" if there are no external contract changes."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "state-and-coordination"
+    attributes:
+      label: "State, persistence, and coordination impact"
+      description: "Describe state ownership, persistence changes, coordination behavior, and recovery implications. Write \"None\" if not applicable."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "observability"
+    attributes:
+      label: "Observability impact"
+      description: "Describe the metrics, traces, logs, and debugging surfaces needed to operate and validate this design."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "validation"
+    attributes:
+      label: "Validation plan"
+      description: "Describe how the design will be validated before and during rollout."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "risks-tradeoffs"
+    attributes:
+      label: "Risks and trade-offs"
+      description: "Describe new complexity, failure modes, operational risks, or cost introduced by this proposal."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "alternatives"
+    attributes:
+      label: "Alternatives considered"
+      description: "Describe the other approaches considered and why they were rejected."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "rollout"
+    attributes:
+      label: "Compatibility, rollout, and rollback"
+      description: "Describe rollout shape, migration plan, downgrade or rollback story, and operator-facing compatibility expectations."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "open-questions"
+    attributes:
+      label: "Open questions"
+      description: "List unresolved questions or follow-up decisions, if any."
+    validations:
+      required: false
+
+  - type: "textarea"
+    id: "references"
+    attributes:
+      label: "References"
+      description: "Link related issues, design notes, benchmarks, diagrams, or external systems only where they materially support the proposal."
+    validations:
+      required: false

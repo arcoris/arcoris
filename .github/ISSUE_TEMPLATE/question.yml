@@ -1,0 +1,148 @@
+# Copyright 2026 The ARCORIS Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+## ARCORIS Issue Form: Maintainer Clarification
+## This form is intentionally narrow to keep generic support out of the issue tracker.
+
+name: "Maintainer Clarification"
+description: "Request a maintainer-level clarification that belongs in the issue tracker"
+title: "[Clarification]: "
+labels:
+  - "kind/question"
+  - "needs-triage"
+body:
+  - type: "markdown"
+    attributes:
+      value: |
+        Use this form only when the answer affects ARCORIS behavior, compatibility, extension contracts, roadmap boundaries, or another repository-level decision that should be captured as a trackable item.
+
+        Do not use this form for how-to questions, deployment help, workload tuning advice, troubleshooting without a confirmed defect, or open-ended discussion. Those belong in GitHub Discussions.
+
+  - type: "checkboxes"
+    id: "preflight"
+    attributes:
+      label: "Before submitting"
+      options:
+        - label: "I checked the README, repository docs, existing issues, and Discussions first"
+          required: true
+        - label: "This is not a how-to, support, troubleshooting, or workload-tuning request"
+          required: true
+        - label: "The answer needs to be captured as a repository decision, contract clarification, or roadmap boundary"
+          required: true
+        - label: "I removed sensitive data and private operational details"
+          required: true
+
+  - type: "dropdown"
+    id: "clarification-class"
+    attributes:
+      label: "Clarification type"
+      options:
+        - "Intended behavior or semantic contract"
+        - "Compatibility or upgrade contract"
+        - "Architecture boundary or design intent"
+        - "Extension point or integration contract"
+        - "Roadmap or project scope"
+        - "Maintainer decision needed to proceed"
+        - "Other / needs triage"
+    validations:
+      required: true
+
+  - type: "dropdown"
+    id: "area"
+    attributes:
+      label: "Affected subsystem"
+      description: "Select every subsystem the clarification touches."
+      multiple: true
+      options:
+        - "Admission control"
+        - "Scheduling / dispatch"
+        - "Rate control / concurrency regulation"
+        - "Workload isolation / fairness"
+        - "Overload protection / shedding"
+        - "Workers / execution / leases / retries"
+        - "Queue / broker adapters"
+        - "Control plane / policy distribution"
+        - "Coordination / cluster state"
+        - "Observability / metrics / tracing / logging"
+        - "API / CLI / configuration schema"
+        - "Deployment / Kubernetes / Helm / CI"
+        - "Documentation"
+        - "Other / needs triage"
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "question"
+    attributes:
+      label: "Question"
+      description: "State the exact clarification you need from maintainers."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "why-issue-tracker"
+    attributes:
+      label: "Why this belongs in the issue tracker"
+      description: "Explain why this should be recorded as a repository item instead of handled in Discussions."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "decision-blocked"
+    attributes:
+      label: "What decision depends on this answer"
+      description: "Describe the implementation, integration, migration, or documentation decision that is blocked on clarification."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "context"
+    attributes:
+      label: "Context"
+      description: "Provide only the architectural, compatibility, or operational context needed to answer precisely."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "checked"
+    attributes:
+      label: "What was already checked"
+      description: "List the docs, issues, discussions, code paths, or experiments already reviewed."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "environment"
+    attributes:
+      label: "Environment, if relevant"
+      description: "Provide version, deployment model, queue or broker, and other context only if it changes the answer."
+    validations:
+      required: false
+
+  - type: "textarea"
+    id: "config"
+    attributes:
+      label: "Relevant configuration"
+      description: "Include the smallest configuration or policy excerpt that makes the question concrete. Remove secrets."
+      render: "yaml"
+    validations:
+      required: false
+
+  - type: "textarea"
+    id: "references"
+    attributes:
+      label: "References"
+      description: "Add logs, links, design notes, or code references only where they materially sharpen the clarification."
+    validations:
+      required: false

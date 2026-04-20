@@ -1,0 +1,146 @@
+# Copyright 2026 The ARCORIS Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+## ARCORIS Issue Form: Documentation
+## Use the same subsystem taxonomy as the product-facing forms for routing.
+
+name: "Documentation Issue"
+description: "Report a defect or maintenance gap in ARCORIS documentation"
+title: "[Docs]: "
+labels:
+  - "kind/docs"
+  - "needs-triage"
+body:
+  - type: "markdown"
+    attributes:
+      value: |
+        Use this form for defects in repository documentation: incorrect behavior descriptions, outdated instructions, broken examples, missing operational guidance, navigation problems, or terminology drift.
+
+        If the underlying product behavior is wrong, use the Bug Report form instead.
+
+  - type: "checkboxes"
+    id: "preflight"
+    attributes:
+      label: "Before submitting"
+      options:
+        - label: "I searched existing issues and did not find the same documentation defect"
+          required: true
+        - label: "I identified the page, file, section, or command path as precisely as possible"
+          required: true
+        - label: "I removed secrets, private URLs, and other sensitive data"
+          required: true
+
+  - type: "dropdown"
+    id: "docs-type"
+    attributes:
+      label: "Documentation defect type"
+      options:
+        - "Incorrect instruction or behavior description"
+        - "Outdated content"
+        - "Missing documentation"
+        - "Broken example, command, or configuration"
+        - "Navigation or information architecture problem"
+        - "Terminology or naming inconsistency"
+        - "Other"
+    validations:
+      required: true
+
+  - type: "dropdown"
+    id: "area"
+    attributes:
+      label: "Affected subsystem"
+      description: "Select the ARCORIS subsystem the documentation is supposed to explain."
+      multiple: true
+      options:
+        - "Admission control"
+        - "Scheduling / dispatch"
+        - "Rate control / concurrency regulation"
+        - "Workload isolation / fairness"
+        - "Overload protection / shedding"
+        - "Workers / execution / leases / retries"
+        - "Queue / broker adapters"
+        - "Control plane / policy distribution"
+        - "Coordination / cluster state"
+        - "Observability / metrics / tracing / logging"
+        - "API / CLI / configuration schema"
+        - "Deployment / Kubernetes / Helm / CI"
+        - "Documentation"
+        - "Other / needs triage"
+    validations:
+      required: true
+
+  - type: "input"
+    id: "location"
+    attributes:
+      label: "Documentation location"
+      description: "Provide the URL, repository path, or section title that needs attention."
+      placeholder: "README.md, a repository path, or the published documentation URL"
+    validations:
+      required: true
+
+  - type: "dropdown"
+    id: "impact"
+    attributes:
+      label: "User impact"
+      description: "Choose the most accurate impact on users or operators."
+      options:
+        - "Can lead to incorrect configuration, unsafe operation, or failed rollout"
+        - "Blocks setup, upgrade, or normal adoption"
+        - "Causes confusion or unnecessary investigation"
+        - "Editorial or discoverability issue with low operational risk"
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "problem"
+    attributes:
+      label: "What is wrong"
+      description: "Describe the documentation defect precisely."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "source-of-truth"
+    attributes:
+      label: "Source of truth"
+      description: "Link code, configuration schema, tests, issues, commits, or design material that prove the documentation is wrong or incomplete."
+    validations:
+      required: false
+
+  - type: "textarea"
+    id: "proposed-correction"
+    attributes:
+      label: "Proposed correction"
+      description: "Describe the correction, missing content, or structural change that would fix the issue."
+    validations:
+      required: true
+
+  - type: "dropdown"
+    id: "contributor-intent"
+    attributes:
+      label: "Contributor intent"
+      options:
+        - "I can submit the documentation change"
+        - "I can validate or review the correction"
+        - "I am reporting the issue only"
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "additional-context"
+    attributes:
+      label: "Additional context"
+      description: "Add screenshots, related issues, or other context only if it materially helps review."
+    validations:
+      required: false
