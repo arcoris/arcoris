@@ -4,31 +4,31 @@
   <p>Admission control · Adaptive resource management · Workload isolation · Feedback-driven overload protection</p>
   <p>
     <a href="https://github.com/ARCORIS/arcoris">
-      <img alt="Repository" src="https://img.shields.io/badge/Repository-GitHub-111827?style=for-the-badge&logo=github" height="28" style="border-radius:999px;" />
+      <img alt="Repository" src="https://img.shields.io/badge/Repository-GitHub-111827?style=flat-square&logo=github" />
     </a>
     <a href="./LICENSE">
-      <img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-D22128?style=for-the-badge&logo=apache" height="28" style="border-radius:999px;" />
+      <img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-D22128?style=flat-square&logo=apache" />
     </a>
-    <img alt="Domain" src="https://img.shields.io/badge/Domain-Distributed%20Scheduling-0F766E?style=for-the-badge" height="28" style="border-radius:999px;" />
-    <img alt="Scope" src="https://img.shields.io/badge/Scope-Queues%20%7C%20Workers%20%7C%20Backends-1D4ED8?style=for-the-badge" height="28" style="border-radius:999px;" />
+    <img alt="Domain" src="https://img.shields.io/badge/Domain-Distributed%20Scheduling-0F766E?style=flat-square" />
+    <img alt="Scope" src="https://img.shields.io/badge/Scope-Queues%20%7C%20Workers%20%7C%20Backends-1D4ED8?style=flat-square" />
   </p>
   <p>
     <a href="https://github.com/ARCORIS/arcoris/actions">
-      <img alt="Build" src="https://img.shields.io/badge/Build-passing-2EA043?style=for-the-badge" height="28" style="border-radius:999px;" />
+      <img alt="Build" src="https://img.shields.io/badge/Build-passing-2EA043?style=flat-square" />
     </a>
     <a href="https://github.com/ARCORIS/arcoris/releases">
-      <img alt="Release" src="https://img.shields.io/badge/Release-v0.1.0--dev-2563EB?style=for-the-badge" height="28" style="border-radius:999px;" />
+      <img alt="Release" src="https://img.shields.io/badge/Release-v0.1.0--dev-2563EB?style=flat-square" />
     </a>
     <a href="https://pkg.go.dev/github.com/ARCORIS/arcoris">
-      <img alt="Go Reference" src="https://img.shields.io/badge/Go%20Reference-pkg.go.dev-00ADD8?style=for-the-badge&logo=go" height="28" style="border-radius:999px;" />
+      <img alt="Go Reference" src="https://img.shields.io/badge/Go%20Reference-pkg.go.dev-00ADD8?style=flat-square&logo=go" />
     </a>
-    <img alt="Coverage" src="https://img.shields.io/badge/Coverage-pending-6B7280?style=for-the-badge" height="28" style="border-radius:999px;" />
+    <img alt="Coverage" src="https://img.shields.io/badge/Coverage-pending-6B7280?style=flat-square" />
   </p>
   <p>
-    <img alt="OpenSSF Scorecard" src="https://img.shields.io/badge/OpenSSF%20Scorecard-pending-6B7280?style=for-the-badge" height="28" style="border-radius:999px;" />
-    <img alt="OpenSSF Best Practices" src="https://img.shields.io/badge/OpenSSF%20Best%20Practices-in%20progress-9A6700?style=for-the-badge" height="28" style="border-radius:999px;" />
-    <img alt="REUSE" src="https://img.shields.io/badge/REUSE-pending-6B7280?style=for-the-badge" height="28" style="border-radius:999px;" />
-    <img alt="Go Report Card" src="https://img.shields.io/badge/Go%20Report%20Card-pending-6B7280?style=for-the-badge" height="28" style="border-radius:999px;" />
+    <img alt="OpenSSF Scorecard" src="https://img.shields.io/badge/OpenSSF%20Scorecard-pending-6B7280?style=flat-square" />
+    <img alt="OpenSSF Best Practices" src="https://img.shields.io/badge/OpenSSF%20Best%20Practices-in%20progress-9A6700?style=flat-square" />
+    <img alt="REUSE" src="https://img.shields.io/badge/REUSE-pending-6B7280?style=flat-square" />
+    <img alt="Go Report Card" src="https://img.shields.io/badge/Go%20Report%20Card-pending-6B7280?style=flat-square" />
   </p>
 </div>
 
