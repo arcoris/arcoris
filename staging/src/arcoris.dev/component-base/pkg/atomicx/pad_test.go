@@ -30,7 +30,8 @@ func TestCacheLinePadSize(t *testing.T) {
 	}
 }
 
-// TestCacheLinePadMemorySize verifies CacheLinePad occupies exactly the configured width.
+// TestCacheLinePadMemorySize verifies CacheLinePad occupies exactly the
+// configured width, not merely a type-level constant with a matching value.
 func TestCacheLinePadMemorySize(t *testing.T) {
 	t.Parallel()
 
@@ -42,7 +43,8 @@ func TestCacheLinePadMemorySize(t *testing.T) {
 	}
 }
 
-// TestPaddedPrimitiveSizesIncludeBothPads verifies primitive layouts keep leading and trailing pads.
+// TestPaddedPrimitiveSizesIncludeBothPads verifies primitive layouts have enough
+// total space for both pads and the atomic wrapper they isolate.
 func TestPaddedPrimitiveSizesIncludeBothPads(t *testing.T) {
 	t.Parallel()
 
@@ -54,22 +56,22 @@ func TestPaddedPrimitiveSizesIncludeBothPads(t *testing.T) {
 		{
 			name: "PaddedUint64",
 			size: unsafe.Sizeof(PaddedUint64{}),
-			min:  uintptr(2*CacheLinePadSize) + unsafe.Sizeof(uint64(0)),
+			min:  uintptr(2*CacheLinePadSize) + unsafe.Sizeof(PaddedUint64{}.value),
 		},
 		{
 			name: "PaddedUint32",
 			size: unsafe.Sizeof(PaddedUint32{}),
-			min:  uintptr(2*CacheLinePadSize) + unsafe.Sizeof(uint32(0)),
+			min:  uintptr(2*CacheLinePadSize) + unsafe.Sizeof(PaddedUint32{}.value),
 		},
 		{
 			name: "PaddedInt64",
 			size: unsafe.Sizeof(PaddedInt64{}),
-			min:  uintptr(2*CacheLinePadSize) + unsafe.Sizeof(int64(0)),
+			min:  uintptr(2*CacheLinePadSize) + unsafe.Sizeof(PaddedInt64{}.value),
 		},
 		{
 			name: "PaddedInt32",
 			size: unsafe.Sizeof(PaddedInt32{}),
-			min:  uintptr(2*CacheLinePadSize) + unsafe.Sizeof(int32(0)),
+			min:  uintptr(2*CacheLinePadSize) + unsafe.Sizeof(PaddedInt32{}.value),
 		},
 	}
 
@@ -81,6 +83,87 @@ func TestPaddedPrimitiveSizesIncludeBothPads(t *testing.T) {
 
 			if tt.size < tt.min {
 				t.Fatalf("unsafe.Sizeof(%s{}) = %d, want at least %d", tt.name, tt.size, tt.min)
+			}
+		})
+	}
+}
+
+// TestPaddedPrimitiveValueOffsetsKeepLeadingPad verifies each atomic wrapper is
+// placed after the leading pad. Total struct size alone would not prove that the
+// hot value is isolated from the previous field.
+func TestPaddedPrimitiveValueOffsetsKeepLeadingPad(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		offset uintptr
+	}{
+		{name: "PaddedUint64", offset: unsafe.Offsetof(PaddedUint64{}.value)},
+		{name: "PaddedUint32", offset: unsafe.Offsetof(PaddedUint32{}.value)},
+		{name: "PaddedInt64", offset: unsafe.Offsetof(PaddedInt64{}.value)},
+		{name: "PaddedInt32", offset: unsafe.Offsetof(PaddedInt32{}.value)},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if tt.offset < uintptr(CacheLinePadSize) {
+				t.Fatalf("%s.value offset = %d, want at least %d", tt.name, tt.offset, CacheLinePadSize)
+			}
+		})
+	}
+}
+
+// TestPaddedPrimitiveValueOffsetsKeepTrailingPad verifies each atomic wrapper is
+// followed by the trailing pad. This protects arrays, slices, and following
+// struct fields from sharing the atomic value's cache line.
+func TestPaddedPrimitiveValueOffsetsKeepTrailingPad(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		size      uintptr
+		valueEnd  uintptr
+		trailWant uintptr
+	}{
+		{
+			name:      "PaddedUint64",
+			size:      unsafe.Sizeof(PaddedUint64{}),
+			valueEnd:  unsafe.Offsetof(PaddedUint64{}.value) + unsafe.Sizeof(PaddedUint64{}.value),
+			trailWant: uintptr(CacheLinePadSize),
+		},
+		{
+			name:      "PaddedUint32",
+			size:      unsafe.Sizeof(PaddedUint32{}),
+			valueEnd:  unsafe.Offsetof(PaddedUint32{}.value) + unsafe.Sizeof(PaddedUint32{}.value),
+			trailWant: uintptr(CacheLinePadSize),
+		},
+		{
+			name:      "PaddedInt64",
+			size:      unsafe.Sizeof(PaddedInt64{}),
+			valueEnd:  unsafe.Offsetof(PaddedInt64{}.value) + unsafe.Sizeof(PaddedInt64{}.value),
+			trailWant: uintptr(CacheLinePadSize),
+		},
+		{
+			name:      "PaddedInt32",
+			size:      unsafe.Sizeof(PaddedInt32{}),
+			valueEnd:  unsafe.Offsetof(PaddedInt32{}.value) + unsafe.Sizeof(PaddedInt32{}.value),
+			trailWant: uintptr(CacheLinePadSize),
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			trailingPad := tt.size - tt.valueEnd
+			if trailingPad < tt.trailWant {
+				t.Fatalf("%s trailing pad = %d, want at least %d", tt.name, trailingPad, tt.trailWant)
 			}
 		})
 	}

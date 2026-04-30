@@ -170,14 +170,14 @@ func TestPaddedInt64RawAddWraps(t *testing.T) {
 
 	var value PaddedInt64
 
-	value.Store(maxInt64)
+	value.Store(testMaxInt64)
 
-	if got := value.Add(1); got != minInt64 {
-		t.Fatalf("PaddedInt64.Add(1) from max int64 = %d, want %d", got, minInt64)
+	if got := value.Add(1); got != testMinInt64 {
+		t.Fatalf("PaddedInt64.Add(1) from max int64 = %d, want %d", got, testMinInt64)
 	}
 
-	if got := value.Load(); got != minInt64 {
-		t.Fatalf("PaddedInt64.Load() after wrap = %d, want %d", got, minInt64)
+	if got := value.Load(); got != testMinInt64 {
+		t.Fatalf("PaddedInt64.Load() after wrap = %d, want %d", got, testMinInt64)
 	}
 }
 

@@ -86,7 +86,9 @@ func TestUint32GaugeTryAddSuccess(t *testing.T) {
 	}
 }
 
-// TestUint32GaugeTryAddOverflowLeavesStateUnchanged verifies refusal is non-mutating.
+// TestUint32GaugeTryAddOverflowLeavesStateUnchanged verifies checked admission
+// failure does not corrupt the current state. A failed TryAdd must be safe to
+// use as a bounded-capacity rejection path.
 func TestUint32GaugeTryAddOverflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
@@ -124,7 +126,8 @@ func TestUint32GaugeTrySubSuccess(t *testing.T) {
 	}
 }
 
-// TestUint32GaugeTrySubUnderflowLeavesStateUnchanged verifies refusal is non-mutating.
+// TestUint32GaugeTrySubUnderflowLeavesStateUnchanged verifies checked release
+// failure does not hide an accounting imbalance by changing the gauge.
 func TestUint32GaugeTrySubUnderflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
@@ -199,7 +202,9 @@ func TestUint32GaugeCompareAndSwap(t *testing.T) {
 	}
 }
 
-// TestUint32GaugeExactBoundaryOperations verifies max-range transitions that remain valid.
+// TestUint32GaugeExactBoundaryOperations verifies that a bounded gauge may
+// legally reach the numeric boundary. The invariant violation starts only when
+// an operation attempts to cross the boundary.
 func TestUint32GaugeExactBoundaryOperations(t *testing.T) {
 	t.Parallel()
 
@@ -225,7 +230,8 @@ func TestUint32GaugePanicsOnOverflow(t *testing.T) {
 	})
 }
 
-// TestUint32GaugePanicsOnUnderflow verifies bounded gauges reject negative current state.
+// TestUint32GaugePanicsOnUnderflow verifies bounded gauges reject negative
+// current state instead of wrapping subtraction to a very large unsigned value.
 func TestUint32GaugePanicsOnUnderflow(t *testing.T) {
 	t.Parallel()
 
@@ -237,7 +243,8 @@ func TestUint32GaugePanicsOnUnderflow(t *testing.T) {
 	})
 }
 
-// TestUint32GaugeIncPanicsOnOverflow verifies Inc preserves the same overflow invariant as Add.
+// TestUint32GaugeIncPanicsOnOverflow verifies Inc preserves the same overflow
+// invariant as Add, so the convenience method cannot bypass gauge safety.
 func TestUint32GaugeIncPanicsOnOverflow(t *testing.T) {
 	t.Parallel()
 
@@ -249,7 +256,8 @@ func TestUint32GaugeIncPanicsOnOverflow(t *testing.T) {
 	})
 }
 
-// TestUint32GaugeDecPanicsOnUnderflow verifies Dec preserves the same underflow invariant as Sub.
+// TestUint32GaugeDecPanicsOnUnderflow verifies Dec preserves the same underflow
+// invariant as Sub, so single-unit release cannot bypass gauge safety.
 func TestUint32GaugeDecPanicsOnUnderflow(t *testing.T) {
 	t.Parallel()
 

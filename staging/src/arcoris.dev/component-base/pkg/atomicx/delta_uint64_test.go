@@ -103,7 +103,7 @@ func TestNewUint64CounterDeltaSameValue(t *testing.T) {
 func TestNewUint64CounterDeltaWrapped(t *testing.T) {
 	t.Parallel()
 
-	previous := ^uint64(0) - 2
+	previous := testMaxUint64 - 2
 	current := uint64(4)
 
 	delta := NewUint64CounterDelta(previous, current)
@@ -133,7 +133,7 @@ func TestNewUint64CounterDeltaWrapped(t *testing.T) {
 func TestNewUint64CounterDeltaFullRangeWrap(t *testing.T) {
 	t.Parallel()
 
-	delta := NewUint64CounterDelta(^uint64(0), 0)
+	delta := NewUint64CounterDelta(testMaxUint64, 0)
 
 	if delta.Value != 1 {
 		t.Fatalf("delta.Value = %d, want 1", delta.Value)

@@ -75,10 +75,10 @@ func TestUint64CounterWrapsLikeUint64(t *testing.T) {
 
 	var counter Uint64Counter
 
-	counter.Add(^uint64(0))
+	counter.Add(testMaxUint64)
 
-	if got := counter.Load(); got != ^uint64(0) {
-		t.Fatalf("Uint64Counter.Load() after Add(max) = %d, want %d", got, ^uint64(0))
+	if got := counter.Load(); got != testMaxUint64 {
+		t.Fatalf("Uint64Counter.Load() after Add(max) = %d, want %d", got, testMaxUint64)
 	}
 
 	if got := counter.Inc(); got != 0 {

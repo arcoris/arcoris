@@ -86,7 +86,9 @@ func TestInt32GaugeTryAddSuccess(t *testing.T) {
 	}
 }
 
-// TestInt32GaugeTryAddOverflowLeavesStateUnchanged verifies positive overflow is non-mutating.
+// TestInt32GaugeTryAddOverflowLeavesStateUnchanged verifies positive overflow
+// is reported without mutating state. Failed checked arithmetic must be safe for
+// callers that treat refusal as normal control flow.
 func TestInt32GaugeTryAddOverflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
@@ -105,7 +107,9 @@ func TestInt32GaugeTryAddOverflowLeavesStateUnchanged(t *testing.T) {
 	}
 }
 
-// TestInt32GaugeTryAddUnderflowLeavesStateUnchanged verifies negative underflow is non-mutating.
+// TestInt32GaugeTryAddUnderflowLeavesStateUnchanged verifies negative underflow
+// is reported without mutating state. Signed gauges must not wrap past the lower
+// boundary.
 func TestInt32GaugeTryAddUnderflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
@@ -143,7 +147,8 @@ func TestInt32GaugeTrySubSuccess(t *testing.T) {
 	}
 }
 
-// TestInt32GaugeTrySubOverflowLeavesStateUnchanged verifies subtracting negative deltas checks the upper bound.
+// TestInt32GaugeTrySubOverflowLeavesStateUnchanged verifies subtracting negative
+// deltas checks the upper bound without computing through a wrapped value.
 func TestInt32GaugeTrySubOverflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
@@ -162,7 +167,8 @@ func TestInt32GaugeTrySubOverflowLeavesStateUnchanged(t *testing.T) {
 	}
 }
 
-// TestInt32GaugeTrySubUnderflowLeavesStateUnchanged verifies subtracting positive deltas checks the lower bound.
+// TestInt32GaugeTrySubUnderflowLeavesStateUnchanged verifies subtracting
+// positive deltas checks the lower bound and leaves the current state intact.
 func TestInt32GaugeTrySubUnderflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
@@ -181,7 +187,9 @@ func TestInt32GaugeTrySubUnderflowLeavesStateUnchanged(t *testing.T) {
 	}
 }
 
-// TestInt32GaugeTrySubHandlesMinInt32Delta verifies TrySub never computes -minInt32.
+// TestInt32GaugeTrySubHandlesMinInt32Delta verifies TrySub never computes
+// -minInt32. That negation is not representable and would turn an invariant
+// check into undefined-looking signed wrap behavior.
 func TestInt32GaugeTrySubHandlesMinInt32Delta(t *testing.T) {
 	t.Parallel()
 
@@ -252,7 +260,9 @@ func TestInt32GaugeCompareAndSwap(t *testing.T) {
 	}
 }
 
-// TestInt32GaugeExactBoundaryOperations verifies legal transitions at both signed limits.
+// TestInt32GaugeExactBoundaryOperations verifies legal transitions at both
+// signed limits. Reaching min or max is valid; crossing either limit is the
+// invariant violation tested by panic and Try* failure cases.
 func TestInt32GaugeExactBoundaryOperations(t *testing.T) {
 	t.Parallel()
 
@@ -286,7 +296,8 @@ func TestInt32GaugeExactBoundaryOperations(t *testing.T) {
 	}
 }
 
-// TestInt32GaugePanicsOnAddOverflow verifies Add rejects positive overflow.
+// TestInt32GaugePanicsOnAddOverflow verifies Add rejects positive overflow as
+// an invariant violation instead of silently wrapping signed current state.
 func TestInt32GaugePanicsOnAddOverflow(t *testing.T) {
 	t.Parallel()
 
@@ -298,7 +309,8 @@ func TestInt32GaugePanicsOnAddOverflow(t *testing.T) {
 	})
 }
 
-// TestInt32GaugePanicsOnAddUnderflow verifies Add rejects negative underflow.
+// TestInt32GaugePanicsOnAddUnderflow verifies Add rejects negative underflow as
+// an invariant violation instead of silently wrapping signed current state.
 func TestInt32GaugePanicsOnAddUnderflow(t *testing.T) {
 	t.Parallel()
 
@@ -310,7 +322,8 @@ func TestInt32GaugePanicsOnAddUnderflow(t *testing.T) {
 	})
 }
 
-// TestInt32GaugePanicsOnSubOverflow verifies Sub rejects upward overflow.
+// TestInt32GaugePanicsOnSubOverflow verifies Sub rejects upward overflow when a
+// negative delta would move the gauge beyond maxInt32.
 func TestInt32GaugePanicsOnSubOverflow(t *testing.T) {
 	t.Parallel()
 
@@ -322,7 +335,8 @@ func TestInt32GaugePanicsOnSubOverflow(t *testing.T) {
 	})
 }
 
-// TestInt32GaugePanicsOnSubUnderflow verifies Sub rejects downward underflow.
+// TestInt32GaugePanicsOnSubUnderflow verifies Sub rejects downward underflow
+// when a positive delta would move the gauge below minInt32.
 func TestInt32GaugePanicsOnSubUnderflow(t *testing.T) {
 	t.Parallel()
 

@@ -86,7 +86,9 @@ func TestInt64GaugeTryAddSuccess(t *testing.T) {
 	}
 }
 
-// TestInt64GaugeTryAddOverflowLeavesStateUnchanged verifies positive overflow is non-mutating.
+// TestInt64GaugeTryAddOverflowLeavesStateUnchanged verifies positive overflow
+// is reported without mutating state. Failed checked arithmetic must be safe for
+// callers that treat refusal as normal control flow.
 func TestInt64GaugeTryAddOverflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
@@ -105,7 +107,9 @@ func TestInt64GaugeTryAddOverflowLeavesStateUnchanged(t *testing.T) {
 	}
 }
 
-// TestInt64GaugeTryAddUnderflowLeavesStateUnchanged verifies negative underflow is non-mutating.
+// TestInt64GaugeTryAddUnderflowLeavesStateUnchanged verifies negative underflow
+// is reported without mutating state. Signed gauges must not wrap past the lower
+// boundary.
 func TestInt64GaugeTryAddUnderflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
@@ -143,7 +147,8 @@ func TestInt64GaugeTrySubSuccess(t *testing.T) {
 	}
 }
 
-// TestInt64GaugeTrySubOverflowLeavesStateUnchanged verifies subtracting negative deltas checks the upper bound.
+// TestInt64GaugeTrySubOverflowLeavesStateUnchanged verifies subtracting negative
+// deltas checks the upper bound without computing through a wrapped value.
 func TestInt64GaugeTrySubOverflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
@@ -162,7 +167,8 @@ func TestInt64GaugeTrySubOverflowLeavesStateUnchanged(t *testing.T) {
 	}
 }
 
-// TestInt64GaugeTrySubUnderflowLeavesStateUnchanged verifies subtracting positive deltas checks the lower bound.
+// TestInt64GaugeTrySubUnderflowLeavesStateUnchanged verifies subtracting
+// positive deltas checks the lower bound and leaves the current state intact.
 func TestInt64GaugeTrySubUnderflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
@@ -181,7 +187,9 @@ func TestInt64GaugeTrySubUnderflowLeavesStateUnchanged(t *testing.T) {
 	}
 }
 
-// TestInt64GaugeTrySubHandlesMinInt64Delta verifies TrySub never computes -minInt64.
+// TestInt64GaugeTrySubHandlesMinInt64Delta verifies TrySub never computes
+// -minInt64. That negation is not representable and would turn an invariant
+// check into undefined-looking signed wrap behavior.
 func TestInt64GaugeTrySubHandlesMinInt64Delta(t *testing.T) {
 	t.Parallel()
 
@@ -252,7 +260,9 @@ func TestInt64GaugeCompareAndSwap(t *testing.T) {
 	}
 }
 
-// TestInt64GaugeExactBoundaryOperations verifies legal transitions at both signed limits.
+// TestInt64GaugeExactBoundaryOperations verifies legal transitions at both
+// signed limits. Reaching min or max is valid; crossing either limit is the
+// invariant violation tested by panic and Try* failure cases.
 func TestInt64GaugeExactBoundaryOperations(t *testing.T) {
 	t.Parallel()
 
@@ -286,7 +296,8 @@ func TestInt64GaugeExactBoundaryOperations(t *testing.T) {
 	}
 }
 
-// TestInt64GaugePanicsOnAddOverflow verifies Add rejects positive overflow.
+// TestInt64GaugePanicsOnAddOverflow verifies Add rejects positive overflow as
+// an invariant violation instead of silently wrapping signed current state.
 func TestInt64GaugePanicsOnAddOverflow(t *testing.T) {
 	t.Parallel()
 
@@ -298,7 +309,8 @@ func TestInt64GaugePanicsOnAddOverflow(t *testing.T) {
 	})
 }
 
-// TestInt64GaugePanicsOnAddUnderflow verifies Add rejects negative underflow.
+// TestInt64GaugePanicsOnAddUnderflow verifies Add rejects negative underflow as
+// an invariant violation instead of silently wrapping signed current state.
 func TestInt64GaugePanicsOnAddUnderflow(t *testing.T) {
 	t.Parallel()
 
@@ -310,7 +322,8 @@ func TestInt64GaugePanicsOnAddUnderflow(t *testing.T) {
 	})
 }
 
-// TestInt64GaugePanicsOnSubOverflow verifies Sub rejects upward overflow.
+// TestInt64GaugePanicsOnSubOverflow verifies Sub rejects upward overflow when a
+// negative delta would move the gauge beyond maxInt64.
 func TestInt64GaugePanicsOnSubOverflow(t *testing.T) {
 	t.Parallel()
 
@@ -322,7 +335,8 @@ func TestInt64GaugePanicsOnSubOverflow(t *testing.T) {
 	})
 }
 
-// TestInt64GaugePanicsOnSubUnderflow verifies Sub rejects downward underflow.
+// TestInt64GaugePanicsOnSubUnderflow verifies Sub rejects downward underflow
+// when a positive delta would move the gauge below minInt64.
 func TestInt64GaugePanicsOnSubUnderflow(t *testing.T) {
 	t.Parallel()
 

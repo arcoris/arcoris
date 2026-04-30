@@ -100,7 +100,7 @@ func TestUint64CounterSnapshotDeltaSince(t *testing.T) {
 func TestUint64CounterSnapshotDeltaSinceWrapped(t *testing.T) {
 	t.Parallel()
 
-	previous := Uint64CounterSnapshot{Value: ^uint64(0) - 2}
+	previous := Uint64CounterSnapshot{Value: testMaxUint64 - 2}
 	current := Uint64CounterSnapshot{Value: 4}
 
 	delta := current.DeltaSince(previous)

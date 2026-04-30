@@ -75,10 +75,10 @@ func TestUint32CounterWrapsLikeUint32(t *testing.T) {
 
 	var counter Uint32Counter
 
-	counter.Add(^uint32(0))
+	counter.Add(testMaxUint32)
 
-	if got := counter.Load(); got != ^uint32(0) {
-		t.Fatalf("Uint32Counter.Load() after Add(max) = %d, want %d", got, ^uint32(0))
+	if got := counter.Load(); got != testMaxUint32 {
+		t.Fatalf("Uint32Counter.Load() after Add(max) = %d, want %d", got, testMaxUint32)
 	}
 
 	if got := counter.Inc(); got != 0 {

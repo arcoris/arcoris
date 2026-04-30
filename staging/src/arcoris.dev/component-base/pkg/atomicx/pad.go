@@ -49,9 +49,10 @@ const (
 // needs manual spacing between fields that are updated by different goroutines
 // and are likely to contend through false sharing.
 //
-// Prefer PaddedUint64 or PaddedInt64 when the hot field itself is an atomic
-// integer. Use CacheLinePad directly only when the caller intentionally owns the
-// surrounding struct layout and wants to separate larger groups of fields.
+// Prefer the corresponding Padded* type when the hot field itself is an atomic
+// integer: PaddedUint64, PaddedUint32, PaddedInt64, or PaddedInt32. Use
+// CacheLinePad directly only when the caller intentionally owns the surrounding
+// struct layout and wants to separate larger groups of fields.
 //
 // CacheLinePad has no behavior. Its only purpose is memory layout. It is safe to
 // copy because it does not contain synchronization state or mutable runtime

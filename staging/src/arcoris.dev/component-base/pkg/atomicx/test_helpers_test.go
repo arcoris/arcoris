@@ -21,6 +21,29 @@ import (
 	"testing"
 )
 
+const (
+	// testMaxUint64 is the test-owned uint64 upper bound used outside gauge
+	// tests. Keeping it here avoids coupling raw primitive, counter, snapshot,
+	// and delta tests to gauge-local production constants.
+	testMaxUint64 = ^uint64(0)
+
+	// testMaxUint32 is the test-owned uint32 upper bound used outside gauge
+	// tests. It keeps 32-bit counter and raw primitive boundary checks explicit.
+	testMaxUint32 = ^uint32(0)
+
+	// testMaxInt64 and testMinInt64 are test-owned signed int64 boundaries for
+	// raw primitive tests. Raw padded primitives wrap; gauge constants belong to
+	// checked gauge implementations.
+	testMaxInt64 = int64(1<<63 - 1)
+	testMinInt64 = -testMaxInt64 - 1
+
+	// testMaxInt32 and testMinInt32 are test-owned signed int32 boundaries for
+	// raw primitive tests. They keep raw atomic semantics separate from gauge
+	// invariant checks.
+	testMaxInt32 = int32(1<<31 - 1)
+	testMinInt32 = -testMaxInt32 - 1
+)
+
 // mustPanicWithValue verifies that fn panics with exactly the expected value.
 //
 // Gauge tests use exact panic values because those values are part of the

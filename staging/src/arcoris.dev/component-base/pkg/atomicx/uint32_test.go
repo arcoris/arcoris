@@ -145,7 +145,7 @@ func TestPaddedUint32RawAddWraps(t *testing.T) {
 
 	var value PaddedUint32
 
-	value.Store(^uint32(0))
+	value.Store(testMaxUint32)
 
 	if got := value.Add(1); got != 0 {
 		t.Fatalf("PaddedUint32.Add(1) from max uint32 = %d, want 0", got)

@@ -97,6 +97,41 @@
 // reconciliation offsets, capacity debt, and temporary signed runtime
 // adjustments. They reject signed overflow and underflow.
 //
+// # File ownership
+//
+// atomicx intentionally separates files by responsibility and numeric type.
+//
+// Raw padded primitives live in:
+//
+//   - uint64.go;
+//   - uint32.go;
+//   - int64.go;
+//   - int32.go.
+//
+// Mutable counters live in:
+//
+//   - counter_uint64.go;
+//   - counter_uint32.go.
+//
+// Counter sampling values live in:
+//
+//   - snapshot_uint64.go;
+//   - snapshot_uint32.go;
+//   - delta_uint64.go;
+//   - delta_uint32.go.
+//
+// Gauges live in:
+//
+//   - gauge_uint64.go;
+//   - gauge_uint32.go;
+//   - gauge_int64.go;
+//   - gauge_int32.go.
+//
+// Counter files must not define snapshots or deltas. Snapshot files must not
+// define mutable counters. Delta files must not define counter state. Gauge
+// files must keep their panic constants and numeric bounds local to the gauge
+// implementation that uses them.
+//
 // # Non-goals
 //
 // atomicx is not a metrics package. It does not define metric names, labels,
@@ -254,6 +289,12 @@
 // If external reporting is needed, export loaded values, snapshots, deltas, or
 // higher-level metric samples produced by a metrics package. Do not marshal live
 // counters or gauges as API state.
+//
+// # Stability
+//
+// atomicx is part of component-base v0. Public APIs in this package should be
+// treated as deliberately designed, but ARCORIS may still refine package
+// boundaries before the first stable release.
 //
 // # Dependency policy
 //
