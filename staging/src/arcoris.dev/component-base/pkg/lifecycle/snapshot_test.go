@@ -18,6 +18,7 @@ package lifecycle
 
 import (
 	"errors"
+	"strings"
 	"testing"
 )
 
@@ -26,7 +27,7 @@ type nonComparableError struct {
 }
 
 func (e nonComparableError) Error() string {
-	return "non-comparable"
+	return strings.Join(e.values, ":")
 }
 
 func TestSnapshotIsValid(t *testing.T) {
@@ -44,6 +45,7 @@ func TestSnapshotIsValid(t *testing.T) {
 		{name: "zero", want: true},
 		{name: "invalid state", snapshot: Snapshot{State: State(99)}, want: false},
 		{name: "revision zero non-zero transition", snapshot: Snapshot{LastTransition: validTransition}, want: false},
+		{name: "revision zero non-comparable transition cause", snapshot: Snapshot{LastTransition: Transition{Cause: nonComparableError{values: []string{"x", "y"}}}}, want: false},
 		{name: "revision non-zero zero transition", snapshot: Snapshot{State: StateStarting, Revision: 1}, want: false},
 		{name: "uncommitted transition", snapshot: Snapshot{State: StateStarting, Revision: 1, LastTransition: Transition{From: StateNew, To: StateStarting, Event: EventBeginStart}}, want: false},
 		{name: "revision mismatch", snapshot: Snapshot{State: StateStarting, Revision: 2, LastTransition: validTransition}, want: false},
@@ -51,7 +53,9 @@ func TestSnapshotIsValid(t *testing.T) {
 		{name: "valid active", snapshot: Snapshot{State: StateStarting, Revision: 1, LastTransition: validTransition}, want: true},
 		{name: "failed without cause", snapshot: Snapshot{State: StateFailed, Revision: 2, LastTransition: failedTransition}, want: false},
 		{name: "non-failed with cause", snapshot: Snapshot{State: StateRunning, Revision: 1, LastTransition: Transition{From: StateStarting, To: StateRunning, Event: EventMarkRunning, Revision: 1, At: testTime}, FailureCause: cause}, want: false},
+		{name: "non-failed with non-comparable cause", snapshot: Snapshot{State: StateRunning, Revision: 1, LastTransition: Transition{From: StateStarting, To: StateRunning, Event: EventMarkRunning, Revision: 1, At: testTime}, FailureCause: nonComparableError{values: []string{"x", "y"}}}, want: false},
 		{name: "failed with cause", snapshot: Snapshot{State: StateFailed, Revision: 2, LastTransition: failedTransition, FailureCause: cause}, want: true},
+		{name: "failed with non-comparable cause", snapshot: Snapshot{State: StateFailed, Revision: 2, LastTransition: Transition{From: StateRunning, To: StateFailed, Event: EventMarkFailed, Cause: nonComparableError{values: []string{"x", "y"}}, Revision: 2, At: testTime}, FailureCause: nonComparableError{values: []string{"x", "y"}}}, want: true},
 	}
 
 	for _, tt := range tests {

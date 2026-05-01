@@ -145,13 +145,21 @@ func TestControllerMarkFailed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("MarkFailed = %v, want nil", err)
 	}
-	if transition.To != StateFailed || transition.Cause != cause {
-		t.Fatalf("transition = %+v, want failed with cause", transition)
-	}
+	assertTransitionEqual(t, transition, Transition{
+		From:     StateStarting,
+		To:       StateFailed,
+		Event:    EventMarkFailed,
+		Revision: transition.Revision,
+		At:       transition.At,
+		Cause:    cause,
+	})
 	snapshot := controller.Snapshot()
-	if snapshot.FailureCause != cause {
-		t.Fatalf("FailureCause = %v, want %v", snapshot.FailureCause, cause)
-	}
+	assertSnapshotEqual(t, snapshot, Snapshot{
+		State:          StateFailed,
+		Revision:       transition.Revision,
+		LastTransition: transition,
+		FailureCause:   cause,
+	})
 	mustSignalClosed(t, controller.Done())
 }
 
@@ -205,9 +213,7 @@ func TestControllerFailedOperationsDoNotMutate(t *testing.T) {
 			}
 			mustMatch(t, err, tt.want)
 			after := controller.Snapshot()
-			if before != after {
-				t.Fatalf("snapshot changed from %+v to %+v", before, after)
-			}
+			assertSnapshotEqual(t, after, before)
 		})
 	}
 }
@@ -221,8 +227,9 @@ func TestControllerGuardRejectionDoesNotCommit(t *testing.T) {
 		WithGuard(TransitionGuardFunc(func(Transition) error { return rejection })),
 		WithObserver(ObserverFunc(func(Transition) { observerCalled = true })),
 	)
-	changed := controller.doneSignal()
 	before := controller.Snapshot()
+	beforeChanged, changed, done := controller.waitSnapshot()
+	assertSnapshotEqual(t, beforeChanged, before)
 
 	_, err := controller.BeginStart()
 	if err == nil {
@@ -230,10 +237,10 @@ func TestControllerGuardRejectionDoesNotCommit(t *testing.T) {
 	}
 	mustMatch(t, err, ErrGuardRejected)
 	mustMatch(t, err, rejection)
-	if after := controller.Snapshot(); before != after {
-		t.Fatalf("snapshot changed from %+v to %+v", before, after)
-	}
+	after := controller.Snapshot()
+	assertSnapshotEqual(t, after, before)
 	mustNotSignalClosed(t, changed)
+	mustNotSignalClosed(t, done)
 	if observerCalled {
 		t.Fatal("observer called after guard rejection")
 	}
@@ -253,8 +260,9 @@ func TestControllerObserverAfterCommit(t *testing.T) {
 	}
 
 	got := <-observed
-	if got != transition || !got.IsCommitted() {
-		t.Fatalf("observer transition = %+v, want committed %+v", got, transition)
+	assertTransitionEqual(t, got, transition)
+	if !got.IsCommitted() {
+		t.Fatalf("observer transition = %+v, want committed", got)
 	}
 }
 

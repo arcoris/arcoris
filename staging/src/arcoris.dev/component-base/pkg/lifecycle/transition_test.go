@@ -59,6 +59,14 @@ func TestTransitionPredicates(t *testing.T) {
 			failure:    true,
 		},
 		{
+			name:       "non-comparable cause",
+			transition: Transition{From: StateRunning, To: StateFailed, Event: EventMarkFailed, Cause: nonComparableError{values: []string{"x", "y"}}},
+			valid:      true,
+			tableValid: true,
+			terminal:   true,
+			failure:    true,
+		},
+		{
 			name:       "missing cause",
 			transition: Transition{From: StateRunning, To: StateFailed, Event: EventMarkFailed},
 			tableValid: true,

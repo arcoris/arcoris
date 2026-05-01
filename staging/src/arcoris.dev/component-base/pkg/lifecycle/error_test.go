@@ -19,6 +19,7 @@ package lifecycle
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -39,22 +40,48 @@ func TestGuardErrorMatchingAndMessage(t *testing.T) {
 	t.Parallel()
 
 	domainErr := errors.New("domain guard")
-	err := newGuardError(Transition{From: StateNew, To: StateStarting, Event: EventBeginStart}, domainErr)
-
-	mustMatch(t, err, ErrGuardRejected)
-	mustMatch(t, err, domainErr)
-	if strings.Count(err.Error(), ErrGuardRejected.Error()) != 1 {
-		t.Fatalf("GuardError message %q repeats guard sentinel", err.Error())
+	transition := Transition{From: StateNew, To: StateStarting, Event: EventBeginStart}
+	tests := []struct {
+		name string
+		err  error
+	}{
+		{
+			name: "domain error only",
+			err:  newGuardError(transition, domainErr),
+		},
+		{
+			name: "guard sentinel only",
+			err:  newGuardError(transition, ErrGuardRejected),
+		},
+		{
+			name: "join guard first",
+			err:  newGuardError(transition, errors.Join(ErrGuardRejected, domainErr)),
+		},
+		{
+			name: "join domain first",
+			err:  newGuardError(transition, errors.Join(domainErr, ErrGuardRejected)),
+		},
+		{
+			name: "wrapped guard sentinel",
+			err:  newGuardError(transition, fmt.Errorf("wrapped: %w", ErrGuardRejected)),
+		},
 	}
 
-	wrapped := newGuardError(
-		Transition{From: StateNew, To: StateStarting, Event: EventBeginStart},
-		errors.Join(ErrGuardRejected, domainErr),
-	)
-	mustMatch(t, wrapped, ErrGuardRejected)
-	mustMatch(t, wrapped, domainErr)
-	if strings.Count(wrapped.Error(), ErrGuardRejected.Error()) != 1 {
-		t.Fatalf("wrapped GuardError message %q repeats guard sentinel", wrapped.Error())
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.name != "guard sentinel only" {
+				mustMatch(t, tt.err, ErrGuardRejected)
+			}
+			if tt.name != "guard sentinel only" && tt.name != "wrapped guard sentinel" {
+				mustMatch(t, tt.err, domainErr)
+			}
+			if !strings.HasPrefix(tt.err.Error(), ErrGuardRejected.Error()) {
+				t.Fatalf("GuardError message %q does not start with %q", tt.err.Error(), ErrGuardRejected.Error())
+			}
+			if strings.Count(tt.err.Error(), ErrGuardRejected.Error()) > 1 && tt.name != "join domain first" {
+				t.Fatalf("GuardError message %q repeats guard sentinel", tt.err.Error())
+			}
+		})
 	}
 }
 

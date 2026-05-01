@@ -54,9 +54,13 @@ func (e *GuardError) Error() string {
 		return message
 	}
 
-	errText := strings.TrimPrefix(e.Err.Error(), ErrGuardRejected.Error()+": ")
+	errText := e.Err.Error()
+	errText = strings.TrimPrefix(errText, ErrGuardRejected.Error()+": ")
 	errText = strings.TrimPrefix(errText, ErrGuardRejected.Error()+"\n")
-	if errText == ErrGuardRejected.Error() {
+	errText = strings.TrimSuffix(errText, "\n"+ErrGuardRejected.Error())
+	errText = strings.TrimSuffix(errText, ": "+ErrGuardRejected.Error())
+	errText = strings.TrimSpace(errText)
+	if errText == "" || errText == ErrGuardRejected.Error() {
 		return message
 	}
 

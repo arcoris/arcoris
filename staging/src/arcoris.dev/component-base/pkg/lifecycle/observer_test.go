@@ -30,9 +30,7 @@ func TestObserverFunc(t *testing.T) {
 		got = transition
 	}).ObserveLifecycleTransition(transition)
 
-	if got != transition {
-		t.Fatalf("observer received %v, want %v", got, transition)
-	}
+	assertTransitionEqual(t, got, transition)
 }
 
 func TestObserverChain(t *testing.T) {
@@ -60,8 +58,6 @@ func TestObserverChain(t *testing.T) {
 		t.Fatalf("observer order = %v, want %v", got, want)
 	}
 	for _, got := range seen {
-		if got != transition {
-			t.Fatalf("observer received %v, want %v", got, transition)
-		}
+		assertTransitionEqual(t, got, transition)
 	}
 }

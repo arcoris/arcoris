@@ -48,6 +48,65 @@ func mustNotMatch(t *testing.T, err error, target error) {
 	}
 }
 
+func assertTransitionEqual(t *testing.T, got, want Transition) {
+	t.Helper()
+
+	if got.From != want.From {
+		t.Fatalf("transition.From = %s, want %s", got.From, want.From)
+	}
+	if got.To != want.To {
+		t.Fatalf("transition.To = %s, want %s", got.To, want.To)
+	}
+	if got.Event != want.Event {
+		t.Fatalf("transition.Event = %s, want %s", got.Event, want.Event)
+	}
+	if got.Revision != want.Revision {
+		t.Fatalf("transition.Revision = %d, want %d", got.Revision, want.Revision)
+	}
+	if got.At.IsZero() != want.At.IsZero() {
+		t.Fatalf("transition.At zero = %v, want %v", got.At.IsZero(), want.At.IsZero())
+	}
+	if !got.At.IsZero() && !got.At.Equal(want.At) {
+		t.Fatalf("transition.At = %v, want %v", got.At, want.At)
+	}
+	if want.Cause == nil {
+		if got.Cause != nil {
+			t.Fatalf("transition.Cause = %v, want nil", got.Cause)
+		}
+		return
+	}
+	if got.Cause == nil {
+		t.Fatal("transition.Cause = nil, want non-nil")
+	}
+	if !errors.Is(got.Cause, want.Cause) {
+		t.Fatalf("errors.Is(transition.Cause, %v) = false, want true", want.Cause)
+	}
+}
+
+func assertSnapshotEqual(t *testing.T, got, want Snapshot) {
+	t.Helper()
+
+	if got.State != want.State {
+		t.Fatalf("snapshot.State = %s, want %s", got.State, want.State)
+	}
+	if got.Revision != want.Revision {
+		t.Fatalf("snapshot.Revision = %d, want %d", got.Revision, want.Revision)
+	}
+	assertTransitionEqual(t, got.LastTransition, want.LastTransition)
+	if want.FailureCause == nil {
+		if got.FailureCause != nil {
+			t.Fatalf("snapshot.FailureCause = %v, want nil", got.FailureCause)
+		}
+		return
+	}
+	if got.FailureCause == nil {
+		t.Fatal("snapshot.FailureCause = nil, want non-nil")
+	}
+	if !errors.Is(got.FailureCause, want.FailureCause) {
+		t.Fatalf("errors.Is(snapshot.FailureCause, %v) = false, want true", want.FailureCause)
+	}
+}
+
 func mustReceiveSnapshot(t *testing.T, ch <-chan Snapshot) Snapshot {
 	t.Helper()
 

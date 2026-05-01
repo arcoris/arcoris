@@ -28,14 +28,25 @@
 //
 // The default lifecycle graph is:
 //
-//	New -> Starting -> Running -> Stopping -> Stopped
-//	                  \---------------------> Failed
+//	New       --BeginStart-->   Starting
+//	New       --BeginStop-->    Stopped
+//
+//	Starting  --MarkRunning-->  Running
+//	Starting  --BeginStop-->    Stopping
+//	Starting  --MarkFailed-->   Failed
+//
+//	Running   --BeginStop-->    Stopping
+//	Running   --MarkFailed-->   Failed
+//
+//	Stopping  --MarkStopped-->  Stopped
+//	Stopping  --MarkFailed-->   Failed
 //
 // StateStarting and StateStopping are transitional states. They record that the
 // component owner has begun startup or shutdown work, but the package does not
-// execute that work. StateStopped and StateFailed are terminal states. Once a
-// Controller reaches a terminal state, the same lifecycle instance cannot be
-// started again.
+// execute that work. Failure can be recorded from Starting, Running, and
+// Stopping. StateStopped and StateFailed are terminal states. Once a Controller
+// reaches a terminal state, the same lifecycle instance cannot be started
+// again.
 //
 // # Controller, Snapshot, and Transition
 //

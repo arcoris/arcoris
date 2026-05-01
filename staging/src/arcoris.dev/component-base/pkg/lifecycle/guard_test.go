@@ -39,9 +39,7 @@ func TestTransitionGuardFunc(t *testing.T) {
 	if err := guard.Allow(transition); err != nil {
 		t.Fatalf("TransitionGuardFunc.Allow = %v, want nil", err)
 	}
-	if got != transition {
-		t.Fatalf("guard received %v, want %v", got, transition)
-	}
+	assertTransitionEqual(t, got, transition)
 }
 
 func TestGuardChain(t *testing.T) {
