@@ -168,6 +168,11 @@
 // Timer and Ticker channels are not closed by Stop. Callers must not use channel
 // close as a lifecycle signal.
 //
+// Fake timer and ticker delivery is non-blocking. If a fake timer or ticker
+// channel already contains an unread value, a later fake delivery may be
+// dropped. Tests that reuse timers or tickers and need to observe every firing
+// must coordinate receives before Reset or further fake-time advancement.
+//
 // # Fake ticker delivery
 //
 // Fake tickers intentionally deliver at most one tick per fake-clock advancement

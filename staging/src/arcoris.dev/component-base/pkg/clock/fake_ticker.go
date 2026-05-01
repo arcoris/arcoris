@@ -138,6 +138,10 @@ func (t *fakeTicker) Stop() {
 // Reset reactivates a stopped ticker and registers it again with the owning fake
 // clock. Reset does not drain the delivery channel. A tick that was already
 // delivered before Reset may still be observed by a receiver.
+//
+// If a previously delivered tick is still unread, a later tick may be dropped
+// because fake ticker delivery is non-blocking. Components that reuse tickers
+// and need strict tick ownership must coordinate receives before Reset.
 func (t *fakeTicker) Reset(d time.Duration) {
 	if d <= 0 {
 		panic(errFakeTickerNonPositiveInterval)
