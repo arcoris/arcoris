@@ -18,6 +18,14 @@ package lifecycle
 
 import "time"
 
+// TimeSource is the minimal clock dependency used by Controller.
+//
+// A richer clock may provide timers, tickers, sleeps, or fake-time advancement,
+// but lifecycle only needs current time for committed Transition.At values.
+type TimeSource interface {
+	Now() time.Time
+}
+
 // Option configures a lifecycle Controller at construction time.
 //
 // Options are applied to an internal controllerConfig before Controller is

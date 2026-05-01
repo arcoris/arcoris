@@ -16,48 +16,51 @@
 
 package lifecycle
 
-// canReachState reports whether target is reachable from from through the static
-// lifecycle transition graph.
+// reachabilityTable describes static graph reachability between states.
 //
-// The function ignores guards, context cancellation, observers, and controller
-// concurrency. It answers only a graph question:
-//
-//	Can any sequence of allowed lifecycle transitions move from this state to
-//	the target state?
-//
-// canReachState is used by WaitState to fail early when a requested state is
-// already impossible to observe. For example, StateRunning cannot reach
-// StateStarting, and StateFailed cannot reach StateStopped.
+// It ignores guards, observer behavior, context cancellation, and controller
+// concurrency. The table answers only whether any sequence of allowed lifecycle
+// transitions can move from one state to another.
+var reachabilityTable = [stateCount][stateCount]bool{
+	StateNew: {
+		StateNew:      true,
+		StateStarting: true,
+		StateRunning:  true,
+		StateStopping: true,
+		StateStopped:  true,
+		StateFailed:   true,
+	},
+	StateStarting: {
+		StateStarting: true,
+		StateRunning:  true,
+		StateStopping: true,
+		StateStopped:  true,
+		StateFailed:   true,
+	},
+	StateRunning: {
+		StateRunning:  true,
+		StateStopping: true,
+		StateStopped:  true,
+		StateFailed:   true,
+	},
+	StateStopping: {
+		StateStopping: true,
+		StateStopped:  true,
+		StateFailed:   true,
+	},
+	StateStopped: {
+		StateStopped: true,
+	},
+	StateFailed: {
+		StateFailed: true,
+	},
+}
+
+// canReachState reports whether target is statically reachable from from.
 func canReachState(from State, target State) bool {
 	if !from.IsValid() || !target.IsValid() {
 		return false
 	}
 
-	if from == target {
-		return true
-	}
-
-	visited := make(map[State]bool, 6)
-	queue := []State{from}
-	visited[from] = true
-
-	for len(queue) > 0 {
-		current := queue[0]
-		queue = queue[1:]
-
-		for _, rule := range AllowedTransitions(current) {
-			if rule.To == target {
-				return true
-			}
-
-			if visited[rule.To] {
-				continue
-			}
-
-			visited[rule.To] = true
-			queue = append(queue, rule.To)
-		}
-	}
-
-	return false
+	return reachabilityTable[int(from)][int(target)]
 }

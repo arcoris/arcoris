@@ -83,7 +83,7 @@ func (s Snapshot) IsValid() bool {
 	if s.Revision == 0 {
 		return s.State == StateNew &&
 			s.FailureCause == nil &&
-			s.LastTransition == (Transition{})
+			s.LastTransition.IsZero()
 	}
 
 	if s.State == StateFailed {

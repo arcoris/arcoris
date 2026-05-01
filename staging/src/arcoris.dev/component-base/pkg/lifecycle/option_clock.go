@@ -16,26 +16,18 @@
 
 package lifecycle
 
-import "time"
-
 // WithClock configures the time source used for committed transition timestamps.
 //
 // The lifecycle controller only needs a current-time source for Transition.At.
-// For that reason, WithClock accepts the minimal structural interface:
-//
-//	interface { Now() time.Time }
-//
-// This allows callers to pass the project clock implementation without making
-// lifecycle depend on the complete clock package API. A richer clock may provide
-// timers, tickers, sleep, manual advancement, or monotonic helpers, but lifecycle
-// only consumes Now.
+// For that reason, WithClock accepts TimeSource instead of depending on the full
+// clock package API.
 //
 // If source is nil, the option leaves the default time source unchanged.
 //
 // The configured time source is called when Controller commits a transition. It
 // is not called while reducing transitions, validating transition rules, running
 // guards, or notifying observers.
-func WithClock(source interface{ Now() time.Time }) Option {
+func WithClock(source TimeSource) Option {
 	return func(config *controllerConfig) {
 		if source == nil {
 			return

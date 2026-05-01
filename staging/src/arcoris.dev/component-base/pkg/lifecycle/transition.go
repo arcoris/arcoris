@@ -112,6 +112,19 @@ func (t Transition) IsValid() bool {
 	return true
 }
 
+// IsZero reports whether t is the zero transition value.
+//
+// The check is field-by-field so it remains safe when Cause holds an error whose
+// dynamic type is not comparable.
+func (t Transition) IsZero() bool {
+	return t.From == 0 &&
+		t.To == 0 &&
+		t.Event == 0 &&
+		t.Revision == 0 &&
+		t.At.IsZero() &&
+		t.Cause == nil
+}
+
 // IsTableValid reports whether t matches the lifecycle transition table without
 // checking runtime payload requirements such as failure cause.
 //

@@ -16,7 +16,7 @@
 
 package lifecycle
 
-import "errors"
+import "strings"
 
 // GuardError describes a transition rejected by a TransitionGuard.
 //
@@ -50,11 +50,17 @@ func (e *GuardError) Error() string {
 
 	message := ErrGuardRejected.Error() + ": " + e.Transition.String()
 
-	if e.Err == nil || errors.Is(e.Err, ErrGuardRejected) {
+	if e.Err == nil || e.Err.Error() == "" {
 		return message
 	}
 
-	return message + ": " + e.Err.Error()
+	errText := strings.TrimPrefix(e.Err.Error(), ErrGuardRejected.Error()+": ")
+	errText = strings.TrimPrefix(errText, ErrGuardRejected.Error()+"\n")
+	if errText == ErrGuardRejected.Error() {
+		return message
+	}
+
+	return message + ": " + errText
 }
 
 // Unwrap returns the underlying guard-specific rejection reason.
@@ -62,11 +68,7 @@ func (e *GuardError) Error() string {
 // ErrGuardRejected is matched through Is rather than Unwrap so the underlying
 // guard error remains visible to errors.Is.
 func (e *GuardError) Unwrap() error {
-	if e == nil {
-		return nil
-	}
-
-	if e.Err == nil || errors.Is(e.Err, ErrGuardRejected) {
+	if e == nil || e.Err == nil {
 		return nil
 	}
 
