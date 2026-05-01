@@ -121,6 +121,21 @@ func TestFakeClockStepNegativePanics(t *testing.T) {
 	mustEqualTime(t, "FakeClock.Now() after failed negative Step", clock.Now(), start)
 }
 
+// TestFakeClockPrivateStepNegativePanics verifies the monotonic fake-time
+// invariant at the private mutation layer used by package-internal tests.
+func TestFakeClockPrivateStepNegativePanics(t *testing.T) {
+	t.Parallel()
+
+	start := fakeClockTestTime()
+	clock := NewFakeClock(start)
+
+	mustPanicWithValue(t, errFakeClockNegativeStep, func() {
+		clock.step(-time.Nanosecond)
+	})
+
+	mustEqualTime(t, "FakeClock.Now() after failed private negative step", clock.Now(), start)
+}
+
 // TestFakeClockStepDeliversDueWaitersTimersAndTickers verifies that time
 // advancement coordinates all fake delivery sources through one path.
 func TestFakeClockStepDeliversDueWaitersTimersAndTickers(t *testing.T) {
@@ -151,6 +166,9 @@ func TestFakeClockStepDeliversDueWaitersTimersAndTickers(t *testing.T) {
 
 // TestFakeClockCollectsDueDeliveriesInStableOrder verifies the documented fake
 // delivery order without relying on receiver scheduling.
+//
+// This test intentionally calls the package-private step method so it can
+// inspect the delivery plan before channel delivery and receiver scheduling.
 func TestFakeClockCollectsDueDeliveriesInStableOrder(t *testing.T) {
 	t.Parallel()
 

@@ -97,11 +97,7 @@ func mustNotReceiveSignal(t *testing.T, ch <-chan struct{}) {
 	t.Helper()
 
 	select {
-	case _, ok := <-ch:
-		if !ok {
-			t.Fatal("signal channel was closed, want it open and empty")
-		}
-
+	case <-ch:
 		t.Fatal("received unexpected signal")
 	default:
 	}

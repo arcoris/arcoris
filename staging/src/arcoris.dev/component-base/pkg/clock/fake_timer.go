@@ -62,8 +62,10 @@ func (c *FakeClock) NewTimer(d time.Duration) Timer {
 //   - Reset returns whether the timer was active immediately before the reset.
 //
 // Reset does not drain the delivery channel. A value delivered before Reset may
-// still be observed by a receiver. Components that require strict timer
-// ownership must coordinate receives, Stop, and Reset at the component level.
+// still be observed by a receiver. If a previously delivered value is still
+// unread, a later immediate or due delivery may be dropped because fake timer
+// delivery is non-blocking. Components that require strict timer ownership must
+// coordinate receives, Stop, and Reset at the component level.
 type fakeTimer struct {
 	clock *FakeClock
 
@@ -72,7 +74,6 @@ type fakeTimer struct {
 
 	ch     chan time.Time
 	active bool
-	fired  bool
 }
 
 // C returns the timer delivery channel.
@@ -127,6 +128,11 @@ func (t *fakeTimer) Stop() bool {
 // receiver, so components that reuse timers must coordinate receives according
 // to their ownership model.
 //
+// If a previously delivered value is still unread, a later immediate or due
+// delivery may be dropped because fake timer delivery is non-blocking.
+// Components that reuse timers and need to observe every firing must coordinate
+// receives or drain ownership before Reset.
+//
 // Non-positive durations are treated as immediately due. In that case Reset
 // schedules an immediate delivery after releasing the fake clock lock.
 func (t *fakeTimer) Reset(d time.Duration) bool {
@@ -160,11 +166,9 @@ func (t *fakeTimer) reset(d time.Duration) (wasActive bool, delivery fakeTimerDe
 	t.deadline = c.now.Add(d)
 	t.sequence = c.nextSequenceLocked()
 	t.active = true
-	t.fired = false
 
 	if !c.now.Before(t.deadline) {
 		t.active = false
-		t.fired = true
 
 		return wasActive, fakeTimerDelivery{
 			ch:    t.ch,
@@ -190,9 +194,10 @@ type fakeTimerDelivery struct {
 
 // deliver sends the timer value if the timer channel can accept it.
 //
-// The timer channel has capacity one. The non-blocking form prevents fake-clock
-// advancement from blocking if a test resets a timer without first draining a
-// previously delivered value.
+// If the channel already contains an unread timer value, this delivery is
+// dropped. This preserves the fake clock invariant that time advancement never
+// blocks on receiver scheduling. Timer owners that reuse timers must coordinate
+// channel reads before relying on another delivery.
 func (d fakeTimerDelivery) deliver() {
 	select {
 	case d.ch <- d.value:
@@ -220,7 +225,6 @@ func (c *FakeClock) newTimer(d time.Duration) (*fakeTimer, fakeTimerDelivery, bo
 
 	if !c.now.Before(timer.deadline) {
 		timer.active = false
-		timer.fired = true
 
 		return timer, fakeTimerDelivery{
 			ch:    timer.ch,
@@ -247,7 +251,7 @@ func (c *FakeClock) ensureTimerStoreLocked() {
 //
 // The caller must hold c.mu.
 //
-// Due timers are removed from the timer registry and marked fired before
+// Due timers are removed from the timer registry and marked inactive before
 // delivery is returned. Delivery itself must happen after c.mu has been released.
 func (c *FakeClock) collectDueTimerDeliveriesLocked() []fakeTimerDelivery {
 	if len(c.timers) == 0 {
@@ -302,7 +306,6 @@ func (t *fakeTimer) collectDueDeliveryLocked(now time.Time) (fakeTimerDelivery, 
 	}
 
 	t.active = false
-	t.fired = true
 
 	return fakeTimerDelivery{
 		ch:    t.ch,

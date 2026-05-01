@@ -93,10 +93,6 @@ func (c *FakeClock) Set(next time.Time) {
 // Like Set, Step collects due deliveries under the fake clock lock and performs
 // channel delivery after releasing the lock.
 func (c *FakeClock) Step(d time.Duration) {
-	if d < 0 {
-		panic(errFakeClockNegativeStep)
-	}
-
 	deliveries := c.step(d)
 	deliveries.deliver()
 }
@@ -120,6 +116,10 @@ func (c *FakeClock) set(next time.Time) fakeClockDeliveries {
 //
 // The returned deliveries must be delivered after c.mu has been released.
 func (c *FakeClock) step(d time.Duration) fakeClockDeliveries {
+	if d < 0 {
+		panic(errFakeClockNegativeStep)
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

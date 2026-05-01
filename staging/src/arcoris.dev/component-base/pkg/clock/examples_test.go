@@ -18,6 +18,7 @@ package clock
 
 import (
 	"fmt"
+	"runtime"
 	"time"
 )
 
@@ -142,10 +143,9 @@ func ExampleFakeClock_Sleep() {
 	}()
 
 	for !clock.HasWaiters() {
-		// Spin until the goroutine has registered its fake-time waiter.
-		//
-		// Production code should not spin like this. This example uses the loop
-		// only to keep fake-time behavior deterministic without real sleeps.
+		// The yield avoids a pure busy spin while waiting for the goroutine to
+		// register its fake-time waiter.
+		runtime.Gosched()
 	}
 
 	clock.Step(5 * time.Second)

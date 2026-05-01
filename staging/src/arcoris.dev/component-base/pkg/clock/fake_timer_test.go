@@ -261,3 +261,27 @@ func TestFakeTimerResetNonPositiveDurationDeliversImmediately(t *testing.T) {
 		})
 	}
 }
+
+// TestFakeTimerResetDropsImmediateDeliveryWhenChannelIsFull documents the
+// non-blocking fake timer delivery policy. Reset(0) must not block when the
+// timer channel still contains a stale unread value; the new immediate delivery
+// is dropped.
+func TestFakeTimerResetDropsImmediateDeliveryWhenChannelIsFull(t *testing.T) {
+	t.Parallel()
+
+	start := fakeClockTestTime()
+	clock := NewFakeClock(start)
+	timer := clock.NewTimer(5 * time.Second)
+
+	clock.Step(5 * time.Second)
+
+	done := make(chan struct{})
+	go func() {
+		timer.Reset(0)
+		close(done)
+	}()
+	mustReceiveSignal(t, done)
+
+	mustEqualTime(t, "stale timer delivery", mustReceiveTime(t, timer.C()), start.Add(5*time.Second))
+	mustNotReceiveTime(t, timer.C())
+}

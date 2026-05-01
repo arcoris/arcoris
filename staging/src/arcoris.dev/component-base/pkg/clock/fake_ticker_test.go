@@ -202,6 +202,26 @@ func TestFakeTickerResetStoppedTickerReactivates(t *testing.T) {
 	mustEqualTime(t, "ticker delivery after Reset from stopped state", mustReceiveTime(t, ticker.C()), start.Add(3*time.Second))
 }
 
+// TestFakeTickerResetDropsDeliveryWhenChannelIsFull documents that Reset does
+// not drain stale ticks. A later tick is dropped when the ticker channel is
+// already full.
+func TestFakeTickerResetDropsDeliveryWhenChannelIsFull(t *testing.T) {
+	t.Parallel()
+
+	start := fakeClockTestTime()
+	clock := NewFakeClock(start)
+	ticker := clock.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	clock.Step(5 * time.Second)
+
+	ticker.Reset(3 * time.Second)
+	clock.Step(3 * time.Second)
+
+	mustEqualTime(t, "stale ticker delivery", mustReceiveTime(t, ticker.C()), start.Add(5*time.Second))
+	mustNotReceiveTime(t, ticker.C())
+}
+
 // TestFakeTickerResetPanicsForNonPositiveInterval verifies Reset uses the same
 // interval validation rule as NewTicker.
 func TestFakeTickerResetPanicsForNonPositiveInterval(t *testing.T) {

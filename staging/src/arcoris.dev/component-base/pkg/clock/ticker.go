@@ -83,7 +83,7 @@ type Ticker interface {
 	// ticker reset semantics. For FakeClock-backed tickers, Reset uses the fake
 	// clock's current time as the base for the next tick.
 	//
-	// The duration must be positive. Implementations should reject non-positive
+	// The duration must be positive. Implementations must reject non-positive
 	// durations consistently with time.Ticker.Reset and time.NewTicker behavior.
 	//
 	// Reset does not drain the delivery channel. A tick that was already
