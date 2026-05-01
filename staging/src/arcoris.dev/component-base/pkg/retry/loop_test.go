@@ -295,3 +295,218 @@ func TestRunEmitsObserverEvents(t *testing.T) {
 		}
 	}
 }
+
+func TestRunPanicsWhenBackoffScheduleReturnsNilSequence(t *testing.T) {
+	config := configOf()
+	config.backoff = retryTestSchedule{}
+
+	expectPanic(t, panicNilBackoffSequence, func() {
+		_, _ = run(context.Background(), func(context.Context) (int, error) {
+			return 0, nil
+		}, config)
+	})
+}
+
+func TestRunPanicsOnNegativeBackoffDelay(t *testing.T) {
+	config := configOf(
+		WithClassifier(RetryAll()),
+		WithMaxAttempts(2),
+	)
+	config.backoff = retryTestSchedule{
+		sequence: &retryTestSequence{delays: []time.Duration{-time.Nanosecond}},
+	}
+
+	expectPanic(t, panicNegativeBackoffDelay, func() {
+		_, _ = run(context.Background(), func(context.Context) (int, error) {
+			return 0, errors.New("boom")
+		}, config)
+	})
+}
+
+func TestRunOperationOwnedContextErrorIsNotInterrupted(t *testing.T) {
+	config := configOf()
+
+	var stop Event
+	observedStop := false
+	config.observers = append(config.observers, ObserverFunc(func(_ context.Context, event Event) {
+		if event.Kind == EventRetryStop {
+			stop = event
+			observedStop = true
+		}
+	}))
+
+	_, err := run(context.Background(), func(context.Context) (int, error) {
+		return 0, context.Canceled
+	}, config)
+
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("run error = %v, want context.Canceled", err)
+	}
+	if errors.Is(err, ErrInterrupted) {
+		t.Fatalf("operation-owned context error matched ErrInterrupted")
+	}
+	if !observedStop {
+		t.Fatalf("retry stop event was not observed")
+	}
+	if stop.Outcome.Reason != StopReasonNonRetryable {
+		t.Fatalf("stop reason = %s, want %s", stop.Outcome.Reason, StopReasonNonRetryable)
+	}
+}
+
+func TestRunObserversAreCalledInRegistrationOrder(t *testing.T) {
+	var order []string
+	config := configOf(
+		WithClassifier(RetryAll()),
+		WithMaxAttempts(1),
+		WithObserverFunc(func(context.Context, Event) {
+			order = append(order, "first")
+		}),
+		WithObserverFunc(func(context.Context, Event) {
+			order = append(order, "second")
+		}),
+	)
+
+	_, err := run(context.Background(), func(context.Context) (int, error) {
+		return 0, errors.New("boom")
+	}, config)
+	if !errors.Is(err, ErrExhausted) {
+		t.Fatalf("run error = %v, want exhausted", err)
+	}
+
+	want := []string{
+		"first", "second",
+		"first", "second",
+		"first", "second",
+	}
+	if len(order) != len(want) {
+		t.Fatalf("observer order len = %d, want %d: %v", len(order), len(want), order)
+	}
+	for i := range want {
+		if order[i] != want[i] {
+			t.Fatalf("observer order[%d] = %q, want %q", i, order[i], want[i])
+		}
+	}
+}
+
+func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
+	errBoom := errors.New("boom")
+
+	tests := []struct {
+		name    string
+		ctx     func() context.Context
+		config  config
+		op      ValueOperation[int]
+		wantErr error
+		reason  StopReason
+	}{
+		{
+			name:   "succeeded",
+			ctx:    context.Background,
+			config: configOf(),
+			op: func(context.Context) (int, error) {
+				return 1, nil
+			},
+			reason: StopReasonSucceeded,
+		},
+		{
+			name:   "non retryable",
+			ctx:    context.Background,
+			config: configOf(),
+			op: func(context.Context) (int, error) {
+				return 0, errBoom
+			},
+			wantErr: errBoom,
+			reason:  StopReasonNonRetryable,
+		},
+		{
+			name: "max attempts",
+			ctx:  context.Background,
+			config: configOf(
+				WithClassifier(RetryAll()),
+				WithMaxAttempts(1),
+			),
+			op: func(context.Context) (int, error) {
+				return 0, errBoom
+			},
+			wantErr: ErrExhausted,
+			reason:  StopReasonMaxAttempts,
+		},
+		{
+			name: "max elapsed",
+			ctx:  context.Background,
+			config: configOf(
+				WithClassifier(RetryAll()),
+				WithMaxAttempts(2),
+				WithBackoff(backoff.Fixed(time.Second)),
+				WithMaxElapsed(time.Nanosecond),
+			),
+			op: func(context.Context) (int, error) {
+				return 0, errBoom
+			},
+			wantErr: ErrExhausted,
+			reason:  StopReasonMaxElapsed,
+		},
+		{
+			name: "backoff exhausted",
+			ctx:  context.Background,
+			config: configOf(
+				WithClassifier(RetryAll()),
+				WithMaxAttempts(2),
+			),
+			op: func(context.Context) (int, error) {
+				return 0, errBoom
+			},
+			wantErr: ErrExhausted,
+			reason:  StopReasonBackoffExhausted,
+		},
+		{
+			name: "interrupted before attempt",
+			ctx: func() context.Context {
+				ctx, cancel := context.WithCancel(context.Background())
+				cancel()
+				return ctx
+			},
+			config:  configOf(),
+			op:      func(context.Context) (int, error) { return 0, nil },
+			wantErr: ErrInterrupted,
+			reason:  StopReasonInterrupted,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stopEvents := 0
+			var stop Event
+			config := tt.config
+			if tt.reason == StopReasonBackoffExhausted {
+				config.backoff = retryTestSchedule{sequence: &retryTestSequence{}}
+			}
+			config.observers = append(config.observers, ObserverFunc(func(_ context.Context, event Event) {
+				if event.Kind != EventRetryStop {
+					return
+				}
+				stopEvents++
+				stop = event
+			}))
+
+			_, err := run(tt.ctx(), tt.op, config)
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("run error = %v, want nil", err)
+				}
+			} else if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("run error = %v, want %v", err, tt.wantErr)
+			}
+
+			if stopEvents != 1 {
+				t.Fatalf("stop events = %d, want 1", stopEvents)
+			}
+			if !stop.IsValid() {
+				t.Fatalf("stop event is invalid: %+v", stop)
+			}
+			if stop.Outcome.Reason != tt.reason {
+				t.Fatalf("stop reason = %s, want %s", stop.Outcome.Reason, tt.reason)
+			}
+		})
+	}
+}

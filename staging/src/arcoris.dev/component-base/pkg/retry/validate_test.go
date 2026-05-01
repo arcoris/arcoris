@@ -18,7 +18,6 @@ package retry
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -146,28 +145,4 @@ func TestRequireOption(t *testing.T) {
 	expectPanic(t, panicNilOption, func() {
 		requireOption(nil)
 	})
-}
-
-func expectPanic(t *testing.T, want any, fn func()) {
-	t.Helper()
-
-	defer func() {
-		recovered := recover()
-		if recovered == nil {
-			t.Fatalf("function did not panic")
-		}
-		if !errors.Is(asError(recovered), asError(want)) && recovered != want {
-			t.Fatalf("panic = %v, want %v", recovered, want)
-		}
-	}()
-
-	fn()
-}
-
-func asError(value any) error {
-	err, ok := value.(error)
-	if !ok {
-		return nil
-	}
-	return err
 }

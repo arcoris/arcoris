@@ -16,10 +16,7 @@
 
 package retry
 
-import (
-	"context"
-	"time"
-)
+import "context"
 
 // run executes op with retry orchestration.
 //
@@ -43,226 +40,51 @@ func run[T any](
 ) (T, error) {
 	requireContext(ctx)
 	requireValueOperation(op)
-	requireClock(config.clock)
-	requireBackoff(config.backoff)
-	requireClassifier(config.classifier)
-	requireMaxAttempts(config.maxAttempts)
-	requireMaxElapsed(config.maxElapsed)
 
 	var zero T
 
-	sequence := config.backoff.NewSequence()
-	requireBackoffSequence(sequence)
-
-	startedAt := config.clock.Now()
-
-	var attempts uint
-	var lastAttempt Attempt
-	var lastErr error
+	execution := newRetryExecution(ctx, config)
 
 	for {
-		if err := contextStopError(ctx); err != nil {
-			outcome := newOutcome(
-				config,
-				startedAt,
-				attempts,
-				lastErr,
-				StopReasonInterrupted,
-			)
-			emitRetryEvent(ctx, config, stopEvent(outcome, lastAttempt))
-			return zero, err
+		if err := execution.contextStop(); err != nil {
+			return zero, execution.interrupted(err)
 		}
 
-		attempts++
-		attempt := Attempt{
-			Number:    attempts,
-			StartedAt: config.clock.Now(),
-		}
-		lastAttempt = attempt
-
-		emitRetryEvent(ctx, config, Event{
-			Kind:    EventAttemptStart,
-			Attempt: attempt,
-		})
+		attempt := execution.nextAttempt()
 
 		value, err := op(ctx)
 		if err == nil {
-			outcome := newOutcome(
-				config,
-				startedAt,
-				attempts,
-				nil,
-				StopReasonSucceeded,
-			)
-			emitRetryEvent(ctx, config, stopEvent(outcome, attempt))
+			execution.succeeded()
 			return value, nil
 		}
 
-		lastErr = err
+		execution.recordFailure(attempt, err)
 
-		emitRetryEvent(ctx, config, Event{
-			Kind:    EventAttemptFailure,
-			Attempt: attempt,
-			Err:     err,
-		})
-
-		if !config.classifier.Retryable(err) {
-			outcome := newOutcome(
-				config,
-				startedAt,
-				attempts,
-				err,
-				StopReasonNonRetryable,
-			)
-			emitRetryEvent(ctx, config, stopEvent(outcome, attempt))
-			return zero, err
+		if !execution.retryable(err) {
+			return zero, execution.nonRetryable(err)
 		}
 
-		if attempts >= config.maxAttempts {
-			outcome := newOutcome(
-				config,
-				startedAt,
-				attempts,
-				err,
-				StopReasonMaxAttempts,
-			)
-			emitRetryEvent(ctx, config, stopEvent(outcome, attempt))
-			return zero, NewExhaustedError(outcome)
+		if execution.maxAttemptsReached() {
+			return zero, execution.exhausted(StopReasonMaxAttempts)
 		}
 
-		if interruptErr := contextStopError(ctx); interruptErr != nil {
-			outcome := newOutcome(
-				config,
-				startedAt,
-				attempts,
-				err,
-				StopReasonInterrupted,
-			)
-			emitRetryEvent(ctx, config, stopEvent(outcome, attempt))
-			return zero, interruptErr
+		if err := execution.contextStop(); err != nil {
+			return zero, execution.interrupted(err)
 		}
 
-		delay, ok := sequence.Next()
-		requireBackoffDelay(delay, ok)
-
+		delay, ok := execution.nextDelay()
 		if !ok {
-			outcome := newOutcome(
-				config,
-				startedAt,
-				attempts,
-				err,
-				StopReasonBackoffExhausted,
-			)
-			emitRetryEvent(ctx, config, stopEvent(outcome, attempt))
-			return zero, NewExhaustedError(outcome)
+			return zero, execution.exhausted(StopReasonBackoffExhausted)
 		}
 
-		if maxElapsedWouldBeExceeded(config, startedAt, delay) {
-			outcome := newOutcome(
-				config,
-				startedAt,
-				attempts,
-				err,
-				StopReasonMaxElapsed,
-			)
-			emitRetryEvent(ctx, config, stopEvent(outcome, attempt))
-			return zero, NewExhaustedError(outcome)
+		if execution.maxElapsedWouldBeExceeded(delay) {
+			return zero, execution.exhausted(StopReasonMaxElapsed)
 		}
 
-		emitRetryEvent(ctx, config, Event{
-			Kind:    EventRetryDelay,
-			Attempt: attempt,
-			Delay:   delay,
-			Err:     err,
-		})
+		execution.retryDelay(delay)
 
-		if waitErr := waitDelay(ctx, config.clock, delay); waitErr != nil {
-			outcome := newOutcome(
-				config,
-				startedAt,
-				attempts,
-				err,
-				StopReasonInterrupted,
-			)
-			emitRetryEvent(ctx, config, stopEvent(outcome, attempt))
-			return zero, waitErr
+		if err := waitDelay(ctx, config.clock, delay); err != nil {
+			return zero, execution.interrupted(err)
 		}
 	}
-}
-
-// newOutcome constructs retry completion metadata using the configured clock.
-//
-// The helper centralizes FinishedAt assignment so every terminal path records
-// completion time consistently.
-func newOutcome(
-	config config,
-	startedAt time.Time,
-	attempts uint,
-	lastErr error,
-	reason StopReason,
-) Outcome {
-	return Outcome{
-		Attempts:   attempts,
-		StartedAt:  startedAt,
-		FinishedAt: config.clock.Now(),
-		LastErr:    lastErr,
-		Reason:     reason,
-	}
-}
-
-// stopEvent constructs the terminal observer event for outcome.
-//
-// When retry stops before any operation attempt, the event carries only Outcome.
-// When retry stops after one or more operation calls, the event carries the last
-// Attempt and mirrors Outcome.LastErr through Event.Err.
-func stopEvent(outcome Outcome, attempt Attempt) Event {
-	if outcome.Attempts == 0 {
-		return Event{
-			Kind:    EventRetryStop,
-			Outcome: outcome,
-		}
-	}
-
-	return Event{
-		Kind:    EventRetryStop,
-		Attempt: attempt,
-		Err:     outcome.LastErr,
-		Outcome: outcome,
-	}
-}
-
-// emitRetryEvent notifies configured observers about event.
-//
-// Observers are called synchronously in registration order. Observer failures are
-// not represented in retry's error model because Observer does not return error.
-// The retry package does not recover observer panics.
-func emitRetryEvent(ctx context.Context, config config, event Event) {
-	for _, observer := range config.observers {
-		observer.ObserveRetry(ctx, event)
-	}
-}
-
-// maxElapsedWouldBeExceeded reports whether waiting for delay would violate the
-// configured max-elapsed boundary.
-//
-// A zero maxElapsed disables elapsed-time limiting. The check is deliberately
-// conservative: if the selected delay would consume all remaining time, retry
-// stops with StopReasonMaxElapsed instead of sleeping until no execution budget
-// remains for the next attempt.
-func maxElapsedWouldBeExceeded(
-	config config,
-	startedAt time.Time,
-	delay time.Duration,
-) bool {
-	if config.maxElapsed == 0 {
-		return false
-	}
-
-	elapsed := config.clock.Since(startedAt)
-	if elapsed >= config.maxElapsed {
-		return true
-	}
-
-	remaining := config.maxElapsed - elapsed
-	return delay >= remaining
 }

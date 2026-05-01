@@ -433,37 +433,3 @@ func TestEventIsZero(t *testing.T) {
 		})
 	}
 }
-
-func retryTestAttempt(number uint) Attempt {
-	return Attempt{
-		Number:    number,
-		StartedAt: time.Unix(int64(number), 0),
-	}
-}
-
-func retryTestStartedAt() time.Time {
-	return time.Unix(100, 0)
-}
-
-func retryTestFinishedAt() time.Time {
-	return time.Unix(101, 0)
-}
-
-func retryTestSuccessOutcome(attempts uint) Outcome {
-	return Outcome{
-		Attempts:   attempts,
-		StartedAt:  retryTestStartedAt(),
-		FinishedAt: retryTestFinishedAt(),
-		Reason:     StopReasonSucceeded,
-	}
-}
-
-func retryTestFailureOutcome(attempts uint, reason StopReason, err error) Outcome {
-	return Outcome{
-		Attempts:   attempts,
-		StartedAt:  retryTestStartedAt(),
-		FinishedAt: retryTestFinishedAt(),
-		LastErr:    err,
-		Reason:     reason,
-	}
-}
