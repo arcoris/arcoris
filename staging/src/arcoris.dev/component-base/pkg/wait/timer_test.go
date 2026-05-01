@@ -19,7 +19,6 @@ package wait
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 )
@@ -98,9 +97,9 @@ func TestTimerWaitReturnsInterruptedWhenContextCancelledBeforeWait(t *testing.T)
 
 	err := timer.Wait(ctx)
 
-	mustTimerBeInterrupted(t, err)
-	mustTimerNotBeTimedOut(t, err)
-	mustTimerMatch(t, err, context.Canceled)
+	mustBeInterrupted(t, err)
+	mustNotBeTimedOut(t, err)
+	mustMatch(t, err, context.Canceled)
 }
 
 // TestTimerWaitPreservesCancellationCause verifies that cancellation causes are
@@ -115,9 +114,10 @@ func TestTimerWaitPreservesCancellationCause(t *testing.T) {
 
 	err := timer.Wait(ctx)
 
-	mustTimerBeInterrupted(t, err)
-	mustTimerNotBeTimedOut(t, err)
-	mustTimerMatch(t, err, cause)
+	mustBeInterrupted(t, err)
+	mustNotBeTimedOut(t, err)
+	mustMatch(t, err, context.Canceled)
+	mustMatch(t, err, cause)
 }
 
 // TestTimerWaitReturnsTimeoutWhenContextDeadlineExceededBeforeWait verifies
@@ -131,9 +131,9 @@ func TestTimerWaitReturnsTimeoutWhenContextDeadlineExceededBeforeWait(t *testing
 
 	err := timer.Wait(ctx)
 
-	mustTimerBeTimedOut(t, err)
-	mustTimerBeInterrupted(t, err)
-	mustTimerMatch(t, err, context.DeadlineExceeded)
+	mustBeTimedOut(t, err)
+	mustBeInterrupted(t, err)
+	mustMatch(t, err, context.DeadlineExceeded)
 }
 
 // TestTimerWaitPreservesDeadlineCause verifies that timeout causes remain
@@ -149,9 +149,10 @@ func TestTimerWaitPreservesDeadlineCause(t *testing.T) {
 
 	err := timer.Wait(ctx)
 
-	mustTimerBeTimedOut(t, err)
-	mustTimerBeInterrupted(t, err)
-	mustTimerMatch(t, err, cause)
+	mustBeTimedOut(t, err)
+	mustBeInterrupted(t, err)
+	mustMatch(t, err, context.DeadlineExceeded)
+	mustMatch(t, err, cause)
 }
 
 // TestTimerWaitReturnsInterruptedWhenContextCancelledDuringWait verifies that
@@ -173,10 +174,11 @@ func TestTimerWaitReturnsInterruptedWhenContextCancelledDuringWait(t *testing.T)
 	<-started
 	cancel(cause)
 
-	err := mustReceiveTimerError(t, errCh)
-	mustTimerBeInterrupted(t, err)
-	mustTimerNotBeTimedOut(t, err)
-	mustTimerMatch(t, err, cause)
+	err := mustReceiveError(t, errCh)
+	mustBeInterrupted(t, err)
+	mustNotBeTimedOut(t, err)
+	mustMatch(t, err, context.Canceled)
+	mustMatch(t, err, cause)
 }
 
 // TestTimerStopPreventsDelivery verifies that Stop prevents an active long timer
@@ -260,7 +262,7 @@ func TestTimerWaitPanicsOnNilContext(t *testing.T) {
 	timer := NewTimer(time.Hour)
 	defer timer.StopAndDrain()
 
-	mustTimerPanicWith(t, errNilContext, func() {
+	mustPanicWith(t, errNilContext, func() {
 		_ = timer.Wait(nil)
 	})
 }
@@ -301,7 +303,7 @@ func TestTimerMethodsPanicOnNilReceiver(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustTimerPanicWith(t, errNilTimer, func() {
+			mustPanicWith(t, errNilTimer, func() {
 				tt.call(nil)
 			})
 		})
@@ -345,96 +347,9 @@ func TestTimerMethodsPanicOnZeroValue(t *testing.T) {
 			t.Parallel()
 
 			var timer Timer
-			mustTimerPanicWith(t, errNilTimer, func() {
+			mustPanicWith(t, errNilTimer, func() {
 				tt.call(&timer)
 			})
 		})
 	}
-}
-
-// mustTimerBeInterrupted fails the test unless err is a wait-owned
-// interruption.
-func mustTimerBeInterrupted(t *testing.T, err error) {
-	t.Helper()
-
-	if err == nil {
-		t.Fatal("err is nil, want non-nil")
-	}
-	if !Interrupted(err) {
-		t.Fatal("Interrupted(err) = false, want true")
-	}
-}
-
-// mustTimerNotBeTimedOut fails the test if err is classified as a wait-owned
-// timeout.
-func mustTimerNotBeTimedOut(t *testing.T, err error) {
-	t.Helper()
-
-	if TimedOut(err) {
-		t.Fatal("TimedOut(err) = true, want false")
-	}
-}
-
-// mustTimerBeTimedOut fails the test unless err is a wait-owned timeout.
-func mustTimerBeTimedOut(t *testing.T, err error) {
-	t.Helper()
-
-	if err == nil {
-		t.Fatal("err is nil, want non-nil")
-	}
-	if !TimedOut(err) {
-		t.Fatal("TimedOut(err) = false, want true")
-	}
-}
-
-// mustTimerMatch fails the test unless err matches target through errors.Is.
-func mustTimerMatch(t *testing.T, err error, target error) {
-	t.Helper()
-
-	if !errors.Is(err, target) {
-		t.Fatalf("errors.Is(err, %v) = false, want true", target)
-	}
-}
-
-// mustReceiveTimerError waits for Timer.Wait running in another goroutine and
-// fails the test if it does not return promptly.
-func mustReceiveTimerError(t *testing.T, ch <-chan error) error {
-	t.Helper()
-
-	select {
-	case err := <-ch:
-		return err
-	case <-time.After(time.Second):
-		t.Fatal("Timer.Wait did not return after context cancellation")
-		return nil
-	}
-}
-
-// mustNotReceiveTimerValue fails the test if ch receives a timer value during a
-// short observation window.
-func mustNotReceiveTimerValue(t *testing.T, ch <-chan time.Time) {
-	t.Helper()
-
-	select {
-	case value := <-ch:
-		t.Fatalf("received timer value %v, want no delivery", value)
-	case <-time.After(10 * time.Millisecond):
-	}
-}
-
-// mustTimerPanicWith fails the test unless fn panics with want.
-func mustTimerPanicWith(t *testing.T, want any, fn func()) {
-	t.Helper()
-
-	defer func() {
-		got := recover()
-		if got == nil {
-			t.Fatalf("panic = nil, want %v", want)
-		}
-		if got != want {
-			t.Fatalf("panic = %s, want %s", fmt.Sprint(got), fmt.Sprint(want))
-		}
-	}()
-
-	fn()
 }

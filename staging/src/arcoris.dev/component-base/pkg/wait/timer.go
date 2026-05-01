@@ -33,8 +33,12 @@ import (
 // dispatch timeout monitors, shutdown-aware waits, and other packages that need
 // more lifecycle control than Delay provides.
 //
+// Timer is not a fake-time abstraction and is not a replacement for
+// clock.Timer. Code that needs deterministic fake-time tests should use package
+// clock. Timer is for simple real-runtime waiting with explicit ownership.
+//
 // Timer does not implement retry policy, backoff growth, jitter, rate limiting,
-// metrics, tracing, logging, scheduler policy, queue policy, or deadline
+// metrics, tracing, logging, scheduler policy, queue policy, or lease/deadline
 // ownership semantics. Higher-level packages own the meaning of the timer and
 // the action taken when it fires.
 //
@@ -43,7 +47,8 @@ import (
 //
 // Timer must not be copied after construction. Copying the value would duplicate
 // the wrapper around the same underlying runtime timer and obscure lifecycle
-// ownership.
+// ownership. The embedded noCopy field is a static-analysis aid for
+// go vet -copylocks; it is not runtime synchronization.
 //
 // Timer supports the ordinary single-owner pattern used by runtime loops: one
 // goroutine owns Stop, StopAndDrain, Reset, and Wait coordination. Timer does not
@@ -51,6 +56,8 @@ import (
 // deterministic. Components that share timer mutation across goroutines MUST add
 // component-level synchronization.
 type Timer struct {
+	noCopy noCopy
+
 	// timer is the underlying runtime timer owned by this wrapper.
 	//
 	// The field is intentionally private so the package can enforce stop/drain

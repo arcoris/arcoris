@@ -43,9 +43,9 @@ func TestContextStopErrorClassifiesCancellation(t *testing.T) {
 
 	err := contextStopError(ctx)
 
-	mustUntilBeInterrupted(t, err)
-	mustUntilNotBeTimedOut(t, err)
-	mustUntilMatch(t, err, context.Canceled)
+	mustBeInterrupted(t, err)
+	mustNotBeTimedOut(t, err)
+	mustMatch(t, err, context.Canceled)
 }
 
 // TestContextStopErrorPreservesCancellationCause verifies that cancellation
@@ -59,9 +59,10 @@ func TestContextStopErrorPreservesCancellationCause(t *testing.T) {
 
 	err := contextStopError(ctx)
 
-	mustUntilBeInterrupted(t, err)
-	mustUntilNotBeTimedOut(t, err)
-	mustUntilMatch(t, err, cause)
+	mustBeInterrupted(t, err)
+	mustNotBeTimedOut(t, err)
+	mustMatch(t, err, context.Canceled)
+	mustMatch(t, err, cause)
 }
 
 // TestContextStopErrorClassifiesDeadline verifies wait-owned timeout
@@ -74,9 +75,9 @@ func TestContextStopErrorClassifiesDeadline(t *testing.T) {
 
 	err := contextStopError(ctx)
 
-	mustUntilBeTimedOut(t, err)
-	mustUntilBeInterrupted(t, err)
-	mustUntilMatch(t, err, context.DeadlineExceeded)
+	mustBeTimedOut(t, err)
+	mustBeInterrupted(t, err)
+	mustMatch(t, err, context.DeadlineExceeded)
 }
 
 // TestContextStopErrorPreservesDeadlineCause verifies that custom deadline
@@ -90,10 +91,10 @@ func TestContextStopErrorPreservesDeadlineCause(t *testing.T) {
 
 	err := contextStopError(ctx)
 
-	mustUntilBeTimedOut(t, err)
-	mustUntilBeInterrupted(t, err)
-	mustUntilMatch(t, err, cause)
-	mustUntilNotMatch(t, err, context.DeadlineExceeded)
+	mustBeTimedOut(t, err)
+	mustBeInterrupted(t, err)
+	mustMatch(t, err, cause)
+	mustMatch(t, err, context.DeadlineExceeded)
 }
 
 // TestContextStopCauseFallsBackToErr verifies the private fallback behavior used

@@ -32,9 +32,10 @@ import (
 // ErrInterrupted through the wait error hierarchy. All other context stops are
 // classified as ErrInterrupted.
 //
-// contextStopError preserves context.Cause(ctx) when it is available. This keeps
-// cancellation causes visible through errors.Is and errors.As while still adding
-// the wait-owned classification layer.
+// contextStopError preserves context.Cause(ctx) when it is available. When the
+// context exposes both a standard sentinel and a custom cause, both remain
+// visible through errors.Is or errors.As while the wait-owned classification
+// layer is added.
 func contextStopError(ctx context.Context) error {
 	err := ctx.Err()
 	if err == nil {
@@ -52,17 +53,26 @@ func contextStopError(ctx context.Context) error {
 // contextStopCause returns the most specific cause available for a completed
 // context.
 //
-// context.Cause returns a cancellation cause when callers use context.WithCancelCause,
-// context.WithDeadlineCause, or context.WithTimeoutCause. For ordinary contexts,
-// it returns the same sentinel as ctx.Err after the context is done.
+// context.Cause returns a cancellation cause when callers use
+// context.WithCancelCause, context.WithDeadlineCause, or context.WithTimeoutCause.
+// For ordinary contexts, it returns the same sentinel as ctx.Err after the
+// context is done.
+//
+// When the caller supplied a custom cause, ctx.Err still carries the standard
+// context sentinel. Joining the two preserves both diagnostics and matching:
+// errors.Is can still find context.Canceled or context.DeadlineExceeded, and it
+// can also find the custom cause.
 //
 // The fallback to err keeps the helper robust for custom Context implementations
 // that may not expose a richer cause.
 func contextStopCause(ctx context.Context, err error) error {
 	cause := context.Cause(ctx)
-	if cause != nil {
+	if cause == nil {
+		return err
+	}
+	if errors.Is(cause, err) {
 		return cause
 	}
 
-	return err
+	return errors.Join(err, cause)
 }

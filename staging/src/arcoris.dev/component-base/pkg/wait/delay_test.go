@@ -19,7 +19,6 @@ package wait
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 )
@@ -75,9 +74,9 @@ func TestDelayChecksContextBeforeImmediateDuration(t *testing.T) {
 
 	err := Delay(ctx, 0)
 
-	mustDelayBeInterrupted(t, err)
-	mustDelayNotBeTimedOut(t, err)
-	mustDelayMatch(t, err, context.Canceled)
+	mustBeInterrupted(t, err)
+	mustNotBeTimedOut(t, err)
+	mustMatch(t, err, context.Canceled)
 }
 
 // TestDelayReturnsInterruptedWhenContextCancelledBeforeDelay verifies
@@ -90,9 +89,9 @@ func TestDelayReturnsInterruptedWhenContextCancelledBeforeDelay(t *testing.T) {
 
 	err := Delay(ctx, time.Hour)
 
-	mustDelayBeInterrupted(t, err)
-	mustDelayNotBeTimedOut(t, err)
-	mustDelayMatch(t, err, context.Canceled)
+	mustBeInterrupted(t, err)
+	mustNotBeTimedOut(t, err)
+	mustMatch(t, err, context.Canceled)
 }
 
 // TestDelayPreservesCancellationCause verifies that context cancellation causes
@@ -106,9 +105,10 @@ func TestDelayPreservesCancellationCause(t *testing.T) {
 
 	err := Delay(ctx, time.Hour)
 
-	mustDelayBeInterrupted(t, err)
-	mustDelayNotBeTimedOut(t, err)
-	mustDelayMatch(t, err, cause)
+	mustBeInterrupted(t, err)
+	mustNotBeTimedOut(t, err)
+	mustMatch(t, err, context.Canceled)
+	mustMatch(t, err, cause)
 }
 
 // TestDelayReturnsTimeoutWhenContextDeadlineExceededBeforeDelay verifies
@@ -121,9 +121,9 @@ func TestDelayReturnsTimeoutWhenContextDeadlineExceededBeforeDelay(t *testing.T)
 
 	err := Delay(ctx, time.Hour)
 
-	mustDelayBeTimedOut(t, err)
-	mustDelayBeInterrupted(t, err)
-	mustDelayMatch(t, err, context.DeadlineExceeded)
+	mustBeTimedOut(t, err)
+	mustBeInterrupted(t, err)
+	mustMatch(t, err, context.DeadlineExceeded)
 }
 
 // TestDelayPreservesDeadlineCause verifies that timeout causes remain visible
@@ -138,9 +138,10 @@ func TestDelayPreservesDeadlineCause(t *testing.T) {
 	<-ctx.Done()
 	err := Delay(ctx, time.Hour)
 
-	mustDelayBeTimedOut(t, err)
-	mustDelayBeInterrupted(t, err)
-	mustDelayMatch(t, err, cause)
+	mustBeTimedOut(t, err)
+	mustBeInterrupted(t, err)
+	mustMatch(t, err, context.DeadlineExceeded)
+	mustMatch(t, err, cause)
 }
 
 // TestDelayReturnsInterruptedWhenContextCancelledDuringDelay verifies that
@@ -161,10 +162,11 @@ func TestDelayReturnsInterruptedWhenContextCancelledDuringDelay(t *testing.T) {
 	<-started
 	cancel(cause)
 
-	err := mustReceiveDelayError(t, errCh)
-	mustDelayBeInterrupted(t, err)
-	mustDelayNotBeTimedOut(t, err)
-	mustDelayMatch(t, err, cause)
+	err := mustReceiveError(t, errCh)
+	mustBeInterrupted(t, err)
+	mustNotBeTimedOut(t, err)
+	mustMatch(t, err, context.Canceled)
+	mustMatch(t, err, cause)
 }
 
 // TestDelayPanicsOnNilContext verifies invalid context validation at the public
@@ -172,92 +174,7 @@ func TestDelayReturnsInterruptedWhenContextCancelledDuringDelay(t *testing.T) {
 func TestDelayPanicsOnNilContext(t *testing.T) {
 	t.Parallel()
 
-	mustDelayPanicWith(t, errNilContext, func() {
+	mustPanicWith(t, errNilContext, func() {
 		_ = Delay(nil, time.Second)
 	})
-}
-
-// mustDelayBeInterrupted fails the test unless err is a wait-owned
-// interruption.
-func mustDelayBeInterrupted(t *testing.T, err error) {
-	t.Helper()
-
-	if err == nil {
-		t.Fatal("err is nil, want non-nil")
-	}
-	if !Interrupted(err) {
-		t.Fatal("Interrupted(err) = false, want true")
-	}
-}
-
-// mustDelayNotBeInterrupted fails the test if err is classified as a wait-owned
-// interruption.
-func mustDelayNotBeInterrupted(t *testing.T, err error) {
-	t.Helper()
-
-	if Interrupted(err) {
-		t.Fatal("Interrupted(err) = true, want false")
-	}
-}
-
-// mustDelayBeTimedOut fails the test unless err is a wait-owned timeout.
-func mustDelayBeTimedOut(t *testing.T, err error) {
-	t.Helper()
-
-	if err == nil {
-		t.Fatal("err is nil, want non-nil")
-	}
-	if !TimedOut(err) {
-		t.Fatal("TimedOut(err) = false, want true")
-	}
-}
-
-// mustDelayNotBeTimedOut fails the test if err is classified as a wait-owned
-// timeout.
-func mustDelayNotBeTimedOut(t *testing.T, err error) {
-	t.Helper()
-
-	if TimedOut(err) {
-		t.Fatal("TimedOut(err) = true, want false")
-	}
-}
-
-// mustDelayMatch fails the test unless err matches target through errors.Is.
-func mustDelayMatch(t *testing.T, err error, target error) {
-	t.Helper()
-
-	if !errors.Is(err, target) {
-		t.Fatalf("errors.Is(err, %v) = false, want true", target)
-	}
-}
-
-// mustReceiveDelayError waits for Delay running in another goroutine and fails
-// the test if it does not return promptly.
-func mustReceiveDelayError(t *testing.T, ch <-chan error) error {
-	t.Helper()
-
-	select {
-	case err := <-ch:
-		return err
-	case <-time.After(time.Second):
-		t.Fatal("Delay did not return after context cancellation")
-		return nil
-	}
-}
-
-// mustDelayPanicWith fails the test unless fn panics with want.
-func mustDelayPanicWith(t *testing.T, want any, fn func()) {
-	t.Helper()
-
-	defer func() {
-		got := recover()
-		if got == nil {
-			t.Fatalf("panic = nil, want %v", want)
-		}
-		if got != want {
-			t.Fatalf("panic = %s, want %s", fmt.Sprint(got), fmt.Sprint(want))
-		}
-	}()
-
-	fn()
 }

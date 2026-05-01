@@ -18,6 +18,7 @@ package wait
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 )
@@ -71,6 +72,19 @@ func mustBeInterrupted(t *testing.T, err error) {
 	}
 }
 
+// mustNotBeInterrupted fails the test if err is classified as a wait
+// interruption.
+func mustNotBeInterrupted(t *testing.T, err error) {
+	t.Helper()
+
+	if Interrupted(err) {
+		t.Fatal("Interrupted(err) = true, want false")
+	}
+	if errors.Is(err, ErrInterrupted) {
+		t.Fatal("errors.Is(err, ErrInterrupted) = true, want false")
+	}
+}
+
 // mustBeTimedOut fails the test unless err is a non-nil wait timeout.
 func mustBeTimedOut(t *testing.T, err error) {
 	t.Helper()
@@ -104,6 +118,15 @@ func mustMatch(t *testing.T, err error, target error) {
 
 	if !errors.Is(err, target) {
 		t.Fatalf("errors.Is(err, %v) = false, want true", target)
+	}
+}
+
+// mustNotMatch fails the test if err matches target through errors.Is.
+func mustNotMatch(t *testing.T, err error, target error) {
+	t.Helper()
+
+	if errors.Is(err, target) {
+		t.Fatalf("errors.Is(err, %v) = true, want false", target)
 	}
 }
 
@@ -148,18 +171,40 @@ func mustEqualDuration(t *testing.T, label string, got time.Duration, want time.
 }
 
 // mustPanicWith fails the test unless fn panics with want.
-func mustPanicWith(t *testing.T, want string, fn func()) {
+func mustPanicWith(t *testing.T, want any, fn func()) {
 	t.Helper()
 
 	defer func() {
 		got := recover()
 		if got == nil {
-			t.Fatalf("panic = nil, want %q", want)
+			t.Fatalf("panic = nil, want %v", want)
 		}
 		if got != want {
-			t.Fatalf("panic = %v, want %q", got, want)
+			t.Fatalf("panic = %s, want %s", fmt.Sprint(got), fmt.Sprint(want))
 		}
 	}()
 
 	fn()
+}
+
+func mustReceiveError(t *testing.T, ch <-chan error) error {
+	t.Helper()
+
+	select {
+	case err := <-ch:
+		return err
+	case <-time.After(time.Second):
+		t.Fatal("operation did not return before safety timeout")
+		return nil
+	}
+}
+
+func mustNotReceiveTimerValue(t *testing.T, ch <-chan time.Time) {
+	t.Helper()
+
+	select {
+	case value := <-ch:
+		t.Fatalf("received timer value %v, want no delivery", value)
+	case <-time.After(10 * time.Millisecond):
+	}
 }

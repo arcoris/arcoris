@@ -19,7 +19,6 @@ package wait
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 )
@@ -77,8 +76,8 @@ func TestUntilReturnsConditionErrorUnchanged(t *testing.T) {
 	if err != conditionErr {
 		t.Fatalf("Until(...) = %v, want exact condition error %v", err, conditionErr)
 	}
-	mustUntilNotBeInterrupted(t, err)
-	mustUntilNotBeTimedOut(t, err)
+	mustNotBeInterrupted(t, err)
+	mustNotBeTimedOut(t, err)
 }
 
 // TestUntilReturnsRawConditionContextErrorUnchanged verifies that raw context
@@ -95,8 +94,8 @@ func TestUntilReturnsRawConditionContextErrorUnchanged(t *testing.T) {
 	if err != context.Canceled {
 		t.Fatalf("Until(...) = %v, want raw context.Canceled", err)
 	}
-	mustUntilNotBeInterrupted(t, err)
-	mustUntilNotBeTimedOut(t, err)
+	mustNotBeInterrupted(t, err)
+	mustNotBeTimedOut(t, err)
 }
 
 // TestUntilDoesNotEvaluateWhenContextIsCancelledBeforeStart verifies that a
@@ -115,9 +114,9 @@ func TestUntilDoesNotEvaluateWhenContextIsCancelledBeforeStart(t *testing.T) {
 
 	err := Until(ctx, time.Hour, condition)
 
-	mustUntilBeInterrupted(t, err)
-	mustUntilNotBeTimedOut(t, err)
-	mustUntilMatch(t, err, context.Canceled)
+	mustBeInterrupted(t, err)
+	mustNotBeTimedOut(t, err)
+	mustMatch(t, err, context.Canceled)
 	if calls != 0 {
 		t.Fatalf("condition calls = %d, want 0", calls)
 	}
@@ -139,9 +138,9 @@ func TestUntilReturnsTimeoutWhenContextDeadlineExceededBeforeStart(t *testing.T)
 
 	err := Until(ctx, time.Hour, condition)
 
-	mustUntilBeTimedOut(t, err)
-	mustUntilBeInterrupted(t, err)
-	mustUntilMatch(t, err, context.DeadlineExceeded)
+	mustBeTimedOut(t, err)
+	mustBeInterrupted(t, err)
+	mustMatch(t, err, context.DeadlineExceeded)
 	if calls != 0 {
 		t.Fatalf("condition calls = %d, want 0", calls)
 	}
@@ -164,9 +163,10 @@ func TestUntilReturnsInterruptedWhenContextIsCancelledDuringCondition(t *testing
 
 	err := Until(ctx, time.Hour, condition)
 
-	mustUntilBeInterrupted(t, err)
-	mustUntilNotBeTimedOut(t, err)
-	mustUntilMatch(t, err, cause)
+	mustBeInterrupted(t, err)
+	mustNotBeTimedOut(t, err)
+	mustMatch(t, err, context.Canceled)
+	mustMatch(t, err, cause)
 	if calls != 1 {
 		t.Fatalf("condition calls = %d, want 1", calls)
 	}
@@ -203,9 +203,10 @@ func TestUntilReturnsTimeoutWhenContextDeadlineExpiresDuringWait(t *testing.T) {
 
 	err := Until(ctx, time.Hour, condition)
 
-	mustUntilBeTimedOut(t, err)
-	mustUntilBeInterrupted(t, err)
-	mustUntilMatch(t, err, cause)
+	mustBeTimedOut(t, err)
+	mustBeInterrupted(t, err)
+	mustMatch(t, err, context.DeadlineExceeded)
+	mustMatch(t, err, cause)
 }
 
 // TestUntilPanicsOnNilContext verifies invalid context validation at the public
@@ -213,7 +214,7 @@ func TestUntilReturnsTimeoutWhenContextDeadlineExpiresDuringWait(t *testing.T) {
 func TestUntilPanicsOnNilContext(t *testing.T) {
 	t.Parallel()
 
-	mustUntilPanicWith(t, errNilContext, func() {
+	mustPanicWith(t, errNilContext, func() {
 		_ = Until(nil, time.Second, Satisfied)
 	})
 }
@@ -242,7 +243,7 @@ func TestUntilPanicsOnNonPositiveInterval(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustUntilPanicWith(t, errNonPositiveInterval, func() {
+			mustPanicWith(t, errNonPositiveInterval, func() {
 				_ = Until(context.Background(), tt.interval, Satisfied)
 			})
 		})
@@ -254,7 +255,7 @@ func TestUntilPanicsOnNonPositiveInterval(t *testing.T) {
 func TestUntilPanicsOnNilCondition(t *testing.T) {
 	t.Parallel()
 
-	mustUntilPanicWith(t, errNilCondition, func() {
+	mustPanicWith(t, errNilCondition, func() {
 		_ = Until(context.Background(), time.Second, nil)
 	})
 }
@@ -269,86 +270,7 @@ func TestUntilDoesNotRecoverConditionPanics(t *testing.T) {
 		panic(panicValue)
 	}
 
-	mustUntilPanicWith(t, panicValue, func() {
+	mustPanicWith(t, panicValue, func() {
 		_ = Until(context.Background(), time.Second, condition)
 	})
-}
-
-// mustUntilBeInterrupted fails the test unless err is a wait-owned interruption.
-func mustUntilBeInterrupted(t *testing.T, err error) {
-	t.Helper()
-
-	if err == nil {
-		t.Fatal("err is nil, want non-nil")
-	}
-	if !Interrupted(err) {
-		t.Fatal("Interrupted(err) = false, want true")
-	}
-}
-
-// mustUntilNotBeInterrupted fails the test if err is classified as a wait-owned
-// interruption.
-func mustUntilNotBeInterrupted(t *testing.T, err error) {
-	t.Helper()
-
-	if Interrupted(err) {
-		t.Fatal("Interrupted(err) = true, want false")
-	}
-}
-
-// mustUntilBeTimedOut fails the test unless err is a wait-owned timeout.
-func mustUntilBeTimedOut(t *testing.T, err error) {
-	t.Helper()
-
-	if err == nil {
-		t.Fatal("err is nil, want non-nil")
-	}
-	if !TimedOut(err) {
-		t.Fatal("TimedOut(err) = false, want true")
-	}
-}
-
-// mustUntilNotBeTimedOut fails the test if err is classified as a wait-owned
-// timeout.
-func mustUntilNotBeTimedOut(t *testing.T, err error) {
-	t.Helper()
-
-	if TimedOut(err) {
-		t.Fatal("TimedOut(err) = true, want false")
-	}
-}
-
-// mustUntilMatch fails the test unless err matches target through errors.Is.
-func mustUntilMatch(t *testing.T, err error, target error) {
-	t.Helper()
-
-	if !errors.Is(err, target) {
-		t.Fatalf("errors.Is(err, %v) = false, want true", target)
-	}
-}
-
-// mustUntilNotMatch fails the test if err matches target through errors.Is.
-func mustUntilNotMatch(t *testing.T, err error, target error) {
-	t.Helper()
-
-	if errors.Is(err, target) {
-		t.Fatalf("errors.Is(err, %v) = true, want false", target)
-	}
-}
-
-// mustUntilPanicWith fails the test unless fn panics with want.
-func mustUntilPanicWith(t *testing.T, want any, fn func()) {
-	t.Helper()
-
-	defer func() {
-		got := recover()
-		if got == nil {
-			t.Fatalf("panic = nil, want %v", want)
-		}
-		if got != want {
-			t.Fatalf("panic = %s, want %s", fmt.Sprint(got), fmt.Sprint(want))
-		}
-	}()
-
-	fn()
 }
