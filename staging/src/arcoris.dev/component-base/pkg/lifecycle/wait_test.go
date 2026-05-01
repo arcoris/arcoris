@@ -18,15 +18,13 @@ package lifecycle
 
 import (
 	"context"
-	"errors"
 	"testing"
-	"time"
 )
 
 func TestWaitImmediateSuccess(t *testing.T) {
 	t.Parallel()
 
-	snapshot, err := NewController().Wait(nil, func(snapshot Snapshot) bool {
+	snapshot, err := NewController().Wait(context.Background(), func(snapshot Snapshot) bool {
 		return snapshot.State == StateNew
 	})
 	if err != nil {
@@ -37,67 +35,78 @@ func TestWaitImmediateSuccess(t *testing.T) {
 	}
 }
 
+func TestWaitNilContextBehavesAsBackground(t *testing.T) {
+	t.Parallel()
+
+	snapshot, err := NewController().Wait(nil, func(snapshot Snapshot) bool {
+		return snapshot.State == StateNew
+	})
+	if err != nil {
+		t.Fatalf("Wait nil context = %v, want nil", err)
+	}
+	if snapshot.State != StateNew {
+		t.Fatalf("snapshot.State = %s, want new", snapshot.State)
+	}
+}
+
 func TestWaitNilPredicate(t *testing.T) {
 	t.Parallel()
 
-	_, err := NewController().Wait(context.Background(), nil)
+	snapshot, err := NewController().Wait(context.Background(), nil)
 	if err == nil {
 		t.Fatal("Wait nil predicate err = nil, want error")
 	}
 	mustMatch(t, err, ErrInvalidWaitPredicate)
-}
-
-func TestWaitContextStops(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name   string
-		ctx    context.Context
-		cancel context.CancelFunc
-		want   error
-	}{
-		{
-			name: "cancelled",
-			want: context.Canceled,
-		},
-		{
-			name: "deadline",
-			want: context.DeadlineExceeded,
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			var ctx context.Context
-			var cancel context.CancelFunc
-			if tt.want == context.Canceled {
-				ctx, cancel = context.WithCancel(context.Background())
-				cancel()
-			} else {
-				ctx, cancel = context.WithTimeout(context.Background(), 0)
-				defer cancel()
-			}
-
-			_, err := NewController().Wait(ctx, func(Snapshot) bool { return false })
-			if err == nil {
-				t.Fatal("Wait err = nil, want context error")
-			}
-			mustMatch(t, err, tt.want)
-		})
+	if snapshot.State != StateNew {
+		t.Fatalf("snapshot.State = %s, want latest new", snapshot.State)
 	}
 }
 
-func TestWaitTargetUnreachableAfterTerminal(t *testing.T) {
+func TestWaitAcrossChangedSignal(t *testing.T) {
 	t.Parallel()
 
+	// Wait must re-evaluate predicates after a changed signal because only the
+	// next snapshot can satisfy conditions based on committed lifecycle progress.
 	controller := NewController()
-	if _, err := controller.BeginStop(); err != nil {
-		t.Fatalf("BeginStop = %v", err)
-	}
+	firstEval := make(chan struct{})
+	results := make(chan Snapshot, 1)
+	errs := make(chan error, 1)
+	go func() {
+		snapshot, err := controller.Wait(context.Background(), func(snapshot Snapshot) bool {
+			if snapshot.State == StateNew {
+				select {
+				case firstEval <- struct{}{}:
+				default:
+				}
+			}
+			return snapshot.State == StateStarting
+		})
+		if err != nil {
+			errs <- err
+			return
+		}
+		results <- snapshot
+	}()
 
+	mustSignalClosed(t, firstEval)
+	_, _ = controller.BeginStart()
+	select {
+	case err := <-errs:
+		t.Fatalf("Wait err = %v, want nil", err)
+	default:
+	}
+	if got := mustReceiveSnapshot(t, results); got.State != StateStarting {
+		t.Fatalf("snapshot.State = %s, want starting", got.State)
+	}
+}
+
+func TestWaitReturnsUnreachableAtTerminalBoundary(t *testing.T) {
+	t.Parallel()
+
+	// Terminal states have no outgoing transitions; if the predicate is false at
+	// the terminal boundary, it cannot become true later.
+	controller := NewController()
+	_, _ = controller.BeginStop()
 	snapshot, err := controller.Wait(context.Background(), func(Snapshot) bool { return false })
 	if err == nil {
 		t.Fatal("Wait err = nil, want unreachable")
@@ -108,135 +117,44 @@ func TestWaitTargetUnreachableAfterTerminal(t *testing.T) {
 	}
 }
 
-func TestWaitState(t *testing.T) {
+func TestWaitContextCanceled(t *testing.T) {
 	t.Parallel()
-
-	controller := NewController()
-	snapshot, err := controller.WaitState(context.Background(), StateNew)
-	if err != nil {
-		t.Fatalf("WaitState current = %v", err)
-	}
-	if snapshot.State != StateNew {
-		t.Fatalf("snapshot.State = %s, want new", snapshot.State)
-	}
-
-	_, err = controller.WaitState(context.Background(), State(99))
-	if err == nil {
-		t.Fatal("WaitState invalid target err = nil, want error")
-	}
-	mustMatch(t, err, ErrInvalidWaitTarget)
-
-	if _, err := controller.BeginStart(); err != nil {
-		t.Fatalf("BeginStart = %v", err)
-	}
-	_, err = controller.WaitState(context.Background(), StateNew)
-	if err == nil {
-		t.Fatal("WaitState backward err = nil, want unreachable")
-	}
-	mustMatch(t, err, ErrWaitTargetUnreachable)
-}
-
-func TestWaitStateWaitsUntilTarget(t *testing.T) {
-	t.Parallel()
-
-	controller := NewController()
-	results := make(chan Snapshot, 1)
-	errs := make(chan error, 1)
-
-	go func() {
-		snapshot, err := controller.WaitState(context.Background(), StateRunning)
-		if err != nil {
-			errs <- err
-			return
-		}
-		results <- snapshot
-	}()
-
-	if _, err := controller.BeginStart(); err != nil {
-		t.Fatalf("BeginStart = %v", err)
-	}
-	if _, err := controller.MarkRunning(); err != nil {
-		t.Fatalf("MarkRunning = %v", err)
-	}
-
-	select {
-	case err := <-errs:
-		t.Fatalf("WaitState err = %v, want nil", err)
-	default:
-	}
-	if got := mustReceiveSnapshot(t, results); got.State != StateRunning {
-		t.Fatalf("snapshot.State = %s, want running", got.State)
-	}
-}
-
-func TestWaitTerminal(t *testing.T) {
-	t.Parallel()
-
-	t.Run("stopped", func(t *testing.T) {
-		t.Parallel()
-
-		controller := NewController()
-		if _, err := controller.BeginStop(); err != nil {
-			t.Fatalf("BeginStop = %v", err)
-		}
-		snapshot, err := controller.WaitTerminal(context.Background())
-		if err != nil {
-			t.Fatalf("WaitTerminal = %v, want nil", err)
-		}
-		if snapshot.State != StateStopped {
-			t.Fatalf("snapshot.State = %s, want stopped", snapshot.State)
-		}
-	})
-
-	t.Run("failed", func(t *testing.T) {
-		t.Parallel()
-
-		cause := errors.New("failed")
-		controller := NewController()
-		if _, err := controller.BeginStart(); err != nil {
-			t.Fatalf("BeginStart = %v", err)
-		}
-		if _, err := controller.MarkFailed(cause); err != nil {
-			t.Fatalf("MarkFailed = %v", err)
-		}
-		snapshot, err := controller.WaitTerminal(context.Background())
-		if err != nil {
-			t.Fatalf("WaitTerminal = %v, want nil", err)
-		}
-		if snapshot.State != StateFailed || snapshot.FailureCause != cause {
-			t.Fatalf("snapshot = %+v, want failed with cause", snapshot)
-		}
-	})
-}
-
-func TestDoneStableAndClosesOnce(t *testing.T) {
-	t.Parallel()
-
-	controller := NewController()
-	first := controller.Done()
-	second := controller.Done()
-	if first != second {
-		t.Fatal("Done returned different channels")
-	}
-	mustNotSignalClosed(t, first)
-
-	if _, err := controller.BeginStop(); err != nil {
-		t.Fatalf("BeginStop = %v", err)
-	}
-	mustSignalClosed(t, first)
-	mustSignalClosed(t, second)
-}
-
-func TestWaitReturnsLatestSnapshotOnContextCancel(t *testing.T) {
-	t.Parallel()
-
-	controller := NewController()
-	if _, err := controller.BeginStart(); err != nil {
-		t.Fatalf("BeginStart = %v", err)
-	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
+	snapshot, err := NewController().Wait(ctx, func(Snapshot) bool { return false })
+	if err == nil {
+		t.Fatal("Wait err = nil, want canceled")
+	}
+	mustMatch(t, err, context.Canceled)
+	if snapshot.State != StateNew {
+		t.Fatalf("snapshot.State = %s, want latest new", snapshot.State)
+	}
+}
+
+func TestWaitContextDeadlineExceeded(t *testing.T) {
+	t.Parallel()
+
+	deadlineCtx, deadlineCancel := context.WithDeadline(context.Background(), testTime)
+	defer deadlineCancel()
+	deadlineSnapshot, deadlineErr := NewController().Wait(deadlineCtx, func(Snapshot) bool { return false })
+	if deadlineErr == nil {
+		t.Fatal("Wait deadline err = nil, want deadline exceeded")
+	}
+	mustMatch(t, deadlineErr, context.DeadlineExceeded)
+	if deadlineSnapshot.State != StateNew {
+		t.Fatalf("deadline snapshot.State = %s, want latest new", deadlineSnapshot.State)
+	}
+}
+
+func TestWaitReturnsLatestSnapshotOnCancellation(t *testing.T) {
+	t.Parallel()
+
+	controller := NewController()
+	_, _ = controller.BeginStart()
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
 	snapshot, err := controller.Wait(ctx, func(Snapshot) bool { return false })
 	if err == nil {
 		t.Fatal("Wait err = nil, want canceled")
@@ -247,16 +165,91 @@ func TestWaitReturnsLatestSnapshotOnContextCancel(t *testing.T) {
 	}
 }
 
-func TestWaitDeadlineExceededDuringWait(t *testing.T) {
+func TestWaitDoneBranchReturnsUnreachableWhenPredicateStillFalse(t *testing.T) {
 	t.Parallel()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
-	defer cancel()
-	<-ctx.Done()
-
-	_, err := NewController().Wait(ctx, func(Snapshot) bool { return false })
-	if err == nil {
-		t.Fatal("Wait err = nil, want deadline")
+	// The done branch reports unreachable when the final terminal snapshot still
+	// does not satisfy the predicate.
+	changed := make(chan struct{})
+	done := make(chan struct{})
+	controller := &Controller{
+		state:   StateStarting,
+		changed: changed,
+		done:    done,
 	}
-	mustMatch(t, err, context.DeadlineExceeded)
+	firstEval := make(chan struct{})
+	errs := make(chan error, 1)
+	go func() {
+		_, err := controller.Wait(context.Background(), func(snapshot Snapshot) bool {
+			if snapshot.State == StateStarting {
+				select {
+				case firstEval <- struct{}{}:
+				default:
+				}
+			}
+			return false
+		})
+		errs <- err
+	}()
+
+	mustSignalClosed(t, firstEval)
+	controller.mu.Lock()
+	controller.state = StateStopped
+	controller.revision = 1
+	controller.lastTransition = Transition{From: StateStarting, To: StateStopped, Event: EventMarkStopped, Revision: 1, At: testTime}
+	close(done)
+	controller.mu.Unlock()
+
+	err := mustReceiveError(t, errs)
+	mustMatch(t, err, ErrWaitTargetUnreachable)
+}
+
+func TestWaitDoneBranchCanSucceedForTerminalSnapshot(t *testing.T) {
+	t.Parallel()
+
+	// The done signal is a terminal boundary, but Wait still gives the predicate
+	// one final evaluation so terminal predicates can succeed.
+	changed := make(chan struct{})
+	done := make(chan struct{})
+	controller := &Controller{
+		state:   StateStarting,
+		changed: changed,
+		done:    done,
+	}
+	results := make(chan Snapshot, 1)
+	errs := make(chan error, 1)
+	firstEval := make(chan struct{})
+	go func() {
+		snapshot, err := controller.Wait(context.Background(), func(snapshot Snapshot) bool {
+			if snapshot.State == StateStarting {
+				select {
+				case firstEval <- struct{}{}:
+				default:
+				}
+			}
+			return snapshot.State == StateStopped
+		})
+		if err != nil {
+			errs <- err
+			return
+		}
+		results <- snapshot
+	}()
+
+	mustSignalClosed(t, firstEval)
+	controller.mu.Lock()
+	controller.state = StateStopped
+	controller.revision = 1
+	controller.lastTransition = Transition{From: StateStarting, To: StateStopped, Event: EventMarkStopped, Revision: 1, At: testTime}
+	close(done)
+	controller.mu.Unlock()
+
+	select {
+	case err := <-errs:
+		t.Fatalf("Wait err = %v, want nil", err)
+	default:
+	}
+	if got := mustReceiveSnapshot(t, results); got.State != StateStopped {
+		t.Fatalf("snapshot.State = %s, want stopped", got.State)
+	}
 }

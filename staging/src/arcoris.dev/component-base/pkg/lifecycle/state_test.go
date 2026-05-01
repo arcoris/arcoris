@@ -35,43 +35,115 @@ func TestStateString(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		if got := tt.state.String(); got != tt.want {
-			t.Fatalf("State(%d).String() = %q, want %q", tt.state, got, tt.want)
+		tt := tt
+		t.Run(tt.want, func(t *testing.T) {
+			t.Parallel()
+
+			if got := tt.state.String(); got != tt.want {
+				t.Fatalf("State(%d).String() = %q, want %q", tt.state, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStateIsValid(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		state State
+		want  bool
+	}{
+		{"new", StateNew, true},
+		{"starting", StateStarting, true},
+		{"running", StateRunning, true},
+		{"stopping", StateStopping, true},
+		{"stopped", StateStopped, true},
+		{"failed", StateFailed, true},
+		{"invalid", State(99), false},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := tt.state.IsValid(); got != tt.want {
+				t.Fatalf("%s IsValid = %v, want %v", tt.state, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStateIsTerminal(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		state State
+		want  bool
+	}{
+		{StateNew, false},
+		{StateStarting, false},
+		{StateRunning, false},
+		{StateStopping, false},
+		{StateStopped, true},
+		{StateFailed, true},
+		{State(99), false},
+	}
+
+	for _, tt := range tests {
+		if got := tt.state.IsTerminal(); got != tt.want {
+			t.Fatalf("%s IsTerminal = %v, want %v", tt.state, got, tt.want)
 		}
 	}
 }
 
-func TestStatePredicates(t *testing.T) {
+func TestStateIsActive(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		state       State
-		valid       bool
-		terminal    bool
-		active      bool
-		acceptsWork bool
+		state State
+		want  bool
 	}{
-		{StateNew, true, false, false, false},
-		{StateStarting, true, false, true, false},
-		{StateRunning, true, false, true, true},
-		{StateStopping, true, false, true, false},
-		{StateStopped, true, true, false, false},
-		{StateFailed, true, true, false, false},
-		{State(99), false, false, false, false},
+		{StateNew, false},
+		{StateStarting, true},
+		{StateRunning, true},
+		{StateStopping, true},
+		{StateStopped, false},
+		{StateFailed, false},
+		{State(99), false},
 	}
 
 	for _, tt := range tests {
-		if got := tt.state.IsValid(); got != tt.valid {
-			t.Fatalf("%s IsValid = %v, want %v", tt.state, got, tt.valid)
+		if got := tt.state.IsActive(); got != tt.want {
+			t.Fatalf("%s IsActive = %v, want %v", tt.state, got, tt.want)
 		}
-		if got := tt.state.IsTerminal(); got != tt.terminal {
-			t.Fatalf("%s IsTerminal = %v, want %v", tt.state, got, tt.terminal)
+	}
+}
+
+func TestStateAcceptsWork(t *testing.T) {
+	t.Parallel()
+
+	// Only StateRunning accepts normal workload; transitional states may be busy
+	// starting or draining and terminal states cannot accept new lifecycle work.
+	for _, state := range append(append([]State(nil), allStates...), State(99)) {
+		want := state == StateRunning
+		if got := state.AcceptsWork(); got != want {
+			t.Fatalf("%s AcceptsWork = %v, want %v", state, got, want)
 		}
-		if got := tt.state.IsActive(); got != tt.active {
-			t.Fatalf("%s IsActive = %v, want %v", tt.state, got, tt.active)
-		}
-		if got := tt.state.AcceptsWork(); got != tt.acceptsWork {
-			t.Fatalf("%s AcceptsWork = %v, want %v", tt.state, got, tt.acceptsWork)
-		}
+	}
+}
+
+func TestStateZeroValueInvariant(t *testing.T) {
+	t.Parallel()
+
+	// StateNew is intentionally the valid zero value so embedding structs do not
+	// need constructor-only initialization before exposing lifecycle state.
+	var state State
+	if state != StateNew {
+		t.Fatalf("zero State = %s, want new", state)
+	}
+	if !state.IsValid() {
+		t.Fatal("zero State IsValid = false, want true")
 	}
 }

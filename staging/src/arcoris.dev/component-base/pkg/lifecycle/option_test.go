@@ -16,33 +16,56 @@
 
 package lifecycle
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
-func TestOptions(t *testing.T) {
+func TestDefaultControllerConfigUsesNonNilClock(t *testing.T) {
 	t.Parallel()
 
-	guard := TransitionGuardFunc(func(Transition) error { return nil })
-	observer := ObserverFunc(func(Transition) {})
+	// The construction-time config boundary guarantees Controller always has a
+	// usable time source even when callers provide no options.
+	config := defaultControllerConfig()
+	if config.now == nil {
+		t.Fatal("default now = nil, want time source")
+	}
+	if config.now().IsZero() {
+		t.Fatal("default now returned zero time")
+	}
+}
 
-	config := newControllerConfig(
-		nil,
-		WithClock(nil),
-		WithClock(testClock{now: testTime}),
-		WithGuard(nil),
-		WithGuard(guard),
-		WithGuards(nil, guard),
-		WithObserver(nil),
-		WithObserver(observer),
-		WithObservers(nil, observer),
-	)
+func TestNewControllerConfigIgnoresNilOptions(t *testing.T) {
+	t.Parallel()
+
+	config := newControllerConfig(nil)
+	if config.now == nil {
+		t.Fatal("config now = nil, want default")
+	}
+}
+
+func TestNewControllerConfigAppliesOptionsInOrder(t *testing.T) {
+	t.Parallel()
+
+	var order []string
+	first := Option(func(*controllerConfig) { order = append(order, "first") })
+	second := Option(func(*controllerConfig) { order = append(order, "second") })
+	newControllerConfig(first, second)
+	assertDeepEqual(t, order, []string{"first", "second"})
+}
+
+func TestNewControllerConfigIndependentFromOptionSlice(t *testing.T) {
+	t.Parallel()
+
+	// The variadic option slice is consumed during construction; mutating the
+	// caller's slice afterward must not rewrite the already returned config.
+	options := []Option{
+		func(config *controllerConfig) { config.now = func() time.Time { return testTime } },
+	}
+	config := newControllerConfig(options...)
+	options[0] = func(config *controllerConfig) { config.now = func() time.Time { return time.Time{} } }
 
 	if got := config.now(); !got.Equal(testTime) {
 		t.Fatalf("config.now() = %v, want %v", got, testTime)
-	}
-	if len(config.guards) != 2 {
-		t.Fatalf("guards len = %d, want 2", len(config.guards))
-	}
-	if len(config.observers) != 2 {
-		t.Fatalf("observers len = %d, want 2", len(config.observers))
 	}
 }

@@ -21,15 +21,21 @@ import (
 	"testing"
 )
 
-func TestTransitionGuardFunc(t *testing.T) {
+func TestTransitionGuardFuncNilAllowsTransition(t *testing.T) {
 	t.Parallel()
 
+	// Nil function adapters make optional guard wiring safe: an absent callback
+	// must not reject a transition or panic during controller construction.
 	transition := Transition{From: StateNew, To: StateStarting, Event: EventBeginStart}
-
 	if err := (TransitionGuardFunc)(nil).Allow(transition); err != nil {
 		t.Fatalf("nil TransitionGuardFunc.Allow = %v, want nil", err)
 	}
+}
 
+func TestTransitionGuardFuncReceivesExactTransition(t *testing.T) {
+	t.Parallel()
+
+	transition := Transition{From: StateNew, To: StateStarting, Event: EventBeginStart}
 	var got Transition
 	guard := TransitionGuardFunc(func(transition Transition) error {
 		got = transition
@@ -42,41 +48,15 @@ func TestTransitionGuardFunc(t *testing.T) {
 	assertTransitionEqual(t, got, transition)
 }
 
-func TestGuardChain(t *testing.T) {
+func TestTransitionGuardFuncPreservesReturnedError(t *testing.T) {
 	t.Parallel()
 
-	transition := Transition{From: StateNew, To: StateStarting, Event: EventBeginStart}
 	rejection := errors.New("blocked")
+	guard := TransitionGuardFunc(func(Transition) error {
+		return rejection
+	})
 
-	if err := (GuardChain)(nil).Allow(transition); err != nil {
-		t.Fatalf("nil GuardChain.Allow = %v, want nil", err)
-	}
-	if err := (GuardChain{}).Allow(transition); err != nil {
-		t.Fatalf("empty GuardChain.Allow = %v, want nil", err)
-	}
-
-	var order []string
-	chain := GuardChain{
-		nil,
-		TransitionGuardFunc(func(Transition) error {
-			order = append(order, "first")
-			return nil
-		}),
-		TransitionGuardFunc(func(Transition) error {
-			order = append(order, "second")
-			return rejection
-		}),
-		TransitionGuardFunc(func(Transition) error {
-			order = append(order, "third")
-			return nil
-		}),
-	}
-
-	err := chain.Allow(transition)
-	if err != rejection {
-		t.Fatalf("GuardChain.Allow err = %v, want %v", err, rejection)
-	}
-	if got, want := order, []string{"first", "second"}; len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
-		t.Fatalf("guard order = %v, want %v", got, want)
+	if err := guard.Allow(Transition{}); err != rejection {
+		t.Fatalf("TransitionGuardFunc.Allow err = %v, want %v", err, rejection)
 	}
 }

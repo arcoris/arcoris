@@ -17,91 +17,52 @@
 package lifecycle
 
 import (
-	"context"
-	"errors"
-	"fmt"
 	"strings"
 	"testing"
 )
 
-func TestTransitionErrorMatching(t *testing.T) {
+func TestSentinelErrorsNonNil(t *testing.T) {
 	t.Parallel()
 
-	invalid := newTransitionError(StateRunning, EventBeginStart, ErrInvalidTransition)
-	mustMatch(t, invalid, ErrInvalidTransition)
-	mustNotMatch(t, invalid, ErrTerminalState)
-
-	terminal := newTransitionError(StateStopped, EventBeginStart, ErrTerminalState)
-	mustMatch(t, terminal, ErrTerminalState)
-	mustMatch(t, terminal, ErrInvalidTransition)
-}
-
-func TestGuardErrorMatchingAndMessage(t *testing.T) {
-	t.Parallel()
-
-	domainErr := errors.New("domain guard")
-	transition := Transition{From: StateNew, To: StateStarting, Event: EventBeginStart}
-	tests := []struct {
-		name string
-		err  error
-	}{
-		{
-			name: "domain error only",
-			err:  newGuardError(transition, domainErr),
-		},
-		{
-			name: "guard sentinel only",
-			err:  newGuardError(transition, ErrGuardRejected),
-		},
-		{
-			name: "join guard first",
-			err:  newGuardError(transition, errors.Join(ErrGuardRejected, domainErr)),
-		},
-		{
-			name: "join domain first",
-			err:  newGuardError(transition, errors.Join(domainErr, ErrGuardRejected)),
-		},
-		{
-			name: "wrapped guard sentinel",
-			err:  newGuardError(transition, fmt.Errorf("wrapped: %w", ErrGuardRejected)),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.name != "guard sentinel only" {
-				mustMatch(t, tt.err, ErrGuardRejected)
-			}
-			if tt.name != "guard sentinel only" && tt.name != "wrapped guard sentinel" {
-				mustMatch(t, tt.err, domainErr)
-			}
-			if !strings.HasPrefix(tt.err.Error(), ErrGuardRejected.Error()) {
-				t.Fatalf("GuardError message %q does not start with %q", tt.err.Error(), ErrGuardRejected.Error())
-			}
-			if strings.Count(tt.err.Error(), ErrGuardRejected.Error()) > 1 && tt.name != "join domain first" {
-				t.Fatalf("GuardError message %q repeats guard sentinel", tt.err.Error())
-			}
-		})
+	for _, err := range lifecycleSentinelErrors() {
+		if err == nil {
+			t.Fatal("sentinel error is nil")
+		}
 	}
 }
 
-func TestWaitErrorMatchingAndMessage(t *testing.T) {
+func TestSentinelErrorStringsStable(t *testing.T) {
 	t.Parallel()
 
-	snapshot := Snapshot{State: StateStarting, Revision: 1, LastTransition: Transition{From: StateNew, To: StateStarting, Event: EventBeginStart, Revision: 1, At: testTime}}
-	tests := []error{
-		context.Canceled,
-		context.DeadlineExceeded,
-		ErrWaitTargetUnreachable,
+	// Stable sentinel text keeps wrapped lifecycle errors recognizable in logs
+	// without depending on concrete error wrapper types.
+	want := []string{
+		"lifecycle: invalid transition",
+		"lifecycle: terminal state",
+		"lifecycle: failure cause required",
+		"lifecycle: guard rejected",
+		"lifecycle: invalid wait predicate",
+		"lifecycle: invalid wait target",
+		"lifecycle: wait target unreachable",
+	}
+	for i, err := range lifecycleSentinelErrors() {
+		if got := err.Error(); got != want[i] {
+			t.Fatalf("sentinel[%d] = %q, want %q", i, got, want[i])
+		}
+		if !strings.HasPrefix(err.Error(), "lifecycle:") {
+			t.Fatalf("sentinel[%d] = %q, want lifecycle prefix", i, err.Error())
+		}
+	}
+}
+
+func lifecycleSentinelErrors() []error {
+	return []error{
+		ErrInvalidTransition,
+		ErrTerminalState,
+		ErrFailureCauseRequired,
+		ErrGuardRejected,
 		ErrInvalidWaitPredicate,
 		ErrInvalidWaitTarget,
-	}
-
-	for _, target := range tests {
-		err := newWaitStateError(snapshot, StateRunning, target)
-		mustMatch(t, err, target)
-		if !strings.HasPrefix(err.Error(), "lifecycle:") {
-			t.Fatalf("WaitError message %q does not start with lifecycle:", err.Error())
-		}
+		ErrWaitTargetUnreachable,
 	}
 }

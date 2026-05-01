@@ -18,16 +18,15 @@ package lifecycle
 
 import (
 	"errors"
-	"strings"
 	"testing"
 )
 
-type nonComparableError struct {
-	values []string
-}
+func TestSnapshotString(t *testing.T) {
+	t.Parallel()
 
-func (e nonComparableError) Error() string {
-	return strings.Join(e.values, ":")
+	if got, want := (Snapshot{State: StateRunning, Revision: 7}).String(), "running@7"; got != want {
+		t.Fatalf("Snapshot.String() = %q, want %q", got, want)
+	}
 }
 
 func TestSnapshotIsValid(t *testing.T) {
@@ -35,27 +34,31 @@ func TestSnapshotIsValid(t *testing.T) {
 
 	cause := errors.New("failed")
 	validTransition := Transition{From: StateNew, To: StateStarting, Event: EventBeginStart, Revision: 1, At: testTime}
-	failedTransition := Transition{From: StateRunning, To: StateFailed, Event: EventMarkFailed, Cause: cause, Revision: 2, At: testTime}
+	failureTransition := Transition{From: StateRunning, To: StateFailed, Event: EventMarkFailed, Cause: cause, Revision: 2, At: testTime}
 
 	tests := []struct {
 		name     string
 		snapshot Snapshot
 		want     bool
 	}{
-		{name: "zero", want: true},
-		{name: "invalid state", snapshot: Snapshot{State: State(99)}, want: false},
-		{name: "revision zero non-zero transition", snapshot: Snapshot{LastTransition: validTransition}, want: false},
-		{name: "revision zero non-comparable transition cause", snapshot: Snapshot{LastTransition: Transition{Cause: nonComparableError{values: []string{"x", "y"}}}}, want: false},
-		{name: "revision non-zero zero transition", snapshot: Snapshot{State: StateStarting, Revision: 1}, want: false},
-		{name: "uncommitted transition", snapshot: Snapshot{State: StateStarting, Revision: 1, LastTransition: Transition{From: StateNew, To: StateStarting, Event: EventBeginStart}}, want: false},
-		{name: "revision mismatch", snapshot: Snapshot{State: StateStarting, Revision: 2, LastTransition: validTransition}, want: false},
-		{name: "target mismatch", snapshot: Snapshot{State: StateRunning, Revision: 1, LastTransition: validTransition}, want: false},
-		{name: "valid active", snapshot: Snapshot{State: StateStarting, Revision: 1, LastTransition: validTransition}, want: true},
-		{name: "failed without cause", snapshot: Snapshot{State: StateFailed, Revision: 2, LastTransition: failedTransition}, want: false},
-		{name: "non-failed with cause", snapshot: Snapshot{State: StateRunning, Revision: 1, LastTransition: Transition{From: StateStarting, To: StateRunning, Event: EventMarkRunning, Revision: 1, At: testTime}, FailureCause: cause}, want: false},
-		{name: "non-failed with non-comparable cause", snapshot: Snapshot{State: StateRunning, Revision: 1, LastTransition: Transition{From: StateStarting, To: StateRunning, Event: EventMarkRunning, Revision: 1, At: testTime}, FailureCause: nonComparableError{values: []string{"x", "y"}}}, want: false},
-		{name: "failed with cause", snapshot: Snapshot{State: StateFailed, Revision: 2, LastTransition: failedTransition, FailureCause: cause}, want: true},
-		{name: "failed with non-comparable cause", snapshot: Snapshot{State: StateFailed, Revision: 2, LastTransition: Transition{From: StateRunning, To: StateFailed, Event: EventMarkFailed, Cause: nonComparableError{values: []string{"x", "y"}}, Revision: 2, At: testTime}, FailureCause: nonComparableError{values: []string{"x", "y"}}}, want: true},
+		// Snapshot is an immutable read model; the zero value represents the
+		// initial StateNew observation before any transition has committed.
+		{"zero snapshot", Snapshot{}, true},
+		{"invalid state", Snapshot{State: State(99)}, false},
+		{"revision zero non-new state", Snapshot{State: StateStarting}, false},
+		{"revision zero with transition", Snapshot{LastTransition: validTransition}, false},
+		{"revision zero with failure cause", Snapshot{FailureCause: cause}, false},
+		{"revision non-zero zero transition", Snapshot{State: StateStarting, Revision: 1}, false},
+		{"uncommitted transition", Snapshot{State: StateStarting, Revision: 1, LastTransition: Transition{From: StateNew, To: StateStarting, Event: EventBeginStart}}, false},
+		{"revision mismatch", Snapshot{State: StateStarting, Revision: 2, LastTransition: validTransition}, false},
+		{"target mismatch", Snapshot{State: StateRunning, Revision: 1, LastTransition: validTransition}, false},
+		{"valid active", Snapshot{State: StateStarting, Revision: 1, LastTransition: validTransition}, true},
+		{"failed without failure cause", Snapshot{State: StateFailed, Revision: 2, LastTransition: failureTransition}, false},
+		{"failed with non-failure transition", Snapshot{State: StateFailed, Revision: 2, LastTransition: Transition{From: StateStarting, To: StateRunning, Event: EventMarkRunning, Revision: 2, At: testTime}, FailureCause: cause}, false},
+		{"failed transition without cause", Snapshot{State: StateFailed, Revision: 2, LastTransition: Transition{From: StateRunning, To: StateFailed, Event: EventMarkFailed, Revision: 2, At: testTime}, FailureCause: cause}, false},
+		{"non-failed with failure cause", Snapshot{State: StateRunning, Revision: 1, LastTransition: Transition{From: StateStarting, To: StateRunning, Event: EventMarkRunning, Revision: 1, At: testTime}, FailureCause: cause}, false},
+		{"valid failed", Snapshot{State: StateFailed, Revision: 2, LastTransition: failureTransition, FailureCause: cause}, true},
+		{"non-comparable failure cause", Snapshot{State: StateFailed, Revision: 2, LastTransition: Transition{From: StateRunning, To: StateFailed, Event: EventMarkFailed, Cause: nonComparableError{values: []string{"x"}}, Revision: 2, At: testTime}, FailureCause: nonComparableError{values: []string{"x"}}}, true},
 	}
 
 	for _, tt := range tests {
@@ -65,18 +68,43 @@ func TestSnapshotIsValid(t *testing.T) {
 	}
 }
 
-func TestSnapshotIsValidDoesNotPanicWithNonComparableTransitionCause(t *testing.T) {
+func TestSnapshotPredicates(t *testing.T) {
 	t.Parallel()
 
-	snapshot := Snapshot{
-		State:    StateNew,
-		Revision: 0,
-		LastTransition: Transition{
-			Cause: nonComparableError{values: []string{"x"}},
-		},
+	tests := []struct {
+		name          string
+		snapshot      Snapshot
+		hasTransition bool
+		terminal      bool
+		active        bool
+		acceptsWork   bool
+		failed        bool
+		stopped       bool
+	}{
+		{"new", Snapshot{State: StateNew}, false, false, false, false, false, false},
+		{"running", Snapshot{State: StateRunning, Revision: 2}, true, false, true, true, false, false},
+		{"stopped", Snapshot{State: StateStopped, Revision: 3}, true, true, false, false, false, true},
+		{"failed", Snapshot{State: StateFailed, Revision: 3}, true, true, false, false, true, false},
 	}
 
-	if snapshot.IsValid() {
-		t.Fatal("Snapshot with non-zero transition at revision zero IsValid = true, want false")
+	for _, tt := range tests {
+		if got := tt.snapshot.HasTransition(); got != tt.hasTransition {
+			t.Fatalf("%s HasTransition = %v, want %v", tt.name, got, tt.hasTransition)
+		}
+		if got := tt.snapshot.IsTerminal(); got != tt.terminal {
+			t.Fatalf("%s IsTerminal = %v, want %v", tt.name, got, tt.terminal)
+		}
+		if got := tt.snapshot.IsActive(); got != tt.active {
+			t.Fatalf("%s IsActive = %v, want %v", tt.name, got, tt.active)
+		}
+		if got := tt.snapshot.AcceptsWork(); got != tt.acceptsWork {
+			t.Fatalf("%s AcceptsWork = %v, want %v", tt.name, got, tt.acceptsWork)
+		}
+		if got := tt.snapshot.IsFailed(); got != tt.failed {
+			t.Fatalf("%s IsFailed = %v, want %v", tt.name, got, tt.failed)
+		}
+		if got := tt.snapshot.IsStopped(); got != tt.stopped {
+			t.Fatalf("%s IsStopped = %v, want %v", tt.name, got, tt.stopped)
+		}
 	}
 }

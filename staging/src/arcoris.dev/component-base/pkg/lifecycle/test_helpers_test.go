@@ -18,11 +18,41 @@ package lifecycle
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 	"time"
 )
 
 var testTime = time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+
+var expectedTransitionRules = []TransitionRule{
+	{StateNew, EventBeginStart, StateStarting},
+	{StateNew, EventBeginStop, StateStopped},
+	{StateStarting, EventMarkRunning, StateRunning},
+	{StateStarting, EventBeginStop, StateStopping},
+	{StateStarting, EventMarkFailed, StateFailed},
+	{StateRunning, EventBeginStop, StateStopping},
+	{StateRunning, EventMarkFailed, StateFailed},
+	{StateStopping, EventMarkStopped, StateStopped},
+	{StateStopping, EventMarkFailed, StateFailed},
+}
+
+var allStates = []State{
+	StateNew,
+	StateStarting,
+	StateRunning,
+	StateStopping,
+	StateStopped,
+	StateFailed,
+}
+
+var allEvents = []Event{
+	EventBeginStart,
+	EventMarkRunning,
+	EventBeginStop,
+	EventMarkStopped,
+	EventMarkFailed,
+}
 
 type testClock struct {
 	now time.Time
@@ -30,6 +60,24 @@ type testClock struct {
 
 func (c testClock) Now() time.Time {
 	return c.now
+}
+
+type countingClock struct {
+	now   time.Time
+	calls int
+}
+
+func (c *countingClock) Now() time.Time {
+	c.calls++
+	return c.now
+}
+
+type nonComparableError struct {
+	values []string
+}
+
+func (e nonComparableError) Error() string {
+	return e.values[0]
 }
 
 func mustMatch(t *testing.T, err error, target error) {
@@ -45,6 +93,14 @@ func mustNotMatch(t *testing.T, err error, target error) {
 
 	if errors.Is(err, target) {
 		t.Fatalf("errors.Is(%v, %v) = true, want false", err, target)
+	}
+}
+
+func assertDeepEqual(t *testing.T, got, want any) {
+	t.Helper()
+
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %#v, want %#v", got, want)
 	}
 }
 
@@ -114,6 +170,7 @@ func mustReceiveSnapshot(t *testing.T, ch <-chan Snapshot) Snapshot {
 	case snapshot := <-ch:
 		return snapshot
 	case <-time.After(time.Second):
+		// The timeout is only a deadlock guard; tests synchronize through channels.
 		t.Fatal("snapshot was not received before safety timeout")
 		return Snapshot{}
 	}
@@ -126,8 +183,22 @@ func mustReceiveError(t *testing.T, ch <-chan error) error {
 	case err := <-ch:
 		return err
 	case <-time.After(time.Second):
+		// The timeout is only a deadlock guard; tests synchronize through channels.
 		t.Fatal("error was not received before safety timeout")
 		return nil
+	}
+}
+
+func mustReceiveTransition(t *testing.T, ch <-chan Transition) Transition {
+	t.Helper()
+
+	select {
+	case transition := <-ch:
+		return transition
+	case <-time.After(time.Second):
+		// The timeout is only a deadlock guard; tests synchronize through channels.
+		t.Fatal("transition was not received before safety timeout")
+		return Transition{}
 	}
 }
 
@@ -137,6 +208,7 @@ func mustSignalClosed(t *testing.T, ch <-chan struct{}) {
 	select {
 	case <-ch:
 	case <-time.After(time.Second):
+		// The timeout is only a deadlock guard; tests synchronize through channels.
 		t.Fatal("signal was not closed before safety timeout")
 	}
 }

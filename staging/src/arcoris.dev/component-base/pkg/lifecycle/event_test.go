@@ -34,8 +34,35 @@ func TestEventString(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		if got := tt.event.String(); got != tt.want {
-			t.Fatalf("Event(%d).String() = %q, want %q", tt.event, got, tt.want)
+		tt := tt
+		t.Run(tt.want, func(t *testing.T) {
+			t.Parallel()
+
+			if got := tt.event.String(); got != tt.want {
+				t.Fatalf("Event(%d).String() = %q, want %q", tt.event, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestEventIsValid(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		event Event
+		want  bool
+	}{
+		{EventBeginStart, true},
+		{EventMarkRunning, true},
+		{EventBeginStop, true},
+		{EventMarkStopped, true},
+		{EventMarkFailed, true},
+		{Event(99), false},
+	}
+
+	for _, tt := range tests {
+		if got := tt.event.IsValid(); got != tt.want {
+			t.Fatalf("%s IsValid = %v, want %v", tt.event, got, tt.want)
 		}
 	}
 }
@@ -45,24 +72,22 @@ func TestEventPredicates(t *testing.T) {
 
 	tests := []struct {
 		event         Event
-		valid         bool
 		start         bool
 		stop          bool
 		terminal      bool
 		requiresCause bool
 	}{
-		{EventBeginStart, true, true, false, false, false},
-		{EventMarkRunning, true, true, false, false, false},
-		{EventBeginStop, true, false, true, false, false},
-		{EventMarkStopped, true, false, true, true, false},
-		{EventMarkFailed, true, false, false, true, true},
-		{Event(99), false, false, false, false, false},
+		{EventBeginStart, true, false, false, false},
+		{EventMarkRunning, true, false, false, false},
+		{EventBeginStop, false, true, false, false},
+		{EventMarkStopped, false, true, true, false},
+		{EventMarkFailed, false, false, true, true},
+		{Event(99), false, false, false, false},
 	}
 
 	for _, tt := range tests {
-		if got := tt.event.IsValid(); got != tt.valid {
-			t.Fatalf("%s IsValid = %v, want %v", tt.event, got, tt.valid)
-		}
+		// Events are lifecycle inputs, not target states: failure is terminal but
+		// not a stop event, and BeginStop may target different states by source.
 		if got := tt.event.IsStartEvent(); got != tt.start {
 			t.Fatalf("%s IsStartEvent = %v, want %v", tt.event, got, tt.start)
 		}

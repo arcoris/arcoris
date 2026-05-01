@@ -18,28 +18,22 @@ package lifecycle
 
 import "testing"
 
-func TestObserverFunc(t *testing.T) {
+func TestObserverChainNilAndEmptyAreNoop(t *testing.T) {
 	t.Parallel()
 
+	// Observers are post-commit notifications, not validation hooks; an absent
+	// chain must be a no-op and must never reject or mutate a transition.
 	transition := Transition{From: StateNew, To: StateStarting, Event: EventBeginStart}
-
-	(ObserverFunc)(nil).ObserveLifecycleTransition(transition)
-
-	var got Transition
-	ObserverFunc(func(transition Transition) {
-		got = transition
-	}).ObserveLifecycleTransition(transition)
-
-	assertTransitionEqual(t, got, transition)
+	(ObserverChain)(nil).ObserveLifecycleTransition(transition)
+	(ObserverChain{}).ObserveLifecycleTransition(transition)
 }
 
-func TestObserverChain(t *testing.T) {
+func TestObserverChainIgnoresNilEntriesAndPreservesOrder(t *testing.T) {
 	t.Parallel()
 
 	transition := Transition{From: StateNew, To: StateStarting, Event: EventBeginStart}
 	var order []string
 	var seen []Transition
-
 	chain := ObserverChain{
 		nil,
 		ObserverFunc(func(transition Transition) {
@@ -54,10 +48,23 @@ func TestObserverChain(t *testing.T) {
 
 	chain.ObserveLifecycleTransition(transition)
 
-	if got, want := order, []string{"first", "second"}; len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
-		t.Fatalf("observer order = %v, want %v", got, want)
+	assertDeepEqual(t, order, []string{"first", "second"})
+	if len(seen) != 2 {
+		t.Fatalf("seen len = %d, want 2", len(seen))
 	}
 	for _, got := range seen {
 		assertTransitionEqual(t, got, transition)
 	}
+}
+
+func TestNotifyObserversDelegatesToObserverChain(t *testing.T) {
+	t.Parallel()
+
+	transition := Transition{From: StateNew, To: StateStarting, Event: EventBeginStart}
+	observed := make(chan Transition, 1)
+	notifyObservers([]Observer{
+		ObserverFunc(func(transition Transition) { observed <- transition }),
+	}, transition)
+
+	assertTransitionEqual(t, mustReceiveTransition(t, observed), transition)
 }
