@@ -48,9 +48,11 @@ func IgnoreContextCanceled(err error) error {
 
 // IgnoreContextStop returns nil when err represents the observed stop of ctx.
 //
-// The function ignores errors matching context.Cause(ctx), ctx.Err, or one of
-// the standard context stop sentinels after ctx has stopped. It preserves
-// unrelated errors. IgnoreContextStop panics when ctx is nil.
+// The check is specific to the supplied context: err must match
+// context.Cause(ctx) or ctx.Err after ctx has stopped. Context errors from
+// nested operations are preserved when they do not match this context's own
+// stop, even if IsContextStop would classify them broadly. IgnoreContextStop
+// panics when ctx is nil.
 func IgnoreContextStop(ctx context.Context, err error) error {
 	requireContext(ctx, errNilIgnoreContext)
 
@@ -65,9 +67,6 @@ func IgnoreContextStop(ctx context.Context, err error) error {
 		return nil
 	}
 	if errors.Is(err, ctx.Err()) {
-		return nil
-	}
-	if IsContextStop(err) {
 		return nil
 	}
 

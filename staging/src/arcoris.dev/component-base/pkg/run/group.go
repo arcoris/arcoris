@@ -41,6 +41,9 @@ type Group struct {
 	names   map[string]struct{}
 	errs    []taskErrorRecord
 
+	// taskCancelSet records that fail-fast cancellation has already been claimed
+	// by the first task error recorded under mu. Later task errors are still
+	// appended for Wait, but they must not race to overwrite the context cause.
 	taskCancelSet bool
 
 	config groupConfig

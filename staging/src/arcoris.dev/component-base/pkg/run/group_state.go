@@ -41,7 +41,11 @@ func (g *Group) reserveTask(name string) uint64 {
 	return seq
 }
 
-// close prevents future task submissions.
+// close prevents future task submissions only.
+//
+// Closing is deliberately smaller than cancellation or joining: it does not
+// cancel the context, wait for running tasks, or build the cached Wait error.
+// Those responsibilities stay with Cancel, task-error handling, and Wait.
 func (g *Group) close() {
 	g.mu.Lock()
 	defer g.mu.Unlock()

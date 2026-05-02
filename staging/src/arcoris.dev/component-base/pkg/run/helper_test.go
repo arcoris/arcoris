@@ -19,7 +19,9 @@ package run
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
+	"time"
 )
 
 func TestWaitReturnsContextCause(t *testing.T) {
@@ -106,17 +108,61 @@ func TestIgnoreContextStopIgnoresContextErr(t *testing.T) {
 	}
 }
 
-func TestIgnoreContextStopIgnoresStandardStopsAfterContextStops(t *testing.T) {
+func TestIgnoreContextStopIgnoresCanceledContextErr(t *testing.T) {
 	t.Parallel()
 
-	ctx, cancel := context.WithCancelCause(context.Background())
-	cancel(errors.New("owner stop"))
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
 
 	if err := IgnoreContextStop(ctx, context.Canceled); err != nil {
 		t.Fatalf("IgnoreContextStop(context.Canceled) = %v, want nil", err)
 	}
+}
+
+func TestIgnoreContextStopIgnoresDeadlineContextErr(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+	defer cancel()
+
 	if err := IgnoreContextStop(ctx, context.DeadlineExceeded); err != nil {
 		t.Fatalf("IgnoreContextStop(context.DeadlineExceeded) = %v, want nil", err)
+	}
+}
+
+func TestIgnoreContextStopPreservesDeadlineForCanceledContext(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	err := IgnoreContextStop(ctx, context.DeadlineExceeded)
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("IgnoreContextStop = %v, want context.DeadlineExceeded", err)
+	}
+}
+
+func TestIgnoreContextStopPreservesCanceledForDeadlineContext(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+	defer cancel()
+
+	err := IgnoreContextStop(ctx, context.Canceled)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("IgnoreContextStop = %v, want context.Canceled", err)
+	}
+}
+
+func TestIgnoreContextStopIgnoresWrappedContextCause(t *testing.T) {
+	t.Parallel()
+
+	want := errors.New("owner stop")
+	ctx, cancel := context.WithCancelCause(context.Background())
+	cancel(want)
+
+	if err := IgnoreContextStop(ctx, fmt.Errorf("wrapped: %w", want)); err != nil {
+		t.Fatalf("IgnoreContextStop = %v, want nil", err)
 	}
 }
 
@@ -133,7 +179,7 @@ func TestIgnoreContextStopPreservesUnrelatedErrors(t *testing.T) {
 	t.Parallel()
 
 	ctx, cancel := context.WithCancelCause(context.Background())
-	cancel(context.Canceled)
+	cancel(errors.New("owner stop"))
 
 	errOther := errors.New("other")
 	if err := IgnoreContextStop(ctx, errOther); !errors.Is(err, errOther) {

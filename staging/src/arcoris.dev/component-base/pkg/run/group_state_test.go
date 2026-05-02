@@ -102,6 +102,10 @@ func TestGroupTaskReservationIsDeterministic(t *testing.T) {
 
 	group := NewGroup(context.Background())
 
+	// This test exercises the reservation primitive directly because it owns the
+	// submission sequence invariant. reserveTask increments the internal
+	// WaitGroup before a goroutine is started, so the test manually balances that
+	// accounting after inspecting the reserved names and sequence numbers.
 	first := group.reserveTask("first")
 	second := group.reserveTask("second")
 	group.wg.Done()

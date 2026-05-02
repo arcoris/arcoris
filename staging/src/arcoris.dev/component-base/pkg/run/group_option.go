@@ -23,14 +23,20 @@ const (
 	// ErrorModeJoin reports all task errors using errors.Join.
 	//
 	// Joined task errors are ordered by task submission order, not goroutine
-	// completion order. This is the default because stable diagnostics are more
-	// useful for component runtimes than race-dependent completion ordering.
+	// completion order. Join mode intentionally uses errors.Join even for one
+	// task error so callers can handle joined and single-failure results through
+	// the same Unwrap() []error and TaskErrors paths. This is the default because
+	// stable diagnostics are more useful for component runtimes than
+	// race-dependent completion ordering.
 	ErrorModeJoin ErrorMode = iota
 
 	// ErrorModeFirst reports only the first observed task error.
 	//
-	// This mode is useful for fail-fast component scopes where sibling tasks are
-	// expected to return context cancellation after the first task fails.
+	// "First" means the first task error recorded by the Group under its mutex.
+	// It is not sorted by task submission sequence and is not a wall-clock
+	// ordering guarantee. This mode is useful for fail-fast component scopes
+	// where sibling tasks are expected to return context cancellation after the
+	// first task fails.
 	ErrorModeFirst
 )
 
@@ -91,9 +97,10 @@ func WithCancelOnError(enabled bool) GroupOption {
 
 // WithErrorMode configures how Wait reports recorded task errors.
 //
-// ErrorModeJoin keeps all task failures and orders joined TaskError values by
-// submission sequence. ErrorModeFirst keeps only the first error observed by the
-// Group. WithErrorMode panics when mode is unknown.
+// ErrorModeJoin keeps all task failures, orders joined TaskError values by
+// submission sequence, and uses errors.Join even when only one task failed.
+// ErrorModeFirst keeps only the first error recorded by the Group under its
+// mutex. WithErrorMode panics when mode is unknown.
 func WithErrorMode(mode ErrorMode) GroupOption {
 	requireErrorMode(mode)
 

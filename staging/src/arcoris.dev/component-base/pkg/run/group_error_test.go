@@ -80,6 +80,14 @@ func TestGroupJoinSingleErrorStillReturnsJoinedTaskError(t *testing.T) {
 	if !errors.As(err, &taskErr) {
 		t.Fatal("Wait error does not expose TaskError")
 	}
+
+	taskErrs := TaskErrors(err)
+	if len(taskErrs) != 1 {
+		t.Fatalf("TaskErrors len = %d, want 1", len(taskErrs))
+	}
+	if taskErrs[0].Name != "worker" {
+		t.Fatalf("TaskError name = %q, want worker", taskErrs[0].Name)
+	}
 }
 
 func TestGroupErrorModeFirstReturnsFirstObservedError(t *testing.T) {
