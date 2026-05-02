@@ -138,7 +138,7 @@ func (e *Evaluator) Evaluate(ctx context.Context, target Target) (Report, error)
 		Target:   target,
 		Status:   status,
 		Observed: finished,
-		Duration: nonNegativeDuration(finished.Sub(started)),
+		Duration: nonNegativeDuration(e.clock.Since(started)),
 		Checks:   results,
 	}, nil
 }

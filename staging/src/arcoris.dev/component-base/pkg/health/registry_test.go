@@ -111,6 +111,57 @@ func TestRegistryRejectsInvalidInputAtomically(t *testing.T) {
 	}
 }
 
+func TestRegistryRegisterReturnsJoinedBatchValidationErrors(t *testing.T) {
+	t.Parallel()
+
+	var typedNil *typedNilChecker
+	emptyName := checkerFunc{name: "", fn: func(context.Context) Result { return Healthy("") }}
+	invalidName := checkerFunc{name: "bad-name", fn: func(context.Context) Result { return Healthy("bad-name") }}
+	firstDuplicate := mustCheck(t, "duplicate", Healthy("duplicate"))
+	secondDuplicate := mustCheck(t, "duplicate", Healthy("duplicate"))
+
+	registry := NewRegistry()
+	err := registry.Register(
+		TargetReady,
+		nil,
+		typedNil,
+		emptyName,
+		invalidName,
+		firstDuplicate,
+		secondDuplicate,
+	)
+
+	for _, target := range []error{
+		ErrNilChecker,
+		ErrEmptyCheckName,
+		ErrInvalidCheckName,
+		ErrDuplicateCheck,
+	} {
+		if !errors.Is(err, target) {
+			t.Fatalf("errors.Is(Register(), %v) = false; err=%v", target, err)
+		}
+	}
+
+	var nilCheckerErr NilCheckerError
+	if !errors.As(err, &nilCheckerErr) || nilCheckerErr.Index != 0 {
+		t.Fatalf("NilCheckerError = %+v, want index 0", nilCheckerErr)
+	}
+
+	var invalidNameErr InvalidCheckNameError
+	if !errors.As(err, &invalidNameErr) || !errors.Is(invalidNameErr.Err, ErrEmptyCheckName) {
+		t.Fatalf("InvalidCheckNameError = %+v, want empty-name cause", invalidNameErr)
+	}
+
+	var duplicateErr DuplicateCheckError
+	if !errors.As(err, &duplicateErr) || duplicateErr.Name != "duplicate" {
+		t.Fatalf("DuplicateCheckError = %+v, want duplicate name", duplicateErr)
+	}
+
+	if got := registry.Len(TargetReady); got != 0 {
+		t.Fatalf("Len() = %d, want 0 after joined validation failure", got)
+	}
+}
+
 func TestRegistryRejectsDuplicates(t *testing.T) {
 	t.Parallel()
 
@@ -136,15 +187,74 @@ func TestRegistryRejectsDuplicates(t *testing.T) {
 	}
 }
 
-func TestRegistryErrors(t *testing.T) {
+func TestRegistryRegisterReturnsJoinedExistingConflictsAtomically(t *testing.T) {
 	t.Parallel()
 
-	invalid := InvalidTargetError{Target: TargetUnknown}
-	duplicate := DuplicateCheckError{Target: TargetReady, Name: "storage"}
+	registry := NewRegistry()
+	first := mustCheck(t, "first", Healthy("first"))
+	second := mustCheck(t, "second", Healthy("second"))
+	third := mustCheck(t, "third", Healthy("third"))
 
-	mustErrorIs(t, invalid, ErrInvalidTarget)
-	mustErrorIs(t, duplicate, ErrDuplicateCheck)
-	if invalid.Error() == "" || duplicate.Error() == "" {
-		t.Fatal("registry error messages must be non-empty")
+	if err := registry.Register(TargetReady, first, second); err != nil {
+		t.Fatalf("Register(initial) = %v, want nil", err)
 	}
+
+	err := registry.Register(TargetReady, first, second, third)
+	if !errors.Is(err, ErrDuplicateCheck) {
+		t.Fatalf("Register(conflicts) = %v, want ErrDuplicateCheck", err)
+	}
+
+	children := joinedErrors(err)
+	if len(children) != 2 {
+		t.Fatalf("joined conflicts = %d, want 2; err=%v", len(children), err)
+	}
+	if got := registry.Len(TargetReady); got != 2 {
+		t.Fatalf("Len() = %d, want original 2 after conflict", got)
+	}
+	if registry.Has(TargetReady, "third") {
+		t.Fatal("conflicting batch registered non-conflicting checker")
+	}
+}
+
+func TestRegistryTargetsOrderIsDeterministic(t *testing.T) {
+	t.Parallel()
+
+	registry := NewRegistry()
+	if err := registry.Register(TargetReady, mustCheck(t, "ready", Healthy("ready"))); err != nil {
+		t.Fatalf("Register(ready) = %v, want nil", err)
+	}
+	if err := registry.Register(TargetStartup, mustCheck(t, "startup", Healthy("startup"))); err != nil {
+		t.Fatalf("Register(startup) = %v, want nil", err)
+	}
+	if err := registry.Register(TargetLive, mustCheck(t, "live", Healthy("live"))); err != nil {
+		t.Fatalf("Register(live) = %v, want nil", err)
+	}
+
+	want := []Target{TargetStartup, TargetLive, TargetReady}
+	got := registry.Targets()
+	if len(got) != len(want) {
+		t.Fatalf("Targets() length = %d, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("Targets()[%d] = %s, want %s", i, got[i], want[i])
+		}
+	}
+}
+
+type joinedError interface {
+	Unwrap() []error
+}
+
+func joinedErrors(err error) []error {
+	if err == nil {
+		return nil
+	}
+
+	joined, ok := err.(joinedError)
+	if !ok {
+		return nil
+	}
+
+	return joined.Unwrap()
 }

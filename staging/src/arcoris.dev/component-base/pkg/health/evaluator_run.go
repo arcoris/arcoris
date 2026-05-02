@@ -35,7 +35,7 @@ func (e *Evaluator) evaluateCheck(ctx context.Context, check Checker, timeout ti
 	result := e.runCheck(ctx, check, timeout)
 
 	finished := e.clock.Now()
-	duration := nonNegativeDuration(finished.Sub(started))
+	duration := nonNegativeDuration(e.clock.Since(started))
 
 	return normalizeEvaluatedResult(result, name, finished, duration)
 }

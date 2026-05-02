@@ -94,37 +94,7 @@ type Checker interface {
 // remain stable, low-cardinality, and safe to expose through diagnostics and
 // adapters.
 func ValidCheckName(name string) bool {
-	if len(name) == 0 || len(name) > maxCheckNameLength {
-		return false
-	}
-
-	previousUnderscore := false
-
-	for i := 0; i < len(name); i++ {
-		c := name[i]
-
-		switch {
-		case c >= 'a' && c <= 'z':
-			previousUnderscore = false
-
-		case c >= '0' && c <= '9':
-			if i == 0 {
-				return false
-			}
-			previousUnderscore = false
-
-		case c == '_':
-			if i == 0 || previousUnderscore {
-				return false
-			}
-			previousUnderscore = true
-
-		default:
-			return false
-		}
-	}
-
-	return !previousUnderscore
+	return validLowerSnakeIdentifier(name, maxCheckNameLength)
 }
 
 // ValidateCheckName validates name as a health check identifier.

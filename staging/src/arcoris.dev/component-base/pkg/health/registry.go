@@ -18,31 +18,7 @@ package health
 
 import (
 	"errors"
-	"fmt"
-	"reflect"
 	"sync"
-)
-
-var (
-	// ErrInvalidTarget identifies a target that cannot own registered checks.
-	//
-	// Registration requires a concrete health target. TargetUnknown is valid as a
-	// zero-value sentinel, but it is not concrete and MUST NOT be used as an
-	// evaluable registry key.
-	ErrInvalidTarget = errors.New("health: invalid target")
-
-	// ErrNilChecker identifies a nil checker passed to Registry.Register.
-	//
-	// A nil checker cannot provide a stable name or produce a Result. Registry
-	// rejects nil values at registration time so evaluator code never has to
-	// recover from nil entries.
-	ErrNilChecker = errors.New("health: nil checker")
-
-	// ErrDuplicateCheck identifies a repeated check name within one target.
-	//
-	// Check names are scoped by target. The same name MAY be registered for
-	// different targets when each target has its own health semantics.
-	ErrDuplicateCheck = errors.New("health: duplicate check")
 )
 
 // Registry owns the set of checks registered for health targets.
@@ -93,7 +69,9 @@ func NewRegistry() *Registry {
 // The same name MAY appear under different targets.
 //
 // Register is atomic for a single call: if any supplied checker is invalid or
-// duplicated, none of the supplied checkers are added to the registry.
+// duplicated, none of the supplied checkers are added to the registry. Batch
+// validation and existing-registry conflicts are aggregated with errors.Join so
+// callers can classify every child error with errors.Is and errors.As.
 func (r *Registry) Register(target Target, checks ...Checker) error {
 	if !target.IsConcrete() {
 		return InvalidTargetError{Target: target}
@@ -114,21 +92,24 @@ func (r *Registry) Register(target Target, checks ...Checker) error {
 		existingNames = make(map[string]struct{}, len(prepared))
 	}
 
+	var conflicts []error
 	for _, check := range prepared {
-		name := check.Name()
-		if _, exists := existingNames[name]; exists {
-			return DuplicateCheckError{
-				Target: target,
-				Name:   name,
-			}
+		if _, exists := existingNames[check.Name]; exists {
+			conflicts = append(conflicts, DuplicateCheckError{
+				Target:        target,
+				Name:          check.Name,
+				Index:         check.Index,
+				PreviousIndex: -1,
+			})
 		}
+	}
+	if len(conflicts) > 0 {
+		return errors.Join(conflicts...)
 	}
 
 	for _, check := range prepared {
-		name := check.Name()
-
-		r.checks[target] = append(r.checks[target], check)
-		existingNames[name] = struct{}{}
+		r.checks[target] = append(r.checks[target], check.Checker)
+		existingNames[check.Name] = struct{}{}
 	}
 
 	r.names[target] = existingNames
@@ -240,103 +221,4 @@ func (r *Registry) initLocked() {
 	if r.names == nil {
 		r.names = make(map[Target]map[string]struct{}, len(ConcreteTargets()))
 	}
-}
-
-// prepareChecks validates a registration batch before the registry is mutated.
-//
-// It validates nil values, check names, and duplicates inside the same Register
-// call. Conflicts with previously registered checks are checked by Register while
-// holding the registry lock.
-func prepareChecks(target Target, checks []Checker) ([]Checker, error) {
-	if len(checks) == 0 {
-		return nil, nil
-	}
-
-	prepared := make([]Checker, 0, len(checks))
-	seen := make(map[string]struct{}, len(checks))
-
-	for _, check := range checks {
-		if nilChecker(check) {
-			return nil, ErrNilChecker
-		}
-
-		name := check.Name()
-		if err := ValidateCheckName(name); err != nil {
-			return nil, err
-		}
-
-		if _, exists := seen[name]; exists {
-			return nil, DuplicateCheckError{
-				Target: target,
-				Name:   name,
-			}
-		}
-
-		seen[name] = struct{}{}
-		prepared = append(prepared, check)
-	}
-
-	return prepared, nil
-}
-
-// nilChecker reports whether check is nil, including typed nil interface values.
-//
-// Typed nil values can occur when a nil pointer to a concrete checker type is
-// assigned to Checker. Register rejects them because method calls on such values
-// can panic later during evaluation.
-func nilChecker(check Checker) bool {
-	if check == nil {
-		return true
-	}
-
-	value := reflect.ValueOf(check)
-	switch value.Kind() {
-	case reflect.Chan,
-		reflect.Func,
-		reflect.Interface,
-		reflect.Map,
-		reflect.Pointer,
-		reflect.Slice:
-		return value.IsNil()
-	default:
-		return false
-	}
-}
-
-// InvalidTargetError describes a non-concrete or invalid target used at a
-// registry boundary.
-//
-// InvalidTargetError is classified as ErrInvalidTarget. Callers should classify
-// it with errors.Is and inspect Target only for diagnostics.
-type InvalidTargetError struct {
-	Target Target
-}
-
-// Error returns the invalid target message.
-func (e InvalidTargetError) Error() string {
-	return fmt.Sprintf("%v: %s", ErrInvalidTarget, e.Target.String())
-}
-
-// Is reports whether target matches the invalid target classification.
-func (e InvalidTargetError) Is(target error) bool {
-	return target == ErrInvalidTarget
-}
-
-// DuplicateCheckError describes a repeated check name within one target.
-//
-// DuplicateCheckError is classified as ErrDuplicateCheck. Callers should
-// classify it with errors.Is and inspect Target or Name only for diagnostics.
-type DuplicateCheckError struct {
-	Target Target
-	Name   string
-}
-
-// Error returns the duplicate check message.
-func (e DuplicateCheckError) Error() string {
-	return fmt.Sprintf("%v: target=%s name=%q", ErrDuplicateCheck, e.Target.String(), e.Name)
-}
-
-// Is reports whether target matches the duplicate check classification.
-func (e DuplicateCheckError) Is(target error) bool {
-	return target == ErrDuplicateCheck
 }

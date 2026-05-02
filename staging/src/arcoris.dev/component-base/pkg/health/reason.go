@@ -184,38 +184,7 @@ func (r Reason) IsValid() bool {
 		return true
 	}
 
-	value := string(r)
-	if len(value) == 0 || len(value) > maxReasonLength {
-		return false
-	}
-
-	previousUnderscore := false
-
-	for i := 0; i < len(value); i++ {
-		c := value[i]
-
-		switch {
-		case c >= 'a' && c <= 'z':
-			previousUnderscore = false
-
-		case c >= '0' && c <= '9':
-			if i == 0 {
-				return false
-			}
-			previousUnderscore = false
-
-		case c == '_':
-			if i == 0 || previousUnderscore {
-				return false
-			}
-			previousUnderscore = true
-
-		default:
-			return false
-		}
-	}
-
-	return !previousUnderscore
+	return validLowerSnakeIdentifier(string(r), maxReasonLength)
 }
 
 // IsBuiltin reports whether r is one of the reasons defined by this package.

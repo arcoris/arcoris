@@ -54,3 +54,106 @@ type Report struct {
 	// full reports or mutate returned Results.
 	Checks []Result
 }
+
+// IsValid reports whether r is structurally valid as a health report.
+//
+// TargetUnknown is valid because Report is a plain value type and the zero
+// report represents "not evaluated yet." Concrete target requirements are
+// enforced by Evaluator and Registry at their ownership boundaries.
+func (r Report) IsValid() bool {
+	if !r.Target.IsValid() || !r.Status.IsValid() || r.Duration < 0 {
+		return false
+	}
+
+	for _, check := range r.Checks {
+		if !check.IsValid() {
+			return false
+		}
+	}
+
+	return true
+}
+
+// IsObserved reports whether r has a report-level observation timestamp.
+func (r Report) IsObserved() bool {
+	return !r.Observed.IsZero()
+}
+
+// Empty reports whether r contains no check results.
+func (r Report) Empty() bool {
+	return len(r.Checks) == 0
+}
+
+// Passed reports whether r.Status passes policy.
+func (r Report) Passed(policy TargetPolicy) bool {
+	return policy.Passes(r.Status)
+}
+
+// Failed reports whether r.Status fails policy.
+func (r Report) Failed(policy TargetPolicy) bool {
+	return policy.Fails(r.Status)
+}
+
+// Check returns the first check result with name.
+//
+// Reports preserve registry order and registry names are unique per target, so a
+// report produced by Evaluator can contain at most one result for a valid check
+// name. The method still returns the first match defensively because Report is a
+// plain caller-owned value.
+func (r Report) Check(name string) (Result, bool) {
+	for _, check := range r.Checks {
+		if check.Name == name {
+			return check, true
+		}
+	}
+
+	return Result{}, false
+}
+
+// ChecksCopy returns a defensive copy of r.Checks.
+func (r Report) ChecksCopy() []Result {
+	if len(r.Checks) == 0 {
+		return nil
+	}
+
+	checks := make([]Result, len(r.Checks))
+	copy(checks, r.Checks)
+
+	return checks
+}
+
+// FailedChecks returns check results whose statuses fail policy.
+func (r Report) FailedChecks(policy TargetPolicy) []Result {
+	var failed []Result
+	for _, check := range r.Checks {
+		if policy.Fails(check.Status) {
+			failed = append(failed, check)
+		}
+	}
+
+	return failed
+}
+
+// DegradedChecks returns check results with StatusDegraded.
+func (r Report) DegradedChecks() []Result {
+	var degraded []Result
+	for _, check := range r.Checks {
+		if check.Status == StatusDegraded {
+			degraded = append(degraded, check)
+		}
+	}
+
+	return degraded
+}
+
+// UnknownChecks returns check results with StatusUnknown.
+func (r Report) UnknownChecks() []Result {
+	var unknown []Result
+	for _, check := range r.Checks {
+		if check.Status == StatusUnknown {
+			unknown = append(unknown, check)
+		}
+	}
+
+	return unknown
+}

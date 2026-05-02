@@ -93,6 +93,7 @@
 //
 //   - check.go owns Checker and check name validation;
 //   - check_func.go owns function-backed checker adapters;
+//   - identifier.go owns shared lower_snake_case identifier syntax;
 //   - status.go owns Status values and status ordering;
 //   - reason.go owns Reason values and reason classification;
 //   - target.go owns Target values and target enumeration;
@@ -100,6 +101,8 @@
 //   - report.go owns target-level Report values;
 //   - policy.go owns target status policy;
 //   - registry.go owns target-scoped check registration;
+//   - registry_error.go owns registry error sentinels and typed errors;
+//   - registry_validate.go owns registration batch validation;
 //   - gate.go owns mutable owner-published checker state;
 //   - shutdown.go owns shutdown and drain check adapters;
 //   - evaluator.go owns Evaluator construction and public evaluation;

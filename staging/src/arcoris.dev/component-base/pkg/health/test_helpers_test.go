@@ -51,8 +51,9 @@ func (checker *typedNilChecker) Check(context.Context) Result {
 }
 
 type stepClock struct {
-	values []time.Time
-	next   int
+	values  []time.Time
+	next    int
+	current time.Time
 }
 
 func newStepClock(values ...time.Time) *stepClock {
@@ -64,16 +65,19 @@ func (clock *stepClock) Now() time.Time {
 		return time.Time{}
 	}
 	if clock.next >= len(clock.values) {
-		return clock.values[len(clock.values)-1]
+		clock.current = clock.values[len(clock.values)-1]
+		return clock.current
 	}
 
 	value := clock.values[clock.next]
 	clock.next++
+	clock.current = value
+
 	return value
 }
 
 func (clock *stepClock) Since(ts time.Time) time.Duration {
-	return clock.Now().Sub(ts)
+	return clock.current.Sub(ts)
 }
 
 func mustCheck(t *testing.T, name string, result Result) Checker {
