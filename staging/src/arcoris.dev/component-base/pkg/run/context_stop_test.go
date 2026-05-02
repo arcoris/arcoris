@@ -24,37 +24,6 @@ import (
 	"time"
 )
 
-func TestWaitReturnsContextCause(t *testing.T) {
-	t.Parallel()
-
-	want := errors.New("stop")
-	ctx, cancel := context.WithCancelCause(context.Background())
-	cancel(want)
-
-	if err := Wait(ctx); !errors.Is(err, want) {
-		t.Fatalf("Wait error = %v, want %v", err, want)
-	}
-}
-
-func TestWaitFallsBackToContextErr(t *testing.T) {
-	t.Parallel()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-
-	if err := Wait(ctx); !errors.Is(err, context.Canceled) {
-		t.Fatalf("Wait error = %v, want context.Canceled", err)
-	}
-}
-
-func TestWaitRejectsNilContext(t *testing.T) {
-	t.Parallel()
-
-	mustPanicWith(t, errNilWaitContext, func() {
-		Wait(nil)
-	})
-}
-
 func TestIsContextStop(t *testing.T) {
 	t.Parallel()
 

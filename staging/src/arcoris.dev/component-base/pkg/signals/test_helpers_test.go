@@ -111,10 +111,12 @@ func (n *fakeNotifier) emit(sig os.Signal) bool {
 		if n.stoppedChannels[ch] {
 			continue
 		}
-		if signals, ok := n.registered[ch]; ok {
-			if _, ok := signals[key]; ok {
-				targets = append(targets, ch)
-			}
+		registered, ok := n.registered[ch]
+		if !ok {
+			continue
+		}
+		if _, ok := registered[key]; ok {
+			targets = append(targets, ch)
 		}
 	}
 	n.mu.Unlock()

@@ -115,15 +115,3 @@ func TestContextStopErrorPreservesDeadlineCause(t *testing.T) {
 		t.Fatalf("contextStopError does not preserve custom deadline cause")
 	}
 }
-
-func TestContextStopCauseFallsBackToContextError(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-
-	err := ctx.Err()
-	cause := contextStopCause(ctx, err)
-
-	if !errors.Is(cause, context.Canceled) {
-		t.Fatalf("contextStopCause did not preserve context.Canceled")
-	}
-}

@@ -150,7 +150,9 @@
 //   - group_error.go owns internal task error recording, ordering, and Wait
 //     error construction;
 //   - error.go owns ErrTaskFailed, TaskError, and TaskErrors;
-//   - helper.go owns context-first helper functions;
+//   - wait.go owns the context-blocking sentinel task helper;
+//   - context_stop.go owns context-stop classification and ignore helpers;
+//   - context_cause.go owns package-local context cause fallback behavior;
 //   - validate.go owns package-local validation helpers and stable panic
 //     messages;
 //   - nocopy.go owns the static-analysis copy marker.

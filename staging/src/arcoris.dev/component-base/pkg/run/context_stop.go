@@ -21,18 +21,6 @@ import (
 	"errors"
 )
 
-// Wait blocks until ctx is done and returns the context cancellation cause.
-//
-// If ctx has no explicit cause, Wait falls back to ctx.Err. Wait panics when ctx
-// is nil. Wait is useful as a Task when a Group should include a context-driven
-// sentinel task.
-func Wait(ctx context.Context) error {
-	requireContext(ctx, errNilWaitContext)
-
-	<-ctx.Done()
-	return contextCause(ctx)
-}
-
 // IsContextStop reports whether err is a standard context stop error.
 func IsContextStop(err error) bool {
 	return errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
@@ -71,12 +59,4 @@ func IgnoreContextStop(ctx context.Context, err error) error {
 	}
 
 	return err
-}
-
-// contextCause returns ctx's cancellation cause with a fallback to ctx.Err.
-func contextCause(ctx context.Context) error {
-	if cause := context.Cause(ctx); cause != nil {
-		return cause
-	}
-	return ctx.Err()
 }

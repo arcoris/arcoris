@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 )
 
 // TestContextStopErrorReturnsNilForActiveContext verifies that active contexts
@@ -95,44 +94,4 @@ func TestContextStopErrorPreservesDeadlineCause(t *testing.T) {
 	mustBeInterrupted(t, err)
 	mustMatch(t, err, cause)
 	mustMatch(t, err, context.DeadlineExceeded)
-}
-
-// TestContextStopCauseFallsBackToErr verifies the private fallback behavior used
-// for unusual context implementations that do not expose a richer cause.
-func TestContextStopCauseFallsBackToErr(t *testing.T) {
-	t.Parallel()
-
-	err := errors.New("context stopped")
-	ctx := contextWithoutCause{err: err}
-
-	if got := contextStopCause(ctx, err); got != err {
-		t.Fatalf("contextStopCause(ctx, err) = %v, want %v", got, err)
-	}
-}
-
-// contextWithoutCause is a minimal custom context used to exercise the fallback
-// path in contextStopCause.
-type contextWithoutCause struct {
-	// err is the value returned by Err.
-	err error
-}
-
-// Deadline reports that this test context has no deadline.
-func (c contextWithoutCause) Deadline() (time.Time, bool) {
-	return time.Time{}, false
-}
-
-// Done returns nil because this test context is inspected only through Err.
-func (c contextWithoutCause) Done() <-chan struct{} {
-	return nil
-}
-
-// Err returns the configured test error.
-func (c contextWithoutCause) Err() error {
-	return c.err
-}
-
-// Value returns nil for every key because this test context carries no values.
-func (c contextWithoutCause) Value(any) any {
-	return nil
 }

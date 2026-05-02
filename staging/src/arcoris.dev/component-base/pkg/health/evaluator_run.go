@@ -73,7 +73,7 @@ func (e *Evaluator) runCheck(ctx context.Context, check Checker, timeout time.Du
 		return result
 
 	case <-checkCtx.Done():
-		return interruptedResult(check.Name(), checkCtx.Err())
+		return interruptedResult(check.Name(), checkCtx)
 	}
 }
 
@@ -96,20 +96,26 @@ func callCheck(ctx context.Context, check Checker) (result Result) {
 }
 
 // interruptedResult converts context interruption into an unknown health result.
-func interruptedResult(name string, err error) Result {
+func interruptedResult(name string, ctx context.Context) Result {
+	err := ctx.Err()
+	cause := context.Cause(ctx)
+	if cause == nil {
+		cause = err
+	}
+
 	if errors.Is(err, context.DeadlineExceeded) {
 		return Unknown(
 			name,
 			ReasonTimeout,
 			"health check timed out",
-		).WithCause(err)
+		).WithCause(cause)
 	}
 
 	return Unknown(
 		name,
 		ReasonCanceled,
 		"health check canceled",
-	).WithCause(err)
+	).WithCause(cause)
 }
 
 // normalizeEvaluatedResult applies evaluator-owned boundary normalization.

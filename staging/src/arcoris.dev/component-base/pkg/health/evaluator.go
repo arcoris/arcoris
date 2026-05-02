@@ -66,14 +66,8 @@ func NewEvaluator(registry *Registry, opts ...EvaluatorOption) (*Evaluator, erro
 	}
 
 	cfg := defaultEvaluatorConfig()
-
-	for _, opt := range opts {
-		if opt == nil {
-			return nil, ErrNilEvaluatorOption
-		}
-		if err := opt(&cfg); err != nil {
-			return nil, err
-		}
+	if err := applyEvaluatorOptions(&cfg, opts...); err != nil {
+		return nil, err
 	}
 
 	targetTimeouts := make(map[Target]time.Duration, len(cfg.targetTimeouts))

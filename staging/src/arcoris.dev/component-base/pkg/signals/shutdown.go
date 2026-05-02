@@ -178,7 +178,8 @@ func (c *ShutdownController) run(parent context.Context) {
 		}
 
 		event := Event{Signal: sig}
-		if !c.firstRecorded() && Contains(c.shutdownSignals, sig) {
+		hasFirst := c.firstRecorded()
+		if !hasFirst && Contains(c.shutdownSignals, sig) {
 			c.recordFirst(event)
 			c.cancel(NewSignalError(sig))
 
@@ -189,7 +190,7 @@ func (c *ShutdownController) run(parent context.Context) {
 			continue
 		}
 
-		if c.firstRecorded() && c.escalationEnabled && Contains(c.escalationSignals, sig) {
+		if hasFirst && c.escalationEnabled && Contains(c.escalationSignals, sig) {
 			c.deliverEscalation(event)
 		}
 	}

@@ -43,12 +43,12 @@ func TestTransitionTableContainsAuthoritativeRules(t *testing.T) {
 	// transitionTable is the authoritative lifecycle graph. Lookup helpers may
 	// expose it differently, but this test owns the exact table contents.
 	for _, rule := range expectedTransitionRules {
-		target := transitionTable[int(rule.From)][int(rule.Event)]
-		if !target.ok {
+		entry := transitionTable[int(rule.From)][int(rule.Event)]
+		if !entry.ok {
 			t.Fatalf("transitionTable[%s][%s].ok = false, want true", rule.From, rule.Event)
 		}
-		if target.to != rule.To {
-			t.Fatalf("transitionTable[%s][%s].to = %s, want %s", rule.From, rule.Event, target.to, rule.To)
+		if entry.to != rule.To {
+			t.Fatalf("transitionTable[%s][%s].to = %s, want %s", rule.From, rule.Event, entry.to, rule.To)
 		}
 	}
 

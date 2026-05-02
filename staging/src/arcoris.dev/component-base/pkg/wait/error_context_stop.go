@@ -19,6 +19,8 @@ package wait
 import (
 	"context"
 	"errors"
+
+	"arcoris.dev/component-base/pkg/internal/contextstop"
 )
 
 // contextStopError converts a completed context into a wait-owned stop error.
@@ -42,37 +44,10 @@ func contextStopError(ctx context.Context) error {
 		return nil
 	}
 
-	cause := contextStopCause(ctx, err)
+	cause := contextstop.Cause(ctx, err)
 	if errors.Is(err, context.DeadlineExceeded) {
 		return NewTimeoutError(cause)
 	}
 
 	return NewInterruptedError(cause)
-}
-
-// contextStopCause returns the most specific cause available for a completed
-// context.
-//
-// context.Cause returns a cancellation cause when callers use
-// context.WithCancelCause, context.WithDeadlineCause, or context.WithTimeoutCause.
-// For ordinary contexts, it returns the same sentinel as ctx.Err after the
-// context is done.
-//
-// When the caller supplied a custom cause, ctx.Err still carries the standard
-// context sentinel. Joining the two preserves both diagnostics and matching:
-// errors.Is can still find context.Canceled or context.DeadlineExceeded, and it
-// can also find the custom cause.
-//
-// The fallback to err keeps the helper robust for custom Context implementations
-// that may not expose a richer cause.
-func contextStopCause(ctx context.Context, err error) error {
-	cause := context.Cause(ctx)
-	if cause == nil {
-		return err
-	}
-	if errors.Is(cause, err) {
-		return cause
-	}
-
-	return errors.Join(err, cause)
 }

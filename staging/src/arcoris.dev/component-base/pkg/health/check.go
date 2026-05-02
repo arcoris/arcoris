@@ -26,8 +26,8 @@ import (
 // The limit is deliberately small to keep check names stable, low-cardinality,
 // and safe to expose through diagnostics and adapters. Dynamic details such as
 // resource IDs, addresses, timestamps, and raw error fragments do not belong in
-// check names. They belong in reasons, messages, logs, metrics labels, and other dynamic
-// details instead.
+// check names. They belong in reasons, messages, logs, metrics labels, or other
+// owner-controlled diagnostic fields instead.
 const maxCheckNameLength = 128
 
 // ErrEmptyCheckName identifies an empty health check name.
