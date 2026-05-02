@@ -58,10 +58,38 @@ func TestGroupConfigAppliesOptionsAndIgnoresNil(t *testing.T) {
 	}
 }
 
+func TestGroupConfigAppliesOptionsInOrder(t *testing.T) {
+	t.Parallel()
+
+	config := newGroupConfig(
+		WithCancelOnError(false),
+		WithCancelOnError(true),
+		WithErrorMode(ErrorModeFirst),
+		WithErrorMode(ErrorModeJoin),
+	)
+
+	if !config.cancelOnError {
+		t.Fatal("cancelOnError = false, want later true option")
+	}
+	if config.errorMode != ErrorModeJoin {
+		t.Fatalf("errorMode = %v, want later ErrorModeJoin option", config.errorMode)
+	}
+}
+
 func TestWithErrorModeRejectsInvalidMode(t *testing.T) {
 	t.Parallel()
 
 	mustPanicWith(t, errInvalidErrorMode, func() {
 		WithErrorMode(ErrorMode(99))
+	})
+}
+
+func TestGroupConfigRejectsInvalidErrorMode(t *testing.T) {
+	t.Parallel()
+
+	mustPanicWith(t, errInvalidErrorMode, func() {
+		newGroupConfig(func(config *groupConfig) {
+			config.errorMode = ErrorMode(99)
+		})
 	})
 }

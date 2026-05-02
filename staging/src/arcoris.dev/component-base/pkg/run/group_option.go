@@ -16,12 +16,6 @@
 
 package run
 
-const (
-	// errInvalidErrorMode is the stable diagnostic text used when an unknown
-	// ErrorMode is supplied to Group configuration.
-	errInvalidErrorMode = "run: invalid error mode"
-)
-
 // ErrorMode controls how Group.Wait reports recorded task errors.
 type ErrorMode uint8
 
@@ -96,6 +90,10 @@ func WithCancelOnError(enabled bool) GroupOption {
 }
 
 // WithErrorMode configures how Wait reports recorded task errors.
+//
+// ErrorModeJoin keeps all task failures and orders joined TaskError values by
+// submission sequence. ErrorModeFirst keeps only the first error observed by the
+// Group. WithErrorMode panics when mode is unknown.
 func WithErrorMode(mode ErrorMode) GroupOption {
 	requireErrorMode(mode)
 

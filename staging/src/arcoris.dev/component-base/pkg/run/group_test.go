@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 )
 
 func TestNewGroupRejectsNilParent(t *testing.T) {
@@ -34,12 +35,35 @@ func TestGroupContextAndDoneAreStable(t *testing.T) {
 	t.Parallel()
 
 	group := NewGroup(context.Background())
+	first := group.Context()
 
-	if group.Context() == nil {
+	if first == nil {
 		t.Fatal("Context returned nil")
 	}
-	if group.Done() != group.Context().Done() {
+	if group.Context() != first {
+		t.Fatal("Context did not return a stable context")
+	}
+	if group.Done() != first.Done() {
 		t.Fatal("Done did not return Context().Done()")
+	}
+}
+
+func TestNewGroupCreatesChildContext(t *testing.T) {
+	t.Parallel()
+
+	parent, cancel := context.WithCancelCause(context.Background())
+	group := NewGroup(parent)
+
+	if group.Context() == parent {
+		t.Fatal("NewGroup returned parent context directly")
+	}
+
+	want := errors.New("parent stop")
+	cancel(want)
+	mustClose(t, group.Done())
+
+	if !errors.Is(context.Cause(group.Context()), want) {
+		t.Fatalf("context cause = %v, want %v", context.Cause(group.Context()), want)
 	}
 }
 
@@ -128,7 +152,7 @@ func TestGroupWithCancelOnErrorDisabledDoesNotCancelOnTaskError(t *testing.T) {
 	})
 
 	mustClose(t, failed)
-	mustNotClose(t, cancelled)
+	mustNotCloseNow(t, cancelled)
 
 	close(release)
 
@@ -151,6 +175,9 @@ func TestGroupCancelCancelsContextWithoutTaskError(t *testing.T) {
 
 	if err := group.Wait(); err != nil {
 		t.Fatalf("Wait error = %v, want nil", err)
+	}
+	if taskErrs := TaskErrors(group.Wait()); len(taskErrs) != 0 {
+		t.Fatalf("Cancel recorded task errors: %+v", taskErrs)
 	}
 	if !errors.Is(context.Cause(group.Context()), context.Canceled) {
 		t.Fatalf("context cause = %v, want context.Canceled", context.Cause(group.Context()))
@@ -185,8 +212,49 @@ func TestGroupWaitIsIdempotent(t *testing.T) {
 	if first == nil || second == nil {
 		t.Fatal("Wait returned nil, want error")
 	}
-	if first.Error() != second.Error() {
-		t.Fatalf("Wait results differ: first=%v second=%v", first, second)
+	if first != second {
+		t.Fatalf("Wait did not return cached error: first=%p second=%p", first, second)
+	}
+}
+
+func TestGroupWaitWaitsForAllTasksAfterFirstError(t *testing.T) {
+	t.Parallel()
+
+	group := NewGroup(context.Background())
+	fail := make(chan struct{})
+	release := make(chan struct{})
+	secondDone := make(chan struct{})
+	want := errors.New("boom")
+
+	group.Go("failing", func(ctx context.Context) error {
+		<-fail
+		return want
+	})
+	group.Go("cleanup", func(ctx context.Context) error {
+		<-release
+		close(secondDone)
+		return nil
+	})
+
+	waitDone := make(chan error, 1)
+	go func() {
+		waitDone <- group.Wait()
+	}()
+
+	close(fail)
+	mustClose(t, group.Done())
+	mustNotCloseNow(t, waitDone)
+
+	close(release)
+	mustClose(t, secondDone)
+
+	select {
+	case err := <-waitDone:
+		if !errors.Is(err, want) {
+			t.Fatalf("Wait error = %v, want %v", err, want)
+		}
+	case <-time.After(testTimeout):
+		t.Fatal("timed out waiting for Wait")
 	}
 }
 
@@ -254,12 +322,33 @@ func TestGroupRejectsGoAfterCancel(t *testing.T) {
 func TestGroupRejectsNilAndUninitializedReceiver(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilGroup, func() {
-		var group *Group
-		group.Wait()
-	})
-	mustPanicWith(t, errUninitializedGroup, func() {
-		var group Group
-		group.Wait()
-	})
+	tests := []struct {
+		name string
+		fn   func(*Group)
+	}{
+		{name: "Go", fn: func(g *Group) { g.Go("task", func(ctx context.Context) error { return nil }) }},
+		{name: "Context", fn: func(g *Group) { g.Context() }},
+		{name: "Done", fn: func(g *Group) { g.Done() }},
+		{name: "Cancel", fn: func(g *Group) { g.Cancel(nil) }},
+		{name: "Wait", fn: func(g *Group) { g.Wait() }},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run("nil "+tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mustPanicWith(t, errNilGroup, func() {
+				tt.fn(nil)
+			})
+		})
+		t.Run("zero "+tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mustPanicWith(t, errUninitializedGroup, func() {
+				var group Group
+				tt.fn(&group)
+			})
+		})
+	}
 }

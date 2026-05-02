@@ -21,24 +21,6 @@ import (
 	"sync"
 )
 
-const (
-	// errNilGroupParent is the stable diagnostic text used when NewGroup
-	// receives a nil parent context.
-	errNilGroupParent = "run: nil group parent context"
-
-	// errNilGroup is the stable diagnostic text used when a Group method is
-	// called on a nil receiver.
-	errNilGroup = "run: nil group"
-
-	// errUninitializedGroup is the stable diagnostic text used when a Group
-	// method is called on a zero-value Group.
-	errUninitializedGroup = "run: uninitialized group"
-
-	// errGroupClosed is the stable diagnostic text used when Go is called after
-	// the group has been closed by Wait, Cancel, or fail-fast cancellation.
-	errGroupClosed = "run: group closed"
-)
-
 // Group owns a single context-first runtime task scope.
 //
 // A Group is created with NewGroup, starts named tasks with Go, exposes the
@@ -58,6 +40,8 @@ type Group struct {
 	nextSeq uint64
 	names   map[string]struct{}
 	errs    []taskErrorRecord
+
+	taskCancelSet bool
 
 	config groupConfig
 
@@ -108,12 +92,19 @@ func (g *Group) Go(name string, task Task) {
 }
 
 // Context returns the context shared by all tasks in the Group.
+//
+// The returned context is stable for the lifetime of the Group. It is cancelled
+// by owner Cancel, by the first task error when cancel-on-error is enabled, by
+// the parent context, or by Wait after all started tasks have completed.
 func (g *Group) Context() context.Context {
 	requireGroup(g)
 	return g.ctx
 }
 
 // Done returns the Group context Done channel.
+//
+// Done is equivalent to Context().Done and is provided for owners that only need
+// to select on group cancellation.
 func (g *Group) Done() <-chan struct{} {
 	requireGroup(g)
 	return g.ctx.Done()

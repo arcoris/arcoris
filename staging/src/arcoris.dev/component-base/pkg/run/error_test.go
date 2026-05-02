@@ -19,6 +19,7 @@ package run
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -37,6 +38,9 @@ func TestTaskErrorMatchesErrTaskFailedAndUnwrapsOriginal(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "worker") {
 		t.Fatalf("TaskError string = %q, want task name", err.Error())
+	}
+	if !strings.Contains(err.Error(), original.Error()) {
+		t.Fatalf("TaskError string = %q, want original error", err.Error())
 	}
 }
 
@@ -62,6 +66,29 @@ func TestTaskErrorsExtractsJoinedTaskErrors(t *testing.T) {
 	}
 	if got[0].Name != "first" || got[1].Name != "second" {
 		t.Fatalf("TaskErrors = %+v, want first then second", got)
+	}
+}
+
+func TestTaskErrorsWalksNestedJoinTrees(t *testing.T) {
+	t.Parallel()
+
+	first := TaskError{Name: "first", Err: context.Canceled}
+	second := TaskError{Name: "second", Err: context.DeadlineExceeded}
+	third := &TaskError{Name: "third", Err: errors.New("third")}
+
+	got := TaskErrors(errors.Join(
+		errors.New("other"),
+		errors.Join(first, fmt.Errorf("wrapped: %w", second)),
+		third,
+	))
+
+	if len(got) != 3 {
+		t.Fatalf("TaskErrors len = %d, want 3", len(got))
+	}
+	for i, want := range []string{"first", "second", "third"} {
+		if got[i].Name != want {
+			t.Fatalf("TaskErrors[%d].Name = %q, want %q", i, got[i].Name, want)
+		}
 	}
 }
 

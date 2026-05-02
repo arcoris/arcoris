@@ -21,38 +21,64 @@ import (
 	"testing"
 )
 
+func TestValidationHelpersAcceptValidInputs(t *testing.T) {
+	t.Parallel()
+
+	requireValidationMessage("valid")
+	requireContext(context.Background(), "valid context")
+	requireGroup(NewGroup(context.Background()))
+	requireTask(func(ctx context.Context) error { return nil })
+	requireTaskName("worker")
+	requireErrorMode(ErrorModeJoin)
+	requireErrorMode(ErrorModeFirst)
+}
+
 func TestValidationHelpersRejectMissingDiagnosticText(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilValidationMessage, func() {
-		requireContext(context.Background(), "")
-	})
+	tests := []struct {
+		name string
+		fn   func()
+	}{
+		{name: "message", fn: func() { requireValidationMessage("") }},
+		{name: "context", fn: func() { requireContext(context.Background(), "") }},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mustPanicWith(t, errNilValidationMessage, tt.fn)
+		})
+	}
 }
 
 func TestValidationHelpersRejectInvalidInputs(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, "nil context", func() {
-		requireContext(nil, "nil context")
-	})
-	mustPanicWith(t, errNilGroup, func() {
-		requireGroup(nil)
-	})
-	mustPanicWith(t, errUninitializedGroup, func() {
-		requireGroup(&Group{})
-	})
-	mustPanicWith(t, errNilTask, func() {
-		requireTask(nil)
-	})
-	mustPanicWith(t, errEmptyTaskName, func() {
-		requireTaskName("")
-	})
-	mustPanicWith(t, errUntrimmedTaskName, func() {
-		requireTaskName(" worker")
-	})
-	mustPanicWith(t, errInvalidErrorMode, func() {
-		requireErrorMode(ErrorMode(99))
-	})
+	tests := []struct {
+		name    string
+		message string
+		fn      func()
+	}{
+		{name: "nil context", message: "nil context", fn: func() { requireContext(nil, "nil context") }},
+		{name: "nil group", message: errNilGroup, fn: func() { requireGroup(nil) }},
+		{name: "uninitialized group", message: errUninitializedGroup, fn: func() { requireGroup(&Group{}) }},
+		{name: "nil task", message: errNilTask, fn: func() { requireTask(nil) }},
+		{name: "empty task name", message: errEmptyTaskName, fn: func() { requireTaskName("") }},
+		{name: "untrimmed task name", message: errUntrimmedTaskName, fn: func() { requireTaskName(" worker") }},
+		{name: "invalid error mode", message: errInvalidErrorMode, fn: func() { requireErrorMode(ErrorMode(99)) }},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mustPanicWith(t, tt.message, tt.fn)
+		})
+	}
 }
 
 func TestNoCopyMarkerMethodsAreCallable(t *testing.T) {

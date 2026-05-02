@@ -34,25 +34,29 @@ type taskErrorRecord struct {
 // recordTaskError records err as a named task failure.
 //
 // When cancel-on-error is enabled, the Group is closed for new submissions and
-// the group context is cancelled with the TaskError. The context cancellation
-// function is idempotent, so only the first cancellation cause is retained by the
-// context package.
+// the first recorded task error reserves fail-fast cancellation. Cancellation is
+// invoked after releasing the Group mutex so context cancellation cannot run
+// owner callbacks while submission and error state are locked.
 func (g *Group) recordTaskError(seq uint64, name string, err error) {
 	if err == nil {
 		return
 	}
 
 	taskErr := TaskError{Name: name, Err: err}
+	shouldCancel := false
 
 	g.mu.Lock()
 	g.errs = append(g.errs, taskErrorRecord{seq: seq, err: taskErr})
-	cancelOnError := g.config.cancelOnError
-	if cancelOnError {
+	if g.config.cancelOnError {
 		g.closed = true
+		if !g.taskCancelSet {
+			g.taskCancelSet = true
+			shouldCancel = true
+		}
 	}
 	g.mu.Unlock()
 
-	if cancelOnError {
+	if shouldCancel {
 		g.cancel(taskErr)
 	}
 }
@@ -75,10 +79,6 @@ func (g *Group) buildWaitError() error {
 	sort.Slice(records, func(i, j int) bool {
 		return records[i].seq < records[j].seq
 	})
-
-	if len(records) == 1 {
-		return records[0].err
-	}
 
 	errs := make([]error, 0, len(records))
 	for _, record := range records {

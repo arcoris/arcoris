@@ -16,12 +16,6 @@
 
 package run
 
-const (
-	// errDuplicateTaskName is the stable diagnostic text used when a Group
-	// receives two tasks with the same name.
-	errDuplicateTaskName = "run: duplicate task name"
-)
-
 // reserveTask reserves name, assigns a submission sequence, and increments the
 // internal WaitGroup before the goroutine is started.
 //

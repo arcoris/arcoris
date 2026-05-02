@@ -18,6 +18,7 @@ package run
 
 import (
 	"fmt"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -42,7 +43,7 @@ func mustPanicWith(t *testing.T, want string, fn func()) {
 	fn()
 }
 
-func mustClose(t *testing.T, ch <-chan struct{}) {
+func mustClose[T any](t *testing.T, ch <-chan T) {
 	t.Helper()
 
 	select {
@@ -52,12 +53,35 @@ func mustClose(t *testing.T, ch <-chan struct{}) {
 	}
 }
 
-func mustNotClose(t *testing.T, ch <-chan struct{}) {
+func mustNotCloseNow[T any](t *testing.T, ch <-chan T) {
 	t.Helper()
 
 	select {
 	case <-ch:
 		t.Fatal("channel closed unexpectedly")
-	case <-time.After(20 * time.Millisecond):
+	default:
+	}
+}
+
+func waitGroupClosed(t *testing.T, group *Group) {
+	t.Helper()
+
+	deadline := time.NewTimer(testTimeout)
+	defer deadline.Stop()
+
+	for {
+		group.mu.Lock()
+		closed := group.closed
+		group.mu.Unlock()
+		if closed {
+			return
+		}
+
+		select {
+		case <-deadline.C:
+			t.Fatal("timed out waiting for group close")
+		default:
+			runtime.Gosched()
+		}
 	}
 }

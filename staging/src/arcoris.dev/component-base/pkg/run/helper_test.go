@@ -34,6 +34,17 @@ func TestWaitReturnsContextCause(t *testing.T) {
 	}
 }
 
+func TestWaitFallsBackToContextErr(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	if err := Wait(ctx); !errors.Is(err, context.Canceled) {
+		t.Fatalf("Wait error = %v, want context.Canceled", err)
+	}
+}
+
 func TestWaitRejectsNilContext(t *testing.T) {
 	t.Parallel()
 
@@ -62,6 +73,9 @@ func TestIgnoreContextCanceled(t *testing.T) {
 	if err := IgnoreContextCanceled(context.Canceled); err != nil {
 		t.Fatalf("IgnoreContextCanceled = %v, want nil", err)
 	}
+	if err := IgnoreContextCanceled(context.DeadlineExceeded); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("IgnoreContextCanceled = %v, want deadline", err)
+	}
 
 	errOther := errors.New("other")
 	if err := IgnoreContextCanceled(errOther); !errors.Is(err, errOther) {
@@ -78,6 +92,40 @@ func TestIgnoreContextStopIgnoresObservedContextCause(t *testing.T) {
 
 	if err := IgnoreContextStop(ctx, want); err != nil {
 		t.Fatalf("IgnoreContextStop = %v, want nil", err)
+	}
+}
+
+func TestIgnoreContextStopIgnoresContextErr(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	if err := IgnoreContextStop(ctx, ctx.Err()); err != nil {
+		t.Fatalf("IgnoreContextStop = %v, want nil", err)
+	}
+}
+
+func TestIgnoreContextStopIgnoresStandardStopsAfterContextStops(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancelCause(context.Background())
+	cancel(errors.New("owner stop"))
+
+	if err := IgnoreContextStop(ctx, context.Canceled); err != nil {
+		t.Fatalf("IgnoreContextStop(context.Canceled) = %v, want nil", err)
+	}
+	if err := IgnoreContextStop(ctx, context.DeadlineExceeded); err != nil {
+		t.Fatalf("IgnoreContextStop(context.DeadlineExceeded) = %v, want nil", err)
+	}
+}
+
+func TestIgnoreContextStopPreservesErrorsBeforeContextStops(t *testing.T) {
+	t.Parallel()
+
+	err := IgnoreContextStop(context.Background(), context.Canceled)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("IgnoreContextStop = %v, want context.Canceled", err)
 	}
 }
 

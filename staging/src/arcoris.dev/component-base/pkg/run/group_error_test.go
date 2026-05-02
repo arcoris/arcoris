@@ -45,12 +45,40 @@ func TestGroupJoinErrorsAreOrderedBySubmission(t *testing.T) {
 	close(releaseFirst)
 
 	err := group.Wait()
+	if _, ok := err.(interface{ Unwrap() []error }); !ok {
+		t.Fatalf("Wait error type %T does not expose joined errors", err)
+	}
+
 	taskErrs := TaskErrors(err)
 	if len(taskErrs) != 2 {
 		t.Fatalf("TaskErrors len = %d, want 2", len(taskErrs))
 	}
 	if taskErrs[0].Name != "first" || taskErrs[1].Name != "second" {
 		t.Fatalf("TaskErrors order = %+v, want first then second", taskErrs)
+	}
+}
+
+func TestGroupJoinSingleErrorStillReturnsJoinedTaskError(t *testing.T) {
+	t.Parallel()
+
+	group := NewGroup(context.Background())
+	want := errors.New("boom")
+
+	group.Go("worker", func(ctx context.Context) error {
+		return want
+	})
+
+	err := group.Wait()
+	if _, ok := err.(interface{ Unwrap() []error }); !ok {
+		t.Fatalf("Wait error type %T does not expose joined errors", err)
+	}
+	if !errors.Is(err, want) {
+		t.Fatalf("Wait error = %v, want original error match", err)
+	}
+
+	var taskErr TaskError
+	if !errors.As(err, &taskErr) {
+		t.Fatal("Wait error does not expose TaskError")
 	}
 }
 
@@ -111,4 +139,30 @@ func TestGroupConcurrentTaskErrorsAreRaceSafe(t *testing.T) {
 	if len(taskErrs) != 4 {
 		t.Fatalf("TaskErrors len = %d, want 4", len(taskErrs))
 	}
+}
+
+func TestGroupTaskErrorCancellationUsesTaskErrorCause(t *testing.T) {
+	t.Parallel()
+
+	group := NewGroup(context.Background())
+	want := errors.New("boom")
+
+	group.Go("worker", func(ctx context.Context) error {
+		return want
+	})
+
+	mustClose(t, group.Done())
+
+	var taskErr TaskError
+	if !errors.As(context.Cause(group.Context()), &taskErr) {
+		t.Fatalf("context cause = %v, want TaskError", context.Cause(group.Context()))
+	}
+	if taskErr.Name != "worker" {
+		t.Fatalf("TaskError name = %q, want worker", taskErr.Name)
+	}
+	if !errors.Is(taskErr, want) {
+		t.Fatalf("TaskError = %v, want original error match", taskErr)
+	}
+
+	_ = group.Wait()
 }

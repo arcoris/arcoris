@@ -26,6 +26,22 @@ const (
 	// validation helper is called without a diagnostic message.
 	errNilValidationMessage = "run: nil validation message"
 
+	// errNilGroupParent is the stable diagnostic text used when NewGroup
+	// receives a nil parent context.
+	errNilGroupParent = "run: nil group parent context"
+
+	// errNilGroup is the stable diagnostic text used when a Group method is
+	// called on a nil receiver.
+	errNilGroup = "run: nil group"
+
+	// errUninitializedGroup is the stable diagnostic text used when a Group
+	// method is called on a zero-value Group.
+	errUninitializedGroup = "run: uninitialized group"
+
+	// errGroupClosed is the stable diagnostic text used when Go is called after
+	// the group has been closed by Wait, Cancel, or fail-fast cancellation.
+	errGroupClosed = "run: group closed"
+
 	// errNilTask is the stable diagnostic text used when Group.Go receives a nil
 	// Task.
 	errNilTask = "run: nil task"
@@ -37,6 +53,22 @@ const (
 	// errUntrimmedTaskName is the stable diagnostic text used when Group.Go
 	// receives a task name with surrounding whitespace.
 	errUntrimmedTaskName = "run: untrimmed task name"
+
+	// errDuplicateTaskName is the stable diagnostic text used when a Group
+	// receives two tasks with the same name.
+	errDuplicateTaskName = "run: duplicate task name"
+
+	// errInvalidErrorMode is the stable diagnostic text used when an unknown
+	// ErrorMode is supplied to Group configuration.
+	errInvalidErrorMode = "run: invalid error mode"
+
+	// errNilWaitContext is the stable diagnostic text used when Wait receives a
+	// nil context.
+	errNilWaitContext = "run: nil wait context"
+
+	// errNilIgnoreContext is the stable diagnostic text used when
+	// IgnoreContextStop receives a nil context.
+	errNilIgnoreContext = "run: nil ignore context"
 )
 
 // requireValidationMessage panics when message is empty.

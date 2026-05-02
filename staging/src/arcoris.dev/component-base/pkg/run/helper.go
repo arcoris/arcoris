@@ -21,16 +21,6 @@ import (
 	"errors"
 )
 
-const (
-	// errNilWaitContext is the stable diagnostic text used when Wait receives a
-	// nil context.
-	errNilWaitContext = "run: nil wait context"
-
-	// errNilIgnoreContext is the stable diagnostic text used when
-	// IgnoreContextStop receives a nil context.
-	errNilIgnoreContext = "run: nil ignore context"
-)
-
 // Wait blocks until ctx is done and returns the context cancellation cause.
 //
 // If ctx has no explicit cause, Wait falls back to ctx.Err. Wait panics when ctx
