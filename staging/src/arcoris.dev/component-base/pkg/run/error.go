@@ -61,8 +61,10 @@ func (e TaskError) Is(target error) bool {
 //
 // The function walks both single-error unwrap chains and multi-error unwrap
 // trees produced by errors.Join. Returned errors preserve traversal order. For
-// errors returned by Group.Wait in ErrorModeJoin, that order is the deterministic
-// task submission order used by the Group.
+// errors returned by Group.Wait in ErrorModeJoin, that order is the
+// deterministic task submission order used by the Group. Join-mode Wait results
+// are joined even when only one task failed, so callers can use TaskErrors for a
+// uniform single- and multi-failure path.
 func TaskErrors(err error) []TaskError {
 	if err == nil {
 		return nil

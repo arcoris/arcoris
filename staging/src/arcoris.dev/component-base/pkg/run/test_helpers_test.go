@@ -63,6 +63,29 @@ func mustNotCloseNow[T any](t *testing.T, ch <-chan T) {
 	}
 }
 
+func waitGroupTaskErrorCount(t *testing.T, group *Group, want int) {
+	t.Helper()
+
+	deadline := time.NewTimer(testTimeout)
+	defer deadline.Stop()
+
+	for {
+		group.mu.Lock()
+		got := len(group.errs)
+		group.mu.Unlock()
+		if got == want {
+			return
+		}
+
+		select {
+		case <-deadline.C:
+			t.Fatalf("timed out waiting for %d task errors", want)
+		default:
+			runtime.Gosched()
+		}
+	}
+}
+
 func waitGroupClosed(t *testing.T, group *Group) {
 	t.Helper()
 

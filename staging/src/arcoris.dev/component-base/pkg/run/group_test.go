@@ -132,29 +132,14 @@ func TestGroupWithCancelOnErrorDisabledDoesNotCancelOnTaskError(t *testing.T) {
 	t.Parallel()
 
 	group := NewGroup(context.Background(), WithCancelOnError(false))
-	release := make(chan struct{})
-	failed := make(chan struct{})
-	cancelled := make(chan struct{})
 	want := errors.New("boom")
 
 	group.Go("failing", func(ctx context.Context) error {
-		close(failed)
 		return want
 	})
-	group.Go("observer", func(ctx context.Context) error {
-		select {
-		case <-ctx.Done():
-			close(cancelled)
-			return nil
-		case <-release:
-			return nil
-		}
-	})
 
-	mustClose(t, failed)
-	mustNotCloseNow(t, cancelled)
-
-	close(release)
+	waitGroupTaskErrorCount(t, group, 1)
+	mustNotCloseNow(t, group.Done())
 
 	if err := group.Wait(); !errors.Is(err, want) {
 		t.Fatalf("Wait error = %v, want %v", err, want)
@@ -184,6 +169,21 @@ func TestGroupCancelCancelsContextWithoutTaskError(t *testing.T) {
 	}
 }
 
+func TestGroupCancelNilWithoutTasksReturnsNil(t *testing.T) {
+	t.Parallel()
+
+	group := NewGroup(context.Background())
+
+	group.Cancel(nil)
+
+	if err := group.Wait(); err != nil {
+		t.Fatalf("Wait error = %v, want nil", err)
+	}
+	if !errors.Is(context.Cause(group.Context()), context.Canceled) {
+		t.Fatalf("context cause = %v, want context.Canceled", context.Cause(group.Context()))
+	}
+}
+
 func TestGroupCancelWithCause(t *testing.T) {
 	t.Parallel()
 
@@ -191,6 +191,9 @@ func TestGroupCancelWithCause(t *testing.T) {
 	want := errors.New("owner stop")
 
 	group.Cancel(want)
+	if err := group.Wait(); err != nil {
+		t.Fatalf("Wait error = %v, want nil", err)
+	}
 	if !errors.Is(context.Cause(group.Context()), want) {
 		t.Fatalf("context cause = %v, want %v", context.Cause(group.Context()), want)
 	}
@@ -199,28 +202,44 @@ func TestGroupCancelWithCause(t *testing.T) {
 func TestGroupTaskErrorCausePrecedesLaterCancel(t *testing.T) {
 	t.Parallel()
 
-	group := NewGroup(context.Background())
-	taskErr := errors.New("task failed")
-	ownerErr := errors.New("owner stop")
-
-	group.Go("worker", func(ctx context.Context) error {
-		return taskErr
-	})
-
-	// The task error claims fail-fast cancellation before the owner calls Cancel.
-	mustClose(t, group.Done())
-	group.Cancel(ownerErr)
-
-	var cause TaskError
-	if !errors.As(context.Cause(group.Context()), &cause) {
-		t.Fatalf("context cause = %v, want TaskError", context.Cause(group.Context()))
-	}
-	if !errors.Is(cause, taskErr) {
-		t.Fatalf("context cause = %v, want %v", cause, taskErr)
+	tests := []struct {
+		name  string
+		cause error
+	}{
+		{name: "nil", cause: nil},
+		{name: "custom", cause: errors.New("owner stop")},
 	}
 
-	if err := group.Wait(); !errors.Is(err, taskErr) {
-		t.Fatalf("Wait error = %v, want %v", err, taskErr)
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			group := NewGroup(context.Background())
+			taskErr := errors.New("task failed")
+
+			group.Go("worker", func(ctx context.Context) error {
+				return taskErr
+			})
+
+			// The task error claims fail-fast cancellation before the owner calls
+			// Cancel. Later owner cancellation, including Cancel(nil), must not
+			// replace the TaskError cause.
+			mustClose(t, group.Done())
+			group.Cancel(tt.cause)
+
+			var cause TaskError
+			if !errors.As(context.Cause(group.Context()), &cause) {
+				t.Fatalf("context cause = %v, want TaskError", context.Cause(group.Context()))
+			}
+			if !errors.Is(cause, taskErr) {
+				t.Fatalf("context cause = %v, want %v", cause, taskErr)
+			}
+
+			if err := group.Wait(); !errors.Is(err, taskErr) {
+				t.Fatalf("Wait error = %v, want %v", err, taskErr)
+			}
+		})
 	}
 }
 
@@ -277,7 +296,29 @@ func TestGroupParentCancelCausePrecedesLaterTaskError(t *testing.T) {
 	}
 }
 
-func TestGroupParentCancelDoesNotCreateTaskError(t *testing.T) {
+func TestGroupParentCancelBeforeTasksDoesNotCreateTaskError(t *testing.T) {
+	t.Parallel()
+
+	parent, cancelParent := context.WithCancelCause(context.Background())
+	group := NewGroup(parent)
+	parentErr := errors.New("parent stop")
+
+	cancelParent(parentErr)
+	mustClose(t, group.Done())
+
+	err := group.Wait()
+	if err != nil {
+		t.Fatalf("Wait error = %v, want nil", err)
+	}
+	if taskErrs := TaskErrors(err); len(taskErrs) != 0 {
+		t.Fatalf("parent cancellation recorded task errors: %+v", taskErrs)
+	}
+	if !errors.Is(context.Cause(group.Context()), parentErr) {
+		t.Fatalf("context cause = %v, want %v", context.Cause(group.Context()), parentErr)
+	}
+}
+
+func TestGroupParentCancelWhileTaskReturnsNilDoesNotCreateTaskError(t *testing.T) {
 	t.Parallel()
 
 	parent, cancelParent := context.WithCancelCause(context.Background())

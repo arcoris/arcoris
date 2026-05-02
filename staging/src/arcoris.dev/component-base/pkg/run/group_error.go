@@ -65,6 +65,8 @@ func (g *Group) recordTaskError(seq uint64, name string, err error) {
 
 // buildWaitError builds the configured Wait error from recorded task errors.
 //
+// Wait reports task failures only. Owner and parent cancellation remain context
+// causes unless a task chooses to return them as its own error.
 // ErrorModeFirst returns the first task error recorded under the Group mutex.
 // ErrorModeJoin sorts by submission sequence and intentionally calls
 // errors.Join for both single and multiple errors so join-mode callers can rely
