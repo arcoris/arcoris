@@ -30,22 +30,24 @@ import (
 // owner-controlled diagnostic fields instead.
 const maxCheckNameLength = 128
 
-// ErrEmptyCheckName identifies an empty health check name.
-//
-// Health check names are ownership identifiers used by registries, reports,
-// diagnostics, tests, and transport adapters. A checker with an empty name cannot
-// be registered safely because it cannot be addressed or distinguished from
-// other checks.
-var ErrEmptyCheckName = errors.New("health: empty check name")
+var (
+	// ErrEmptyCheckName identifies an empty health check name.
+	//
+	// Health check names are ownership identifiers used by registries, reports,
+	// diagnostics, tests, and transport adapters. A checker with an empty name
+	// cannot be registered safely because it cannot be addressed or
+	// distinguished from other checks.
+	ErrEmptyCheckName = errors.New("health: empty check name")
 
-// ErrInvalidCheckName identifies a health check name that does not satisfy the
-// package's stable identifier syntax.
-//
-// Check names are intentionally restricted so they remain safe for diagnostics,
-// metrics labels, logs, reports, tests, and transport adapters. Dynamic details
-// such as resource IDs, addresses, timestamps, and raw error fragments do not
-// belong in check names.
-var ErrInvalidCheckName = errors.New("health: invalid check name")
+	// ErrInvalidCheckName identifies a health check name that does not satisfy
+	// the package's stable identifier syntax.
+	//
+	// Check names are intentionally restricted so they remain safe for
+	// diagnostics, metrics labels, logs, reports, tests, and transport adapters.
+	// Dynamic details such as resource IDs, addresses, timestamps, and raw error
+	// fragments do not belong in check names.
+	ErrInvalidCheckName = errors.New("health: invalid check name")
+)
 
 // Checker produces one health observation for a named component, subsystem, or
 // runtime condition.
