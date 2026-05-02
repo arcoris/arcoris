@@ -44,17 +44,16 @@ func TestReportPredicates(t *testing.T) {
 	if !report.Failed(ReadyPolicy()) {
 		t.Fatal("degraded report should fail default ready policy")
 	}
+	if !report.HasReason(ReasonOverloaded) || report.HasReason(ReasonFatal) {
+		t.Fatalf("reason predicates mismatch for %+v", report)
+	}
 
 	zero := Report{}
 	if !zero.IsValid() || zero.IsObserved() || !zero.Empty() {
 		t.Fatalf("zero report predicates mismatch for %+v", zero)
 	}
 
-	invalid := Report{
-		Target:   Target(99),
-		Status:   StatusHealthy,
-		Duration: -time.Second,
-	}
+	invalid := Report{Target: Target(99), Status: StatusHealthy, Duration: -time.Second}
 	if invalid.IsValid() {
 		t.Fatal("invalid report IsValid() = true, want false")
 	}
@@ -94,17 +93,51 @@ func TestReportCheckAccessors(t *testing.T) {
 	}
 }
 
-func TestReportChecksCopy(t *testing.T) {
+func TestReportReasonAccessors(t *testing.T) {
 	t.Parallel()
 
 	report := Report{
 		Target: TargetReady,
-		Status: StatusHealthy,
+		Status: StatusUnknown,
 		Checks: []Result{
 			Healthy("storage"),
-			Healthy("queue"),
+			Degraded("queue", ReasonOverloaded, "queue overloaded"),
+			Unhealthy("admission", ReasonAdmissionClosed, "admission closed"),
+			Unknown("cache", ReasonNotObserved, "cache unknown"),
+			Degraded("worker_pool", ReasonOverloaded, "worker pool overloaded"),
 		},
 	}
+
+	overloaded := report.ChecksByReason(ReasonOverloaded)
+	if len(overloaded) != 2 || overloaded[0].Name != "queue" || overloaded[1].Name != "worker_pool" {
+		t.Fatalf("ChecksByReason(overloaded) = %+v, want queue and worker_pool", overloaded)
+	}
+
+	noReason := report.ChecksByReason(ReasonNone)
+	if len(noReason) != 1 || noReason[0].Name != "storage" {
+		t.Fatalf("ChecksByReason(none) = %+v, want storage", noReason)
+	}
+
+	reasons := report.Reasons()
+	want := []Reason{ReasonOverloaded, ReasonAdmissionClosed, ReasonNotObserved}
+	if len(reasons) != len(want) {
+		t.Fatalf("Reasons() = %+v, want %+v", reasons, want)
+	}
+	for i := range want {
+		if reasons[i] != want[i] {
+			t.Fatalf("Reasons()[%d] = %s, want %s", i, reasons[i], want[i])
+		}
+	}
+
+	if empty := (Report{}).Reasons(); empty != nil {
+		t.Fatalf("empty Reasons() = %+v, want nil", empty)
+	}
+}
+
+func TestReportChecksCopy(t *testing.T) {
+	t.Parallel()
+
+	report := Report{Target: TargetReady, Status: StatusHealthy, Checks: []Result{Healthy("storage"), Healthy("queue")}}
 
 	copied := report.ChecksCopy()
 	copied[0] = Unhealthy("storage", ReasonFatal, "fatal")

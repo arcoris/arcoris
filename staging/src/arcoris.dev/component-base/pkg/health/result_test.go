@@ -79,10 +79,7 @@ func TestResultWithMethods(t *testing.T) {
 func TestResultNormalize(t *testing.T) {
 	t.Parallel()
 
-	result := Result{
-		Status:   Status(99),
-		Duration: -time.Second,
-	}.Normalize("storage", testObserved)
+	result := Result{Status: Status(99), Duration: -time.Second}.Normalize("storage", testObserved)
 
 	if result.Name != "storage" {
 		t.Fatalf("Name = %q, want storage", result.Name)
@@ -108,6 +105,9 @@ func TestResultPredicates(t *testing.T) {
 
 	if !result.IsValid() || !result.IsNamed() || !result.IsObserved() || !result.HasCause() {
 		t.Fatalf("predicate mismatch for %+v", result)
+	}
+	if !result.HasReason(ReasonOverloaded) || result.HasReason(ReasonFatal) {
+		t.Fatalf("reason predicate mismatch for %+v", result)
 	}
 	if result.IsAffirmative() || result.IsNegative() || !result.IsKnown() || !result.IsOperational() {
 		t.Fatalf("status predicate mismatch for %+v", result)

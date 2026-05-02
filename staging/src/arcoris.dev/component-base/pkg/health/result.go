@@ -21,7 +21,7 @@ import "time"
 // Result describes one health observation produced by a checker, gate, cached
 // probe, or another health source.
 //
-// A Result is intentionally transport-neutral. It does not define HTTP response
+// Result is intentionally transport-neutral. It does not define HTTP response
 // codes, gRPC serving states, JSON rendering, metric labels, restart decisions,
 // readiness outcomes, admission behavior, or scheduler policy. Those concerns
 // belong to adapter packages and higher-level runtime owners.
@@ -40,11 +40,10 @@ import "time"
 // Reason is a stable, machine-readable explanation for Status when a reason is
 // useful. A healthy result MAY leave Reason empty. Non-healthy results SHOULD
 // provide a reason when the owner can classify the condition without leaking
-// implementation details.
+// private implementation detail.
 //
 // Message is a safe, short, human-readable explanation. Message MUST NOT contain
-// secrets, credentials, connection strings, raw stack traces, or other sensitive
-// implementation details. Transport adapters may expose Message directly.
+// private operational data. Transport adapters may expose Message directly.
 //
 // Observed is the time at which the result was observed or normalized. A zero
 // value means the result has not been timestamped yet.
@@ -169,9 +168,8 @@ func (r Result) WithDuration(duration time.Duration) Result {
 // WithMessage returns a copy of r with message set as the safe human-readable
 // message.
 //
-// The caller owns message safety. Message MUST NOT include secrets,
-// credentials, connection strings, stack traces, or raw low-level error output
-// unless the result is guaranteed to remain internal.
+// The caller owns message safety. Message MUST remain suitable for the adapters
+// and diagnostics that will render it.
 func (r Result) WithMessage(message string) Result {
 	r.Message = message
 	return r
@@ -245,6 +243,16 @@ func (r Result) IsObserved() bool {
 // MUST NOT treat HasCause as permission to expose the cause.
 func (r Result) HasCause() bool {
 	return r.Cause != nil
+}
+
+// HasReason reports whether r has reason.
+//
+// HasReason performs exact reason matching. It intentionally does not interpret
+// reason categories or status severity. Use Reason category helpers when callers
+// need broader classification such as dependency, control, freshness, or
+// observation reasons.
+func (r Result) HasReason(reason Reason) bool {
+	return r.Reason == reason
 }
 
 // IsAffirmative reports whether r is a positive health observation.

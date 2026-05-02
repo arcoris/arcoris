@@ -32,12 +32,17 @@ const maxReasonLength = 128
 // may define their own health causes without changing the health core package.
 // Custom reasons MUST use the same stable lower_snake_case format as the built-in
 // reasons and MUST NOT contain secrets, credentials, connection strings, raw
-// errors, stack traces, resource identifiers, timestamps, or other dynamic
-// values.
+// errors, stack traces, resource identifiers, timestamps, addresses, tenant IDs,
+// object IDs, or other dynamic values.
 //
 // The zero value is ReasonNone. It is valid and means that no specific reason was
 // provided. Healthy results commonly use ReasonNone. Non-healthy results SHOULD
 // provide a reason when the owner can classify the condition safely.
+//
+// Reason does not define severity. The same reason may be paired with different
+// statuses depending on the owner and target. For example, overload may be
+// degraded while admission is still partially available, or unhealthy when the
+// component must stop accepting new work.
 type Reason string
 
 const (
@@ -52,13 +57,6 @@ const (
 	// This reason is useful for unknown results produced before a checker, gate,
 	// cached probe, or evaluator has observed a concrete component state.
 	ReasonNotObserved Reason = "not_observed"
-
-	// ReasonStarting means that the component or subsystem is still
-	// bootstrapping.
-	//
-	// This reason is normally paired with StatusStarting or StatusUnknown. It
-	// describes initialization progress, not terminal failure.
-	ReasonStarting Reason = "starting"
 
 	// ReasonTimeout means that a health observation did not complete before its
 	// owner-controlled deadline or timeout.
@@ -83,6 +81,13 @@ const (
 	// owner-controlled diagnostics.
 	ReasonPanic Reason = "panic"
 
+	// ReasonStarting means that the component or subsystem is still
+	// bootstrapping.
+	//
+	// This reason is normally paired with StatusStarting or StatusUnknown. It
+	// describes initialization progress, not terminal failure.
+	ReasonStarting Reason = "starting"
+
 	// ReasonDraining means that the component is intentionally draining existing
 	// work and should normally stop receiving new work.
 	//
@@ -106,12 +111,35 @@ const (
 	// progress model.
 	ReasonDependencyUnavailable Reason = "dependency_unavailable"
 
-	// ReasonOverloaded means that the component is applying overload protection or
-	// cannot safely accept additional work under current load.
+	// ReasonDependencyDegraded means that a required dependency is reachable but
+	// operating below the owner's healthy threshold.
+	//
+	// Dependency degradation is useful when a dependency is still usable with
+	// reduced confidence, higher latency, partial errors, fallback behavior, or
+	// reduced capacity. It should remain distinct from dependency unavailability.
+	ReasonDependencyDegraded Reason = "dependency_degraded"
+
+	// ReasonOverloaded means that the component is under load pressure above the
+	// owner-defined safe operating threshold.
 	//
 	// Overload is an expected control signal in ARCORIS. It should normally affect
 	// readiness, admission, scheduling, or load routing rather than liveness.
 	ReasonOverloaded Reason = "overloaded"
+
+	// ReasonBackpressured means that the component is actively applying
+	// backpressure to protect itself or upstream/downstream runtime boundaries.
+	//
+	// Backpressure describes a protective control state. It may be caused by
+	// overload, limited downstream capacity, queue pressure, or owner-defined
+	// flow-control policy.
+	ReasonBackpressured Reason = "backpressured"
+
+	// ReasonRateLimited means that work is being limited by a rate policy.
+	//
+	// Rate limiting may be protective, tenant-specific, workload-specific, or
+	// operator-configured. It is distinct from overload because the component may
+	// be enforcing policy even when it still has physical capacity.
+	ReasonRateLimited Reason = "rate_limited"
 
 	// ReasonAdmissionClosed means that the component or one of its owners has
 	// intentionally closed admission for new work.
@@ -123,10 +151,18 @@ const (
 	// ReasonCapacityExhausted means that the checked scope has no safe remaining
 	// capacity for the relevant workload.
 	//
-	// Capacity exhaustion is not necessarily a terminal failure. It may represent
-	// a temporary readiness or admission condition that a scheduler or controller
-	// can react to.
+	// Capacity exhaustion describes workload-serving capacity such as queue slots,
+	// worker concurrency, dispatch tokens, or owner-defined admission capacity. It
+	// is distinct from lower-level runtime resource exhaustion.
 	ReasonCapacityExhausted Reason = "capacity_exhausted"
+
+	// ReasonResourceExhausted means that an underlying runtime or system resource
+	// required by the checked scope is exhausted.
+	//
+	// Resource exhaustion covers generic resources such as memory, disk, file
+	// descriptors, connection pools, goroutine/thread budgets, or similar
+	// low-level runtime limits.
+	ReasonResourceExhausted Reason = "resource_exhausted"
 
 	// ReasonStale means that the health result is based on state that is older
 	// than the owner considers acceptable.
@@ -135,6 +171,45 @@ const (
 	// snapshots, and scheduler/runtime views. The target and policy interpreting
 	// the result decide whether stale state is tolerated.
 	ReasonStale Reason = "stale"
+
+	// ReasonNotSynced means that a local view, cache, snapshot, or controller
+	// input has not completed its initial synchronization.
+	//
+	// Not-synced state often appears during startup or after ownership changes. It
+	// is distinct from sync failure because synchronization may still be making
+	// normal progress.
+	ReasonNotSynced Reason = "not_synced"
+
+	// ReasonSyncFailed means that synchronization was attempted and failed.
+	//
+	// Sync failure is useful for caches, informers, replicated views, dependency
+	// snapshots, and controller inputs where the owner can distinguish a failed
+	// sync attempt from a not-yet-synced initial state.
+	ReasonSyncFailed Reason = "sync_failed"
+
+	// ReasonLagging means that a component, replica, consumer, controller, or
+	// local view is behind the progress expected by its owner.
+	//
+	// Lagging is distinct from stale: stale describes age of observed state, while
+	// lagging describes progress behind another stream, source, leader, replica,
+	// queue, or control-loop expectation.
+	ReasonLagging Reason = "lagging"
+
+	// ReasonPartitioned means that communication with a required peer, group, or
+	// cluster segment is partitioned for the checked scope.
+	//
+	// Partitioned should be used only when the owner can classify an isolation or
+	// reachability split at the distributed-system boundary. Ordinary dependency
+	// dial failures should normally use dependency or timeout reasons instead.
+	ReasonPartitioned Reason = "partitioned"
+
+	// ReasonMisconfigured means that configuration prevents the checked scope from
+	// operating correctly.
+	//
+	// Misconfiguration is useful for invalid required settings, incompatible local
+	// options, missing required configuration, or configuration that makes startup
+	// or safe operation impossible.
+	ReasonMisconfigured Reason = "misconfigured"
 
 	// ReasonFatal means that the checked scope reached a fatal or unrecoverable
 	// condition.
@@ -197,18 +272,45 @@ func (r Reason) IsBuiltin() bool {
 	switch r {
 	case ReasonNone,
 		ReasonNotObserved,
-		ReasonStarting,
 		ReasonTimeout,
 		ReasonCanceled,
 		ReasonPanic,
+		ReasonStarting,
 		ReasonDraining,
 		ReasonShuttingDown,
 		ReasonDependencyUnavailable,
+		ReasonDependencyDegraded,
 		ReasonOverloaded,
+		ReasonBackpressured,
+		ReasonRateLimited,
 		ReasonAdmissionClosed,
 		ReasonCapacityExhausted,
+		ReasonResourceExhausted,
 		ReasonStale,
+		ReasonNotSynced,
+		ReasonSyncFailed,
+		ReasonLagging,
+		ReasonPartitioned,
+		ReasonMisconfigured,
 		ReasonFatal:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsObservationReason reports whether r describes the health observation
+// boundary rather than the checked component's own domain state.
+//
+// Observation reasons are produced before, during, or around a health
+// observation. They are useful for distinguishing missing or interrupted
+// observation from a successful observation of an unhealthy component.
+func (r Reason) IsObservationReason() bool {
+	switch r {
+	case ReasonNotObserved,
+		ReasonTimeout,
+		ReasonCanceled,
+		ReasonPanic:
 		return true
 	default:
 		return false
@@ -219,7 +321,8 @@ func (r Reason) IsBuiltin() bool {
 // producing a health observation.
 //
 // Execution reasons describe checker/evaluator execution, not the checked
-// component's own operational state.
+// component's own operational state. ReasonNotObserved is observation-related but
+// not execution-related because no check execution necessarily occurred.
 func (r Reason) IsExecutionReason() bool {
 	switch r {
 	case ReasonTimeout,
@@ -248,6 +351,23 @@ func (r Reason) IsLifecycleReason() bool {
 	}
 }
 
+// IsDependencyReason reports whether r describes dependency availability or
+// dependency quality.
+//
+// Dependency reasons describe the relationship between the checked scope and a
+// required external or internal dependency. They do not identify the dependency;
+// check names, messages, diagnostics, or domain-specific reasons provide that
+// additional context.
+func (r Reason) IsDependencyReason() bool {
+	switch r {
+	case ReasonDependencyUnavailable,
+		ReasonDependencyDegraded:
+		return true
+	default:
+		return false
+	}
+}
+
 // IsControlReason reports whether r describes runtime control, capacity, or
 // overload state.
 //
@@ -256,11 +376,48 @@ func (r Reason) IsLifecycleReason() bool {
 func (r Reason) IsControlReason() bool {
 	switch r {
 	case ReasonOverloaded,
+		ReasonBackpressured,
+		ReasonRateLimited,
 		ReasonAdmissionClosed,
 		ReasonCapacityExhausted,
-		ReasonStale:
+		ReasonResourceExhausted:
 		return true
 	default:
 		return false
 	}
+}
+
+// IsFreshnessReason reports whether r describes stale, unsynchronized, failed
+// synchronization, or lagging local state.
+//
+// Freshness reasons are useful for cached probes, replicated views, dependency
+// snapshots, control-loop inputs, event streams, and scheduler/runtime views.
+func (r Reason) IsFreshnessReason() bool {
+	switch r {
+	case ReasonStale,
+		ReasonNotSynced,
+		ReasonSyncFailed,
+		ReasonLagging:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsConnectivityReason reports whether r describes distributed communication
+// partitioning.
+//
+// Connectivity reasons should remain coarse in health core. Detailed network,
+// TLS, DNS, or transport failures belong in domain-specific diagnostics or Cause.
+func (r Reason) IsConnectivityReason() bool {
+	return r == ReasonPartitioned
+}
+
+// IsConfigurationReason reports whether r describes configuration that prevents
+// correct operation.
+//
+// Configuration reasons are useful when startup or safe operation is blocked by
+// invalid, missing, or incompatible local configuration.
+func (r Reason) IsConfigurationReason() bool {
+	return r == ReasonMisconfigured
 }

@@ -110,6 +110,21 @@ func (r Report) Check(name string) (Result, bool) {
 	return Result{}, false
 }
 
+// HasReason reports whether at least one check result has reason.
+//
+// HasReason performs exact reason matching. It intentionally does not interpret
+// reason categories or status severity. Use Reason category helpers on individual
+// results when callers need broader classification.
+func (r Report) HasReason(reason Reason) bool {
+	for _, check := range r.Checks {
+		if check.HasReason(reason) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // ChecksCopy returns a defensive copy of r.Checks.
 func (r Report) ChecksCopy() []Result {
 	if len(r.Checks) == 0 {
@@ -120,6 +135,45 @@ func (r Report) ChecksCopy() []Result {
 	copy(checks, r.Checks)
 
 	return checks
+}
+
+// ChecksByReason returns check results with reason in report order.
+//
+// The returned slice is newly allocated. ReasonNone is matched like any other
+// reason so callers can explicitly find results that did not provide a reason.
+func (r Report) ChecksByReason(reason Reason) []Result {
+	var matches []Result
+	for _, check := range r.Checks {
+		if check.HasReason(reason) {
+			matches = append(matches, check)
+		}
+	}
+
+	return matches
+}
+
+// Reasons returns unique non-empty reasons in first-seen report order.
+//
+// ReasonNone is omitted because it represents the absence of a reason rather
+// than a diagnostic classification. Use ChecksByReason(ReasonNone) when callers
+// need to inspect results that intentionally provided no reason.
+func (r Report) Reasons() []Reason {
+	var reasons []Reason
+	seen := make(map[Reason]struct{})
+
+	for _, check := range r.Checks {
+		if check.Reason == ReasonNone {
+			continue
+		}
+		if _, exists := seen[check.Reason]; exists {
+			continue
+		}
+
+		seen[check.Reason] = struct{}{}
+		reasons = append(reasons, check.Reason)
+	}
+
+	return reasons
 }
 
 // FailedChecks returns check results whose statuses fail policy.

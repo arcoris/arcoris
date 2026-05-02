@@ -56,6 +56,29 @@
 // policies transport-neutral and does not map them to HTTP status codes or gRPC
 // serving states.
 //
+// # Reason taxonomy
+//
+// Built-in Reasons cover common operational categories that are broadly useful
+// across distributed runtime components:
+//
+//   - observation and evaluator boundaries, such as missing observations,
+//     timeouts, cancellations, and recovered panics;
+//   - lifecycle and operation phases, such as startup, draining, and shutdown;
+//   - dependency availability and dependency degradation;
+//   - load, backpressure, rate limiting, admission closure, capacity exhaustion,
+//     and resource exhaustion;
+//   - freshness and synchronization state, such as stale, not-synced, failed
+//     sync, and lagging views;
+//   - distributed connectivity partitioning;
+//   - configuration errors and fatal owner-defined failures.
+//
+// Reason is deliberately extensible. Domain packages may define their own valid
+// lower_snake_case reasons when the core taxonomy is too coarse. Core code should
+// not grow storage-specific, scheduler-specific, security-specific,
+// lease-specific, or transport-specific reasons unless those causes become
+// common component-base concepts. Dynamic details belong in Message when safe,
+// or in Cause when internal.
+//
 // # Evaluator ownership
 //
 // Evaluator reads checks from Registry at evaluation time, executes them
