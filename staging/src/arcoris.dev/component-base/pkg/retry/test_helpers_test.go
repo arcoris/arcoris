@@ -19,10 +19,12 @@ package retry
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
 	"arcoris.dev/component-base/pkg/backoff"
+	"arcoris.dev/component-base/pkg/clock"
 )
 
 func expectPanic(t *testing.T, want any, fn func()) {
@@ -111,9 +113,48 @@ type retryObserverRecorder struct {
 	name   string
 }
 
-func (r *retryObserverRecorder) observe(_ context.Context, event Event) {
+// ObserveRetry records observer calls without changing retry behavior.
+//
+// Tests use it when they need to assert observer-visible ordering or terminal
+// metadata while preserving the production rule that observers are synchronous
+// notifications and cannot reject a retry decision.
+func (r *retryObserverRecorder) ObserveRetry(_ context.Context, event Event) {
 	r.events = append(r.events, event)
 	if r.name != "" {
 		r.order = append(r.order, r.name)
 	}
+}
+
+// retryTimerSignalClock exposes the point where retry has entered a real delay.
+//
+// The signal lets tests cancel context after retry has created the timer, which
+// exercises the "context stopped during retry-owned delay" path without sleeps
+// or scheduler timing assumptions.
+type retryTimerSignalClock struct {
+	clock.Clock
+
+	once         sync.Once
+	timerCreated chan struct{}
+}
+
+// newRetryTimerSignalClock wraps an existing Clock for a single deterministic
+// delay-observation test. It does not change timer behavior; it only reports
+// that NewTimer was called.
+func newRetryTimerSignalClock(base clock.Clock) *retryTimerSignalClock {
+	return &retryTimerSignalClock{
+		Clock:        base,
+		timerCreated: make(chan struct{}),
+	}
+}
+
+// NewTimer delegates to the wrapped clock and closes timerCreated once.
+//
+// Closing after delegation means the retry goroutine is inside waitDelay's timer
+// setup path before the test cancels context.
+func (c *retryTimerSignalClock) NewTimer(delay time.Duration) clock.Timer {
+	timer := c.Clock.NewTimer(delay)
+	c.once.Do(func() {
+		close(c.timerCreated)
+	})
+	return timer
 }

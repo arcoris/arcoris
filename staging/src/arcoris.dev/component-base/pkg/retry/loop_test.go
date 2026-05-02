@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"arcoris.dev/component-base/pkg/backoff"
+	"arcoris.dev/component-base/pkg/clock"
 )
 
 func TestRunSucceedsOnFirstAttempt(t *testing.T) {
@@ -225,10 +226,19 @@ func TestRunReturnsInterruptedWhenContextAlreadyStopped(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
+	var stop Event
+	stopEvents := 0
 	config := configOf(
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(3),
 		WithBackoff(backoff.Immediate()),
+		WithObserverFunc(func(_ context.Context, event Event) {
+			if event.Kind != EventRetryStop {
+				return
+			}
+			stop = event
+			stopEvents++
+		}),
 	)
 
 	calls := 0
@@ -246,6 +256,18 @@ func TestRunReturnsInterruptedWhenContextAlreadyStopped(t *testing.T) {
 	}
 	if calls != 0 {
 		t.Fatalf("operation calls = %d, want 0", calls)
+	}
+	if stopEvents != 1 {
+		t.Fatalf("stop events = %d, want 1", stopEvents)
+	}
+	if !stop.IsValid() {
+		t.Fatalf("stop event is invalid: %+v", stop)
+	}
+	if stop.Outcome.Reason != StopReasonInterrupted {
+		t.Fatalf("stop reason = %s, want %s", stop.Outcome.Reason, StopReasonInterrupted)
+	}
+	if stop.Outcome.Attempts != 0 {
+		t.Fatalf("stop attempts = %d, want 0", stop.Outcome.Attempts)
 	}
 }
 
@@ -351,18 +373,31 @@ func TestRunOperationOwnedContextErrorIsNotInterrupted(t *testing.T) {
 	if stop.Outcome.Reason != StopReasonNonRetryable {
 		t.Fatalf("stop reason = %s, want %s", stop.Outcome.Reason, StopReasonNonRetryable)
 	}
+	if !stop.IsValid() {
+		t.Fatalf("stop event is invalid: %+v", stop)
+	}
 }
 
 func TestRunObserversAreCalledInRegistrationOrder(t *testing.T) {
-	var order []string
+	var (
+		order  []string
+		events int
+	)
 	config := configOf(
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(1),
-		WithObserverFunc(func(context.Context, Event) {
+		WithObserverFunc(func(_ context.Context, event Event) {
 			order = append(order, "first")
+			events++
+			if !event.IsValid() {
+				t.Fatalf("first observer received invalid event: %+v", event)
+			}
 		}),
-		WithObserverFunc(func(context.Context, Event) {
+		WithObserverFunc(func(_ context.Context, event Event) {
 			order = append(order, "second")
+			if !event.IsValid() {
+				t.Fatalf("second observer received invalid event: %+v", event)
+			}
 		}),
 	)
 
@@ -371,6 +406,9 @@ func TestRunObserversAreCalledInRegistrationOrder(t *testing.T) {
 	}, config)
 	if !errors.Is(err, ErrExhausted) {
 		t.Fatalf("run error = %v, want exhausted", err)
+	}
+	if events != 3 {
+		t.Fatalf("events observed by first observer = %d, want 3", events)
 	}
 
 	want := []string{
@@ -385,6 +423,63 @@ func TestRunObserversAreCalledInRegistrationOrder(t *testing.T) {
 		if order[i] != want[i] {
 			t.Fatalf("observer order[%d] = %q, want %q", i, order[i], want[i])
 		}
+	}
+}
+
+func TestRunReturnsInterruptedWhenContextStopsDuringDelay(t *testing.T) {
+	errBoom := errors.New("boom")
+	fake := clock.NewFakeClock(time.Unix(100, 0))
+	signalingClock := newRetryTimerSignalClock(fake)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stopEvents := make(chan Event, 1)
+	config := configOf(
+		WithClock(signalingClock),
+		WithClassifier(RetryAll()),
+		WithMaxAttempts(2),
+		WithBackoff(backoff.Fixed(time.Hour)),
+		WithObserverFunc(func(_ context.Context, event Event) {
+			if event.Kind == EventRetryStop {
+				stopEvents <- event
+			}
+		}),
+	)
+
+	errs := make(chan error, 1)
+	go func() {
+		_, err := run(ctx, func(context.Context) (int, error) {
+			return 0, errBoom
+		}, config)
+		errs <- err
+	}()
+
+	// The timer-created signal proves retry has crossed into its own delay wait.
+	// Cancelling after this point distinguishes retry-owned interruption from an
+	// operation returning a raw context error.
+	<-signalingClock.timerCreated
+	cancel()
+
+	err := <-errs
+	if !errors.Is(err, ErrInterrupted) {
+		t.Fatalf("run error does not match ErrInterrupted: %v", err)
+	}
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("run error does not preserve context.Canceled: %v", err)
+	}
+
+	stop := <-stopEvents
+	if !stop.IsValid() {
+		t.Fatalf("stop event is invalid: %+v", stop)
+	}
+	if stop.Outcome.Reason != StopReasonInterrupted {
+		t.Fatalf("stop reason = %s, want %s", stop.Outcome.Reason, StopReasonInterrupted)
+	}
+	if stop.Outcome.Attempts != 1 {
+		t.Fatalf("stop attempts = %d, want 1", stop.Outcome.Attempts)
+	}
+	if !errors.Is(stop.Outcome.LastErr, errBoom) {
+		t.Fatalf("stop last error = %v, want %v", stop.Outcome.LastErr, errBoom)
 	}
 }
 
@@ -471,6 +566,19 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 			wantErr: ErrInterrupted,
 			reason:  StopReasonInterrupted,
 		},
+		{
+			name: "interrupted after failed attempt",
+			ctx:  context.Background,
+			config: configOf(
+				WithClassifier(RetryAll()),
+				WithMaxAttempts(2),
+			),
+			op: func(context.Context) (int, error) {
+				return 0, errBoom
+			},
+			wantErr: ErrInterrupted,
+			reason:  StopReasonInterrupted,
+		},
 	}
 
 	for _, tt := range tests {
@@ -478,8 +586,21 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 			stopEvents := 0
 			var stop Event
 			config := tt.config
+			ctx := tt.ctx()
 			if tt.reason == StopReasonBackoffExhausted {
 				config.backoff = retryTestSchedule{sequence: &retryTestSequence{}}
+			}
+			if tt.name == "interrupted after failed attempt" {
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithCancel(context.Background())
+				// Cancelling from the failure observer stops retry at its next
+				// context boundary, after LastErr has been set but before delay
+				// selection can happen.
+				config.observers = append(config.observers, ObserverFunc(func(_ context.Context, event Event) {
+					if event.Kind == EventAttemptFailure {
+						cancel()
+					}
+				}))
 			}
 			config.observers = append(config.observers, ObserverFunc(func(_ context.Context, event Event) {
 				if event.Kind != EventRetryStop {
@@ -489,7 +610,7 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 				stop = event
 			}))
 
-			_, err := run(tt.ctx(), tt.op, config)
+			_, err := run(ctx, tt.op, config)
 			if tt.wantErr == nil {
 				if err != nil {
 					t.Fatalf("run error = %v, want nil", err)

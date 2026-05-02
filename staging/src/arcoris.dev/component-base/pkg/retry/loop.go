@@ -43,48 +43,48 @@ func run[T any](
 
 	var zero T
 
-	execution := newRetryExecution(ctx, config)
+	execution := newRetryExecution(config)
 
 	for {
-		if err := execution.contextStop(); err != nil {
-			return zero, execution.interrupted(err)
+		if err := execution.contextStop(ctx); err != nil {
+			return zero, execution.interrupted(ctx, err)
 		}
 
-		attempt := execution.nextAttempt()
+		attempt := execution.nextAttempt(ctx)
 
 		value, err := op(ctx)
 		if err == nil {
-			execution.succeeded()
+			execution.succeeded(ctx)
 			return value, nil
 		}
 
-		execution.recordFailure(attempt, err)
+		execution.recordFailure(ctx, attempt, err)
 
 		if !execution.retryable(err) {
-			return zero, execution.nonRetryable(err)
+			return zero, execution.nonRetryable(ctx, err)
 		}
 
 		if execution.maxAttemptsReached() {
-			return zero, execution.exhausted(StopReasonMaxAttempts)
+			return zero, execution.exhausted(ctx, StopReasonMaxAttempts)
 		}
 
-		if err := execution.contextStop(); err != nil {
-			return zero, execution.interrupted(err)
+		if err := execution.contextStop(ctx); err != nil {
+			return zero, execution.interrupted(ctx, err)
 		}
 
 		delay, ok := execution.nextDelay()
 		if !ok {
-			return zero, execution.exhausted(StopReasonBackoffExhausted)
+			return zero, execution.exhausted(ctx, StopReasonBackoffExhausted)
 		}
 
 		if execution.maxElapsedWouldBeExceeded(delay) {
-			return zero, execution.exhausted(StopReasonMaxElapsed)
+			return zero, execution.exhausted(ctx, StopReasonMaxElapsed)
 		}
 
-		execution.retryDelay(delay)
+		execution.retryDelay(ctx, delay)
 
-		if err := waitDelay(ctx, config.clock, delay); err != nil {
-			return zero, execution.interrupted(err)
+		if err := execution.waitDelay(ctx, delay); err != nil {
+			return zero, execution.interrupted(ctx, err)
 		}
 	}
 }

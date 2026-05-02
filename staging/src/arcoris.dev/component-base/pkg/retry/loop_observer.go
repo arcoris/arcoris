@@ -18,8 +18,8 @@ package retry
 
 import "context"
 
-func (e *retryExecution) emit(event Event) {
-	emitRetryEvent(e.ctx, e.config, event)
+func (e *retryExecution) emit(ctx context.Context, event Event) {
+	emitRetryEvent(ctx, e.config, event)
 }
 
 // emitRetryEvent notifies configured observers about event.
