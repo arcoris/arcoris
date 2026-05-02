@@ -44,10 +44,10 @@
 //
 // # Signal sets
 //
-// Shutdown returns the project-wide default signal set that should initiate
-// graceful shutdown for ordinary ARCORIS processes. Reload and Diagnostics return
-// platform-specific sets for optional owners that deliberately support those
-// behaviors.
+// ShutdownSignals returns the project-wide default signal set that should
+// initiate graceful shutdown for ordinary ARCORIS processes. ReloadSignals and
+// DiagnosticSignals return platform-specific sets for optional owners that
+// deliberately support those behaviors.
 //
 // Signal set helpers such as Clone, Unique, Merge, and Contains are pure value
 // helpers. They preserve caller order where order matters and reject nil signals
@@ -60,6 +60,11 @@
 // registers one channel with package os/signal and exposes C, Wait, Stop, and
 // Done operations. Callers that create a Subscription must call Stop when the
 // subscription is no longer needed.
+//
+// C and Wait receive from the same channel. A direct receive from C consumes the
+// same signal value that Wait would otherwise observe, so owners should choose a
+// single receive path or deliberately coordinate any competition between those
+// APIs.
 //
 // Subscription does not close the signal delivery channel. The channel is owned
 // by the subscription, but os/signal delivery and user receives may race with
@@ -84,14 +89,18 @@
 //
 // ShutdownController is the higher-level graceful shutdown primitive. The first
 // configured shutdown signal records the first Event and cancels the controller
-// context with SignalError. Repeated escalation signals are delivered through a
+// context with SignalError. Shutdown signals are registered when the controller
+// is constructed. Escalation signals are registered only after shutdown starts,
+// which avoids intercepting escalation-only process signals before the
+// controller owns shutdown. Repeated escalation signals are delivered through a
 // best-effort escalation channel when escalation is enabled.
 //
 // ShutdownController never calls os.Exit, never panics on repeated signals, and
 // never drives lifecycle transitions directly. Applications may decide that a
 // repeated signal should shorten a grace period, dump diagnostics, return from
-// main, or exit the process. That policy belongs to the application owner, not
-// to component-base.
+// main, or exit the process. Escalation delivery is best-effort and does not
+// exit the process. That policy belongs to the application owner, not to
+// component-base.
 //
 // # Error and cause model
 //
@@ -151,11 +160,12 @@
 //   - set_unix.go, set_windows.go, and set_other.go own platform sets;
 //   - validate.go owns package-local validation helpers;
 //   - notifier.go and os_notifier.go own the package-local os/signal seam;
-//   - option_subscribe.go owns Subscription construction options;
+//   - option_subscription.go owns Subscription construction options;
 //   - subscription.go owns signal registration lifecycle;
 //   - context.go owns NotifyContext;
 //   - option_shutdown.go owns ShutdownController construction options;
-//   - shutdown.go owns graceful shutdown coordination.
+//   - shutdown.go owns graceful shutdown coordination;
+//   - nocopy.go owns the static-analysis copy marker.
 //
 // # Dependency policy
 //

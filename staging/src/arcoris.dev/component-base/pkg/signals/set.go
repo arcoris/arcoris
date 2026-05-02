@@ -99,13 +99,16 @@ func Contains(sigs []os.Signal, sig os.Signal) bool {
 	return false
 }
 
-// signalSetOrShutdown returns a normalized signal set.
+// signalSetOrShutdownSignals returns a normalized signal set for APIs whose
+// empty input means the package shutdown default.
 //
-// An empty set means the package default shutdown signal set. The returned slice
-// is unique and independent from caller-owned slices.
-func signalSetOrShutdown(sigs []os.Signal) []os.Signal {
+// The returned slice is unique and independent from caller-owned slices. This
+// helper keeps the defaulting rule close to the signal-set ownership code so
+// Subscription, NotifyContext, and ShutdownController do not each reinterpret an
+// empty signal list differently.
+func signalSetOrShutdownSignals(sigs []os.Signal) []os.Signal {
 	if len(sigs) == 0 {
-		return Shutdown()
+		return ShutdownSignals()
 	}
 
 	return Unique(sigs)

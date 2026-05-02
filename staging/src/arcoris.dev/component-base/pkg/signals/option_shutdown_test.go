@@ -16,17 +16,20 @@
 
 package signals
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 func TestShutdownConfigDefaults(t *testing.T) {
+	t.Parallel()
+
 	config := newShutdownConfig()
 
 	if len(config.shutdownSignals) == 0 {
 		t.Fatal("default shutdown signals are empty")
 	}
-	if len(config.escalationSignals) == 0 {
-		t.Fatal("default escalation signals are empty")
-	}
+	assertSignalSlice(t, config.escalationSignals, config.shutdownSignals)
 	if config.escalationBuffer != 1 {
 		t.Fatalf("escalation buffer = %d, want 1", config.escalationBuffer)
 	}
@@ -36,49 +39,146 @@ func TestShutdownConfigDefaults(t *testing.T) {
 }
 
 func TestShutdownConfigAppliesSignalOptions(t *testing.T) {
+	t.Parallel()
+
 	config := newShutdownConfig(
 		WithShutdownSignals(testSIGINT, testSIGTERM, testSIGINT),
-		WithEscalationSignals(testSIGHUP),
+		WithEscalationSignals(testSIGHUP, testSIGHUP),
 		WithEscalationBuffer(3),
 	)
 
-	if len(config.shutdownSignals) != 2 {
-		t.Fatalf("shutdown len = %d, want 2", len(config.shutdownSignals))
-	}
-	if len(config.escalationSignals) != 1 || !sameSignal(config.escalationSignals[0], testSIGHUP) {
-		t.Fatalf("escalation signals = %v, want [%v]", config.escalationSignals, testSIGHUP)
-	}
+	assertSignalSlice(t, config.shutdownSignals, []os.Signal{testSIGINT, testSIGTERM})
+	assertSignalSlice(t, config.escalationSignals, []os.Signal{testSIGHUP})
 	if config.escalationBuffer != 3 {
 		t.Fatalf("escalation buffer = %d, want 3", config.escalationBuffer)
 	}
 }
 
-func TestShutdownConfigCanDisableEscalation(t *testing.T) {
-	config := newShutdownConfig(WithNoEscalation())
+func TestShutdownConfigDefaultsEscalationToFinalShutdownSignals(t *testing.T) {
+	t.Parallel()
 
-	if config.escalationEnabled {
-		t.Fatal("escalation is enabled")
+	config := newShutdownConfig(WithShutdownSignals(testSIGTERM))
+
+	assertSignalSlice(t, config.escalationSignals, config.shutdownSignals)
+}
+
+func TestShutdownConfigOptionOrdering(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name             string
+		options          []ShutdownOption
+		wantEscalation   []os.Signal
+		wantEscalationOn bool
+		wantBuffer       int
+	}{
+		{
+			name: "explicit escalation survives later shutdown replacement",
+			options: []ShutdownOption{
+				WithEscalationSignals(testSIGHUP),
+				WithShutdownSignals(testSIGTERM),
+			},
+			wantEscalation:   []os.Signal{testSIGHUP},
+			wantEscalationOn: true,
+			wantBuffer:       1,
+		},
+		{
+			name: "later escalation re-enables disabled escalation",
+			options: []ShutdownOption{
+				WithNoEscalation(),
+				WithEscalationSignals(testSIGQUIT),
+			},
+			wantEscalation:   []os.Signal{testSIGQUIT},
+			wantEscalationOn: true,
+			wantBuffer:       1,
+		},
+		{
+			name: "later no escalation wins",
+			options: []ShutdownOption{
+				WithEscalationSignals(testSIGHUP),
+				WithNoEscalation(),
+			},
+			wantEscalationOn: false,
+			wantBuffer:       1,
+		},
+		{
+			name: "later buffer wins",
+			options: []ShutdownOption{
+				WithEscalationBuffer(2),
+				WithEscalationBuffer(5),
+			},
+			wantEscalationOn: true,
+			wantBuffer:       5,
+		},
 	}
-	if config.escalationSignals != nil {
-		t.Fatal("escalation signals are not nil")
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			config := newShutdownConfig(tt.options...)
+
+			if config.escalationEnabled != tt.wantEscalationOn {
+				t.Fatalf("escalation enabled = %v, want %v", config.escalationEnabled, tt.wantEscalationOn)
+			}
+			if config.escalationBuffer != tt.wantBuffer {
+				t.Fatalf("escalation buffer = %d, want %d", config.escalationBuffer, tt.wantBuffer)
+			}
+			if tt.wantEscalation != nil {
+				assertSignalSlice(t, config.escalationSignals, tt.wantEscalation)
+			}
+			if !tt.wantEscalationOn && config.escalationSignals != nil {
+				t.Fatalf("escalation signals = %v, want nil", config.escalationSignals)
+			}
+		})
 	}
 }
 
 func TestShutdownConfigRejectsInvalidOptions(t *testing.T) {
-	mustPanicWith(t, errEmptyShutdownSignals, func() {
-		newShutdownConfig(WithShutdownSignals())
-	})
-	mustPanicWith(t, errEmptyEscalationSignals, func() {
-		newShutdownConfig(WithEscalationSignals())
-	})
-	mustPanicWith(t, errNegativeEscalationBuffer, func() {
-		newShutdownConfig(WithEscalationBuffer(-1))
-	})
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		message string
+		options []ShutdownOption
+	}{
+		{name: "empty shutdown", message: errEmptyShutdownSignals, options: []ShutdownOption{WithShutdownSignals()}},
+		{name: "nil shutdown", message: errNilSignalSetSignal, options: []ShutdownOption{WithShutdownSignals(nil)}},
+		{name: "empty escalation", message: errEmptyEscalationSignals, options: []ShutdownOption{WithEscalationSignals()}},
+		{name: "nil escalation", message: errNilSignalSetSignal, options: []ShutdownOption{WithEscalationSignals(nil)}},
+		{name: "negative buffer", message: errNegativeEscalationBuffer, options: []ShutdownOption{WithEscalationBuffer(-1)}},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mustPanicWith(t, tt.message, func() {
+				newShutdownConfig(tt.options...)
+			})
+		})
+	}
 }
 
 func TestShutdownConfigIgnoresNilOptions(t *testing.T) {
+	t.Parallel()
+
 	config := newShutdownConfig(nil)
+
 	if len(config.shutdownSignals) == 0 {
 		t.Fatal("nil option broke default config")
+	}
+}
+
+func TestShutdownConfigCollectsSubscriptionOptions(t *testing.T) {
+	t.Parallel()
+
+	option := withNotifier(&fakeNotifier{})
+	config := newShutdownConfig(withShutdownSubscriptionOptions(option, nil))
+
+	if len(config.subscribeOptions) != 2 {
+		t.Fatalf("subscribe options len = %d, want 2", len(config.subscribeOptions))
 	}
 }

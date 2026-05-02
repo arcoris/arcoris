@@ -16,7 +16,7 @@
 
 package signals
 
-// noCopy marks a struct as unsafe to copy after first use.
+// noCopy marks a signal owner as unsafe to copy after first use.
 //
 // It is intentionally small, unexported, and behaviorless. Its only purpose is
 // to make accidental value copies visible to static analysis tools such as:
@@ -24,8 +24,12 @@ package signals
 //	go vet -copylocks
 //
 // The Go vet copylocks analyzer treats values with Lock and Unlock methods as
-// lock-like values. When Timer contains noCopy, copying a Timer value after
-// first use is reported similarly to copying a mutex.
+// lock-like values. Subscription and ShutdownController embed noCopy because
+// both values own process signal registration and runtime coordination state.
+// Copying either value after construction duplicates ownership over the same
+// signal registration, done channel, context cancellation function, and
+// escalation delivery path. That can make one copy stop delivery while the other
+// still appears usable, or make cancellation and escalation ownership ambiguous.
 //
 // noCopy does not provide runtime protection. It does not lock anything, does
 // not allocate, and does not participate in synchronization. It is a

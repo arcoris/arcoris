@@ -1,3 +1,5 @@
+//go:build unix
+
 /*
   Copyright 2026 The ARCORIS Authors
 
@@ -16,25 +18,27 @@
 
 package signals
 
-import "testing"
+import (
+	"os"
+	"syscall"
+	"testing"
+)
 
-func TestEventIsCopyableValue(t *testing.T) {
+func TestUnixSignalSets(t *testing.T) {
 	t.Parallel()
 
-	event := Event{Signal: testSIGINT}
-	copy := event
-
-	if !sameSignal(copy.Signal, testSIGINT) {
-		t.Fatalf("signal = %v, want %v", copy.Signal, testSIGINT)
-	}
+	assertSignalSlice(t, ShutdownSignals(), []os.Signal{os.Interrupt, syscall.SIGTERM})
+	assertSignalSlice(t, ReloadSignals(), []os.Signal{syscall.SIGHUP})
+	assertSignalSlice(t, DiagnosticSignals(), []os.Signal{syscall.SIGQUIT})
 }
 
-func TestEventZeroValueIsEmpty(t *testing.T) {
+func TestUnixShutdownSignalsReturnIndependentSlices(t *testing.T) {
 	t.Parallel()
 
-	var event Event
+	left := ShutdownSignals()
+	left[0] = testSIGHUP
 
-	if event.Signal != nil {
-		t.Fatalf("zero Event signal = %v, want nil", event.Signal)
+	if sameSignal(ShutdownSignals()[0], testSIGHUP) {
+		t.Fatal("ShutdownSignals was mutated through returned slice")
 	}
 }

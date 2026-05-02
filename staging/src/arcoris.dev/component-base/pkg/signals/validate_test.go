@@ -22,35 +22,70 @@ import (
 	"testing"
 )
 
+func TestValidationHelpersAcceptValidInputs(t *testing.T) {
+	t.Parallel()
+
+	requireValidationMessage("valid")
+	requireContext(context.Background(), "valid context")
+	requireSignal(testSIGINT, "valid signal")
+	requireSignals([]os.Signal{testSIGINT, testSIGTERM}, "valid signals")
+	requireNonEmptySignals([]os.Signal{testSIGINT}, "valid non-empty signals")
+	requirePositiveBuffer(1, "valid positive buffer")
+	requireNonNegativeBuffer(0, "valid non-negative buffer")
+}
+
 func TestValidationHelpersRejectMissingDiagnosticText(t *testing.T) {
-	mustPanicWith(t, errNilValidationMessage, func() {
-		requireContext(context.Background(), "")
-	})
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		fn   func()
+	}{
+		{name: "message", fn: func() { requireValidationMessage("") }},
+		{name: "context", fn: func() { requireContext(context.Background(), "") }},
+		{name: "signal", fn: func() { requireSignal(testSIGINT, "") }},
+		{name: "signals", fn: func() { requireSignals([]os.Signal{testSIGINT}, "") }},
+		{name: "non-empty signals", fn: func() { requireNonEmptySignals([]os.Signal{testSIGINT}, "") }},
+		{name: "positive buffer", fn: func() { requirePositiveBuffer(1, "") }},
+		{name: "non-negative buffer", fn: func() { requireNonNegativeBuffer(0, "") }},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mustPanicWith(t, errNilValidationMessage, tt.fn)
+		})
+	}
 }
 
 func TestValidationHelpersRejectInvalidInputs(t *testing.T) {
-	mustPanicWith(t, "nil context", func() {
-		requireContext(nil, "nil context")
-	})
-	mustPanicWith(t, "nil signal", func() {
-		requireSignal(nil, "nil signal")
-	})
-	mustPanicWith(t, "nil signals", func() {
-		requireSignals([]os.Signal{nil}, "nil signals")
-	})
-	mustPanicWith(t, "empty signals", func() {
-		requireNonEmptySignals(nil, "empty signals")
-	})
-	mustPanicWith(t, "positive buffer", func() {
-		requirePositiveBuffer(0, "positive buffer")
-	})
-	mustPanicWith(t, "non-negative buffer", func() {
-		requireNonNegativeBuffer(-1, "non-negative buffer")
-	})
-}
+	t.Parallel()
 
-func TestNoCopyMarkerMethodsAreCallable(t *testing.T) {
-	var marker noCopy
-	marker.Lock()
-	marker.Unlock()
+	tests := []struct {
+		name    string
+		message string
+		fn      func()
+	}{
+		{name: "nil context", message: "nil context", fn: func() { requireContext(nil, "nil context") }},
+		{name: "nil signal", message: "nil signal", fn: func() { requireSignal(nil, "nil signal") }},
+		{name: "nil signals", message: "nil signals", fn: func() { requireSignals([]os.Signal{nil}, "nil signals") }},
+		{name: "empty signals", message: "empty signals", fn: func() { requireNonEmptySignals(nil, "empty signals") }},
+		{name: "nil non-empty signals", message: "nil non-empty signals", fn: func() {
+			requireNonEmptySignals([]os.Signal{nil}, "nil non-empty signals")
+		}},
+		{name: "zero positive buffer", message: "positive buffer", fn: func() { requirePositiveBuffer(0, "positive buffer") }},
+		{name: "negative positive buffer", message: "positive buffer", fn: func() { requirePositiveBuffer(-1, "positive buffer") }},
+		{name: "negative buffer", message: "non-negative buffer", fn: func() { requireNonNegativeBuffer(-1, "non-negative buffer") }},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mustPanicWith(t, tt.message, tt.fn)
+		})
+	}
 }

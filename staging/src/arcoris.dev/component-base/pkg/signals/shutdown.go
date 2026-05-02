@@ -40,6 +40,11 @@ const (
 // Escalation when escalation is enabled. ShutdownController never exits the
 // process and never drives component lifecycle transitions directly.
 //
+// Escalation registration is staged. NewShutdownController registers only the
+// shutdown signal set. After the first shutdown signal is received and recorded,
+// the controller registers the escalation set on the same Subscription. This
+// avoids intercepting escalation-only process signals before shutdown has begun.
+//
 // ShutdownController values must be created with NewShutdownController and must
 // not be copied after first use.
 type ShutdownController struct {
@@ -64,17 +69,15 @@ type ShutdownController struct {
 
 // NewShutdownController constructs and starts a shutdown controller.
 //
-// The controller listens for shutdown signals immediately. The owner must call
-// Stop when the controller is no longer needed. NewShutdownController panics
-// when parent is nil or when options produce invalid signal configuration.
+// The controller listens for shutdown signals immediately and delays escalation
+// registration until the first shutdown signal has been observed. The owner must
+// call Stop when the controller is no longer needed. NewShutdownController
+// panics when parent is nil or when options produce invalid signal
+// configuration.
 func NewShutdownController(parent context.Context, opts ...ShutdownOption) *ShutdownController {
 	requireContext(parent, errNilShutdownParent)
 
 	config := newShutdownConfig(opts...)
-	subscribeSet := config.shutdownSignals
-	if config.escalationEnabled {
-		subscribeSet = Merge(subscribeSet, config.escalationSignals)
-	}
 
 	ctx, cancel := context.WithCancelCause(parent)
 	var escalation chan Event
@@ -85,7 +88,7 @@ func NewShutdownController(parent context.Context, opts ...ShutdownOption) *Shut
 	controller := &ShutdownController{
 		ctx:               ctx,
 		cancel:            cancel,
-		sub:               SubscribeWithOptions(subscribeSet, config.subscribeOptions...),
+		sub:               SubscribeWithOptions(config.shutdownSignals, config.subscribeOptions...),
 		shutdownSignals:   Clone(config.shutdownSignals),
 		escalationSignals: Clone(config.escalationSignals),
 		escalationEnabled: config.escalationEnabled,
@@ -114,7 +117,9 @@ func (c *ShutdownController) Done() <-chan struct{} {
 
 // Stop releases signal registration and cancels the controller context.
 //
-// Stop is idempotent.
+// Stop is idempotent. If the context has already been cancelled by a signal or
+// by the parent context, Stop does not overwrite the existing cancellation
+// cause.
 func (c *ShutdownController) Stop() {
 	requireShutdownController(c)
 
@@ -125,6 +130,9 @@ func (c *ShutdownController) Stop() {
 }
 
 // First returns the first shutdown signal observed by the controller.
+//
+// The recorded Event is immutable once set. Escalation signals and later
+// shutdown signals never replace it.
 func (c *ShutdownController) First() (Event, bool) {
 	requireShutdownController(c)
 
@@ -146,6 +154,12 @@ func (c *ShutdownController) Escalation() <-chan Event {
 }
 
 // run owns the controller signal loop.
+//
+// The loop intentionally keeps only two states: before the first shutdown signal
+// and after the first shutdown signal. It records the first shutdown event once,
+// then registers escalation signals on the existing subscription. It does not
+// interpret escalation as exit, panic, timeout, logging, metrics, or lifecycle
+// policy.
 func (c *ShutdownController) run(parent context.Context) {
 	defer c.sub.Stop()
 	if c.escalation != nil {
@@ -171,15 +185,25 @@ func (c *ShutdownController) run(parent context.Context) {
 			if !c.escalationEnabled {
 				return
 			}
+			c.sub.registerMore(c.escalationSignals)
 			continue
 		}
 
 		if c.firstRecorded() && c.escalationEnabled && Contains(c.escalationSignals, sig) {
-			select {
-			case c.escalation <- event:
-			default:
-			}
+			c.deliverEscalation(event)
 		}
+	}
+}
+
+// deliverEscalation reports event without blocking the signal loop.
+//
+// Escalation is advisory. A full or unready channel means the owner is not
+// currently accepting another escalation event, so the controller drops it
+// instead of turning signal delivery into backpressure or process-exit policy.
+func (c *ShutdownController) deliverEscalation(event Event) {
+	select {
+	case c.escalation <- event:
+	default:
 	}
 }
 

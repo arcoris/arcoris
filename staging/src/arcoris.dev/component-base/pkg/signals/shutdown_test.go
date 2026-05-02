@@ -19,17 +19,83 @@ package signals
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
-	"time"
 )
 
+func TestShutdownControllerDoesNotSubscribeEscalationSignalsBeforeShutdown(t *testing.T) {
+	t.Parallel()
+
+	n := &fakeNotifier{}
+	controller := NewShutdownController(
+		context.Background(),
+		WithShutdownSignals(testSIGTERM),
+		WithEscalationSignals(testSIGHUP),
+		withShutdownSubscriptionOptions(withNotifier(n)),
+	)
+	defer controller.Stop()
+
+	// Escalation-only signals must not be registered before shutdown starts,
+	// because os/signal registration changes process-level signal behavior.
+	assertSignalSlice(t, n.registeredSignals(), []os.Signal{testSIGTERM})
+	if n.notifyCount() != 1 {
+		t.Fatalf("notify count = %d, want initial shutdown registration only", n.notifyCount())
+	}
+}
+
+func TestShutdownControllerRegistersEscalationSignalsAfterFirstShutdownSignal(t *testing.T) {
+	t.Parallel()
+
+	n := &fakeNotifier{}
+	controller := NewShutdownController(
+		context.Background(),
+		WithShutdownSignals(testSIGTERM),
+		WithEscalationSignals(testSIGHUP),
+		withShutdownSubscriptionOptions(withNotifier(n)),
+	)
+	defer controller.Stop()
+
+	n.emit(testSIGTERM)
+	mustClose(t, controller.Done())
+	n.waitNotifyCount(t, 2)
+
+	assertSignalSlice(t, n.registeredSignals(), []os.Signal{testSIGTERM, testSIGHUP})
+}
+
+func TestShutdownControllerIgnoresPreShutdownEscalationSignal(t *testing.T) {
+	t.Parallel()
+
+	n := &fakeNotifier{}
+	controller := NewShutdownController(
+		context.Background(),
+		WithShutdownSignals(testSIGTERM),
+		WithEscalationSignals(testSIGHUP),
+		withShutdownSubscriptionOptions(withNotifier(n)),
+	)
+	defer controller.Stop()
+
+	if n.emit(testSIGHUP) {
+		t.Fatal("pre-shutdown escalation signal was delivered")
+	}
+	select {
+	case <-controller.Done():
+		t.Fatal("controller cancelled before a shutdown signal")
+	default:
+	}
+	if event, ok := controller.First(); ok || event.Signal != nil {
+		t.Fatalf("First() = (%v, %v), want empty false", event, ok)
+	}
+}
+
 func TestShutdownControllerCancelsOnFirstShutdownSignal(t *testing.T) {
+	t.Parallel()
+
 	n := &fakeNotifier{}
 	controller := NewShutdownController(
 		context.Background(),
 		WithShutdownSignals(testSIGTERM),
 		WithEscalationSignals(testSIGTERM),
-		withShutdownSubscribeOptions(withNotifier(n)),
+		withShutdownSubscriptionOptions(withNotifier(n)),
 	)
 	defer controller.Stop()
 
@@ -48,58 +114,73 @@ func TestShutdownControllerCancelsOnFirstShutdownSignal(t *testing.T) {
 	}
 }
 
-func TestShutdownControllerDeliversEscalationAfterFirstSignal(t *testing.T) {
+func TestShutdownControllerDeliversRepeatedShutdownAsEscalationByDefault(t *testing.T) {
+	t.Parallel()
+
 	n := &fakeNotifier{}
 	controller := NewShutdownController(
 		context.Background(),
 		WithShutdownSignals(testSIGTERM),
-		WithEscalationSignals(testSIGTERM),
-		WithEscalationBuffer(1),
-		withShutdownSubscribeOptions(withNotifier(n)),
+		withShutdownSubscriptionOptions(withNotifier(n)),
 	)
 	defer controller.Stop()
 
 	n.emit(testSIGTERM)
 	mustClose(t, controller.Done())
-	n.emit(testSIGTERM)
+	n.waitNotifyCount(t, 2)
 
+	n.emit(testSIGTERM)
 	mustReceiveSignal(t, controller.Escalation(), testSIGTERM)
 }
 
-func TestShutdownControllerEscalationIsBestEffort(t *testing.T) {
+func TestShutdownControllerDeliversConfiguredEscalationAfterFirstSignal(t *testing.T) {
+	t.Parallel()
+
 	n := &fakeNotifier{}
 	controller := NewShutdownController(
 		context.Background(),
 		WithShutdownSignals(testSIGTERM),
-		WithEscalationSignals(testSIGTERM),
-		WithEscalationBuffer(0),
-		withShutdownSubscribeOptions(withNotifier(n)),
+		WithEscalationSignals(testSIGHUP),
+		WithEscalationBuffer(1),
+		withShutdownSubscriptionOptions(withNotifier(n)),
 	)
 	defer controller.Stop()
 
 	n.emit(testSIGTERM)
 	mustClose(t, controller.Done())
+	n.waitNotifyCount(t, 2)
 
+	n.emit(testSIGHUP)
+	mustReceiveSignal(t, controller.Escalation(), testSIGHUP)
+}
+
+func TestShutdownControllerEscalationIsBestEffort(t *testing.T) {
+	t.Parallel()
+
+	controller := &ShutdownController{escalation: make(chan Event, 1)}
+	controller.escalation <- Event{Signal: testSIGINT}
+
+	// A full escalation channel models an owner that has not consumed the
+	// previous advisory event. The controller must drop instead of blocking.
 	done := make(chan struct{})
 	go func() {
-		n.emit(testSIGTERM)
+		controller.deliverEscalation(Event{Signal: testSIGTERM})
 		close(done)
 	}()
 
-	select {
-	case <-done:
-	case <-time.After(time.Second):
-		t.Fatal("best-effort escalation send blocked")
-	}
+	mustClose(t, done)
+	mustReceiveSignal(t, controller.Escalation(), testSIGINT)
 }
 
 func TestShutdownControllerCanDisableEscalation(t *testing.T) {
+	t.Parallel()
+
 	n := &fakeNotifier{}
 	controller := NewShutdownController(
 		context.Background(),
 		WithShutdownSignals(testSIGTERM),
 		WithNoEscalation(),
-		withShutdownSubscribeOptions(withNotifier(n)),
+		withShutdownSubscriptionOptions(withNotifier(n)),
 	)
 	defer controller.Stop()
 
@@ -109,25 +190,104 @@ func TestShutdownControllerCanDisableEscalation(t *testing.T) {
 
 	n.emit(testSIGTERM)
 	mustClose(t, controller.Done())
+	n.waitStopCount(t, 1)
+
+	if n.notifyCount() != 1 {
+		t.Fatalf("notify count = %d, want no escalation registration", n.notifyCount())
+	}
 }
 
 func TestShutdownControllerPreservesParentCause(t *testing.T) {
+	t.Parallel()
+
 	n := &fakeNotifier{}
 	parent, cancel := context.WithCancelCause(context.Background())
-	controller := NewShutdownController(parent, withShutdownSubscribeOptions(withNotifier(n)))
+	controller := NewShutdownController(parent, withShutdownSubscriptionOptions(withNotifier(n)))
 	defer controller.Stop()
 
 	cancel(context.DeadlineExceeded)
 	mustClose(t, controller.Done())
+	n.waitStopCount(t, 1)
 
 	if !errors.Is(context.Cause(controller.Context()), context.DeadlineExceeded) {
 		t.Fatalf("cause = %v, want deadline exceeded", context.Cause(controller.Context()))
 	}
 }
 
-func TestShutdownControllerStopIsIdempotent(t *testing.T) {
+func TestShutdownControllerStopDoesNotOverwriteSignalCause(t *testing.T) {
+	t.Parallel()
+
 	n := &fakeNotifier{}
-	controller := NewShutdownController(context.Background(), withShutdownSubscribeOptions(withNotifier(n)))
+	controller := NewShutdownController(
+		context.Background(),
+		WithShutdownSignals(testSIGTERM),
+		withShutdownSubscriptionOptions(withNotifier(n)),
+	)
+
+	n.emit(testSIGTERM)
+	mustClose(t, controller.Done())
+
+	// Stop is cleanup. Once a signal owns the cancellation cause, Stop must not
+	// replace it with context.Canceled.
+	controller.Stop()
+
+	event, ok := Cause(controller.Context())
+	if !ok {
+		t.Fatal("signal cause was not preserved")
+	}
+	if !sameSignal(event.Signal, testSIGTERM) {
+		t.Fatalf("signal = %v, want %v", event.Signal, testSIGTERM)
+	}
+}
+
+func TestShutdownControllerStopDoesNotOverwriteParentCause(t *testing.T) {
+	t.Parallel()
+
+	n := &fakeNotifier{}
+	parent, cancel := context.WithCancelCause(context.Background())
+	controller := NewShutdownController(parent, withShutdownSubscriptionOptions(withNotifier(n)))
+
+	cancel(context.DeadlineExceeded)
+	mustClose(t, controller.Done())
+
+	// Parent cancellation is externally owned. Stop must release registration
+	// without changing the already-observed parent cause.
+	controller.Stop()
+
+	if !errors.Is(context.Cause(controller.Context()), context.DeadlineExceeded) {
+		t.Fatalf("cause = %v, want deadline exceeded", context.Cause(controller.Context()))
+	}
+}
+
+func TestShutdownControllerEscalationChannelClosesOnStop(t *testing.T) {
+	t.Parallel()
+
+	n := &fakeNotifier{}
+	controller := NewShutdownController(context.Background(), withShutdownSubscriptionOptions(withNotifier(n)))
+
+	controller.Stop()
+
+	mustClose(t, controller.Escalation())
+}
+
+func TestShutdownControllerEscalationChannelClosesOnParentCancel(t *testing.T) {
+	t.Parallel()
+
+	n := &fakeNotifier{}
+	parent, cancel := context.WithCancelCause(context.Background())
+	controller := NewShutdownController(parent, withShutdownSubscriptionOptions(withNotifier(n)))
+	defer controller.Stop()
+
+	cancel(context.Canceled)
+
+	mustClose(t, controller.Escalation())
+}
+
+func TestShutdownControllerStopIsIdempotent(t *testing.T) {
+	t.Parallel()
+
+	n := &fakeNotifier{}
+	controller := NewShutdownController(context.Background(), withShutdownSubscriptionOptions(withNotifier(n)))
 
 	controller.Stop()
 	controller.Stop()
@@ -138,20 +298,58 @@ func TestShutdownControllerStopIsIdempotent(t *testing.T) {
 	}
 }
 
-func TestShutdownControllerRejectsNilParentAndNilReceiver(t *testing.T) {
+func TestShutdownControllerRejectsNilParent(t *testing.T) {
+	t.Parallel()
+
 	mustPanicWith(t, errNilShutdownParent, func() {
 		NewShutdownController(nil)
 	})
-	mustPanicWith(t, errNilShutdownController, func() {
-		var controller *ShutdownController
-		controller.Done()
-	})
 }
 
-func TestShutdownControllerRecordFirstKeepsOriginalEvent(t *testing.T) {
-	controller := &ShutdownController{}
-	controller.recordFirst(Event{Signal: testSIGINT})
-	controller.recordFirst(Event{Signal: testSIGTERM})
+func TestShutdownControllerRejectsNilReceiver(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		fn   func(*ShutdownController)
+	}{
+		{name: "Context", fn: func(c *ShutdownController) { c.Context() }},
+		{name: "Done", fn: func(c *ShutdownController) { c.Done() }},
+		{name: "Stop", fn: func(c *ShutdownController) { c.Stop() }},
+		{name: "First", fn: func(c *ShutdownController) { c.First() }},
+		{name: "Escalation", fn: func(c *ShutdownController) { c.Escalation() }},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mustPanicWith(t, errNilShutdownController, func() {
+				tt.fn(nil)
+			})
+		})
+	}
+}
+
+func TestShutdownControllerFirstEventIsImmutable(t *testing.T) {
+	t.Parallel()
+
+	n := &fakeNotifier{}
+	controller := NewShutdownController(
+		context.Background(),
+		WithShutdownSignals(testSIGINT),
+		WithEscalationSignals(testSIGTERM),
+		withShutdownSubscriptionOptions(withNotifier(n)),
+	)
+	defer controller.Stop()
+
+	n.emit(testSIGINT)
+	mustClose(t, controller.Done())
+	n.waitNotifyCount(t, 2)
+
+	n.emit(testSIGTERM)
+	mustReceiveSignal(t, controller.Escalation(), testSIGTERM)
 
 	event, ok := controller.First()
 	if !ok {

@@ -24,6 +24,8 @@ import (
 )
 
 func TestSignalErrorMatchesErrSignal(t *testing.T) {
+	t.Parallel()
+
 	err := NewSignalError(testSIGTERM)
 
 	if !errors.Is(err, ErrSignal) {
@@ -39,7 +41,17 @@ func TestSignalErrorMatchesErrSignal(t *testing.T) {
 	}
 }
 
+func TestSignalErrorDoesNotMatchUnrelatedErrors(t *testing.T) {
+	t.Parallel()
+
+	if errors.Is(NewSignalError(testSIGTERM), ErrStopped) {
+		t.Fatal("SignalError matched ErrStopped")
+	}
+}
+
 func TestSignalErrorStringIncludesSignal(t *testing.T) {
+	t.Parallel()
+
 	err := NewSignalError(testSIGINT)
 
 	if !strings.Contains(err.Error(), testSIGINT.String()) {
@@ -47,13 +59,35 @@ func TestSignalErrorStringIncludesSignal(t *testing.T) {
 	}
 }
 
+func TestSignalErrorStringHandlesZeroValue(t *testing.T) {
+	t.Parallel()
+
+	err := SignalError{}
+
+	if got := err.Error(); got != "signal received: <nil>" {
+		t.Fatalf("Error() = %q, want nil signal text", got)
+	}
+}
+
 func TestNewSignalErrorRejectsNilSignal(t *testing.T) {
+	t.Parallel()
+
 	mustPanicWith(t, errNilSignalErrorSignal, func() {
 		NewSignalError(nil)
 	})
 }
 
+func TestErrStoppedDoesNotClassifyAsSignal(t *testing.T) {
+	t.Parallel()
+
+	if errors.Is(ErrStopped, ErrSignal) {
+		t.Fatal("ErrStopped matched ErrSignal")
+	}
+}
+
 func TestCauseExtractsSignalEvent(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancelCause(context.Background())
 	cancel(NewSignalError(testSIGTERM))
 
@@ -67,6 +101,8 @@ func TestCauseExtractsSignalEvent(t *testing.T) {
 }
 
 func TestCauseReturnsFalseForNonSignalCause(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancelCause(context.Background())
 	cancel(context.Canceled)
 
@@ -75,7 +111,20 @@ func TestCauseReturnsFalseForNonSignalCause(t *testing.T) {
 	}
 }
 
+func TestCauseReturnsFalseForZeroSignalError(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancelCause(context.Background())
+	cancel(SignalError{})
+
+	if event, ok := Cause(ctx); ok || event.Signal != nil {
+		t.Fatalf("Cause = (%v, %v), want empty false", event, ok)
+	}
+}
+
 func TestCauseRejectsNilContext(t *testing.T) {
+	t.Parallel()
+
 	mustPanicWith(t, errNilCauseContext, func() {
 		Cause(nil)
 	})

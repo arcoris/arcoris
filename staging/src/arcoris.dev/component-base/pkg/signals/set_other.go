@@ -20,18 +20,28 @@ package signals
 
 import "os"
 
-// Shutdown returns the portable interrupt signal for platforms without Unix or
-// Windows-specific process signal sets.
-func Shutdown() []os.Signal {
+// ShutdownSignals returns the portable interrupt signal for platforms without
+// Unix or Windows-specific process signal sets.
+//
+// The result is deliberately conservative. It exposes only os.Interrupt because
+// this low-level package should not invent platform policy when the standard
+// library does not define a conventional shutdown set.
+func ShutdownSignals() []os.Signal {
 	return []os.Signal{os.Interrupt}
 }
 
-// Reload returns no default reload signals on this platform.
-func Reload() []os.Signal {
+// ReloadSignals returns no default reload signals on this platform.
+//
+// Reload behavior is opt-in. Callers that have a platform-specific reload
+// signal should pass it explicitly.
+func ReloadSignals() []os.Signal {
 	return nil
 }
 
-// Diagnostics returns no default diagnostic signals on this platform.
-func Diagnostics() []os.Signal {
+// DiagnosticSignals returns no default diagnostic signals on this platform.
+//
+// Diagnostic behavior is owner policy. This package exposes platform
+// conventions only when the platform provides one.
+func DiagnosticSignals() []os.Signal {
 	return nil
 }

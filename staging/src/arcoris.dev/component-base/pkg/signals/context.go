@@ -33,7 +33,8 @@ const (
 //
 // StopFunc values returned by NotifyContext are idempotent. Calling StopFunc
 // unregisters signal delivery and cancels the returned context if it has not
-// already been cancelled.
+// already been cancelled. When the context already has a signal or parent cause,
+// StopFunc does not overwrite that cause.
 type StopFunc func()
 
 // NotifyContext returns a child context cancelled when a configured signal is
@@ -44,14 +45,17 @@ type StopFunc func()
 // cancellation uses SignalError as the context cause. Parent cancellation
 // preserves the parent cause when available.
 //
-// An empty sigs list means Shutdown. NotifyContext panics when parent is nil or
-// when any configured signal is nil.
+// An empty sigs list means ShutdownSignals. NotifyContext panics when parent is
+// nil or when any configured signal is nil.
 func NotifyContext(parent context.Context, sigs ...os.Signal) (context.Context, StopFunc) {
 	return notifyContextWithOptions(parent, sigs, nil)
 }
 
 // notifyContextWithOptions is the testable implementation behind NotifyContext.
-func notifyContextWithOptions(parent context.Context, sigs []os.Signal, opts []SubscribeOption) (context.Context, StopFunc) {
+//
+// The options slice is package-local so tests can replace os/signal without
+// adding a public dependency injection point to this low-level package.
+func notifyContextWithOptions(parent context.Context, sigs []os.Signal, opts []SubscriptionOption) (context.Context, StopFunc) {
 	requireContext(parent, errNilNotifyContextParent)
 
 	ctx, cancel := context.WithCancelCause(parent)

@@ -24,45 +24,47 @@ import (
 )
 
 func TestSubscribeWithOptionsRegistersNormalizedSignals(t *testing.T) {
+	t.Parallel()
+
 	n := &fakeNotifier{}
 	sub := SubscribeWithOptions([]os.Signal{testSIGINT, testSIGTERM, testSIGINT}, withNotifier(n))
 	defer sub.Stop()
 
-	got := n.notifiedSignals()
-	want := []os.Signal{testSIGINT, testSIGTERM}
-	if len(got) != len(want) {
-		t.Fatalf("registered len = %d, want %d", len(got), len(want))
-	}
-	for i := range want {
-		if !sameSignal(got[i], want[i]) {
-			t.Fatalf("registered[%d] = %v, want %v", i, got[i], want[i])
-		}
-	}
+	assertSignalSlice(t, n.registeredSignals(), []os.Signal{testSIGINT, testSIGTERM})
 }
 
-func TestSubscribeWithOptionsUsesShutdownWhenSignalsEmpty(t *testing.T) {
+func TestSubscribeWithOptionsUsesShutdownSignalsWhenEmpty(t *testing.T) {
+	t.Parallel()
+
 	n := &fakeNotifier{}
 	sub := SubscribeWithOptions(nil, withNotifier(n))
 	defer sub.Stop()
 
-	if len(n.notifiedSignals()) == 0 {
+	if len(n.registeredSignals()) == 0 {
 		t.Fatal("empty subscription did not register default shutdown signals")
 	}
 }
 
-func TestSubscribeRejectsNilSignal(t *testing.T) {
+func TestSubscribeWithOptionsRejectsNilSignal(t *testing.T) {
+	t.Parallel()
+
 	n := &fakeNotifier{}
+
 	mustPanicWith(t, errNilSignalSetSignal, func() {
 		SubscribeWithOptions([]os.Signal{nil}, withNotifier(n))
 	})
 }
 
 func TestSubscriptionWaitReturnsSignal(t *testing.T) {
+	t.Parallel()
+
 	n := &fakeNotifier{}
 	sub := SubscribeWithOptions([]os.Signal{testSIGINT}, withNotifier(n))
 	defer sub.Stop()
 
-	n.emit(testSIGINT)
+	if !n.emit(testSIGINT) {
+		t.Fatal("registered signal was not delivered")
+	}
 	sig, err := sub.Wait(context.Background())
 	if err != nil {
 		t.Fatalf("Wait error = %v", err)
@@ -73,6 +75,8 @@ func TestSubscriptionWaitReturnsSignal(t *testing.T) {
 }
 
 func TestSubscriptionWaitReturnsContextCause(t *testing.T) {
+	t.Parallel()
+
 	n := &fakeNotifier{}
 	sub := SubscribeWithOptions([]os.Signal{testSIGINT}, withNotifier(n))
 	defer sub.Stop()
@@ -87,6 +91,8 @@ func TestSubscriptionWaitReturnsContextCause(t *testing.T) {
 }
 
 func TestSubscriptionWaitReturnsErrStopped(t *testing.T) {
+	t.Parallel()
+
 	n := &fakeNotifier{}
 	sub := SubscribeWithOptions([]os.Signal{testSIGINT}, withNotifier(n))
 	sub.Stop()
@@ -97,7 +103,9 @@ func TestSubscriptionWaitReturnsErrStopped(t *testing.T) {
 	}
 }
 
-func TestSubscriptionStopIsIdempotent(t *testing.T) {
+func TestSubscriptionStopIsIdempotentAndClosesDone(t *testing.T) {
+	t.Parallel()
+
 	n := &fakeNotifier{}
 	sub := SubscribeWithOptions([]os.Signal{testSIGINT}, withNotifier(n))
 
@@ -107,14 +115,105 @@ func TestSubscriptionStopIsIdempotent(t *testing.T) {
 	if n.stopCount() != 1 {
 		t.Fatalf("stop count = %d, want 1", n.stopCount())
 	}
+	if !n.stopped() {
+		t.Fatal("notifier was not marked stopped")
+	}
 	mustClose(t, sub.Done())
 }
 
-func TestSubscriptionRejectsNilReceiverAndNilContext(t *testing.T) {
-	mustPanicWith(t, errNilSubscription, func() {
-		var sub *Subscription
-		sub.Done()
-	})
+func TestSubscriptionChannelAccessor(t *testing.T) {
+	t.Parallel()
+
+	n := &fakeNotifier{}
+	sub := SubscribeWithOptions([]os.Signal{testSIGINT}, withNotifier(n))
+	defer sub.Stop()
+
+	if sub.C() == nil {
+		t.Fatal("C returned nil")
+	}
+}
+
+func TestSubscriptionDirectChannelReceiveCompetesWithWait(t *testing.T) {
+	t.Parallel()
+
+	n := &fakeNotifier{}
+	sub := SubscribeWithOptions([]os.Signal{testSIGINT}, withNotifier(n))
+	defer sub.Stop()
+
+	// C and Wait share one channel. The direct receive consumes the only signal,
+	// so the later Wait observes the already-cancelled context instead.
+	n.emit(testSIGINT)
+	mustReceiveOSSignal(t, sub.C(), testSIGINT)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := sub.Wait(ctx)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("Wait error = %v, want context.Canceled", err)
+	}
+}
+
+func TestSubscriptionRegisterMoreExtendsRegistration(t *testing.T) {
+	t.Parallel()
+
+	n := &fakeNotifier{}
+	sub := SubscribeWithOptions([]os.Signal{testSIGINT}, withNotifier(n))
+	defer sub.Stop()
+
+	if !sub.registerMore([]os.Signal{testSIGTERM, testSIGINT}) {
+		t.Fatal("registerMore returned false for active subscription")
+	}
+
+	assertSignalSlice(t, n.registeredSignals(), []os.Signal{testSIGINT, testSIGTERM})
+	if n.notifyCount() != 2 {
+		t.Fatalf("notify count = %d, want 2", n.notifyCount())
+	}
+}
+
+func TestSubscriptionRegisterMoreDoesNotRegisterAfterStop(t *testing.T) {
+	t.Parallel()
+
+	n := &fakeNotifier{}
+	sub := SubscribeWithOptions([]os.Signal{testSIGINT}, withNotifier(n))
+	sub.Stop()
+
+	if sub.registerMore([]os.Signal{testSIGTERM}) {
+		t.Fatal("registerMore returned true after Stop")
+	}
+	if n.notifyCount() != 1 {
+		t.Fatalf("notify count = %d, want only initial registration", n.notifyCount())
+	}
+}
+
+func TestSubscriptionRejectsNilReceiver(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		fn   func(*Subscription)
+	}{
+		{name: "C", fn: func(s *Subscription) { s.C() }},
+		{name: "Wait", fn: func(s *Subscription) { _, _ = s.Wait(context.Background()) }},
+		{name: "Stop", fn: func(s *Subscription) { s.Stop() }},
+		{name: "Done", fn: func(s *Subscription) { s.Done() }},
+		{name: "registerMore", fn: func(s *Subscription) { s.registerMore([]os.Signal{testSIGINT}) }},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mustPanicWith(t, errNilSubscription, func() {
+				tt.fn(nil)
+			})
+		})
+	}
+}
+
+func TestSubscriptionWaitRejectsNilContext(t *testing.T) {
+	t.Parallel()
 
 	n := &fakeNotifier{}
 	sub := SubscribeWithOptions([]os.Signal{testSIGINT}, withNotifier(n))
@@ -125,17 +224,9 @@ func TestSubscriptionRejectsNilReceiverAndNilContext(t *testing.T) {
 	})
 }
 
-func TestSubscriptionChannelAccessors(t *testing.T) {
-	n := &fakeNotifier{}
-	sub := SubscribeWithOptions([]os.Signal{testSIGINT}, withNotifier(n))
-	defer sub.Stop()
-
-	if sub.C() == nil {
-		t.Fatal("C returned nil")
-	}
-}
-
 func TestContextCauseFallsBackToContextErr(t *testing.T) {
+	t.Parallel()
+
 	if err := contextCause(context.Background()); err != nil {
 		t.Fatalf("contextCause(background) = %v, want nil", err)
 	}

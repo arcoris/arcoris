@@ -23,21 +23,33 @@ import (
 	"syscall"
 )
 
-// Shutdown returns the default graceful-shutdown signal set for Unix systems.
-func Shutdown() []os.Signal {
+// ShutdownSignals returns the default graceful-shutdown signal set for Unix
+// systems.
+//
+// The set contains os.Interrupt and SIGTERM, which are the process-level
+// triggers ordinary component entrypoints should treat as owner-requested
+// shutdown. Each call returns a fresh slice so callers may append, sort, or
+// otherwise normalize the result without mutating package-owned state.
+func ShutdownSignals() []os.Signal {
 	return []os.Signal{os.Interrupt, syscall.SIGTERM}
 }
 
-// Reload returns the conventional configuration-reload signal set for Unix
-// systems.
-func Reload() []os.Signal {
+// ReloadSignals returns the conventional configuration-reload signal set for
+// Unix systems.
+//
+// Reload support is opt-in. The package never registers reload signals through
+// NotifyContext or ShutdownController defaults because reload policy belongs to
+// the component owner.
+func ReloadSignals() []os.Signal {
 	return []os.Signal{syscall.SIGHUP}
 }
 
-// Diagnostics returns the conventional diagnostic signal set for Unix systems.
+// DiagnosticSignals returns the conventional diagnostic signal set for Unix
+// systems.
 //
-// Diagnostics signals are opt-in. They are not registered by NotifyContext or
-// ShutdownController defaults.
-func Diagnostics() []os.Signal {
+// Diagnostic signals are opt-in. This package only exposes the platform
+// convention; it does not decide whether diagnostics are dumped, logged,
+// exported, or ignored.
+func DiagnosticSignals() []os.Signal {
 	return []os.Signal{syscall.SIGQUIT}
 }

@@ -40,19 +40,18 @@ type ShutdownOption func(*shutdownConfig)
 
 // shutdownConfig contains construction-time settings for ShutdownController.
 type shutdownConfig struct {
-	shutdownSignals   []os.Signal
-	escalationSignals []os.Signal
-	escalationBuffer  int
-	escalationEnabled bool
-	subscribeOptions  []SubscribeOption
+	shutdownSignals      []os.Signal
+	escalationSignals    []os.Signal
+	escalationSignalsSet bool
+	escalationBuffer     int
+	escalationEnabled    bool
+	subscribeOptions     []SubscriptionOption
 }
 
 // defaultShutdownConfig returns the default ShutdownController config.
 func defaultShutdownConfig() shutdownConfig {
-	shutdown := Shutdown()
 	return shutdownConfig{
-		shutdownSignals:   shutdown,
-		escalationSignals: Clone(shutdown),
+		shutdownSignals:   ShutdownSignals(),
 		escalationBuffer:  1,
 		escalationEnabled: true,
 	}
@@ -75,6 +74,9 @@ func newShutdownConfig(options ...ShutdownOption) shutdownConfig {
 	requireNonEmptySignals(config.shutdownSignals, errEmptyShutdownSignals)
 
 	if config.escalationEnabled {
+		if !config.escalationSignalsSet {
+			config.escalationSignals = Clone(config.shutdownSignals)
+		}
 		config.escalationSignals = Unique(config.escalationSignals)
 		requireNonEmptySignals(config.escalationSignals, errEmptyEscalationSignals)
 	}
@@ -85,7 +87,9 @@ func newShutdownConfig(options ...ShutdownOption) shutdownConfig {
 
 // WithShutdownSignals replaces the signal set that starts graceful shutdown.
 //
-// The set must be non-empty and must not contain nil signals.
+// The set must be non-empty and must not contain nil signals. When escalation
+// remains enabled and WithEscalationSignals is not supplied, repeated signals
+// from this final shutdown set are also used as escalation signals.
 func WithShutdownSignals(sigs ...os.Signal) ShutdownOption {
 	return func(config *shutdownConfig) {
 		copy := Unique(sigs)
@@ -94,15 +98,19 @@ func WithShutdownSignals(sigs ...os.Signal) ShutdownOption {
 	}
 }
 
-// WithEscalationSignals replaces the signal set reported after shutdown starts.
+// WithEscalationSignals replaces the signal set registered after shutdown
+// starts and reported as escalation.
 //
-// The set must be non-empty and must not contain nil signals. Use
+// The set must be non-empty and must not contain nil signals. These signals are
+// not registered during NewShutdownController construction; registration is
+// staged until the first shutdown signal has been recorded. Use
 // WithNoEscalation to disable repeated-signal escalation entirely.
 func WithEscalationSignals(sigs ...os.Signal) ShutdownOption {
 	return func(config *shutdownConfig) {
 		copy := Unique(sigs)
 		requireNonEmptySignals(copy, errEmptyEscalationSignals)
 		config.escalationSignals = copy
+		config.escalationSignalsSet = true
 		config.escalationEnabled = true
 	}
 }
@@ -123,15 +131,16 @@ func WithNoEscalation() ShutdownOption {
 	return func(config *shutdownConfig) {
 		config.escalationEnabled = false
 		config.escalationSignals = nil
+		config.escalationSignalsSet = false
 	}
 }
 
-// withShutdownSubscribeOptions appends Subscription options used by the internal
-// signal subscription.
+// withShutdownSubscriptionOptions appends Subscription options used by the
+// internal signal subscription.
 //
 // The option is intentionally unexported. Tests use it to replace os/signal with
-// a fake notifier.
-func withShutdownSubscribeOptions(opts ...SubscribeOption) ShutdownOption {
+// a fake notifier while production callers keep the standard os/signal seam.
+func withShutdownSubscriptionOptions(opts ...SubscriptionOption) ShutdownOption {
 	return func(config *shutdownConfig) {
 		config.subscribeOptions = append(config.subscribeOptions, opts...)
 	}

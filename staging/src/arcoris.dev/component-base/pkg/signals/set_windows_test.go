@@ -1,3 +1,5 @@
+//go:build windows
+
 /*
   Copyright 2026 The ARCORIS Authors
 
@@ -16,25 +18,30 @@
 
 package signals
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
-func TestEventIsCopyableValue(t *testing.T) {
+func TestWindowsSignalSets(t *testing.T) {
 	t.Parallel()
 
-	event := Event{Signal: testSIGINT}
-	copy := event
-
-	if !sameSignal(copy.Signal, testSIGINT) {
-		t.Fatalf("signal = %v, want %v", copy.Signal, testSIGINT)
+	assertSignalSlice(t, ShutdownSignals(), []os.Signal{os.Interrupt})
+	if ReloadSignals() != nil {
+		t.Fatalf("ReloadSignals() = %v, want nil", ReloadSignals())
+	}
+	if DiagnosticSignals() != nil {
+		t.Fatalf("DiagnosticSignals() = %v, want nil", DiagnosticSignals())
 	}
 }
 
-func TestEventZeroValueIsEmpty(t *testing.T) {
+func TestWindowsShutdownSignalsReturnIndependentSlices(t *testing.T) {
 	t.Parallel()
 
-	var event Event
+	left := ShutdownSignals()
+	left[0] = testSIGHUP
 
-	if event.Signal != nil {
-		t.Fatalf("zero Event signal = %v, want nil", event.Signal)
+	if sameSignal(ShutdownSignals()[0], testSIGHUP) {
+		t.Fatal("ShutdownSignals was mutated through returned slice")
 	}
 }

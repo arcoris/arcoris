@@ -20,17 +20,27 @@ package signals
 
 import "os"
 
-// Shutdown returns the default graceful-shutdown signal set for Windows.
-func Shutdown() []os.Signal {
+// ShutdownSignals returns the default graceful-shutdown signal set for Windows.
+//
+// Windows exposes os.Interrupt as the portable owner-requested shutdown signal
+// available to this low-level package. Each call returns a fresh slice so
+// callers cannot mutate package-owned defaults.
+func ShutdownSignals() []os.Signal {
 	return []os.Signal{os.Interrupt}
 }
 
-// Reload returns no default reload signals on Windows.
-func Reload() []os.Signal {
+// ReloadSignals returns no default reload signals on Windows.
+//
+// Reload behavior is intentionally opt-in and platform-specific. Callers that
+// support a Windows-specific reload trigger should pass that signal explicitly.
+func ReloadSignals() []os.Signal {
 	return nil
 }
 
-// Diagnostics returns no default diagnostic signals on Windows.
-func Diagnostics() []os.Signal {
+// DiagnosticSignals returns no default diagnostic signals on Windows.
+//
+// Diagnostic behavior is owner policy. The package does not invent a synthetic
+// diagnostic signal when the platform has no conventional default.
+func DiagnosticSignals() []os.Signal {
 	return nil
 }

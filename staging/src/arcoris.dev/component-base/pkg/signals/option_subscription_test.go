@@ -18,7 +18,9 @@ package signals
 
 import "testing"
 
-func TestSubscribeConfigDefaults(t *testing.T) {
+func TestSubscriptionConfigDefaults(t *testing.T) {
+	t.Parallel()
+
 	config := newSubscribeConfig()
 
 	if config.buffer != 1 {
@@ -29,9 +31,11 @@ func TestSubscribeConfigDefaults(t *testing.T) {
 	}
 }
 
-func TestSubscribeConfigAppliesOptionsAndIgnoresNil(t *testing.T) {
+func TestSubscriptionConfigAppliesOptionsAndIgnoresNil(t *testing.T) {
+	t.Parallel()
+
 	n := &fakeNotifier{}
-	config := newSubscribeConfig(nil, WithBuffer(4), withNotifier(n))
+	config := newSubscribeConfig(nil, WithSubscriptionBuffer(4), withNotifier(n))
 
 	if config.buffer != 4 {
 		t.Fatalf("buffer = %d, want 4", config.buffer)
@@ -41,17 +45,47 @@ func TestSubscribeConfigAppliesOptionsAndIgnoresNil(t *testing.T) {
 	}
 }
 
-func TestWithBufferRejectsNonPositiveSize(t *testing.T) {
-	mustPanicWith(t, errNonPositiveSubscribeBuffer, func() {
-		newSubscribeConfig(WithBuffer(0))
-	})
-	mustPanicWith(t, errNonPositiveSubscribeBuffer, func() {
-		newSubscribeConfig(WithBuffer(-1))
-	})
+func TestSubscriptionConfigAppliesBufferOptionsInOrder(t *testing.T) {
+	t.Parallel()
+
+	config := newSubscribeConfig(
+		WithSubscriptionBuffer(2),
+		WithSubscriptionBuffer(5),
+	)
+
+	if config.buffer != 5 {
+		t.Fatalf("buffer = %d, want 5", config.buffer)
+	}
 }
 
-func TestSubscribeConfigRepairsNilNotifier(t *testing.T) {
+func TestSubscriptionConfigRejectsInvalidBuffer(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		size int
+	}{
+		{name: "zero", size: 0},
+		{name: "negative", size: -1},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mustPanicWith(t, errNonPositiveSubscriptionBuffer, func() {
+				newSubscribeConfig(WithSubscriptionBuffer(tt.size))
+			})
+		})
+	}
+}
+
+func TestSubscriptionConfigRepairsNilNotifier(t *testing.T) {
+	t.Parallel()
+
 	config := newSubscribeConfig(withNotifier(nil))
+
 	if config.notifier == nil {
 		t.Fatal("nil notifier was not repaired")
 	}
