@@ -57,6 +57,24 @@ func TestReportPredicates(t *testing.T) {
 	if invalid.IsValid() {
 		t.Fatal("invalid report IsValid() = true, want false")
 	}
+
+	unknownWithChecks := Report{
+		Target: TargetUnknown,
+		Status: StatusHealthy,
+		Checks: []Result{Healthy("storage")},
+	}
+	if unknownWithChecks.IsValid() {
+		t.Fatal("TargetUnknown report with checks should be invalid")
+	}
+
+	invalidCheck := Report{
+		Target: TargetReady,
+		Status: StatusHealthy,
+		Checks: []Result{{Status: StatusHealthy, Reason: Reason("bad-reason")}},
+	}
+	if invalidCheck.IsValid() {
+		t.Fatal("report with invalid check reason should be invalid")
+	}
 }
 
 func TestReportCheckAccessors(t *testing.T) {

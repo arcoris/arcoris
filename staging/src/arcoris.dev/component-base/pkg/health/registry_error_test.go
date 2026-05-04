@@ -30,11 +30,6 @@ func TestRegistryErrorsClassifyWithErrorsIs(t *testing.T) {
 		target error
 	}{
 		{
-			name:   "invalid_target",
-			err:    InvalidTargetError{Target: TargetUnknown},
-			target: ErrInvalidTarget,
-		},
-		{
 			name:   "nil_checker",
 			err:    NilCheckerError{Target: TargetReady, Index: 1},
 			target: ErrNilChecker,

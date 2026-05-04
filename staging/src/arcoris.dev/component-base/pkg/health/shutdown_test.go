@@ -22,7 +22,7 @@ import (
 	"testing"
 )
 
-func TestSignalChannelChecks(t *testing.T) {
+func TestSourceChannelChecks(t *testing.T) {
 	t.Parallel()
 
 	done := make(chan struct{})
@@ -60,7 +60,7 @@ func TestDrainChannelCheck(t *testing.T) {
 	}
 }
 
-func TestSignalContextChecks(t *testing.T) {
+func TestSourceContextChecks(t *testing.T) {
 	t.Parallel()
 
 	cause := errors.New("owner stop")
@@ -102,38 +102,38 @@ func TestContextDrainCheck(t *testing.T) {
 	}
 }
 
-func TestSignalChecksRejectInvalidInputs(t *testing.T) {
+func TestSourceChecksRejectInvalidInputs(t *testing.T) {
 	t.Parallel()
 
-	if _, err := NewShutdownCheck("shutdown", nil); !errors.Is(err, ErrNilSignalChannel) {
-		t.Fatalf("NewShutdownCheck(nil) = %v, want ErrNilSignalChannel", err)
+	if _, err := NewShutdownCheck("shutdown", nil); !errors.Is(err, ErrNilSourceChannel) {
+		t.Fatalf("NewShutdownCheck(nil) = %v, want ErrNilSourceChannel", err)
 	}
-	if _, err := NewContextShutdownCheck("shutdown", nil); !errors.Is(err, ErrNilSignalContext) {
-		t.Fatalf("NewContextShutdownCheck(nil) = %v, want ErrNilSignalContext", err)
+	if _, err := NewContextShutdownCheck("shutdown", nil); !errors.Is(err, ErrNilSourceContext) {
+		t.Fatalf("NewContextShutdownCheck(nil) = %v, want ErrNilSourceContext", err)
 	}
 	if _, err := NewDrainCheck("bad-name", make(chan struct{})); !errors.Is(err, ErrInvalidCheckName) {
 		t.Fatalf("NewDrainCheck(invalid name) = %v, want ErrInvalidCheckName", err)
 	}
 }
 
-func TestMustSignalChecksPanic(t *testing.T) {
+func TestMustSourceChecksPanic(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, ErrNilSignalChannel, func() {
+	mustPanicWith(t, ErrNilSourceChannel, func() {
 		MustShutdownCheck("shutdown", nil)
 	})
-	mustPanicWith(t, ErrNilSignalChannel, func() {
+	mustPanicWith(t, ErrNilSourceChannel, func() {
 		MustDrainCheck("drain", nil)
 	})
-	mustPanicWith(t, ErrNilSignalContext, func() {
+	mustPanicWith(t, ErrNilSourceContext, func() {
 		MustContextShutdownCheck("shutdown", nil)
 	})
-	mustPanicWith(t, ErrNilSignalContext, func() {
+	mustPanicWith(t, ErrNilSourceContext, func() {
 		MustContextDrainCheck("drain", nil)
 	})
 }
 
-func TestMustSignalChecksReturnCheckerOnValidInput(t *testing.T) {
+func TestMustSourceChecksReturnCheckerOnValidInput(t *testing.T) {
 	t.Parallel()
 
 	done := make(chan struct{})

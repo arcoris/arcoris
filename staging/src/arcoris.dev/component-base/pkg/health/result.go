@@ -213,11 +213,12 @@ func (r Result) Normalize(defaultName string, observed time.Time) Result {
 
 // IsValid reports whether r is structurally valid as a health result.
 //
-// A valid result has a known Status value and a non-negative Duration. Name is
-// not required for structural validity because the zero value is an unnamed
-// StatusUnknown result and aggregators may fill the name from checker ownership.
+// A valid result has a known Status value, a valid Reason value, and a
+// non-negative Duration. Name is not required for structural validity because the
+// zero value is an unnamed StatusUnknown result and aggregators may fill the name
+// from checker ownership.
 func (r Result) IsValid() bool {
-	return r.Status.IsValid() && r.Duration >= 0
+	return r.Status.IsValid() && r.Reason.IsValid() && r.Duration >= 0
 }
 
 // IsNamed reports whether r has a non-empty logical check name.

@@ -22,21 +22,21 @@ import (
 )
 
 var (
-	// ErrNilSignalChannel identifies a nil signal channel passed to a
+	// ErrNilSourceChannel identifies a nil source channel passed to a
 	// channel-backed health check constructor.
 	//
 	// A nil channel would never become ready and would make the check report a
 	// permanently healthy state. Constructors reject it because that usually
 	// hides a wiring error.
-	ErrNilSignalChannel = errors.New("health: nil signal channel")
+	ErrNilSourceChannel = errors.New("health: nil source channel")
 
-	// ErrNilSignalContext identifies a nil context passed to a context-backed
-	// health check constructor.
+	// ErrNilSourceContext identifies a nil source context passed to a
+	// context-backed health check constructor.
 	//
 	// A nil context has no Done channel and cannot represent shutdown or drain
 	// state. Constructors reject it instead of silently replacing it with
 	// context.Background.
-	ErrNilSignalContext = errors.New("health: nil signal context")
+	ErrNilSourceContext = errors.New("health: nil source context")
 )
 
 // NewShutdownCheck returns a Checker that reports unhealthy after done is closed.
@@ -51,7 +51,7 @@ var (
 //
 // done MUST be non-nil.
 func NewShutdownCheck(name string, done <-chan struct{}) (Checker, error) {
-	return newSignalChannelCheck(
+	return newSourceChannelCheck(
 		name,
 		done,
 		ReasonShuttingDown,
@@ -85,7 +85,7 @@ func MustShutdownCheck(name string, done <-chan struct{}) Checker {
 //
 // draining MUST be non-nil.
 func NewDrainCheck(name string, draining <-chan struct{}) (Checker, error) {
-	return newSignalChannelCheck(
+	return newSourceChannelCheck(
 		name,
 		draining,
 		ReasonDraining,
@@ -121,7 +121,7 @@ func MustDrainCheck(name string, draining <-chan struct{}) Checker {
 //
 // source MUST be non-nil.
 func NewContextShutdownCheck(name string, source context.Context) (Checker, error) {
-	return newSignalContextCheck(
+	return newSourceContextCheck(
 		name,
 		source,
 		ReasonShuttingDown,
@@ -157,7 +157,7 @@ func MustContextShutdownCheck(name string, source context.Context) Checker {
 //
 // source MUST be non-nil.
 func NewContextDrainCheck(name string, source context.Context) (Checker, error) {
-	return newSignalContextCheck(
+	return newSourceContextCheck(
 		name,
 		source,
 		ReasonDraining,
@@ -180,16 +180,16 @@ func MustContextDrainCheck(name string, source context.Context) Checker {
 	return checker
 }
 
-// newSignalChannelCheck constructs a channel-backed shutdown-style checker.
-func newSignalChannelCheck(name string, done <-chan struct{}, reason Reason, message string) (Checker, error) {
+// newSourceChannelCheck constructs a channel-backed shutdown-style checker.
+func newSourceChannelCheck(name string, done <-chan struct{}, reason Reason, message string) (Checker, error) {
 	if err := ValidateCheckName(name); err != nil {
 		return nil, err
 	}
 	if done == nil {
-		return nil, ErrNilSignalChannel
+		return nil, ErrNilSourceChannel
 	}
 
-	return signalChannelCheck{
+	return sourceChannelCheck{
 		name:    name,
 		done:    done,
 		reason:  reason,
@@ -197,16 +197,16 @@ func newSignalChannelCheck(name string, done <-chan struct{}, reason Reason, mes
 	}, nil
 }
 
-// newSignalContextCheck constructs a context-backed shutdown-style checker.
-func newSignalContextCheck(name string, source context.Context, reason Reason, message string) (Checker, error) {
+// newSourceContextCheck constructs a context-backed shutdown-style checker.
+func newSourceContextCheck(name string, source context.Context, reason Reason, message string) (Checker, error) {
 	if err := ValidateCheckName(name); err != nil {
 		return nil, err
 	}
 	if source == nil {
-		return nil, ErrNilSignalContext
+		return nil, ErrNilSourceContext
 	}
 
-	return signalContextCheck{
+	return sourceContextCheck{
 		name:    name,
 		source:  source,
 		reason:  reason,
@@ -214,11 +214,11 @@ func newSignalContextCheck(name string, source context.Context, reason Reason, m
 	}, nil
 }
 
-// signalChannelCheck reports unhealthy after a channel is closed.
+// sourceChannelCheck reports unhealthy after a channel is closed.
 //
 // The type is intentionally private. Public callers should construct it through
 // NewShutdownCheck or NewDrainCheck so name and channel invariants are validated.
-type signalChannelCheck struct {
+type sourceChannelCheck struct {
 	name    string
 	done    <-chan struct{}
 	reason  Reason
@@ -226,7 +226,7 @@ type signalChannelCheck struct {
 }
 
 // Name returns the stable check name.
-func (c signalChannelCheck) Name() string {
+func (c sourceChannelCheck) Name() string {
 	return c.name
 }
 
@@ -235,7 +235,7 @@ func (c signalChannelCheck) Name() string {
 //
 // Check ignores ctx because the check is a non-blocking read of owner-published
 // state. Evaluator-owned cancellation and timeout are handled by Evaluator.
-func (c signalChannelCheck) Check(ctx context.Context) Result {
+func (c sourceChannelCheck) Check(ctx context.Context) Result {
 	select {
 	case <-c.done:
 		return Unhealthy(c.name, c.reason, c.message)
@@ -244,12 +244,12 @@ func (c signalChannelCheck) Check(ctx context.Context) Result {
 	}
 }
 
-// signalContextCheck reports unhealthy after a source context is cancelled.
+// sourceContextCheck reports unhealthy after a source context is cancelled.
 //
 // The type is intentionally private. Public callers should construct it through
 // NewContextShutdownCheck or NewContextDrainCheck so name and context invariants
 // are validated.
-type signalContextCheck struct {
+type sourceContextCheck struct {
 	name    string
 	source  context.Context
 	reason  Reason
@@ -257,7 +257,7 @@ type signalContextCheck struct {
 }
 
 // Name returns the stable check name.
-func (c signalContextCheck) Name() string {
+func (c sourceContextCheck) Name() string {
 	return c.name
 }
 
@@ -267,7 +267,7 @@ func (c signalContextCheck) Name() string {
 // Check observes c.source, not ctx. The ctx parameter belongs to the evaluator
 // call and controls the evaluation attempt; c.source represents the component's
 // shutdown or drain state.
-func (c signalContextCheck) Check(ctx context.Context) Result {
+func (c sourceContextCheck) Check(ctx context.Context) Result {
 	select {
 	case <-c.source.Done():
 		result := Unhealthy(c.name, c.reason, c.message)

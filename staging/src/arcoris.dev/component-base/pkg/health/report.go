@@ -57,12 +57,19 @@ type Report struct {
 
 // IsValid reports whether r is structurally valid as a health report.
 //
-// TargetUnknown is valid because Report is a plain value type and the zero
-// report represents "not evaluated yet." Concrete target requirements are
-// enforced by Evaluator and Registry at their ownership boundaries.
+// The zero report is valid and represents "not evaluated yet." Every non-zero or
+// evaluated report must use a concrete Target. This prevents caller-constructed
+// reports from carrying concrete check results under TargetUnknown.
 func (r Report) IsValid() bool {
 	if !r.Target.IsValid() || !r.Status.IsValid() || r.Duration < 0 {
 		return false
+	}
+
+	if r.Target == TargetUnknown {
+		return r.Status == StatusUnknown &&
+			r.Observed.IsZero() &&
+			r.Duration == 0 &&
+			len(r.Checks) == 0
 	}
 
 	for _, check := range r.Checks {

@@ -118,4 +118,7 @@ func TestResultPredicates(t *testing.T) {
 	if (Result{Status: StatusHealthy, Duration: -time.Second}).IsValid() {
 		t.Fatal("negative duration result should be invalid")
 	}
+	if (Result{Status: StatusHealthy, Reason: Reason("bad-reason")}).IsValid() {
+		t.Fatal("invalid reason result should be invalid")
+	}
 }

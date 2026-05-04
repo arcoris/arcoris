@@ -182,6 +182,42 @@ func TestNormalizeEvaluatedResult(t *testing.T) {
 	}
 }
 
+func TestNormalizeEvaluatedResultRejectsMismatchedResultName(t *testing.T) {
+	t.Parallel()
+
+	result := normalizeEvaluatedResult(
+		Healthy("database"),
+		"storage",
+		testObserved,
+		time.Second,
+	)
+
+	if result.Name != "storage" || result.Status != StatusUnknown || result.Reason != ReasonMisconfigured {
+		t.Fatalf("mismatched result normalization = %+v, want unknown misconfigured storage", result)
+	}
+	if !errors.Is(result.Cause, ErrMismatchedCheckResult) {
+		t.Fatalf("cause = %v, want ErrMismatchedCheckResult", result.Cause)
+	}
+}
+
+func TestNormalizeEvaluatedResultRejectsInvalidReason(t *testing.T) {
+	t.Parallel()
+
+	result := normalizeEvaluatedResult(
+		Result{Status: StatusHealthy, Reason: Reason("bad-reason")},
+		"storage",
+		testObserved,
+		time.Second,
+	)
+
+	if result.Name != "storage" || result.Status != StatusUnknown || result.Reason != ReasonMisconfigured {
+		t.Fatalf("invalid reason normalization = %+v, want unknown misconfigured storage", result)
+	}
+	if !errors.Is(result.Cause, ErrInvalidCheckResult) {
+		t.Fatalf("cause = %v, want ErrInvalidCheckResult", result.Cause)
+	}
+}
+
 func TestInterruptedResult(t *testing.T) {
 	t.Parallel()
 

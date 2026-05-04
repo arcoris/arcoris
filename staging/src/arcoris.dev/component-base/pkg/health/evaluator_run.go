@@ -119,7 +119,36 @@ func interruptedResult(name string, ctx context.Context) Result {
 }
 
 // normalizeEvaluatedResult applies evaluator-owned boundary normalization.
+//
+// Evaluator owns checker identity in reports. A checker may leave Result.Name
+// empty, but it must not return another checker's name. Invalid reasons are also
+// converted into unknown misconfiguration results so Evaluator never returns an
+// invalid Report because of malformed checker output.
 func normalizeEvaluatedResult(result Result, defaultName string, observed time.Time, duration time.Duration) Result {
+	duration = nonNegativeDuration(duration)
+
+	if result.Name != "" && result.Name != defaultName {
+		return Unknown(
+			defaultName,
+			ReasonMisconfigured,
+			"health check returned a mismatched result name",
+		).WithCause(MismatchedCheckResultError{
+			CheckName:  defaultName,
+			ResultName: result.Name,
+		}).WithObserved(observed).WithDuration(duration)
+	}
+
+	if !result.Reason.IsValid() {
+		return Unknown(
+			defaultName,
+			ReasonMisconfigured,
+			"health check returned an invalid reason",
+		).WithCause(InvalidCheckResultError{
+			CheckName: defaultName,
+			Result:    result,
+		}).WithObserved(observed).WithDuration(duration)
+	}
+
 	result = result.Normalize(defaultName, observed)
 
 	if result.Duration == 0 {

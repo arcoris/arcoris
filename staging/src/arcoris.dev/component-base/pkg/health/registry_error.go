@@ -22,13 +22,6 @@ import (
 )
 
 var (
-	// ErrInvalidTarget identifies a target that cannot own registered checks.
-	//
-	// Registration requires a concrete health target. TargetUnknown is valid as a
-	// zero-value sentinel, but it is not concrete and MUST NOT be used as an
-	// evaluable registry key.
-	ErrInvalidTarget = errors.New("health: invalid target")
-
 	// ErrNilChecker identifies a nil checker passed to Registry.Register.
 	//
 	// A nil checker cannot provide a stable name or produce a Result. Registry
@@ -42,25 +35,6 @@ var (
 	// different targets when each target has its own health semantics.
 	ErrDuplicateCheck = errors.New("health: duplicate check")
 )
-
-// InvalidTargetError describes a non-concrete or invalid target used at a
-// registry boundary.
-//
-// InvalidTargetError is classified as ErrInvalidTarget. Callers should classify
-// it with errors.Is and inspect Target only for diagnostics.
-type InvalidTargetError struct {
-	Target Target
-}
-
-// Error returns the invalid target message.
-func (e InvalidTargetError) Error() string {
-	return fmt.Sprintf("%v: %s", ErrInvalidTarget, e.Target.String())
-}
-
-// Is reports whether target matches the invalid target classification.
-func (e InvalidTargetError) Is(target error) bool {
-	return target == ErrInvalidTarget
-}
 
 // NilCheckerError describes a nil checker rejected from a registration batch.
 //

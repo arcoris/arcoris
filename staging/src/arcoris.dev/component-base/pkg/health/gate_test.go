@@ -78,6 +78,9 @@ func TestGateRejectsInvalidResults(t *testing.T) {
 	if _, err := NewGate("ready_gate", Result{Status: Status(99)}); !errors.Is(err, ErrInvalidGateResult) {
 		t.Fatalf("NewGate(invalid result) = %v, want ErrInvalidGateResult", err)
 	}
+	if _, err := NewGate("ready_gate", Result{Status: StatusHealthy, Reason: Reason("bad-reason")}); !errors.Is(err, ErrInvalidGateResult) {
+		t.Fatalf("NewGate(invalid reason) = %v, want ErrInvalidGateResult", err)
+	}
 	if _, err := NewGate("ready_gate", Healthy("other_gate")); !errors.Is(err, ErrMismatchedGateResult) {
 		t.Fatalf("NewGate(mismatched result) = %v, want ErrMismatchedGateResult", err)
 	}
@@ -88,6 +91,9 @@ func TestGateRejectsInvalidResults(t *testing.T) {
 	}
 	if err := gate.Set(Result{Status: StatusHealthy, Duration: -time.Second}); !errors.Is(err, ErrInvalidGateResult) {
 		t.Fatalf("Set(invalid result) = %v, want ErrInvalidGateResult", err)
+	}
+	if err := gate.Set(Result{Status: StatusHealthy, Reason: Reason("bad-reason")}); !errors.Is(err, ErrInvalidGateResult) {
+		t.Fatalf("Set(invalid reason) = %v, want ErrInvalidGateResult", err)
 	}
 	if err := gate.Set(Healthy("other_gate")); !errors.Is(err, ErrMismatchedGateResult) {
 		t.Fatalf("Set(mismatch) = %v, want ErrMismatchedGateResult", err)
