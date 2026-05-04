@@ -24,12 +24,6 @@ import (
 var (
 	// ErrInvalidPath identifies an HTTP path that cannot be used as a health
 	// endpoint route.
-	//
-	// Paths must be local route paths, not full URLs. They must start with "/",
-	// must not be the root path "/", and must not contain query or fragment
-	// components. The validation is intentionally independent from a particular
-	// router implementation so the package remains usable with net/http.ServeMux
-	// and compatible muxes.
 	ErrInvalidPath = errors.New("healthhttp: invalid path")
 )
 

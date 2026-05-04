@@ -18,52 +18,24 @@ package healthhttp
 
 // Format identifies the HTTP response representation used by health handlers.
 //
-// Format controls only the representation of the response body. It does not
-// affect health evaluation, target policy, HTTP status mapping, endpoint paths,
-// request methods, detail selection, logging, metrics, or diagnostics policy.
-//
-// The zero value is FormatText. This is intentional: plain text is the safest
-// default for infrastructure probes, load balancers, simple curl checks, and
-// environments where the response body is usually ignored.
+// The zero value is FormatText. Plain text is the safest default for probes and
+// load balancers.
 type Format uint8
 
 const (
 	// FormatText renders a compact text response.
-	//
-	// Text is the default format. It is intended for health probes and simple
-	// operational checks where the status code is the primary signal and the
-	// response body should remain small and stable.
 	FormatText Format = iota
 
 	// FormatJSON renders a structured JSON response.
-	//
-	// JSON is intended for diagnostics and integrations that need a structured
-	// view of the evaluated health report. JSON rendering must still respect the
-	// package exposure model: Result.Cause, panic stacks, raw errors, and other
-	// internal diagnostics must not be exposed.
 	FormatJSON
 )
 
 const (
-	// contentTypeText is the Content-Type value for FormatText responses.
-	//
-	// The value is package-private because content negotiation and response
-	// writing are owned by render.go. Format only owns the mapping from format
-	// identity to the media type used by the renderer.
 	contentTypeText = "text/plain; charset=utf-8"
-
-	// contentTypeJSON is the Content-Type value for FormatJSON responses.
-	//
-	// The value intentionally omits a charset parameter. JSON is Unicode text
-	// encoded as UTF-8 by convention, and "application/json" is the most common
-	// interoperable content type for HTTP JSON responses.
 	contentTypeJSON = "application/json"
 )
 
 // String returns the stable diagnostic name for format.
-//
-// String is intended for diagnostics, tests, and error messages. It is not a
-// wire-format negotiation mechanism. Unknown values return "invalid".
 func (f Format) String() string {
 	switch f {
 	case FormatText:
@@ -86,9 +58,6 @@ func (f Format) IsValid() bool {
 }
 
 // contentType returns the HTTP Content-Type value for f.
-//
-// Invalid formats return an empty string. Callers that accept user-provided or
-// option-provided formats should validate them before rendering.
 func (f Format) contentType() string {
 	switch f {
 	case FormatText:
@@ -101,10 +70,6 @@ func (f Format) contentType() string {
 }
 
 // validateFormat returns an error if format is not supported.
-//
-// The helper is package-private because callers can use Format.IsValid for
-// boolean checks, while option parsing and constructor code need an
-// error-returning boundary.
 func validateFormat(format Format) error {
 	if !format.IsValid() {
 		return InvalidFormatError{Format: format}

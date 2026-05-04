@@ -21,14 +21,7 @@ import "arcoris.dev/component-base/pkg/health"
 // DefaultPath returns the default HTTP path for target.
 //
 // DefaultPath only maps concrete health targets that have unambiguous default
-// probe paths:
-//
-//   - health.TargetStartup -> DefaultStartupPath;
-//   - health.TargetLive -> DefaultLivePath;
-//   - health.TargetReady -> DefaultReadyPath.
-//
-// The function returns false for health.TargetUnknown and invalid target values.
-// It also intentionally does not return DefaultHealthPath or
+// probe paths. It intentionally does not return DefaultHealthPath or
 // DefaultHealthPlainPath because those compatibility paths do not have a
 // universal target meaning.
 func DefaultPath(target health.Target) (string, bool) {

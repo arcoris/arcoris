@@ -22,19 +22,13 @@ import (
 )
 
 var (
-	// ErrInvalidDetailLevel identifies an unsupported health HTTP response
-	// detail level.
-	//
-	// Invalid detail levels are rejected at configuration boundaries so handlers
-	// never have to guess how much information may be exposed at request time.
+	// ErrInvalidDetailLevel identifies an unsupported health HTTP response detail
+	// level.
 	ErrInvalidDetailLevel = errors.New("healthhttp: invalid detail level")
 )
 
 // InvalidDetailLevelError describes an unsupported health HTTP response detail
 // level.
-//
-// InvalidDetailLevelError is classified as ErrInvalidDetailLevel. Callers should
-// use errors.Is for classification and inspect Level only for diagnostics.
 type InvalidDetailLevelError struct {
 	Level DetailLevel
 }

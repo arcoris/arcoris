@@ -23,16 +23,10 @@ import (
 
 var (
 	// ErrInvalidFormat identifies an unsupported health HTTP response format.
-	//
-	// Invalid formats are rejected at configuration boundaries so handlers never
-	// have to guess how to render a response at request time.
 	ErrInvalidFormat = errors.New("healthhttp: invalid format")
 )
 
 // InvalidFormatError describes an unsupported health HTTP response format.
-//
-// InvalidFormatError is classified as ErrInvalidFormat. Callers should use
-// errors.Is for classification and inspect Format only for diagnostics.
 type InvalidFormatError struct {
 	Format Format
 }

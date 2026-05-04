@@ -20,9 +20,5 @@ import "errors"
 
 var (
 	// ErrNilOption identifies a nil health HTTP handler option.
-	//
-	// Nil options are rejected at construction boundaries so conditional option
-	// composition mistakes are visible. Silent nil-option skipping can hide
-	// configuration bugs in server setup code.
 	ErrNilOption = errors.New("healthhttp: nil option")
 )

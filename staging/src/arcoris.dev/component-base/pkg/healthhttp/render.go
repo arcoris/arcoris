@@ -26,63 +26,29 @@ import (
 )
 
 const (
-	// headerContentType is the HTTP header used to declare response body type.
-	//
-	// The Go standard library does not provide a constant for this header name.
-	headerContentType = "Content-Type"
-
-	// headerCacheControl is the HTTP header used to prevent health response
-	// caching.
-	//
-	// Health endpoints expose current runtime state. Their responses should not
-	// be cached by clients, proxies, or intermediate infrastructure.
-	headerCacheControl = "Cache-Control"
-
-	// headerXContentTypeOptions is the HTTP header used to prevent content type
-	// sniffing by clients.
+	headerContentType         = "Content-Type"
+	headerCacheControl        = "Cache-Control"
 	headerXContentTypeOptions = "X-Content-Type-Options"
 )
 
 const (
-	// headerValueNoStore disables storing health responses.
 	headerValueNoStore = "no-store"
-
-	// headerValueNoSniff disables response content sniffing.
 	headerValueNoSniff = "nosniff"
 )
 
 const (
-	// textOK is the compact successful text response body.
-	textOK = "ok\n"
-
-	// textUnhealthy is the compact failed-health text response body.
-	textUnhealthy = "unhealthy\n"
-
-	// textHandlerError is the compact adapter/evaluator error response body.
-	//
-	// The message is intentionally generic. Raw evaluator errors, causes, panic
-	// details, and internal diagnostic values must not be rendered by default.
+	textOK           = "ok\n"
+	textUnhealthy    = "unhealthy\n"
 	textHandlerError = "health handler error\n"
 )
 
-// errorResponse is the safe JSON representation of an adapter/evaluator boundary
-// error.
-//
-// It intentionally does not contain the raw error string. Handler construction,
-// evaluator, and adapter failures may include internal implementation details
-// that should stay in logs or owner-controlled diagnostics.
+// errorResponse is the safe JSON representation of an adapter/evaluator error.
 type errorResponse struct {
 	Error string `json:"error"`
 }
 
 // renderReport writes an HTTP response for a successfully evaluated health
 // report.
-//
-// passed must be computed with the same policy stored in config. renderReport
-// uses passed both for HTTP status selection and response DTO construction.
-//
-// renderReport never exposes Result.Cause. For detailed output it delegates to
-// response DTO construction, which copies only safe fields.
 func renderReport(w http.ResponseWriter, r *http.Request, config config, report health.Report, passed bool) {
 	switch config.format {
 	case FormatJSON:
@@ -92,17 +58,13 @@ func renderReport(w http.ResponseWriter, r *http.Request, config config, report 
 	}
 }
 
-// renderHandlerError writes an HTTP response for adapter/evaluator boundary
-// errors.
-//
-// The concrete error is intentionally not accepted as an argument. This keeps
-// the rendering boundary safe by construction: callers cannot accidentally pass
-// raw internal errors into public HTTP responses.
+// renderHandlerError writes an HTTP response for adapter/evaluator errors.
 func renderHandlerError(w http.ResponseWriter, r *http.Request, config config) {
 	format := config.format
 	if !format.IsValid() {
 		format = FormatText
 	}
+	config.format = format
 
 	switch format {
 	case FormatJSON:
@@ -164,16 +126,7 @@ func renderJSONError(w http.ResponseWriter, r *http.Request, config config) {
 }
 
 // textReportBody builds a safe text response body for report.
-//
-// DetailNone returns a compact probe-oriented body. DetailFailed and DetailAll
-// include safe check-level diagnostics selected by DetailLevel. Result.Cause is
-// never rendered.
-func textReportBody(
-	report health.Report,
-	passed bool,
-	policy health.TargetPolicy,
-	detail DetailLevel,
-) string {
+func textReportBody(report health.Report, passed bool, policy health.TargetPolicy, detail DetailLevel) string {
 	if !detail.IncludesChecks() {
 		if passed {
 			return textOK
@@ -195,22 +148,13 @@ func textReportBody(
 }
 
 // writeTextCheck appends one safe text check line to builder.
-//
-// The line includes check name, status, optional reason, and optional safe
-// message. It intentionally ignores Result.Cause.
 func writeTextCheck(builder *strings.Builder, result health.Result, policy health.TargetPolicy) {
 	marker := "[-]"
 	if policy.Passes(result.Status) {
 		marker = "[+]"
 	}
 
-	fmt.Fprintf(
-		builder,
-		"%s %s %s",
-		marker,
-		result.Name,
-		result.Status.String(),
-	)
+	fmt.Fprintf(builder, "%s %s %s", marker, result.Name, result.Status.String())
 
 	if reason := formatReason(result.Reason); reason != "" {
 		fmt.Fprintf(builder, " %s", reason)
@@ -231,10 +175,6 @@ func writeCommonHeaders(w http.ResponseWriter, format Format) {
 }
 
 // suppressBody reports whether a response body must be suppressed.
-//
-// HEAD responses should include the same status and headers as GET responses but
-// no body. A nil request is treated as a normal body-allowed call so tests and
-// defensive internal usage remain simple.
 func suppressBody(r *http.Request) bool {
 	return r != nil && r.Method == http.MethodHead
 }

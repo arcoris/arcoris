@@ -20,8 +20,5 @@ import "errors"
 
 var (
 	// ErrNilEvaluator identifies a nil health Evaluator passed to NewHandler.
-	//
-	// healthhttp handlers are adapters over health.Evaluator. A nil evaluator
-	// cannot produce health reports and is rejected at construction time.
 	ErrNilEvaluator = errors.New("healthhttp: nil evaluator")
 )

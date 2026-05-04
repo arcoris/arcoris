@@ -24,26 +24,13 @@ import (
 var (
 	// ErrInvalidHTTPStatusCode identifies an unsupported HTTP status code mapping
 	// for health HTTP handlers.
-	//
-	// Invalid mappings are rejected at configuration boundaries so handlers never
-	// emit misleading status codes such as 200 for a failed health target or 404
-	// for an internal adapter error.
 	ErrInvalidHTTPStatusCode = errors.New("healthhttp: invalid HTTP status code")
 )
 
 // InvalidHTTPStatusCodeError describes an invalid HTTP status code field.
-//
-// InvalidHTTPStatusCodeError is classified as ErrInvalidHTTPStatusCode. Callers
-// should use errors.Is for classification and inspect Field and Code only for
-// diagnostics.
 type InvalidHTTPStatusCodeError struct {
-	// Field identifies the mapping field that failed validation.
-	//
-	// Expected values are "passed", "failed", and "error".
 	Field string
-
-	// Code is the invalid configured HTTP status code.
-	Code int
+	Code  int
 }
 
 // Error returns the invalid HTTP status code message.
