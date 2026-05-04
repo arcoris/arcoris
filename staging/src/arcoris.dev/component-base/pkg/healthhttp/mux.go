@@ -27,13 +27,19 @@ var (
 	ErrNilMux = errors.New("healthhttp: nil mux")
 )
 
-// Mux is the minimal HTTP route registration capability required by install
-// helpers.
+// Mux is the minimal route-registration capability required by install helpers.
+//
+// Duplicate path handling belongs to the concrete mux or router chosen by the
+// caller. healthhttp does not attempt to recover or virtualize those semantics.
 type Mux interface {
 	Handle(pattern string, handler http.Handler)
 }
 
 // nilMux reports whether mux is nil, including typed nil implementations.
+//
+// Install helpers accept interfaces so they can work with net/http.ServeMux and
+// third-party routers that provide a compatible Handle method. Typed nil
+// detection keeps that convenience without silently accepting a broken receiver.
 func nilMux(mux Mux) bool {
 	if mux == nil {
 		return true

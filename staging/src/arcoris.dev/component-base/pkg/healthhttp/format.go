@@ -20,13 +20,23 @@ package healthhttp
 //
 // The zero value is FormatText. Plain text is the safest default for probes and
 // load balancers.
+//
+// Format controls representation only. It does not change health evaluation,
+// target-policy pass/fail decisions, diagnostics safety rules, or content
+// negotiation behavior.
 type Format uint8
 
 const (
 	// FormatText renders a compact text response.
+	//
+	// Text is the default because it is easy for probes, load balancers, shell
+	// tooling, and humans to consume without depending on structured parsers.
 	FormatText Format = iota
 
 	// FormatJSON renders a structured JSON response.
+	//
+	// JSON uses adapter-owned DTOs rather than exposing package health structs
+	// directly.
 	FormatJSON
 )
 
@@ -36,6 +46,9 @@ const (
 )
 
 // String returns the stable diagnostic name for format.
+//
+// Invalid values return "invalid" so diagnostics stay explicit without
+// inventing a fallback format silently.
 func (f Format) String() string {
 	switch f {
 	case FormatText:
@@ -48,6 +61,9 @@ func (f Format) String() string {
 }
 
 // IsValid reports whether f is a supported health HTTP response format.
+//
+// Unsupported values are rejected during handler construction instead of being
+// normalized implicitly.
 func (f Format) IsValid() bool {
 	switch f {
 	case FormatText, FormatJSON:
@@ -58,6 +74,9 @@ func (f Format) IsValid() bool {
 }
 
 // contentType returns the HTTP Content-Type value for f.
+//
+// The helper is package-private because callers configure representation
+// through Format rather than by managing raw content-type strings.
 func (f Format) contentType() string {
 	switch f {
 	case FormatText:
@@ -70,6 +89,9 @@ func (f Format) contentType() string {
 }
 
 // validateFormat returns an error if format is not supported.
+//
+// Validation remains package-local so configuration failures preserve the
+// adapter's typed error surface.
 func validateFormat(format Format) error {
 	if !format.IsValid() {
 		return InvalidFormatError{Format: format}

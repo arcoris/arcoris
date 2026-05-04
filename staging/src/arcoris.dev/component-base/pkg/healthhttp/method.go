@@ -42,7 +42,18 @@ func methodAllowed(method string) bool {
 
 // writeMethodNotAllowed writes a 405 Method Not Allowed response for unsupported
 // health endpoint methods.
-func writeMethodNotAllowed(w http.ResponseWriter) {
+//
+// The response intentionally uses the same cache and content-safety headers as
+// normal health responses so unsupported-method probes cannot accidentally
+// produce cacheable or content-sniffable error bodies.
+func writeMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
+	writeCommonHeaders(w, FormatText)
 	w.Header().Set(headerAllow, allowedMethodsHeader)
-	http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+	w.WriteHeader(http.StatusMethodNotAllowed)
+
+	if suppressBody(r) {
+		return
+	}
+
+	_, _ = w.Write([]byte(http.StatusText(http.StatusMethodNotAllowed) + "\n"))
 }

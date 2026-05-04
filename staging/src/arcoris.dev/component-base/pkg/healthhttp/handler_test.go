@@ -23,7 +23,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"arcoris.dev/component-base/pkg/health"
 )
@@ -405,19 +404,13 @@ func TestHandlerServeHTTPPassesRequestContext(t *testing.T) {
 	}
 }
 
-func TestHandlerServeHTTPEvaluatorError(t *testing.T) {
+func TestHandlerServeHTTPRejectsNilRequest(t *testing.T) {
 	t.Parallel()
 
-	handler := &Handler{
-		evaluator: failingEvaluator{err: errors.New("private evaluator error")},
-		target:    health.TargetReady,
-		config:    defaultConfig(health.TargetReady),
-	}
-
-	request := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+	handler := mustNewHandler(t, mustTestEvaluator(t, health.TargetReady, health.Healthy("storage")), health.TargetReady)
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.ServeHTTP(recorder, nil)
 
 	response := recorder.Result()
 	defer response.Body.Close()
@@ -427,9 +420,6 @@ func TestHandlerServeHTTPEvaluatorError(t *testing.T) {
 	}
 	if got := recorder.Body.String(); got != textHandlerError {
 		t.Fatalf("body = %q, want %q", got, textHandlerError)
-	}
-	if strings.Contains(recorder.Body.String(), "private evaluator error") {
-		t.Fatalf("body exposes evaluator error: %q", recorder.Body.String())
 	}
 }
 
@@ -468,55 +458,4 @@ func TestNilHandlerAccessors(t *testing.T) {
 	if handler.DetailLevel() != DetailNone {
 		t.Fatalf("DetailLevel() = %s, want none", handler.DetailLevel())
 	}
-}
-
-type failingEvaluator struct {
-	err error
-}
-
-func (e failingEvaluator) Evaluate(context.Context, health.Target) (health.Report, error) {
-	return health.Report{
-		Target:   health.TargetReady,
-		Status:   health.StatusUnknown,
-		Observed: time.Now(),
-	}, e.err
-}
-
-func mustNewHandler(
-	t *testing.T,
-	evaluator *health.Evaluator,
-	target health.Target,
-	options ...Option,
-) *Handler {
-	t.Helper()
-
-	handler, err := NewHandler(evaluator, target, options...)
-	if err != nil {
-		t.Fatalf("NewHandler() = %v, want nil", err)
-	}
-
-	return handler
-}
-
-func mustTestEvaluator(t *testing.T, target health.Target, result health.Result) *health.Evaluator {
-	t.Helper()
-
-	checker, err := health.NewCheck(result.Name, func(context.Context) health.Result {
-		return result
-	})
-	if err != nil {
-		t.Fatalf("health.NewCheck() = %v, want nil", err)
-	}
-
-	registry := health.NewRegistry()
-	if err := registry.Register(target, checker); err != nil {
-		t.Fatalf("registry.Register() = %v, want nil", err)
-	}
-
-	evaluator, err := health.NewEvaluator(registry, health.WithDefaultTimeout(0))
-	if err != nil {
-		t.Fatalf("health.NewEvaluator() = %v, want nil", err)
-	}
-
-	return evaluator
 }

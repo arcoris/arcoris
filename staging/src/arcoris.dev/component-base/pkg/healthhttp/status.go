@@ -30,6 +30,10 @@ const (
 )
 
 // HTTPStatusCodes defines the HTTP status code mapping used by health handlers.
+//
+// The mapping is adapter policy only. It does not change how health reports are
+// evaluated, nor does it alter target-policy pass/fail decisions inside
+// package health.
 type HTTPStatusCodes struct {
 	Passed int
 	Failed int
@@ -37,6 +41,10 @@ type HTTPStatusCodes struct {
 }
 
 // DefaultStatusCodes returns the default HTTP status code mapping.
+//
+// The defaults are intentionally conservative: success is 200 OK, a failed
+// health report is 503 Service Unavailable, and adapter-boundary errors are
+// 500 Internal Server Error.
 func DefaultStatusCodes() HTTPStatusCodes {
 	return HTTPStatusCodes{
 		Passed: DefaultPassedStatus,
@@ -46,6 +54,9 @@ func DefaultStatusCodes() HTTPStatusCodes {
 }
 
 // Normalize returns a copy of codes with zero fields replaced by defaults.
+//
+// Zero fields are treated as "use package defaults" so callers can override
+// only the status classes they need without repeating the full mapping.
 func (codes HTTPStatusCodes) Normalize() HTTPStatusCodes {
 	defaults := DefaultStatusCodes()
 
@@ -63,6 +74,11 @@ func (codes HTTPStatusCodes) Normalize() HTTPStatusCodes {
 }
 
 // Validate reports an error if codes contains unsupported HTTP status codes.
+//
+// Passed must stay in the 2xx class. Failed may be 4xx or 5xx so deployments
+// can encode local policy such as rate-limited or administratively withheld
+// readiness while still treating the report as a failure. Error must stay in
+// the 5xx class because adapter-boundary failures are server-side.
 func (codes HTTPStatusCodes) Validate() error {
 	codes = codes.Normalize()
 

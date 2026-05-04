@@ -17,25 +17,32 @@
 package healthhttp
 
 import (
-	"context"
 	"net/http"
 
 	"arcoris.dev/component-base/pkg/health"
 )
 
-// evaluator is the evaluator capability required by Handler.
-type evaluator interface {
-	Evaluate(ctx context.Context, target health.Target) (health.Report, error)
-}
-
-// Handler adapts one health target to http.Handler.
+// Handler adapts one concrete health target to an HTTP endpoint.
+//
+// Handler is intentionally thin. It does not own health registry contents,
+// check execution policy, retries, logging, metrics, tracing, authentication,
+// authorization, routing, or restart decisions. Its responsibility is limited
+// to invoking a health.Evaluator for one target and rendering the resulting
+// report through the package's safe HTTP surface.
+//
+// Handler stores only adapter configuration. It never exposes Result.Cause,
+// panic stacks, raw errors, or context causes to callers.
 type Handler struct {
-	evaluator evaluator
+	evaluator *health.Evaluator
 	target    health.Target
 	config    config
 }
 
 // NewHandler returns an HTTP handler for target.
+//
+// evaluator MUST be non-nil. target MUST be concrete. Options configure only
+// HTTP-adapter policy such as response format, safe detail level, and status
+// code mapping.
 func NewHandler(evaluator *health.Evaluator, target health.Target, opts ...Option) (*Handler, error) {
 	if evaluator == nil {
 		return nil, ErrNilEvaluator
@@ -53,6 +60,13 @@ func NewHandler(evaluator *health.Evaluator, target health.Target, opts ...Optio
 }
 
 // ServeHTTP evaluates the configured health target and writes a safe response.
+//
+// The method accepts only GET and HEAD. Unsupported methods receive a generic
+// 405 response with the same cache and content-safety headers used by normal
+// health responses.
+//
+// A nil handler, nil evaluator, or nil request is treated as an adapter-boundary
+// failure and returns a generic handler error response instead of panicking.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h == nil || h.evaluator == nil || r == nil {
 		renderHandlerError(w, r, defaultConfig(health.TargetUnknown))
@@ -60,7 +74,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !methodAllowed(r.Method) {
-		writeMethodNotAllowed(w)
+		writeMethodNotAllowed(w, r)
 		return
 	}
 
@@ -74,7 +88,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	renderReport(w, r, h.config, report, passed)
 }
 
-// Target returns the health target served by h.
+// Target returns the concrete health target served by h.
+//
+// A nil handler reports TargetUnknown so diagnostics and tests can inspect the
+// zero boundary without panicking.
 func (h *Handler) Target() health.Target {
 	if h == nil {
 		return health.TargetUnknown
@@ -84,6 +101,9 @@ func (h *Handler) Target() health.Target {
 }
 
 // Format returns the response format configured for h.
+//
+// A nil handler reports FormatText because text is the package's zero/default
+// representation.
 func (h *Handler) Format() Format {
 	if h == nil {
 		return FormatText
@@ -93,6 +113,9 @@ func (h *Handler) Format() Format {
 }
 
 // DetailLevel returns the response detail level configured for h.
+//
+// A nil handler reports DetailNone because safe-by-default responses do not
+// include per-check details unless the owner opts in explicitly.
 func (h *Handler) DetailLevel() DetailLevel {
 	if h == nil {
 		return DetailNone

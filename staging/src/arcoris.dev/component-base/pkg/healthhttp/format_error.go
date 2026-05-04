@@ -23,20 +23,31 @@ import (
 
 var (
 	// ErrInvalidFormat identifies an unsupported health HTTP response format.
+	//
+	// The sentinel classifies only adapter representation errors. It does not
+	// describe Accept negotiation, renderer failures, or report content issues.
 	ErrInvalidFormat = errors.New("healthhttp: invalid format")
 )
 
 // InvalidFormatError describes an unsupported health HTTP response format.
+//
+// Callers should use errors.Is for classification and inspect Format only for
+// setup diagnostics.
 type InvalidFormatError struct {
 	Format Format
 }
 
 // Error returns the invalid format message.
+//
+// The exact string is diagnostic-only and may include the format's stable
+// textual name.
 func (e InvalidFormatError) Error() string {
 	return fmt.Sprintf("%v: %s", ErrInvalidFormat, e.Format.String())
 }
 
 // Is reports whether target matches the invalid format classification.
+//
+// This keeps the typed error compatible with errors.Is against ErrInvalidFormat.
 func (e InvalidFormatError) Is(target error) bool {
 	return target == ErrInvalidFormat
 }

@@ -58,26 +58,3 @@ func TestNilMux(t *testing.T) {
 		})
 	}
 }
-
-// recordingMux is a small test mux that records Handle calls.
-//
-// It intentionally does not implement routing. Handler behavior is tested
-// separately through net/http/httptest against the registered handlers.
-type recordingMux struct {
-	handlers map[string]http.Handler
-}
-
-func newRecordingMux() *recordingMux {
-	return &recordingMux{
-		handlers: make(map[string]http.Handler),
-	}
-}
-
-func (mux *recordingMux) Handle(pattern string, handler http.Handler) {
-	mux.handlers[pattern] = handler
-}
-
-func (mux *recordingMux) handler(pattern string) (http.Handler, bool) {
-	handler, ok := mux.handlers[pattern]
-	return handler, ok
-}

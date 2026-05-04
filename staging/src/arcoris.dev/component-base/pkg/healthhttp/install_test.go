@@ -17,7 +17,6 @@
 package healthhttp
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -30,7 +29,7 @@ func TestInstall(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustInstallTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
+	evaluator := mustTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
 
 	err := Install(mux, "/internal/readyz", evaluator, health.TargetReady)
 	if err != nil {
@@ -59,7 +58,7 @@ func TestInstallAppliesOptions(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustInstallTestEvaluator(
+	evaluator := mustTestEvaluator(
 		t,
 		health.TargetReady,
 		health.Degraded("queue", health.ReasonOverloaded, "queue overloaded"),
@@ -102,7 +101,7 @@ func TestInstallAppliesOptions(t *testing.T) {
 func TestInstallRejectsNilMux(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustInstallTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
+	evaluator := mustTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
 
 	err := Install(nil, DefaultReadyPath, evaluator, health.TargetReady)
 	if !errors.Is(err, ErrNilMux) {
@@ -113,7 +112,7 @@ func TestInstallRejectsNilMux(t *testing.T) {
 func TestInstallRejectsTypedNilMux(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustInstallTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
+	evaluator := mustTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
 
 	var mux *recordingMux
 	err := Install(mux, DefaultReadyPath, evaluator, health.TargetReady)
@@ -127,7 +126,7 @@ func TestInstallRejectsInvalidPath(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustInstallTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
+	evaluator := mustTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
 
 	err := Install(mux, "readyz", evaluator, health.TargetReady)
 	if !errors.Is(err, ErrInvalidPath) {
@@ -156,7 +155,7 @@ func TestInstallRejectsInvalidTarget(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustInstallTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
+	evaluator := mustTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
 
 	err := Install(mux, DefaultReadyPath, evaluator, health.TargetUnknown)
 	if !errors.Is(err, health.ErrInvalidTarget) {
@@ -171,7 +170,7 @@ func TestInstallRejectsInvalidOption(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustInstallTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
+	evaluator := mustTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
 
 	err := Install(mux, DefaultReadyPath, evaluator, health.TargetReady, WithFormat(Format(99)))
 	if !errors.Is(err, ErrInvalidFormat) {
@@ -186,7 +185,7 @@ func TestInstallDefaults(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustInstallDefaultsEvaluator(t)
+	evaluator := mustDefaultsEvaluator(t)
 
 	err := InstallDefaults(mux, evaluator)
 	if err != nil {
@@ -226,7 +225,7 @@ func TestInstallDefaultsDoesNotInstallCompatibilityPaths(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustInstallDefaultsEvaluator(t)
+	evaluator := mustDefaultsEvaluator(t)
 
 	err := InstallDefaults(mux, evaluator)
 	if err != nil {
@@ -247,7 +246,7 @@ func TestInstallDefaultsAppliesOptionsToAllHandlers(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustInstallDefaultsEvaluator(t)
+	evaluator := mustDefaultsEvaluator(t)
 
 	err := InstallDefaults(
 		mux,
@@ -286,7 +285,7 @@ func TestInstallDefaultsAppliesOptionsToAllHandlers(t *testing.T) {
 func TestInstallDefaultsRejectsNilMux(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustInstallDefaultsEvaluator(t)
+	evaluator := mustDefaultsEvaluator(t)
 
 	err := InstallDefaults(nil, evaluator)
 	if !errors.Is(err, ErrNilMux) {
@@ -297,7 +296,7 @@ func TestInstallDefaultsRejectsNilMux(t *testing.T) {
 func TestInstallDefaultsRejectsTypedNilMux(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustInstallDefaultsEvaluator(t)
+	evaluator := mustDefaultsEvaluator(t)
 
 	var mux *recordingMux
 	err := InstallDefaults(mux, evaluator)
@@ -325,7 +324,7 @@ func TestInstallDefaultsRejectsInvalidOptionsWithoutMutatingMux(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustInstallDefaultsEvaluator(t)
+	evaluator := mustDefaultsEvaluator(t)
 
 	err := InstallDefaults(mux, evaluator, WithFormat(Format(99)))
 	if !errors.Is(err, ErrInvalidFormat) {
@@ -374,63 +373,4 @@ func TestDefaultHandlersUsePrimaryDefaultPathsOnly(t *testing.T) {
 	if _, ok := seen[DefaultHealthPlainPath]; ok {
 		t.Fatalf("DefaultHealthPlainPath must not be installed by default")
 	}
-}
-
-func mustInstallTestEvaluator(
-	t *testing.T,
-	target health.Target,
-	result health.Result,
-) *health.Evaluator {
-	t.Helper()
-
-	checker, err := health.NewCheck(result.Name, func(context.Context) health.Result {
-		return result
-	})
-	if err != nil {
-		t.Fatalf("health.NewCheck() = %v, want nil", err)
-	}
-
-	registry := health.NewRegistry()
-	if err := registry.Register(target, checker); err != nil {
-		t.Fatalf("registry.Register() = %v, want nil", err)
-	}
-
-	evaluator, err := health.NewEvaluator(registry, health.WithDefaultTimeout(0))
-	if err != nil {
-		t.Fatalf("health.NewEvaluator() = %v, want nil", err)
-	}
-
-	return evaluator
-}
-
-func mustInstallDefaultsEvaluator(t *testing.T) *health.Evaluator {
-	t.Helper()
-
-	registry := health.NewRegistry()
-
-	register := func(target health.Target, name string) {
-		t.Helper()
-
-		checker, err := health.NewCheck(name, func(context.Context) health.Result {
-			return health.Healthy(name)
-		})
-		if err != nil {
-			t.Fatalf("health.NewCheck(%s) = %v, want nil", name, err)
-		}
-
-		if err := registry.Register(target, checker); err != nil {
-			t.Fatalf("registry.Register(%s, %s) = %v, want nil", target, name, err)
-		}
-	}
-
-	register(health.TargetStartup, "startup")
-	register(health.TargetLive, "live")
-	register(health.TargetReady, "ready")
-
-	evaluator, err := health.NewEvaluator(registry, health.WithDefaultTimeout(0))
-	if err != nil {
-		t.Fatalf("health.NewEvaluator() = %v, want nil", err)
-	}
-
-	return evaluator
 }

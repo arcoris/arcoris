@@ -16,12 +16,21 @@
 
 package healthhttp
 
-import "errors"
+import "arcoris.dev/component-base/pkg/health"
 
-var (
-	// ErrNilOption identifies a nil health HTTP handler option.
-	//
-	// Nil options are rejected explicitly so adapter configuration cannot be
-	// partially dropped by mistake.
-	ErrNilOption = errors.New("healthhttp: nil option")
-)
+// selectChecks returns the report results allowed by detail.
+//
+// The selection policy belongs to the HTTP adapter because it controls exposure,
+// not health evaluation.
+func selectChecks(report health.Report, policy health.TargetPolicy, detail DetailLevel) []health.Result {
+	switch detail {
+	case DetailNone:
+		return nil
+	case DetailFailed:
+		return report.FailedChecks(policy)
+	case DetailAll:
+		return report.ChecksCopy()
+	default:
+		return nil
+	}
+}

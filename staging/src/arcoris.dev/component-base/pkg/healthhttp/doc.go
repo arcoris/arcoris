@@ -16,27 +16,43 @@
 
 // Package healthhttp adapts package health reports to safe HTTP health endpoints.
 //
-// The package is intentionally an adapter layer. It does not define health check
-// contracts, own a health registry, execute checks directly, run periodic probes,
-// publish metrics, log diagnostics, manage lifecycle state, handle operating
-// system signals, or make restart, routing, admission, scheduling, or alerting
-// decisions.
+// # Package scope
 //
-// The owned responsibilities are default health endpoint paths, HTTP method
-// policy, handler configuration, HTTP status code mapping, safe text and JSON
-// rendering, and mux installation helpers.
+// healthhttp is a transport adapter over package health. It turns
+// health.Evaluator evaluations and health.Report values into HTTP handlers,
+// endpoint paths, status-code mappings, and safe text or JSON responses.
 //
-// Public HTTP responses never expose health.Result.Cause, panic stacks, raw
-// errors, context causes, connection strings, credentials, internal addresses,
-// tenant identifiers, or other private diagnostic data.
+// The package intentionally does not define health checks, own a registry,
+// execute checks on a schedule, choose evaluator timeouts, manage lifecycle
+// state, handle process signals, run background loops, expose metrics, log
+// diagnostics, attach tracing spans, or make admission, routing, scheduling, or
+// restart decisions.
+//
+// # Safe exposure model
+//
+// Public responses are safe by construction. healthhttp never exposes
+// health.Result.Cause, panic stacks, raw errors, context causes, credentials,
+// connection strings, tenant identifiers, or internal network addresses. JSON
+// responses use dedicated DTOs instead of embedding package health values
+// directly so future additions to health.Report or health.Result cannot leak
+// into the adapter surface accidentally.
+//
+// # Default endpoints
 //
 // InstallDefaults registers only target-specific endpoints:
 //
-//   - /startupz;
-//   - /livez;
-//   - /readyz.
+//   - /startupz
+//   - /livez
+//   - /readyz
 //
-// Compatibility paths such as /healthz and /health are provided as constants but
-// are not installed by default because they do not have universal target
-// semantics across systems.
+// Compatibility constants such as /healthz and /health are provided only for
+// callers that want to install them explicitly. They are not registered by
+// default because they do not carry stable target semantics across systems.
+//
+// # Non-goals
+//
+// healthhttp does not own health contracts, registry mutation, evaluator
+// execution policy, middleware stacks, authentication, authorization, or
+// router-specific pattern semantics. It remains a small adapter layer over the
+// health core package.
 package healthhttp

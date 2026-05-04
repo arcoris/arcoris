@@ -24,21 +24,31 @@ import (
 var (
 	// ErrInvalidDetailLevel identifies an unsupported health HTTP response detail
 	// level.
+	//
+	// The sentinel classifies only adapter exposure configuration errors.
 	ErrInvalidDetailLevel = errors.New("healthhttp: invalid detail level")
 )
 
 // InvalidDetailLevelError describes an unsupported health HTTP response detail
 // level.
+//
+// Callers should use errors.Is for classification and inspect Level only for
+// configuration diagnostics.
 type InvalidDetailLevelError struct {
 	Level DetailLevel
 }
 
 // Error returns the invalid detail level message.
+//
+// The string is diagnostic-only and includes the level's stable textual form.
 func (e InvalidDetailLevelError) Error() string {
 	return fmt.Sprintf("%v: %s", ErrInvalidDetailLevel, e.Level.String())
 }
 
 // Is reports whether target matches the invalid detail level classification.
+//
+// This keeps the typed error compatible with errors.Is against
+// ErrInvalidDetailLevel.
 func (e InvalidDetailLevelError) Is(target error) bool {
 	return target == ErrInvalidDetailLevel
 }

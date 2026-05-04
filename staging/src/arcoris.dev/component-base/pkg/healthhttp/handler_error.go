@@ -19,6 +19,10 @@ package healthhttp
 import "errors"
 
 var (
-	// ErrNilEvaluator identifies a nil health Evaluator passed to NewHandler.
+	// ErrNilEvaluator identifies a nil health evaluator passed to NewHandler or
+	// install helpers.
+	//
+	// healthhttp owns handler adaptation only; without a real evaluator it has no
+	// core health execution boundary to delegate to.
 	ErrNilEvaluator = errors.New("healthhttp: nil evaluator")
 )

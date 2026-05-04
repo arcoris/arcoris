@@ -19,27 +19,17 @@ package healthhttp
 import "arcoris.dev/component-base/pkg/health"
 
 // Option configures a health HTTP handler at construction time.
+//
+// Options are adapter-scoped. They may change representation, safe detail
+// exposure, target-policy interpretation, and HTTP status code mapping, but they
+// must not alter registry contents, evaluator execution policy, or health-core
+// contracts.
 type Option func(*config) error
 
-// config contains normalized health HTTP handler configuration.
-type config struct {
-	policy      health.TargetPolicy
-	format      Format
-	detailLevel DetailLevel
-	statusCodes HTTPStatusCodes
-}
-
-// defaultConfig returns the default handler configuration for target.
-func defaultConfig(target health.Target) config {
-	return config{
-		policy:      health.DefaultPolicy(target),
-		format:      FormatText,
-		detailLevel: DetailNone,
-		statusCodes: DefaultStatusCodes(),
-	}
-}
-
 // applyOptions applies options to config in order.
+//
+// Nil options are rejected explicitly so handler construction cannot silently
+// drop part of the caller's intended configuration.
 func applyOptions(config *config, options ...Option) error {
 	for _, option := range options {
 		if option == nil {
@@ -54,6 +44,10 @@ func applyOptions(config *config, options ...Option) error {
 }
 
 // WithPolicy configures the target policy used by the handler.
+//
+// This changes only how an already-evaluated report is interpreted for HTTP
+// pass/fail purposes. It does not alter how checks run or how report statuses
+// are produced by package health.
 func WithPolicy(policy health.TargetPolicy) Option {
 	return func(config *config) error {
 		config.policy = policy
@@ -62,6 +56,9 @@ func WithPolicy(policy health.TargetPolicy) Option {
 }
 
 // WithFormat configures the response format used by the handler.
+//
+// Format changes representation only. It does not enable content negotiation or
+// widen the set of diagnostics exposed by the adapter.
 func WithFormat(format Format) Option {
 	return func(config *config) error {
 		if err := validateFormat(format); err != nil {
@@ -75,6 +72,9 @@ func WithFormat(format Format) Option {
 
 // WithDetailLevel configures the amount of safe check-level detail exposed by
 // the handler renderer.
+//
+// Even DetailAll remains subject to the package's safe DTO boundary and never
+// exposes Result.Cause, panic stacks, raw errors, or context causes.
 func WithDetailLevel(level DetailLevel) Option {
 	return func(config *config) error {
 		if err := validateDetailLevel(level); err != nil {
@@ -82,67 +82,6 @@ func WithDetailLevel(level DetailLevel) Option {
 		}
 
 		config.detailLevel = level
-		return nil
-	}
-}
-
-// WithStatusCodes configures the HTTP status code mapping used by the handler.
-func WithStatusCodes(codes HTTPStatusCodes) Option {
-	return func(config *config) error {
-		codes = codes.Normalize()
-		if err := codes.Validate(); err != nil {
-			return err
-		}
-
-		config.statusCodes = codes
-		return nil
-	}
-}
-
-// WithPassedStatus configures the HTTP status code used when a report passes.
-func WithPassedStatus(code int) Option {
-	return func(config *config) error {
-		codes := config.statusCodes
-		codes.Passed = code
-		codes = codes.Normalize()
-
-		if err := codes.Validate(); err != nil {
-			return err
-		}
-
-		config.statusCodes = codes
-		return nil
-	}
-}
-
-// WithFailedStatus configures the HTTP status code used when a report fails.
-func WithFailedStatus(code int) Option {
-	return func(config *config) error {
-		codes := config.statusCodes
-		codes.Failed = code
-		codes = codes.Normalize()
-
-		if err := codes.Validate(); err != nil {
-			return err
-		}
-
-		config.statusCodes = codes
-		return nil
-	}
-}
-
-// WithErrorStatus configures the HTTP status code used for adapter errors.
-func WithErrorStatus(code int) Option {
-	return func(config *config) error {
-		codes := config.statusCodes
-		codes.Error = code
-		codes = codes.Normalize()
-
-		if err := codes.Validate(); err != nil {
-			return err
-		}
-
-		config.statusCodes = codes
 		return nil
 	}
 }

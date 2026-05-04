@@ -97,7 +97,7 @@ func TestDefaultConfig(t *testing.T) {
 	}
 }
 
-func TestDefaultTargetPolicy(t *testing.T) {
+func TestDefaultConfigUsesHealthDefaultPolicy(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -121,9 +121,9 @@ func TestDefaultTargetPolicy(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			policy := defaultTargetPolicy(test.target)
+			policy := defaultConfig(test.target).policy
 			if got := policy.Passes(test.status); got != test.shouldPass {
-				t.Fatalf("defaultTargetPolicy(%s).Passes(%s) = %v, want %v", test.target, test.status, got, test.shouldPass)
+				t.Fatalf("defaultConfig(%s).policy.Passes(%s) = %v, want %v", test.target, test.status, got, test.shouldPass)
 			}
 		})
 	}

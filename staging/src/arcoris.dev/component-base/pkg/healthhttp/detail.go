@@ -22,20 +22,35 @@ package healthhttp
 // The zero value is DetailNone. Renderers must never use detail levels to expose
 // health.Result.Cause, panic stacks, raw errors, credentials, or private
 // diagnostic data.
+//
+// DetailLevel affects exposure only. It does not change how package health
+// evaluates checks or aggregates report status.
 type DetailLevel uint8
 
 const (
 	// DetailNone suppresses check-level details.
+	//
+	// The response still reports the aggregate target status, but no per-check
+	// breakdown is exposed.
 	DetailNone DetailLevel = iota
 
 	// DetailFailed includes only checks that fail the handler's target policy.
+	//
+	// This is often a good compromise when operators need failure visibility
+	// without routinely exposing passing checks.
 	DetailFailed
 
 	// DetailAll includes all check results in report order.
+	//
+	// Even at this most verbose level, the adapter still emits only safe DTO
+	// fields and never exposes Cause or raw panic details.
 	DetailAll
 )
 
 // String returns the stable diagnostic name for level.
+//
+// Invalid values return "invalid" so misconfiguration is explicit in tests and
+// diagnostics.
 func (level DetailLevel) String() string {
 	switch level {
 	case DetailNone:
@@ -50,6 +65,8 @@ func (level DetailLevel) String() string {
 }
 
 // IsValid reports whether level is a supported response detail level.
+//
+// Unsupported values are rejected during handler construction.
 func (level DetailLevel) IsValid() bool {
 	switch level {
 	case DetailNone, DetailFailed, DetailAll:
@@ -60,6 +77,9 @@ func (level DetailLevel) IsValid() bool {
 }
 
 // IncludesChecks reports whether level allows any check-level results.
+//
+// This helper exists to keep rendering code explicit about when it may include
+// per-check output at all.
 func (level DetailLevel) IncludesChecks() bool {
 	switch level {
 	case DetailFailed, DetailAll:
@@ -70,11 +90,17 @@ func (level DetailLevel) IncludesChecks() bool {
 }
 
 // IncludesAllChecks reports whether level allows all check results.
+//
+// The helper is intentionally narrow so render paths can express their exposure
+// choices without repeating enum comparisons.
 func (level DetailLevel) IncludesAllChecks() bool {
 	return level == DetailAll
 }
 
 // IncludesFailedChecks reports whether level allows policy-failed check results.
+//
+// The notion of "failed" remains policy-relative: the same check can be failed
+// for readiness and passing for liveness.
 func (level DetailLevel) IncludesFailedChecks() bool {
 	switch level {
 	case DetailFailed, DetailAll:
@@ -85,6 +111,8 @@ func (level DetailLevel) IncludesFailedChecks() bool {
 }
 
 // validateDetailLevel returns an error if level is not supported.
+//
+// Validation stays local to preserve the adapter's own typed error surface.
 func validateDetailLevel(level DetailLevel) error {
 	if !level.IsValid() {
 		return InvalidDetailLevelError{Level: level}

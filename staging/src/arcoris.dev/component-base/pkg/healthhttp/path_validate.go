@@ -29,7 +29,8 @@ import (
 //
 // ValidatePath intentionally does not enforce router-specific path pattern
 // syntax. Different HTTP muxes support different matching rules, wildcards, and
-// path normalization behavior.
+// path normalization behavior. The adapter validates only the invariants needed
+// to keep health endpoint installation local, explicit, and transport-safe.
 func ValidatePath(path string) error {
 	if !validPath(path) {
 		return InvalidPathError{Path: path}
@@ -39,6 +40,9 @@ func ValidatePath(path string) error {
 }
 
 // validPath reports whether path is a safe local route path.
+//
+// The helper encodes only package-level path invariants. It deliberately avoids
+// knowledge of ServeMux patterns or third-party router extensions.
 func validPath(path string) bool {
 	if path == "" || path == "/" {
 		return false
@@ -63,6 +67,9 @@ func validPath(path string) bool {
 }
 
 // invalidPathRune reports whether r is unsafe inside a health HTTP route path.
+//
+// The adapter rejects whitespace and control characters so probe paths remain
+// stable in configuration, logs, and router registrations.
 func invalidPathRune(r rune) bool {
 	return unicode.IsSpace(r) || r < 0x20 || r == 0x7f
 }

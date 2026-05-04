@@ -24,21 +24,32 @@ import (
 var (
 	// ErrInvalidHTTPStatusCode identifies an unsupported HTTP status code mapping
 	// for health HTTP handlers.
+	//
+	// The sentinel classifies only adapter status-mapping configuration errors.
 	ErrInvalidHTTPStatusCode = errors.New("healthhttp: invalid HTTP status code")
 )
 
 // InvalidHTTPStatusCodeError describes an invalid HTTP status code field.
+//
+// Field identifies which mapping entry failed validation so configuration errors
+// remain actionable without parsing Error strings.
 type InvalidHTTPStatusCodeError struct {
 	Field string
 	Code  int
 }
 
 // Error returns the invalid HTTP status code message.
+//
+// The string is diagnostic-only and reports both the logical field and the
+// invalid numeric code.
 func (e InvalidHTTPStatusCodeError) Error() string {
 	return fmt.Sprintf("%v: field=%s code=%d", ErrInvalidHTTPStatusCode, e.Field, e.Code)
 }
 
 // Is reports whether target matches the invalid HTTP status code classification.
+//
+// This keeps the typed error compatible with errors.Is against
+// ErrInvalidHTTPStatusCode.
 func (e InvalidHTTPStatusCodeError) Is(target error) bool {
 	return target == ErrInvalidHTTPStatusCode
 }
