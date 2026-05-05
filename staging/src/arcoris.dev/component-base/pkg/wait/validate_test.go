@@ -67,7 +67,6 @@ func TestRequirePositiveIntervalPanicsOnNonPositiveDuration(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -103,7 +102,6 @@ func TestRequireJitterFactorAcceptsValidFactors(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -146,7 +144,6 @@ func TestRequireJitterFactorPanicsOnInvalidFactors(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -205,7 +202,6 @@ func TestTimerRequireUsablePanicsOnInvalidTimer(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()

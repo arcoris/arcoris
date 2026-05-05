@@ -31,6 +31,7 @@ func TestValidationHelpersAcceptValidInputs(t *testing.T) {
 	requireTaskName("worker")
 	requireErrorMode(ErrorModeJoin)
 	requireErrorMode(ErrorModeFirst)
+	requireGroupOption(WithCancelOnError(true))
 }
 
 func TestValidationHelpersRejectMissingDiagnosticText(t *testing.T) {
@@ -45,7 +46,6 @@ func TestValidationHelpersRejectMissingDiagnosticText(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -69,10 +69,10 @@ func TestValidationHelpersRejectInvalidInputs(t *testing.T) {
 		{name: "empty task name", message: errEmptyTaskName, fn: func() { requireTaskName("") }},
 		{name: "untrimmed task name", message: errUntrimmedTaskName, fn: func() { requireTaskName(" worker") }},
 		{name: "invalid error mode", message: errInvalidErrorMode, fn: func() { requireErrorMode(ErrorMode(99)) }},
+		{name: "nil group option", message: errNilGroupOption, fn: func() { requireGroupOption(nil) }},
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

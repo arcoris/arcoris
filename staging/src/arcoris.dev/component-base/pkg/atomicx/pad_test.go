@@ -76,7 +76,6 @@ func TestPaddedPrimitiveSizesIncludeBothPads(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -105,7 +104,6 @@ func TestPaddedPrimitiveValueOffsetsKeepLeadingPad(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -156,7 +154,6 @@ func TestPaddedPrimitiveValueOffsetsKeepTrailingPad(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -201,7 +198,6 @@ func TestPaddedPrimitiveAlignment(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()

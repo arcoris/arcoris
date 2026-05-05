@@ -62,6 +62,10 @@ const (
 	// ErrorMode is supplied to Group configuration.
 	errInvalidErrorMode = "run: invalid error mode"
 
+	// errNilGroupOption is the stable diagnostic text used when NewGroup
+	// receives a nil GroupOption.
+	errNilGroupOption = "run: nil group option"
+
 	// errNilWaitContext is the stable diagnostic text used when Wait receives a
 	// nil context.
 	errNilWaitContext = "run: nil wait context"
@@ -117,5 +121,12 @@ func requireTaskName(name string) {
 func requireErrorMode(mode ErrorMode) {
 	if !mode.IsValid() {
 		panic(errInvalidErrorMode)
+	}
+}
+
+// requireGroupOption panics when option is nil.
+func requireGroupOption(option GroupOption) {
+	if option == nil {
+		panic(errNilGroupOption)
 	}
 }

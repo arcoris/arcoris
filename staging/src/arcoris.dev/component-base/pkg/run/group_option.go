@@ -62,19 +62,17 @@ func defaultGroupConfig() groupConfig {
 // GroupOption configures a Group during construction.
 //
 // Options are applied to an internal groupConfig before the Group starts any
-// tasks. They do not mutate an already constructed Group.
+// tasks. They do not mutate an already constructed Group. A nil option is a
+// programming error and causes NewGroup to panic so invalid conditional option
+// composition is visible at the construction boundary.
 type GroupOption func(*groupConfig)
 
 // newGroupConfig applies options to a fresh default groupConfig.
-//
-// Nil options are ignored to keep conditional option lists easy to compose.
 func newGroupConfig(options ...GroupOption) groupConfig {
 	config := defaultGroupConfig()
 
 	for _, option := range options {
-		if option == nil {
-			continue
-		}
+		requireGroupOption(option)
 		option(&config)
 	}
 

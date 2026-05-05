@@ -92,7 +92,6 @@ func runConcurrentIndexed(t *testing.T, goroutines int, fn func(index int)) {
 	var wg sync.WaitGroup
 	wg.Add(goroutines)
 	for i := range goroutines {
-		i := i
 		go func() {
 			defer wg.Done()
 			fn(i)

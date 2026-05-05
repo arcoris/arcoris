@@ -131,7 +131,6 @@ func TestGroupGoMayBeCalledConcurrentlyBeforeClose(t *testing.T) {
 	var submits sync.WaitGroup
 
 	for i := 0; i < 8; i++ {
-		i := i
 		submits.Add(1)
 		go func() {
 			defer submits.Done()

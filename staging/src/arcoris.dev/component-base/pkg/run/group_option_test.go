@@ -45,17 +45,20 @@ func TestGroupConfigDefaults(t *testing.T) {
 	}
 }
 
-func TestGroupConfigAppliesOptionsAndIgnoresNil(t *testing.T) {
+func TestGroupConfigRejectsNilOption(t *testing.T) {
 	t.Parallel()
 
-	config := newGroupConfig(nil, WithCancelOnError(false), WithErrorMode(ErrorModeFirst))
+	mustPanicWith(t, errNilGroupOption, func() {
+		newGroupConfig(nil)
+	})
+}
 
-	if config.cancelOnError {
-		t.Fatal("cancelOnError = true, want false")
-	}
-	if config.errorMode != ErrorModeFirst {
-		t.Fatalf("errorMode = %v, want ErrorModeFirst", config.errorMode)
-	}
+func TestNewGroupRejectsNilOption(t *testing.T) {
+	t.Parallel()
+
+	mustPanicWith(t, errNilGroupOption, func() {
+		NewGroup(t.Context(), nil)
+	})
 }
 
 func TestGroupConfigAppliesOptionsInOrder(t *testing.T) {
