@@ -32,13 +32,9 @@ func TestNormalizeTargets(t *testing.T) {
 		want    []health.Target
 	}{
 		{
-			name: "single target",
-			targets: []health.Target{
-				health.TargetReady,
-			},
-			want: []health.Target{
-				health.TargetReady,
-			},
+			name:    "single target",
+			targets: []health.Target{health.TargetReady},
+			want:    []health.Target{health.TargetReady},
 		},
 		{
 			name: "all concrete targets in caller order",
@@ -285,17 +281,4 @@ func TestContainsTarget(t *testing.T) {
 			}
 		})
 	}
-}
-
-func sameTargets(left []health.Target, right []health.Target) bool {
-	if len(left) != len(right) {
-		return false
-	}
-	for i := range left {
-		if left[i] != right[i] {
-			return false
-		}
-	}
-
-	return true
 }

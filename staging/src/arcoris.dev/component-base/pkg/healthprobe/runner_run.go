@@ -22,11 +22,15 @@ import "context"
 //
 // Run owns exactly one ticker loop for the Runner. Concurrent Run calls on the
 // same Runner return ErrRunnerRunning. Context cancellation is treated as normal
-// loop shutdown and returns nil.
+// loop shutdown and returns nil. Calling Run on a nil Runner returns
+// ErrNilRunner.
 //
 // Run panics when ctx is nil. A nil context would create an unowned background
 // loop and hide a caller wiring bug.
 func (r *Runner) Run(ctx context.Context) error {
+	if r == nil {
+		return ErrNilRunner
+	}
 	if ctx == nil {
 		panic("healthprobe: nil context")
 	}

@@ -34,3 +34,17 @@ func TestInvalidIntervalError(t *testing.T) {
 		t.Fatal("Error() returned empty message")
 	}
 }
+
+func TestInvalidIntervalErrorSupportsErrorsAs(t *testing.T) {
+	t.Parallel()
+
+	err := error(InvalidIntervalError{Interval: -time.Second})
+
+	var intervalErr InvalidIntervalError
+	if !errors.As(err, &intervalErr) {
+		t.Fatalf("errors.As(%T, InvalidIntervalError) = false, want true", err)
+	}
+	if intervalErr.Interval != -time.Second {
+		t.Fatalf("Interval = %s, want %s", intervalErr.Interval, -time.Second)
+	}
+}

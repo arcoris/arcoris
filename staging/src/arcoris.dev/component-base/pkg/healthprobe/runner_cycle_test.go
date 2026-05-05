@@ -26,7 +26,7 @@ import (
 func TestRunnerRunCycleEvaluatesTargetsInOrder(t *testing.T) {
 	t.Parallel()
 
-	clk := newManualClock()
+	clk := newTestClock()
 	order := make(chan health.Target, 2)
 	evaluator := newEvaluatorWithChecks(t, map[health.Target]health.CheckFunc{
 		health.TargetReady: func(context.Context) health.Result {
@@ -62,8 +62,7 @@ func TestRunnerRunCycleDoesNotStoreAfterContextCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	clk := newManualClock()
-	runner := newTestRunner(t, clk)
+	runner := newTestRunner(t, newTestClock())
 	runner.runCycle(ctx)
 
 	if _, ok := runner.Snapshot(health.TargetReady); ok {
@@ -74,14 +73,21 @@ func TestRunnerRunCycleDoesNotStoreAfterContextCanceled(t *testing.T) {
 func TestUnknownReport(t *testing.T) {
 	t.Parallel()
 
-	report := unknownReport(health.TargetReady, newManualClock().Now())
+	observed := newTestClock().Now()
+	report := unknownReport(health.TargetReady, observed)
 	if report.Target != health.TargetReady {
 		t.Fatalf("Target = %s, want ready", report.Target)
 	}
 	if report.Status != health.StatusUnknown {
 		t.Fatalf("Status = %s, want unknown", report.Status)
 	}
-	if report.Observed.IsZero() {
-		t.Fatal("Observed is zero")
+	if !report.Observed.Equal(observed) {
+		t.Fatalf("Observed = %v, want %v", report.Observed, observed)
+	}
+	if len(report.Checks) != 0 {
+		t.Fatalf("Checks length = %d, want 0", len(report.Checks))
+	}
+	if !report.IsValid() {
+		t.Fatalf("unknownReport().IsValid() = false, want true: %#v", report)
 	}
 }

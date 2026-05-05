@@ -16,28 +16,27 @@
 
 package healthprobe
 
-import "time"
+import (
+	"testing"
 
-// isStale reports whether a cached snapshot with age should be considered stale.
-//
-// Staleness is strict: age must be greater than staleAfter. An age equal to the
-// window is still fresh.
-func isStale(age time.Duration, staleAfter time.Duration) bool {
-	if staleAfter <= 0 {
-		return false
+	"arcoris.dev/component-base/pkg/health"
+)
+
+func TestWithTargets(t *testing.T) {
+	t.Parallel()
+
+	source := []health.Target{health.TargetReady, health.TargetLive}
+	cfg := defaultConfig()
+	err := WithTargets(source...)(&cfg)
+	if err != nil {
+		t.Fatalf("WithTargets() = %v, want nil", err)
 	}
-	if age < 0 {
-		return false
-	}
-
-	return age > staleAfter
-}
-
-// validateStaleAfter validates the configured stale window.
-func validateStaleAfter(staleAfter time.Duration) error {
-	if staleAfter < 0 {
-		return InvalidStaleAfterError{StaleAfter: staleAfter}
+	if !sameTargets(cfg.targets, []health.Target{health.TargetReady, health.TargetLive}) {
+		t.Fatalf("targets = %v, want [ready live]", cfg.targets)
 	}
 
-	return nil
+	source[0] = health.TargetStartup
+	if cfg.targets[0] != health.TargetReady {
+		t.Fatalf("targets share caller backing array: %v", cfg.targets)
+	}
 }

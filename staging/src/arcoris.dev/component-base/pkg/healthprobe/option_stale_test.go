@@ -16,28 +16,32 @@
 
 package healthprobe
 
-import "time"
+import (
+	"errors"
+	"testing"
+	"time"
+)
 
-// isStale reports whether a cached snapshot with age should be considered stale.
-//
-// Staleness is strict: age must be greater than staleAfter. An age equal to the
-// window is still fresh.
-func isStale(age time.Duration, staleAfter time.Duration) bool {
-	if staleAfter <= 0 {
-		return false
-	}
-	if age < 0 {
-		return false
-	}
+func TestWithStaleAfter(t *testing.T) {
+	t.Parallel()
 
-	return age > staleAfter
+	cfg := defaultConfig()
+	err := WithStaleAfter(0)(&cfg)
+	if err != nil {
+		t.Fatalf("WithStaleAfter(0) = %v, want nil", err)
+	}
+	if cfg.staleAfter != 0 {
+		t.Fatalf("staleAfter = %s, want 0", cfg.staleAfter)
+	}
 }
 
-// validateStaleAfter validates the configured stale window.
-func validateStaleAfter(staleAfter time.Duration) error {
-	if staleAfter < 0 {
-		return InvalidStaleAfterError{StaleAfter: staleAfter}
-	}
+func TestWithStaleAfterRejectsInvalidValue(t *testing.T) {
+	t.Parallel()
 
-	return nil
+	cfg := defaultConfig()
+	err := WithStaleAfter(-time.Nanosecond)(&cfg)
+
+	if !errors.Is(err, ErrInvalidStaleAfter) {
+		t.Fatalf("WithStaleAfter(-1ns) = %v, want ErrInvalidStaleAfter", err)
+	}
 }

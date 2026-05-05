@@ -18,26 +18,19 @@ package healthprobe
 
 import "time"
 
-// isStale reports whether a cached snapshot with age should be considered stale.
+// WithStaleAfter configures the cache staleness window.
 //
-// Staleness is strict: age must be greater than staleAfter. An age equal to the
-// window is still fresh.
-func isStale(age time.Duration, staleAfter time.Duration) bool {
-	if staleAfter <= 0 {
-		return false
-	}
-	if age < 0 {
-		return false
-	}
+// A zero staleAfter disables stale detection. Positive values enable stale
+// detection. Negative values are rejected. Changing the probe interval does not
+// automatically change staleAfter; callers that need a specific freshness ratio
+// should configure both explicitly.
+func WithStaleAfter(staleAfter time.Duration) Option {
+	return func(config *config) error {
+		if err := validateStaleAfter(staleAfter); err != nil {
+			return err
+		}
 
-	return age > staleAfter
-}
-
-// validateStaleAfter validates the configured stale window.
-func validateStaleAfter(staleAfter time.Duration) error {
-	if staleAfter < 0 {
-		return InvalidStaleAfterError{StaleAfter: staleAfter}
+		config.staleAfter = staleAfter
+		return nil
 	}
-
-	return nil
 }

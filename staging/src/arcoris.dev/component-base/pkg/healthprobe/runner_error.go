@@ -25,6 +25,12 @@ var (
 	// would make the runner unable to produce any health observation.
 	ErrNilEvaluator = errors.New("healthprobe: nil evaluator")
 
+	// ErrNilRunner identifies a Run call on a nil Runner receiver.
+	//
+	// Snapshot and Snapshots treat nil Runner receivers as empty readers. Run
+	// returns this stable error because a nil Runner cannot own a ticker loop.
+	ErrNilRunner = errors.New("healthprobe: nil runner")
+
 	// ErrRunnerRunning identifies a concurrent Run call on the same Runner.
 	//
 	// Runner owns one ticker loop. Running two loops for the same Runner would

@@ -18,7 +18,11 @@ package healthprobe
 
 import "arcoris.dev/component-base/pkg/health"
 
-// normalizeTargets validates and copies the target list used by Runner.
+// normalizeTargets validates and copies the explicit probe target list.
+//
+// health.Target values are owned by package health. healthprobe owns only the
+// list-level rules needed by Runner: at least one concrete target, no
+// duplicates, and caller-order preservation.
 func normalizeTargets(targets []health.Target) ([]health.Target, error) {
 	if len(targets) == 0 {
 		return nil, ErrNoTargets

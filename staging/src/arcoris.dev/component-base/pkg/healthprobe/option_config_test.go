@@ -22,15 +22,35 @@ import (
 	"arcoris.dev/component-base/pkg/health"
 )
 
-func TestWithTargets(t *testing.T) {
+func TestDefaultConfig(t *testing.T) {
 	t.Parallel()
 
 	cfg := defaultConfig()
-	err := WithTargets(health.TargetReady, health.TargetLive)(&cfg)
-	if err != nil {
-		t.Fatalf("WithTargets() = %v, want nil", err)
+
+	if nilClock(cfg.clock) {
+		t.Fatal("default clock is nil")
 	}
-	if !sameHealthprobeTargets(cfg.targets, []health.Target{health.TargetReady, health.TargetLive}) {
-		t.Fatalf("targets = %v, want [ready live]", cfg.targets)
+	if cfg.interval != defaultInterval {
+		t.Fatalf("interval = %s, want %s", cfg.interval, defaultInterval)
+	}
+	if cfg.staleAfter != defaultStaleAfter {
+		t.Fatalf("staleAfter = %s, want %s", cfg.staleAfter, defaultStaleAfter)
+	}
+	if len(cfg.targets) != 0 {
+		t.Fatalf("targets = %v, want empty", cfg.targets)
+	}
+	if !cfg.initialProbe {
+		t.Fatal("initialProbe = false, want true")
+	}
+}
+
+func TestConfigValidate(t *testing.T) {
+	t.Parallel()
+
+	cfg := defaultConfig()
+	cfg.targets = []health.Target{health.TargetReady}
+
+	if err := cfg.validate(); err != nil {
+		t.Fatalf("validate() = %v, want nil", err)
 	}
 }

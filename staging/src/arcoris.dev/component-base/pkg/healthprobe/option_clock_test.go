@@ -19,6 +19,8 @@ package healthprobe
 import (
 	"errors"
 	"testing"
+
+	"arcoris.dev/component-base/pkg/clock"
 )
 
 func TestWithClockRejectsNilClock(t *testing.T) {
@@ -32,10 +34,22 @@ func TestWithClockRejectsNilClock(t *testing.T) {
 	}
 }
 
+func TestWithClockRejectsTypedNilClock(t *testing.T) {
+	t.Parallel()
+
+	var clk *clock.FakeClock
+	cfg := defaultConfig()
+	err := WithClock(clk)(&cfg)
+
+	if !errors.Is(err, ErrNilClock) {
+		t.Fatalf("WithClock(typed nil) = %v, want ErrNilClock", err)
+	}
+}
+
 func TestWithClockAppliesClock(t *testing.T) {
 	t.Parallel()
 
-	clk := newManualClock()
+	clk := newTestClock()
 	cfg := defaultConfig()
 
 	if err := WithClock(clk)(&cfg); err != nil {

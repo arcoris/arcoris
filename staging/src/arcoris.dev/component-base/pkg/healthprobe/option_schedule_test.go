@@ -46,30 +46,6 @@ func TestWithIntervalRejectsInvalidValue(t *testing.T) {
 	}
 }
 
-func TestWithStaleAfter(t *testing.T) {
-	t.Parallel()
-
-	cfg := defaultConfig()
-	err := WithStaleAfter(0)(&cfg)
-	if err != nil {
-		t.Fatalf("WithStaleAfter(0) = %v, want nil", err)
-	}
-	if cfg.staleAfter != 0 {
-		t.Fatalf("staleAfter = %s, want 0", cfg.staleAfter)
-	}
-}
-
-func TestWithStaleAfterRejectsInvalidValue(t *testing.T) {
-	t.Parallel()
-
-	cfg := defaultConfig()
-	err := WithStaleAfter(-time.Nanosecond)(&cfg)
-
-	if !errors.Is(err, ErrInvalidStaleAfter) {
-		t.Fatalf("WithStaleAfter(-1ns) = %v, want ErrInvalidStaleAfter", err)
-	}
-}
-
 func TestWithInitialProbe(t *testing.T) {
 	t.Parallel()
 

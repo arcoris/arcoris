@@ -35,23 +35,6 @@ func WithInterval(interval time.Duration) Option {
 	}
 }
 
-// WithStaleAfter configures the cache staleness window.
-//
-// A zero staleAfter disables stale detection. Positive values enable stale
-// detection. Negative values are rejected. Changing the probe interval does not
-// automatically change staleAfter; callers that need a specific freshness ratio
-// should configure both explicitly.
-func WithStaleAfter(staleAfter time.Duration) Option {
-	return func(config *config) error {
-		if err := validateStaleAfter(staleAfter); err != nil {
-			return err
-		}
-
-		config.staleAfter = staleAfter
-		return nil
-	}
-}
-
 // WithInitialProbe configures whether Runner performs a probe cycle immediately
 // when Run starts.
 //

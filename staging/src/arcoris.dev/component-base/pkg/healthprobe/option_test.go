@@ -24,28 +24,6 @@ import (
 	"arcoris.dev/component-base/pkg/health"
 )
 
-func TestDefaultConfig(t *testing.T) {
-	t.Parallel()
-
-	cfg := defaultConfig()
-
-	if nilClock(cfg.clock) {
-		t.Fatal("default clock is nil")
-	}
-	if cfg.interval != defaultInterval {
-		t.Fatalf("interval = %s, want %s", cfg.interval, defaultInterval)
-	}
-	if cfg.staleAfter != defaultStaleAfter {
-		t.Fatalf("staleAfter = %s, want %s", cfg.staleAfter, defaultStaleAfter)
-	}
-	if len(cfg.targets) != 0 {
-		t.Fatalf("targets = %v, want empty", cfg.targets)
-	}
-	if !cfg.initialProbe {
-		t.Fatal("initialProbe = false, want true")
-	}
-}
-
 func TestApplyOptionsRejectsNilOption(t *testing.T) {
 	t.Parallel()
 
@@ -81,16 +59,5 @@ func TestApplyOptionsAppliesInOrder(t *testing.T) {
 	}
 	if cfg.initialProbe {
 		t.Fatal("initialProbe = true, want false")
-	}
-}
-
-func TestConfigValidate(t *testing.T) {
-	t.Parallel()
-
-	cfg := defaultConfig()
-	cfg.targets = []health.Target{health.TargetReady}
-
-	if err := cfg.validate(); err != nil {
-		t.Fatalf("validate() = %v, want nil", err)
 	}
 }

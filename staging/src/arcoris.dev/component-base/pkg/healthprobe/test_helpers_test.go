@@ -18,7 +18,6 @@ package healthprobe
 
 import (
 	"context"
-	"sync"
 	"testing"
 	"time"
 
@@ -28,108 +27,10 @@ import (
 
 const testTimeout = 5 * time.Second
 
-type manualClock struct {
-	mu      sync.Mutex
-	now     time.Time
-	tickers []*manualTicker
-}
+var testNow = time.Unix(100, 0)
 
-func newManualClock() *manualClock {
-	return &manualClock{now: time.Unix(100, 0)}
-}
-
-func (c *manualClock) Now() time.Time {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.now
-}
-
-func (c *manualClock) Since(t time.Time) time.Duration {
-	return c.Now().Sub(t)
-}
-
-func (c *manualClock) After(d time.Duration) <-chan time.Time {
-	timer := time.NewTimer(d)
-	return timer.C
-}
-
-func (c *manualClock) NewTimer(d time.Duration) clock.Timer {
-	return realTimer{timer: time.NewTimer(d)}
-}
-
-func (c *manualClock) NewTicker(d time.Duration) clock.Ticker {
-	ticker := &manualTicker{ch: make(chan time.Time, 16)}
-	c.mu.Lock()
-	c.tickers = append(c.tickers, ticker)
-	c.mu.Unlock()
-	return ticker
-}
-
-func (c *manualClock) Sleep(d time.Duration) {
-	time.Sleep(d)
-}
-
-func (c *manualClock) Advance(d time.Duration) {
-	c.mu.Lock()
-	c.now = c.now.Add(d)
-	c.mu.Unlock()
-}
-
-func (c *manualClock) TickAll() {
-	c.mu.Lock()
-	now := c.now
-	tickers := append([]*manualTicker(nil), c.tickers...)
-	c.mu.Unlock()
-
-	for _, ticker := range tickers {
-		ticker.tick(now)
-	}
-}
-
-type manualTicker struct {
-	mu      sync.Mutex
-	ch      chan time.Time
-	stopped bool
-}
-
-func (t *manualTicker) C() <-chan time.Time { return t.ch }
-
-func (t *manualTicker) Stop() {
-	t.mu.Lock()
-	t.stopped = true
-	t.mu.Unlock()
-}
-
-func (t *manualTicker) Reset(d time.Duration) {}
-
-func (t *manualTicker) tick(now time.Time) {
-	t.mu.Lock()
-	stopped := t.stopped
-	t.mu.Unlock()
-	if stopped {
-		return
-	}
-
-	select {
-	case t.ch <- now:
-	default:
-	}
-}
-
-type realTimer struct {
-	timer *time.Timer
-}
-
-func (t realTimer) C() <-chan time.Time {
-	return t.timer.C
-}
-
-func (t realTimer) Stop() bool {
-	return t.timer.Stop()
-}
-
-func (t realTimer) Reset(d time.Duration) bool {
-	return t.timer.Reset(d)
+func newTestClock() *clock.FakeClock {
+	return clock.NewFakeClock(testNow)
 }
 
 func newTestEvaluator(t *testing.T) *health.Evaluator {
@@ -164,7 +65,7 @@ func newEvaluatorWithChecks(t *testing.T, checks map[health.Target]health.CheckF
 	return evaluator
 }
 
-func newTestRunner(t *testing.T, clk *manualClock, options ...Option) *Runner {
+func newTestRunner(t *testing.T, clk clock.Clock, options ...Option) *Runner {
 	t.Helper()
 
 	allOptions := []Option{WithClock(clk), WithTargets(health.TargetReady)}
@@ -178,29 +79,31 @@ func newTestRunner(t *testing.T, clk *manualClock, options ...Option) *Runner {
 	return runner
 }
 
-func waitForTicker(t *testing.T, clk *manualClock) {
-	t.Helper()
-
-	deadline := time.After(testTimeout)
-	ticker := time.NewTicker(time.Millisecond)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-deadline:
-			t.Fatal("timed out waiting for ticker creation")
-		case <-ticker.C:
-			clk.mu.Lock()
-			count := len(clk.tickers)
-			clk.mu.Unlock()
-			if count > 0 {
-				return
-			}
-		}
+func healthyReport(target health.Target, observed time.Time) health.Report {
+	return health.Report{
+		Target:   target,
+		Status:   health.StatusHealthy,
+		Observed: observed,
+		Checks: []health.Result{
+			health.Healthy(target.String() + "_check").WithObserved(observed),
+		},
 	}
 }
 
-func waitForSnapshot(t *testing.T, runner *Runner, target health.Target) {
+func waitForSnapshot(t *testing.T, runner *Runner, target health.Target) Snapshot {
+	t.Helper()
+
+	return waitForSnapshotWhere(t, runner, target, func(Snapshot) bool {
+		return true
+	})
+}
+
+func waitForSnapshotWhere(
+	t *testing.T,
+	runner *Runner,
+	target health.Target,
+	accept func(Snapshot) bool,
+) Snapshot {
 	t.Helper()
 
 	deadline := time.After(testTimeout)
@@ -212,11 +115,20 @@ func waitForSnapshot(t *testing.T, runner *Runner, target health.Target) {
 		case <-deadline:
 			t.Fatalf("timed out waiting for snapshot target=%s", target)
 		case <-ticker.C:
-			if _, ok := runner.Snapshot(target); ok {
-				return
+			snapshot, ok := runner.Snapshot(target)
+			if ok && accept(snapshot) {
+				return snapshot
 			}
 		}
 	}
+}
+
+func waitForGeneration(t *testing.T, runner *Runner, target health.Target, generation uint64) Snapshot {
+	t.Helper()
+
+	return waitForSnapshotWhere(t, runner, target, func(snapshot Snapshot) bool {
+		return snapshot.Generation >= generation
+	})
 }
 
 func waitForRunnerRunning(t *testing.T, runner *Runner) {
@@ -238,7 +150,46 @@ func waitForRunnerRunning(t *testing.T, runner *Runner) {
 	}
 }
 
-func sameHealthprobeTargets(left []health.Target, right []health.Target) bool {
+func stepUntilGeneration(
+	t *testing.T,
+	clk *clock.FakeClock,
+	runner *Runner,
+	target health.Target,
+	generation uint64,
+	interval time.Duration,
+) Snapshot {
+	t.Helper()
+
+	deadline := time.After(testTimeout)
+	ticker := time.NewTicker(time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-deadline:
+			t.Fatalf("timed out waiting for target=%s generation=%d", target, generation)
+		case <-ticker.C:
+			clk.Step(interval)
+			if snapshot, ok := runner.Snapshot(target); ok && snapshot.Generation >= generation {
+				return snapshot
+			}
+		}
+	}
+}
+
+func waitForRunDone(t *testing.T, done <-chan error) error {
+	t.Helper()
+
+	select {
+	case err := <-done:
+		return err
+	case <-time.After(testTimeout):
+		t.Fatal("Run did not stop")
+		return nil
+	}
+}
+
+func sameTargets(left []health.Target, right []health.Target) bool {
 	if len(left) != len(right) {
 		return false
 	}
@@ -247,5 +198,6 @@ func sameHealthprobeTargets(left []health.Target, right []health.Target) bool {
 			return false
 		}
 	}
+
 	return true
 }

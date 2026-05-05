@@ -33,6 +33,9 @@ func (r *Runner) runCycle(ctx context.Context) {
 		if !ok {
 			return
 		}
+		if ctx.Err() != nil {
+			return
+		}
 
 		r.store.update(target, report, r.clock.Now())
 	}

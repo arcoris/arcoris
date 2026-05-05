@@ -94,12 +94,13 @@ func (s Snapshot) IsZero() bool {
 
 // IsObserved reports whether s contains a stored probe observation.
 //
-// IsObserved is intentionally based on the cache write boundary rather than only
-// on Report.Observed. A snapshot is a cache observation when Runner has stored it
-// and assigned a generation. The embedded Report may still represent an unknown
-// health state.
+// IsObserved is intentionally stricter than checking Updated and Generation
+// alone. A snapshot is observed only when the complete Snapshot invariants hold:
+// a concrete Target, a valid Report for the same Target, a non-zero cache update
+// timestamp, and a positive generation. The embedded Report may still represent
+// an unknown health state.
 func (s Snapshot) IsObserved() bool {
-	return !s.Updated.IsZero() && s.Generation > 0
+	return !s.IsZero() && s.IsValid()
 }
 
 // IsFresh reports whether s contains an observed snapshot that was not stale at
@@ -109,6 +110,36 @@ func (s Snapshot) IsObserved() bool {
 // contain an unhealthy, degraded, or unknown health.Report.
 func (s Snapshot) IsFresh() bool {
 	return s.IsObserved() && !s.Stale
+}
+
+// IsValid reports whether s satisfies the Snapshot structural invariants.
+//
+// The zero Snapshot is valid and means that no cached observation exists. Any
+// non-zero Snapshot must be a complete observed cache value: Target is concrete,
+// Report is valid, Report.Target matches Target, Updated is non-zero, and
+// Generation is positive. Stale may be true only on an otherwise observed
+// Snapshot because stale is read-time cache metadata.
+func (s Snapshot) IsValid() bool {
+	if s.IsZero() {
+		return true
+	}
+	if !s.Target.IsConcrete() {
+		return false
+	}
+	if s.Report.Target != s.Target {
+		return false
+	}
+	if !s.Report.IsValid() {
+		return false
+	}
+	if s.Updated.IsZero() {
+		return false
+	}
+	if s.Generation == 0 {
+		return false
+	}
+
+	return true
 }
 
 // reportIsZero reports whether report is the zero health.Report value.
