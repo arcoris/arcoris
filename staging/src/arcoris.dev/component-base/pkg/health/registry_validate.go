@@ -43,8 +43,8 @@ func prepareChecks(target Target, checks []Checker) ([]preparedCheck, error) {
 	seen := make(map[string]int, len(checks))
 	var failures []error
 
-	for index, check := range checks {
-		if nilChecker(check) {
+	for index, chk := range checks {
+		if nilChecker(chk) {
 			failures = append(failures, NilCheckerError{
 				Target: target,
 				Index:  index,
@@ -52,7 +52,7 @@ func prepareChecks(target Target, checks []Checker) ([]preparedCheck, error) {
 			continue
 		}
 
-		name := check.Name()
+		name := chk.Name()
 		if err := ValidateCheckName(name); err != nil {
 			failures = append(failures, InvalidCheckNameError{
 				Target: target,
@@ -77,7 +77,7 @@ func prepareChecks(target Target, checks []Checker) ([]preparedCheck, error) {
 		prepared = append(prepared, preparedCheck{
 			Index:   index,
 			Name:    name,
-			Checker: check,
+			Checker: chk,
 		})
 	}
 

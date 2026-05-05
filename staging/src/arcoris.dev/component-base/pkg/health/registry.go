@@ -93,12 +93,12 @@ func (r *Registry) Register(target Target, checks ...Checker) error {
 	}
 
 	var conflicts []error
-	for _, check := range prepared {
-		if _, exists := existingNames[check.Name]; exists {
+	for _, pc := range prepared {
+		if _, exists := existingNames[pc.Name]; exists {
 			conflicts = append(conflicts, DuplicateCheckError{
 				Target:        target,
-				Name:          check.Name,
-				Index:         check.Index,
+				Name:          pc.Name,
+				Index:         pc.Index,
 				PreviousIndex: -1,
 			})
 		}
@@ -107,9 +107,9 @@ func (r *Registry) Register(target Target, checks ...Checker) error {
 		return errors.Join(conflicts...)
 	}
 
-	for _, check := range prepared {
-		r.checks[target] = append(r.checks[target], check.Checker)
-		existingNames[check.Name] = struct{}{}
+	for _, pc := range prepared {
+		r.checks[target] = append(r.checks[target], pc.Checker)
+		existingNames[pc.Name] = struct{}{}
 	}
 
 	r.names[target] = existingNames

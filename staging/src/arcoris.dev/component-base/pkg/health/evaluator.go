@@ -30,8 +30,11 @@ import (
 // probes, or decide restart, admission, routing, or scheduling behavior. It only
 // owns the synchronous evaluation boundary for checks registered in Registry.
 //
-// Evaluation is deterministic with respect to registry order. Checks are
-// evaluated sequentially in the order they were registered for the target.
+// Evaluation is deterministic with respect to registry order. The default
+// execution policy is sequential. Component owners may configure bounded
+// parallel execution globally or per target. Parallel execution preserves
+// Report.Checks order by registry registration order even when checks finish out
+// of order.
 //
 // Evaluator applies a cooperative context to every check and, when a timeout is
 // configured, also enforces a caller-visible result boundary. A checker that
@@ -48,6 +51,9 @@ type Evaluator struct {
 	clock          clock.PassiveClock
 	defaultTimeout time.Duration
 	targetTimeouts map[Target]time.Duration
+
+	executionPolicy         ExecutionPolicy
+	targetExecutionPolicies map[Target]ExecutionPolicy
 }
 
 // NewEvaluator returns an evaluator for registry.
@@ -57,9 +63,11 @@ type Evaluator struct {
 // Component owners SHOULD normally finish registration during setup and treat
 // the registry as effectively immutable after startup.
 //
-// By default, every check receives a one-second timeout. Use WithDefaultTimeout
-// to change or disable the default timeout, and WithTargetTimeout to override the
-// timeout for a specific target.
+// By default, every check receives a one-second timeout and checks are evaluated
+// sequentially. Use WithDefaultTimeout to change or disable the default timeout,
+// WithTargetTimeout to override the timeout for a specific target,
+// WithExecutionPolicy or WithParallelChecks to change default execution, and
+// target-specific execution options to override execution for a specific target.
 func NewEvaluator(registry *Registry, opts ...EvaluatorOption) (*Evaluator, error) {
 	if registry == nil {
 		return nil, ErrNilRegistry
@@ -75,11 +83,18 @@ func NewEvaluator(registry *Registry, opts ...EvaluatorOption) (*Evaluator, erro
 		targetTimeouts[target] = timeout
 	}
 
+	targetExecutionPolicies := make(map[Target]ExecutionPolicy, len(cfg.targetExecutionPolicies))
+	for target, policy := range cfg.targetExecutionPolicies {
+		targetExecutionPolicies[target] = policy
+	}
+
 	return &Evaluator{
-		registry:       registry,
-		clock:          cfg.clock,
-		defaultTimeout: cfg.defaultTimeout,
-		targetTimeouts: targetTimeouts,
+		registry:                registry,
+		clock:                   cfg.clock,
+		defaultTimeout:          cfg.defaultTimeout,
+		targetTimeouts:          targetTimeouts,
+		executionPolicy:         cfg.executionPolicy,
+		targetExecutionPolicies: targetExecutionPolicies,
 	}, nil
 }
 
@@ -95,6 +110,11 @@ func NewEvaluator(registry *Registry, opts ...EvaluatorOption) (*Evaluator, erro
 // If target has no registered checks, Evaluate returns a StatusUnknown report.
 // Absence of checks is not treated as healthy because health requires an
 // affirmative observation.
+//
+// Evaluate is synchronous regardless of execution policy. Parallel execution
+// affects only how checks are scheduled inside this call; the caller still
+// receives one complete Report after all scheduled checks have produced
+// caller-visible Results.
 func (e *Evaluator) Evaluate(ctx context.Context, target Target) (Report, error) {
 	started := e.clock.Now()
 
@@ -119,18 +139,10 @@ func (e *Evaluator) Evaluate(ctx context.Context, target Target) (Report, error)
 		}, nil
 	}
 
-	results := make([]Result, 0, len(checks))
-	status := StatusHealthy
 	timeout := e.timeoutFor(target)
-
-	for _, check := range checks {
-		result := e.evaluateCheck(ctx, check, timeout)
-
-		results = append(results, result)
-		if result.Status.MoreSevereThan(status) {
-			status = result.Status
-		}
-	}
+	executionPolicy := e.executionPolicyFor(target)
+	results := e.evaluateChecks(ctx, checks, timeout, executionPolicy)
+	status := aggregateStatus(results)
 
 	finished := e.clock.Now()
 
@@ -150,4 +162,16 @@ func (e *Evaluator) timeoutFor(target Target) time.Duration {
 	}
 
 	return e.defaultTimeout
+}
+
+// executionPolicyFor returns the effective check execution policy for target.
+//
+// Target-specific execution policy overrides the evaluator default. The returned
+// policy is normalized at construction time.
+func (e *Evaluator) executionPolicyFor(target Target) ExecutionPolicy {
+	if policy, ok := e.targetExecutionPolicies[target]; ok {
+		return policy
+	}
+
+	return e.executionPolicy
 }

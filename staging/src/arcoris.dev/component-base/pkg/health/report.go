@@ -72,8 +72,8 @@ func (r Report) IsValid() bool {
 			len(r.Checks) == 0
 	}
 
-	for _, check := range r.Checks {
-		if !check.IsValid() {
+	for _, res := range r.Checks {
+		if !res.IsValid() {
 			return false
 		}
 	}
@@ -108,9 +108,9 @@ func (r Report) Failed(policy TargetPolicy) bool {
 // name. The method still returns the first match defensively because Report is a
 // plain caller-owned value.
 func (r Report) Check(name string) (Result, bool) {
-	for _, check := range r.Checks {
-		if check.Name == name {
-			return check, true
+	for _, res := range r.Checks {
+		if res.Name == name {
+			return res, true
 		}
 	}
 
@@ -123,8 +123,8 @@ func (r Report) Check(name string) (Result, bool) {
 // reason categories or status severity. Use Reason category helpers on individual
 // results when callers need broader classification.
 func (r Report) HasReason(reason Reason) bool {
-	for _, check := range r.Checks {
-		if check.HasReason(reason) {
+	for _, res := range r.Checks {
+		if res.HasReason(reason) {
 			return true
 		}
 	}
@@ -150,9 +150,9 @@ func (r Report) ChecksCopy() []Result {
 // reason so callers can explicitly find results that did not provide a reason.
 func (r Report) ChecksByReason(reason Reason) []Result {
 	var matches []Result
-	for _, check := range r.Checks {
-		if check.HasReason(reason) {
-			matches = append(matches, check)
+	for _, res := range r.Checks {
+		if res.HasReason(reason) {
+			matches = append(matches, res)
 		}
 	}
 
@@ -168,16 +168,16 @@ func (r Report) Reasons() []Reason {
 	var reasons []Reason
 	seen := make(map[Reason]struct{})
 
-	for _, check := range r.Checks {
-		if check.Reason == ReasonNone {
+	for _, res := range r.Checks {
+		if res.Reason == ReasonNone {
 			continue
 		}
-		if _, exists := seen[check.Reason]; exists {
+		if _, exists := seen[res.Reason]; exists {
 			continue
 		}
 
-		seen[check.Reason] = struct{}{}
-		reasons = append(reasons, check.Reason)
+		seen[res.Reason] = struct{}{}
+		reasons = append(reasons, res.Reason)
 	}
 
 	return reasons
@@ -186,9 +186,9 @@ func (r Report) Reasons() []Reason {
 // FailedChecks returns check results whose statuses fail policy.
 func (r Report) FailedChecks(policy TargetPolicy) []Result {
 	var failed []Result
-	for _, check := range r.Checks {
-		if policy.Fails(check.Status) {
-			failed = append(failed, check)
+	for _, res := range r.Checks {
+		if policy.Fails(res.Status) {
+			failed = append(failed, res)
 		}
 	}
 
@@ -198,9 +198,9 @@ func (r Report) FailedChecks(policy TargetPolicy) []Result {
 // DegradedChecks returns check results with StatusDegraded.
 func (r Report) DegradedChecks() []Result {
 	var degraded []Result
-	for _, check := range r.Checks {
-		if check.Status == StatusDegraded {
-			degraded = append(degraded, check)
+	for _, res := range r.Checks {
+		if res.Status == StatusDegraded {
+			degraded = append(degraded, res)
 		}
 	}
 
@@ -210,9 +210,9 @@ func (r Report) DegradedChecks() []Result {
 // UnknownChecks returns check results with StatusUnknown.
 func (r Report) UnknownChecks() []Result {
 	var unknown []Result
-	for _, check := range r.Checks {
-		if check.Status == StatusUnknown {
-			unknown = append(unknown, check)
+	for _, res := range r.Checks {
+		if res.Status == StatusUnknown {
+			unknown = append(unknown, res)
 		}
 	}
 
