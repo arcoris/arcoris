@@ -32,13 +32,12 @@ func TestTargetString(t *testing.T) {
 		{Target(99), "invalid"},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.want, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.want, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.target.String(); got != test.want {
-				t.Fatalf("String() = %q, want %q", got, test.want)
+			if got := tc.target.String(); got != tc.want {
+				t.Fatalf("String() = %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -62,25 +61,24 @@ func TestTargetClassification(t *testing.T) {
 		{Target(99), false, false, false, false, false},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.target.String(), func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.target.String(), func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.target.IsValid(); got != test.valid {
-				t.Fatalf("IsValid() = %v, want %v", got, test.valid)
+			if got := tc.target.IsValid(); got != tc.valid {
+				t.Fatalf("IsValid() = %v, want %v", got, tc.valid)
 			}
-			if got := test.target.IsConcrete(); got != test.concrete {
-				t.Fatalf("IsConcrete() = %v, want %v", got, test.concrete)
+			if got := tc.target.IsConcrete(); got != tc.concrete {
+				t.Fatalf("IsConcrete() = %v, want %v", got, tc.concrete)
 			}
-			if got := test.target.IsStartup(); got != test.startup {
-				t.Fatalf("IsStartup() = %v, want %v", got, test.startup)
+			if got := tc.target.IsStartup(); got != tc.startup {
+				t.Fatalf("IsStartup() = %v, want %v", got, tc.startup)
 			}
-			if got := test.target.IsLive(); got != test.live {
-				t.Fatalf("IsLive() = %v, want %v", got, test.live)
+			if got := tc.target.IsLive(); got != tc.live {
+				t.Fatalf("IsLive() = %v, want %v", got, tc.live)
 			}
-			if got := test.target.IsReady(); got != test.ready {
-				t.Fatalf("IsReady() = %v, want %v", got, test.ready)
+			if got := tc.target.IsReady(); got != tc.ready {
+				t.Fatalf("IsReady() = %v, want %v", got, tc.ready)
 			}
 		})
 	}

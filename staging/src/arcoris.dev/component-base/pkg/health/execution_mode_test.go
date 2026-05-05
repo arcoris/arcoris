@@ -31,13 +31,12 @@ func TestExecutionModeString(t *testing.T) {
 		{name: "invalid", mode: ExecutionMode(99), want: "invalid"},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.mode.String(); got != test.want {
-				t.Fatalf("String() = %q, want %q", got, test.want)
+			if got := tc.mode.String(); got != tc.want {
+				t.Fatalf("String() = %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -56,13 +55,12 @@ func TestExecutionModeIsValid(t *testing.T) {
 		{name: "invalid", mode: ExecutionMode(99), want: false},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.mode.IsValid(); got != test.want {
-				t.Fatalf("IsValid() = %v, want %v", got, test.want)
+			if got := tc.mode.IsValid(); got != tc.want {
+				t.Fatalf("IsValid() = %v, want %v", got, tc.want)
 			}
 		})
 	}

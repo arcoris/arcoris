@@ -33,13 +33,12 @@ func TestStatusString(t *testing.T) {
 		{Status(99), "invalid"},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.want, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.want, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.status.String(); got != test.want {
-				t.Fatalf("String() = %q, want %q", got, test.want)
+			if got := tc.status.String(); got != tc.want {
+				t.Fatalf("String() = %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -64,25 +63,24 @@ func TestStatusClassification(t *testing.T) {
 		{Status(99), false, false, false, false, false},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.status.String(), func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.status.String(), func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.status.IsValid(); got != test.valid {
-				t.Fatalf("IsValid() = %v, want %v", got, test.valid)
+			if got := tc.status.IsValid(); got != tc.valid {
+				t.Fatalf("IsValid() = %v, want %v", got, tc.valid)
 			}
-			if got := test.status.IsAffirmative(); got != test.affirmative {
-				t.Fatalf("IsAffirmative() = %v, want %v", got, test.affirmative)
+			if got := tc.status.IsAffirmative(); got != tc.affirmative {
+				t.Fatalf("IsAffirmative() = %v, want %v", got, tc.affirmative)
 			}
-			if got := test.status.IsNegative(); got != test.negative {
-				t.Fatalf("IsNegative() = %v, want %v", got, test.negative)
+			if got := tc.status.IsNegative(); got != tc.negative {
+				t.Fatalf("IsNegative() = %v, want %v", got, tc.negative)
 			}
-			if got := test.status.IsKnown(); got != test.known {
-				t.Fatalf("IsKnown() = %v, want %v", got, test.known)
+			if got := tc.status.IsKnown(); got != tc.known {
+				t.Fatalf("IsKnown() = %v, want %v", got, tc.known)
 			}
-			if got := test.status.IsOperational(); got != test.operational {
-				t.Fatalf("IsOperational() = %v, want %v", got, test.operational)
+			if got := tc.status.IsOperational(); got != tc.operational {
+				t.Fatalf("IsOperational() = %v, want %v", got, tc.operational)
 			}
 		})
 	}

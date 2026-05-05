@@ -38,19 +38,18 @@ func TestResultConstructors(t *testing.T) {
 		{"unknown", Unknown("storage", ReasonNotObserved, "unknown"), StatusUnknown, ReasonNotObserved},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if test.result.Name != "storage" {
-				t.Fatalf("Name = %q, want storage", test.result.Name)
+			if tc.result.Name != "storage" {
+				t.Fatalf("Name = %q, want storage", tc.result.Name)
 			}
-			if test.result.Status != test.status {
-				t.Fatalf("Status = %s, want %s", test.result.Status, test.status)
+			if tc.result.Status != tc.status {
+				t.Fatalf("Status = %s, want %s", tc.result.Status, tc.status)
 			}
-			if test.result.Reason != test.reason {
-				t.Fatalf("Reason = %s, want %s", test.result.Reason, test.reason)
+			if tc.result.Reason != tc.reason {
+				t.Fatalf("Reason = %s, want %s", tc.result.Reason, tc.reason)
 			}
 		})
 	}

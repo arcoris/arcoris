@@ -20,7 +20,10 @@ import (
 	"context"
 	"sync/atomic"
 	"testing"
+	"time"
 )
+
+const executionTestTimeout = 5 * time.Second
 
 func mustRegisterExecutionCheck(
 	t *testing.T,

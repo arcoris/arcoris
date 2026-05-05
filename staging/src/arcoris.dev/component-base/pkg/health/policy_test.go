@@ -32,13 +32,12 @@ func TestDefaultPolicy(t *testing.T) {
 		{Target(99), TargetPolicy{}},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.target.String(), func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.target.String(), func(t *testing.T) {
 			t.Parallel()
 
-			if got := DefaultPolicy(test.target); got != test.want {
-				t.Fatalf("DefaultPolicy() = %+v, want %+v", got, test.want)
+			if got := DefaultPolicy(tc.target); got != tc.want {
+				t.Fatalf("DefaultPolicy() = %+v, want %+v", got, tc.want)
 			}
 		})
 	}

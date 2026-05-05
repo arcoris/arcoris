@@ -16,7 +16,67 @@
 
 package health
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
+
+func TestEvaluateChecksSequential(t *testing.T) {
+	t.Parallel()
+
+	evaluator := mustExecutionEvaluator(t, NewRegistry(), WithDefaultTimeout(0))
+	order := make([]string, 0, 2)
+	checks := []Checker{
+		MustCheck("first", func(context.Context) Result {
+			order = append(order, "first")
+			return Healthy("first")
+		}),
+		MustCheck("second", func(context.Context) Result {
+			order = append(order, "second")
+			return Healthy("second")
+		}),
+	}
+
+	results := evaluator.evaluateChecksSequential(context.Background(), checks, 0)
+
+	if got, want := executionResultNames(results), []string{"first", "second"}; !sameStrings(got, want) {
+		t.Fatalf("result names = %v, want %v", got, want)
+	}
+	if !sameStrings(order, []string{"first", "second"}) {
+		t.Fatalf("execution order = %v, want [first second]", order)
+	}
+}
+
+func TestEvaluateChecksFallsBackToSequentialForParallelLimitOne(t *testing.T) {
+	t.Parallel()
+
+	evaluator := mustExecutionEvaluator(t, NewRegistry(), WithDefaultTimeout(0))
+	blocked := false
+	checks := []Checker{
+		MustCheck("first", func(context.Context) Result {
+			blocked = true
+			return Healthy("first")
+		}),
+		MustCheck("second", func(context.Context) Result {
+			if !blocked {
+				return Unhealthy("second", ReasonMisconfigured, "parallel execution was observed")
+			}
+
+			return Healthy("second")
+		}),
+	}
+
+	results := evaluator.evaluateChecks(
+		context.Background(),
+		checks,
+		0,
+		ExecutionPolicy{Mode: ExecutionParallel, MaxConcurrency: 1},
+	)
+
+	if got := aggregateStatus(results); got != StatusHealthy {
+		t.Fatalf("aggregateStatus() = %s, want healthy", got)
+	}
+}
 
 func TestAggregateStatus(t *testing.T) {
 	t.Parallel()
@@ -33,13 +93,12 @@ func TestAggregateStatus(t *testing.T) {
 		{name: "unhealthy", results: []Result{Unknown("unknown", ReasonNotObserved, "unknown"), Unhealthy("unhealthy", ReasonFatal, "unhealthy")}, want: StatusUnhealthy},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := aggregateStatus(test.results); got != test.want {
-				t.Fatalf("aggregateStatus() = %s, want %s", got, test.want)
+			if got := aggregateStatus(tc.results); got != tc.want {
+				t.Fatalf("aggregateStatus() = %s, want %s", got, tc.want)
 			}
 		})
 	}

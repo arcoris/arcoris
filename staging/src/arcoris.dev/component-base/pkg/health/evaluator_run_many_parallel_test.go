@@ -24,12 +24,14 @@ import (
 	"time"
 )
 
-func TestEvaluatorParallelPreservesRegistryOrder(t *testing.T) {
+func TestEvaluatorParallelPreservesRegistryOrderWhenChecksFinishOutOfOrder(t *testing.T) {
 	t.Parallel()
 
 	registry := NewRegistry()
 	releaseFirst := make(chan struct{})
 	firstStarted := make(chan struct{})
+	secondDone := make(chan struct{})
+	thirdDone := make(chan struct{})
 
 	mustRegisterExecutionCheck(t, registry, TargetReady, "first", func(context.Context) Result {
 		close(firstStarted)
@@ -37,9 +39,11 @@ func TestEvaluatorParallelPreservesRegistryOrder(t *testing.T) {
 		return Healthy("first")
 	})
 	mustRegisterExecutionCheck(t, registry, TargetReady, "second", func(context.Context) Result {
+		close(secondDone)
 		return Healthy("second")
 	})
 	mustRegisterExecutionCheck(t, registry, TargetReady, "third", func(context.Context) Result {
+		close(thirdDone)
 		return Healthy("third")
 	})
 
@@ -60,9 +64,17 @@ func TestEvaluatorParallelPreservesRegistryOrder(t *testing.T) {
 	}()
 
 	<-firstStarted
+	<-secondDone
+	<-thirdDone
 	close(releaseFirst)
 
-	report := <-done
+	var report Report
+	select {
+	case report = <-done:
+	case <-time.After(executionTestTimeout):
+		t.Fatal("parallel evaluation did not finish")
+	}
+
 	names := executionResultNames(report.Checks)
 	want := []string{"first", "second", "third"}
 
@@ -118,12 +130,18 @@ func TestEvaluatorParallelRespectsMaxConcurrency(t *testing.T) {
 		<-started
 	}
 
-	if got := maxSeen.Load(); got > limit {
-		t.Fatalf("max concurrency = %d, want <= %d", got, limit)
+	if got := maxSeen.Load(); got != limit {
+		t.Fatalf("max concurrency = %d, want exactly %d", got, limit)
 	}
 
 	close(release)
-	report := <-done
+
+	var report Report
+	select {
+	case report = <-done:
+	case <-time.After(executionTestTimeout):
+		t.Fatal("parallel evaluation did not finish")
+	}
 
 	if got := maxSeen.Load(); got > limit {
 		t.Fatalf("max concurrency after completion = %d, want <= %d", got, limit)
@@ -205,13 +223,12 @@ func TestEvaluatorParallelPreservesNormalization(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			registry := NewRegistry()
-			mustRegisterExecutionCheck(t, registry, TargetReady, test.checkName, test.fn)
+			mustRegisterExecutionCheck(t, registry, TargetReady, tc.checkName, tc.fn)
 
 			evaluator := mustExecutionEvaluator(
 				t,
@@ -229,11 +246,11 @@ func TestEvaluatorParallelPreservesNormalization(t *testing.T) {
 			}
 
 			result := report.Checks[0]
-			if result.Status != test.wantStatus {
-				t.Fatalf("Status = %s, want %s", result.Status, test.wantStatus)
+			if result.Status != tc.wantStatus {
+				t.Fatalf("Status = %s, want %s", result.Status, tc.wantStatus)
 			}
-			if result.Reason != test.wantReason {
-				t.Fatalf("Reason = %s, want %s", result.Reason, test.wantReason)
+			if result.Reason != tc.wantReason {
+				t.Fatalf("Reason = %s, want %s", result.Reason, tc.wantReason)
 			}
 			if result.Observed.IsZero() {
 				t.Fatal("Observed is zero")
@@ -269,33 +286,47 @@ func TestEvaluatorParallelTimeoutAndCancel(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			release := make(chan struct{})
 			defer close(release)
 
 			registry := NewRegistry()
-			mustRegisterExecutionCheck(t, registry, TargetReady, "blocking_check", blockingAfterContextDone(release))
+			mustRegisterExecutionCheck(t, registry, TargetReady, "blocking_one", blockingAfterContextDone(release))
+			mustRegisterExecutionCheck(t, registry, TargetReady, "blocking_two", blockingAfterContextDone(release))
 
 			evaluator := mustExecutionEvaluator(
 				t,
 				registry,
-				WithTargetTimeout(TargetReady, test.timeout),
+				WithTargetTimeout(TargetReady, tc.timeout),
 				WithTargetParallelChecks(TargetReady, 2),
 			)
 
-			report, err := evaluator.Evaluate(test.ctx, TargetReady)
-			if err != nil {
-				t.Fatalf("Evaluate() = %v, want nil", err)
+			done := make(chan Report, 1)
+			go func() {
+				report, err := evaluator.Evaluate(tc.ctx, TargetReady)
+				if err != nil {
+					t.Errorf("Evaluate() = %v, want nil", err)
+				}
+				done <- report
+			}()
+
+			var report Report
+			select {
+			case report = <-done:
+			case <-time.After(executionTestTimeout):
+				t.Fatal("parallel evaluation did not finish")
 			}
-			if len(report.Checks) != 1 {
-				t.Fatalf("checks = %d, want 1", len(report.Checks))
+
+			if len(report.Checks) != 2 {
+				t.Fatalf("checks = %d, want 2", len(report.Checks))
 			}
-			if report.Checks[0].Reason != test.wantReason {
-				t.Fatalf("Reason = %s, want %s", report.Checks[0].Reason, test.wantReason)
+			for _, res := range report.Checks {
+				if res.Reason != tc.wantReason {
+					t.Fatalf("Reason for %s = %s, want %s", res.Name, res.Reason, tc.wantReason)
+				}
 			}
 		})
 	}

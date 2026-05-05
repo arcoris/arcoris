@@ -88,17 +88,17 @@ func prepareChecks(target Target, checks []Checker) ([]preparedCheck, error) {
 	return prepared, nil
 }
 
-// nilChecker reports whether check is nil, including typed nil interface values.
+// nilChecker reports whether chk is nil, including typed nil interface values.
 //
 // Typed nil values can occur when a nil pointer to a concrete checker type is
 // assigned to Checker. Register rejects them because method calls on such values
 // can panic later during evaluation.
-func nilChecker(check Checker) bool {
-	if check == nil {
+func nilChecker(chk Checker) bool {
+	if chk == nil {
 		return true
 	}
 
-	value := reflect.ValueOf(check)
+	value := reflect.ValueOf(chk)
 	switch value.Kind() {
 	case reflect.Chan,
 		reflect.Func,

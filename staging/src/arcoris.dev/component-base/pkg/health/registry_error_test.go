@@ -56,15 +56,14 @@ func TestRegistryErrorsClassifyWithErrorsIs(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if !errors.Is(test.err, test.target) {
-				t.Fatalf("errors.Is(%v, %v) = false, want true", test.err, test.target)
+			if !errors.Is(tc.err, tc.target) {
+				t.Fatalf("errors.Is(%v, %v) = false, want true", tc.err, tc.target)
 			}
-			if test.err.Error() == "" {
+			if tc.err.Error() == "" {
 				t.Fatal("Error() returned empty message")
 			}
 		})

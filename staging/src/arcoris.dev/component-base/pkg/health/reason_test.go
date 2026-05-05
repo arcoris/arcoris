@@ -35,13 +35,12 @@ func TestReasonString(t *testing.T) {
 		{name: "invalid", reason: Reason("Bad"), want: "invalid"},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.reason.String(); got != test.want {
-				t.Fatalf("String() = %q, want %q", got, test.want)
+			if got := tc.reason.String(); got != tc.want {
+				t.Fatalf("String() = %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -71,13 +70,12 @@ func TestReasonValidation(t *testing.T) {
 		{name: "too long", reason: Reason(strings.Repeat("a", maxReasonLength+1)), want: false},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.reason.IsValid(); got != test.want {
-				t.Fatalf("IsValid() = %v, want %v", got, test.want)
+			if got := tc.reason.IsValid(); got != tc.want {
+				t.Fatalf("IsValid() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -87,7 +85,6 @@ func TestReasonBuiltins(t *testing.T) {
 	t.Parallel()
 
 	for _, reason := range builtinReasonsForTest() {
-		reason := reason
 		t.Run(reason.String(), func(t *testing.T) {
 			t.Parallel()
 
@@ -119,7 +116,6 @@ func TestReasonNone(t *testing.T) {
 	}
 
 	for _, reason := range builtinReasonsForTest() {
-		reason := reason
 		t.Run(reason.String(), func(t *testing.T) {
 			t.Parallel()
 

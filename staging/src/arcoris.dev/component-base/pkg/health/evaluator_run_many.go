@@ -33,13 +33,13 @@ func (e *Evaluator) evaluateChecks(
 	ctx context.Context,
 	checks []Checker,
 	timeout time.Duration,
-	policy ExecutionPolicy,
+	executionPolicy ExecutionPolicy,
 ) []Result {
-	policy = policy.Normalize()
+	executionPolicy = executionPolicy.Normalize()
 
-	switch policy.Mode {
+	switch executionPolicy.Mode {
 	case ExecutionParallel:
-		return e.evaluateChecksParallel(ctx, checks, timeout, policy.MaxConcurrency)
+		return e.evaluateChecksParallel(ctx, checks, timeout, executionPolicy.MaxConcurrency)
 	default:
 		return e.evaluateChecksSequential(ctx, checks, timeout)
 	}
@@ -65,6 +65,11 @@ func (e *Evaluator) evaluateChecksSequential(
 // The implementation preallocates the result slice and assigns exactly one index
 // from exactly one goroutine. It never appends concurrently. This preserves
 // deterministic Report.Checks order even when checks complete out of order.
+//
+// Parallel execution is intentionally not fail-fast. Every registered check is
+// still evaluated through evaluateCheck so timeout, panic, cancellation,
+// mismatched-name, invalid-reason, timestamp, and duration normalization remains
+// centralized and consistent with sequential execution.
 func (e *Evaluator) evaluateChecksParallel(
 	ctx context.Context,
 	checks []Checker,

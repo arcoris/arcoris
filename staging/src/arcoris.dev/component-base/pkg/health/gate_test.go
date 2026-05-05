@@ -59,12 +59,12 @@ func TestGateSetters(t *testing.T) {
 		{"unhealthy", func() error { return gate.Unhealthy(ReasonFatal, "fatal") }, StatusUnhealthy},
 	}
 
-	for _, test := range setters {
-		if err := test.set(); err != nil {
-			t.Fatalf("%s setter = %v, want nil", test.name, err)
+	for _, tc := range setters {
+		if err := tc.set(); err != nil {
+			t.Fatalf("%s setter = %v, want nil", tc.name, err)
 		}
-		if got := gate.Check(context.Background()).Status; got != test.status {
-			t.Fatalf("%s status = %s, want %s", test.name, got, test.status)
+		if got := gate.Check(context.Background()).Status; got != tc.status {
+			t.Fatalf("%s status = %s, want %s", tc.name, got, tc.status)
 		}
 	}
 }

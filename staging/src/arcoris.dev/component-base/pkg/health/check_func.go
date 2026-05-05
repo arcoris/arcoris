@@ -90,6 +90,9 @@ func MustCheck(name string, fn CheckFunc) Checker {
 // needs to distinguish timeout, cancellation, degradation, startup, draining,
 // overload, dependency outage, or other domain-specific reasons.
 func NewErrorCheck(name string, fn ErrorCheckFunc) (Checker, error) {
+	if err := ValidateCheckName(name); err != nil {
+		return nil, err
+	}
 	if fn == nil {
 		return nil, ErrNilCheckFunc
 	}

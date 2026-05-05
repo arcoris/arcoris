@@ -77,6 +77,15 @@ func TestNewErrorCheckMapsErrors(t *testing.T) {
 	}
 }
 
+func TestNewErrorCheckValidatesNameBeforeFunc(t *testing.T) {
+	t.Parallel()
+
+	_, err := NewErrorCheck("bad-name", nil)
+	if !errors.Is(err, ErrInvalidCheckName) {
+		t.Fatalf("NewErrorCheck(invalid name, nil func) = %v, want ErrInvalidCheckName", err)
+	}
+}
+
 func TestNewErrorCheckMapsNilErrorToHealthy(t *testing.T) {
 	t.Parallel()
 

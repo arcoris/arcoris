@@ -39,13 +39,12 @@ func TestValidLowerSnakeIdentifier(t *testing.T) {
 		{name: "dash", value: "pool-main", max: 32, want: false},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := validLowerSnakeIdentifier(test.value, test.max); got != test.want {
-				t.Fatalf("validLowerSnakeIdentifier(%q, %d) = %v, want %v", test.value, test.max, got, test.want)
+			if got := validLowerSnakeIdentifier(tc.value, tc.max); got != tc.want {
+				t.Fatalf("validLowerSnakeIdentifier(%q, %d) = %v, want %v", tc.value, tc.max, got, tc.want)
 			}
 		})
 	}

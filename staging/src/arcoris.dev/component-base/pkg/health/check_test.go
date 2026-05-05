@@ -41,13 +41,12 @@ func TestValidCheckName(t *testing.T) {
 		{name: strings.Repeat("a", maxCheckNameLength+1), want: false},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := ValidCheckName(test.name); got != test.want {
-				t.Fatalf("ValidCheckName(%q) = %v, want %v", test.name, got, test.want)
+			if got := ValidCheckName(tc.name); got != tc.want {
+				t.Fatalf("ValidCheckName(%q) = %v, want %v", tc.name, got, tc.want)
 			}
 		})
 	}

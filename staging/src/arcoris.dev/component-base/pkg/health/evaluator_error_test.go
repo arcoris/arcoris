@@ -31,13 +31,12 @@ func TestEvaluatorErrorMessages(t *testing.T) {
 		{ErrInvalidTimeout, "health: invalid timeout"},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.want, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.want, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.err.Error(); got != test.want {
-				t.Fatalf("Error() = %q, want %q", got, test.want)
+			if got := tc.err.Error(); got != tc.want {
+				t.Fatalf("Error() = %q, want %q", got, tc.want)
 			}
 		})
 	}

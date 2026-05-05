@@ -31,6 +31,10 @@ import "arcoris.dev/component-base/pkg/clock"
 //   - Result.Observed normalization;
 //   - Result.Duration normalization.
 //
+// When parallel execution is enabled, Evaluator may call the configured clock
+// concurrently from multiple goroutines. Custom clock implementations used with
+// parallel execution MUST be safe for concurrent Now and Since calls.
+//
 // Passing nil returns ErrNilClock.
 func WithClock(source clock.PassiveClock) EvaluatorOption {
 	return func(config *evaluatorConfig) error {

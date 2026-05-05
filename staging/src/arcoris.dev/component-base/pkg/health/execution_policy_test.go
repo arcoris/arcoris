@@ -16,7 +16,10 @@
 
 package health
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestExecutionPolicyNormalize(t *testing.T) {
 	t.Parallel()
@@ -58,13 +61,12 @@ func TestExecutionPolicyNormalize(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.policy.Normalize(); got != test.want {
-				t.Fatalf("Normalize() = %+v, want %+v", got, test.want)
+			if got := tc.policy.Normalize(); got != tc.want {
+				t.Fatalf("Normalize() = %+v, want %+v", got, tc.want)
 			}
 		})
 	}
@@ -86,14 +88,53 @@ func TestExecutionPolicyValidate(t *testing.T) {
 		{name: "invalid mode", policy: ExecutionPolicy{Mode: ExecutionMode(99), MaxConcurrency: 1}, want: false},
 	}
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := test.policy.Validate()
-			if got := err == nil; got != test.want {
-				t.Fatalf("Validate() ok = %v, want %v; err=%v", got, test.want, err)
+			err := tc.policy.Validate()
+			if got := err == nil; got != tc.want {
+				t.Fatalf("Validate() ok = %v, want %v; err=%v", got, tc.want, err)
+			}
+		})
+	}
+}
+
+func TestExecutionPolicyValidateInvalidDiagnostics(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		policy    ExecutionPolicy
+		wantField string
+	}{
+		{
+			name:      "invalid mode",
+			policy:    ExecutionPolicy{Mode: ExecutionMode(99), MaxConcurrency: 1},
+			wantField: "mode",
+		},
+		{
+			name:      "invalid parallel concurrency",
+			policy:    ParallelExecutionPolicy(0),
+			wantField: "max_concurrency",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := tc.policy.Validate()
+			if !errors.Is(err, ErrInvalidExecutionPolicy) {
+				t.Fatalf("Validate() = %v, want ErrInvalidExecutionPolicy", err)
+			}
+
+			var policyErr InvalidExecutionPolicyError
+			if !errors.As(err, &policyErr) {
+				t.Fatalf("errors.As(%T, InvalidExecutionPolicyError) = false, want true", err)
+			}
+			if policyErr.Field != tc.wantField {
+				t.Fatalf("Field = %q, want %q", policyErr.Field, tc.wantField)
 			}
 		})
 	}

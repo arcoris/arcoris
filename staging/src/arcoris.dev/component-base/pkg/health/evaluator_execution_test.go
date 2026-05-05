@@ -82,3 +82,29 @@ func TestEvaluatorTargetExecutionPolicyOverrideWins(t *testing.T) {
 		t.Fatalf("executionPolicyFor(live) = %+v, want %+v", got, want)
 	}
 }
+
+func TestEvaluatorTargetExecutionPolicyAppliesOnlyToConfiguredTarget(t *testing.T) {
+	t.Parallel()
+
+	registry := NewRegistry()
+	mustRegisterExecutionCheck(t, registry, TargetReady, "ready", func(context.Context) Result {
+		return Healthy("ready")
+	})
+	mustRegisterExecutionCheck(t, registry, TargetLive, "live", func(context.Context) Result {
+		return Healthy("live")
+	})
+
+	evaluator := mustExecutionEvaluator(
+		t,
+		registry,
+		WithDefaultTimeout(0),
+		WithTargetParallelChecks(TargetReady, 4),
+	)
+
+	if got, want := evaluator.executionPolicyFor(TargetReady), ParallelExecutionPolicy(4); got != want {
+		t.Fatalf("executionPolicyFor(ready) = %+v, want %+v", got, want)
+	}
+	if got, want := evaluator.executionPolicyFor(TargetLive), DefaultExecutionPolicy(); got != want {
+		t.Fatalf("executionPolicyFor(live) = %+v, want %+v", got, want)
+	}
+}
