@@ -23,13 +23,14 @@ import (
 	"testing"
 
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 )
 
 func TestInstall(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
+	evaluator := healthtest.NewEvaluatorWithResults(t, health.TargetReady, health.Healthy("storage"))
 
 	err := Install(mux, "/internal/readyz", evaluator, health.TargetReady)
 	if err != nil {
@@ -58,7 +59,7 @@ func TestInstallAppliesOptions(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustTestEvaluator(
+	evaluator := healthtest.NewEvaluatorWithResults(
 		t,
 		health.TargetReady,
 		health.Degraded("queue", health.ReasonOverloaded, "queue overloaded"),
@@ -101,7 +102,7 @@ func TestInstallAppliesOptions(t *testing.T) {
 func TestInstallRejectsNilMux(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
+	evaluator := healthtest.NewEvaluatorWithResults(t, health.TargetReady, health.Healthy("storage"))
 
 	err := Install(nil, DefaultReadyPath, evaluator, health.TargetReady)
 	if !errors.Is(err, ErrNilMux) {
@@ -112,7 +113,7 @@ func TestInstallRejectsNilMux(t *testing.T) {
 func TestInstallRejectsTypedNilMux(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
+	evaluator := healthtest.NewEvaluatorWithResults(t, health.TargetReady, health.Healthy("storage"))
 
 	var mux *recordingMux
 	err := Install(mux, DefaultReadyPath, evaluator, health.TargetReady)
@@ -126,7 +127,7 @@ func TestInstallRejectsInvalidPath(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
+	evaluator := healthtest.NewEvaluatorWithResults(t, health.TargetReady, health.Healthy("storage"))
 
 	err := Install(mux, "readyz", evaluator, health.TargetReady)
 	if !errors.Is(err, ErrInvalidPath) {
@@ -155,7 +156,7 @@ func TestInstallRejectsInvalidTarget(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
+	evaluator := healthtest.NewEvaluatorWithResults(t, health.TargetReady, health.Healthy("storage"))
 
 	err := Install(mux, DefaultReadyPath, evaluator, health.TargetUnknown)
 	if !errors.Is(err, health.ErrInvalidTarget) {
@@ -170,7 +171,7 @@ func TestInstallRejectsInvalidOption(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustTestEvaluator(t, health.TargetReady, health.Healthy("storage"))
+	evaluator := healthtest.NewEvaluatorWithResults(t, health.TargetReady, health.Healthy("storage"))
 
 	err := Install(mux, DefaultReadyPath, evaluator, health.TargetReady, WithFormat(Format(99)))
 	if !errors.Is(err, ErrInvalidFormat) {
@@ -185,7 +186,7 @@ func TestInstallDefaults(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustDefaultsEvaluator(t)
+	evaluator := healthtest.NewDefaultTargetsEvaluator(t)
 
 	err := InstallDefaults(mux, evaluator)
 	if err != nil {
@@ -225,7 +226,7 @@ func TestInstallDefaultsDoesNotInstallCompatibilityPaths(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustDefaultsEvaluator(t)
+	evaluator := healthtest.NewDefaultTargetsEvaluator(t)
 
 	err := InstallDefaults(mux, evaluator)
 	if err != nil {
@@ -246,7 +247,7 @@ func TestInstallDefaultsAppliesOptionsToAllHandlers(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustDefaultsEvaluator(t)
+	evaluator := healthtest.NewDefaultTargetsEvaluator(t)
 
 	err := InstallDefaults(
 		mux,
@@ -285,7 +286,7 @@ func TestInstallDefaultsAppliesOptionsToAllHandlers(t *testing.T) {
 func TestInstallDefaultsRejectsNilMux(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustDefaultsEvaluator(t)
+	evaluator := healthtest.NewDefaultTargetsEvaluator(t)
 
 	err := InstallDefaults(nil, evaluator)
 	if !errors.Is(err, ErrNilMux) {
@@ -296,7 +297,7 @@ func TestInstallDefaultsRejectsNilMux(t *testing.T) {
 func TestInstallDefaultsRejectsTypedNilMux(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustDefaultsEvaluator(t)
+	evaluator := healthtest.NewDefaultTargetsEvaluator(t)
 
 	var mux *recordingMux
 	err := InstallDefaults(mux, evaluator)
@@ -324,7 +325,7 @@ func TestInstallDefaultsRejectsInvalidOptionsWithoutMutatingMux(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
-	evaluator := mustDefaultsEvaluator(t)
+	evaluator := healthtest.NewDefaultTargetsEvaluator(t)
 
 	err := InstallDefaults(mux, evaluator, WithFormat(Format(99)))
 	if !errors.Is(err, ErrInvalidFormat) {

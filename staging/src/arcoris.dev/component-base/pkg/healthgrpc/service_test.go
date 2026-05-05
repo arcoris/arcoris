@@ -22,12 +22,13 @@ import (
 	"testing"
 
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 )
 
 func TestDefaultServiceMapping(t *testing.T) {
 	t.Parallel()
 
-	server := mustNewServer(t, staticSource{status: health.StatusHealthy})
+	server := mustNewServer(t, healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)))
 	target, ok := server.Target("")
 	if !ok {
 		t.Fatal("Target(empty) ok = false, want true")
@@ -40,7 +41,7 @@ func TestDefaultServiceMapping(t *testing.T) {
 func TestTargetServiceMappings(t *testing.T) {
 	t.Parallel()
 
-	server := mustNewServer(t, staticSource{status: health.StatusHealthy}, WithTargetServices())
+	server := mustNewServer(t, healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)), WithTargetServices())
 	wantServices := []string{"", "startup", "live", "ready"}
 
 	if got := server.Services(); !sameStrings(got, wantServices) {
@@ -94,7 +95,10 @@ func TestServiceNameValidationRejectsInvalidNames(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := NewServer(staticSource{status: health.StatusHealthy}, WithService(tc.service, health.TargetReady))
+			_, err := NewServer(
+				healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)),
+				WithService(tc.service, health.TargetReady),
+			)
 			if !errors.Is(err, ErrInvalidService) {
 				t.Fatalf("NewServer() = %v, want ErrInvalidService", err)
 			}
@@ -105,7 +109,10 @@ func TestServiceNameValidationRejectsInvalidNames(t *testing.T) {
 func TestServiceMappingRejectsInvalidTarget(t *testing.T) {
 	t.Parallel()
 
-	_, err := NewServer(staticSource{status: health.StatusHealthy}, WithService("invalid", health.TargetUnknown))
+	_, err := NewServer(
+		healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)),
+		WithService("invalid", health.TargetUnknown),
+	)
 	if !errors.Is(err, health.ErrInvalidTarget) {
 		t.Fatalf("NewServer() = %v, want health.ErrInvalidTarget", err)
 	}
@@ -115,7 +122,7 @@ func TestServiceMappingRejectsDuplicateService(t *testing.T) {
 	t.Parallel()
 
 	_, err := NewServer(
-		staticSource{status: health.StatusHealthy},
+		healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)),
 		WithService("duplicate", health.TargetReady),
 		WithService("duplicate", health.TargetLive),
 	)
@@ -137,7 +144,7 @@ func TestServiceIndexPreservesOrder(t *testing.T) {
 
 	server := mustNewServer(
 		t,
-		staticSource{status: health.StatusHealthy},
+		healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)),
 		WithService("alpha", health.TargetReady),
 		WithService("beta", health.TargetLive),
 		WithService("gamma", health.TargetStartup),

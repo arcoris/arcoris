@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 )
 
 func TestApplyOptionsRejectsNilOption(t *testing.T) {
@@ -188,7 +189,7 @@ func TestOptionsAreAppliedInOrder(t *testing.T) {
 
 	server := mustNewServer(
 		t,
-		staticSource{status: health.StatusHealthy},
+		healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)),
 		WithDefaultService(health.TargetLive),
 		WithDefaultService(health.TargetReady),
 		WithService("custom", health.TargetStartup),

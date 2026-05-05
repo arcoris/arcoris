@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 	"google.golang.org/grpc/codes"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
@@ -31,7 +32,7 @@ import (
 func TestCheckRejectsNilRequest(t *testing.T) {
 	t.Parallel()
 
-	server := mustNewServer(t, staticSource{status: health.StatusHealthy})
+	server := mustNewServer(t, healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)))
 	_, err := server.Check(context.Background(), nil)
 	if grpcCode(err) != codes.InvalidArgument {
 		t.Fatalf("Check(nil) code = %s, want InvalidArgument", grpcCode(err))
@@ -51,7 +52,7 @@ func TestCheckRejectsNilServer(t *testing.T) {
 func TestCheckRejectsUnknownService(t *testing.T) {
 	t.Parallel()
 
-	server := mustNewServer(t, staticSource{status: health.StatusHealthy})
+	server := mustNewServer(t, healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)))
 	_, err := server.Check(context.Background(), &healthpb.HealthCheckRequest{Service: "missing"})
 	if grpcCode(err) != codes.NotFound {
 		t.Fatalf("Check(missing) code = %s, want NotFound", grpcCode(err))
@@ -73,27 +74,27 @@ func TestCheckMapsReports(t *testing.T) {
 	}{
 		{
 			name:   "healthy ready",
-			source: staticSource{status: health.StatusHealthy},
+			source: healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)),
 			want:   healthpb.HealthCheckResponse_SERVING,
 		},
 		{
 			name:   "unhealthy ready",
-			source: staticSource{status: health.StatusUnhealthy},
+			source: healthtest.NewStaticSource(healthtest.UnhealthyReport(health.TargetReady)),
 			want:   healthpb.HealthCheckResponse_NOT_SERVING,
 		},
 		{
 			name:   "unknown report",
-			source: staticSource{status: health.StatusUnknown},
+			source: healthtest.NewStaticSource(healthtest.UnknownReport(health.TargetReady)),
 			want:   healthpb.HealthCheckResponse_UNKNOWN,
 		},
 		{
 			name:   "degraded ready",
-			source: staticSource{status: health.StatusDegraded},
+			source: healthtest.NewStaticSource(healthtest.DegradedReport(health.TargetReady)),
 			want:   healthpb.HealthCheckResponse_NOT_SERVING,
 		},
 		{
 			name:    "degraded live",
-			source:  targetSource{statuses: map[health.Target]health.Status{health.TargetLive: health.StatusDegraded}},
+			source:  healthtest.NewTargetSource(map[health.Target]health.Report{health.TargetLive: healthtest.DegradedReport(health.TargetLive)}),
 			options: []Option{WithTargetServices()},
 			service: "live",
 			want:    healthpb.HealthCheckResponse_SERVING,
@@ -120,7 +121,7 @@ func TestCheckSourceErrorIsGeneric(t *testing.T) {
 	t.Parallel()
 
 	raw := errors.New("database password=secret is down")
-	server := mustNewServer(t, errorSource{err: raw})
+	server := mustNewServer(t, healthtest.NewErrorSource(raw))
 
 	_, err := server.Check(context.Background(), &healthpb.HealthCheckRequest{})
 	if grpcCode(err) != codes.Internal {

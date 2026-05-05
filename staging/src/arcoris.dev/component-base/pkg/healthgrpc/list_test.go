@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 	"google.golang.org/grpc/codes"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -29,7 +30,7 @@ import (
 func TestListRejectsNilRequest(t *testing.T) {
 	t.Parallel()
 
-	server := mustNewServer(t, staticSource{status: health.StatusHealthy})
+	server := mustNewServer(t, healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)))
 	_, err := server.List(context.Background(), nil)
 	if grpcCode(err) != codes.InvalidArgument {
 		t.Fatalf("List(nil) code = %s, want InvalidArgument", grpcCode(err))
@@ -49,11 +50,11 @@ func TestListRejectsNilServer(t *testing.T) {
 func TestListReturnsConfiguredServices(t *testing.T) {
 	t.Parallel()
 
-	source := targetSource{statuses: map[health.Target]health.Status{
-		health.TargetReady:   health.StatusHealthy,
-		health.TargetStartup: health.StatusUnhealthy,
-		health.TargetLive:    health.StatusDegraded,
-	}}
+	source := healthtest.NewTargetSource(map[health.Target]health.Report{
+		health.TargetReady:   healthtest.HealthyReport(health.TargetReady),
+		health.TargetStartup: healthtest.UnhealthyReport(health.TargetStartup),
+		health.TargetLive:    healthtest.DegradedReport(health.TargetLive),
+	})
 	server := mustNewServer(t, source, WithTargetServices())
 
 	response, err := server.List(context.Background(), &healthpb.HealthListRequest{})
@@ -84,7 +85,7 @@ func TestListMaxServiceLimit(t *testing.T) {
 
 	server := mustNewServer(
 		t,
-		staticSource{status: health.StatusHealthy},
+		healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)),
 		WithTargetServices(),
 		WithMaxListServices(1),
 	)
@@ -98,8 +99,9 @@ func TestListMaxServiceLimit(t *testing.T) {
 func TestListEvaluatesSharedTargetOnce(t *testing.T) {
 	t.Parallel()
 
-	source := newCountingSource()
-	source.statuses[health.TargetReady] = health.StatusHealthy
+	source := healthtest.NewCountingSource(map[health.Target]health.Report{
+		health.TargetReady: healthtest.HealthyReport(health.TargetReady),
+	})
 	server := mustNewServer(t, source, WithService("ready-alt", health.TargetReady))
 
 	response, err := server.List(context.Background(), &healthpb.HealthListRequest{})
@@ -109,7 +111,7 @@ func TestListEvaluatesSharedTargetOnce(t *testing.T) {
 	if len(response.GetStatuses()) != 2 {
 		t.Fatalf("statuses length = %d, want 2", len(response.GetStatuses()))
 	}
-	if calls := source.callsFor(health.TargetReady); calls != 1 {
+	if calls := source.Calls(health.TargetReady); calls != 1 {
 		t.Fatalf("ready calls = %d, want 1", calls)
 	}
 }
@@ -118,9 +120,10 @@ func TestListEvaluationErrorMapsAffectedServicesToUnknown(t *testing.T) {
 	t.Parallel()
 
 	raw := errors.New("raw database outage")
-	source := newCountingSource()
-	source.errors[health.TargetReady] = raw
-	source.statuses[health.TargetLive] = health.StatusHealthy
+	source := healthtest.NewCountingSource(map[health.Target]health.Report{
+		health.TargetLive: healthtest.HealthyReport(health.TargetLive),
+	})
+	source.SetError(health.TargetReady, raw)
 	server := mustNewServer(
 		t,
 		source,
@@ -142,7 +145,7 @@ func TestListEvaluationErrorMapsAffectedServicesToUnknown(t *testing.T) {
 	if statuses["live"].GetStatus() != healthpb.HealthCheckResponse_SERVING {
 		t.Fatalf("live status = %s, want SERVING", statuses["live"].GetStatus())
 	}
-	if calls := source.callsFor(health.TargetReady); calls != 1 {
+	if calls := source.Calls(health.TargetReady); calls != 1 {
 		t.Fatalf("ready calls = %d, want 1", calls)
 	}
 }

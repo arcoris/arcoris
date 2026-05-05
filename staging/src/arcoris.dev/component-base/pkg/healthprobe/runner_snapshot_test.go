@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 )
 
 func TestRunnerSnapshotNilRunner(t *testing.T) {
@@ -60,7 +61,7 @@ func TestRunnerSnapshotComputesStaleAtReadTime(t *testing.T) {
 	runner := newTestRunner(t, clk, WithStaleAfter(time.Second))
 	if ok := runner.store.update(
 		health.TargetReady,
-		healthyReport(health.TargetReady, clk.Now()),
+		healthtest.HealthyReport(health.TargetReady),
 		clk.Now(),
 	); !ok {
 		t.Fatal("store.update() = false, want true")
@@ -107,10 +108,10 @@ func TestRunnerSnapshotsComputeStaleAndOrder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewRunner() = %v, want nil", err)
 	}
-	if ok := runner.store.update(health.TargetReady, healthyReport(health.TargetReady, clk.Now()), clk.Now()); !ok {
+	if ok := runner.store.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady), clk.Now()); !ok {
 		t.Fatal("store.update(ready) = false, want true")
 	}
-	if ok := runner.store.update(health.TargetLive, healthyReport(health.TargetLive, clk.Now()), clk.Now()); !ok {
+	if ok := runner.store.update(health.TargetLive, healthtest.HealthyReport(health.TargetLive), clk.Now()); !ok {
 		t.Fatal("store.update(live) = false, want true")
 	}
 
@@ -132,7 +133,7 @@ func TestRunnerSnapshotReadsAreDetached(t *testing.T) {
 
 	clk := newTestClock()
 	runner := newTestRunner(t, clk)
-	if ok := runner.store.update(health.TargetReady, healthyReport(health.TargetReady, clk.Now()), clk.Now()); !ok {
+	if ok := runner.store.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady), clk.Now()); !ok {
 		t.Fatal("store.update() = false, want true")
 	}
 

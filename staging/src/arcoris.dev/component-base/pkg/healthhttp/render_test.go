@@ -23,12 +23,13 @@ import (
 	"testing"
 
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 )
 
 func TestRenderReportText(t *testing.T) {
 	t.Parallel()
 
-	report := testReport()
+	report := healthtest.MixedReport(health.TargetReady)
 	config := defaultConfig(health.TargetReady)
 	config.detailLevel = DetailAll
 
@@ -57,7 +58,7 @@ func TestRenderReportText(t *testing.T) {
 func TestRenderReportJSON(t *testing.T) {
 	t.Parallel()
 
-	report := testReport()
+	report := healthtest.MixedReport(health.TargetReady)
 	config := defaultConfig(health.TargetReady)
 	config.format = FormatJSON
 	config.detailLevel = DetailAll
@@ -122,7 +123,7 @@ func TestRenderHandlerErrorJSON(t *testing.T) {
 func TestRenderSuppressesHeadBody(t *testing.T) {
 	t.Parallel()
 
-	report := testReport()
+	report := healthtest.MixedReport(health.TargetReady)
 	config := defaultConfig(health.TargetReady)
 	config.format = FormatJSON
 	config.detailLevel = DetailAll

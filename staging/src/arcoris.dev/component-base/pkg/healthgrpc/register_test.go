@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 	"google.golang.org/grpc"
 )
 
@@ -42,7 +43,7 @@ func (r *fakeRegistrar) RegisterService(desc *grpc.ServiceDesc, impl any) {
 func TestRegisterRejectsNilRegistrar(t *testing.T) {
 	t.Parallel()
 
-	server := mustNewServer(t, staticSource{status: health.StatusHealthy})
+	server := mustNewServer(t, healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)))
 	err := Register(nil, server)
 	if !errors.Is(err, ErrNilRegistrar) {
 		t.Fatalf("Register(nil) = %v, want ErrNilRegistrar", err)
@@ -62,7 +63,7 @@ func TestRegisterInstallsHealthService(t *testing.T) {
 	t.Parallel()
 
 	registrar := &fakeRegistrar{}
-	server := mustNewServer(t, staticSource{status: health.StatusHealthy})
+	server := mustNewServer(t, healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)))
 
 	if err := Register(registrar, server); err != nil {
 		t.Fatalf("Register() = %v, want nil", err)

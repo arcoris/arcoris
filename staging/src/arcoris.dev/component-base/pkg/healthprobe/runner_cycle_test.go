@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 )
 
 func TestRunnerRunCycleEvaluatesTargetsInOrder(t *testing.T) {
@@ -28,16 +29,17 @@ func TestRunnerRunCycleEvaluatesTargetsInOrder(t *testing.T) {
 
 	clk := newTestClock()
 	order := make(chan health.Target, 2)
-	evaluator := newEvaluatorWithChecks(t, map[health.Target]health.CheckFunc{
-		health.TargetReady: func(context.Context) health.Result {
+	evaluator := healthtest.NewEvaluator(t, healthtest.NewRegistry(
+		t,
+		healthtest.ForTarget(health.TargetReady, healthtest.FuncChecker("ready_check", func(context.Context) health.Result {
 			order <- health.TargetReady
 			return health.Healthy("ready_check")
-		},
-		health.TargetLive: func(context.Context) health.Result {
+		})),
+		healthtest.ForTarget(health.TargetLive, healthtest.FuncChecker("live_check", func(context.Context) health.Result {
 			order <- health.TargetLive
 			return health.Healthy("live_check")
-		},
-	})
+		})),
+	))
 	runner, err := NewRunner(evaluator, WithClock(clk), WithTargets(health.TargetReady, health.TargetLive))
 	if err != nil {
 		t.Fatalf("NewRunner() = %v, want nil", err)

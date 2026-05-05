@@ -25,12 +25,13 @@ import (
 	"testing"
 
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 )
 
 func TestNewHandler(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustTestEvaluator(t,
+	evaluator := healthtest.NewEvaluatorWithResults(t,
 		health.TargetReady,
 		health.Healthy("storage"),
 	)
@@ -66,7 +67,7 @@ func TestNewHandlerRejectsNilEvaluator(t *testing.T) {
 func TestNewHandlerRejectsInvalidTarget(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustTestEvaluator(t,
+	evaluator := healthtest.NewEvaluatorWithResults(t,
 		health.TargetReady,
 		health.Healthy("storage"),
 	)
@@ -83,7 +84,7 @@ func TestNewHandlerRejectsInvalidTarget(t *testing.T) {
 func TestNewHandlerRejectsInvalidOption(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustTestEvaluator(t,
+	evaluator := healthtest.NewEvaluatorWithResults(t,
 		health.TargetReady,
 		health.Healthy("storage"),
 	)
@@ -100,7 +101,7 @@ func TestNewHandlerRejectsInvalidOption(t *testing.T) {
 func TestNewHandlerAppliesOptions(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustTestEvaluator(t,
+	evaluator := healthtest.NewEvaluatorWithResults(t,
 		health.TargetReady,
 		health.Degraded("queue", health.ReasonOverloaded, "queue overloaded"),
 	)
@@ -134,7 +135,7 @@ func TestNewHandlerAppliesOptions(t *testing.T) {
 func TestHandlerServeHTTPReadyHealthy(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustTestEvaluator(t,
+	evaluator := healthtest.NewEvaluatorWithResults(t,
 		health.TargetReady,
 		health.Healthy("storage"),
 	)
@@ -159,7 +160,7 @@ func TestHandlerServeHTTPReadyHealthy(t *testing.T) {
 func TestHandlerServeHTTPReadyDegradedFailsByDefault(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustTestEvaluator(t,
+	evaluator := healthtest.NewEvaluatorWithResults(t,
 		health.TargetReady,
 		health.Degraded("queue", health.ReasonOverloaded, "queue overloaded"),
 	)
@@ -184,7 +185,7 @@ func TestHandlerServeHTTPReadyDegradedFailsByDefault(t *testing.T) {
 func TestHandlerServeHTTPLiveDegradedPassesByDefault(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustTestEvaluator(t,
+	evaluator := healthtest.NewEvaluatorWithResults(t,
 		health.TargetLive,
 		health.Degraded("queue", health.ReasonOverloaded, "queue overloaded"),
 	)
@@ -209,7 +210,7 @@ func TestHandlerServeHTTPLiveDegradedPassesByDefault(t *testing.T) {
 func TestHandlerServeHTTPWithCustomPolicy(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustTestEvaluator(t,
+	evaluator := healthtest.NewEvaluatorWithResults(t,
 		health.TargetReady,
 		health.Degraded("queue", health.ReasonOverloaded, "queue overloaded"),
 	)
@@ -236,7 +237,7 @@ func TestHandlerServeHTTPWithCustomPolicy(t *testing.T) {
 func TestHandlerServeHTTPJSON(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustTestEvaluator(t,
+	evaluator := healthtest.NewEvaluatorWithResults(t,
 		health.TargetReady,
 		health.Unhealthy(
 			"database",
@@ -277,7 +278,7 @@ func TestHandlerServeHTTPJSON(t *testing.T) {
 func TestHandlerServeHTTPHeadSuppressesBody(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustTestEvaluator(t,
+	evaluator := healthtest.NewEvaluatorWithResults(t,
 		health.TargetReady,
 		health.Healthy("storage"),
 	)
@@ -308,7 +309,7 @@ func TestHandlerServeHTTPHeadSuppressesBody(t *testing.T) {
 func TestHandlerServeHTTPRejectsUnsupportedMethod(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustTestEvaluator(t,
+	evaluator := healthtest.NewEvaluatorWithResults(t,
 		health.TargetReady,
 		health.Healthy("storage"),
 	)
@@ -407,7 +408,11 @@ func TestHandlerServeHTTPPassesRequestContext(t *testing.T) {
 func TestHandlerServeHTTPRejectsNilRequest(t *testing.T) {
 	t.Parallel()
 
-	handler := mustNewHandler(t, mustTestEvaluator(t, health.TargetReady, health.Healthy("storage")), health.TargetReady)
+	handler := mustNewHandler(
+		t,
+		healthtest.NewEvaluatorWithResults(t, health.TargetReady, health.Healthy("storage")),
+		health.TargetReady,
+	)
 	recorder := httptest.NewRecorder()
 
 	handler.ServeHTTP(recorder, nil)

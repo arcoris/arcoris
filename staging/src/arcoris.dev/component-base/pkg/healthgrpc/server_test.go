@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 )
 
 func TestNewServerRejectsNilSource(t *testing.T) {
@@ -45,7 +46,7 @@ func TestNewServerRejectsTypedNilSource(t *testing.T) {
 func TestNewServerCreatesDefaultServiceMapping(t *testing.T) {
 	t.Parallel()
 
-	server := mustNewServer(t, staticSource{status: health.StatusHealthy})
+	server := mustNewServer(t, healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)))
 	if got := server.Services(); !sameStrings(got, []string{""}) {
 		t.Fatalf("Services() = %v, want [empty]", got)
 	}
@@ -91,7 +92,7 @@ func TestNewServerRejectsInvalidConfig(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := NewServer(staticSource{status: health.StatusHealthy}, tc.options...)
+			_, err := NewServer(healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)), tc.options...)
 			if !errors.Is(err, tc.wantErr) {
 				t.Fatalf("NewServer() = %v, want %v", err, tc.wantErr)
 			}
@@ -102,7 +103,11 @@ func TestNewServerRejectsInvalidConfig(t *testing.T) {
 func TestServerServicesReturnsDefensiveCopy(t *testing.T) {
 	t.Parallel()
 
-	server := mustNewServer(t, staticSource{status: health.StatusHealthy}, WithService("custom", health.TargetLive))
+	server := mustNewServer(
+		t,
+		healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)),
+		WithService("custom", health.TargetLive),
+	)
 	services := server.Services()
 	services[0] = "mutated"
 
@@ -114,7 +119,11 @@ func TestServerServicesReturnsDefensiveCopy(t *testing.T) {
 func TestServerHasServiceAndTarget(t *testing.T) {
 	t.Parallel()
 
-	server := mustNewServer(t, staticSource{status: health.StatusHealthy}, WithService("live", health.TargetLive))
+	server := mustNewServer(
+		t,
+		healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)),
+		WithService("live", health.TargetLive),
+	)
 
 	if !server.HasService("live") {
 		t.Fatal("HasService(live) = false, want true")

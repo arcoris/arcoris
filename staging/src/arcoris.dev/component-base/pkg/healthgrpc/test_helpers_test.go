@@ -18,7 +18,6 @@ package healthgrpc
 
 import (
 	"context"
-	"errors"
 	"io"
 	"sync"
 	"testing"
@@ -26,6 +25,7 @@ import (
 
 	"arcoris.dev/component-base/pkg/clock"
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 	"google.golang.org/grpc/codes"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
@@ -34,180 +34,6 @@ import (
 
 // testTimeout bounds asynchronous Watch test waits.
 const testTimeout = 5 * time.Second
-
-// testObserved is the stable timestamp used by synthetic health reports.
-var testObserved = time.Unix(100, 0)
-
-// sourceFunc adapts a function to Source for focused tests.
-type sourceFunc func(context.Context, health.Target) (health.Report, error)
-
-// Evaluate calls fn with the supplied context and target.
-func (fn sourceFunc) Evaluate(ctx context.Context, target health.Target) (health.Report, error) {
-	return fn(ctx, target)
-}
-
-// staticSource returns one status for every target.
-type staticSource struct {
-	// status is the report status returned by Evaluate.
-	status health.Status
-}
-
-// Evaluate returns a ready-target report with the configured status.
-func (s staticSource) Evaluate(context.Context, health.Target) (health.Report, error) {
-	return health.Report{Target: health.TargetReady, Status: s.status, Observed: testObserved}, nil
-}
-
-// targetSource returns statuses keyed by package-health target.
-type targetSource struct {
-	// statuses maps each target to the status returned for that target.
-	statuses map[health.Target]health.Status
-}
-
-// Evaluate returns the target-specific status or UNKNOWN when absent.
-func (s targetSource) Evaluate(_ context.Context, target health.Target) (health.Report, error) {
-	status, ok := s.statuses[target]
-	if !ok {
-		status = health.StatusUnknown
-	}
-
-	return testReport(target, status), nil
-}
-
-// errorSource returns a stable evaluation error.
-type errorSource struct {
-	// err is returned by Evaluate; a default error is created when nil.
-	err error
-}
-
-// Evaluate returns err without exposing a report.
-func (s errorSource) Evaluate(context.Context, health.Target) (health.Report, error) {
-	if s.err == nil {
-		s.err = errors.New("source error")
-	}
-
-	return health.Report{}, s.err
-}
-
-// scriptedResult is one scripted Source response.
-type scriptedResult struct {
-	// status is returned as a report status when err is nil.
-	status health.Status
-
-	// err is returned instead of a report when non-nil.
-	err error
-}
-
-// scriptedSource returns a sequence of results and records calls.
-type scriptedSource struct {
-	// mu protects script state and call counters across Watch goroutines.
-	mu sync.Mutex
-
-	// script is consumed one entry at a time, keeping the last entry sticky.
-	script []scriptedResult
-
-	// calls is the total number of Evaluate calls.
-	calls int
-
-	// called notifies tests that Evaluate advanced.
-	called chan int
-
-	// targets records evaluated targets in call order.
-	targets []health.Target
-}
-
-// newScriptedSource returns a Source backed by script.
-func newScriptedSource(script ...scriptedResult) *scriptedSource {
-	return &scriptedSource{
-		script: script,
-		called: make(chan int, 16),
-	}
-}
-
-// Evaluate returns the next scripted result and records the target.
-func (s *scriptedSource) Evaluate(_ context.Context, target health.Target) (health.Report, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.calls++
-	s.targets = append(s.targets, target)
-
-	result := scriptedResult{status: health.StatusUnknown}
-	if len(s.script) > 0 {
-		result = s.script[0]
-		if len(s.script) > 1 {
-			s.script = s.script[1:]
-		}
-	}
-
-	select {
-	case s.called <- s.calls:
-	default:
-	}
-
-	if result.err != nil {
-		return health.Report{}, result.err
-	}
-
-	return testReport(target, result.status), nil
-}
-
-// callCount returns the number of recorded Evaluate calls.
-func (s *scriptedSource) callCount() int {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	return s.calls
-}
-
-// countingSource records per-target evaluations for List deduplication tests.
-type countingSource struct {
-	// mu protects maps because List and Watch tests may run sources concurrently.
-	mu sync.Mutex
-
-	// statuses maps each target to the status Evaluate should return.
-	statuses map[health.Target]health.Status
-
-	// errors maps targets to evaluation errors.
-	errors map[health.Target]error
-
-	// calls records evaluation counts by target.
-	calls map[health.Target]int
-}
-
-// newCountingSource returns an initialized counting Source.
-func newCountingSource() *countingSource {
-	return &countingSource{
-		statuses: make(map[health.Target]health.Status),
-		errors:   make(map[health.Target]error),
-		calls:    make(map[health.Target]int),
-	}
-}
-
-// Evaluate records target and returns the configured status or error.
-func (s *countingSource) Evaluate(_ context.Context, target health.Target) (health.Report, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.calls[target]++
-	if err := s.errors[target]; err != nil {
-		return health.Report{}, err
-	}
-
-	status, ok := s.statuses[target]
-	if !ok {
-		status = health.StatusHealthy
-	}
-
-	return testReport(target, status), nil
-}
-
-// callsFor returns how many times target has been evaluated.
-func (s *countingSource) callsFor(target health.Target) int {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	return s.calls[target]
-}
 
 // watchStream is a minimal Health_WatchServer test double.
 type watchStream struct {
@@ -299,23 +125,14 @@ func mustNewServer(t *testing.T, source Source, options ...Option) *Server {
 	return server
 }
 
-// testReport returns a minimal valid report for target and status.
-func testReport(target health.Target, status health.Status) health.Report {
-	return health.Report{
-		Target:   target,
-		Status:   status,
-		Observed: testObserved,
-	}
-}
-
 // grpcCode returns the canonical gRPC code for err.
 func grpcCode(err error) codes.Code {
 	return status.Code(err)
 }
 
-// testClock returns a FakeClock anchored at testObserved.
+// testClock returns a FakeClock anchored at the shared health fixture time.
 func testClock() *clock.FakeClock {
-	return clock.NewFakeClock(testObserved)
+	return clock.NewFakeClock(healthtest.ObservedTime)
 }
 
 // mustReceiveStatus waits for the next Watch response and returns its status.
@@ -358,23 +175,28 @@ func waitForWatchDone(t *testing.T, done <-chan error) error {
 	}
 }
 
-// waitForCalls waits until scriptedSource has observed at least want calls.
-func waitForCalls(t *testing.T, source *scriptedSource, want int) {
+// sourceCallCounter is the healthtest source call-count interface used by Watch tests.
+type sourceCallCounter interface {
+	Calls(health.Target) int
+}
+
+// waitForSourceCalls waits until source has observed at least want calls.
+func waitForSourceCalls(t *testing.T, source sourceCallCounter, target health.Target, want int) {
 	t.Helper()
 
-	if source.callCount() >= want {
+	if source.Calls(target) >= want {
 		return
 	}
 
 	deadline := time.After(testTimeout)
 	for {
+		if source.Calls(target) >= want {
+			return
+		}
 		select {
-		case <-source.called:
-			if source.callCount() >= want {
-				return
-			}
+		case <-time.After(time.Millisecond):
 		case <-deadline:
-			t.Fatalf("timed out waiting for source calls >= %d", want)
+			t.Fatalf("timed out waiting for source calls target=%s >= %d", target, want)
 		}
 	}
 }

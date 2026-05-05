@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 )
 
 func TestStoreSnapshotLifecycle(t *testing.T) {
@@ -34,7 +35,7 @@ func TestStoreSnapshotLifecycle(t *testing.T) {
 	}
 
 	updated := time.Unix(10, 0)
-	report := healthyReport(health.TargetReady, updated)
+	report := healthtest.HealthyReport(health.TargetReady)
 
 	if ok := s.update(health.TargetReady, report, updated); !ok {
 		t.Fatal("update() = false, want true")
@@ -68,13 +69,13 @@ func TestStoreGenerationIsIndependentPerTarget(t *testing.T) {
 	s := newStore([]health.Target{health.TargetReady, health.TargetLive})
 	updated := time.Unix(10, 0)
 
-	if ok := s.update(health.TargetReady, healthyReport(health.TargetReady, updated), updated); !ok {
+	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady), updated); !ok {
 		t.Fatal("update(ready) = false, want true")
 	}
-	if ok := s.update(health.TargetReady, healthyReport(health.TargetReady, updated), updated); !ok {
+	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady), updated); !ok {
 		t.Fatal("second update(ready) = false, want true")
 	}
-	if ok := s.update(health.TargetLive, healthyReport(health.TargetLive, updated), updated); !ok {
+	if ok := s.update(health.TargetLive, healthtest.HealthyReport(health.TargetLive), updated); !ok {
 		t.Fatal("update(live) = false, want true")
 	}
 
@@ -100,10 +101,10 @@ func TestStoreSnapshotsReturnConfiguredOrder(t *testing.T) {
 	s := newStore([]health.Target{health.TargetReady, health.TargetLive})
 	updated := time.Unix(10, 0)
 
-	if ok := s.update(health.TargetLive, healthyReport(health.TargetLive, updated), updated); !ok {
+	if ok := s.update(health.TargetLive, healthtest.HealthyReport(health.TargetLive), updated); !ok {
 		t.Fatal("update(live) = false, want true")
 	}
-	if ok := s.update(health.TargetReady, healthyReport(health.TargetReady, updated), updated); !ok {
+	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady), updated); !ok {
 		t.Fatal("update(ready) = false, want true")
 	}
 
@@ -122,7 +123,7 @@ func TestStoreRejectsUnconfiguredTarget(t *testing.T) {
 	s := newStore([]health.Target{health.TargetReady})
 	updated := time.Unix(10, 0)
 
-	if ok := s.update(health.TargetLive, healthyReport(health.TargetLive, updated), updated); ok {
+	if ok := s.update(health.TargetLive, healthtest.HealthyReport(health.TargetLive), updated); ok {
 		t.Fatal("update(unconfigured) = true, want false")
 	}
 	if _, ok := s.snapshot(health.TargetLive); ok {
@@ -157,7 +158,7 @@ func TestStoreCopiesReportChecksOnWrite(t *testing.T) {
 
 	s := newStore([]health.Target{health.TargetReady})
 	updated := time.Unix(10, 0)
-	report := healthyReport(health.TargetReady, updated)
+	report := healthtest.HealthyReport(health.TargetReady)
 
 	if ok := s.update(health.TargetReady, report, updated); !ok {
 		t.Fatal("update() = false, want true")
@@ -178,7 +179,7 @@ func TestStoreCopiesReportChecksOnRead(t *testing.T) {
 
 	s := newStore([]health.Target{health.TargetReady})
 	updated := time.Unix(10, 0)
-	if ok := s.update(health.TargetReady, healthyReport(health.TargetReady, updated), updated); !ok {
+	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady), updated); !ok {
 		t.Fatal("update() = false, want true")
 	}
 
@@ -219,7 +220,7 @@ func TestStoreConcurrentReadUpdate(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for j := 0; j < 100; j++ {
-				_ = s.update(health.TargetReady, healthyReport(health.TargetReady, updated), updated)
+				_ = s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady), updated)
 			}
 		}()
 	}

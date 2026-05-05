@@ -17,12 +17,12 @@
 package healthprobe
 
 import (
-	"context"
 	"testing"
 	"time"
 
 	"arcoris.dev/component-base/pkg/clock"
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 )
 
 const testTimeout = 5 * time.Second
@@ -36,33 +36,7 @@ func newTestClock() *clock.FakeClock {
 func newTestEvaluator(t *testing.T) *health.Evaluator {
 	t.Helper()
 
-	return newEvaluatorWithChecks(t, map[health.Target]health.CheckFunc{
-		health.TargetReady: func(context.Context) health.Result {
-			return health.Healthy("ready_check")
-		},
-	})
-}
-
-func newEvaluatorWithChecks(t *testing.T, checks map[health.Target]health.CheckFunc) *health.Evaluator {
-	t.Helper()
-
-	registry := health.NewRegistry()
-	for target, fn := range checks {
-		check, err := health.NewCheck(target.String()+"_check", fn)
-		if err != nil {
-			t.Fatalf("NewCheck() = %v, want nil", err)
-		}
-		if err := registry.Register(target, check); err != nil {
-			t.Fatalf("Register() = %v, want nil", err)
-		}
-	}
-
-	evaluator, err := health.NewEvaluator(registry, health.WithDefaultTimeout(0))
-	if err != nil {
-		t.Fatalf("NewEvaluator() = %v, want nil", err)
-	}
-
-	return evaluator
+	return healthtest.NewEvaluatorForTarget(t, health.TargetReady, healthtest.HealthyChecker("ready_check"))
 }
 
 func newTestRunner(t *testing.T, clk clock.Clock, options ...Option) *Runner {
@@ -77,17 +51,6 @@ func newTestRunner(t *testing.T, clk clock.Clock, options ...Option) *Runner {
 	}
 
 	return runner
-}
-
-func healthyReport(target health.Target, observed time.Time) health.Report {
-	return health.Report{
-		Target:   target,
-		Status:   health.StatusHealthy,
-		Observed: observed,
-		Checks: []health.Result{
-			health.Healthy(target.String() + "_check").WithObserved(observed),
-		},
-	}
 }
 
 func waitForSnapshot(t *testing.T, runner *Runner, target health.Target) Snapshot {

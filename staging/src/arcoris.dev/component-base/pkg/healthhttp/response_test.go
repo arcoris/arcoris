@@ -24,12 +24,13 @@ import (
 	"time"
 
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 )
 
 func TestNewResponseWithDetailNone(t *testing.T) {
 	t.Parallel()
 
-	report := testReport()
+	report := healthtest.MixedReport(health.TargetReady)
 	policy := health.ReadyPolicy()
 
 	response := newResponse(report, report.Passed(policy), policy, DetailNone)
@@ -57,7 +58,7 @@ func TestNewResponseWithDetailNone(t *testing.T) {
 func TestNewResponseWithDetailFailed(t *testing.T) {
 	t.Parallel()
 
-	report := testReport()
+	report := healthtest.MixedReport(health.TargetReady)
 	policy := health.ReadyPolicy()
 
 	response := newResponse(report, report.Passed(policy), policy, DetailFailed)
@@ -80,7 +81,7 @@ func TestNewResponseWithDetailFailed(t *testing.T) {
 func TestNewResponseWithDetailAll(t *testing.T) {
 	t.Parallel()
 
-	report := testReport()
+	report := healthtest.MixedReport(health.TargetReady)
 	policy := health.ReadyPolicy()
 
 	response := newResponse(report, report.Passed(policy), policy, DetailAll)
@@ -107,7 +108,7 @@ func TestNewResponseWithDetailAll(t *testing.T) {
 func TestNewResponseUsesPolicyForCheckPassed(t *testing.T) {
 	t.Parallel()
 
-	report := testReport()
+	report := healthtest.MixedReport(health.TargetReady)
 
 	readyResponse := newResponse(report, false, health.ReadyPolicy(), DetailFailed)
 	if len(readyResponse.Checks) != 3 {
@@ -143,7 +144,7 @@ func TestNewCheckResponseIncludesSafeFields(t *testing.T) {
 		"queue",
 		health.ReasonOverloaded,
 		"queue is above soft capacity",
-	).WithObserved(testObservedTime()).
+	).WithObserved(healthtest.ObservedTime).
 		WithDuration(1500 * time.Millisecond).
 		WithCause(errors.New("private cause"))
 
@@ -175,7 +176,7 @@ func TestNewCheckResponseIncludesSafeFields(t *testing.T) {
 func TestResponseJSONDoesNotExposeCause(t *testing.T) {
 	t.Parallel()
 
-	report := testReport()
+	report := healthtest.MixedReport(health.TargetReady)
 	policy := health.ReadyPolicy()
 	response := newResponse(report, false, policy, DetailAll)
 
@@ -196,7 +197,7 @@ func TestResponseJSONDoesNotExposeCause(t *testing.T) {
 func TestSelectChecks(t *testing.T) {
 	t.Parallel()
 
-	report := testReport()
+	report := healthtest.MixedReport(health.TargetReady)
 	policy := health.ReadyPolicy()
 
 	tests := []struct {
@@ -225,7 +226,7 @@ func TestSelectChecks(t *testing.T) {
 func TestSelectChecksReturnsDefensiveCopyForAll(t *testing.T) {
 	t.Parallel()
 
-	report := testReport()
+	report := healthtest.MixedReport(health.TargetReady)
 	checks := selectChecks(report, health.ReadyPolicy(), DetailAll)
 
 	checks[0] = health.Unhealthy("mutated", health.ReasonFatal, "mutated")

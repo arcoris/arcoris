@@ -25,6 +25,7 @@ import (
 
 	"arcoris.dev/component-base/pkg/clock"
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 	"google.golang.org/grpc/codes"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -32,7 +33,7 @@ import (
 func TestWatchRejectsNilRequest(t *testing.T) {
 	t.Parallel()
 
-	server := mustNewServer(t, staticSource{status: health.StatusHealthy})
+	server := mustNewServer(t, healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)))
 	err := server.Watch(nil, newWatchStream())
 	if grpcCode(err) != codes.InvalidArgument {
 		t.Fatalf("Watch(nil) code = %s, want InvalidArgument", grpcCode(err))
@@ -47,7 +48,7 @@ func TestWatchRejectsNilServerOrStream(t *testing.T) {
 		t.Fatalf("Watch(nil server) code = %s, want Canceled", grpcCode(err))
 	}
 
-	server = mustNewServer(t, staticSource{status: health.StatusHealthy})
+	server = mustNewServer(t, healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)))
 	if err := server.Watch(&healthpb.HealthCheckRequest{}, nil); grpcCode(err) != codes.Canceled {
 		t.Fatalf("Watch(nil stream) code = %s, want Canceled", grpcCode(err))
 	}
@@ -56,7 +57,7 @@ func TestWatchRejectsNilServerOrStream(t *testing.T) {
 func TestWatchUnknownServiceSendsServiceUnknown(t *testing.T) {
 	t.Parallel()
 
-	server := mustNewServer(t, staticSource{status: health.StatusHealthy})
+	server := mustNewServer(t, healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)))
 	stream := newWatchStream()
 	done := make(chan error, 1)
 
@@ -80,7 +81,7 @@ func TestWatchKnownServiceSendsInitialStatus(t *testing.T) {
 	clk := testClock()
 	server := mustNewServer(
 		t,
-		newScriptedSource(scriptedResult{status: health.StatusHealthy}),
+		healthtest.NewSequenceSource(health.TargetReady, healthtest.HealthyReport(health.TargetReady)),
 		WithClock(clk),
 		WithWatchInterval(time.Second),
 	)
@@ -105,9 +106,10 @@ func TestWatchSendsChangedStatus(t *testing.T) {
 	t.Parallel()
 
 	clk := testClock()
-	source := newScriptedSource(
-		scriptedResult{status: health.StatusHealthy},
-		scriptedResult{status: health.StatusUnhealthy},
+	source := healthtest.NewSequenceSource(
+		health.TargetReady,
+		healthtest.HealthyReport(health.TargetReady),
+		healthtest.UnhealthyReport(health.TargetReady),
 	)
 	server := mustNewServer(t, source, WithClock(clk), WithWatchInterval(time.Second))
 	stream := newWatchStream()
@@ -135,10 +137,11 @@ func TestWatchDoesNotSendDuplicateStatus(t *testing.T) {
 
 	clk := testClock()
 	recording := &recordingClock{Clock: clk, created: make(chan time.Duration, 1)}
-	source := newScriptedSource(
-		scriptedResult{status: health.StatusHealthy},
-		scriptedResult{status: health.StatusHealthy},
-		scriptedResult{status: health.StatusUnhealthy},
+	source := healthtest.NewSequenceSource(
+		health.TargetReady,
+		healthtest.HealthyReport(health.TargetReady),
+		healthtest.HealthyReport(health.TargetReady),
+		healthtest.UnhealthyReport(health.TargetReady),
 	)
 	server := mustNewServer(t, source, WithClock(recording), WithWatchInterval(time.Second))
 	stream := newWatchStream()
@@ -154,7 +157,7 @@ func TestWatchDoesNotSendDuplicateStatus(t *testing.T) {
 	waitForTickerInterval(t, recording, time.Second)
 
 	clk.Step(time.Second)
-	waitForCalls(t, source, 2)
+	waitForSourceCalls(t, source, health.TargetReady, 2)
 	assertNoWatchStatus(t, stream)
 
 	clk.Step(time.Second)
@@ -174,7 +177,7 @@ func TestWatchSourceErrorMapsToUnknown(t *testing.T) {
 	raw := errors.New("raw password=secret source error")
 	server := mustNewServer(
 		t,
-		newScriptedSource(scriptedResult{err: raw}),
+		healthtest.NewErrorSource(raw),
 		WithClock(testClock()),
 		WithWatchInterval(time.Second),
 	)
@@ -204,7 +207,7 @@ func TestWatchStreamCancellationStopsWatch(t *testing.T) {
 
 	server := mustNewServer(
 		t,
-		newScriptedSource(scriptedResult{status: health.StatusHealthy}),
+		healthtest.NewSequenceSource(health.TargetReady, healthtest.HealthyReport(health.TargetReady)),
 		WithClock(testClock()),
 		WithWatchInterval(time.Second),
 	)
@@ -229,7 +232,7 @@ func TestWatchSendErrorReturnsCanceled(t *testing.T) {
 
 	stream := newWatchStream()
 	stream.sendErr = errors.New("raw stream transport failed")
-	server := mustNewServer(t, staticSource{status: health.StatusHealthy})
+	server := mustNewServer(t, healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)))
 
 	err := server.Watch(&healthpb.HealthCheckRequest{}, stream)
 	if grpcCode(err) != codes.Canceled {
@@ -249,7 +252,7 @@ func TestWatchUsesConfiguredInterval(t *testing.T) {
 	clk := &recordingClock{Clock: testClock(), created: make(chan time.Duration, 1)}
 	server := mustNewServer(
 		t,
-		newScriptedSource(scriptedResult{status: health.StatusHealthy}),
+		healthtest.NewSequenceSource(health.TargetReady, healthtest.HealthyReport(health.TargetReady)),
 		WithClock(clk),
 		WithWatchInterval(2*time.Second),
 	)
@@ -318,30 +321,6 @@ func stepClockUntilStatus(
 		case <-deadline:
 			t.Fatal("timed out waiting for watch status after clock step")
 			return healthpb.HealthCheckResponse_UNKNOWN
-		default:
-		}
-	}
-}
-
-// stepClockUntilCalls advances clk until source has seen wantCalls evaluations.
-func stepClockUntilCalls(
-	t *testing.T,
-	clk *clock.FakeClock,
-	source *scriptedSource,
-	wantCalls int,
-	step time.Duration,
-) {
-	t.Helper()
-
-	deadline := time.After(testTimeout)
-	for {
-		clk.Step(step)
-		if source.callCount() >= wantCalls {
-			return
-		}
-		select {
-		case <-deadline:
-			t.Fatalf("timed out waiting for source calls >= %d", wantCalls)
 		default:
 		}
 	}

@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"arcoris.dev/component-base/pkg/health"
+	"arcoris.dev/component-base/pkg/healthtest"
 )
 
 func TestRunnerRunPerformsInitialProbe(t *testing.T) {
@@ -198,14 +199,16 @@ func TestRunnerRunDoesNotStoreCancellationArtifacts(t *testing.T) {
 
 	started := make(chan struct{})
 	released := make(chan struct{})
-	evaluator := newEvaluatorWithChecks(t, map[health.Target]health.CheckFunc{
-		health.TargetReady: func(ctx context.Context) health.Result {
+	evaluator := healthtest.NewEvaluatorForTarget(
+		t,
+		health.TargetReady,
+		healthtest.FuncChecker("ready_check", func(ctx context.Context) health.Result {
 			close(started)
 			<-ctx.Done()
 			close(released)
 			return health.Unknown("ready_check", health.ReasonCanceled, "canceled")
-		},
-	})
+		}),
+	)
 	runner, err := NewRunner(evaluator, WithClock(newTestClock()), WithTargets(health.TargetReady))
 	if err != nil {
 		t.Fatalf("NewRunner() = %v, want nil", err)
