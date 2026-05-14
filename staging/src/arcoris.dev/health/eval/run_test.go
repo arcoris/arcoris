@@ -14,26 +14,28 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import (
 	"context"
 	"errors"
 	"testing"
 	"time"
+
+	"arcoris.dev/health"
 )
 
 func TestEvaluateCheckHandlesNilChecker(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustEvaluator(t, NewRegistry(), WithClock(newStepClock(testObserved, testObserved)))
+	evaluator := mustEvaluator(t, health.NewRegistry(), WithClock(newStepClock(testObserved, testObserved)))
 
 	result := evaluator.evaluateCheck(context.Background(), nil, 0)
-	if result.Status != StatusUnknown || result.Reason != ReasonNotObserved {
+	if result.Status != health.StatusUnknown || result.Reason != health.ReasonNotObserved {
 		t.Fatalf("nil checker result = %+v", result)
 	}
-	if !errors.Is(result.Cause, ErrNilChecker) {
-		t.Fatalf("nil checker cause = %v, want ErrNilChecker", result.Cause)
+	if !errors.Is(result.Cause, health.ErrNilChecker) {
+		t.Fatalf("nil checker cause = %v, want health.ErrNilChecker", result.Cause)
 	}
 }
 
@@ -45,15 +47,15 @@ func TestRunCheckTimeout(t *testing.T) {
 
 	checker := checkerFunc{
 		name: "blocked",
-		fn: func(context.Context) Result {
+		fn: func(context.Context) health.Result {
 			<-release
-			return Healthy("blocked")
+			return health.Healthy("blocked")
 		},
 	}
-	evaluator := mustEvaluator(t, NewRegistry())
+	evaluator := mustEvaluator(t, health.NewRegistry())
 
 	result := evaluator.runCheck(context.Background(), checker, time.Nanosecond)
-	if result.Status != StatusUnknown || result.Reason != ReasonTimeout {
+	if result.Status != health.StatusUnknown || result.Reason != health.ReasonTimeout {
 		t.Fatalf("timeout result = %+v, want unknown timeout", result)
 	}
 	if !errors.Is(result.Cause, context.DeadlineExceeded) {
@@ -66,14 +68,14 @@ func TestRunCheckReturnsResultBeforeTimeout(t *testing.T) {
 
 	checker := checkerFunc{
 		name: "fast",
-		fn: func(context.Context) Result {
-			return Healthy("fast")
+		fn: func(context.Context) health.Result {
+			return health.Healthy("fast")
 		},
 	}
-	evaluator := mustEvaluator(t, NewRegistry())
+	evaluator := mustEvaluator(t, health.NewRegistry())
 
 	result := evaluator.runCheck(context.Background(), checker, time.Second)
-	if result.Status != StatusHealthy {
+	if result.Status != health.StatusHealthy {
 		t.Fatalf("status = %s, want healthy", result.Status)
 	}
 }
@@ -90,15 +92,15 @@ func TestRunCheckParentCancellation(t *testing.T) {
 
 	checker := checkerFunc{
 		name: "blocked",
-		fn: func(context.Context) Result {
+		fn: func(context.Context) health.Result {
 			<-release
-			return Healthy("blocked")
+			return health.Healthy("blocked")
 		},
 	}
-	evaluator := mustEvaluator(t, NewRegistry())
+	evaluator := mustEvaluator(t, health.NewRegistry())
 
 	result := evaluator.runCheck(ctx, checker, time.Second)
-	if result.Status != StatusUnknown || result.Reason != ReasonCanceled {
+	if result.Status != health.StatusUnknown || result.Reason != health.ReasonCanceled {
 		t.Fatalf("cancel result = %+v, want unknown canceled", result)
 	}
 	if !errors.Is(result.Cause, cause) {
@@ -112,18 +114,18 @@ func TestRunCheckWithZeroTimeoutRunsInline(t *testing.T) {
 	called := false
 	checker := checkerFunc{
 		name: "inline",
-		fn: func(context.Context) Result {
+		fn: func(context.Context) health.Result {
 			called = true
-			return Healthy("inline")
+			return health.Healthy("inline")
 		},
 	}
-	evaluator := mustEvaluator(t, NewRegistry())
+	evaluator := mustEvaluator(t, health.NewRegistry())
 
 	result := evaluator.runCheck(context.Background(), checker, 0)
 	if !called {
 		t.Fatal("checker was not called")
 	}
-	if result.Status != StatusHealthy {
+	if result.Status != health.StatusHealthy {
 		t.Fatalf("status = %s, want healthy", result.Status)
 	}
 }
@@ -133,13 +135,13 @@ func TestCallCheckRecoversPanic(t *testing.T) {
 
 	checker := checkerFunc{
 		name: "panic_check",
-		fn: func(context.Context) Result {
+		fn: func(context.Context) health.Result {
 			panic("boom")
 		},
 	}
 
 	result := callCheck(context.Background(), checker)
-	if result.Status != StatusUnhealthy || result.Reason != ReasonPanic {
+	if result.Status != health.StatusUnhealthy || result.Reason != health.ReasonPanic {
 		t.Fatalf("panic result = %+v, want unhealthy panic", result)
 	}
 
@@ -156,7 +158,7 @@ func TestNormalizeEvaluatedResult(t *testing.T) {
 	t.Parallel()
 
 	result := normalizeEvaluatedResult(
-		Result{Status: StatusHealthy, Duration: -time.Second},
+		health.Result{Status: health.StatusHealthy, Duration: -time.Second},
 		"storage",
 		testObserved,
 		time.Second,
@@ -172,7 +174,7 @@ func TestNormalizeEvaluatedResult(t *testing.T) {
 	}
 
 	result = normalizeEvaluatedResult(
-		Result{Status: StatusHealthy, Duration: -time.Second},
+		health.Result{Status: health.StatusHealthy, Duration: -time.Second},
 		"storage",
 		testObserved,
 		-time.Second,
@@ -186,13 +188,13 @@ func TestNormalizeEvaluatedResultRejectsMismatchedResultName(t *testing.T) {
 	t.Parallel()
 
 	result := normalizeEvaluatedResult(
-		Healthy("database"),
+		health.Healthy("database"),
 		"storage",
 		testObserved,
 		time.Second,
 	)
 
-	if result.Name != "storage" || result.Status != StatusUnknown || result.Reason != ReasonMisconfigured {
+	if result.Name != "storage" || result.Status != health.StatusUnknown || result.Reason != health.ReasonMisconfigured {
 		t.Fatalf("mismatched result normalization = %+v, want unknown misconfigured storage", result)
 	}
 	if !errors.Is(result.Cause, ErrMismatchedCheckResult) {
@@ -204,13 +206,13 @@ func TestNormalizeEvaluatedResultRejectsInvalidReason(t *testing.T) {
 	t.Parallel()
 
 	result := normalizeEvaluatedResult(
-		Result{Status: StatusHealthy, Reason: Reason("bad-reason")},
+		health.Result{Status: health.StatusHealthy, Reason: health.Reason("bad-reason")},
 		"storage",
 		testObserved,
 		time.Second,
 	)
 
-	if result.Name != "storage" || result.Status != StatusUnknown || result.Reason != ReasonMisconfigured {
+	if result.Name != "storage" || result.Status != health.StatusUnknown || result.Reason != health.ReasonMisconfigured {
 		t.Fatalf("invalid reason normalization = %+v, want unknown misconfigured storage", result)
 	}
 	if !errors.Is(result.Cause, ErrInvalidCheckResult) {
@@ -225,7 +227,7 @@ func TestInterruptedResult(t *testing.T) {
 	defer timeoutCancel()
 
 	timeout := interruptedResult("storage", timeoutCtx)
-	if timeout.Reason != ReasonTimeout || !errors.Is(timeout.Cause, context.DeadlineExceeded) {
+	if timeout.Reason != health.ReasonTimeout || !errors.Is(timeout.Cause, context.DeadlineExceeded) {
 		t.Fatalf("timeout result = %+v", timeout)
 	}
 
@@ -233,12 +235,12 @@ func TestInterruptedResult(t *testing.T) {
 	cancel()
 
 	canceled := interruptedResult("storage", canceledCtx)
-	if canceled.Reason != ReasonCanceled || !errors.Is(canceled.Cause, context.Canceled) {
+	if canceled.Reason != health.ReasonCanceled || !errors.Is(canceled.Cause, context.Canceled) {
 		t.Fatalf("canceled result = %+v", canceled)
 	}
 
 	active := interruptedResult("storage", context.Background())
-	if active.Reason != ReasonCanceled || active.Cause != nil {
+	if active.Reason != health.ReasonCanceled || active.Cause != nil {
 		t.Fatalf("active context result = %+v, want canceled reason with nil cause", active)
 	}
 }

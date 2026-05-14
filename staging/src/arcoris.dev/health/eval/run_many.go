@@ -14,12 +14,14 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import (
 	"context"
 	"sync"
 	"time"
+
+	"arcoris.dev/health"
 )
 
 // evaluateChecks evaluates checks with the supplied execution policy.
@@ -28,13 +30,13 @@ import (
 // individual check to evaluateCheck so timeout handling, panic recovery,
 // cancellation normalization, mismatched-name normalization, invalid-reason
 // normalization, observed timestamps, and durations remain centralized in
-// evaluator_run.go.
+// run.go.
 func (e *Evaluator) evaluateChecks(
 	ctx context.Context,
-	checks []Checker,
+	checks []health.Checker,
 	timeout time.Duration,
 	executionPolicy ExecutionPolicy,
-) []Result {
+) []health.Result {
 	executionPolicy = executionPolicy.Normalize()
 
 	switch executionPolicy.Mode {
@@ -48,10 +50,10 @@ func (e *Evaluator) evaluateChecks(
 // evaluateChecksSequential evaluates checks one by one in registry order.
 func (e *Evaluator) evaluateChecksSequential(
 	ctx context.Context,
-	checks []Checker,
+	checks []health.Checker,
 	timeout time.Duration,
-) []Result {
-	results := make([]Result, 0, len(checks))
+) []health.Result {
+	results := make([]health.Result, 0, len(checks))
 	for _, chk := range checks {
 		results = append(results, e.evaluateCheck(ctx, chk, timeout))
 	}
@@ -64,7 +66,7 @@ func (e *Evaluator) evaluateChecksSequential(
 //
 // The implementation preallocates the result slice and assigns exactly one index
 // from exactly one goroutine. It never appends concurrently. This preserves
-// deterministic Report.Checks order even when checks complete out of order.
+// deterministic health.Report.Checks order even when checks complete out of order.
 //
 // Parallel execution is intentionally not fail-fast. Every registered check is
 // still evaluated through evaluateCheck so timeout, panic, cancellation,
@@ -72,10 +74,10 @@ func (e *Evaluator) evaluateChecksSequential(
 // centralized and consistent with sequential execution.
 func (e *Evaluator) evaluateChecksParallel(
 	ctx context.Context,
-	checks []Checker,
+	checks []health.Checker,
 	timeout time.Duration,
 	maxConcurrency int,
-) []Result {
+) []health.Result {
 	if len(checks) == 0 {
 		return nil
 	}
@@ -86,7 +88,7 @@ func (e *Evaluator) evaluateChecksParallel(
 		maxConcurrency = len(checks)
 	}
 
-	results := make([]Result, len(checks))
+	results := make([]health.Result, len(checks))
 	sem := make(chan struct{}, maxConcurrency)
 
 	var wg sync.WaitGroup
@@ -113,15 +115,15 @@ func (e *Evaluator) evaluateChecksParallel(
 
 // aggregateStatus returns the most severe status in results.
 //
-// Empty result slices are treated as StatusUnknown. Evaluate handles the normal
+// Empty result slices are treated as health.StatusUnknown. Evaluate handles the normal
 // no-check case before calling this helper, but the defensive fallback keeps the
 // aggregation boundary conservative for tests and future internal callers.
-func aggregateStatus(results []Result) Status {
+func aggregateStatus(results []health.Result) health.Status {
 	if len(results) == 0 {
-		return StatusUnknown
+		return health.StatusUnknown
 	}
 
-	status := StatusHealthy
+	status := health.StatusHealthy
 	for _, res := range results {
 		if res.Status.MoreSevereThan(status) {
 			status = res.Status

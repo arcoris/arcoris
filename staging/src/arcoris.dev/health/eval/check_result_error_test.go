@@ -14,11 +14,13 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import (
 	"errors"
 	"testing"
+
+	"arcoris.dev/health"
 )
 
 func TestCheckResultErrorsClassifyWithErrorsIs(t *testing.T) {
@@ -26,9 +28,9 @@ func TestCheckResultErrorsClassifyWithErrorsIs(t *testing.T) {
 
 	invalid := InvalidCheckResultError{
 		CheckName: "storage",
-		Result: Result{
-			Status: StatusHealthy,
-			Reason: Reason("bad-reason"),
+		Result: health.Result{
+			Status: health.StatusHealthy,
+			Reason: health.Reason("bad-reason"),
 		},
 	}
 	mismatch := MismatchedCheckResultError{

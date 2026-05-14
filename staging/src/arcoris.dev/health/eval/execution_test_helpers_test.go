@@ -14,29 +14,31 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import (
 	"context"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"arcoris.dev/health"
 )
 
 const executionTestTimeout = 5 * time.Second
 
 func mustRegisterExecutionCheck(
 	t *testing.T,
-	registry *Registry,
-	target Target,
+	registry *health.Registry,
+	target health.Target,
 	name string,
-	fn CheckFunc,
+	fn health.CheckFunc,
 ) {
 	t.Helper()
 
-	chk, err := NewCheck(name, fn)
+	chk, err := health.NewCheck(name, fn)
 	if err != nil {
-		t.Fatalf("NewCheck(%q) = %v, want nil", name, err)
+		t.Fatalf("health.NewCheck(%q) = %v, want nil", name, err)
 	}
 
 	if err := registry.Register(target, chk); err != nil {
@@ -46,7 +48,7 @@ func mustRegisterExecutionCheck(
 
 func mustExecutionEvaluator(
 	t *testing.T,
-	registry *Registry,
+	registry *health.Registry,
 	opts ...EvaluatorOption,
 ) *Evaluator {
 	t.Helper()
@@ -59,7 +61,7 @@ func mustExecutionEvaluator(
 	return evaluator
 }
 
-func executionResultNames(results []Result) []string {
+func executionResultNames(results []health.Result) []string {
 	names := make([]string, 0, len(results))
 	for _, res := range results {
 		names = append(names, res.Name)
@@ -113,10 +115,10 @@ func sameStrings(left []string, right []string) bool {
 	return true
 }
 
-func blockingAfterContextDone(release <-chan struct{}) CheckFunc {
-	return func(ctx context.Context) Result {
+func blockingAfterContextDone(release <-chan struct{}) health.CheckFunc {
+	return func(ctx context.Context) health.Result {
 		<-ctx.Done()
 		<-release
-		return Healthy("blocking_check")
+		return health.Healthy("blocking_check")
 	}
 }

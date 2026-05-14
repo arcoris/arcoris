@@ -24,7 +24,7 @@ import (
 
 // Source evaluates one health target and returns a package-health report.
 //
-// Source is the only health model boundary used by healthgrpc. *health.Evaluator
+// Source is the only health model boundary used by healthgrpc. *eval.Evaluator
 // satisfies this interface. Implementations own check execution and report
 // construction; healthgrpc owns only the gRPC adapter mapping.
 type Source interface {

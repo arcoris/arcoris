@@ -14,14 +14,20 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import (
 	"time"
 
 	"arcoris.dev/chrono/clock"
+	"arcoris.dev/health"
 )
 
+// defaultCheckTimeout is the default timeout applied to checks by Evaluator.
+//
+// The default is intentionally finite so a stuck checker does not block the caller
+// forever by default. Components with purely in-memory checks may explicitly
+// disable the timeout with WithDefaultTimeout(0).
 const defaultCheckTimeout = time.Second
 
 // evaluatorConfig contains normalized Evaluator construction settings.
@@ -52,7 +58,7 @@ type evaluatorConfig struct {
 	//
 	// The map is owned by evaluatorConfig during construction and is defensively
 	// copied into Evaluator by NewEvaluator.
-	targetTimeouts map[Target]time.Duration
+	targetTimeouts map[health.Target]time.Duration
 
 	// executionPolicy is the default check execution policy used when
 	// targetExecutionPolicies does not contain an override for the evaluated
@@ -66,7 +72,7 @@ type evaluatorConfig struct {
 	//
 	// The map is owned by evaluatorConfig during construction and is defensively
 	// copied into Evaluator by NewEvaluator.
-	targetExecutionPolicies map[Target]ExecutionPolicy
+	targetExecutionPolicies map[health.Target]ExecutionPolicy
 }
 
 // defaultEvaluatorConfig returns the conservative Evaluator configuration.
@@ -79,8 +85,8 @@ func defaultEvaluatorConfig() evaluatorConfig {
 	return evaluatorConfig{
 		clock:                   clock.RealClock{},
 		defaultTimeout:          defaultCheckTimeout,
-		targetTimeouts:          make(map[Target]time.Duration),
+		targetTimeouts:          make(map[health.Target]time.Duration),
 		executionPolicy:         DefaultExecutionPolicy(),
-		targetExecutionPolicies: make(map[Target]ExecutionPolicy),
+		targetExecutionPolicies: make(map[health.Target]ExecutionPolicy),
 	}
 }

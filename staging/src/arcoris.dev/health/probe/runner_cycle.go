@@ -26,7 +26,7 @@ import (
 // runCycle evaluates configured targets once in configured order.
 //
 // A cycle is synchronous and non-overlapping. Runner deliberately evaluates
-// targets sequentially; check-level parallelism belongs to health.Evaluator.
+// targets sequentially; check-level parallelism belongs to the evaluator source.
 func (r *Runner) runCycle(ctx context.Context) {
 	for _, target := range r.targets {
 		report, ok := r.evaluateTarget(ctx, target)

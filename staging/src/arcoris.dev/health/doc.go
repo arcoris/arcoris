@@ -14,69 +14,38 @@
   limitations under the License.
 */
 
-// Package health provides transport-neutral health check contracts and
-// synchronous evaluation mechanics for ARCORIS component internals.
+// Package health provides transport-neutral health contracts for ARCORIS
+// component internals.
 //
 // # Package scope
 //
-// The package owns local, in-process health primitives:
+// The root package owns the shared health language and in-process contracts:
 //
-//   - Checker and CheckFunc contracts;
 //   - Status, Reason, Target, Result, and Report values;
+//   - Checker and CheckFunc contracts;
 //   - Registry storage for target-scoped checks;
 //   - Gate for owner-published mutable health state;
-//   - Evaluator for synchronous target evaluation;
-//   - evaluator-owned timeout, cancellation, panic, and execution normalization.
+//   - TargetPolicy helpers for interpreting target status;
+//   - shared identifier validation for stable health names and reasons.
 //
-// It does not publish metrics, perform service discovery, run distributed health
-// consensus, drive lifecycle transitions, or make restart, admission, routing,
-// scheduling, logging, tracing, or alerting decisions.
+// It does not publish metrics, expose transports, run periodic probes, perform
+// service discovery, drive lifecycle transitions, or make restart, admission,
+// routing, scheduling, logging, tracing, or alerting decisions.
 //
 // # Subpackages
 //
-// The health module keeps transport-neutral contracts in the root package and
-// exposes optional runtime and transport behavior through subpackages:
+// Optional behavior is provided by subpackages:
 //
-//   - probe periodically evaluates configured targets and caches latest reports;
+//   - eval synchronously evaluates registered checks into reports;
+//   - probe periodically evaluates targets and caches latest snapshots;
 //   - http adapts reports and evaluators to HTTP health endpoints;
 //   - grpc adapts reports and evaluators to the standard gRPC health service;
 //   - healthtest provides test helpers for health-domain packages.
 //
-// Root package health must remain independent from those subpackages. Transport
-// adapters depend inward on health, while health does not import HTTP, gRPC,
-// probe, retry, runtime lifecycle, metrics, logging, or tracing packages.
-//
-// # Evaluator ownership
-//
-// Evaluator reads checks from Registry at evaluation time, evaluates all checks
-// registered for a concrete target, normalizes individual Results, aggregates
-// the most severe Status, and returns a Report. Evaluate is a synchronous API:
-// the caller waits until a complete Report is available or until the caller's
-// context prevents reliable evaluation.
-//
-// Evaluator is sequential by default. Component owners may configure evaluator
-// execution policy globally and may override it per target. Parallel execution is
-// bounded by an explicit maximum concurrency and preserves Report.Checks order by
-// Registry registration order. Execution policy changes how checks are evaluated
-// inside one Evaluate call; it does not create periodic probes, background loops,
-// retries, result caches, metrics, logging, tracing, transport adapters, or
-// runtime actions.
-//
-// # Timeout and context model
-//
-// Evaluator gives each check a cooperative context. With a positive timeout, it
-// uses a per-check context timeout and returns an unknown timeout Result if that
-// context finishes first. A checker that ignores context may outlive the
-// evaluator result; health only owns the caller-visible evaluation boundary, not
-// forced goroutine termination.
-//
-// # Registry, gate, policy, and execution
-//
-// Registry stores target-scoped checks in deterministic registration order. Gate
-// is a concurrency-safe Checker for owner-published health state. TargetPolicy
-// interprets a Status for one target without prescribing transport or runtime
-// action. ExecutionPolicy selects sequential or bounded parallel check execution
-// without changing Result, Report, Registry, or TargetPolicy semantics.
+// Root package health must remain independent from those subpackages. Adapters
+// and runtime helpers depend inward on health, while health does not import
+// eval, HTTP, gRPC, probe, runtime lifecycle, metrics, logging, or tracing
+// packages.
 //
 // # File ownership
 //
@@ -86,6 +55,7 @@
 //   - status.go owns Status values and status ordering;
 //   - reason.go owns Reason values and reason classification;
 //   - target.go owns Target values and target enumeration;
+//   - target_error.go owns target validation errors;
 //   - result.go owns single-check Result values;
 //   - report.go owns target-level Report values;
 //   - policy.go owns target status policy;
@@ -93,19 +63,5 @@
 //   - registry_error.go owns registry error sentinels and typed errors;
 //   - registry_validate.go owns registration batch validation;
 //   - gate.go owns mutable owner-published checker state;
-//   - shutdown.go owns shutdown and drain check adapters;
-//   - execution.go owns evaluator execution policy values;
-//   - execution_error.go owns execution policy errors;
-//   - evaluator.go owns Evaluator construction and public evaluation;
-//   - evaluator_run.go owns single-check execution and normalization;
-//   - evaluator_run_many.go owns multi-check execution strategies;
-//   - evaluator_error.go owns evaluator error sentinels;
-//   - evaluator_panic.go owns panic cause preservation;
-//   - evaluator_option*.go files own evaluator option domains.
-//
-// # Dependency policy
-//
-// Production code in the root package depends only on the Go standard library
-// and arcoris.dev/chrono/clock. HTTP and gRPC dependencies are isolated in their
-// adapter subpackages inside this module.
+//   - shutdown.go owns shutdown and drain check adapters.
 package health

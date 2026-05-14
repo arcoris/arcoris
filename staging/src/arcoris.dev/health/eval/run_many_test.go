@@ -14,26 +14,28 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import (
 	"context"
 	"testing"
+
+	"arcoris.dev/health"
 )
 
 func TestEvaluateChecksSequential(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustExecutionEvaluator(t, NewRegistry(), WithDefaultTimeout(0))
+	evaluator := mustExecutionEvaluator(t, health.NewRegistry(), WithDefaultTimeout(0))
 	order := make([]string, 0, 2)
-	checks := []Checker{
-		MustCheck("first", func(context.Context) Result {
+	checks := []health.Checker{
+		health.MustCheck("first", func(context.Context) health.Result {
 			order = append(order, "first")
-			return Healthy("first")
+			return health.Healthy("first")
 		}),
-		MustCheck("second", func(context.Context) Result {
+		health.MustCheck("second", func(context.Context) health.Result {
 			order = append(order, "second")
-			return Healthy("second")
+			return health.Healthy("second")
 		}),
 	}
 
@@ -50,19 +52,19 @@ func TestEvaluateChecksSequential(t *testing.T) {
 func TestEvaluateChecksFallsBackToSequentialForParallelLimitOne(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustExecutionEvaluator(t, NewRegistry(), WithDefaultTimeout(0))
+	evaluator := mustExecutionEvaluator(t, health.NewRegistry(), WithDefaultTimeout(0))
 	blocked := false
-	checks := []Checker{
-		MustCheck("first", func(context.Context) Result {
+	checks := []health.Checker{
+		health.MustCheck("first", func(context.Context) health.Result {
 			blocked = true
-			return Healthy("first")
+			return health.Healthy("first")
 		}),
-		MustCheck("second", func(context.Context) Result {
+		health.MustCheck("second", func(context.Context) health.Result {
 			if !blocked {
-				return Unhealthy("second", ReasonMisconfigured, "parallel execution was observed")
+				return health.Unhealthy("second", health.ReasonMisconfigured, "parallel execution was observed")
 			}
 
-			return Healthy("second")
+			return health.Healthy("second")
 		}),
 	}
 
@@ -73,7 +75,7 @@ func TestEvaluateChecksFallsBackToSequentialForParallelLimitOne(t *testing.T) {
 		ExecutionPolicy{Mode: ExecutionParallel, MaxConcurrency: 1},
 	)
 
-	if got := aggregateStatus(results); got != StatusHealthy {
+	if got := aggregateStatus(results); got != health.StatusHealthy {
 		t.Fatalf("aggregateStatus() = %s, want healthy", got)
 	}
 }
@@ -83,14 +85,14 @@ func TestAggregateStatus(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		results []Result
-		want    Status
+		results []health.Result
+		want    health.Status
 	}{
-		{name: "empty", want: StatusUnknown},
-		{name: "healthy", results: []Result{Healthy("healthy")}, want: StatusHealthy},
-		{name: "degraded", results: []Result{Healthy("healthy"), Degraded("degraded", ReasonOverloaded, "degraded")}, want: StatusDegraded},
-		{name: "unknown", results: []Result{Degraded("degraded", ReasonOverloaded, "degraded"), Unknown("unknown", ReasonNotObserved, "unknown")}, want: StatusUnknown},
-		{name: "unhealthy", results: []Result{Unknown("unknown", ReasonNotObserved, "unknown"), Unhealthy("unhealthy", ReasonFatal, "unhealthy")}, want: StatusUnhealthy},
+		{name: "empty", want: health.StatusUnknown},
+		{name: "healthy", results: []health.Result{health.Healthy("healthy")}, want: health.StatusHealthy},
+		{name: "degraded", results: []health.Result{health.Healthy("healthy"), health.Degraded("degraded", health.ReasonOverloaded, "degraded")}, want: health.StatusDegraded},
+		{name: "unknown", results: []health.Result{health.Degraded("degraded", health.ReasonOverloaded, "degraded"), health.Unknown("unknown", health.ReasonNotObserved, "unknown")}, want: health.StatusUnknown},
+		{name: "unhealthy", results: []health.Result{health.Unknown("unknown", health.ReasonNotObserved, "unknown"), health.Unhealthy("unhealthy", health.ReasonFatal, "unhealthy")}, want: health.StatusUnhealthy},
 	}
 
 	for _, tc := range tests {

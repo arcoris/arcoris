@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"arcoris.dev/health"
+	"arcoris.dev/health/eval"
 )
 
 // NewEvaluator returns an evaluator with test-safe timeout defaults.
@@ -30,16 +31,16 @@ import (
 // execution-policy behavior.
 //
 // This helper is for successful fixture construction. Tests that need to assert
-// NewEvaluator error behavior should call health.NewEvaluator directly.
-func NewEvaluator(t testing.TB, registry *health.Registry, opts ...health.EvaluatorOption) *health.Evaluator {
+// NewEvaluator error behavior should call eval.NewEvaluator directly.
+func NewEvaluator(t testing.TB, registry *health.Registry, opts ...eval.EvaluatorOption) *eval.Evaluator {
 	t.Helper()
 
-	allOptions := []health.EvaluatorOption{health.WithDefaultTimeout(0)}
+	allOptions := []eval.EvaluatorOption{eval.WithDefaultTimeout(0)}
 	allOptions = append(allOptions, opts...)
 
-	evaluator, err := health.NewEvaluator(registry, allOptions...)
+	evaluator, err := eval.NewEvaluator(registry, allOptions...)
 	if err != nil {
-		t.Fatalf("health.NewEvaluator() = %v, want nil", err)
+		t.Fatalf("eval.NewEvaluator() = %v, want nil", err)
 	}
 
 	return evaluator
@@ -53,7 +54,7 @@ func NewEvaluatorForTarget(
 	t testing.TB,
 	target health.Target,
 	checks ...health.Checker,
-) *health.Evaluator {
+) *eval.Evaluator {
 	t.Helper()
 
 	return NewEvaluator(t, NewRegistry(t, ForTarget(target, checks...)))
@@ -68,7 +69,7 @@ func NewEvaluatorWithResults(
 	t testing.TB,
 	target health.Target,
 	results ...health.Result,
-) *health.Evaluator {
+) *eval.Evaluator {
 	t.Helper()
 
 	checks := make([]health.Checker, 0, len(results))
@@ -86,7 +87,7 @@ func NewEvaluatorWithResults(
 //
 // The helper mirrors the conventional ARCORIS health target surface used
 // by transport adapter default installation tests.
-func NewDefaultTargetsEvaluator(t testing.TB) *health.Evaluator {
+func NewDefaultTargetsEvaluator(t testing.TB) *eval.Evaluator {
 	t.Helper()
 
 	return NewEvaluator(t, NewRegistry(

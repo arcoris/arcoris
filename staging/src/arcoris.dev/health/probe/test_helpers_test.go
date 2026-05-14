@@ -33,7 +33,7 @@ func newTestClock() *clock.FakeClock {
 	return clock.NewFakeClock(testNow)
 }
 
-func newTestEvaluator(t *testing.T) *health.Evaluator {
+func newTestEvaluator(t *testing.T) Evaluator {
 	t.Helper()
 
 	return healthtest.NewEvaluatorForTarget(t, health.TargetReady, healthtest.HealthyChecker("ready_check"))

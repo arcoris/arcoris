@@ -18,9 +18,9 @@
 //
 // # Package scope
 //
-// healthhttp is a transport adapter over package health. It turns
-// health.Evaluator evaluations and health.Report values into HTTP handlers,
-// endpoint paths, status-code mappings, and safe text or JSON responses.
+// healthhttp is a transport adapter over package health. It turns evaluator
+// reports into HTTP handlers, endpoint paths, status-code mappings, and safe
+// text or JSON responses.
 //
 // The package intentionally does not define health checks, own a registry,
 // execute checks on a schedule, choose evaluator timeouts, manage lifecycle

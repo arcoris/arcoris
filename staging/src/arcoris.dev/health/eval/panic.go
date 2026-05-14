@@ -14,11 +14,11 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import "fmt"
 
-// PanicError preserves checker panic details as an internal Result.Cause.
+// PanicError preserves checker panic details as an internal health.Result.Cause.
 //
 // PanicError is intended for owner-controlled diagnostics and tests. Public
 // adapters MUST NOT expose PanicError by default because panic values and stack

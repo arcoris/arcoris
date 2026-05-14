@@ -46,7 +46,7 @@ func (mux *recordingMux) handler(pattern string) (http.Handler, bool) {
 	return handler, ok
 }
 
-func mustNewHandler(t *testing.T, evaluator *health.Evaluator, target health.Target, opts ...Option) *Handler {
+func mustNewHandler(t *testing.T, evaluator Evaluator, target health.Target, opts ...Option) *Handler {
 	t.Helper()
 
 	handler, err := NewHandler(evaluator, target, opts...)

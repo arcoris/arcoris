@@ -24,7 +24,7 @@ import "arcoris.dev/health"
 // before mutating mux. Path ownership remains router-neutral: healthhttp checks
 // only broad HTTP-path safety invariants and leaves duplicate route behavior to
 // the concrete mux implementation.
-func Install(mux Mux, path string, evaluator *health.Evaluator, target health.Target, opts ...Option) error {
+func Install(mux Mux, path string, evaluator Evaluator, target health.Target, opts ...Option) error {
 	if nilMux(mux) {
 		return ErrNilMux
 	}
@@ -54,7 +54,7 @@ func Install(mux Mux, path string, evaluator *health.Evaluator, target health.Ta
 // Options apply to every installed endpoint. Callers that need different
 // per-target policy or representation settings should call Install directly for
 // each route instead of relying on InstallDefaults.
-func InstallDefaults(mux Mux, evaluator *health.Evaluator, opts ...Option) error {
+func InstallDefaults(mux Mux, evaluator Evaluator, opts ...Option) error {
 	if nilMux(mux) {
 		return ErrNilMux
 	}

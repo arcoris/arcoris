@@ -16,7 +16,7 @@
 
 package probe
 
-import "arcoris.dev/health"
+import "reflect"
 
 // NewRunner returns a Runner that periodically evaluates targets with evaluator.
 //
@@ -24,8 +24,8 @@ import "arcoris.dev/health"
 // WithTargets. NewRunner validates configuration and creates the private cache,
 // but it does not start goroutines. Callers start probing by calling Run with an
 // owner-controlled context.
-func NewRunner(evaluator *health.Evaluator, opts ...Option) (*Runner, error) {
-	if evaluator == nil {
+func NewRunner(evaluator Evaluator, opts ...Option) (*Runner, error) {
+	if nilEvaluator(evaluator) {
 		return nil, ErrNilEvaluator
 	}
 
@@ -48,4 +48,18 @@ func NewRunner(evaluator *health.Evaluator, opts ...Option) (*Runner, error) {
 		staleAfter:   cfg.staleAfter,
 		initialProbe: cfg.initialProbe,
 	}, nil
+}
+
+func nilEvaluator(evaluator Evaluator) bool {
+	if evaluator == nil {
+		return true
+	}
+
+	value := reflect.ValueOf(evaluator)
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
+	default:
+		return false
+	}
 }

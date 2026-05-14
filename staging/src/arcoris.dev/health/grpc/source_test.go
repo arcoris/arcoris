@@ -16,6 +16,6 @@
 
 package healthgrpc
 
-import "arcoris.dev/health"
+import "arcoris.dev/health/eval"
 
-var _ Source = (*health.Evaluator)(nil)
+var _ Source = (*eval.Evaluator)(nil)

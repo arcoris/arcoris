@@ -14,13 +14,14 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
+
+	"arcoris.dev/health"
 )
 
 const testTimeout = time.Second
@@ -29,25 +30,15 @@ var testObserved = time.Date(2026, 5, 2, 12, 0, 0, 0, time.UTC)
 
 type checkerFunc struct {
 	name string
-	fn   func(context.Context) Result
+	fn   func(context.Context) health.Result
 }
 
 func (checker checkerFunc) Name() string {
 	return checker.name
 }
 
-func (checker checkerFunc) Check(ctx context.Context) Result {
+func (checker checkerFunc) Check(ctx context.Context) health.Result {
 	return checker.fn(ctx)
-}
-
-type typedNilChecker struct{}
-
-func (checker *typedNilChecker) Name() string {
-	return "typed_nil"
-}
-
-func (checker *typedNilChecker) Check(context.Context) Result {
-	return Healthy("typed_nil")
 }
 
 type stepClock struct {
@@ -80,23 +71,23 @@ func (clock *stepClock) Since(ts time.Time) time.Duration {
 	return clock.current.Sub(ts)
 }
 
-func mustCheck(t *testing.T, name string, result Result) Checker {
+func mustCheck(t *testing.T, name string, result health.Result) health.Checker {
 	t.Helper()
 
-	checker, err := NewCheck(name, func(context.Context) Result {
+	checker, err := health.NewCheck(name, func(context.Context) health.Result {
 		return result
 	})
 	if err != nil {
-		t.Fatalf("NewCheck(%q) = %v, want nil", name, err)
+		t.Fatalf("health.NewCheck(%q) = %v, want nil", name, err)
 	}
 
 	return checker
 }
 
-func mustRegistry(t *testing.T, target Target, checks ...Checker) *Registry {
+func mustRegistry(t *testing.T, target health.Target, checks ...health.Checker) *health.Registry {
 	t.Helper()
 
-	registry := NewRegistry()
+	registry := health.NewRegistry()
 	if err := registry.Register(target, checks...); err != nil {
 		t.Fatalf("Register() = %v, want nil", err)
 	}
@@ -104,39 +95,13 @@ func mustRegistry(t *testing.T, target Target, checks ...Checker) *Registry {
 	return registry
 }
 
-func mustErrorIs(t *testing.T, err error, target error) {
+func mustEvaluator(t *testing.T, registry *health.Registry, opts ...EvaluatorOption) *Evaluator {
 	t.Helper()
 
-	if !errors.Is(err, target) {
-		t.Fatalf("errors.Is(%v, %v) = false, want true", err, target)
+	evaluator, err := NewEvaluator(registry, opts...)
+	if err != nil {
+		t.Fatalf("NewEvaluator() = %v, want nil", err)
 	}
-}
 
-func mustPanicWith(t *testing.T, want any, fn func()) {
-	t.Helper()
-
-	defer func() {
-		got := recover()
-		if got == nil {
-			t.Fatalf("panic = nil, want %v", want)
-		}
-		if got != want {
-			t.Fatalf("panic = %v, want %v", got, want)
-		}
-	}()
-
-	fn()
-}
-
-func mustClose(t *testing.T, ch <-chan struct{}) {
-	t.Helper()
-
-	timer := time.NewTimer(testTimeout)
-	defer timer.Stop()
-
-	select {
-	case <-ch:
-	case <-timer.C:
-		t.Fatal("channel did not close before timeout")
-	}
+	return evaluator
 }

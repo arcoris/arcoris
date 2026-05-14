@@ -25,6 +25,7 @@ import (
 	"testing"
 
 	"arcoris.dev/health"
+	"arcoris.dev/health/eval"
 	"arcoris.dev/health/healthtest"
 )
 
@@ -335,9 +336,9 @@ func TestHandlerServeHTTPNoChecksFails(t *testing.T) {
 	t.Parallel()
 
 	registry := health.NewRegistry()
-	evaluator, err := health.NewEvaluator(registry)
+	evaluator, err := eval.NewEvaluator(registry)
 	if err != nil {
-		t.Fatalf("health.NewEvaluator() = %v, want nil", err)
+		t.Fatalf("eval.NewEvaluator() = %v, want nil", err)
 	}
 
 	handler := mustNewHandler(t, evaluator, health.TargetReady)
@@ -383,9 +384,9 @@ func TestHandlerServeHTTPPassesRequestContext(t *testing.T) {
 		t.Fatalf("registry.Register() = %v, want nil", err)
 	}
 
-	evaluator, err := health.NewEvaluator(registry, health.WithDefaultTimeout(0))
+	evaluator, err := eval.NewEvaluator(registry, eval.WithDefaultTimeout(0))
 	if err != nil {
-		t.Fatalf("health.NewEvaluator() = %v, want nil", err)
+		t.Fatalf("eval.NewEvaluator() = %v, want nil", err)
 	}
 
 	handler := mustNewHandler(t, evaluator, health.TargetReady)

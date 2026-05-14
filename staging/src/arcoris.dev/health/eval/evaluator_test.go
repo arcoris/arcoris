@@ -14,13 +14,15 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import (
 	"context"
 	"errors"
 	"testing"
 	"time"
+
+	"arcoris.dev/health"
 )
 
 func TestNewEvaluatorRejectsInvalidInputs(t *testing.T) {
@@ -29,10 +31,10 @@ func TestNewEvaluatorRejectsInvalidInputs(t *testing.T) {
 	if _, err := NewEvaluator(nil); !errors.Is(err, ErrNilRegistry) {
 		t.Fatalf("NewEvaluator(nil) = %v, want ErrNilRegistry", err)
 	}
-	if _, err := NewEvaluator(NewRegistry(), nil); !errors.Is(err, ErrNilEvaluatorOption) {
+	if _, err := NewEvaluator(health.NewRegistry(), nil); !errors.Is(err, ErrNilEvaluatorOption) {
 		t.Fatalf("NewEvaluator(nil option) = %v, want ErrNilEvaluatorOption", err)
 	}
-	if _, err := NewEvaluator(NewRegistry(), WithDefaultTimeout(-time.Second)); !errors.Is(err, ErrInvalidTimeout) {
+	if _, err := NewEvaluator(health.NewRegistry(), WithDefaultTimeout(-time.Second)); !errors.Is(err, ErrInvalidTimeout) {
 		t.Fatalf("NewEvaluator(invalid option) = %v, want ErrInvalidTimeout", err)
 	}
 }
@@ -42,15 +44,15 @@ func TestEvaluatorTimeoutForUsesTargetOverride(t *testing.T) {
 
 	evaluator := mustEvaluator(
 		t,
-		NewRegistry(),
+		health.NewRegistry(),
 		WithDefaultTimeout(time.Second),
-		WithTargetTimeout(TargetReady, 2*time.Second),
+		WithTargetTimeout(health.TargetReady, 2*time.Second),
 	)
 
-	if got := evaluator.timeoutFor(TargetReady); got != 2*time.Second {
+	if got := evaluator.timeoutFor(health.TargetReady); got != 2*time.Second {
 		t.Fatalf("ready timeout = %s, want 2s", got)
 	}
-	if got := evaluator.timeoutFor(TargetLive); got != time.Second {
+	if got := evaluator.timeoutFor(health.TargetLive); got != time.Second {
 		t.Fatalf("live timeout = %s, want 1s", got)
 	}
 }
@@ -58,13 +60,13 @@ func TestEvaluatorTimeoutForUsesTargetOverride(t *testing.T) {
 func TestEvaluateRejectsInvalidTarget(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustEvaluator(t, NewRegistry(), WithClock(newStepClock(testObserved)))
+	evaluator := mustEvaluator(t, health.NewRegistry(), WithClock(newStepClock(testObserved)))
 
-	report, err := evaluator.Evaluate(context.Background(), TargetUnknown)
-	if !errors.Is(err, ErrInvalidTarget) {
-		t.Fatalf("Evaluate(invalid target) = %v, want ErrInvalidTarget", err)
+	report, err := evaluator.Evaluate(context.Background(), health.TargetUnknown)
+	if !errors.Is(err, health.ErrInvalidTarget) {
+		t.Fatalf("Evaluate(invalid target) = %v, want health.ErrInvalidTarget", err)
 	}
-	if report.Target != TargetUnknown || report.Status != StatusUnknown || report.Observed != testObserved {
+	if report.Target != health.TargetUnknown || report.Status != health.StatusUnknown || report.Observed != testObserved {
 		t.Fatalf("invalid target report = %+v", report)
 	}
 }
@@ -72,13 +74,13 @@ func TestEvaluateRejectsInvalidTarget(t *testing.T) {
 func TestEvaluateReturnsUnknownForTargetWithoutChecks(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustEvaluator(t, NewRegistry(), WithClock(newStepClock(testObserved)))
+	evaluator := mustEvaluator(t, health.NewRegistry(), WithClock(newStepClock(testObserved)))
 
-	report, err := evaluator.Evaluate(nil, TargetReady)
+	report, err := evaluator.Evaluate(nil, health.TargetReady)
 	if err != nil {
 		t.Fatalf("Evaluate(empty target) = %v, want nil", err)
 	}
-	if report.Target != TargetReady || report.Status != StatusUnknown || len(report.Checks) != 0 {
+	if report.Target != health.TargetReady || report.Status != health.StatusUnknown || len(report.Checks) != 0 {
 		t.Fatalf("empty target report = %+v", report)
 	}
 }
@@ -88,9 +90,9 @@ func TestEvaluateRunsChecksInRegistryOrderAndAggregatesSeverity(t *testing.T) {
 
 	registry := mustRegistry(
 		t,
-		TargetReady,
-		mustCheck(t, "first", Healthy("")),
-		mustCheck(t, "second", Degraded("", ReasonOverloaded, "overloaded")),
+		health.TargetReady,
+		mustCheck(t, "first", health.Healthy("")),
+		mustCheck(t, "second", health.Degraded("", health.ReasonOverloaded, "overloaded")),
 	)
 	start := testObserved
 	evaluator := mustEvaluator(
@@ -107,11 +109,11 @@ func TestEvaluateRunsChecksInRegistryOrderAndAggregatesSeverity(t *testing.T) {
 		)),
 	)
 
-	report, err := evaluator.Evaluate(context.Background(), TargetReady)
+	report, err := evaluator.Evaluate(context.Background(), health.TargetReady)
 	if err != nil {
 		t.Fatalf("Evaluate() = %v, want nil", err)
 	}
-	if report.Status != StatusDegraded {
+	if report.Status != health.StatusDegraded {
 		t.Fatalf("status = %s, want degraded", report.Status)
 	}
 	if report.Duration != 30*time.Millisecond {
@@ -128,7 +130,7 @@ func TestEvaluateRunsChecksInRegistryOrderAndAggregatesSeverity(t *testing.T) {
 func TestEvaluateClampsNegativeReportDuration(t *testing.T) {
 	t.Parallel()
 
-	registry := mustRegistry(t, TargetReady, mustCheck(t, "storage", Healthy("storage")))
+	registry := mustRegistry(t, health.TargetReady, mustCheck(t, "storage", health.Healthy("storage")))
 	evaluator := mustEvaluator(
 		t,
 		registry,
@@ -141,7 +143,7 @@ func TestEvaluateClampsNegativeReportDuration(t *testing.T) {
 		)),
 	)
 
-	report, err := evaluator.Evaluate(context.Background(), TargetReady)
+	report, err := evaluator.Evaluate(context.Background(), health.TargetReady)
 	if err != nil {
 		t.Fatalf("Evaluate() = %v, want nil", err)
 	}
@@ -153,20 +155,20 @@ func TestEvaluateClampsNegativeReportDuration(t *testing.T) {
 func TestEvaluateDoesNotRetainReport(t *testing.T) {
 	t.Parallel()
 
-	registry := mustRegistry(t, TargetReady, mustCheck(t, "storage", Healthy("storage")))
+	registry := mustRegistry(t, health.TargetReady, mustCheck(t, "storage", health.Healthy("storage")))
 	evaluator := mustEvaluator(t, registry, WithDefaultTimeout(0))
 
-	report, err := evaluator.Evaluate(context.Background(), TargetReady)
+	report, err := evaluator.Evaluate(context.Background(), health.TargetReady)
 	if err != nil {
 		t.Fatalf("Evaluate() = %v, want nil", err)
 	}
-	report.Checks[0] = Unhealthy("storage", ReasonFatal, "mutated")
+	report.Checks[0] = health.Unhealthy("storage", health.ReasonFatal, "mutated")
 
-	again, err := evaluator.Evaluate(context.Background(), TargetReady)
+	again, err := evaluator.Evaluate(context.Background(), health.TargetReady)
 	if err != nil {
 		t.Fatalf("Evaluate() second = %v, want nil", err)
 	}
-	if again.Checks[0].Status != StatusHealthy {
+	if again.Checks[0].Status != health.StatusHealthy {
 		t.Fatalf("retained mutated report status = %s, want healthy", again.Checks[0].Status)
 	}
 }

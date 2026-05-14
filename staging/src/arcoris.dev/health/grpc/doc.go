@@ -34,10 +34,11 @@
 // # Relationship to health
 //
 // Package health owns the transport-neutral health model: Target, Status,
-// TargetPolicy, Report, Registry, and Evaluator. healthgrpc depends only on a
-// Source interface satisfied by *health.Evaluator. The Source remains the owner
-// of synchronous evaluation behavior, check execution policy, panic
-// normalization, status aggregation, and report construction.
+// TargetPolicy, Report, and Registry. healthgrpc depends only on a Source
+// interface, which is satisfied by *eval.Evaluator from package health/eval.
+// The Source remains the owner of synchronous evaluation behavior, check
+// execution policy, panic normalization, status aggregation, and report
+// construction.
 //
 // # Service names
 //

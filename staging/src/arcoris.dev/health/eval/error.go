@@ -14,37 +14,66 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import (
 	"errors"
 	"fmt"
+
+	"arcoris.dev/health"
 )
 
 var (
-	// ErrInvalidCheckResult identifies a structurally invalid Result returned by
-	// a checker during evaluator-owned normalization.
+	// ErrNilRegistry identifies a nil health.Registry passed to NewEvaluator.
+	//
+	// Evaluator requires a registry owner. A nil registry would make target
+	// evaluation ambiguous, so construction rejects it instead of producing an
+	// evaluator that fails later.
+	ErrNilRegistry = errors.New("health: nil registry")
+
+	// ErrNilEvaluatorOption identifies a nil option passed to NewEvaluator.
+	//
+	// Options are executed during evaluator construction. A nil option is a
+	// wiring error and is rejected explicitly.
+	ErrNilEvaluatorOption = errors.New("health: nil evaluator option")
+
+	// ErrNilClock identifies a nil clock passed to WithClock.
+	//
+	// Evaluator uses clock.PassiveClock for observation timestamps and elapsed
+	// duration measurement. A nil clock would panic during evaluation.
+	ErrNilClock = errors.New("health: nil clock")
+
+	// ErrInvalidTimeout identifies a negative health check timeout.
+	//
+	// A zero timeout is valid and disables evaluator-enforced timeout. Negative
+	// values do not describe a meaningful evaluation budget.
+	ErrInvalidTimeout = errors.New("health: invalid timeout")
+
+	// ErrInvalidCheckResult identifies a structurally invalid health.Result
+	// returned by a checker during evaluator-owned normalization.
 	//
 	// Evaluator converts invalid checker output into an unknown misconfiguration
-	// result instead of returning an invalid Report to callers.
+	// result instead of returning an invalid health.Report to callers.
 	ErrInvalidCheckResult = errors.New("health: invalid check result")
 
-	// ErrMismatchedCheckResult identifies a Result whose non-empty name differs
-	// from the Checker name that produced it.
+	// ErrMismatchedCheckResult identifies a health.Result whose non-empty name
+	// differs from the health.Checker name that produced it.
 	//
-	// Checker identity is owned by Checker.Name and registry registration.
-	// Evaluator rejects mismatched result names so one checker cannot accidentally
-	// or intentionally publish another checker's identity in reports.
+	// health.Checker identity is owned by health.Checker.Name and registry
+	// registration. Evaluator rejects mismatched result names so one checker
+	// cannot accidentally or intentionally publish another checker's identity in
+	// reports.
 	ErrMismatchedCheckResult = errors.New("health: mismatched check result")
 )
 
-// InvalidCheckResultError describes an invalid Result returned by a checker.
+// InvalidCheckResultError describes an invalid health.Result returned by a
+// checker.
 //
 // InvalidCheckResultError is classified as ErrInvalidCheckResult. Callers should
 // use errors.Is for classification and inspect fields only for diagnostics.
 type InvalidCheckResultError struct {
 	CheckName string
-	Result    Result
+	Result    health.Result
 }
 
 // Error returns the invalid check result message.

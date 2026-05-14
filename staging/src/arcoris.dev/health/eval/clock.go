@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import "arcoris.dev/chrono/clock"
 
@@ -26,10 +26,10 @@ import "arcoris.dev/chrono/clock"
 //
 // The configured clock is used for:
 //
-//   - Report.Observed;
-//   - Report.Duration;
-//   - Result.Observed normalization;
-//   - Result.Duration normalization.
+//   - health.Report.Observed;
+//   - health.Report.Duration;
+//   - health.Result.Observed normalization;
+//   - health.Result.Duration normalization.
 //
 // When parallel execution is enabled, Evaluator may call the configured clock
 // concurrently from multiple goroutines. Custom clock implementations used with

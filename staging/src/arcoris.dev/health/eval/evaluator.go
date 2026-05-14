@@ -14,13 +14,14 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import (
 	"context"
 	"time"
 
 	"arcoris.dev/chrono/clock"
+	"arcoris.dev/health"
 )
 
 // Evaluator executes registered health checks and returns target reports.
@@ -28,32 +29,32 @@ import (
 // Evaluator is transport-neutral. It does not expose HTTP handlers, map gRPC
 // serving states, log diagnostics, emit metrics, perform retries, run periodic
 // probes, or decide restart, admission, routing, or scheduling behavior. It only
-// owns the synchronous evaluation boundary for checks registered in Registry.
+// owns the synchronous evaluation boundary for checks registered in health.Registry.
 //
 // Evaluation is deterministic with respect to registry order. The default
 // execution policy is sequential. Component owners may configure bounded
 // parallel execution globally or per target. Parallel execution preserves
-// Report.Checks order by registry registration order even when checks finish out
+// health.Report.Checks order by registry registration order even when checks finish out
 // of order.
 //
 // Evaluator applies a cooperative context to every check and, when a timeout is
 // configured, also enforces a caller-visible result boundary. A checker that
 // ignores its context may continue running after the evaluator has returned a
-// timeout result. Checker implementations SHOULD observe ctx whenever they can
+// timeout result. health.Checker implementations SHOULD observe ctx whenever they can
 // block, perform I/O, wait on another goroutine, or acquire external resources.
 //
 // Evaluator recovers checker panics and converts them into unhealthy results
-// with ReasonPanic. Panic details are preserved only in Result.Cause and MUST
+// with health.ReasonPanic. Panic details are preserved only in health.Result.Cause and MUST
 // NOT be exposed by public adapters by default.
 type Evaluator struct {
-	registry *Registry
+	registry *health.Registry
 
 	clock          clock.PassiveClock
 	defaultTimeout time.Duration
-	targetTimeouts map[Target]time.Duration
+	targetTimeouts map[health.Target]time.Duration
 
 	executionPolicy         ExecutionPolicy
-	targetExecutionPolicies map[Target]ExecutionPolicy
+	targetExecutionPolicies map[health.Target]ExecutionPolicy
 }
 
 // NewEvaluator returns an evaluator for registry.
@@ -68,7 +69,7 @@ type Evaluator struct {
 // WithTargetTimeout to override the timeout for a specific target,
 // WithExecutionPolicy or WithParallelChecks to change default execution, and
 // target-specific execution options to override execution for a specific target.
-func NewEvaluator(registry *Registry, opts ...EvaluatorOption) (*Evaluator, error) {
+func NewEvaluator(registry *health.Registry, opts ...EvaluatorOption) (*Evaluator, error) {
 	if registry == nil {
 		return nil, ErrNilRegistry
 	}
@@ -78,12 +79,12 @@ func NewEvaluator(registry *Registry, opts ...EvaluatorOption) (*Evaluator, erro
 		return nil, err
 	}
 
-	targetTimeouts := make(map[Target]time.Duration, len(cfg.targetTimeouts))
+	targetTimeouts := make(map[health.Target]time.Duration, len(cfg.targetTimeouts))
 	for target, timeout := range cfg.targetTimeouts {
 		targetTimeouts[target] = timeout
 	}
 
-	targetExecutionPolicies := make(map[Target]ExecutionPolicy, len(cfg.targetExecutionPolicies))
+	targetExecutionPolicies := make(map[health.Target]ExecutionPolicy, len(cfg.targetExecutionPolicies))
 	for target, policy := range cfg.targetExecutionPolicies {
 		targetExecutionPolicies[target] = policy
 	}
@@ -101,29 +102,29 @@ func NewEvaluator(registry *Registry, opts ...EvaluatorOption) (*Evaluator, erro
 // Evaluate runs all checks registered for target and returns an aggregated
 // report.
 //
-// target MUST be concrete. Invalid or non-concrete targets return a StatusUnknown
-// report and an error classified as ErrInvalidTarget.
+// target MUST be concrete. Invalid or non-concrete targets return a health.StatusUnknown
+// report and an error classified as health.ErrInvalidTarget.
 //
 // A nil ctx is treated as context.Background. This mirrors defensive boundaries
 // in other adjacent ARCORIS packages and avoids panics in diagnostics and tests.
 //
-// If target has no registered checks, Evaluate returns a StatusUnknown report.
+// If target has no registered checks, Evaluate returns a health.StatusUnknown report.
 // Absence of checks is not treated as healthy because health requires an
 // affirmative observation.
 //
 // Evaluate is synchronous regardless of execution policy. Parallel execution
 // affects only how checks are scheduled inside this call; the caller still
-// receives one complete Report after all scheduled checks have produced
+// receives one complete health.Report after all scheduled checks have produced
 // caller-visible Results.
-func (e *Evaluator) Evaluate(ctx context.Context, target Target) (Report, error) {
+func (e *Evaluator) Evaluate(ctx context.Context, target health.Target) (health.Report, error) {
 	started := e.clock.Now()
 
 	if !target.IsConcrete() {
-		return Report{
+		return health.Report{
 			Target:   target,
-			Status:   StatusUnknown,
+			Status:   health.StatusUnknown,
 			Observed: started,
-		}, InvalidTargetError{Target: target}
+		}, health.InvalidTargetError{Target: target}
 	}
 
 	if ctx == nil {
@@ -132,9 +133,9 @@ func (e *Evaluator) Evaluate(ctx context.Context, target Target) (Report, error)
 
 	checks := e.registry.Checks(target)
 	if len(checks) == 0 {
-		return Report{
+		return health.Report{
 			Target:   target,
-			Status:   StatusUnknown,
+			Status:   health.StatusUnknown,
 			Observed: started,
 		}, nil
 	}
@@ -146,7 +147,7 @@ func (e *Evaluator) Evaluate(ctx context.Context, target Target) (Report, error)
 
 	finished := e.clock.Now()
 
-	return Report{
+	return health.Report{
 		Target:   target,
 		Status:   status,
 		Observed: finished,
@@ -156,7 +157,7 @@ func (e *Evaluator) Evaluate(ctx context.Context, target Target) (Report, error)
 }
 
 // timeoutFor returns the effective check timeout for target.
-func (e *Evaluator) timeoutFor(target Target) time.Duration {
+func (e *Evaluator) timeoutFor(target health.Target) time.Duration {
 	if timeout, ok := e.targetTimeouts[target]; ok {
 		return timeout
 	}
@@ -166,9 +167,9 @@ func (e *Evaluator) timeoutFor(target Target) time.Duration {
 
 // executionPolicyFor returns the effective check execution policy for target.
 //
-// Target-specific execution policy overrides the evaluator default. The returned
+// health.Target-specific execution policy overrides the evaluator default. The returned
 // policy is normalized at construction time.
-func (e *Evaluator) executionPolicyFor(target Target) ExecutionPolicy {
+func (e *Evaluator) executionPolicyFor(target health.Target) ExecutionPolicy {
 	if policy, ok := e.targetExecutionPolicies[target]; ok {
 		return policy
 	}

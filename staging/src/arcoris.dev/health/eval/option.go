@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 // EvaluatorOption configures an Evaluator at construction time.
 //
@@ -37,8 +37,8 @@ type EvaluatorOption func(*evaluatorConfig) error
 
 // applyEvaluatorOptions applies options to normalized configuration in order.
 //
-// Later options win for single-value domains. Target timeout options replace the
-// previous timeout for the same target. Target execution options replace the
+// Later options win for single-value domains. health.Target timeout options replace the
+// previous timeout for the same target. health.Target execution options replace the
 // previous execution policy for the same target. Nil options are rejected with
 // ErrNilEvaluatorOption so invalid conditional option composition is visible at
 // the construction boundary.

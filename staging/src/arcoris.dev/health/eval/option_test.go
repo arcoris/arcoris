@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import (
 	"errors"
@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"arcoris.dev/chrono/clock"
+	"arcoris.dev/health"
 )
 
 func TestApplyEvaluatorOptions(t *testing.T) {
@@ -33,7 +34,7 @@ func TestApplyEvaluatorOptions(t *testing.T) {
 	err := applyEvaluatorOptions(
 		&cfg,
 		WithDefaultTimeout(2*time.Second),
-		WithTargetTimeout(TargetReady, 3*time.Second),
+		WithTargetTimeout(health.TargetReady, 3*time.Second),
 		WithClock(fakeClock),
 	)
 	if err != nil {
@@ -42,8 +43,8 @@ func TestApplyEvaluatorOptions(t *testing.T) {
 	if cfg.defaultTimeout != 2*time.Second {
 		t.Fatalf("default timeout = %s, want 2s", cfg.defaultTimeout)
 	}
-	if cfg.targetTimeouts[TargetReady] != 3*time.Second {
-		t.Fatalf("ready timeout = %s, want 3s", cfg.targetTimeouts[TargetReady])
+	if cfg.targetTimeouts[health.TargetReady] != 3*time.Second {
+		t.Fatalf("ready timeout = %s, want 3s", cfg.targetTimeouts[health.TargetReady])
 	}
 	if cfg.clock != fakeClock {
 		t.Fatal("clock was not configured")
@@ -64,10 +65,10 @@ func TestEvaluatorOptionsRejectInvalidInputs(t *testing.T) {
 	if err := WithDefaultTimeout(-time.Second)(&cfg); !errors.Is(err, ErrInvalidTimeout) {
 		t.Fatalf("WithDefaultTimeout(-1s) = %v, want ErrInvalidTimeout", err)
 	}
-	if err := WithTargetTimeout(TargetUnknown, time.Second)(&cfg); !errors.Is(err, ErrInvalidTarget) {
-		t.Fatalf("WithTargetTimeout(invalid target) = %v, want ErrInvalidTarget", err)
+	if err := WithTargetTimeout(health.TargetUnknown, time.Second)(&cfg); !errors.Is(err, health.ErrInvalidTarget) {
+		t.Fatalf("WithTargetTimeout(invalid target) = %v, want health.ErrInvalidTarget", err)
 	}
-	if err := WithTargetTimeout(TargetReady, -time.Second)(&cfg); !errors.Is(err, ErrInvalidTimeout) {
+	if err := WithTargetTimeout(health.TargetReady, -time.Second)(&cfg); !errors.Is(err, ErrInvalidTimeout) {
 		t.Fatalf("WithTargetTimeout(-1s) = %v, want ErrInvalidTimeout", err)
 	}
 }

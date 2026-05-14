@@ -17,23 +17,30 @@
 package healthhttp
 
 import (
+	"context"
 	"net/http"
+	"reflect"
 
 	"arcoris.dev/health"
 )
+
+// Evaluator is the health evaluation boundary used by Handler.
+type Evaluator interface {
+	Evaluate(ctx context.Context, target health.Target) (health.Report, error)
+}
 
 // Handler adapts one concrete health target to an HTTP endpoint.
 //
 // Handler is intentionally thin. It does not own health registry contents,
 // check execution policy, retries, logging, metrics, tracing, authentication,
 // authorization, routing, or restart decisions. Its responsibility is limited
-// to invoking a health.Evaluator for one target and rendering the resulting
+// to invoking an Evaluator source for one target and rendering the resulting
 // report through the package's safe HTTP surface.
 //
 // Handler stores only adapter configuration. It never exposes Result.Cause,
 // panic stacks, raw errors, or context causes to callers.
 type Handler struct {
-	evaluator *health.Evaluator
+	evaluator Evaluator
 	target    health.Target
 	config    config
 }
@@ -43,8 +50,8 @@ type Handler struct {
 // evaluator MUST be non-nil. target MUST be concrete. Options configure only
 // HTTP-adapter policy such as response format, safe detail level, and status
 // code mapping.
-func NewHandler(evaluator *health.Evaluator, target health.Target, opts ...Option) (*Handler, error) {
-	if evaluator == nil {
+func NewHandler(evaluator Evaluator, target health.Target, opts ...Option) (*Handler, error) {
+	if nilEvaluator(evaluator) {
 		return nil, ErrNilEvaluator
 	}
 	if !target.IsConcrete() {
@@ -68,7 +75,7 @@ func NewHandler(evaluator *health.Evaluator, target health.Target, opts ...Optio
 // A nil handler, nil evaluator, or nil request is treated as an adapter-boundary
 // failure and returns a generic handler error response instead of panicking.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if h == nil || h.evaluator == nil || r == nil {
+	if h == nil || nilEvaluator(h.evaluator) || r == nil {
 		renderHandlerError(w, r, defaultConfig(health.TargetUnknown))
 		return
 	}
@@ -86,6 +93,20 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	passed := report.Passed(h.config.policy)
 	renderReport(w, r, h.config, report, passed)
+}
+
+func nilEvaluator(evaluator Evaluator) bool {
+	if evaluator == nil {
+		return true
+	}
+
+	value := reflect.ValueOf(evaluator)
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
+	default:
+		return false
+	}
 }
 
 // Target returns the concrete health target served by h.

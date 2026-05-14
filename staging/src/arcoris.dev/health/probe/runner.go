@@ -17,12 +17,18 @@
 package probe
 
 import (
+	"context"
 	"sync/atomic"
 	"time"
 
 	"arcoris.dev/chrono/clock"
 	"arcoris.dev/health"
 )
+
+// Evaluator is the health evaluation boundary used by Runner.
+type Evaluator interface {
+	Evaluate(ctx context.Context, target health.Target) (health.Report, error)
+}
 
 // Runner periodically evaluates configured health targets and stores latest
 // snapshots.
@@ -37,7 +43,7 @@ import (
 // A Runner supports at most one active Run call at a time. Snapshot and Snapshots
 // may be called concurrently with Run.
 type Runner struct {
-	evaluator *health.Evaluator
+	evaluator Evaluator
 	store     *store
 
 	clock        clock.Clock

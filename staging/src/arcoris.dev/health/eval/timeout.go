@@ -14,9 +14,13 @@
   limitations under the License.
 */
 
-package health
+package eval
 
-import "time"
+import (
+	"time"
+
+	"arcoris.dev/health"
+)
 
 // WithDefaultTimeout configures the default timeout applied to every check.
 //
@@ -26,7 +30,7 @@ import "time"
 //
 // A negative timeout returns ErrInvalidTimeout.
 //
-// Target-specific timeouts configured with WithTargetTimeout override the
+// health.Target-specific timeouts configured with WithTargetTimeout override the
 // default timeout for that target.
 func WithDefaultTimeout(timeout time.Duration) EvaluatorOption {
 	return func(cfg *evaluatorConfig) error {
@@ -41,19 +45,19 @@ func WithDefaultTimeout(timeout time.Duration) EvaluatorOption {
 
 // WithTargetTimeout configures the timeout applied to checks for target.
 //
-// target MUST be concrete. TargetUnknown and invalid target values return an
-// error classified as ErrInvalidTarget.
+// target MUST be concrete. health.TargetUnknown and invalid target values return an
+// error classified as health.ErrInvalidTarget.
 //
 // A zero timeout disables evaluator-enforced timeout for the target. A negative
 // timeout returns ErrInvalidTimeout.
 //
-// Target-specific timeouts are useful when startup, liveness, and readiness have
+// health.Target-specific timeouts are useful when startup, liveness, and readiness have
 // different evaluation budgets. For example, liveness checks should normally be
 // cheap and short, while startup checks may need a wider budget during bootstrap.
-func WithTargetTimeout(target Target, timeout time.Duration) EvaluatorOption {
+func WithTargetTimeout(target health.Target, timeout time.Duration) EvaluatorOption {
 	return func(cfg *evaluatorConfig) error {
 		if !target.IsConcrete() {
-			return InvalidTargetError{Target: target}
+			return health.InvalidTargetError{Target: target}
 		}
 		if timeout < 0 {
 			return ErrInvalidTimeout

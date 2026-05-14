@@ -20,7 +20,7 @@
 // # Package scope
 //
 // Package probe is an optional runtime cache layer over package health. A Runner
-// owns a fixed-interval probe loop, calls health.Evaluator for each configured
+// owns a fixed-interval probe loop, calls an Evaluator source for each configured
 // target, stores one latest Snapshot per target, and lets readers inspect cached
 // observations without executing checks directly.
 //
@@ -33,11 +33,10 @@
 //
 // # Relationship to health
 //
-// Package health owns the synchronous health contracts: Target, Result, Report,
-// Registry, Gate, TargetPolicy, and Evaluator. Package probe depends on
-// health.Evaluator instead of reading registries or executing checks itself.
-// Evaluator remains the boundary for check execution, timeout handling, panic
-// normalization, result normalization, status aggregation, and report validity.
+// Package health owns the transport-neutral health contracts: Target, Result,
+// Report, Registry, Gate, and TargetPolicy. Package probe depends on a small
+// local Evaluator interface instead of reading registries or executing checks
+// itself. Package health/eval provides the default synchronous evaluator.
 //
 // # Transport adapters
 //

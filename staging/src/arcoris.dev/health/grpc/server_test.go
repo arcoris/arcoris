@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"arcoris.dev/health"
+	"arcoris.dev/health/eval"
 	"arcoris.dev/health/healthtest"
 )
 
@@ -36,7 +37,7 @@ func TestNewServerRejectsNilSource(t *testing.T) {
 func TestNewServerRejectsTypedNilSource(t *testing.T) {
 	t.Parallel()
 
-	var source *health.Evaluator
+	var source *eval.Evaluator
 	_, err := NewServer(source)
 	if !errors.Is(err, ErrNilSource) {
 		t.Fatalf("NewServer(typed nil) = %v, want ErrNilSource", err)

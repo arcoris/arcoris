@@ -26,7 +26,7 @@ import (
 
 // SourceFunc adapts a function to an evaluator-shaped health report source.
 //
-// The shape intentionally matches health.Evaluator.Evaluate and adapter source
+// The shape intentionally matches eval.Evaluator.Evaluate and adapter source
 // interfaces such as healthgrpc.Source without importing any adapter package.
 type SourceFunc func(context.Context, health.Target) (health.Report, error)
 

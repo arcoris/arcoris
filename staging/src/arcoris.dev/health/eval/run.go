@@ -14,17 +14,20 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import (
 	"context"
 	"errors"
+	"reflect"
 	"runtime/debug"
 	"time"
+
+	"arcoris.dev/health"
 )
 
 // evaluateCheck executes one checker and applies evaluator-owned normalization.
-func (e *Evaluator) evaluateCheck(ctx context.Context, check Checker, timeout time.Duration) Result {
+func (e *Evaluator) evaluateCheck(ctx context.Context, check health.Checker, timeout time.Duration) health.Result {
 	started := e.clock.Now()
 
 	name := ""
@@ -40,19 +43,19 @@ func (e *Evaluator) evaluateCheck(ctx context.Context, check Checker, timeout ti
 	return normalizeEvaluatedResult(result, name, finished, duration)
 }
 
-// runCheck runs check and returns a raw Result.
+// runCheck runs check and returns a raw health.Result.
 //
 // Timeout enforcement uses a goroutine so the evaluator can return when the
 // timeout or parent context expires. Checkers still MUST observe ctx. A checker
 // that ignores ctx may continue running after a timeout result has already been
 // returned.
-func (e *Evaluator) runCheck(ctx context.Context, check Checker, timeout time.Duration) Result {
+func (e *Evaluator) runCheck(ctx context.Context, check health.Checker, timeout time.Duration) health.Result {
 	if nilChecker(check) {
-		return Unknown(
+		return health.Unknown(
 			"",
-			ReasonNotObserved,
+			health.ReasonNotObserved,
 			"health checker is nil",
-		).WithCause(ErrNilChecker)
+		).WithCause(health.ErrNilChecker)
 	}
 
 	if timeout == 0 {
@@ -62,7 +65,7 @@ func (e *Evaluator) runCheck(ctx context.Context, check Checker, timeout time.Du
 	checkCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	resultCh := make(chan Result, 1)
+	resultCh := make(chan health.Result, 1)
 
 	go func() {
 		resultCh <- callCheck(checkCtx, check)
@@ -78,12 +81,12 @@ func (e *Evaluator) runCheck(ctx context.Context, check Checker, timeout time.Du
 }
 
 // callCheck invokes check and converts panics into health results.
-func callCheck(ctx context.Context, check Checker) (result Result) {
+func callCheck(ctx context.Context, check health.Checker) (result health.Result) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			result = Unhealthy(
+			result = health.Unhealthy(
 				check.Name(),
-				ReasonPanic,
+				health.ReasonPanic,
 				"health check panicked",
 			).WithCause(PanicError{
 				Value: recovered,
@@ -96,7 +99,7 @@ func callCheck(ctx context.Context, check Checker) (result Result) {
 }
 
 // interruptedResult converts context interruption into an unknown health result.
-func interruptedResult(name string, ctx context.Context) Result {
+func interruptedResult(name string, ctx context.Context) health.Result {
 	err := ctx.Err()
 	cause := context.Cause(ctx)
 	if cause == nil {
@@ -104,33 +107,33 @@ func interruptedResult(name string, ctx context.Context) Result {
 	}
 
 	if errors.Is(err, context.DeadlineExceeded) {
-		return Unknown(
+		return health.Unknown(
 			name,
-			ReasonTimeout,
+			health.ReasonTimeout,
 			"health check timed out",
 		).WithCause(cause)
 	}
 
-	return Unknown(
+	return health.Unknown(
 		name,
-		ReasonCanceled,
+		health.ReasonCanceled,
 		"health check canceled",
 	).WithCause(cause)
 }
 
 // normalizeEvaluatedResult applies evaluator-owned boundary normalization.
 //
-// Evaluator owns checker identity in reports. A checker may leave Result.Name
+// Evaluator owns checker identity in reports. A checker may leave health.Result.Name
 // empty, but it must not return another checker's name. Invalid reasons are also
 // converted into unknown misconfiguration results so Evaluator never returns an
-// invalid Report because of malformed checker output.
-func normalizeEvaluatedResult(result Result, defaultName string, observed time.Time, duration time.Duration) Result {
+// invalid health.Report because of malformed checker output.
+func normalizeEvaluatedResult(result health.Result, defaultName string, observed time.Time, duration time.Duration) health.Result {
 	duration = nonNegativeDuration(duration)
 
 	if result.Name != "" && result.Name != defaultName {
-		return Unknown(
+		return health.Unknown(
 			defaultName,
-			ReasonMisconfigured,
+			health.ReasonMisconfigured,
 			"health check returned a mismatched result name",
 		).WithCause(MismatchedCheckResultError{
 			CheckName:  defaultName,
@@ -139,9 +142,9 @@ func normalizeEvaluatedResult(result Result, defaultName string, observed time.T
 	}
 
 	if !result.Reason.IsValid() {
-		return Unknown(
+		return health.Unknown(
 			defaultName,
-			ReasonMisconfigured,
+			health.ReasonMisconfigured,
 			"health check returned an invalid reason",
 		).WithCause(InvalidCheckResultError{
 			CheckName: defaultName,
@@ -172,4 +175,19 @@ func nonNegativeDuration(duration time.Duration) time.Duration {
 	}
 
 	return duration
+}
+
+// nilChecker reports whether chk is nil, including typed nil interface values.
+func nilChecker(chk health.Checker) bool {
+	if chk == nil {
+		return true
+	}
+
+	value := reflect.ValueOf(chk)
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
+	default:
+		return false
+	}
 }

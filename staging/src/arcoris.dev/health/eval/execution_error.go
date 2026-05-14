@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-package health
+package eval
 
 import (
 	"errors"

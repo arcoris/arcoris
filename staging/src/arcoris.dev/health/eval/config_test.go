@@ -14,18 +14,21 @@
   limitations under the License.
 */
 
-package health
+package eval
 
-import (
-	"strings"
-	"testing"
-)
+import "testing"
 
-func TestPanicErrorMessage(t *testing.T) {
+func TestDefaultEvaluatorConfig(t *testing.T) {
 	t.Parallel()
 
-	err := PanicError{Value: "boom", Stack: []byte("stack")}
-	if got := err.Error(); !strings.Contains(got, "boom") {
-		t.Fatalf("Error() = %q, want panic value", got)
+	cfg := defaultEvaluatorConfig()
+	if cfg.clock == nil {
+		t.Fatal("default clock is nil")
+	}
+	if cfg.defaultTimeout != defaultCheckTimeout {
+		t.Fatalf("default timeout = %s, want %s", cfg.defaultTimeout, defaultCheckTimeout)
+	}
+	if cfg.targetTimeouts == nil {
+		t.Fatal("target timeouts map is nil")
 	}
 }
