@@ -18,6 +18,11 @@ package retry
 
 import "context"
 
+// emit sends one observer-visible retry event through the configured observer
+// list.
+//
+// The execution method keeps event emission close to the loop state while
+// delegating ordering and observer-call mechanics to emitRetryEvent.
 func (e *retryExecution) emit(ctx context.Context, event Event) {
 	emitRetryEvent(ctx, e.config, event)
 }
@@ -27,8 +32,8 @@ func (e *retryExecution) emit(ctx context.Context, event Event) {
 // Observers are synchronous and are called in registration order. Retry does not
 // recover observer panics and does not model observer failures because Observer
 // does not return an error.
-func emitRetryEvent(ctx context.Context, config config, event Event) {
-	for _, observer := range config.observers {
+func emitRetryEvent(ctx context.Context, cfg config, event Event) {
+	for _, observer := range cfg.observers {
 		observer.ObserveRetry(ctx, event)
 	}
 }

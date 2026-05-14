@@ -21,8 +21,8 @@ import (
 	"testing"
 	"time"
 
-	"arcoris.dev/component-base/pkg/backoff"
 	"arcoris.dev/component-base/pkg/clock"
+	"arcoris.dev/component-base/pkg/delay"
 )
 
 func TestRequireContext(t *testing.T) {
@@ -61,29 +61,29 @@ func TestRequireClock(t *testing.T) {
 	})
 }
 
-func TestRequireBackoff(t *testing.T) {
-	requireBackoff(backoff.Immediate())
+func TestRequireDelaySchedule(t *testing.T) {
+	requireDelaySchedule(delay.Immediate())
 
-	expectPanic(t, panicNilBackoffSchedule, func() {
-		requireBackoff(nil)
+	expectPanic(t, panicNilDelaySchedule, func() {
+		requireDelaySchedule(nil)
 	})
 }
 
-func TestRequireBackoffSequence(t *testing.T) {
-	requireBackoffSequence(backoff.Immediate().NewSequence())
+func TestRequireDelayScheduleSequence(t *testing.T) {
+	requireDelaySequence(delay.Immediate().NewSequence())
 
-	expectPanic(t, panicNilBackoffSequence, func() {
-		requireBackoffSequence(nil)
+	expectPanic(t, panicNilDelaySequence, func() {
+		requireDelaySequence(nil)
 	})
 }
 
-func TestRequireBackoffDelay(t *testing.T) {
-	requireBackoffDelay(0, true)
-	requireBackoffDelay(time.Nanosecond, true)
-	requireBackoffDelay(-time.Nanosecond, false)
+func TestRequireDelayScheduleDelay(t *testing.T) {
+	requireDelay(0, true)
+	requireDelay(time.Nanosecond, true)
+	requireDelay(-time.Nanosecond, false)
 
-	expectPanic(t, panicNegativeBackoffDelay, func() {
-		requireBackoffDelay(-time.Nanosecond, true)
+	expectPanic(t, panicNegativeDelay, func() {
+		requireDelay(-time.Nanosecond, true)
 	})
 }
 

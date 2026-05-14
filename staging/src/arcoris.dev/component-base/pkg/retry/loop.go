@@ -22,7 +22,7 @@ import "context"
 //
 // run is the private retry engine behind Do and DoValue. It owns the runtime
 // control flow that combines operation execution, retryability classification,
-// retry-owned limits, backoff sequence consumption, clock-backed delays, context
+// retry-owned limits, delay sequence consumption, clock-backed delays, context
 // interruption, and observer events.
 //
 // run does not define operation semantics. The caller remains responsible for
@@ -74,7 +74,7 @@ func run[T any](
 
 		delay, ok := execution.nextDelay()
 		if !ok {
-			return zero, execution.exhausted(ctx, StopReasonBackoffExhausted)
+			return zero, execution.exhausted(ctx, StopReasonDelayExhausted)
 		}
 
 		if execution.maxElapsedWouldBeExceeded(delay) {

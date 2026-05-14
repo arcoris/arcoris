@@ -20,7 +20,7 @@ import (
 	"context"
 	"time"
 
-	"arcoris.dev/component-base/pkg/backoff"
+	"arcoris.dev/component-base/pkg/delay"
 )
 
 // retryExecution owns the mutable state for one Do or DoValue run.
@@ -30,37 +30,67 @@ import (
 // passed explicitly to every helper that observes cancellation or emits observer
 // events, following Go's context ownership rule.
 type retryExecution struct {
-	config   config
-	sequence backoff.Sequence
+	// config is the normalized immutable configuration used by this execution.
+	//
+	// The value is copied from configOf before the loop starts. Options are not
+	// retained and cannot mutate it after execution begins.
+	config config
 
+	// sequence is the delay stream owned by this execution.
+	//
+	// It is created from config.delay exactly once. The sequence is mutable,
+	// single-owner state and must not be shared between retry executions.
+	sequence delay.Sequence
+
+	// startedAt is the clock timestamp captured before the first attempt.
+	//
+	// Elapsed-time limits and terminal outcomes use this same timestamp so event
+	// metadata and limit checks agree on the execution boundary.
 	startedAt time.Time
-	attempts  uint
 
+	// attempts is the number of operation attempts that have started.
+	//
+	// It includes the initial operation call and is incremented before each
+	// operation invocation.
+	attempts uint
+
+	// lastAttempt is the most recent operation attempt metadata.
+	//
+	// Terminal stop events reuse it when at least one attempt was started.
 	lastAttempt Attempt
-	lastErr     error
+
+	// lastErr is the most recent operation-owned error.
+	//
+	// Retry-owned context interruption is returned separately and must not
+	// replace this field.
+	lastErr error
 }
 
 // newRetryExecution validates retry runtime dependencies and starts one run.
 //
-// Public configuration stores a reusable backoff.Schedule. Runtime execution
+// Public configuration stores a reusable delay.Schedule. Runtime execution
 // immediately creates a fresh Sequence so delay state is owned by this run only.
-func newRetryExecution(config config) *retryExecution {
-	requireClock(config.clock)
-	requireBackoff(config.backoff)
-	requireClassifier(config.classifier)
-	requireMaxAttempts(config.maxAttempts)
-	requireMaxElapsed(config.maxElapsed)
+func newRetryExecution(cfg config) *retryExecution {
+	requireClock(cfg.clock)
+	requireDelaySchedule(cfg.delay)
+	requireClassifier(cfg.classifier)
+	requireMaxAttempts(cfg.maxAttempts)
+	requireMaxElapsed(cfg.maxElapsed)
 
-	sequence := config.backoff.NewSequence()
-	requireBackoffSequence(sequence)
+	seq := cfg.delay.NewSequence()
+	requireDelaySequence(seq)
 
 	return &retryExecution{
-		config:    config,
-		sequence:  sequence,
-		startedAt: config.clock.Now(),
+		config:    cfg,
+		sequence:  seq,
+		startedAt: cfg.clock.Now(),
 	}
 }
 
+// contextStop returns retry-owned context interruption if ctx has stopped.
+//
+// The wrapper keeps context observation readable at call sites and centralizes
+// the rule that retry-owned context errors are returned as ErrInterrupted.
 func (e *retryExecution) contextStop(ctx context.Context) error {
 	return contextStopError(ctx)
 }
@@ -87,44 +117,53 @@ func (e *retryExecution) nextAttempt(ctx context.Context) Attempt {
 //
 // lastErr is reserved for operation errors. Retry-owned context interruption is
 // returned separately and must not replace the last operation error in Outcome.
-func (e *retryExecution) recordFailure(ctx context.Context, attempt Attempt, err error) {
-	e.lastAttempt = attempt
+func (e *retryExecution) recordFailure(ctx context.Context, a Attempt, err error) {
+	e.lastAttempt = a
 	e.lastErr = err
 	e.emit(ctx, Event{
 		Kind:    EventAttemptFailure,
-		Attempt: attempt,
+		Attempt: a,
 		Err:     err,
 	})
 }
 
+// retryable reports whether err is retryable according to the configured
+// classifier.
+//
+// The error remains operation-owned. This method only delegates the policy
+// decision and does not wrap, classify, or store the error itself.
 func (e *retryExecution) retryable(err error) bool {
 	return e.config.classifier.Retryable(err)
 }
 
+// maxAttemptsReached reports whether the attempt budget has been consumed.
+//
+// The comparison uses attempts after the current attempt has already started, so
+// reaching the limit means retry must stop before scheduling another attempt.
 func (e *retryExecution) maxAttemptsReached() bool {
 	return e.attempts >= e.config.maxAttempts
 }
 
-// nextDelay consumes the execution-owned backoff sequence.
+// nextDelay consumes the execution-owned delay sequence.
 //
 // A negative delay with ok=true violates the Sequence contract and panics via
-// the stable retry diagnostic. ok=false is not a backoff error; run maps it to
-// retry-owned backoff exhaustion.
+// the stable retry diagnostic. ok=false is not a delay error; run maps it to
+// retry-owned delay exhaustion.
 func (e *retryExecution) nextDelay() (time.Duration, bool) {
-	delay, ok := e.sequence.Next()
-	requireBackoffDelay(delay, ok)
-	return delay, ok
+	d, ok := e.sequence.Next()
+	requireDelay(d, ok)
+	return d, ok
 }
 
 // retryDelay emits the delay selected after the current failed retryable attempt.
 //
 // It assumes recordFailure has already stored lastAttempt and lastErr for the
 // retry boundary that selected this delay.
-func (e *retryExecution) retryDelay(ctx context.Context, delay time.Duration) {
+func (e *retryExecution) retryDelay(ctx context.Context, d time.Duration) {
 	e.emit(ctx, Event{
 		Kind:    EventRetryDelay,
 		Attempt: e.lastAttempt,
-		Delay:   delay,
+		Delay:   d,
 		Err:     e.lastErr,
 	})
 }
@@ -134,6 +173,6 @@ func (e *retryExecution) retryDelay(ctx context.Context, delay time.Duration) {
 // The method exists only to keep run focused on control flow while preserving
 // the package-level waitDelay semantics: context interruption observed here is
 // retry-owned and must be returned as ErrInterrupted.
-func (e *retryExecution) waitDelay(ctx context.Context, delay time.Duration) error {
-	return waitDelay(ctx, e.config.clock, delay)
+func (e *retryExecution) waitDelay(ctx context.Context, d time.Duration) error {
+	return waitDelay(ctx, e.config.clock, d)
 }

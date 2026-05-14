@@ -21,10 +21,10 @@ package retry
 // A Classifier is consulted only after an operation attempt returns a non-nil
 // error. It answers whether retry execution may schedule another attempt, subject
 // to retry-owned limits such as maximum attempts, maximum elapsed time, context
-// state, and backoff sequence availability.
+// state, and delay sequence availability.
 //
 // Classifier implementations classify operation-owned errors. They must not
-// execute operations, sleep, consume backoff sequences, mutate retry state,
+// execute operations, sleep, consume delay sequences, mutate retry state,
 // observe timers, emit events, or create retry-owned error wrappers.
 //
 // A nil error is never retryable. Retry loops normally do not call Classifier for

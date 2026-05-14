@@ -39,7 +39,7 @@ func (e *retryExecution) nonRetryable(ctx context.Context, err error) error {
 //
 // Callers must pass only exhausted StopReason values so NewExhaustedError
 // preserves the package invariant that ErrExhausted belongs to retry-owned
-// attempt, elapsed, or backoff exhaustion.
+// attempt, elapsed, or delay exhaustion.
 func (e *retryExecution) exhausted(ctx context.Context, reason StopReason) error {
 	outcome := e.stop(ctx, reason, e.lastErr)
 	return NewExhaustedError(outcome)

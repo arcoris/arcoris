@@ -20,8 +20,8 @@ import (
 	"context"
 	"time"
 
-	"arcoris.dev/component-base/pkg/backoff"
 	"arcoris.dev/component-base/pkg/clock"
+	"arcoris.dev/component-base/pkg/delay"
 )
 
 const (
@@ -55,28 +55,28 @@ const (
 	// it is rejected at configuration boundaries.
 	panicNilClock = "retry: nil clock"
 
-	// panicNilBackoffSchedule is the stable diagnostic text used when retry
-	// configuration receives a nil backoff schedule.
+	// panicNilDelaySchedule is the stable diagnostic text used when retry
+	// configuration receives a nil delay schedule.
 	//
-	// Retry stores a reusable backoff.Schedule and creates a fresh Sequence for
+	// Retry stores a reusable delay.Schedule and creates a fresh Sequence for
 	// each execution. A nil schedule cannot produce per-execution delay streams.
-	panicNilBackoffSchedule = "retry: nil backoff schedule"
+	panicNilDelaySchedule = "retry: nil delay schedule"
 
-	// panicNilBackoffSequence is the stable diagnostic text used when a configured
-	// backoff schedule returns a nil sequence.
+	// panicNilDelaySequence is the stable diagnostic text used when a configured
+	// delay schedule returns a nil sequence.
 	//
 	// Schedule.NewSequence must return a usable Sequence. Returning nil violates
-	// the backoff.Schedule contract and is reported at the retry boundary that
+	// the delay.Schedule contract and is reported at the retry boundary that
 	// observes it.
-	panicNilBackoffSequence = "retry: backoff schedule returned nil Sequence"
+	panicNilDelaySequence = "retry: delay schedule returned nil Sequence"
 
-	// panicNegativeBackoffDelay is the stable diagnostic text used when a backoff
+	// panicNegativeDelay is the stable diagnostic text used when a delay
 	// sequence returns a negative delay while reporting ok=true.
 	//
 	// A zero delay is valid and means immediate retry. A negative delay violates
-	// the backoff.Sequence contract and would make retry waiting semantics
+	// the delay.Sequence contract and would make retry waiting semantics
 	// ambiguous.
-	panicNegativeBackoffDelay = "retry: backoff sequence returned negative delay"
+	panicNegativeDelay = "retry: delay sequence returned negative delay"
 
 	// panicNilClassifier is the stable diagnostic text used when retry
 	// configuration receives a nil Classifier.
@@ -157,34 +157,34 @@ func requireClock(c clock.Clock) {
 	}
 }
 
-// requireBackoff panics when schedule is nil.
+// requireDelaySchedule panics when sched is nil.
 //
-// Retry stores a backoff.Schedule rather than a backoff.Sequence so every
+// Retry stores a delay.Schedule rather than a delay.Sequence so every
 // Do/DoValue execution can create and own its own independent sequence.
-func requireBackoff(schedule backoff.Schedule) {
-	if schedule == nil {
-		panic(panicNilBackoffSchedule)
+func requireDelaySchedule(sched delay.Schedule) {
+	if sched == nil {
+		panic(panicNilDelaySchedule)
 	}
 }
 
-// requireBackoffSequence panics when sequence is nil.
+// requireDelaySequence panics when seq is nil.
 //
 // A nil sequence means the configured Schedule violated its NewSequence contract.
 // Retry reports this as a programming error at the schedule boundary.
-func requireBackoffSequence(sequence backoff.Sequence) {
-	if sequence == nil {
-		panic(panicNilBackoffSequence)
+func requireDelaySequence(seq delay.Sequence) {
+	if seq == nil {
+		panic(panicNilDelaySequence)
 	}
 }
 
-// requireBackoffDelay panics when delay is negative and ok is true.
+// requireDelay panics when d is negative and ok is true.
 //
 // Sequence.Next returns a meaningful delay only when ok is true. Finite sequence
 // exhaustion, represented by ok=false, is handled by the retry loop as
-// StopReasonBackoffExhausted and must not be treated as a validation failure.
-func requireBackoffDelay(delay time.Duration, ok bool) {
-	if ok && delay < 0 {
-		panic(panicNegativeBackoffDelay)
+// StopReasonDelayExhausted and must not be treated as a validation failure.
+func requireDelay(d time.Duration, ok bool) {
+	if ok && d < 0 {
+		panic(panicNegativeDelay)
 	}
 }
 

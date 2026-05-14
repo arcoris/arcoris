@@ -23,7 +23,7 @@ import "context"
 // Operation is the basic unit of work for Do. A retry execution may call an
 // Operation zero, one, or many times depending on context state, operation
 // result, retryability classification, configured limits, and the configured
-// backoff schedule.
+// delay schedule.
 //
 // A retry execution may skip the first call when its owning context has already
 // stopped before the first attempt starts. It may call the operation once when

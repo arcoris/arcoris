@@ -24,13 +24,13 @@ import "time"
 // were made, when the retry execution started and finished, which operation-owned
 // error was observed last, and why the retry execution stopped.
 //
-// Outcome does not execute operations, classify errors, compute backoff delays,
+// Outcome does not execute operations, classify errors, compute retry delays,
 // wait on timers, observe contexts, notify observers, or create retry-owned error
 // wrappers. Those responsibilities belong to the retry loop, classifier,
-// backoff, clock, observer, and error layers.
+// delay, clock, observer, and error layers.
 //
 // Outcome values are copyable. They must not contain locks, channels, mutable
-// backoff sequences, observers, operations, timers, or references back to the
+// delay sequences, observers, operations, timers, or references back to the
 // retry execution that produced them.
 //
 // The zero Outcome is invalid. This prevents empty metadata from accidentally
@@ -70,7 +70,7 @@ type Outcome struct {
 	// Reason explains why retry execution stopped.
 	//
 	// Reason classifies the terminal retry decision. It does not carry the
-	// operation error, context cause, backoff sequence state, or observer state.
+	// operation error, context cause, delay sequence state, or observer state.
 	Reason StopReason
 }
 
@@ -90,7 +90,7 @@ func (o Outcome) IsZero() bool {
 //
 // IsValid checks structural invariants only. It does not check whether timestamps
 // came from a particular clock, whether LastErr is retryable, whether Attempts
-// matches a specific backoff sequence, or whether Reason was produced by a real
+// matches a specific delay sequence, or whether Reason was produced by a real
 // retry loop.
 func (o Outcome) IsValid() bool {
 	if !o.Reason.IsValid() {
@@ -110,7 +110,7 @@ func (o Outcome) IsValid() bool {
 	case StopReasonNonRetryable,
 		StopReasonMaxAttempts,
 		StopReasonMaxElapsed,
-		StopReasonBackoffExhausted:
+		StopReasonDelayExhausted:
 		return o.Attempts != 0 && o.LastErr != nil
 
 	case StopReasonInterrupted:
@@ -144,7 +144,7 @@ func (o Outcome) Failed() bool {
 // Exhausted reports whether o records retry-owned exhaustion.
 //
 // Exhaustion includes max-attempt exhaustion, max-elapsed exhaustion, and finite
-// backoff sequence exhaustion. Non-retryable operation errors and retry-owned
+// delay sequence exhaustion. Non-retryable operation errors and retry-owned
 // interruptions are failures, but they are not exhaustion.
 func (o Outcome) Exhausted() bool {
 	return o.IsValid() && o.Reason.Exhausted()

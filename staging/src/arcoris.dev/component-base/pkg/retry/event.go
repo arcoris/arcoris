@@ -22,11 +22,11 @@ import "time"
 //
 // Event is immutable retry metadata produced by retry execution and delivered to
 // configured observers. It does not execute operations, decide retryability,
-// compute backoff delays, wait on timers, wrap errors, mutate retry state, or
+// compute retry delays, wait on timers, wrap errors, mutate retry state, or
 // change the retry decision.
 //
 // Event values are copyable. They must not contain locks, channels, mutable
-// backoff sequences, operations, timers, or references back to the retry
+// delay sequences, operations, timers, or references back to the retry
 // execution that produced them.
 //
 // Field interpretation depends on Kind:
@@ -53,7 +53,7 @@ type Event struct {
 	//
 	// Delay is meaningful only for EventRetryDelay. A zero delay is valid and
 	// represents an immediate retry boundary. Negative delays are invalid because
-	// backoff sequences must not produce negative wait durations for retry.
+	// delay sequences must not produce negative wait durations for retry.
 	Delay time.Duration
 
 	// Err is the operation-owned error associated with this event.
@@ -86,7 +86,7 @@ func (e Event) IsZero() bool {
 //
 // IsValid checks event-shape invariants only. It does not verify that the event
 // was emitted by a real retry loop, that Err is retryable, that Delay came from a
-// specific backoff sequence, or that timestamps came from a particular clock.
+// specific delay sequence, or that timestamps came from a particular clock.
 func (e Event) IsValid() bool {
 	switch e.Kind {
 	case EventAttemptStart:
@@ -129,7 +129,7 @@ func (e Event) isValidAttemptFailureEvent() bool {
 // isValidRetryDelayEvent reports whether e is a valid retry-delay event.
 //
 // Retry-delay events are emitted after retry has classified a failed attempt as
-// retryable, selected a delay from the configured backoff sequence, and decided
+// retryable, selected a delay from the configured delay sequence, and decided
 // to wait before another attempt. A zero delay is valid; a negative delay is not.
 func (e Event) isValidRetryDelayEvent() bool {
 	return e.Attempt.IsValid() &&

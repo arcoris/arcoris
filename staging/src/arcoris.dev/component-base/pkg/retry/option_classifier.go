@@ -21,7 +21,7 @@ package retry
 // The classifier is consulted only after an operation attempt returns a non-nil
 // operation-owned error. If the classifier rejects the error, retry stops and
 // returns the original operation error unchanged. If the classifier accepts the
-// error, retry still must satisfy retry-owned limits, context state, and backoff
+// error, retry still must satisfy retry-owned limits, context state, and delay
 // sequence availability before scheduling another attempt.
 //
 // The retry package does not infer idempotency, replay safety, protocol

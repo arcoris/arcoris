@@ -20,7 +20,7 @@ package retry
 //
 // EventKind is part of the observer-facing retry metadata model. It tells
 // observers which payload fields in Event are meaningful. It does not represent
-// retryability, backoff policy, stop reason, operation status, context state, or
+// retryability, delay policy, stop reason, operation status, context state, or
 // protocol-specific behavior.
 //
 // The zero value is invalid. This prevents an empty Event from accidentally
@@ -48,7 +48,7 @@ const (
 	//
 	// The corresponding Event carries the failed Attempt and the operation-owned
 	// error. It does not decide whether another attempt will be scheduled. Retry
-	// still has to apply the classifier, limits, context state, and backoff
+	// still has to apply the classifier, limits, context state, and delay
 	// sequence after the failed attempt is observed.
 	EventAttemptFailure
 

@@ -23,10 +23,15 @@ import (
 	"testing"
 	"time"
 
-	"arcoris.dev/component-base/pkg/backoff"
 	"arcoris.dev/component-base/pkg/clock"
+	"arcoris.dev/component-base/pkg/delay"
 )
 
+// expectPanic asserts that fn panics with want or an error matching want.
+//
+// Retry exposes both stable string diagnostics and sentinel-wrapping errors.
+// This helper supports exact panic values and errors.Is matching without
+// weakening tests that expect a non-error panic payload.
 func expectPanic(t *testing.T, want any, fn func()) {
 	t.Helper()
 
@@ -43,41 +48,47 @@ func expectPanic(t *testing.T, want any, fn func()) {
 	fn()
 }
 
-func asError(value any) error {
-	err, ok := value.(error)
+// asError returns v when it is an error and nil otherwise.
+func asError(v any) error {
+	err, ok := v.(error)
 	if !ok {
 		return nil
 	}
 	return err
 }
 
-func retryTestAttempt(number uint) Attempt {
+// retryTestAttempt returns deterministic attempt metadata for n.
+func retryTestAttempt(n uint) Attempt {
 	return Attempt{
-		Number:    number,
-		StartedAt: time.Unix(int64(number), 0),
+		Number:    n,
+		StartedAt: time.Unix(int64(n), 0),
 	}
 }
 
+// retryTestStartedAt returns the shared deterministic start timestamp.
 func retryTestStartedAt() time.Time {
 	return time.Unix(100, 0)
 }
 
+// retryTestFinishedAt returns the shared deterministic finish timestamp.
 func retryTestFinishedAt() time.Time {
 	return time.Unix(101, 0)
 }
 
-func retryTestSuccessOutcome(attempts uint) Outcome {
+// retryTestSuccessOutcome returns an expected success Outcome for n attempts.
+func retryTestSuccessOutcome(n uint) Outcome {
 	return Outcome{
-		Attempts:   attempts,
+		Attempts:   n,
 		StartedAt:  retryTestStartedAt(),
 		FinishedAt: retryTestFinishedAt(),
 		Reason:     StopReasonSucceeded,
 	}
 }
 
-func retryTestFailureOutcome(attempts uint, reason StopReason, err error) Outcome {
+// retryTestFailureOutcome returns an expected failure Outcome for n attempts.
+func retryTestFailureOutcome(n uint, reason StopReason, err error) Outcome {
 	return Outcome{
-		Attempts:   attempts,
+		Attempts:   n,
 		StartedAt:  retryTestStartedAt(),
 		FinishedAt: retryTestFinishedAt(),
 		LastErr:    err,
@@ -85,32 +96,47 @@ func retryTestFailureOutcome(attempts uint, reason StopReason, err error) Outcom
 	}
 }
 
+// retryTestSchedule returns a preconfigured sequence for runtime tests.
 type retryTestSchedule struct {
-	sequence backoff.Sequence
+	// sequence is returned directly from NewSequence.
+	//
+	// Tests use this helper to exercise retry boundary validation without
+	// creating additional delay package fixtures.
+	sequence delay.Sequence
 }
 
-func (s retryTestSchedule) NewSequence() backoff.Sequence {
+// NewSequence returns the configured test sequence.
+func (s retryTestSchedule) NewSequence() delay.Sequence {
 	return s.sequence
 }
 
+// retryTestSequence returns configured delays in order and then exhausts.
 type retryTestSequence struct {
+	// delays is the remaining delay list returned by Next.
 	delays []time.Duration
 }
 
+// Next returns the next configured delay or finite exhaustion.
 func (s *retryTestSequence) Next() (time.Duration, bool) {
 	if len(s.delays) == 0 {
 		return 0, false
 	}
 
-	delay := s.delays[0]
+	d := s.delays[0]
 	s.delays = s.delays[1:]
-	return delay, true
+	return d, true
 }
 
+// retryObserverRecorder records observer-visible events and call order.
 type retryObserverRecorder struct {
+	// events is the ordered list of observed retry events.
 	events []Event
-	order  []string
-	name   string
+
+	// order records the recorder name for each ObserveRetry call.
+	order []string
+
+	// name is appended to order when non-empty.
+	name string
 }
 
 // ObserveRetry records observer calls without changing retry behavior.
@@ -131,9 +157,13 @@ func (r *retryObserverRecorder) ObserveRetry(_ context.Context, event Event) {
 // exercises the "context stopped during retry-owned delay" path without sleeps
 // or scheduler timing assumptions.
 type retryTimerSignalClock struct {
+	// Clock is the wrapped clock used for all real clock behavior.
 	clock.Clock
 
-	once         sync.Once
+	// once guarantees timerCreated is closed at most once.
+	once sync.Once
+
+	// timerCreated is closed after the first delegated NewTimer call.
 	timerCreated chan struct{}
 }
 
@@ -151,8 +181,8 @@ func newRetryTimerSignalClock(base clock.Clock) *retryTimerSignalClock {
 //
 // Closing after delegation means the retry goroutine is inside waitDelay's timer
 // setup path before the test cancels context.
-func (c *retryTimerSignalClock) NewTimer(delay time.Duration) clock.Timer {
-	timer := c.Clock.NewTimer(delay)
+func (c *retryTimerSignalClock) NewTimer(d time.Duration) clock.Timer {
+	timer := c.Clock.NewTimer(d)
 	c.once.Do(func() {
 		close(c.timerCreated)
 	})

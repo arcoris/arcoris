@@ -21,7 +21,7 @@ import (
 	"errors"
 	"testing"
 
-	"arcoris.dev/component-base/pkg/backoff"
+	"arcoris.dev/component-base/pkg/delay"
 )
 
 func TestDoValueSucceeds(t *testing.T) {
@@ -81,7 +81,7 @@ func TestDoValueRetriesAndReturnsSuccessfulValue(t *testing.T) {
 		},
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(3),
-		WithBackoff(backoff.Immediate()),
+		WithDelaySchedule(delay.Immediate()),
 	)
 
 	if err != nil {
@@ -107,7 +107,7 @@ func TestDoValueReturnsExhaustedAndZeroValue(t *testing.T) {
 		},
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(2),
-		WithBackoff(backoff.Immediate()),
+		WithDelaySchedule(delay.Immediate()),
 	)
 
 	if !errors.Is(err, ErrExhausted) {
@@ -149,7 +149,7 @@ func TestDoValueReturnsInterruptedAndZeroValueWhenContextAlreadyStopped(t *testi
 		},
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(3),
-		WithBackoff(backoff.Immediate()),
+		WithDelaySchedule(delay.Immediate()),
 	)
 
 	if !errors.Is(err, ErrInterrupted) {

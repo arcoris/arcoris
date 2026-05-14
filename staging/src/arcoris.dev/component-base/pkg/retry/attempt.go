@@ -22,11 +22,11 @@ import "time"
 //
 // Attempt is immutable retry metadata. It records the one-based attempt number
 // and the retry clock time at which that attempt started. It does not execute
-// work, classify errors, compute backoff delays, wait on timers, observe
+// work, classify errors, compute retry delays, wait on timers, observe
 // contexts, emit events, or decide whether another attempt is allowed.
 //
 // Attempt values are copyable. They must not contain locks, channels, mutable
-// backoff sequences, observers, operations, or references back to the retry
+// delay sequences, observers, operations, or references back to the retry
 // execution that produced them.
 //
 // Attempt numbering is one-based:

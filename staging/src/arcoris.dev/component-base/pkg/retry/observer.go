@@ -26,7 +26,7 @@ import "context"
 // side-channel data.
 //
 // Observer must not be used as retry policy. It does not decide whether an error
-// is retryable, does not choose backoff delays, does not change attempt limits,
+// is retryable, does not choose retry delays, does not change attempt limits,
 // does not mutate retry configuration, and does not control operation execution.
 //
 // ObserveRetry does not return an error. Observer failures cannot change retry

@@ -33,7 +33,7 @@ func TestWaitDelayReturnsImmediatelyForZeroDelay(t *testing.T) {
 }
 
 func TestWaitDelayPanicsOnNegativeDelay(t *testing.T) {
-	expectPanic(t, panicNegativeBackoffDelay, func() {
+	expectPanic(t, panicNegativeDelay, func() {
 		_ = waitDelay(context.Background(), clock.RealClock{}, -time.Nanosecond)
 	})
 }

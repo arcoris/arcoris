@@ -26,7 +26,7 @@ package healthprobe
 // interval, snapshot staleness window, initial probe behavior, and target list.
 // They must not configure health checks, registries, evaluator execution policy,
 // HTTP/gRPC adapters, metrics, logging, tracing, lifecycle transitions, restart
-// policy, admission, routing, scheduling, retries, or backoff.
+// policy, admission, routing, scheduling, retries, or retry delay growth.
 type Option func(*config) error
 
 // applyOptions applies options to config in order.

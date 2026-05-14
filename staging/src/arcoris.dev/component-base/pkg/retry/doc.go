@@ -19,11 +19,11 @@
 //
 // The package executes caller-owned operations and decides whether another
 // attempt may be scheduled after an operation-owned error. It combines operation
-// execution, retryability classification, retry-owned limits, backoff sequence
+// execution, retryability classification, retry-owned limits, delay sequence
 // consumption, clock-backed waiting, retry-owned context interruption, terminal
 // outcome metadata, and observer events.
 //
-// Package retry is an orchestration layer. It does not define backoff formulas,
+// Package retry is an orchestration layer. It does not define delay formulas,
 // protocol retry rules, storage retry rules, controller reconciliation policy,
 // retry budgets, circuit breakers, hedged requests, rate limiters, queue
 // scheduling, logging backends, metrics exporters, tracing exporters, goroutine
@@ -46,7 +46,7 @@
 //
 // Attempt numbering is one-based. Attempt 1 is the initial operation call.
 // Attempts 2 and later are retry operation calls. Attempt metadata is represented
-// by Attempt and is intentionally separate from operation errors, backoff delays,
+// by Attempt and is intentionally separate from operation errors, retry delays,
 // observer events, and terminal outcomes.
 //
 // The retry package does not infer idempotency, replay safety, transaction
@@ -54,27 +54,27 @@
 // configure retries only for operations whose retry behavior is valid for their
 // domain.
 //
-// # Backoff integration
+// # Delay integration
 //
-// Package retry uses package backoff for delay streams.
+// Package retry uses package delay for delay streams.
 //
-// Retry configuration stores a backoff.Schedule. A fresh backoff.Sequence is
+// Retry configuration stores a delay.Schedule. A fresh delay.Sequence is
 // created for each Do or DoValue execution. The sequence is owned by that single
 // retry execution and is not shared across executions.
 //
-// The retry loop consumes a backoff sequence only after an operation attempt
+// The retry loop consumes a delay sequence only after an operation attempt
 // fails with an error that the configured Classifier accepts as retryable and
 // after retry-owned attempt limits still allow another attempt.
 //
-// When Sequence.Next returns ok=false, the backoff package has not failed; it has
+// When Sequence.Next returns ok=false, the delay package has not failed; it has
 // reported finite sequence exhaustion. At the retry layer, that means a
 // retryable operation failure cannot be followed by another scheduled attempt.
 // Retry reports this as retry-owned exhaustion with
-// StopReasonBackoffExhausted and ErrExhausted.
+// StopReasonDelayExhausted and ErrExhausted.
 //
 // A zero delay is valid and means retry may proceed to the next attempt
 // immediately after retry-owned context checks. A negative delay with ok=true is
-// a programming error because it violates the backoff.Sequence contract.
+// a programming error because it violates the delay.Sequence contract.
 //
 // # Clock integration
 //
@@ -109,7 +109,7 @@
 //
 //   - max attempts;
 //   - max elapsed runtime;
-//   - finite backoff sequence exhaustion.
+//   - finite delay sequence exhaustion.
 //
 // Max attempts includes the initial operation call. WithMaxAttempts(1) allows
 // only the initial attempt and no retry attempts. WithMaxAttempts(0) is invalid.
@@ -172,7 +172,7 @@
 // The default configuration is intentionally conservative:
 //
 //   - clock.RealClock{} for runtime time;
-//   - backoff.Immediate() as the default delay schedule;
+//   - delay.Immediate() as the default delay schedule;
 //   - NeverRetry as the default classifier;
 //   - one max attempt;
 //   - no max elapsed limit;
@@ -199,12 +199,12 @@
 // # Panic policy
 //
 // Package retry panics on programming errors such as nil context, nil operation,
-// nil option, nil clock, nil backoff schedule, nil classifier, nil observer,
-// zero max attempts, negative max elapsed duration, or a negative backoff delay
+// nil option, nil clock, nil delay schedule, nil classifier, nil observer,
+// zero max attempts, negative max elapsed duration, or a negative delay
 // returned with ok=true.
 //
 // Package retry does not recover panics raised by operations, observers, clocks,
-// backoff schedules, or classifiers. Panic recovery, if required, belongs to the
+// delay schedules, or classifiers. Panic recovery, if required, belongs to the
 // operation owner, observer implementation, runtime supervisor, or an explicit
 // wrapper outside this package.
 //

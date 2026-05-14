@@ -46,7 +46,7 @@ const (
 	// retryErrorKindExhausted identifies retry-owned exhaustion.
 	//
 	// Exhaustion means retry execution stopped because a retry-owned boundary was
-	// reached: max attempts, max elapsed time, or finite backoff sequence
+	// reached: max attempts, max elapsed time, or finite delay sequence
 	// exhaustion.
 	retryErrorKindExhausted retryErrorKind = iota + 1
 

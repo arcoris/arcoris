@@ -20,7 +20,7 @@ package retry
 //
 // StopReason is completion metadata. It explains the terminal reason recorded in
 // an Outcome or stop event, but it does not carry the operation error, context
-// cause, backoff sequence, attempt metadata, observer state, or retry
+// cause, delay sequence, attempt metadata, observer state, or retry
 // configuration that produced that reason.
 //
 // The zero value is invalid. This keeps an empty Outcome from accidentally
@@ -66,14 +66,14 @@ const (
 	// limit.
 	StopReasonMaxElapsed
 
-	// StopReasonBackoffExhausted means the configured backoff sequence had no
+	// StopReasonDelayExhausted means the configured delay sequence had no
 	// next delay for another retry attempt.
 	//
-	// The backoff package represents finite sequence exhaustion with ok=false.
-	// That is not a backoff error. At the retry layer, however, it means a
+	// The delay package represents finite sequence exhaustion with ok=false.
+	// That is not a delay error. At the retry layer, however, it means a
 	// retryable operation failure could not be followed by another scheduled
 	// attempt, so the retry execution is exhausted.
-	StopReasonBackoffExhausted
+	StopReasonDelayExhausted
 
 	// StopReasonInterrupted means retry execution stopped because the retry-owned
 	// context was cancelled or its deadline expired.
@@ -101,8 +101,8 @@ func (r StopReason) String() string {
 		return "max_attempts"
 	case StopReasonMaxElapsed:
 		return "max_elapsed"
-	case StopReasonBackoffExhausted:
-		return "backoff_exhausted"
+	case StopReasonDelayExhausted:
+		return "delay_exhausted"
 	case StopReasonInterrupted:
 		return "interrupted"
 	default:
@@ -121,7 +121,7 @@ func (r StopReason) IsValid() bool {
 		StopReasonNonRetryable,
 		StopReasonMaxAttempts,
 		StopReasonMaxElapsed,
-		StopReasonBackoffExhausted,
+		StopReasonDelayExhausted,
 		StopReasonInterrupted:
 		return true
 	default:
@@ -146,7 +146,7 @@ func (r StopReason) Failed() bool {
 	case StopReasonNonRetryable,
 		StopReasonMaxAttempts,
 		StopReasonMaxElapsed,
-		StopReasonBackoffExhausted,
+		StopReasonDelayExhausted,
 		StopReasonInterrupted:
 		return true
 	default:
@@ -158,13 +158,13 @@ func (r StopReason) Failed() bool {
 //
 // Exhaustion means retry wanted or was allowed to continue only until a
 // retry-owned boundary was reached: attempt limit, elapsed-time limit, or finite
-// backoff sequence exhaustion. Non-retryable operation errors and retry-owned
+// delay sequence exhaustion. Non-retryable operation errors and retry-owned
 // interruptions are not exhaustion.
 func (r StopReason) Exhausted() bool {
 	switch r {
 	case StopReasonMaxAttempts,
 		StopReasonMaxElapsed,
-		StopReasonBackoffExhausted:
+		StopReasonDelayExhausted:
 		return true
 	default:
 		return false

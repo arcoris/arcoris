@@ -30,7 +30,7 @@ import (
 // time.Timer directly. This keeps retry loops deterministic with fake clocks in
 // tests.
 //
-// waitDelay does not compute backoff delays, classify operation errors, update
+// waitDelay does not compute delay values, classify operation errors, update
 // attempts, emit observer events, or create retry outcomes. It only owns the
 // cancellable delay between two retry attempts.
 //
@@ -46,19 +46,19 @@ import (
 // The returned context interruption is retry-owned. Raw context errors returned
 // by operations must remain operation-owned unless retry itself observes the
 // context stop at this boundary.
-func waitDelay(ctx context.Context, c clock.Clock, delay time.Duration) error {
+func waitDelay(ctx context.Context, c clock.Clock, d time.Duration) error {
 	requireContext(ctx)
 	requireClock(c)
-	requireBackoffDelay(delay, true)
+	requireDelay(d, true)
 
 	if err := contextStopError(ctx); err != nil {
 		return err
 	}
-	if delay == 0 {
+	if d == 0 {
 		return nil
 	}
 
-	timer := c.NewTimer(delay)
+	timer := c.NewTimer(d)
 
 	select {
 	case <-timer.C():

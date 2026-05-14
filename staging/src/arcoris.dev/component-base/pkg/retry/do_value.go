@@ -41,7 +41,7 @@ import "context"
 //   - one time when the first attempt succeeds, fails with a non-retryable error,
 //     or the configured attempt limit allows only the initial attempt;
 //   - many times when operation errors are classified as retryable and retry
-//     limits, context state, and backoff sequence availability allow more
+//     limits, context state, and delay sequence availability allow more
 //     attempts.
 //
 // Operation errors that are not retried are returned unchanged. Retry-owned

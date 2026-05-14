@@ -102,13 +102,13 @@ func TestOutcomeIsValid(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "backoff exhausted",
+			name: "delay exhausted",
 			outcome: Outcome{
 				Attempts:   2,
 				StartedAt:  started,
 				FinishedAt: finished,
 				LastErr:    errBoom,
-				Reason:     StopReasonBackoffExhausted,
+				Reason:     StopReasonDelayExhausted,
 			},
 			want: true,
 		},
@@ -223,12 +223,12 @@ func TestOutcomeIsValid(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "backoff exhausted without last error",
+			name: "delay exhausted without last error",
 			outcome: Outcome{
 				Attempts:   2,
 				StartedAt:  started,
 				FinishedAt: finished,
-				Reason:     StopReasonBackoffExhausted,
+				Reason:     StopReasonDelayExhausted,
 			},
 			want: false,
 		},
@@ -334,13 +334,13 @@ func TestOutcomePredicatesRequireValidOutcome(t *testing.T) {
 			wantExhausted: true,
 		},
 		{
-			name: "backoff exhausted",
+			name: "delay exhausted",
 			outcome: Outcome{
 				Attempts:   2,
 				StartedAt:  started,
 				FinishedAt: finished,
 				LastErr:    errBoom,
-				Reason:     StopReasonBackoffExhausted,
+				Reason:     StopReasonDelayExhausted,
 			},
 			wantFailed:    true,
 			wantExhausted: true,

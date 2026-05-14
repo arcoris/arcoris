@@ -18,11 +18,11 @@ package retry
 
 import "time"
 
-// maxElapsedWouldBeExceeded reports whether delay would cross the elapsed limit.
+// maxElapsedWouldBeExceeded reports whether d would cross the elapsed limit.
 //
 // The check is conservative: a delay equal to the remaining budget stops the
 // execution instead of sleeping until no time remains for the next attempt.
-func (e *retryExecution) maxElapsedWouldBeExceeded(delay time.Duration) bool {
+func (e *retryExecution) maxElapsedWouldBeExceeded(d time.Duration) bool {
 	if e.config.maxElapsed == 0 {
 		return false
 	}
@@ -33,5 +33,5 @@ func (e *retryExecution) maxElapsedWouldBeExceeded(delay time.Duration) bool {
 	}
 
 	remaining := e.config.maxElapsed - elapsed
-	return delay >= remaining
+	return d >= remaining
 }

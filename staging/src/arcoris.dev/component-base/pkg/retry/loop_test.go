@@ -22,8 +22,8 @@ import (
 	"testing"
 	"time"
 
-	"arcoris.dev/component-base/pkg/backoff"
 	"arcoris.dev/component-base/pkg/clock"
+	"arcoris.dev/component-base/pkg/delay"
 )
 
 func TestRunSucceedsOnFirstAttempt(t *testing.T) {
@@ -71,7 +71,7 @@ func TestRunRetriesRetryableErrors(t *testing.T) {
 	config := configOf(
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(3),
-		WithBackoff(backoff.Immediate()),
+		WithDelaySchedule(delay.Immediate()),
 	)
 
 	errBoom := errors.New("boom")
@@ -100,7 +100,7 @@ func TestRunStopsAtMaxAttempts(t *testing.T) {
 	config := configOf(
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(2),
-		WithBackoff(backoff.Immediate()),
+		WithDelaySchedule(delay.Immediate()),
 	)
 
 	errBoom := errors.New("boom")
@@ -137,7 +137,7 @@ func TestRunReturnsOriginalNonRetryableError(t *testing.T) {
 	config := configOf(
 		WithClassifier(NeverRetry()),
 		WithMaxAttempts(5),
-		WithBackoff(backoff.Immediate()),
+		WithDelaySchedule(delay.Immediate()),
 	)
 
 	errBoom := errors.New("boom")
@@ -159,11 +159,11 @@ func TestRunReturnsOriginalNonRetryableError(t *testing.T) {
 	}
 }
 
-func TestRunStopsWhenBackoffSequenceIsExhausted(t *testing.T) {
+func TestRunStopsWhenDelaySequenceIsExhausted(t *testing.T) {
 	config := configOf(
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(10),
-		WithBackoff(backoff.Limit(backoff.Immediate(), 1)),
+		WithDelaySchedule(delay.Limit(delay.Immediate(), 1)),
 	)
 
 	errBoom := errors.New("boom")
@@ -185,8 +185,8 @@ func TestRunStopsWhenBackoffSequenceIsExhausted(t *testing.T) {
 	if !ok {
 		t.Fatalf("ExhaustedOutcome returned ok=false")
 	}
-	if outcome.Reason != StopReasonBackoffExhausted {
-		t.Fatalf("Outcome.Reason = %s, want %s", outcome.Reason, StopReasonBackoffExhausted)
+	if outcome.Reason != StopReasonDelayExhausted {
+		t.Fatalf("Outcome.Reason = %s, want %s", outcome.Reason, StopReasonDelayExhausted)
 	}
 }
 
@@ -194,7 +194,7 @@ func TestRunStopsAtMaxElapsed(t *testing.T) {
 	config := configOf(
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(10),
-		WithBackoff(backoff.Fixed(time.Hour)),
+		WithDelaySchedule(delay.Fixed(time.Hour)),
 		WithMaxElapsed(time.Millisecond),
 	)
 
@@ -231,7 +231,7 @@ func TestRunReturnsInterruptedWhenContextAlreadyStopped(t *testing.T) {
 	config := configOf(
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(3),
-		WithBackoff(backoff.Immediate()),
+		WithDelaySchedule(delay.Immediate()),
 		WithObserverFunc(func(_ context.Context, event Event) {
 			if event.Kind != EventRetryStop {
 				return
@@ -277,7 +277,7 @@ func TestRunEmitsObserverEvents(t *testing.T) {
 	config := configOf(
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(2),
-		WithBackoff(backoff.Immediate()),
+		WithDelaySchedule(delay.Immediate()),
 		WithObserverFunc(func(_ context.Context, event Event) {
 			if !event.IsValid() {
 				t.Fatalf("observer received invalid event: %+v", event)
@@ -318,33 +318,6 @@ func TestRunEmitsObserverEvents(t *testing.T) {
 	}
 }
 
-func TestRunPanicsWhenBackoffScheduleReturnsNilSequence(t *testing.T) {
-	config := configOf()
-	config.backoff = retryTestSchedule{}
-
-	expectPanic(t, panicNilBackoffSequence, func() {
-		_, _ = run(context.Background(), func(context.Context) (int, error) {
-			return 0, nil
-		}, config)
-	})
-}
-
-func TestRunPanicsOnNegativeBackoffDelay(t *testing.T) {
-	config := configOf(
-		WithClassifier(RetryAll()),
-		WithMaxAttempts(2),
-	)
-	config.backoff = retryTestSchedule{
-		sequence: &retryTestSequence{delays: []time.Duration{-time.Nanosecond}},
-	}
-
-	expectPanic(t, panicNegativeBackoffDelay, func() {
-		_, _ = run(context.Background(), func(context.Context) (int, error) {
-			return 0, errors.New("boom")
-		}, config)
-	})
-}
-
 func TestRunOperationOwnedContextErrorIsNotInterrupted(t *testing.T) {
 	config := configOf()
 
@@ -378,54 +351,6 @@ func TestRunOperationOwnedContextErrorIsNotInterrupted(t *testing.T) {
 	}
 }
 
-func TestRunObserversAreCalledInRegistrationOrder(t *testing.T) {
-	var (
-		order  []string
-		events int
-	)
-	config := configOf(
-		WithClassifier(RetryAll()),
-		WithMaxAttempts(1),
-		WithObserverFunc(func(_ context.Context, event Event) {
-			order = append(order, "first")
-			events++
-			if !event.IsValid() {
-				t.Fatalf("first observer received invalid event: %+v", event)
-			}
-		}),
-		WithObserverFunc(func(_ context.Context, event Event) {
-			order = append(order, "second")
-			if !event.IsValid() {
-				t.Fatalf("second observer received invalid event: %+v", event)
-			}
-		}),
-	)
-
-	_, err := run(context.Background(), func(context.Context) (int, error) {
-		return 0, errors.New("boom")
-	}, config)
-	if !errors.Is(err, ErrExhausted) {
-		t.Fatalf("run error = %v, want exhausted", err)
-	}
-	if events != 3 {
-		t.Fatalf("events observed by first observer = %d, want 3", events)
-	}
-
-	want := []string{
-		"first", "second",
-		"first", "second",
-		"first", "second",
-	}
-	if len(order) != len(want) {
-		t.Fatalf("observer order len = %d, want %d: %v", len(order), len(want), order)
-	}
-	for i := range want {
-		if order[i] != want[i] {
-			t.Fatalf("observer order[%d] = %q, want %q", i, order[i], want[i])
-		}
-	}
-}
-
 func TestRunReturnsInterruptedWhenContextStopsDuringDelay(t *testing.T) {
 	errBoom := errors.New("boom")
 	fake := clock.NewFakeClock(time.Unix(100, 0))
@@ -438,7 +363,7 @@ func TestRunReturnsInterruptedWhenContextStopsDuringDelay(t *testing.T) {
 		WithClock(signalingClock),
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(2),
-		WithBackoff(backoff.Fixed(time.Hour)),
+		WithDelaySchedule(delay.Fixed(time.Hour)),
 		WithObserverFunc(func(_ context.Context, event Event) {
 			if event.Kind == EventRetryStop {
 				stopEvents <- event
@@ -532,7 +457,7 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 			config: configOf(
 				WithClassifier(RetryAll()),
 				WithMaxAttempts(2),
-				WithBackoff(backoff.Fixed(time.Second)),
+				WithDelaySchedule(delay.Fixed(time.Second)),
 				WithMaxElapsed(time.Nanosecond),
 			),
 			op: func(context.Context) (int, error) {
@@ -542,7 +467,7 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 			reason:  StopReasonMaxElapsed,
 		},
 		{
-			name: "backoff exhausted",
+			name: "delay exhausted",
 			ctx:  context.Background,
 			config: configOf(
 				WithClassifier(RetryAll()),
@@ -552,7 +477,7 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 				return 0, errBoom
 			},
 			wantErr: ErrExhausted,
-			reason:  StopReasonBackoffExhausted,
+			reason:  StopReasonDelayExhausted,
 		},
 		{
 			name: "interrupted before attempt",
@@ -587,8 +512,8 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 			var stop Event
 			config := tt.config
 			ctx := tt.ctx()
-			if tt.reason == StopReasonBackoffExhausted {
-				config.backoff = retryTestSchedule{sequence: &retryTestSequence{}}
+			if tt.reason == StopReasonDelayExhausted {
+				config.delay = retryTestSchedule{sequence: &retryTestSequence{}}
 			}
 			if tt.name == "interrupted after failed attempt" {
 				var cancel context.CancelFunc

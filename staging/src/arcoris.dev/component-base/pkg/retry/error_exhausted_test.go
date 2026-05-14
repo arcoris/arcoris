@@ -87,7 +87,7 @@ func TestNewExhaustedErrorReasons(t *testing.T) {
 	reasons := []StopReason{
 		StopReasonMaxAttempts,
 		StopReasonMaxElapsed,
-		StopReasonBackoffExhausted,
+		StopReasonDelayExhausted,
 	}
 
 	for _, reason := range reasons {
