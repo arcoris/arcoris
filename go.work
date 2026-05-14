@@ -1,0 +1,12 @@
+go 1.25.0
+
+toolchain go1.25.9
+
+use (
+	./staging/src/arcoris.dev/apimachinery
+	./staging/src/arcoris.dev/atomicx
+	./staging/src/arcoris.dev/chrono
+	./staging/src/arcoris.dev/health
+	./staging/src/arcoris.dev/resilience
+	./staging/src/arcoris.dev/runtime
+)
