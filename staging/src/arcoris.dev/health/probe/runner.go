@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"arcoris.dev/chrono/clock"
+	"arcoris.dev/chrono/delay"
 	"arcoris.dev/health"
 )
 
@@ -33,12 +34,14 @@ type Evaluator interface {
 // Runner periodically evaluates configured health targets and stores latest
 // snapshots.
 //
-// Runner is the runtime object of package probe. It owns a ticker loop
-// when Run is active, a private latest-snapshot store, and read methods for
-// concurrent consumers. Runner does not own health checks, registries, evaluator
-// execution policy, transport rendering, retry policy, metrics, logging,
-// tracing, lifecycle transitions, restart policy, admission, routing, or
-// scheduling decisions.
+// Runner is the runtime object of package probe. It owns one schedule sequence
+// per Run invocation, waits through its configured clock, keeps a private
+// latest-snapshot store, and exposes read methods for concurrent consumers.
+// The schedule controls delays between probe cycles after the optional initial
+// probe; it does not own timers or context. Runner does not own health checks,
+// registries, evaluator execution policy, transport rendering, retry policy,
+// metrics, logging, tracing, lifecycle transitions, restart policy, admission,
+// routing, or workload-control decisions.
 //
 // A Runner supports at most one active Run call at a time. Snapshot and Snapshots
 // may be called concurrently with Run.
@@ -48,7 +51,7 @@ type Runner struct {
 
 	clock        clock.Clock
 	targets      []health.Target
-	interval     time.Duration
+	schedule     delay.Schedule
 	staleAfter   time.Duration
 	initialProbe bool
 

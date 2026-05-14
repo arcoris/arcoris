@@ -47,8 +47,8 @@ func TestNewRunner(t *testing.T) {
 	if runner.clock != clk {
 		t.Fatal("clock not stored")
 	}
-	if runner.interval != time.Second {
-		t.Fatalf("interval = %s, want 1s", runner.interval)
+	if d := firstScheduleDelay(t, runner.schedule); d != time.Second {
+		t.Fatalf("schedule delay = %s, want 1s", d)
 	}
 	if runner.staleAfter != 2*time.Second {
 		t.Fatalf("staleAfter = %s, want 2s", runner.staleAfter)

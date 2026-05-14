@@ -30,8 +30,11 @@ func TestDefaultConfig(t *testing.T) {
 	if nilClock(cfg.clock) {
 		t.Fatal("default clock is nil")
 	}
-	if cfg.interval != defaultInterval {
-		t.Fatalf("interval = %s, want %s", cfg.interval, defaultInterval)
+	if cfg.schedule == nil {
+		t.Fatal("default schedule is nil")
+	}
+	if d := firstScheduleDelay(t, cfg.schedule); d != defaultInterval {
+		t.Fatalf("default schedule delay = %s, want %s", d, defaultInterval)
 	}
 	if cfg.staleAfter != defaultStaleAfter {
 		t.Fatalf("staleAfter = %s, want %s", cfg.staleAfter, defaultStaleAfter)

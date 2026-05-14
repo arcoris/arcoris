@@ -23,6 +23,7 @@ import (
 	"testing"
 	"time"
 
+	"arcoris.dev/chrono/delay"
 	"arcoris.dev/health"
 	"arcoris.dev/health/healthtest"
 )
@@ -51,7 +52,7 @@ func TestRunnerRunPerformsInitialProbe(t *testing.T) {
 	}
 }
 
-func TestRunnerRunWaitsForTickWhenInitialProbeDisabled(t *testing.T) {
+func TestRunnerRunWaitsForScheduleDelayWhenInitialProbeDisabled(t *testing.T) {
 	t.Parallel()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -68,7 +69,7 @@ func TestRunnerRunWaitsForTickWhenInitialProbeDisabled(t *testing.T) {
 
 	waitForRunnerRunning(t, runner)
 	if _, ok := runner.Snapshot(health.TargetReady); ok {
-		t.Fatal("Snapshot before tick ok = true, want false")
+		t.Fatal("Snapshot before schedule delay ok = true, want false")
 	}
 
 	snapshot := stepUntilGeneration(t, clk, runner, health.TargetReady, 1, interval)
@@ -82,7 +83,7 @@ func TestRunnerRunWaitsForTickWhenInitialProbeDisabled(t *testing.T) {
 	}
 }
 
-func TestRunnerRunTickDrivenProbeIncrementsGeneration(t *testing.T) {
+func TestRunnerRunScheduleDrivenProbeIncrementsGeneration(t *testing.T) {
 	t.Parallel()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -114,6 +115,160 @@ func TestRunnerRunTickDrivenProbeIncrementsGeneration(t *testing.T) {
 	cancel()
 	if err := waitForRunDone(t, done); err != nil {
 		t.Fatalf("Run() = %v, want nil", err)
+	}
+}
+
+func TestRunnerRunUsesScheduleDelays(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	schedule := delay.Delays(time.Second, 3*time.Second)
+	clk := newTestClock()
+	runner := newTestRunner(t, clk, WithSchedule(schedule), WithInitialProbe(false))
+	done := make(chan error, 1)
+
+	go func() {
+		done <- runner.Run(ctx)
+	}()
+
+	waitForRunnerRunning(t, runner)
+	first := stepUntilGeneration(t, clk, runner, health.TargetReady, 1, time.Second)
+	second := stepUntilGeneration(t, clk, runner, health.TargetReady, 2, 3*time.Second)
+
+	if first.Generation != 1 {
+		t.Fatalf("first Generation = %d, want 1", first.Generation)
+	}
+	if second.Generation != 2 {
+		t.Fatalf("second Generation = %d, want 2", second.Generation)
+	}
+	if !second.Updated.After(first.Updated) {
+		t.Fatalf("second Updated = %v, want after %v", second.Updated, first.Updated)
+	}
+	if err := waitForRunDone(t, done); !errors.Is(err, ErrExhaustedSchedule) {
+		t.Fatalf("Run() = %v, want ErrExhaustedSchedule", err)
+	}
+}
+
+func TestRunnerRunAcceptsZeroScheduleDelay(t *testing.T) {
+	t.Parallel()
+
+	runner := newTestRunner(
+		t,
+		newTestClock(),
+		WithSchedule(delay.Delays(0)),
+		WithInitialProbe(false),
+	)
+
+	err := runner.Run(context.Background())
+
+	if !errors.Is(err, ErrExhaustedSchedule) {
+		t.Fatalf("Run() = %v, want ErrExhaustedSchedule", err)
+	}
+	snapshot, ok := runner.Snapshot(health.TargetReady)
+	if !ok {
+		t.Fatal("Snapshot() ok = false, want true")
+	}
+	if snapshot.Generation != 1 {
+		t.Fatalf("Generation = %d, want 1", snapshot.Generation)
+	}
+}
+
+func TestRunnerRunInitialProbeBeforeScheduleDelay(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	clk := newTestClock()
+	runner := newTestRunner(
+		t,
+		clk,
+		WithSchedule(delay.Delays(time.Hour)),
+		WithInitialProbe(true),
+	)
+	done := make(chan error, 1)
+
+	go func() {
+		done <- runner.Run(ctx)
+	}()
+
+	snapshot := waitForGeneration(t, runner, health.TargetReady, 1)
+	if snapshot.Generation != 1 {
+		t.Fatalf("Generation = %d, want 1", snapshot.Generation)
+	}
+
+	cancel()
+	if err := waitForRunDone(t, done); err != nil {
+		t.Fatalf("Run() = %v, want nil", err)
+	}
+}
+
+func TestRunnerRunReturnsExhaustedSchedule(t *testing.T) {
+	t.Parallel()
+
+	runner := newTestRunner(
+		t,
+		newTestClock(),
+		WithSchedule(delay.Delays()),
+		WithInitialProbe(false),
+	)
+
+	err := runner.Run(context.Background())
+
+	if !errors.Is(err, ErrExhaustedSchedule) {
+		t.Fatalf("Run() = %v, want ErrExhaustedSchedule", err)
+	}
+}
+
+func TestRunnerRunReturnsNilWhenContextCanceledBeforeScheduleExhaustion(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	runner := newTestRunner(
+		t,
+		newTestClock(),
+		WithSchedule(delay.Delays()),
+		WithInitialProbe(false),
+	)
+
+	if err := runner.Run(ctx); err != nil {
+		t.Fatalf("Run(canceled ctx) = %v, want nil", err)
+	}
+}
+
+func TestRunnerRunRejectsNilSequence(t *testing.T) {
+	t.Parallel()
+
+	runner := newTestRunner(
+		t,
+		newTestClock(),
+		WithSchedule(nilSequenceSchedule{}),
+		WithInitialProbe(false),
+	)
+
+	err := runner.Run(context.Background())
+
+	if !errors.Is(err, ErrNilSequence) {
+		t.Fatalf("Run() = %v, want ErrNilSequence", err)
+	}
+}
+
+func TestRunnerRunRejectsNegativeScheduleDelay(t *testing.T) {
+	t.Parallel()
+
+	runner := newTestRunner(
+		t,
+		newTestClock(),
+		WithSchedule(negativeDelaySchedule{}),
+		WithInitialProbe(false),
+	)
+
+	err := runner.Run(context.Background())
+
+	if !errors.Is(err, ErrInvalidScheduleDelay) {
+		t.Fatalf("Run() = %v, want ErrInvalidScheduleDelay", err)
 	}
 }
 

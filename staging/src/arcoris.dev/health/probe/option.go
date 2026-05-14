@@ -22,8 +22,8 @@ package probe
 // created. They do not mutate an already constructed Runner and are not retained
 // as option values after construction.
 //
-// Options must remain limited to probe-owned mechanics: clock, fixed probe
-// interval, snapshot staleness window, initial probe behavior, and target list.
+// Options must remain limited to probe-owned mechanics: clock, schedule,
+// snapshot staleness window, initial probe behavior, and target list.
 // They must not configure health checks, registries, evaluator execution policy,
 // HTTP/gRPC adapters, metrics, logging, tracing, lifecycle transitions, restart
 // policy, admission, routing, scheduling, retries, or retry delay growth.

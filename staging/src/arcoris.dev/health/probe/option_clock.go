@@ -21,11 +21,12 @@ import "arcoris.dev/chrono/clock"
 // WithClock configures the clock used by Runner.
 //
 // Runner requires clock.Clock rather than clock.PassiveClock because package probe
-// owns a ticker loop. The configured clock provides observation time for cache
-// updates, stale calculations through Since, and the ticker that drives Run.
+// owns a schedule-driven loop. The configured clock provides observation time
+// for cache updates, stale calculations through Since, and timers that drive
+// Run.
 //
 // A nil clock is rejected with ErrNilClock. Custom clock implementations used by
-// Runner must be safe for the ordinary ownership pattern where Run owns ticker
+// Runner must be safe for the ordinary ownership pattern where Run owns timer
 // lifecycle and concurrent readers call Snapshot or Snapshots while Run updates
 // the cache.
 func WithClock(clk clock.Clock) Option {

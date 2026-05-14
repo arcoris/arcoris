@@ -21,7 +21,7 @@ import "time"
 // WithStaleAfter configures the cache staleness window.
 //
 // A zero staleAfter disables stale detection. Positive values enable stale
-// detection. Negative values are rejected. Changing the probe interval does not
+// detection. Negative values are rejected. Changing the probe schedule does not
 // automatically change staleAfter; callers that need a specific freshness ratio
 // should configure both explicitly.
 func WithStaleAfter(staleAfter time.Duration) Option {

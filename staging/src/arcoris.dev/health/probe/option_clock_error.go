@@ -27,8 +27,9 @@ var (
 	// ErrNilClock identifies a nil clock passed to WithClock or left in Runner
 	// configuration.
 	//
-	// Runner owns a ticker loop and uses clock reads for cache update timestamps
-	// and staleness checks. A nil clock would panic during runtime probing.
+	// Runner owns a schedule-driven loop and uses clock reads for cache update
+	// timestamps and staleness checks. A nil clock would panic during runtime
+	// probing.
 	ErrNilClock = errors.New("healthprobe: nil clock")
 )
 

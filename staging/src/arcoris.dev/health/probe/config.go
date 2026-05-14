@@ -20,11 +20,12 @@ import (
 	"time"
 
 	"arcoris.dev/chrono/clock"
+	"arcoris.dev/chrono/delay"
 	"arcoris.dev/health"
 )
 
 const (
-	// defaultInterval is the default fixed probe cadence.
+	// defaultInterval is the duration backing the default fixed probe schedule.
 	//
 	// The value is intentionally conservative: frequent enough to keep cached
 	// readiness and liveness snapshots useful, but not so aggressive that a default
@@ -33,9 +34,9 @@ const (
 
 	// defaultStaleAfter is the default cache freshness window.
 	//
-	// The default is three default probe intervals. Callers that change interval
-	// should also configure staleAfter explicitly when they need a different
-	// freshness relationship.
+	// The default remains 15s, matching three default fixed schedule delays.
+	// Callers that configure custom schedules should also configure staleAfter
+	// explicitly when they need a different freshness relationship.
 	defaultStaleAfter = 15 * time.Second
 )
 
@@ -45,7 +46,7 @@ const (
 // constructors, while NewRunner receives a complete normalized configuration.
 type config struct {
 	clock        clock.Clock
-	interval     time.Duration
+	schedule     delay.Schedule
 	staleAfter   time.Duration
 	targets      []health.Target
 	initialProbe bool
@@ -58,7 +59,7 @@ type config struct {
 func defaultConfig() config {
 	return config{
 		clock:        clock.RealClock{},
-		interval:     defaultInterval,
+		schedule:     delay.Fixed(defaultInterval),
 		staleAfter:   defaultStaleAfter,
 		initialProbe: true,
 	}
@@ -69,7 +70,7 @@ func (cfg config) validate() error {
 	if nilClock(cfg.clock) {
 		return ErrNilClock
 	}
-	if err := validateInterval(cfg.interval); err != nil {
+	if err := validateSchedule(cfg.schedule); err != nil {
 		return err
 	}
 	if err := validateStaleAfter(cfg.staleAfter); err != nil {

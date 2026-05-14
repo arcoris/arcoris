@@ -44,7 +44,7 @@ func NewRunner(evaluator Evaluator, opts ...Option) (*Runner, error) {
 		store:        newStore(targets),
 		clock:        cfg.clock,
 		targets:      targets,
-		interval:     cfg.interval,
+		schedule:     cfg.schedule,
 		staleAfter:   cfg.staleAfter,
 		initialProbe: cfg.initialProbe,
 	}, nil

@@ -28,12 +28,12 @@ var (
 	// ErrNilRunner identifies a Run call on a nil Runner receiver.
 	//
 	// Snapshot and Snapshots treat nil Runner receivers as empty readers. Run
-	// returns this stable error because a nil Runner cannot own a ticker loop.
+	// returns this stable error because a nil Runner cannot own a probe loop.
 	ErrNilRunner = errors.New("healthprobe: nil runner")
 
 	// ErrRunnerRunning identifies a concurrent Run call on the same Runner.
 	//
-	// Runner owns one ticker loop. Running two loops for the same Runner would
-	// duplicate probe work and create ambiguous snapshot generations.
+	// Runner owns one schedule-driven loop. Running two loops for the same Runner
+	// would duplicate probe work and create ambiguous snapshot generations.
 	ErrRunnerRunning = errors.New("healthprobe: runner already running")
 )

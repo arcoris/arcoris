@@ -51,8 +51,8 @@ func TestApplyOptionsAppliesInOrder(t *testing.T) {
 		t.Fatalf("applyOptions() = %v, want nil", err)
 	}
 
-	if cfg.interval != 2*time.Second {
-		t.Fatalf("interval = %s, want 2s", cfg.interval)
+	if d := firstScheduleDelay(t, cfg.schedule); d != 2*time.Second {
+		t.Fatalf("schedule delay = %s, want 2s", d)
 	}
 	if len(cfg.targets) != 1 || cfg.targets[0] != health.TargetReady {
 		t.Fatalf("targets = %v, want [ready]", cfg.targets)

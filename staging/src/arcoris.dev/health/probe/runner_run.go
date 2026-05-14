@@ -16,14 +16,19 @@
 
 package probe
 
-import "context"
+import (
+	"context"
+	"time"
 
-// Run starts the fixed-interval probe loop and blocks until ctx is stopped.
+	"arcoris.dev/chrono/delay"
+)
+
+// Run starts the schedule-driven probe loop and blocks until ctx is stopped.
 //
-// Run owns exactly one ticker loop for the Runner. Concurrent Run calls on the
-// same Runner return ErrRunnerRunning. Context cancellation is treated as normal
-// loop shutdown and returns nil. Calling Run on a nil Runner returns
-// ErrNilRunner.
+// Run owns exactly one schedule sequence for the Runner. Concurrent Run calls
+// on the same Runner return ErrRunnerRunning. Context cancellation is treated as
+// normal loop shutdown and returns nil. Schedule exhaustion returns
+// ErrExhaustedSchedule. Calling Run on a nil Runner returns ErrNilRunner.
 //
 // Run panics when ctx is nil. A nil context would create an unowned background
 // loop and hide a caller wiring bug.
@@ -46,15 +51,61 @@ func (r *Runner) Run(ctx context.Context) error {
 		}
 	}
 
-	ticker := r.clock.NewTicker(r.interval)
-	defer ticker.Stop()
+	if ctx.Err() != nil {
+		return nil
+	}
+
+	sequence, err := newSequence(r.schedule)
+	if err != nil {
+		return err
+	}
 
 	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-ticker.C():
-			r.runCycle(ctx)
+		wait, ok, err := nextDelay(ctx, sequence)
+		if err != nil {
+			return err
 		}
+		if !ok {
+			return nil
+		}
+		if !r.waitDelay(ctx, wait) {
+			return nil
+		}
+
+		r.runCycle(ctx)
+		if ctx.Err() != nil {
+			return nil
+		}
+	}
+}
+
+func nextDelay(ctx context.Context, sequence delay.Sequence) (time.Duration, bool, error) {
+	d, ok := sequence.Next()
+	if !ok {
+		if ctx.Err() != nil {
+			return 0, false, nil
+		}
+		return 0, false, ErrExhaustedSchedule
+	}
+	if d < 0 {
+		return 0, false, InvalidScheduleDelayError{Delay: d}
+	}
+
+	return d, true, nil
+}
+
+func (r *Runner) waitDelay(ctx context.Context, d time.Duration) bool {
+	if d == 0 {
+		return true
+	}
+
+	timer := r.clock.NewTimer(d)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return false
+	case <-timer.C():
+		return true
 	}
 }

@@ -20,16 +20,20 @@
 // # Package scope
 //
 // Package probe is an optional runtime cache layer over package health. A Runner
-// owns a fixed-interval probe loop, calls an Evaluator source for each configured
-// target, stores one latest Snapshot per target, and lets readers inspect cached
-// observations without executing checks directly.
+// owns a schedule-driven probe loop, calls an Evaluator source for each
+// configured target, stores one latest Snapshot per target, and lets readers
+// inspect cached observations without executing checks directly. The default
+// schedule is fixed; WithInterval is a convenience wrapper for that common case.
 //
 // The package intentionally does not define health checks, own health
 // registries, duplicate target status aggregation, duplicate reason validation,
 // change evaluator execution policy, expose HTTP or gRPC endpoints, publish
 // metrics, log diagnostics, attach tracing spans, handle process signals, drive
-// lifecycle transitions, implement retries or backoff, restart components, or
-// make admission, routing, scheduling, or workload-control decisions.
+// lifecycle transitions, implement retries or result-dependent backoff, restart
+// components, or make admission, routing, target-specific scheduling, or
+// workload-control decisions. Advanced schedules may provide jitter, capped
+// sequences, or finite sequences. Finite schedule exhaustion ends Run with an
+// error.
 //
 // # Relationship to health
 //
@@ -49,11 +53,11 @@
 //
 // # Runtime ownership
 //
-// NewRunner validates evaluator, clock, interval, staleness window, and explicit
-// target list, but it does not start background work. Run owns exactly one ticker
-// loop while the caller's context is active. Concurrent Run calls on the same
-// Runner are rejected. When Run exits after context cancellation, the Runner can
-// be started again by the same owner or a later owner.
+// NewRunner validates evaluator, clock, schedule, staleness window, and explicit
+// target list, but it does not start background work. Run owns exactly one
+// schedule sequence while the caller's context is active. Concurrent Run calls
+// on the same Runner are rejected. When Run exits after context cancellation,
+// the Runner can be started again by the same owner or a later owner.
 //
 // # Snapshot model
 //
@@ -85,14 +89,14 @@
 //   - option.go owns the Option contract and option application order;
 //   - config.go owns normalized Runner construction settings;
 //   - option_clock.go and option_clock_error.go own clock configuration;
-//   - option_schedule.go and option_schedule_error.go own probe cadence and
-//     initial-probe configuration;
+//   - schedule.go and schedule_error.go own probe cadence and initial-probe
+//     configuration;
 //   - option_stale.go and stale_error.go own stale-after configuration;
 //   - option_targets.go owns public target-list options;
 //   - target_list.go and target_error.go own target-list validation and copying;
 //   - runner.go owns the Runner type;
 //   - runner_constructor.go owns Runner construction;
-//   - runner_run.go owns ticker-loop lifecycle;
+//   - runner_run.go owns schedule-loop lifecycle;
 //   - runner_cycle.go owns one probe cycle and evaluator-error normalization;
 //   - runner_snapshot.go owns public read methods;
 //   - runner_error.go owns runner error sentinels;
@@ -104,5 +108,5 @@
 // # Dependency policy
 //
 // Production code depends only on the Go standard library, arcoris.dev/health,
-// and arcoris.dev/chrono/clock.
+// arcoris.dev/chrono/clock, and arcoris.dev/chrono/delay.
 package probe

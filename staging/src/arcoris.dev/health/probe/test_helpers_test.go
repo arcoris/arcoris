@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"arcoris.dev/chrono/clock"
+	"arcoris.dev/chrono/delay"
 	"arcoris.dev/health"
 	"arcoris.dev/health/healthtest"
 )
@@ -163,4 +164,37 @@ func sameTargets(l []health.Target, r []health.Target) bool {
 	}
 
 	return true
+}
+
+func firstScheduleDelay(t *testing.T, schedule delay.Schedule) time.Duration {
+	t.Helper()
+
+	sequence := schedule.NewSequence()
+	if sequence == nil {
+		t.Fatal("schedule returned nil sequence")
+	}
+	d, ok := sequence.Next()
+	if !ok {
+		t.Fatal("schedule sequence exhausted before first delay")
+	}
+
+	return d
+}
+
+type nilSequenceSchedule struct{}
+
+func (nilSequenceSchedule) NewSequence() delay.Sequence {
+	return nil
+}
+
+type negativeDelaySchedule struct{}
+
+func (negativeDelaySchedule) NewSequence() delay.Sequence {
+	return negativeDelaySequence{}
+}
+
+type negativeDelaySequence struct{}
+
+func (negativeDelaySequence) Next() (time.Duration, bool) {
+	return -time.Nanosecond, true
 }

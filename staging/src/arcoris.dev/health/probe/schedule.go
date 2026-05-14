@@ -16,21 +16,43 @@
 
 package probe
 
-import "time"
+import (
+	"time"
 
-// WithInterval configures the fixed interval between probe cycles.
+	"arcoris.dev/chrono/delay"
+)
+
+// WithInterval configures a fixed schedule between probe cycles.
 //
-// The interval must be positive. Runner uses one fixed interval for all
-// configured targets in v1. Target-specific intervals, jitter, adaptive backoff,
-// and failure-specific scheduling are intentionally outside the base runner
-// contract.
+// The interval must be positive. WithInterval is a convenience wrapper around
+// WithSchedule(delay.Fixed(interval)) for callers that need a simple fixed
+// cadence.
 func WithInterval(interval time.Duration) Option {
 	return func(cfg *config) error {
 		if err := validateInterval(interval); err != nil {
 			return err
 		}
 
-		cfg.interval = interval
+		cfg.schedule = delay.Fixed(interval)
+		return nil
+	}
+}
+
+// WithSchedule configures the delay schedule between probe cycles.
+//
+// Each Run call creates its own independent sequence from schedule. Zero delays
+// produced by the sequence are valid and run the next cycle immediately. Finite
+// sequence exhaustion stops Run with ErrExhaustedSchedule. Target-specific
+// schedules, result-dependent backoff, retry behavior, and jitter-specific
+// options remain outside the base runner contract; callers can compose those at
+// the delay.Schedule layer.
+func WithSchedule(schedule delay.Schedule) Option {
+	return func(cfg *config) error {
+		if err := validateSchedule(schedule); err != nil {
+			return err
+		}
+
+		cfg.schedule = schedule
 		return nil
 	}
 }
@@ -39,9 +61,9 @@ func WithInterval(interval time.Duration) Option {
 // when Run starts.
 //
 // Initial probing is enabled by default so Snapshot and Snapshots can become
-// useful before the first ticker interval elapses. Disabling the initial probe is
+// useful before the first schedule delay elapses. Disabling the initial probe is
 // useful in tests or in components that want the first observation to align with
-// the periodic cadence exactly.
+// the configured schedule exactly.
 func WithInitialProbe(enabled bool) Option {
 	return func(cfg *config) error {
 		cfg.initialProbe = enabled
