@@ -34,6 +34,6 @@ var (
 	// ErrRunnerRunning identifies a concurrent Run call on the same Runner.
 	//
 	// Runner owns one schedule-driven loop. Running two loops for the same Runner
-	// would duplicate probe work and create ambiguous snapshot generations.
+	// would duplicate probe work and create ambiguous snapshot revisions.
 	ErrRunnerRunning = errors.New("healthprobe: runner already running")
 )

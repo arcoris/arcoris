@@ -27,6 +27,11 @@ import (
 //
 // A cycle is synchronous and non-overlapping. Runner deliberately evaluates
 // targets sequentially; check-level parallelism belongs to the evaluator source.
+//
+// The store update no longer receives an explicit timestamp. The per-target
+// snapshot.Store records Updated at commit time using the same clock configured
+// on Runner. This keeps write metadata ownership inside the storage primitive
+// and keeps runCycle focused on evaluator orchestration.
 func (r *Runner) runCycle(ctx context.Context) {
 	for _, target := range r.targets {
 		report, ok := r.evaluateTarget(ctx, target)
@@ -37,7 +42,7 @@ func (r *Runner) runCycle(ctx context.Context) {
 			return
 		}
 
-		r.store.update(target, report, r.clock.Now())
+		r.store.update(target, report)
 	}
 }
 
@@ -47,6 +52,11 @@ func (r *Runner) runCycle(ctx context.Context) {
 // If the runner context stops before or during evaluation, the result is not
 // stored. This prevents normal runner shutdown from overwriting the last useful
 // cached snapshot with cancellation artifacts.
+//
+// Evaluator errors are converted into an unknown report because probe is a cache
+// layer over health reports, not an error-reporting transport. Context
+// cancellation remains special: normal shutdown should not publish a synthetic
+// canceled observation.
 func (r *Runner) evaluateTarget(ctx context.Context, target health.Target) (health.Report, bool) {
 	if ctx.Err() != nil {
 		return health.Report{}, false
@@ -69,6 +79,10 @@ func (r *Runner) evaluateTarget(ctx context.Context, target health.Target) (heal
 // Targets are validated during Runner construction, so evaluator errors should
 // be rare. The runner stores an unknown report instead of stopping the loop or
 // exposing a raw internal error through Snapshot.
+//
+// observed is the health report observation time, not the cache commit time. The
+// cache commit time is supplied later by snapshot.Store and exposed as
+// Snapshot.Updated.
 func unknownReport(target health.Target, observed time.Time) health.Report {
 	return health.Report{
 		Target:   target,

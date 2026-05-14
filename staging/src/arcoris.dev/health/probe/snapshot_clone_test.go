@@ -131,9 +131,9 @@ func TestCloneSnapshotCopiesEmbeddedReportChecks(t *testing.T) {
 				).WithObserved(observed),
 			},
 		},
-		Updated:    updated,
-		Generation: 42,
-		Stale:      true,
+		Updated:  updated,
+		Revision: 42,
+		Stale:    true,
 	}
 
 	cloned := cloneSnapshot(source)
@@ -156,8 +156,8 @@ func TestCloneSnapshotCopiesEmbeddedReportChecks(t *testing.T) {
 	if !cloned.Updated.Equal(source.Updated) {
 		t.Fatalf("Updated = %v, want %v", cloned.Updated, source.Updated)
 	}
-	if cloned.Generation != source.Generation {
-		t.Fatalf("Generation = %d, want %d", cloned.Generation, source.Generation)
+	if cloned.Revision != source.Revision {
+		t.Fatalf("Revision = %d, want %d", cloned.Revision, source.Revision)
 	}
 	if cloned.Stale != source.Stale {
 		t.Fatalf("Stale = %v, want %v", cloned.Stale, source.Stale)

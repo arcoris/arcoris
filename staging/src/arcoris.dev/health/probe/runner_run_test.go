@@ -72,9 +72,9 @@ func TestRunnerRunWaitsForScheduleDelayWhenInitialProbeDisabled(t *testing.T) {
 		t.Fatal("Snapshot before schedule delay ok = true, want false")
 	}
 
-	snapshot := stepUntilGeneration(t, clk, runner, health.TargetReady, 1, interval)
-	if snapshot.Generation != 1 {
-		t.Fatalf("Generation = %d, want 1", snapshot.Generation)
+	snapshot := stepUntilRevision(t, clk, runner, health.TargetReady, 1, interval)
+	if snapshot.Revision != 1 {
+		t.Fatalf("Revision = %d, want 1", snapshot.Revision)
 	}
 
 	cancel()
@@ -83,7 +83,7 @@ func TestRunnerRunWaitsForScheduleDelayWhenInitialProbeDisabled(t *testing.T) {
 	}
 }
 
-func TestRunnerRunScheduleDrivenProbeIncrementsGeneration(t *testing.T) {
+func TestRunnerRunScheduleDrivenProbeIncrementsRevision(t *testing.T) {
 	t.Parallel()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -99,14 +99,14 @@ func TestRunnerRunScheduleDrivenProbeIncrementsGeneration(t *testing.T) {
 	}()
 
 	waitForRunnerRunning(t, runner)
-	first := stepUntilGeneration(t, clk, runner, health.TargetReady, 1, interval)
-	second := stepUntilGeneration(t, clk, runner, health.TargetReady, 2, interval)
+	first := stepUntilRevision(t, clk, runner, health.TargetReady, 1, interval)
+	second := stepUntilRevision(t, clk, runner, health.TargetReady, 2, interval)
 
-	if first.Generation != 1 {
-		t.Fatalf("first Generation = %d, want 1", first.Generation)
+	if first.Revision != 1 {
+		t.Fatalf("first Revision = %d, want 1", first.Revision)
 	}
-	if second.Generation != 2 {
-		t.Fatalf("second Generation = %d, want 2", second.Generation)
+	if second.Revision != 2 {
+		t.Fatalf("second Revision = %d, want 2", second.Revision)
 	}
 	if !second.Updated.After(first.Updated) {
 		t.Fatalf("second Updated = %v, want after %v", second.Updated, first.Updated)
@@ -132,14 +132,14 @@ func TestRunnerRunUsesScheduleDelays(t *testing.T) {
 	}()
 
 	waitForRunnerRunning(t, runner)
-	first := stepUntilGeneration(t, clk, runner, health.TargetReady, 1, time.Second)
-	second := stepUntilGeneration(t, clk, runner, health.TargetReady, 2, 3*time.Second)
+	first := stepUntilRevision(t, clk, runner, health.TargetReady, 1, time.Second)
+	second := stepUntilRevision(t, clk, runner, health.TargetReady, 2, 3*time.Second)
 
-	if first.Generation != 1 {
-		t.Fatalf("first Generation = %d, want 1", first.Generation)
+	if first.Revision != 1 {
+		t.Fatalf("first Revision = %d, want 1", first.Revision)
 	}
-	if second.Generation != 2 {
-		t.Fatalf("second Generation = %d, want 2", second.Generation)
+	if second.Revision != 2 {
+		t.Fatalf("second Revision = %d, want 2", second.Revision)
 	}
 	if !second.Updated.After(first.Updated) {
 		t.Fatalf("second Updated = %v, want after %v", second.Updated, first.Updated)
@@ -168,8 +168,8 @@ func TestRunnerRunAcceptsZeroScheduleDelay(t *testing.T) {
 	if !ok {
 		t.Fatal("Snapshot() ok = false, want true")
 	}
-	if snapshot.Generation != 1 {
-		t.Fatalf("Generation = %d, want 1", snapshot.Generation)
+	if snapshot.Revision != 1 {
+		t.Fatalf("Revision = %d, want 1", snapshot.Revision)
 	}
 }
 
@@ -192,9 +192,9 @@ func TestRunnerRunInitialProbeBeforeScheduleDelay(t *testing.T) {
 		done <- runner.Run(ctx)
 	}()
 
-	snapshot := waitForGeneration(t, runner, health.TargetReady, 1)
-	if snapshot.Generation != 1 {
-		t.Fatalf("Generation = %d, want 1", snapshot.Generation)
+	snapshot := waitForRevision(t, runner, health.TargetReady, 1)
+	if snapshot.Revision != 1 {
+		t.Fatalf("Revision = %d, want 1", snapshot.Revision)
 	}
 
 	cancel()
@@ -322,9 +322,9 @@ func TestRunnerRunCanRestartAfterStop(t *testing.T) {
 		secondDone <- runner.Run(secondCtx)
 	}()
 	waitForRunnerRunning(t, runner)
-	snapshot := stepUntilGeneration(t, clk, runner, health.TargetReady, 1, interval)
-	if snapshot.Generation != 1 {
-		t.Fatalf("Generation = %d, want 1", snapshot.Generation)
+	snapshot := stepUntilRevision(t, clk, runner, health.TargetReady, 1, interval)
+	if snapshot.Revision != 1 {
+		t.Fatalf("Revision = %d, want 1", snapshot.Revision)
 	}
 
 	secondCancel()
@@ -453,7 +453,7 @@ func TestRunnerConcurrentReadDuringRun(t *testing.T) {
 		clk.Step(interval)
 	}
 	readers.Wait()
-	_ = stepUntilGeneration(t, clk, runner, health.TargetReady, 1, interval)
+	_ = stepUntilRevision(t, clk, runner, health.TargetReady, 1, interval)
 
 	cancel()
 	if err := waitForRunDone(t, done); err != nil {

@@ -24,6 +24,10 @@ import "arcoris.dev/health"
 // when the Runner is nil, target is not concrete, target is not configured, or no
 // valid observation has been stored for target yet. Stale is computed at the
 // read boundary using Runner's configured clock.
+//
+// store.snapshot returns an unstaled public Snapshot built from
+// snapshot.Stamped[observation]. Runner then adds Stale because staleness depends
+// on the read time and stale-after window, not only on the committed value.
 func (r *Runner) Snapshot(target health.Target) (Snapshot, bool) {
 	if r == nil || !target.IsConcrete() || !containsTarget(r.targets, target) {
 		return Snapshot{}, false
@@ -47,6 +51,11 @@ func (r *Runner) Snapshot(target health.Target) (Snapshot, bool) {
 // A nil Runner returns nil. Unobserved or invalid snapshots are omitted. Each
 // returned snapshot is detached from Runner internals. Stale is computed at the
 // read boundary for each snapshot.
+//
+// The store preserves configured target order and returns only observed targets.
+// Runner performs a final IsObserved check after stale calculation so invalid
+// data cannot cross the public read boundary even if future store internals
+// change.
 func (r *Runner) Snapshots() []Snapshot {
 	if r == nil {
 		return nil
@@ -65,6 +74,8 @@ func (r *Runner) Snapshots() []Snapshot {
 }
 
 func (r *Runner) withReadStale(snapshot Snapshot) Snapshot {
+	// Stale is not stored in observation or snapshot.Store. It is recomputed on
+	// every read so a snapshot can age naturally without forcing a write.
 	if !snapshot.IsObserved() {
 		snapshot.Stale = false
 		return snapshot

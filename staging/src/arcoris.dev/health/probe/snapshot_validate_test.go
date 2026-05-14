@@ -21,7 +21,31 @@ import (
 	"time"
 
 	"arcoris.dev/health"
+	"arcoris.dev/snapshot"
 )
+
+func TestSnapshotObservedRequiresRevision(t *testing.T) {
+	t.Parallel()
+
+	observed := time.Unix(9, 0)
+	snap := Snapshot{
+		Target: health.TargetReady,
+		Report: health.Report{
+			Target:   health.TargetReady,
+			Status:   health.StatusHealthy,
+			Observed: observed,
+		},
+		Revision: snapshot.ZeroRevision,
+		Updated:  time.Unix(10, 0),
+	}
+
+	if snap.IsValid() {
+		t.Fatal("IsValid() = true, want false")
+	}
+	if snap.IsObserved() {
+		t.Fatal("IsObserved() = true, want false")
+	}
+}
 
 func TestSnapshotIsValid(t *testing.T) {
 	t.Parallel()
@@ -50,8 +74,8 @@ func TestSnapshotIsValid(t *testing.T) {
 						health.Healthy("database").WithObserved(observed),
 					},
 				},
-				Updated:    updated,
-				Generation: 1,
+				Updated:  updated,
+				Revision: 1,
 			},
 			want: true,
 		},
@@ -64,8 +88,8 @@ func TestSnapshotIsValid(t *testing.T) {
 					Status:   health.StatusUnknown,
 					Observed: observed,
 				},
-				Updated:    updated,
-				Generation: 1,
+				Updated:  updated,
+				Revision: 1,
 			},
 			want: true,
 		},
@@ -78,17 +102,17 @@ func TestSnapshotIsValid(t *testing.T) {
 					Status:   health.StatusHealthy,
 					Observed: observed,
 				},
-				Updated:    updated,
-				Generation: 2,
-				Stale:      true,
+				Updated:  updated,
+				Revision: 2,
+				Stale:    true,
 			},
 			want: true,
 		},
 		{
-			name: "updated and generation without target and report",
+			name: "updated and revision without target and report",
 			snapshot: Snapshot{
-				Updated:    updated,
-				Generation: 1,
+				Updated:  updated,
+				Revision: 1,
 			},
 		},
 		{
@@ -100,8 +124,8 @@ func TestSnapshotIsValid(t *testing.T) {
 					Status:   health.StatusUnknown,
 					Observed: observed,
 				},
-				Updated:    updated,
-				Generation: 1,
+				Updated:  updated,
+				Revision: 1,
 			},
 		},
 		{
@@ -113,8 +137,8 @@ func TestSnapshotIsValid(t *testing.T) {
 					Status:   health.StatusHealthy,
 					Observed: observed,
 				},
-				Updated:    updated,
-				Generation: 1,
+				Updated:  updated,
+				Revision: 1,
 			},
 		},
 		{
@@ -126,8 +150,8 @@ func TestSnapshotIsValid(t *testing.T) {
 					Status:   health.Status(255),
 					Observed: observed,
 				},
-				Updated:    updated,
-				Generation: 1,
+				Updated:  updated,
+				Revision: 1,
 			},
 		},
 		{
@@ -140,8 +164,8 @@ func TestSnapshotIsValid(t *testing.T) {
 					Observed: observed,
 					Duration: -time.Millisecond,
 				},
-				Updated:    updated,
-				Generation: 1,
+				Updated:  updated,
+				Revision: 1,
 			},
 		},
 		{
@@ -153,11 +177,11 @@ func TestSnapshotIsValid(t *testing.T) {
 					Status:   health.StatusHealthy,
 					Observed: observed,
 				},
-				Generation: 1,
+				Revision: 1,
 			},
 		},
 		{
-			name: "missing generation",
+			name: "missing revision",
 			snapshot: Snapshot{
 				Target: health.TargetReady,
 				Report: health.Report{

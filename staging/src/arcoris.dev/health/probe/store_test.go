@@ -23,59 +23,62 @@ import (
 
 	"arcoris.dev/health"
 	"arcoris.dev/health/healthtest"
+	"arcoris.dev/snapshot"
 )
 
 func TestStoreSnapshotLifecycle(t *testing.T) {
 	t.Parallel()
 
-	s := newStore([]health.Target{health.TargetReady, health.TargetLive})
+	clk := newTestClock()
+	s := newStore([]health.Target{health.TargetReady, health.TargetLive}, clk)
 
 	if _, ok := s.snapshot(health.TargetReady); ok {
 		t.Fatal("snapshot before update ok = true, want false")
 	}
 
-	updated := time.Unix(10, 0)
 	report := healthtest.HealthyReport(health.TargetReady)
-
-	if ok := s.update(health.TargetReady, report, updated); !ok {
+	if ok := s.update(health.TargetReady, report); !ok {
 		t.Fatal("update() = false, want true")
 	}
-	snapshot, ok := s.snapshot(health.TargetReady)
+	snap, ok := s.snapshot(health.TargetReady)
 	if !ok {
 		t.Fatal("snapshot after update ok = false, want true")
 	}
-	if snapshot.Generation != 1 {
-		t.Fatalf("Generation = %d, want 1", snapshot.Generation)
+	if snap.Revision != snapshot.Revision(1) {
+		t.Fatalf("Revision = %d, want 1", snap.Revision)
 	}
-	if !snapshot.Updated.Equal(updated) {
-		t.Fatalf("Updated = %v, want %v", snapshot.Updated, updated)
+	if !snap.Updated.Equal(testNow) {
+		t.Fatalf("Updated = %v, want %v", snap.Updated, testNow)
 	}
 
-	if ok := s.update(health.TargetReady, report, updated.Add(time.Second)); !ok {
+	clk.Step(time.Second)
+	if ok := s.update(health.TargetReady, report); !ok {
 		t.Fatal("second update() = false, want true")
 	}
-	snapshot, ok = s.snapshot(health.TargetReady)
+	snap, ok = s.snapshot(health.TargetReady)
 	if !ok {
 		t.Fatal("snapshot after second update ok = false, want true")
 	}
-	if snapshot.Generation != 2 {
-		t.Fatalf("Generation = %d, want 2", snapshot.Generation)
+	if snap.Revision != snapshot.Revision(2) {
+		t.Fatalf("Revision = %d, want 2", snap.Revision)
+	}
+	if !snap.Updated.Equal(testNow.Add(time.Second)) {
+		t.Fatalf("Updated = %v, want %v", snap.Updated, testNow.Add(time.Second))
 	}
 }
 
-func TestStoreGenerationIsIndependentPerTarget(t *testing.T) {
+func TestStoreRevisionsAreIndependentPerTarget(t *testing.T) {
 	t.Parallel()
 
-	s := newStore([]health.Target{health.TargetReady, health.TargetLive})
-	updated := time.Unix(10, 0)
+	s := newStore([]health.Target{health.TargetReady, health.TargetLive}, newTestClock())
 
-	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady), updated); !ok {
+	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady)); !ok {
 		t.Fatal("update(ready) = false, want true")
 	}
-	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady), updated); !ok {
+	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady)); !ok {
 		t.Fatal("second update(ready) = false, want true")
 	}
-	if ok := s.update(health.TargetLive, healthtest.HealthyReport(health.TargetLive), updated); !ok {
+	if ok := s.update(health.TargetLive, healthtest.HealthyReport(health.TargetLive)); !ok {
 		t.Fatal("update(live) = false, want true")
 	}
 
@@ -87,24 +90,43 @@ func TestStoreGenerationIsIndependentPerTarget(t *testing.T) {
 	if !ok {
 		t.Fatal("snapshot(live) ok = false, want true")
 	}
-	if ready.Generation != 2 {
-		t.Fatalf("ready Generation = %d, want 2", ready.Generation)
+	if ready.Revision != snapshot.Revision(2) {
+		t.Fatalf("ready Revision = %d, want 2", ready.Revision)
 	}
-	if live.Generation != 1 {
-		t.Fatalf("live Generation = %d, want 1", live.Generation)
+	if live.Revision != snapshot.Revision(1) {
+		t.Fatalf("live Revision = %d, want 1", live.Revision)
 	}
 }
 
-func TestStoreSnapshotsReturnConfiguredOrder(t *testing.T) {
+func TestStoreUpdateUsesSnapshotClock(t *testing.T) {
 	t.Parallel()
 
-	s := newStore([]health.Target{health.TargetReady, health.TargetLive})
-	updated := time.Unix(10, 0)
+	clk := newTestClock()
+	clk.Step(3 * time.Second)
+	s := newStore([]health.Target{health.TargetReady}, clk)
 
-	if ok := s.update(health.TargetLive, healthtest.HealthyReport(health.TargetLive), updated); !ok {
+	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady)); !ok {
+		t.Fatal("update() = false, want true")
+	}
+
+	snap, ok := s.snapshot(health.TargetReady)
+	if !ok {
+		t.Fatal("snapshot ok = false, want true")
+	}
+	if !snap.Updated.Equal(clk.Now()) {
+		t.Fatalf("Updated = %v, want %v", snap.Updated, clk.Now())
+	}
+}
+
+func TestStoreSnapshotsPreserveConfiguredOrder(t *testing.T) {
+	t.Parallel()
+
+	s := newStore([]health.Target{health.TargetReady, health.TargetLive}, newTestClock())
+
+	if ok := s.update(health.TargetLive, healthtest.HealthyReport(health.TargetLive)); !ok {
 		t.Fatal("update(live) = false, want true")
 	}
-	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady), updated); !ok {
+	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady)); !ok {
 		t.Fatal("update(ready) = false, want true")
 	}
 
@@ -120,10 +142,9 @@ func TestStoreSnapshotsReturnConfiguredOrder(t *testing.T) {
 func TestStoreRejectsUnconfiguredTarget(t *testing.T) {
 	t.Parallel()
 
-	s := newStore([]health.Target{health.TargetReady})
-	updated := time.Unix(10, 0)
+	s := newStore([]health.Target{health.TargetReady}, newTestClock())
 
-	if ok := s.update(health.TargetLive, healthtest.HealthyReport(health.TargetLive), updated); ok {
+	if ok := s.update(health.TargetLive, healthtest.HealthyReport(health.TargetLive)); ok {
 		t.Fatal("update(unconfigured) = true, want false")
 	}
 	if _, ok := s.snapshot(health.TargetLive); ok {
@@ -134,18 +155,27 @@ func TestStoreRejectsUnconfiguredTarget(t *testing.T) {
 	}
 }
 
+func TestStoreSnapshotUnobservedTarget(t *testing.T) {
+	t.Parallel()
+
+	s := newStore([]health.Target{health.TargetReady}, newTestClock())
+
+	if _, ok := s.snapshot(health.TargetReady); ok {
+		t.Fatal("snapshot(unobserved) ok = true, want false")
+	}
+}
+
 func TestStoreRejectsInvalidSnapshotInput(t *testing.T) {
 	t.Parallel()
 
-	s := newStore([]health.Target{health.TargetReady})
-	updated := time.Unix(10, 0)
+	s := newStore([]health.Target{health.TargetReady}, newTestClock())
 	report := health.Report{
 		Target:   health.TargetLive,
 		Status:   health.StatusHealthy,
-		Observed: updated,
+		Observed: testNow,
 	}
 
-	if ok := s.update(health.TargetReady, report, updated); ok {
+	if ok := s.update(health.TargetReady, report); ok {
 		t.Fatal("update(mismatched report) = true, want false")
 	}
 	if _, ok := s.snapshot(health.TargetReady); ok {
@@ -153,41 +183,39 @@ func TestStoreRejectsInvalidSnapshotInput(t *testing.T) {
 	}
 }
 
-func TestStoreCopiesReportChecksOnWrite(t *testing.T) {
+func TestStoreUpdateClonesInputReport(t *testing.T) {
 	t.Parallel()
 
-	s := newStore([]health.Target{health.TargetReady})
-	updated := time.Unix(10, 0)
+	s := newStore([]health.Target{health.TargetReady}, newTestClock())
 	report := healthtest.HealthyReport(health.TargetReady)
 
-	if ok := s.update(health.TargetReady, report, updated); !ok {
+	if ok := s.update(health.TargetReady, report); !ok {
 		t.Fatal("update() = false, want true")
 	}
 	report.Checks[0] = health.Unhealthy("mutated", health.ReasonFatal, "mutated")
 
-	snapshot, ok := s.snapshot(health.TargetReady)
+	snap, ok := s.snapshot(health.TargetReady)
 	if !ok {
 		t.Fatal("snapshot ok = false, want true")
 	}
-	if snapshot.Report.Checks[0].Name != "ready_check" {
-		t.Fatalf("stored check name = %q, want ready_check", snapshot.Report.Checks[0].Name)
+	if snap.Report.Checks[0].Name != "ready_check" {
+		t.Fatalf("stored check name = %q, want ready_check", snap.Report.Checks[0].Name)
 	}
 }
 
-func TestStoreCopiesReportChecksOnRead(t *testing.T) {
+func TestStoreSnapshotReturnsDetachedReport(t *testing.T) {
 	t.Parallel()
 
-	s := newStore([]health.Target{health.TargetReady})
-	updated := time.Unix(10, 0)
-	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady), updated); !ok {
+	s := newStore([]health.Target{health.TargetReady}, newTestClock())
+	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady)); !ok {
 		t.Fatal("update() = false, want true")
 	}
 
-	snapshot, ok := s.snapshot(health.TargetReady)
+	snap, ok := s.snapshot(health.TargetReady)
 	if !ok {
 		t.Fatal("snapshot ok = false, want true")
 	}
-	snapshot.Report.Checks[0] = health.Unhealthy("mutated_again", health.ReasonFatal, "mutated")
+	snap.Report.Checks[0] = health.Unhealthy("mutated_again", health.ReasonFatal, "mutated")
 
 	again, ok := s.snapshot(health.TargetReady)
 	if !ok {
@@ -211,8 +239,7 @@ func TestStoreCopiesReportChecksOnRead(t *testing.T) {
 func TestStoreConcurrentReadUpdate(t *testing.T) {
 	t.Parallel()
 
-	s := newStore([]health.Target{health.TargetReady})
-	updated := time.Unix(10, 0)
+	s := newStore([]health.Target{health.TargetReady}, newTestClock())
 
 	var wg sync.WaitGroup
 	for i := 0; i < 4; i++ {
@@ -220,7 +247,7 @@ func TestStoreConcurrentReadUpdate(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for j := 0; j < 100; j++ {
-				_ = s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady), updated)
+				_ = s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady))
 			}
 		}()
 	}
@@ -236,11 +263,11 @@ func TestStoreConcurrentReadUpdate(t *testing.T) {
 	}
 	wg.Wait()
 
-	snapshot, ok := s.snapshot(health.TargetReady)
+	snap, ok := s.snapshot(health.TargetReady)
 	if !ok {
 		t.Fatal("snapshot ok = false, want true")
 	}
-	if snapshot.Generation == 0 {
-		t.Fatal("Generation = 0, want positive")
+	if snap.Revision == snapshot.ZeroRevision {
+		t.Fatal("Revision = 0, want positive")
 	}
 }

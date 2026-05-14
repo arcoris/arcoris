@@ -65,8 +65,9 @@
 // zero Snapshot is valid and means no cached observation. Every observed
 // Snapshot has a concrete Target, a valid health.Report whose Target matches the
 // Snapshot Target, a non-zero Updated timestamp, and a positive per-target
-// Generation. Snapshot.Report.Checks is defensively copied at store write and
-// read boundaries so callers cannot mutate cached state.
+// Revision. Internally, store uses one snapshot.Store[observation] per observed
+// target; the underlying snapshot store assigns Revision and Updated, while
+// Stale remains read-boundary metadata computed by Runner.
 //
 // # Staleness
 //
@@ -80,9 +81,9 @@
 // # Concurrency
 //
 // Runner read methods may be called concurrently with Run. Snapshot and
-// Snapshots return detached values. The private store serializes updates and
-// reads with a mutex, preserves configured target order for Snapshots, and
-// increments Generation independently per target.
+// Snapshots return detached values. The private store preserves configured
+// target order for Snapshots, protects its target map with a mutex, and delegates
+// per-target value, revision, timestamp, and clone isolation to snapshot.Store.
 //
 // # File ownership
 //
@@ -102,11 +103,13 @@
 //   - runner_error.go owns runner error sentinels;
 //   - snapshot.go owns Snapshot invariants and predicates;
 //   - snapshot_clone.go owns defensive copy helpers;
+//   - observation.go owns the private stored observation payload;
 //   - stale.go owns stale calculation;
 //   - store.go owns the private latest-snapshot cache.
 //
 // # Dependency policy
 //
 // Production code depends only on the Go standard library, arcoris.dev/health,
-// arcoris.dev/chrono/clock, and arcoris.dev/chrono/delay.
+// arcoris.dev/chrono/clock, arcoris.dev/chrono/delay, and
+// arcoris.dev/snapshot.
 package probe

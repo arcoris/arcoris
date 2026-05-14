@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"arcoris.dev/health"
+	"arcoris.dev/snapshot"
 )
 
 // Snapshot is the public read model for the latest probed health state of one
@@ -34,10 +35,11 @@ import (
 // state, metrics, logging, restart policy, admission policy, routing, and
 // scheduler decisions belong outside package probe.
 //
-// Snapshot also does not expose evaluator execution errors. Runner converts
-// evaluator observations into health.Report values and keeps the public cache
-// surface report-oriented. Transport adapters MUST still avoid exposing
-// health.Result.Cause unless they explicitly own a safe diagnostic surface.
+// Snapshot is built from the stamped observation held by the internal per-target
+// snapshot.Store. It keeps the public cache surface report-oriented and does not
+// expose evaluator execution errors. Transport adapters MUST still avoid
+// exposing health.Result.Cause unless they explicitly own a safe diagnostic
+// surface.
 type Snapshot struct {
 	// Target is the health target represented by this snapshot.
 	//
@@ -54,21 +56,22 @@ type Snapshot struct {
 	// slice and therefore has shared backing-array semantics unless copied.
 	Report health.Report
 
-	// Updated is the time at which Runner stored Report in its latest-snapshot
-	// cache.
+	// Revision is the per-target snapshot store revision.
+	//
+	// Revision advances each time Runner commits an observation for Target. It is
+	// local to one Runner and one target. It is not a global ordering,
+	// distributed resource version, persistence version, lease epoch, or fencing
+	// token.
+	Revision snapshot.Revision
+
+	// Updated is the time at which the per-target snapshot store committed
+	// Report.
 	//
 	// Updated is distinct from Report.Observed. Report.Observed belongs to the
-	// health evaluation itself; Updated belongs to the probe cache write boundary.
-	// In normal operation they are close, but they intentionally describe
-	// different events.
+	// health evaluation itself; Updated belongs to the snapshot store commit
+	// boundary. In normal operation they are close, but they intentionally
+	// describe different events.
 	Updated time.Time
-
-	// Generation is the per-target cache generation.
-	//
-	// Runner increments Generation each time it stores a new snapshot for the same
-	// target. Generation is local to one Runner instance and is not a distributed
-	// resource version, fencing token, lease epoch, or persistence contract.
-	Generation uint64
 
 	// Stale reports whether the snapshot was older than the configured staleness
 	// window when it was read.
@@ -84,20 +87,24 @@ type Snapshot struct {
 // The zero value represents "no cached observation." Runner read methods should
 // normally return ok=false instead of returning a zero Snapshot, but IsZero is
 // useful in tests and defensive integration code.
+//
+// A zero Snapshot must also have snapshot.ZeroRevision. A committed
+// snapshot.Store observation can never have ZeroRevision, so this keeps absence
+// distinguishable from a real cached observation.
 func (s Snapshot) IsZero() bool {
 	return s.Target == health.TargetUnknown &&
 		reportIsZero(s.Report) &&
+		s.Revision == snapshot.ZeroRevision &&
 		s.Updated.IsZero() &&
-		s.Generation == 0 &&
 		!s.Stale
 }
 
 // IsObserved reports whether s contains a stored probe observation.
 //
-// IsObserved is intentionally stricter than checking Updated and Generation
+// IsObserved is intentionally stricter than checking Updated and Revision
 // alone. A snapshot is observed only when the complete Snapshot invariants hold:
 // a concrete Target, a valid Report for the same Target, a non-zero cache update
-// timestamp, and a positive generation. The embedded Report may still represent
+// timestamp, and a non-zero revision. The embedded Report may still represent
 // an unknown health state.
 func (s Snapshot) IsObserved() bool {
 	return !s.IsZero() && s.IsValid()
@@ -116,9 +123,14 @@ func (s Snapshot) IsFresh() bool {
 //
 // The zero Snapshot is valid and means that no cached observation exists. Any
 // non-zero Snapshot must be a complete observed cache value: Target is concrete,
-// Report is valid, Report.Target matches Target, Updated is non-zero, and
-// Generation is positive. Stale may be true only on an otherwise observed
+// Report is valid, Report.Target matches Target, Revision is non-zero, and
+// Updated is non-zero. Stale may be true only on an otherwise observed
 // Snapshot because stale is read-time cache metadata.
+//
+// IsValid intentionally does not interpret health success or failure. A valid
+// Snapshot may contain a healthy, degraded, unhealthy, or unknown health.Report.
+// This method checks only whether the cache read model is structurally safe to
+// hand to callers.
 func (s Snapshot) IsValid() bool {
 	if s.IsZero() {
 		return true
@@ -132,10 +144,10 @@ func (s Snapshot) IsValid() bool {
 	if !s.Report.IsValid() {
 		return false
 	}
-	if s.Updated.IsZero() {
+	if s.Revision == snapshot.ZeroRevision {
 		return false
 	}
-	if s.Generation == 0 {
+	if s.Updated.IsZero() {
 		return false
 	}
 
@@ -147,6 +159,11 @@ func (s Snapshot) IsValid() bool {
 // health.Report is not directly comparable because it contains the Checks slice.
 // Keep this helper local to package probe instead of changing package health only
 // to support Snapshot.IsZero.
+//
+// A nil Checks slice and an empty Checks slice are both treated as zero here
+// because a zero report means "no report payload", not a committed report with an
+// intentionally empty check list. Committed reports are validated through
+// health.Report.IsValid instead.
 func reportIsZero(report health.Report) bool {
 	return report.Target == health.TargetUnknown &&
 		report.Status == health.StatusUnknown &&

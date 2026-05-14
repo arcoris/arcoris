@@ -39,9 +39,13 @@ func NewRunner(evaluator Evaluator, opts ...Option) (*Runner, error) {
 
 	targets := copyTargets(cfg.targets)
 
+	// Store receives the same clock as Runner so Snapshot.Updated and stale
+	// calculations share one time source. This is especially important for fake
+	// clock tests: the commit time recorded by snapshot.Store must advance with
+	// the same deterministic clock that Runner uses at read time.
 	return &Runner{
 		evaluator:    evaluator,
-		store:        newStore(targets),
+		store:        newStore(targets, cfg.clock),
 		clock:        cfg.clock,
 		targets:      targets,
 		schedule:     cfg.schedule,

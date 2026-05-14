@@ -31,12 +31,27 @@ func cloneReport(report health.Report) health.Report {
 	return report
 }
 
+// cloneObservation returns an observation value whose report is detached from
+// the source observation's report slices.
+//
+// This function is passed directly to snapshot.NewStore. snapshot.Store calls it
+// on write and read boundaries, so it is the central ownership contract between
+// probe and the generic snapshot package. If observation gains more mutable
+// fields later, they must be copied here as well.
+func cloneObservation(obs observation) observation {
+	obs.Report = cloneReport(obs.Report)
+	return obs
+}
+
 // cloneSnapshot returns a snapshot value whose embedded report is detached from
 // the source snapshot's report slices.
 //
 // Snapshot itself contains only value fields, but Snapshot.Report.Checks requires
 // explicit copying. The helper keeps store code small and makes the cache
 // ownership boundary visible in one place.
+//
+// Revision, Updated, Target, and Stale are value fields and are intentionally
+// preserved exactly. Only the embedded Report needs cloning.
 func cloneSnapshot(snapshot Snapshot) Snapshot {
 	snapshot.Report = cloneReport(snapshot.Report)
 	return snapshot

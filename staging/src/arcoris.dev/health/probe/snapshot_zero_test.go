@@ -21,7 +21,21 @@ import (
 	"time"
 
 	"arcoris.dev/health"
+	"arcoris.dev/snapshot"
 )
+
+func TestSnapshotZeroUsesZeroRevision(t *testing.T) {
+	t.Parallel()
+
+	var snap Snapshot
+
+	if !snap.IsValid() {
+		t.Fatal("zero Snapshot IsValid() = false, want true")
+	}
+	if snap.Revision != snapshot.ZeroRevision {
+		t.Fatalf("zero Snapshot Revision = %d, want zero", snap.Revision)
+	}
+}
 
 func TestSnapshotIsZero(t *testing.T) {
 	t.Parallel()
@@ -98,9 +112,9 @@ func TestSnapshotIsZero(t *testing.T) {
 			},
 		},
 		{
-			name: "generation set",
+			name: "revision set",
 			snapshot: Snapshot{
-				Generation: 1,
+				Revision: 1,
 			},
 		},
 		{

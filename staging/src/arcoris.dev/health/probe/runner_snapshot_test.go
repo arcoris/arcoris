@@ -62,7 +62,6 @@ func TestRunnerSnapshotComputesStaleAtReadTime(t *testing.T) {
 	if ok := runner.store.update(
 		health.TargetReady,
 		healthtest.HealthyReport(health.TargetReady),
-		clk.Now(),
 	); !ok {
 		t.Fatal("store.update() = false, want true")
 	}
@@ -108,10 +107,10 @@ func TestRunnerSnapshotsComputeStaleAndOrder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewRunner() = %v, want nil", err)
 	}
-	if ok := runner.store.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady), clk.Now()); !ok {
+	if ok := runner.store.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady)); !ok {
 		t.Fatal("store.update(ready) = false, want true")
 	}
-	if ok := runner.store.update(health.TargetLive, healthtest.HealthyReport(health.TargetLive), clk.Now()); !ok {
+	if ok := runner.store.update(health.TargetLive, healthtest.HealthyReport(health.TargetLive)); !ok {
 		t.Fatal("store.update(live) = false, want true")
 	}
 
@@ -133,7 +132,7 @@ func TestRunnerSnapshotReadsAreDetached(t *testing.T) {
 
 	clk := newTestClock()
 	runner := newTestRunner(t, clk)
-	if ok := runner.store.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady), clk.Now()); !ok {
+	if ok := runner.store.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady)); !ok {
 		t.Fatal("store.update() = false, want true")
 	}
 

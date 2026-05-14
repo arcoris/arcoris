@@ -24,6 +24,7 @@ import (
 	"arcoris.dev/chrono/delay"
 	"arcoris.dev/health"
 	"arcoris.dev/health/healthtest"
+	"arcoris.dev/snapshot"
 )
 
 const testTimeout = 5 * time.Second
@@ -87,11 +88,11 @@ func waitForSnapshotWhere(
 	}
 }
 
-func waitForGeneration(t *testing.T, runner *Runner, target health.Target, generation uint64) Snapshot {
+func waitForRevision(t *testing.T, runner *Runner, target health.Target, revision snapshot.Revision) Snapshot {
 	t.Helper()
 
 	return waitForSnapshotWhere(t, runner, target, func(snapshot Snapshot) bool {
-		return snapshot.Generation >= generation
+		return snapshot.Revision >= revision
 	})
 }
 
@@ -114,12 +115,12 @@ func waitForRunnerRunning(t *testing.T, runner *Runner) {
 	}
 }
 
-func stepUntilGeneration(
+func stepUntilRevision(
 	t *testing.T,
 	clk *clock.FakeClock,
 	runner *Runner,
 	target health.Target,
-	generation uint64,
+	revision snapshot.Revision,
 	interval time.Duration,
 ) Snapshot {
 	t.Helper()
@@ -131,10 +132,10 @@ func stepUntilGeneration(
 	for {
 		select {
 		case <-deadline:
-			t.Fatalf("timed out waiting for target=%s generation=%d", target, generation)
+			t.Fatalf("timed out waiting for target=%s revision=%d", target, revision)
 		case <-ticker.C:
 			clk.Step(interval)
-			if snapshot, ok := runner.Snapshot(target); ok && snapshot.Generation >= generation {
+			if snapshot, ok := runner.Snapshot(target); ok && snapshot.Revision >= revision {
 				return snapshot
 			}
 		}
