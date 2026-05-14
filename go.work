@@ -9,5 +9,6 @@ use (
 	./staging/src/arcoris.dev/health
 	./staging/src/arcoris.dev/resilience
 	./staging/src/arcoris.dev/runtime
+	./staging/src/arcoris.dev/snapshot
 	./staging/src/arcoris.dev/value
 )
