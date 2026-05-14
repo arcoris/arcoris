@@ -52,11 +52,11 @@ func TestDelayReturnsNilForNonPositiveDuration(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if err := Delay(context.Background(), tt.duration); err != nil {
+			if err := Delay(context.Background(), tc.duration); err != nil {
 				t.Fatalf("Delay(...) = %v, want nil", err)
 			}
 		})

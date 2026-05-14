@@ -47,11 +47,11 @@ func mustRegisterExecutionCheck(
 func mustExecutionEvaluator(
 	t *testing.T,
 	registry *Registry,
-	options ...EvaluatorOption,
+	opts ...EvaluatorOption,
 ) *Evaluator {
 	t.Helper()
 
-	evaluator, err := NewEvaluator(registry, options...)
+	evaluator, err := NewEvaluator(registry, opts...)
 	if err != nil {
 		t.Fatalf("NewEvaluator() = %v, want nil", err)
 	}
@@ -90,11 +90,11 @@ func executionCheckName(i int) string {
 
 func updateMaxInt64(maxSeen *atomic.Int64, current int64) {
 	for {
-		previous := maxSeen.Load()
-		if current <= previous {
+		prev := maxSeen.Load()
+		if current <= prev {
 			return
 		}
-		if maxSeen.CompareAndSwap(previous, current) {
+		if maxSeen.CompareAndSwap(prev, current) {
 			return
 		}
 	}

@@ -103,17 +103,17 @@ func TestNewUint32CounterDeltaSameValue(t *testing.T) {
 func TestNewUint32CounterDeltaWrapped(t *testing.T) {
 	t.Parallel()
 
-	previous := testMaxUint32 - 2
-	current := uint32(4)
+	prev := testMaxUint32 - 2
+	cur := uint32(4)
 
-	delta := NewUint32CounterDelta(previous, current)
+	delta := NewUint32CounterDelta(prev, cur)
 
-	if delta.Previous != previous {
-		t.Fatalf("delta.Previous = %d, want %d", delta.Previous, previous)
+	if delta.Previous != prev {
+		t.Fatalf("delta.Previous = %d, want %d", delta.Previous, prev)
 	}
 
-	if delta.Current != current {
-		t.Fatalf("delta.Current = %d, want %d", delta.Current, current)
+	if delta.Current != cur {
+		t.Fatalf("delta.Current = %d, want %d", delta.Current, cur)
 	}
 
 	if delta.Value != 7 {

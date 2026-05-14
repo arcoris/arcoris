@@ -77,21 +77,21 @@ type ShutdownController struct {
 func NewShutdownController(parent context.Context, opts ...ShutdownOption) *ShutdownController {
 	requireContext(parent, errNilShutdownParent)
 
-	config := newShutdownConfig(opts...)
+	cfg := newShutdownConfig(opts...)
 
 	ctx, cancel := context.WithCancelCause(parent)
 	var escalation chan Event
-	if config.escalationEnabled {
-		escalation = make(chan Event, config.escalationBuffer)
+	if cfg.escalationEnabled {
+		escalation = make(chan Event, cfg.escalationBuffer)
 	}
 
 	controller := &ShutdownController{
 		ctx:               ctx,
 		cancel:            cancel,
-		sub:               SubscribeWithOptions(config.shutdownSignals, config.subscribeOptions...),
-		shutdownSignals:   Clone(config.shutdownSignals),
-		escalationSignals: Clone(config.escalationSignals),
-		escalationEnabled: config.escalationEnabled,
+		sub:               SubscribeWithOptions(cfg.shutdownSignals, cfg.subscribeOptions...),
+		shutdownSignals:   Clone(cfg.shutdownSignals),
+		escalationSignals: Clone(cfg.escalationSignals),
+		escalationEnabled: cfg.escalationEnabled,
 		escalation:        escalation,
 	}
 

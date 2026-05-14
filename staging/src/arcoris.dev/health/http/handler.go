@@ -51,12 +51,12 @@ func NewHandler(evaluator *health.Evaluator, target health.Target, opts ...Optio
 		return nil, health.InvalidTargetError{Target: target}
 	}
 
-	config := defaultConfig(target)
-	if err := applyOptions(&config, opts...); err != nil {
+	cfg := defaultConfig(target)
+	if err := applyOptions(&cfg, opts...); err != nil {
 		return nil, err
 	}
 
-	return &Handler{evaluator: evaluator, target: target, config: config}, nil
+	return &Handler{evaluator: evaluator, target: target, config: cfg}, nil
 }
 
 // ServeHTTP evaluates the configured health target and writes a safe response.

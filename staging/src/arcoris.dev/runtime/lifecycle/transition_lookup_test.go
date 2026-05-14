@@ -65,13 +65,13 @@ func TestNextStateRejectsInvalidInputs(t *testing.T) {
 		{"invalid event", StateNew, Event(99)},
 	}
 
-	for _, tt := range tests {
-		to, ok := NextState(tt.from, tt.event)
+	for _, tc := range tests {
+		to, ok := NextState(tc.from, tc.event)
 		if ok {
-			t.Fatalf("%s ok = true, want false", tt.name)
+			t.Fatalf("%s ok = true, want false", tc.name)
 		}
-		if to != tt.from {
-			t.Fatalf("%s fallback = %s, want %s", tt.name, to, tt.from)
+		if to != tc.from {
+			t.Fatalf("%s fallback = %s, want %s", tc.name, to, tc.from)
 		}
 	}
 }
@@ -105,8 +105,8 @@ func TestAllowedTransitionsPerState(t *testing.T) {
 		{State(99), nil},
 	}
 
-	for _, tt := range tests {
-		assertDeepEqual(t, AllowedTransitions(tt.state), tt.want)
+	for _, tc := range tests {
+		assertDeepEqual(t, AllowedTransitions(tc.state), tc.want)
 	}
 }
 

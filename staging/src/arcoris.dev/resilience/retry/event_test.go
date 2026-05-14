@@ -87,10 +87,10 @@ func TestEventIsValidAttemptStart(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.event.IsValid(); got != tt.want {
-				t.Fatalf("Event.IsValid() = %v, want %v", got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.event.IsValid(); got != tc.want {
+				t.Fatalf("Event.IsValid() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -153,10 +153,10 @@ func TestEventIsValidAttemptFailure(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.event.IsValid(); got != tt.want {
-				t.Fatalf("Event.IsValid() = %v, want %v", got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.event.IsValid(); got != tc.want {
+				t.Fatalf("Event.IsValid() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -232,10 +232,10 @@ func TestEventIsValidRetryDelay(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.event.IsValid(); got != tt.want {
-				t.Fatalf("Event.IsValid() = %v, want %v", got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.event.IsValid(); got != tc.want {
+				t.Fatalf("Event.IsValid() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -366,10 +366,10 @@ func TestEventIsValidRetryStop(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.event.IsValid(); got != tt.want {
-				t.Fatalf("Event.IsValid() = %v, want %v", got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.event.IsValid(); got != tc.want {
+				t.Fatalf("Event.IsValid() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -425,10 +425,10 @@ func TestEventIsZero(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.event.IsZero(); got != tt.want {
-				t.Fatalf("Event.IsZero() = %v, want %v", got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.event.IsZero(); got != tc.want {
+				t.Fatalf("Event.IsZero() = %v, want %v", got, tc.want)
 			}
 		})
 	}

@@ -211,13 +211,13 @@ func TestSelectChecks(t *testing.T) {
 		{name: "invalid", detail: DetailLevel(99), want: 0},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			checks := selectChecks(report, policy, test.detail)
-			if len(checks) != test.want {
-				t.Fatalf("selectChecks(%s) length = %d, want %d", test.detail, len(checks), test.want)
+			checks := selectChecks(report, policy, tc.detail)
+			if len(checks) != tc.want {
+				t.Fatalf("selectChecks(%s) length = %d, want %d", tc.detail, len(checks), tc.want)
 			}
 		})
 	}
@@ -267,12 +267,12 @@ func TestDurationMillis(t *testing.T) {
 		{name: "second", duration: time.Second, want: 1000},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := durationMillis(test.duration); got != test.want {
-				t.Fatalf("durationMillis(%s) = %d, want %d", test.duration, got, test.want)
+			if got := durationMillis(tc.duration); got != tc.want {
+				t.Fatalf("durationMillis(%s) = %d, want %d", tc.duration, got, tc.want)
 			}
 		})
 	}
@@ -292,12 +292,12 @@ func TestFormatReason(t *testing.T) {
 		{name: "invalid", reason: health.Reason("bad-reason"), want: "invalid"},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := formatReason(test.reason); got != test.want {
-				t.Fatalf("formatReason(%s) = %q, want %q", test.reason, got, test.want)
+			if got := formatReason(tc.reason); got != tc.want {
+				t.Fatalf("formatReason(%s) = %q, want %q", tc.reason, got, tc.want)
 			}
 		})
 	}

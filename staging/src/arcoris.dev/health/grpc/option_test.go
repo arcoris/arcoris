@@ -28,8 +28,8 @@ import (
 func TestApplyOptionsRejectsNilOption(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig()
-	err := applyOptions(&config, nil)
+	cfg := defaultConfig()
+	err := applyOptions(&cfg, nil)
 	if !errors.Is(err, ErrNilOption) {
 		t.Fatalf("applyOptions(nil) = %v, want ErrNilOption", err)
 	}
@@ -38,9 +38,9 @@ func TestApplyOptionsRejectsNilOption(t *testing.T) {
 func TestServiceOptions(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig()
+	cfg := defaultConfig()
 	err := applyOptions(
-		&config,
+		&cfg,
 		WithService("live-service", health.TargetLive),
 		WithServicePolicy("ready-degraded", health.TargetReady, health.ReadyPolicy().WithDegraded(true)),
 		WithServices(ServiceMapping{
@@ -53,26 +53,26 @@ func TestServiceOptions(t *testing.T) {
 		t.Fatalf("applyOptions() = %v, want nil", err)
 	}
 
-	if len(config.services) != 4 {
-		t.Fatalf("services length = %d, want 4", len(config.services))
+	if len(cfg.services) != 4 {
+		t.Fatalf("services length = %d, want 4", len(cfg.services))
 	}
-	if config.services[1].Service != "live-service" || config.services[1].Policy != health.LivePolicy() {
-		t.Fatalf("WithService mapping = %+v, want live default policy", config.services[1])
+	if cfg.services[1].Service != "live-service" || cfg.services[1].Policy != health.LivePolicy() {
+		t.Fatalf("WithService mapping = %+v, want live default policy", cfg.services[1])
 	}
-	if !config.services[2].Policy.AllowDegraded {
-		t.Fatalf("WithServicePolicy policy = %+v, want AllowDegraded", config.services[2].Policy)
+	if !cfg.services[2].Policy.AllowDegraded {
+		t.Fatalf("WithServicePolicy policy = %+v, want AllowDegraded", cfg.services[2].Policy)
 	}
-	if config.services[3].Target != health.TargetStartup {
-		t.Fatalf("WithServices target = %s, want startup", config.services[3].Target)
+	if cfg.services[3].Target != health.TargetStartup {
+		t.Fatalf("WithServices target = %s, want startup", cfg.services[3].Target)
 	}
 }
 
 func TestDefaultServiceOptions(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig()
+	cfg := defaultConfig()
 	err := applyOptions(
-		&config,
+		&cfg,
 		WithService("custom", health.TargetReady),
 		WithDefaultService(health.TargetLive),
 		WithDefaultServicePolicy(health.TargetReady, health.ReadyPolicy().WithDegraded(true)),
@@ -81,28 +81,28 @@ func TestDefaultServiceOptions(t *testing.T) {
 		t.Fatalf("applyOptions() = %v, want nil", err)
 	}
 
-	if config.services[0].Service != "" || config.services[0].Target != health.TargetReady {
-		t.Fatalf("default service = %+v, want ready", config.services[0])
+	if cfg.services[0].Service != "" || cfg.services[0].Target != health.TargetReady {
+		t.Fatalf("default service = %+v, want ready", cfg.services[0])
 	}
-	if !config.services[0].Policy.AllowDegraded {
-		t.Fatalf("default policy = %+v, want AllowDegraded", config.services[0].Policy)
+	if !cfg.services[0].Policy.AllowDegraded {
+		t.Fatalf("default policy = %+v, want AllowDegraded", cfg.services[0].Policy)
 	}
-	if config.services[1].Service != "custom" {
-		t.Fatalf("second service = %q, want custom", config.services[1].Service)
+	if cfg.services[1].Service != "custom" {
+		t.Fatalf("second service = %q, want custom", cfg.services[1].Service)
 	}
 }
 
 func TestWithTargetServicesOption(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig()
-	if err := WithTargetServices()(&config); err != nil {
+	cfg := defaultConfig()
+	if err := WithTargetServices()(&cfg); err != nil {
 		t.Fatalf("WithTargetServices() = %v, want nil", err)
 	}
 
 	want := []string{"", "startup", "live", "ready"}
 	var got []string
-	for _, mapping := range config.services {
+	for _, mapping := range cfg.services {
 		got = append(got, mapping.Service)
 	}
 	if !sameStrings(got, want) {
@@ -113,9 +113,9 @@ func TestWithTargetServicesOption(t *testing.T) {
 func TestScheduleOptions(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig()
+	cfg := defaultConfig()
 	err := applyOptions(
-		&config,
+		&cfg,
 		WithWatchInterval(time.Second),
 		WithWatchInterval(2*time.Second),
 		WithMaxListServices(10),
@@ -124,11 +124,11 @@ func TestScheduleOptions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("applyOptions() = %v, want nil", err)
 	}
-	if config.watchInterval != 2*time.Second {
-		t.Fatalf("watchInterval = %s, want 2s", config.watchInterval)
+	if cfg.watchInterval != 2*time.Second {
+		t.Fatalf("watchInterval = %s, want 2s", cfg.watchInterval)
 	}
-	if config.maxListServices != 20 {
-		t.Fatalf("maxListServices = %d, want 20", config.maxListServices)
+	if cfg.maxListServices != 20 {
+		t.Fatalf("maxListServices = %d, want 20", cfg.maxListServices)
 	}
 }
 
@@ -137,7 +137,7 @@ func TestOptionsRejectInvalidValues(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		option  Option
+		opt     Option
 		wantErr error
 	}{
 		{"invalid service", WithService(" bad", health.TargetReady), ErrInvalidService},
@@ -160,8 +160,8 @@ func TestOptionsRejectInvalidValues(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			config := defaultConfig()
-			err := tc.option(&config)
+			cfg := defaultConfig()
+			err := tc.opt(&cfg)
 			if !errors.Is(err, tc.wantErr) {
 				t.Fatalf("option() = %v, want %v", err, tc.wantErr)
 			}
@@ -172,15 +172,15 @@ func TestOptionsRejectInvalidValues(t *testing.T) {
 func TestReplaceDefaultServiceMappingAppendsWhenMissing(t *testing.T) {
 	t.Parallel()
 
-	config := config{}
-	replaceDefaultServiceMapping(&config, ServiceMapping{
+	cfg := config{}
+	replaceDefaultServiceMapping(&cfg, ServiceMapping{
 		Service: "",
 		Target:  health.TargetReady,
 		Policy:  health.ReadyPolicy(),
 	})
 
-	if len(config.services) != 1 || config.services[0].Target != health.TargetReady {
-		t.Fatalf("services = %+v, want appended ready default", config.services)
+	if len(cfg.services) != 1 || cfg.services[0].Target != health.TargetReady {
+		t.Fatalf("services = %+v, want appended ready default", cfg.services)
 	}
 }
 

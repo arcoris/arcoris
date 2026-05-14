@@ -55,8 +55,8 @@ type Controller struct {
 // The returned controller starts in StateNew with revision zero and no committed
 // LastTransition. Options configure construction-time dependencies such as the
 // time source, transition guards, and observers.
-func NewController(options ...Option) *Controller {
-	config := newControllerConfig(options...)
+func NewController(opts ...Option) *Controller {
+	config := newControllerConfig(opts...)
 
 	if config.now == nil {
 		config.now = time.Now

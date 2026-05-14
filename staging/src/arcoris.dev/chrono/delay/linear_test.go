@@ -55,12 +55,12 @@ func TestLinearZeroStepBehavesLikeFixed(t *testing.T) {
 func TestLinearSequencesHaveIndependentIndexes(t *testing.T) {
 	schedule := Linear(time.Second, time.Second)
 
-	left := schedule.NewSequence()
-	right := schedule.NewSequence()
+	l := schedule.NewSequence()
+	r := schedule.NewSequence()
 
-	mustNext(t, left, time.Second)
-	mustNext(t, left, 2*time.Second)
-	mustNext(t, right, time.Second)
+	mustNext(t, l, time.Second)
+	mustNext(t, l, 2*time.Second)
+	mustNext(t, r, time.Second)
 }
 
 func TestLinearDelaySaturates(t *testing.T) {

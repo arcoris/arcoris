@@ -61,9 +61,9 @@ func TestSnapshotIsValid(t *testing.T) {
 		{"non-comparable failure cause", Snapshot{State: StateFailed, Revision: 2, LastTransition: Transition{From: StateRunning, To: StateFailed, Event: EventMarkFailed, Cause: nonComparableError{values: []string{"x"}}, Revision: 2, At: testTime}, FailureCause: nonComparableError{values: []string{"x"}}}, true},
 	}
 
-	for _, tt := range tests {
-		if got := tt.snapshot.IsValid(); got != tt.want {
-			t.Fatalf("%s IsValid = %v, want %v", tt.name, got, tt.want)
+	for _, tc := range tests {
+		if got := tc.snapshot.IsValid(); got != tc.want {
+			t.Fatalf("%s IsValid = %v, want %v", tc.name, got, tc.want)
 		}
 	}
 }
@@ -87,24 +87,24 @@ func TestSnapshotPredicates(t *testing.T) {
 		{"failed", Snapshot{State: StateFailed, Revision: 3}, true, true, false, false, true, false},
 	}
 
-	for _, tt := range tests {
-		if got := tt.snapshot.HasTransition(); got != tt.hasTransition {
-			t.Fatalf("%s HasTransition = %v, want %v", tt.name, got, tt.hasTransition)
+	for _, tc := range tests {
+		if got := tc.snapshot.HasTransition(); got != tc.hasTransition {
+			t.Fatalf("%s HasTransition = %v, want %v", tc.name, got, tc.hasTransition)
 		}
-		if got := tt.snapshot.IsTerminal(); got != tt.terminal {
-			t.Fatalf("%s IsTerminal = %v, want %v", tt.name, got, tt.terminal)
+		if got := tc.snapshot.IsTerminal(); got != tc.terminal {
+			t.Fatalf("%s IsTerminal = %v, want %v", tc.name, got, tc.terminal)
 		}
-		if got := tt.snapshot.IsActive(); got != tt.active {
-			t.Fatalf("%s IsActive = %v, want %v", tt.name, got, tt.active)
+		if got := tc.snapshot.IsActive(); got != tc.active {
+			t.Fatalf("%s IsActive = %v, want %v", tc.name, got, tc.active)
 		}
-		if got := tt.snapshot.AcceptsWork(); got != tt.acceptsWork {
-			t.Fatalf("%s AcceptsWork = %v, want %v", tt.name, got, tt.acceptsWork)
+		if got := tc.snapshot.AcceptsWork(); got != tc.acceptsWork {
+			t.Fatalf("%s AcceptsWork = %v, want %v", tc.name, got, tc.acceptsWork)
 		}
-		if got := tt.snapshot.IsFailed(); got != tt.failed {
-			t.Fatalf("%s IsFailed = %v, want %v", tt.name, got, tt.failed)
+		if got := tc.snapshot.IsFailed(); got != tc.failed {
+			t.Fatalf("%s IsFailed = %v, want %v", tc.name, got, tc.failed)
 		}
-		if got := tt.snapshot.IsStopped(); got != tt.stopped {
-			t.Fatalf("%s IsStopped = %v, want %v", tt.name, got, tt.stopped)
+		if got := tc.snapshot.IsStopped(); got != tc.stopped {
+			t.Fatalf("%s IsStopped = %v, want %v", tc.name, got, tc.stopped)
 		}
 	}
 }

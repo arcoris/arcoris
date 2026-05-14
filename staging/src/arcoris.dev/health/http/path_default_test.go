@@ -38,16 +38,16 @@ func TestDefaultPath(t *testing.T) {
 		{name: "invalid", target: health.Target(99), ok: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			path, ok := DefaultPath(test.target)
-			if ok != test.ok {
-				t.Fatalf("DefaultPath(%s) ok = %v, want %v", test.target, ok, test.ok)
+			path, ok := DefaultPath(tc.target)
+			if ok != tc.ok {
+				t.Fatalf("DefaultPath(%s) ok = %v, want %v", tc.target, ok, tc.ok)
 			}
-			if path != test.path {
-				t.Fatalf("DefaultPath(%s) path = %q, want %q", test.target, path, test.path)
+			if path != tc.path {
+				t.Fatalf("DefaultPath(%s) path = %q, want %q", tc.target, path, tc.path)
 			}
 		})
 	}

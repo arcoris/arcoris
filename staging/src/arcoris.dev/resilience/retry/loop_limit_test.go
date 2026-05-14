@@ -70,20 +70,20 @@ func TestRetryExecutionMaxElapsedWouldBeExceeded(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fake := clock.NewFakeClock(startedAt.Add(tt.elapsed))
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fake := clock.NewFakeClock(startedAt.Add(tc.elapsed))
 			execution := &retryExecution{
 				config: config{
 					clock:      fake,
-					maxElapsed: tt.maxElapsed,
+					maxElapsed: tc.maxElapsed,
 				},
 				startedAt: startedAt,
 			}
 
-			got := execution.maxElapsedWouldBeExceeded(tt.delay)
-			if got != tt.want {
-				t.Fatalf("maxElapsedWouldBeExceeded(%v) = %v, want %v", tt.delay, got, tt.want)
+			got := execution.maxElapsedWouldBeExceeded(tc.delay)
+			if got != tc.want {
+				t.Fatalf("maxElapsedWouldBeExceeded(%v) = %v, want %v", tc.delay, got, tc.want)
 			}
 		})
 	}

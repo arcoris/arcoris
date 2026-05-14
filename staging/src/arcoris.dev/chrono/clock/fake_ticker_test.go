@@ -63,15 +63,15 @@ func TestFakeTickerPanicsForNonPositiveInterval(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			clock := NewFakeClock(fakeClockTestTime())
 
 			mustPanicWithValue(t, errFakeTickerNonPositiveInterval, func() {
-				_ = clock.NewTicker(tt.duration)
+				_ = clock.NewTicker(tc.duration)
 			})
 		})
 	}
@@ -240,9 +240,9 @@ func TestFakeTickerResetPanicsForNonPositiveInterval(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			clock := NewFakeClock(fakeClockTestTime())
@@ -250,7 +250,7 @@ func TestFakeTickerResetPanicsForNonPositiveInterval(t *testing.T) {
 			defer ticker.Stop()
 
 			mustPanicWithValue(t, errFakeTickerNonPositiveInterval, func() {
-				ticker.Reset(tt.duration)
+				ticker.Reset(tc.duration)
 			})
 		})
 	}

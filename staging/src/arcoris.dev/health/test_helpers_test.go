@@ -104,10 +104,10 @@ func mustRegistry(t *testing.T, target Target, checks ...Checker) *Registry {
 	return registry
 }
 
-func mustEvaluator(t *testing.T, registry *Registry, options ...EvaluatorOption) *Evaluator {
+func mustEvaluator(t *testing.T, registry *Registry, opts ...EvaluatorOption) *Evaluator {
 	t.Helper()
 
-	evaluator, err := NewEvaluator(registry, options...)
+	evaluator, err := NewEvaluator(registry, opts...)
 	if err != nil {
 		t.Fatalf("NewEvaluator() = %v, want nil", err)
 	}

@@ -44,9 +44,9 @@ func TestTransitionRuleIsValid(t *testing.T) {
 		{"invalid combination", TransitionRule{StateRunning, EventBeginStart, StateStarting}, false},
 	}
 
-	for _, tt := range tests {
-		if got := tt.rule.IsValid(); got != tt.want {
-			t.Fatalf("%s IsValid = %v, want %v", tt.name, got, tt.want)
+	for _, tc := range tests {
+		if got := tc.rule.IsValid(); got != tc.want {
+			t.Fatalf("%s IsValid = %v, want %v", tc.name, got, tc.want)
 		}
 	}
 }
@@ -77,12 +77,12 @@ func TestTransitionRuleClassification(t *testing.T) {
 		{"failed", TransitionRule{StateRunning, EventMarkFailed, StateFailed}, true, true},
 	}
 
-	for _, tt := range tests {
-		if got := tt.rule.IsTerminal(); got != tt.terminal {
-			t.Fatalf("%s IsTerminal = %v, want %v", tt.name, got, tt.terminal)
+	for _, tc := range tests {
+		if got := tc.rule.IsTerminal(); got != tc.terminal {
+			t.Fatalf("%s IsTerminal = %v, want %v", tc.name, got, tc.terminal)
 		}
-		if got := tt.rule.IsFailure(); got != tt.failure {
-			t.Fatalf("%s IsFailure = %v, want %v", tt.name, got, tt.failure)
+		if got := tc.rule.IsFailure(); got != tc.failure {
+			t.Fatalf("%s IsFailure = %v, want %v", tc.name, got, tc.failure)
 		}
 	}
 }

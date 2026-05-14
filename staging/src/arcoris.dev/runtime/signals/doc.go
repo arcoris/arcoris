@@ -160,9 +160,11 @@
 //   - set_unix.go, set_windows.go, and set_other.go own platform sets;
 //   - validate.go owns package-local validation helpers;
 //   - notifier.go and os_notifier.go own the package-local os/signal seam;
+//   - subscription_config.go owns Subscription construction config;
 //   - option_subscription.go owns Subscription construction options;
 //   - subscription.go owns signal registration lifecycle;
 //   - context.go owns NotifyContext;
+//   - shutdown_config.go owns ShutdownController construction config;
 //   - option_shutdown.go owns ShutdownController construction options;
 //   - shutdown.go owns graceful shutdown coordination;
 //   - nocopy.go owns the static-analysis copy marker.

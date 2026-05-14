@@ -23,12 +23,12 @@ import (
 )
 
 // renderReport writes a response for a successfully evaluated health report.
-func renderReport(w http.ResponseWriter, r *http.Request, config config, report health.Report, passed bool) {
-	switch config.format {
+func renderReport(w http.ResponseWriter, r *http.Request, cfg config, report health.Report, passed bool) {
+	switch cfg.format {
 	case FormatJSON:
-		renderJSONReport(w, r, config, report, passed)
+		renderJSONReport(w, r, cfg, report, passed)
 	default:
-		renderTextReport(w, r, config, report, passed)
+		renderTextReport(w, r, cfg, report, passed)
 	}
 }
 
@@ -36,17 +36,17 @@ func renderReport(w http.ResponseWriter, r *http.Request, config config, report 
 //
 // The function never accepts a raw error value and therefore cannot leak one by
 // accident. Callers choose only the configured format and status-code mapping.
-func renderHandlerError(w http.ResponseWriter, r *http.Request, config config) {
-	format := config.format
+func renderHandlerError(w http.ResponseWriter, r *http.Request, cfg config) {
+	format := cfg.format
 	if !format.IsValid() {
 		format = FormatText
 	}
-	config.format = format
+	cfg.format = format
 
 	switch format {
 	case FormatJSON:
-		renderJSONError(w, r, config)
+		renderJSONError(w, r, cfg)
 	default:
-		renderTextError(w, r, config)
+		renderTextError(w, r, cfg)
 	}
 }

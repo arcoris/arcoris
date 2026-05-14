@@ -135,14 +135,15 @@
 // The package keeps files split by responsibility:
 //
 //   - condition.go owns ConditionFunc;
-//   - condition_helpers.go owns condition helper composition;
+//   - condition_combinator.go owns condition helper composition;
 //   - error_kind.go, error_interrupted.go, error_timeout.go, and
 //     error_context_stop.go own wait error classification;
 //   - delay.go owns cancellable one-shot delays;
 //   - timer.go owns the owner-controlled runtime timer;
 //   - until.go owns fixed-interval condition loops;
 //   - jitter.go owns positive one-sided jitter;
-//   - options.go owns mechanical functional options;
+//   - config.go owns normalized option state;
+//   - option.go owns mechanical functional options;
 //   - validate.go owns package-local validation helpers;
 //   - nocopy.go owns the static-analysis copy marker.
 //

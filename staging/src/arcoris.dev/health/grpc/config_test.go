@@ -27,18 +27,18 @@ import (
 func TestDefaultConfig(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig()
-	if len(config.services) != 1 || config.services[0].Service != "" {
-		t.Fatalf("services = %+v, want default service only", config.services)
+	cfg := defaultConfig()
+	if len(cfg.services) != 1 || cfg.services[0].Service != "" {
+		t.Fatalf("services = %+v, want default service only", cfg.services)
 	}
-	if config.watchInterval != defaultWatchInterval {
-		t.Fatalf("watchInterval = %s, want %s", config.watchInterval, defaultWatchInterval)
+	if cfg.watchInterval != defaultWatchInterval {
+		t.Fatalf("watchInterval = %s, want %s", cfg.watchInterval, defaultWatchInterval)
 	}
-	if nilClock(config.clock) {
+	if nilClock(cfg.clock) {
 		t.Fatal("clock is nil")
 	}
-	if config.maxListServices != defaultMaxListServices {
-		t.Fatalf("maxListServices = %d, want %d", config.maxListServices, defaultMaxListServices)
+	if cfg.maxListServices != defaultMaxListServices {
+		t.Fatalf("maxListServices = %d, want %d", cfg.maxListServices, defaultMaxListServices)
 	}
 }
 
@@ -55,29 +55,29 @@ func TestConfigValidate(t *testing.T) {
 		},
 		{
 			name: "nil clock",
-			mutate: func(config *config) {
-				config.clock = nil
+			mutate: func(cfg *config) {
+				cfg.clock = nil
 			},
 			wantErr: ErrNilClock,
 		},
 		{
 			name: "invalid watch interval",
-			mutate: func(config *config) {
-				config.watchInterval = 0
+			mutate: func(cfg *config) {
+				cfg.watchInterval = 0
 			},
 			wantErr: ErrInvalidWatchInterval,
 		},
 		{
 			name: "invalid max list services",
-			mutate: func(config *config) {
-				config.maxListServices = 0
+			mutate: func(cfg *config) {
+				cfg.maxListServices = 0
 			},
 			wantErr: ErrInvalidMaxListServices,
 		},
 		{
 			name: "duplicate service",
-			mutate: func(config *config) {
-				config.services = append(config.services, ServiceMapping{
+			mutate: func(cfg *config) {
+				cfg.services = append(cfg.services, ServiceMapping{
 					Service: "",
 					Target:  health.TargetReady,
 					Policy:  health.ReadyPolicy(),
@@ -87,8 +87,8 @@ func TestConfigValidate(t *testing.T) {
 		},
 		{
 			name: "invalid service mapping",
-			mutate: func(config *config) {
-				config.services = []ServiceMapping{{
+			mutate: func(cfg *config) {
+				cfg.services = []ServiceMapping{{
 					Service: " invalid",
 					Target:  health.TargetReady,
 					Policy:  health.ReadyPolicy(),
@@ -102,12 +102,12 @@ func TestConfigValidate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			config := defaultConfig()
+			cfg := defaultConfig()
 			if tc.mutate != nil {
-				tc.mutate(&config)
+				tc.mutate(&cfg)
 			}
 
-			err := config.validate()
+			err := cfg.validate()
 			if tc.wantErr == nil {
 				if err != nil {
 					t.Fatalf("validate() = %v, want nil", err)

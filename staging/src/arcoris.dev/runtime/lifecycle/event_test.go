@@ -33,12 +33,12 @@ func TestEventString(t *testing.T) {
 		{Event(99), "invalid"},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.want, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.want, func(t *testing.T) {
 			t.Parallel()
 
-			if got := tt.event.String(); got != tt.want {
-				t.Fatalf("Event(%d).String() = %q, want %q", tt.event, got, tt.want)
+			if got := tc.event.String(); got != tc.want {
+				t.Fatalf("Event(%d).String() = %q, want %q", tc.event, got, tc.want)
 			}
 		})
 	}
@@ -59,9 +59,9 @@ func TestEventIsValid(t *testing.T) {
 		{Event(99), false},
 	}
 
-	for _, tt := range tests {
-		if got := tt.event.IsValid(); got != tt.want {
-			t.Fatalf("%s IsValid = %v, want %v", tt.event, got, tt.want)
+	for _, tc := range tests {
+		if got := tc.event.IsValid(); got != tc.want {
+			t.Fatalf("%s IsValid = %v, want %v", tc.event, got, tc.want)
 		}
 	}
 }
@@ -84,20 +84,20 @@ func TestEventPredicates(t *testing.T) {
 		{Event(99), false, false, false, false},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 		// Events are lifecycle inputs, not target states: failure is terminal but
 		// not a stop event, and BeginStop may target different states by source.
-		if got := tt.event.IsStartEvent(); got != tt.start {
-			t.Fatalf("%s IsStartEvent = %v, want %v", tt.event, got, tt.start)
+		if got := tc.event.IsStartEvent(); got != tc.start {
+			t.Fatalf("%s IsStartEvent = %v, want %v", tc.event, got, tc.start)
 		}
-		if got := tt.event.IsStopEvent(); got != tt.stop {
-			t.Fatalf("%s IsStopEvent = %v, want %v", tt.event, got, tt.stop)
+		if got := tc.event.IsStopEvent(); got != tc.stop {
+			t.Fatalf("%s IsStopEvent = %v, want %v", tc.event, got, tc.stop)
 		}
-		if got := tt.event.IsTerminalEvent(); got != tt.terminal {
-			t.Fatalf("%s IsTerminalEvent = %v, want %v", tt.event, got, tt.terminal)
+		if got := tc.event.IsTerminalEvent(); got != tc.terminal {
+			t.Fatalf("%s IsTerminalEvent = %v, want %v", tc.event, got, tc.terminal)
 		}
-		if got := tt.event.RequiresCause(); got != tt.requiresCause {
-			t.Fatalf("%s RequiresCause = %v, want %v", tt.event, got, tt.requiresCause)
+		if got := tc.event.RequiresCause(); got != tc.requiresCause {
+			t.Fatalf("%s RequiresCause = %v, want %v", tc.event, got, tc.requiresCause)
 		}
 	}
 }

@@ -22,32 +22,32 @@ package healthgrpc
 // service index. It does not start goroutines, allocate Watch streams, register
 // itself with a grpc.Server, or ask source to evaluate anything. Evaluation is
 // owned by Check, List, and Watch at request time.
-func NewServer(source Source, options ...Option) (*Server, error) {
+func NewServer(source Source, opts ...Option) (*Server, error) {
 	if nilSource(source) {
 		return nil, ErrNilSource
 	}
 
-	config := defaultConfig()
-	if err := applyOptions(&config, options...); err != nil {
+	cfg := defaultConfig()
+	if err := applyOptions(&cfg, opts...); err != nil {
 		return nil, err
 	}
-	if err := config.validate(); err != nil {
+	if err := cfg.validate(); err != nil {
 		return nil, err
 	}
 
-	mappings, err := normalizeServiceMappings(config.services)
+	mappings, err := normalizeServiceMappings(cfg.services)
 	if err != nil {
 		return nil, err
 	}
 
 	services, order := buildServiceIndex(mappings)
-	config.services = mappings
+	cfg.services = mappings
 
 	return &Server{
 		source:   source,
 		services: services,
 		order:    order,
-		config:   config,
+		config:   cfg,
 	}, nil
 }
 

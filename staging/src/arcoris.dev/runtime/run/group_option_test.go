@@ -18,81 +18,10 @@ package run
 
 import "testing"
 
-func TestErrorModeValidity(t *testing.T) {
-	t.Parallel()
-
-	if !ErrorModeJoin.IsValid() {
-		t.Fatal("ErrorModeJoin is invalid")
-	}
-	if !ErrorModeFirst.IsValid() {
-		t.Fatal("ErrorModeFirst is invalid")
-	}
-	if ErrorMode(99).IsValid() {
-		t.Fatal("unknown ErrorMode is valid")
-	}
-}
-
-func TestGroupConfigDefaults(t *testing.T) {
-	t.Parallel()
-
-	config := newGroupConfig()
-
-	if !config.cancelOnError {
-		t.Fatal("cancelOnError default is false")
-	}
-	if config.errorMode != ErrorModeJoin {
-		t.Fatalf("errorMode = %v, want ErrorModeJoin", config.errorMode)
-	}
-}
-
-func TestGroupConfigRejectsNilOption(t *testing.T) {
-	t.Parallel()
-
-	mustPanicWith(t, errNilGroupOption, func() {
-		newGroupConfig(nil)
-	})
-}
-
-func TestNewGroupRejectsNilOption(t *testing.T) {
-	t.Parallel()
-
-	mustPanicWith(t, errNilGroupOption, func() {
-		NewGroup(t.Context(), nil)
-	})
-}
-
-func TestGroupConfigAppliesOptionsInOrder(t *testing.T) {
-	t.Parallel()
-
-	config := newGroupConfig(
-		WithCancelOnError(false),
-		WithCancelOnError(true),
-		WithErrorMode(ErrorModeFirst),
-		WithErrorMode(ErrorModeJoin),
-	)
-
-	if !config.cancelOnError {
-		t.Fatal("cancelOnError = false, want later true option")
-	}
-	if config.errorMode != ErrorModeJoin {
-		t.Fatalf("errorMode = %v, want later ErrorModeJoin option", config.errorMode)
-	}
-}
-
 func TestWithErrorModeRejectsInvalidMode(t *testing.T) {
 	t.Parallel()
 
 	mustPanicWith(t, errInvalidErrorMode, func() {
 		WithErrorMode(ErrorMode(99))
-	})
-}
-
-func TestGroupConfigRejectsInvalidErrorMode(t *testing.T) {
-	t.Parallel()
-
-	mustPanicWith(t, errInvalidErrorMode, func() {
-		newGroupConfig(func(config *groupConfig) {
-			config.errorMode = ErrorMode(99)
-		})
 	})
 }

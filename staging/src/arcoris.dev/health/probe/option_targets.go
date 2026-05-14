@@ -24,13 +24,13 @@ import "arcoris.dev/health"
 // is used by Snapshots when returning cached observations. At least one concrete
 // target is required, and duplicates are rejected.
 func WithTargets(targets ...health.Target) Option {
-	return func(config *config) error {
+	return func(cfg *config) error {
 		normalized, err := normalizeTargets(targets)
 		if err != nil {
 			return err
 		}
 
-		config.targets = normalized
+		cfg.targets = normalized
 		return nil
 	}
 }

@@ -21,12 +21,12 @@ import "testing"
 func TestSubscriptionConfigDefaults(t *testing.T) {
 	t.Parallel()
 
-	config := newSubscribeConfig()
+	cfg := newSubscribeConfig()
 
-	if config.buffer != 1 {
-		t.Fatalf("buffer = %d, want 1", config.buffer)
+	if cfg.buffer != 1 {
+		t.Fatalf("buffer = %d, want 1", cfg.buffer)
 	}
-	if config.notifier == nil {
+	if cfg.notifier == nil {
 		t.Fatal("default notifier is nil")
 	}
 }
@@ -35,12 +35,12 @@ func TestSubscriptionConfigAppliesOptionsAndIgnoresNil(t *testing.T) {
 	t.Parallel()
 
 	n := &fakeNotifier{}
-	config := newSubscribeConfig(nil, WithSubscriptionBuffer(4), withNotifier(n))
+	cfg := newSubscribeConfig(nil, WithSubscriptionBuffer(4), withNotifier(n))
 
-	if config.buffer != 4 {
-		t.Fatalf("buffer = %d, want 4", config.buffer)
+	if cfg.buffer != 4 {
+		t.Fatalf("buffer = %d, want 4", cfg.buffer)
 	}
-	if config.notifier != n {
+	if cfg.notifier != n {
 		t.Fatal("notifier option was not applied")
 	}
 }
@@ -48,13 +48,13 @@ func TestSubscriptionConfigAppliesOptionsAndIgnoresNil(t *testing.T) {
 func TestSubscriptionConfigAppliesBufferOptionsInOrder(t *testing.T) {
 	t.Parallel()
 
-	config := newSubscribeConfig(
+	cfg := newSubscribeConfig(
 		WithSubscriptionBuffer(2),
 		WithSubscriptionBuffer(5),
 	)
 
-	if config.buffer != 5 {
-		t.Fatalf("buffer = %d, want 5", config.buffer)
+	if cfg.buffer != 5 {
+		t.Fatalf("buffer = %d, want 5", cfg.buffer)
 	}
 }
 
@@ -69,12 +69,12 @@ func TestSubscriptionConfigRejectsInvalidBuffer(t *testing.T) {
 		{name: "negative", size: -1},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			mustPanicWith(t, errNonPositiveSubscriptionBuffer, func() {
-				newSubscribeConfig(WithSubscriptionBuffer(tt.size))
+				newSubscribeConfig(WithSubscriptionBuffer(tc.size))
 			})
 		})
 	}
@@ -83,9 +83,9 @@ func TestSubscriptionConfigRejectsInvalidBuffer(t *testing.T) {
 func TestSubscriptionConfigRepairsNilNotifier(t *testing.T) {
 	t.Parallel()
 
-	config := newSubscribeConfig(withNotifier(nil))
+	cfg := newSubscribeConfig(withNotifier(nil))
 
-	if config.notifier == nil {
+	if cfg.notifier == nil {
 		t.Fatal("nil notifier was not repaired")
 	}
 }

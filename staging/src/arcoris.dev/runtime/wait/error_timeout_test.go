@@ -74,12 +74,12 @@ func TestTimedOutClassification(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := TimedOut(tt.err); got != tt.want {
-				t.Fatalf("TimedOut(err) = %v, want %v", got, tt.want)
+			if got := TimedOut(tc.err); got != tc.want {
+				t.Fatalf("TimedOut(err) = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -132,11 +132,11 @@ func TestNewTimeoutErrorPreservesAlreadyTimedOutErrors(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := NewTimeoutError(tt.err); got != tt.err {
+			if got := NewTimeoutError(tc.err); got != tc.err {
 				t.Fatal("NewTimeoutError wrapped an error that was already classified as timeout")
 			}
 		})

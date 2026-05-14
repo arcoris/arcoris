@@ -50,27 +50,27 @@ func TestValidatePath(t *testing.T) {
 		{name: "delete_control", path: "/readyz" + string(rune(0x7f)), want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := ValidatePath(test.path)
-			if got := err == nil; got != test.want {
-				t.Fatalf("ValidatePath(%q) ok = %v, want %v; err=%v", test.path, got, test.want, err)
+			err := ValidatePath(tc.path)
+			if got := err == nil; got != tc.want {
+				t.Fatalf("ValidatePath(%q) ok = %v, want %v; err=%v", tc.path, got, tc.want, err)
 			}
-			if test.want {
+			if tc.want {
 				return
 			}
 			if !errors.Is(err, ErrInvalidPath) {
-				t.Fatalf("ValidatePath(%q) error = %v, want ErrInvalidPath", test.path, err)
+				t.Fatalf("ValidatePath(%q) error = %v, want ErrInvalidPath", tc.path, err)
 			}
 
 			var pathErr InvalidPathError
 			if !errors.As(err, &pathErr) {
-				t.Fatalf("ValidatePath(%q) error = %T, want InvalidPathError", test.path, err)
+				t.Fatalf("ValidatePath(%q) error = %T, want InvalidPathError", tc.path, err)
 			}
-			if pathErr.Path != test.path {
-				t.Fatalf("InvalidPathError.Path = %q, want %q", pathErr.Path, test.path)
+			if pathErr.Path != tc.path {
+				t.Fatalf("InvalidPathError.Path = %q, want %q", pathErr.Path, tc.path)
 			}
 		})
 	}
@@ -88,12 +88,12 @@ func TestValidPath(t *testing.T) {
 		{name: "invalid", path: "readyz", want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := validPath(test.path); got != test.want {
-				t.Fatalf("validPath(%q) = %v, want %v", test.path, got, test.want)
+			if got := validPath(tc.path); got != tc.want {
+				t.Fatalf("validPath(%q) = %v, want %v", tc.path, got, tc.want)
 			}
 		})
 	}
@@ -116,12 +116,12 @@ func TestInvalidPathRune(t *testing.T) {
 		{name: "delete", r: 0x7f, want: true},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := invalidPathRune(test.r); got != test.want {
-				t.Fatalf("invalidPathRune(%q) = %v, want %v", test.r, got, test.want)
+			if got := invalidPathRune(tc.r); got != tc.want {
+				t.Fatalf("invalidPathRune(%q) = %v, want %v", tc.r, got, tc.want)
 			}
 		})
 	}

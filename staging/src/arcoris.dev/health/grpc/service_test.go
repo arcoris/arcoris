@@ -157,12 +157,12 @@ func TestServiceIndexPreservesOrder(t *testing.T) {
 }
 
 // sameStrings reports whether two string slices contain the same ordered values.
-func sameStrings(left, right []string) bool {
-	if len(left) != len(right) {
+func sameStrings(l, r []string) bool {
+	if len(l) != len(r) {
 		return false
 	}
-	for i := range left {
-		if left[i] != right[i] {
+	for i := range l {
+		if l[i] != r[i] {
 			return false
 		}
 	}

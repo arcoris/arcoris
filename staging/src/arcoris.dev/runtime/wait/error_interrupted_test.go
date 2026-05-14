@@ -79,12 +79,12 @@ func TestInterruptedClassification(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := Interrupted(tt.err); got != tt.want {
-				t.Fatalf("Interrupted(err) = %v, want %v", got, tt.want)
+			if got := Interrupted(tc.err); got != tc.want {
+				t.Fatalf("Interrupted(err) = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -145,11 +145,11 @@ func TestNewInterruptedErrorPreservesAlreadyInterruptedErrors(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := NewInterruptedError(tt.err); got != tt.err {
+			if got := NewInterruptedError(tc.err); got != tc.err {
 				t.Fatal("NewInterruptedError wrapped an error that was already classified as interrupted")
 			}
 		})

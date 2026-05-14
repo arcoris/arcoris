@@ -35,13 +35,13 @@ func TestGroupVersionKindParseValidValues(t *testing.T) {
 		{input: "control.arcoris.dev/v1alpha1, Kind=WorkloadClass", want: GroupVersionKind{Group: "control.arcoris.dev", Version: "v1alpha1", Kind: "WorkloadClass"}},
 	}
 
-	for _, tt := range tests {
-		got, err := ParseGroupVersionKind(tt.input)
+	for _, tc := range tests {
+		got, err := ParseGroupVersionKind(tc.input)
 		if err != nil {
-			t.Fatalf("ParseGroupVersionKind(%q) returned error: %v", tt.input, err)
+			t.Fatalf("ParseGroupVersionKind(%q) returned error: %v", tc.input, err)
 		}
-		if got != tt.want || got.String() != tt.input || got.Identifier() != tt.input {
-			t.Fatalf("ParseGroupVersionKind(%q) = %+v", tt.input, got)
+		if got != tc.want || got.String() != tc.input || got.Identifier() != tc.input {
+			t.Fatalf("ParseGroupVersionKind(%q) = %+v", tc.input, got)
 		}
 	}
 }

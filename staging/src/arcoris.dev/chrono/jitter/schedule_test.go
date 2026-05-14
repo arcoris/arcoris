@@ -72,12 +72,12 @@ func TestJitterRequestsRandomGeneratorPerSequence(t *testing.T) {
 	source := &countingRandomSource{}
 	schedule := newJitterScheduleWithSource(delay.Fixed(time.Second), fullJitterTransform, source)
 
-	left := schedule.NewSequence()
-	right := schedule.NewSequence()
+	l := schedule.NewSequence()
+	r := schedule.NewSequence()
 
 	if source.calls != 2 {
 		t.Fatalf("NewRandom calls = %d, want 2", source.calls)
 	}
-	mustNext(t, left, 0)
-	mustNext(t, right, time.Nanosecond)
+	mustNext(t, l, 0)
+	mustNext(t, r, time.Nanosecond)
 }

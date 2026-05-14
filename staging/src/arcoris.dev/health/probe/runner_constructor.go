@@ -24,28 +24,28 @@ import "arcoris.dev/health"
 // WithTargets. NewRunner validates configuration and creates the private cache,
 // but it does not start goroutines. Callers start probing by calling Run with an
 // owner-controlled context.
-func NewRunner(evaluator *health.Evaluator, options ...Option) (*Runner, error) {
+func NewRunner(evaluator *health.Evaluator, opts ...Option) (*Runner, error) {
 	if evaluator == nil {
 		return nil, ErrNilEvaluator
 	}
 
-	config := defaultConfig()
-	if err := applyOptions(&config, options...); err != nil {
+	cfg := defaultConfig()
+	if err := applyOptions(&cfg, opts...); err != nil {
 		return nil, err
 	}
-	if err := config.validate(); err != nil {
+	if err := cfg.validate(); err != nil {
 		return nil, err
 	}
 
-	targets := copyTargets(config.targets)
+	targets := copyTargets(cfg.targets)
 
 	return &Runner{
 		evaluator:    evaluator,
 		store:        newStore(targets),
-		clock:        config.clock,
+		clock:        cfg.clock,
 		targets:      targets,
-		interval:     config.interval,
-		staleAfter:   config.staleAfter,
-		initialProbe: config.initialProbe,
+		interval:     cfg.interval,
+		staleAfter:   cfg.staleAfter,
+		initialProbe: cfg.initialProbe,
 	}, nil
 }

@@ -43,12 +43,12 @@ func TestFibonacciSequenceUsesFibonacciGrowth(t *testing.T) {
 func TestFibonacciSequencesHaveIndependentState(t *testing.T) {
 	schedule := Fibonacci(time.Second)
 
-	left := schedule.NewSequence()
-	right := schedule.NewSequence()
+	l := schedule.NewSequence()
+	r := schedule.NewSequence()
 
-	mustNext(t, left, time.Second)
-	mustNext(t, left, time.Second)
-	mustNext(t, right, time.Second)
+	mustNext(t, l, time.Second)
+	mustNext(t, l, time.Second)
+	mustNext(t, r, time.Second)
 }
 
 func TestFibonacciSequenceSaturates(t *testing.T) {

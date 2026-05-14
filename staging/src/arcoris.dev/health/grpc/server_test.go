@@ -60,12 +60,12 @@ func TestNewServerRejectsInvalidConfig(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		options []Option
+		opts    []Option
 		wantErr error
 	}{
 		{
 			name: "duplicate service",
-			options: []Option{
+			opts: []Option{
 				WithService("dup", health.TargetReady),
 				WithService("dup", health.TargetLive),
 			},
@@ -73,17 +73,17 @@ func TestNewServerRejectsInvalidConfig(t *testing.T) {
 		},
 		{
 			name:    "invalid watch interval",
-			options: []Option{WithWatchInterval(0)},
+			opts:    []Option{WithWatchInterval(0)},
 			wantErr: ErrInvalidWatchInterval,
 		},
 		{
 			name:    "invalid max list services",
-			options: []Option{WithMaxListServices(0)},
+			opts:    []Option{WithMaxListServices(0)},
 			wantErr: ErrInvalidMaxListServices,
 		},
 		{
 			name:    "nil option",
-			options: []Option{nil},
+			opts:    []Option{nil},
 			wantErr: ErrNilOption,
 		},
 	}
@@ -92,7 +92,7 @@ func TestNewServerRejectsInvalidConfig(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := NewServer(healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)), tc.options...)
+			_, err := NewServer(healthtest.NewStaticSource(healthtest.HealthyReport(health.TargetReady)), tc.opts...)
 			if !errors.Is(err, tc.wantErr) {
 				t.Fatalf("NewServer() = %v, want %v", err, tc.wantErr)
 			}

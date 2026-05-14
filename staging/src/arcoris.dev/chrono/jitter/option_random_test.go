@@ -86,11 +86,11 @@ func TestWithRandomFuncAdaptsFunction(t *testing.T) {
 func TestWithSeedCreatesFreshDeterministicGenerators(t *testing.T) {
 	config := randomOptionsOf(WithSeed(42))
 
-	left := config.source.NewRandom()
-	right := config.source.NewRandom()
+	l := config.source.NewRandom()
+	r := config.source.NewRandom()
 
 	for i := 0; i < 5; i++ {
-		if got, want := left.Int63(), right.Int63(); got != want {
+		if got, want := l.Int63(), r.Int63(); got != want {
 			t.Fatalf("draw %d mismatch: left=%d right=%d", i, got, want)
 		}
 	}

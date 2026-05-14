@@ -37,12 +37,12 @@ import "arcoris.dev/chrono/clock"
 //
 // Passing nil returns ErrNilClock.
 func WithClock(source clock.PassiveClock) EvaluatorOption {
-	return func(config *evaluatorConfig) error {
+	return func(cfg *evaluatorConfig) error {
 		if source == nil {
 			return ErrNilClock
 		}
 
-		config.clock = source
+		cfg.clock = source
 		return nil
 	}
 }

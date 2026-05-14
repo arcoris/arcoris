@@ -52,12 +52,12 @@ func TestJitterReturnsOriginalDurationForNonPositiveDurations(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := Jitter(tt.duration, 1); got != tt.duration {
-				t.Fatalf("Jitter(%v, 1) = %v, want %v", tt.duration, got, tt.duration)
+			if got := Jitter(tc.duration, 1); got != tc.duration {
+				t.Fatalf("Jitter(%v, 1) = %v, want %v", tc.duration, got, tc.duration)
 			}
 		})
 	}
@@ -182,12 +182,12 @@ func TestMaxJitterDelta(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := maxJitterDelta(tt.duration, tt.factor); got != tt.want {
-				t.Fatalf("maxJitterDelta(%v, %v) = %v, want %v", tt.duration, tt.factor, got, tt.want)
+			if got := maxJitterDelta(tc.duration, tc.factor); got != tc.want {
+				t.Fatalf("maxJitterDelta(%v, %v) = %v, want %v", tc.duration, tc.factor, got, tc.want)
 			}
 		})
 	}
@@ -244,12 +244,12 @@ func TestJitterPanicsOnInvalidFactor(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustJitterPanicWith(t, tt.panic, func() {
-				_ = Jitter(time.Second, tt.factor)
+			mustJitterPanicWith(t, tc.panic, func() {
+				_ = Jitter(time.Second, tc.factor)
 			})
 		})
 	}

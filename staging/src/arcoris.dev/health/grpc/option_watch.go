@@ -23,12 +23,12 @@ import "time"
 // Each Watch call owns its ticker. This option changes only that polling
 // cadence; it does not create a package-level background runner or cache.
 func WithWatchInterval(interval time.Duration) Option {
-	return func(config *config) error {
+	return func(cfg *config) error {
 		if err := validateWatchInterval(interval); err != nil {
 			return err
 		}
 
-		config.watchInterval = interval
+		cfg.watchInterval = interval
 		return nil
 	}
 }

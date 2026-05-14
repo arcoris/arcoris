@@ -31,11 +31,11 @@ import (
 //
 // This helper is for successful fixture construction. Tests that need to assert
 // NewEvaluator error behavior should call health.NewEvaluator directly.
-func NewEvaluator(t testing.TB, registry *health.Registry, options ...health.EvaluatorOption) *health.Evaluator {
+func NewEvaluator(t testing.TB, registry *health.Registry, opts ...health.EvaluatorOption) *health.Evaluator {
 	t.Helper()
 
 	allOptions := []health.EvaluatorOption{health.WithDefaultTimeout(0)}
-	allOptions = append(allOptions, options...)
+	allOptions = append(allOptions, opts...)
 
 	evaluator, err := health.NewEvaluator(registry, allOptions...)
 	if err != nil {

@@ -66,13 +66,13 @@ func TestRequirePositiveIntervalPanicsOnNonPositiveDuration(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			mustPanicWith(t, errNonPositiveInterval, func() {
-				requirePositiveInterval(tt.interval)
+				requirePositiveInterval(tc.interval)
 			})
 		})
 	}
@@ -101,12 +101,12 @@ func TestRequireJitterFactorAcceptsValidFactors(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			requireJitterFactor(tt.factor)
+			requireJitterFactor(tc.factor)
 		})
 	}
 }
@@ -143,13 +143,13 @@ func TestRequireJitterFactorPanicsOnInvalidFactors(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, tt.panic, func() {
-				requireJitterFactor(tt.factor)
+			mustPanicWith(t, tc.panic, func() {
+				requireJitterFactor(tc.factor)
 			})
 		})
 	}
@@ -201,13 +201,13 @@ func TestTimerRequireUsablePanicsOnInvalidTimer(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			mustPanicWith(t, errNilTimer, func() {
-				tt.timer.requireUsable()
+				tc.timer.requireUsable()
 			})
 		})
 	}

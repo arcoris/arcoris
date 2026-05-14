@@ -108,12 +108,12 @@ func TestWaitErrorMessagePrefix(t *testing.T) {
 		{context.DeadlineExceeded, "lifecycle: wait failed: context deadline exceeded"},
 	}
 
-	for _, tt := range tests {
-		if got := waitErrorMessagePrefix(tt.cause); got != tt.want {
-			t.Fatalf("prefix = %q, want %q", got, tt.want)
+	for _, tc := range tests {
+		if got := waitErrorMessagePrefix(tc.cause); got != tc.want {
+			t.Fatalf("prefix = %q, want %q", got, tc.want)
 		}
-		if !strings.HasPrefix(waitErrorMessagePrefix(tt.cause), "lifecycle:") {
-			t.Fatalf("prefix %q lacks lifecycle prefix", waitErrorMessagePrefix(tt.cause))
+		if !strings.HasPrefix(waitErrorMessagePrefix(tc.cause), "lifecycle:") {
+			t.Fatalf("prefix %q lacks lifecycle prefix", waitErrorMessagePrefix(tc.cause))
 		}
 	}
 }

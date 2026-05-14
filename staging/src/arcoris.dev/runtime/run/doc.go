@@ -143,8 +143,9 @@
 //
 //   - task.go owns the Task contract;
 //   - group.go owns Group construction and public methods;
-//   - group_option.go owns GroupOption, groupConfig, ErrorMode, and option
-//     normalization;
+//   - error_mode.go owns ErrorMode;
+//   - group_config.go owns Group construction config and option normalization;
+//   - group_option.go owns GroupOption constructors;
 //   - group_state.go owns internal Group state transitions and submission
 //     guards;
 //   - group_error.go owns internal task error recording, ordering, and Wait

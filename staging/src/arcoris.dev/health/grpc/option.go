@@ -23,18 +23,18 @@ package healthgrpc
 // health registries, evaluator execution policy, or package-health contracts.
 type Option func(*config) error
 
-// applyOptions applies options in caller order to config.
+// applyOptions applies options in caller order to normalized configuration.
 //
 // Option order is part of the package contract: later options may intentionally
 // replace earlier configuration, such as the default service mapping or Watch
 // interval. Nil options are rejected as configuration errors instead of being
 // skipped silently.
-func applyOptions(config *config, options ...Option) error {
-	for _, option := range options {
-		if option == nil {
+func applyOptions(cfg *config, opts ...Option) error {
+	for _, opt := range opts {
+		if opt == nil {
 			return ErrNilOption
 		}
-		if err := option(config); err != nil {
+		if err := opt(cfg); err != nil {
 			return err
 		}
 	}

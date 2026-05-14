@@ -25,12 +25,12 @@ import "time"
 // automatically change staleAfter; callers that need a specific freshness ratio
 // should configure both explicitly.
 func WithStaleAfter(staleAfter time.Duration) Option {
-	return func(config *config) error {
+	return func(cfg *config) error {
 		if err := validateStaleAfter(staleAfter); err != nil {
 			return err
 		}
 
-		config.staleAfter = staleAfter
+		cfg.staleAfter = staleAfter
 		return nil
 	}
 }

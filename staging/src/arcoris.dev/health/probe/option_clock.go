@@ -29,12 +29,12 @@ import "arcoris.dev/chrono/clock"
 // lifecycle and concurrent readers call Snapshot or Snapshots while Run updates
 // the cache.
 func WithClock(clk clock.Clock) Option {
-	return func(config *config) error {
+	return func(cfg *config) error {
 		if nilClock(clk) {
 			return ErrNilClock
 		}
 
-		config.clock = clk
+		cfg.clock = clk
 		return nil
 	}
 }

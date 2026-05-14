@@ -45,11 +45,11 @@ func TestValidationHelpersRejectMissingDiagnosticText(t *testing.T) {
 		{name: "context", fn: func() { requireContext(context.Background(), "") }},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNilValidationMessage, tt.fn)
+			mustPanicWith(t, errNilValidationMessage, tc.fn)
 		})
 	}
 }
@@ -72,11 +72,11 @@ func TestValidationHelpersRejectInvalidInputs(t *testing.T) {
 		{name: "nil group option", message: errNilGroupOption, fn: func() { requireGroupOption(nil) }},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, tt.message, tt.fn)
+			mustPanicWith(t, tc.message, tc.fn)
 		})
 	}
 }

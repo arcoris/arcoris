@@ -210,8 +210,8 @@ func TestGroupTaskErrorCausePrecedesLaterCancel(t *testing.T) {
 		{name: "custom", cause: errors.New("owner stop")},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			group := NewGroup(context.Background())
@@ -225,7 +225,7 @@ func TestGroupTaskErrorCausePrecedesLaterCancel(t *testing.T) {
 			// Cancel. Later owner cancellation, including Cancel(nil), must not
 			// replace the TaskError cause.
 			mustClose(t, group.Done())
-			group.Cancel(tt.cause)
+			group.Cancel(tc.cause)
 
 			var cause TaskError
 			if !errors.As(context.Cause(group.Context()), &cause) {
@@ -483,20 +483,20 @@ func TestGroupRejectsNilAndUninitializedReceiver(t *testing.T) {
 		{name: "Wait", fn: func(g *Group) { g.Wait() }},
 	}
 
-	for _, tt := range tests {
-		t.Run("nil "+tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run("nil "+tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			mustPanicWith(t, errNilGroup, func() {
-				tt.fn(nil)
+				tc.fn(nil)
 			})
 		})
-		t.Run("zero "+tt.name, func(t *testing.T) {
+		t.Run("zero "+tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			mustPanicWith(t, errUninitializedGroup, func() {
 				var group Group
-				tt.fn(&group)
+				tc.fn(&group)
 			})
 		})
 	}

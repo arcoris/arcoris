@@ -87,10 +87,10 @@ func reachableFromTransitionRules(from State) map[State]bool {
 	}
 
 	for len(queue) > 0 {
-		current := queue[0]
+		cur := queue[0]
 		queue = queue[1:]
 
-		for _, target := range adjacency[current] {
+		for _, target := range adjacency[cur] {
 			if visited[target] {
 				continue
 			}

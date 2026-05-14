@@ -55,11 +55,11 @@ func TestDelaysCopiesCallerSlice(t *testing.T) {
 func TestDelaysSequencesHaveIndependentCursors(t *testing.T) {
 	schedule := Delays(time.Second, 2*time.Second)
 
-	left := schedule.NewSequence()
-	right := schedule.NewSequence()
+	l := schedule.NewSequence()
+	r := schedule.NewSequence()
 
-	mustNext(t, left, time.Second)
-	mustNext(t, left, 2*time.Second)
-	mustNext(t, right, time.Second)
-	mustNext(t, right, 2*time.Second)
+	mustNext(t, l, time.Second)
+	mustNext(t, l, 2*time.Second)
+	mustNext(t, r, time.Second)
+	mustNext(t, r, 2*time.Second)
 }

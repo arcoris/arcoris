@@ -87,14 +87,14 @@ func TestFakeClockAfterNonPositiveDurationIsImmediatelyReady(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			clock := NewFakeClock(start)
 
-			ch := clock.After(tt.duration)
+			ch := clock.After(tc.duration)
 
 			mustEqualTime(t, "After immediate delivery", mustReceiveTime(t, ch), start)
 			mustNotReceiveTime(t, ch)
@@ -145,16 +145,16 @@ func TestFakeClockSleepNonPositiveDurationReturns(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			clock := NewFakeClock(fakeClockTestTime())
 			done := make(chan struct{})
 
 			go func() {
-				clock.Sleep(tt.duration)
+				clock.Sleep(tc.duration)
 				close(done)
 			}()
 

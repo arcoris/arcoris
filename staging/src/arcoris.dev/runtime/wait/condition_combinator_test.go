@@ -131,18 +131,18 @@ func TestPredicateReturnsConditionState(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			condition := Predicate(func(context.Context) bool {
-				return tt.want
+				return tc.want
 			})
 
 			done, err := condition(context.Background())
 
-			if done != tt.want {
-				t.Fatalf("Predicate(...) done = %v, want %v", done, tt.want)
+			if done != tc.want {
+				t.Fatalf("Predicate(...) done = %v, want %v", done, tc.want)
 			}
 			if err != nil {
 				t.Fatalf("Predicate(...) err = %v, want nil", err)
@@ -192,18 +192,18 @@ func TestNotInvertsSatisfiedState(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			condition := Not(func(context.Context) (bool, error) {
-				return tt.in, nil
+				return tc.in, nil
 			})
 
 			done, err := condition(context.Background())
 
-			if done != tt.want {
-				t.Fatalf("Not(...) done = %v, want %v", done, tt.want)
+			if done != tc.want {
+				t.Fatalf("Not(...) done = %v, want %v", done, tc.want)
 			}
 			if err != nil {
 				t.Fatalf("Not(...) err = %v, want nil", err)
@@ -266,11 +266,11 @@ func TestAllPanicsOnNilCondition(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNilCondition, tt.call)
+			mustPanicWith(t, errNilCondition, tc.call)
 		})
 	}
 }
@@ -390,11 +390,11 @@ func TestAnyPanicsOnNilCondition(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNilCondition, tt.call)
+			mustPanicWith(t, errNilCondition, tc.call)
 		})
 	}
 }

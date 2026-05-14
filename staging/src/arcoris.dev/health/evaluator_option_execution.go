@@ -26,13 +26,13 @@ package health
 // The policy is normalized and validated at construction time. Invalid policies
 // return an error classified as ErrInvalidExecutionPolicy.
 func WithExecutionPolicy(policy ExecutionPolicy) EvaluatorOption {
-	return func(config *evaluatorConfig) error {
+	return func(cfg *evaluatorConfig) error {
 		policy = policy.Normalize()
 		if err := policy.Validate(); err != nil {
 			return err
 		}
 
-		config.executionPolicy = policy
+		cfg.executionPolicy = policy
 		return nil
 	}
 }
@@ -46,7 +46,7 @@ func WithExecutionPolicy(policy ExecutionPolicy) EvaluatorOption {
 // policy. This is useful when readiness needs bounded parallel dependency probes
 // while startup and liveness should remain sequential.
 func WithTargetExecutionPolicy(target Target, policy ExecutionPolicy) EvaluatorOption {
-	return func(config *evaluatorConfig) error {
+	return func(cfg *evaluatorConfig) error {
 		if !target.IsConcrete() {
 			return InvalidTargetError{Target: target}
 		}
@@ -56,7 +56,7 @@ func WithTargetExecutionPolicy(target Target, policy ExecutionPolicy) EvaluatorO
 			return err
 		}
 
-		config.targetExecutionPolicies[target] = policy
+		cfg.targetExecutionPolicies[target] = policy
 		return nil
 	}
 }

@@ -67,13 +67,13 @@ func Subscribe(sigs ...os.Signal) *Subscription {
 // preserving first occurrence order. The returned Subscription owns its signal
 // registration until Stop is called.
 func SubscribeWithOptions(sigs []os.Signal, opts ...SubscriptionOption) *Subscription {
-	config := newSubscribeConfig(opts...)
+	cfg := newSubscribeConfig(opts...)
 	registered := signalSetOrShutdownSignals(sigs)
 
 	s := &Subscription{
-		ch:       make(chan os.Signal, config.buffer),
+		ch:       make(chan os.Signal, cfg.buffer),
 		done:     make(chan struct{}),
-		notifier: config.notifier,
+		notifier: cfg.notifier,
 	}
 	s.notifier.notify(s.ch, registered...)
 

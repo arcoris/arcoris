@@ -254,8 +254,8 @@ func requireObserverFunc(fn func(context.Context, Event)) {
 //
 // Nil options are rejected instead of ignored. This makes option composition
 // errors visible at configuration time and keeps retry defaults explicit.
-func requireOption(option Option) {
-	if option == nil {
+func requireOption(opt Option) {
+	if opt == nil {
 		panic(panicNilOption)
 	}
 }

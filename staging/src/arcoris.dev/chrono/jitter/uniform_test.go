@@ -60,25 +60,25 @@ func TestUniformScheduleRequestsGeneratorPerSequence(t *testing.T) {
 	source := &countingRandomSource{}
 	schedule := Uniform(0, time.Second, WithRandomSource(source))
 
-	left := schedule.NewSequence()
-	right := schedule.NewSequence()
+	l := schedule.NewSequence()
+	r := schedule.NewSequence()
 
 	if source.calls != 2 {
 		t.Fatalf("NewRandom calls = %d, want 2", source.calls)
 	}
-	mustNext(t, left, 0)
-	mustNext(t, right, time.Nanosecond)
+	mustNext(t, l, 0)
+	mustNext(t, r, time.Nanosecond)
 }
 
 func TestUniformSequencesWithSameSeedAreIndependentAndDeterministic(t *testing.T) {
 	schedule := Uniform(time.Second, 10*time.Second, WithSeed(42))
 
-	left := schedule.NewSequence()
-	right := schedule.NewSequence()
+	l := schedule.NewSequence()
+	r := schedule.NewSequence()
 
 	for i := 0; i < 5; i++ {
-		leftDelay, leftOK := left.Next()
-		rightDelay, rightOK := right.Next()
+		leftDelay, leftOK := l.Next()
+		rightDelay, rightOK := r.Next()
 		if !leftOK || !rightOK {
 			t.Fatalf("sequence %d exhausted: left=%v right=%v", i, leftOK, rightOK)
 		}

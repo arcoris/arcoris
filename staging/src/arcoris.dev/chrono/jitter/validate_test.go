@@ -50,9 +50,9 @@ func TestRequireValidationHelpersRejectInvalidInput(t *testing.T) {
 		{name: "negative sequence delay", fn: func() { requireNonNegativeSequenceDelay(-time.Nanosecond, true, testValidationMessage) }},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mustPanicWith(t, testValidationMessage, tt.fn)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mustPanicWith(t, testValidationMessage, tc.fn)
 		})
 	}
 }

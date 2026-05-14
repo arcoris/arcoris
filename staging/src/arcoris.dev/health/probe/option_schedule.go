@@ -25,12 +25,12 @@ import "time"
 // and failure-specific scheduling are intentionally outside the base runner
 // contract.
 func WithInterval(interval time.Duration) Option {
-	return func(config *config) error {
+	return func(cfg *config) error {
 		if err := validateInterval(interval); err != nil {
 			return err
 		}
 
-		config.interval = interval
+		cfg.interval = interval
 		return nil
 	}
 }
@@ -43,8 +43,8 @@ func WithInterval(interval time.Duration) Option {
 // useful in tests or in components that want the first observation to align with
 // the periodic cadence exactly.
 func WithInitialProbe(enabled bool) Option {
-	return func(config *config) error {
-		config.initialProbe = enabled
+	return func(cfg *config) error {
+		cfg.initialProbe = enabled
 		return nil
 	}
 }

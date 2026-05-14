@@ -88,15 +88,15 @@ func defaultControllerConfig() controllerConfig {
 // The returned config is independent from the variadic options slice. Guards and
 // observers are stored as interface values; the lifecycle package does not clone
 // the concrete objects behind those interfaces.
-func newControllerConfig(options ...Option) controllerConfig {
+func newControllerConfig(opts ...Option) controllerConfig {
 	config := defaultControllerConfig()
 
-	for _, option := range options {
-		if option == nil {
+	for _, opt := range opts {
+		if opt == nil {
 			continue
 		}
 
-		option(&config)
+		opt(&config)
 	}
 
 	return config

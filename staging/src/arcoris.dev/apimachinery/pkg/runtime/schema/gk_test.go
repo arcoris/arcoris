@@ -35,13 +35,13 @@ func TestGroupKindParseValidValues(t *testing.T) {
 		{input: "WorkloadClass.control.arcoris.dev", want: GroupKind{Group: "control.arcoris.dev", Kind: "WorkloadClass"}},
 	}
 
-	for _, tt := range tests {
-		got, err := ParseGroupKind(tt.input)
+	for _, tc := range tests {
+		got, err := ParseGroupKind(tc.input)
 		if err != nil {
-			t.Fatalf("ParseGroupKind(%q) returned error: %v", tt.input, err)
+			t.Fatalf("ParseGroupKind(%q) returned error: %v", tc.input, err)
 		}
-		if got != tt.want || got.String() != tt.input || got.Identifier() != tt.input {
-			t.Fatalf("ParseGroupKind(%q) = %+v", tt.input, got)
+		if got != tc.want || got.String() != tc.input || got.Identifier() != tc.input {
+			t.Fatalf("ParseGroupKind(%q) = %+v", tc.input, got)
 		}
 	}
 }

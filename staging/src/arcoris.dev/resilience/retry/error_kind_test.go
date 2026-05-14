@@ -49,10 +49,10 @@ func TestRetryErrorKindError(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.kind.Error(); got != tt.want {
-				t.Fatalf("retryErrorKind.Error() = %q, want %q", got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.kind.Error(); got != tc.want {
+				t.Fatalf("retryErrorKind.Error() = %q, want %q", got, tc.want)
 			}
 		})
 	}

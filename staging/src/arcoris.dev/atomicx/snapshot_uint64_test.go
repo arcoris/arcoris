@@ -74,17 +74,17 @@ func TestUint64CounterSnapshotIsIndependentFromLaterCounterUpdates(t *testing.T)
 func TestUint64CounterSnapshotDeltaSince(t *testing.T) {
 	t.Parallel()
 
-	previous := Uint64CounterSnapshot{Value: 100}
-	current := Uint64CounterSnapshot{Value: 175}
+	prev := Uint64CounterSnapshot{Value: 100}
+	cur := Uint64CounterSnapshot{Value: 175}
 
-	delta := current.DeltaSince(previous)
+	delta := cur.DeltaSince(prev)
 
-	if delta.Previous != previous.Value {
-		t.Fatalf("delta.Previous = %d, want %d", delta.Previous, previous.Value)
+	if delta.Previous != prev.Value {
+		t.Fatalf("delta.Previous = %d, want %d", delta.Previous, prev.Value)
 	}
 
-	if delta.Current != current.Value {
-		t.Fatalf("delta.Current = %d, want %d", delta.Current, current.Value)
+	if delta.Current != cur.Value {
+		t.Fatalf("delta.Current = %d, want %d", delta.Current, cur.Value)
 	}
 
 	if delta.Value != 75 {
@@ -100,17 +100,17 @@ func TestUint64CounterSnapshotDeltaSince(t *testing.T) {
 func TestUint64CounterSnapshotDeltaSinceWrapped(t *testing.T) {
 	t.Parallel()
 
-	previous := Uint64CounterSnapshot{Value: testMaxUint64 - 2}
-	current := Uint64CounterSnapshot{Value: 4}
+	prev := Uint64CounterSnapshot{Value: testMaxUint64 - 2}
+	cur := Uint64CounterSnapshot{Value: 4}
 
-	delta := current.DeltaSince(previous)
+	delta := cur.DeltaSince(prev)
 
-	if delta.Previous != previous.Value {
-		t.Fatalf("delta.Previous = %d, want %d", delta.Previous, previous.Value)
+	if delta.Previous != prev.Value {
+		t.Fatalf("delta.Previous = %d, want %d", delta.Previous, prev.Value)
 	}
 
-	if delta.Current != current.Value {
-		t.Fatalf("delta.Current = %d, want %d", delta.Current, current.Value)
+	if delta.Current != cur.Value {
+		t.Fatalf("delta.Current = %d, want %d", delta.Current, cur.Value)
 	}
 
 	if delta.Value != 7 {

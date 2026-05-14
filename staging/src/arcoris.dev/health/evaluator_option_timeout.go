@@ -29,12 +29,12 @@ import "time"
 // Target-specific timeouts configured with WithTargetTimeout override the
 // default timeout for that target.
 func WithDefaultTimeout(timeout time.Duration) EvaluatorOption {
-	return func(config *evaluatorConfig) error {
+	return func(cfg *evaluatorConfig) error {
 		if timeout < 0 {
 			return ErrInvalidTimeout
 		}
 
-		config.defaultTimeout = timeout
+		cfg.defaultTimeout = timeout
 		return nil
 	}
 }
@@ -51,7 +51,7 @@ func WithDefaultTimeout(timeout time.Duration) EvaluatorOption {
 // different evaluation budgets. For example, liveness checks should normally be
 // cheap and short, while startup checks may need a wider budget during bootstrap.
 func WithTargetTimeout(target Target, timeout time.Duration) EvaluatorOption {
-	return func(config *evaluatorConfig) error {
+	return func(cfg *evaluatorConfig) error {
 		if !target.IsConcrete() {
 			return InvalidTargetError{Target: target}
 		}
@@ -59,7 +59,7 @@ func WithTargetTimeout(target Target, timeout time.Duration) EvaluatorOption {
 			return ErrInvalidTimeout
 		}
 
-		config.targetTimeouts[target] = timeout
+		cfg.targetTimeouts[target] = timeout
 		return nil
 	}
 }

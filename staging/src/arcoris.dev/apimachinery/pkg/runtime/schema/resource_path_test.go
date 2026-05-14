@@ -35,16 +35,16 @@ func TestResourcePathParseValidValues(t *testing.T) {
 		{input: "pods/status", want: ResourcePath{Resource: "pods", Subresource: "status"}},
 	}
 
-	for _, tt := range tests {
-		got, err := ParseResourcePath(tt.input)
+	for _, tc := range tests {
+		got, err := ParseResourcePath(tc.input)
 		if err != nil {
-			t.Fatalf("ParseResourcePath(%q) returned error: %v", tt.input, err)
+			t.Fatalf("ParseResourcePath(%q) returned error: %v", tc.input, err)
 		}
-		if got != tt.want {
-			t.Fatalf("ParseResourcePath(%q) = %+v, want %+v", tt.input, got, tt.want)
+		if got != tc.want {
+			t.Fatalf("ParseResourcePath(%q) = %+v, want %+v", tc.input, got, tc.want)
 		}
-		if got.String() != tt.input {
-			t.Fatalf("ParseResourcePath(%q).String() = %q", tt.input, got.String())
+		if got.String() != tc.input {
+			t.Fatalf("ParseResourcePath(%q).String() = %q", tc.input, got.String())
 		}
 	}
 }

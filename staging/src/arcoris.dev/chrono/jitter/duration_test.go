@@ -35,10 +35,10 @@ func TestDurationHelpersSaturateInsteadOfWrapping(t *testing.T) {
 		{name: "min", got: minDuration(time.Second, time.Millisecond), want: time.Millisecond},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.got != tt.want {
-				t.Fatalf("got %s, want %s", tt.got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.got != tc.want {
+				t.Fatalf("got %s, want %s", tc.got, tc.want)
 			}
 		})
 	}

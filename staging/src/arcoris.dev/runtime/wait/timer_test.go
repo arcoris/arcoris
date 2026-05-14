@@ -72,11 +72,11 @@ func TestTimerWaitReturnsNilForImmediateTimer(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			timer := NewTimer(tt.duration)
+			timer := NewTimer(tc.duration)
 
 			if err := timer.Wait(context.Background()); err != nil {
 				t.Fatalf("Timer.Wait(...) = %v, want nil", err)
@@ -297,12 +297,12 @@ func TestTimerMethodsPanicOnNilReceiver(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			mustPanicWith(t, errNilTimer, func() {
-				tt.call(nil)
+				tc.call(nil)
 			})
 		})
 	}
@@ -339,13 +339,13 @@ func TestTimerMethodsPanicOnZeroValue(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			var timer Timer
 			mustPanicWith(t, errNilTimer, func() {
-				tt.call(&timer)
+				tc.call(&timer)
 			})
 		})
 	}

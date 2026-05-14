@@ -33,48 +33,6 @@ const (
 // retained after construction except through normalized configuration values.
 type SubscriptionOption func(*subscribeConfig)
 
-// subscribeConfig contains construction-time settings for Subscription.
-//
-// The config is package-local. Public callers configure it through
-// SubscriptionOption values while tests may use package-local options to replace
-// the os/signal notifier seam.
-type subscribeConfig struct {
-	// buffer is the capacity of the signal delivery channel.
-	buffer int
-
-	// notifier registers and unregisters process signal delivery.
-	notifier notifier
-}
-
-// defaultSubscribeConfig returns the default Subscription construction config.
-func defaultSubscribeConfig() subscribeConfig {
-	return subscribeConfig{
-		buffer:   1,
-		notifier: osNotifier{},
-	}
-}
-
-// newSubscribeConfig applies options to a fresh default subscribeConfig.
-//
-// Nil options are ignored to keep conditional option lists easy to compose.
-func newSubscribeConfig(options ...SubscriptionOption) subscribeConfig {
-	config := defaultSubscribeConfig()
-
-	for _, option := range options {
-		if option == nil {
-			continue
-		}
-		option(&config)
-	}
-
-	if config.notifier == nil {
-		config.notifier = osNotifier{}
-	}
-	requirePositiveBuffer(config.buffer, errNonPositiveSubscriptionBuffer)
-
-	return config
-}
-
 // WithSubscriptionBuffer configures the signal delivery channel buffer size.
 //
 // The buffer must be positive. A value of one is usually enough for shutdown
@@ -82,9 +40,9 @@ func newSubscribeConfig(options ...SubscriptionOption) subscribeConfig {
 // values are useful only when an owner intentionally wants to retain a small
 // burst of signal notifications before it can receive from C or Wait.
 func WithSubscriptionBuffer(size int) SubscriptionOption {
-	return func(config *subscribeConfig) {
+	return func(cfg *subscribeConfig) {
 		requirePositiveBuffer(size, errNonPositiveSubscriptionBuffer)
-		config.buffer = size
+		cfg.buffer = size
 	}
 }
 
@@ -93,7 +51,7 @@ func WithSubscriptionBuffer(size int) SubscriptionOption {
 // The option is intentionally unexported. Production callers should not replace
 // os/signal registration. Tests use this hook to avoid real process signals.
 func withNotifier(n notifier) SubscriptionOption {
-	return func(config *subscribeConfig) {
-		config.notifier = n
+	return func(cfg *subscribeConfig) {
+		cfg.notifier = n
 	}
 }

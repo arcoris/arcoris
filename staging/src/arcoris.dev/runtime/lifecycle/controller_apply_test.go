@@ -67,20 +67,20 @@ func TestControllerApplyAllowedTransitions(t *testing.T) {
 		}, Transition{From: StateStopping, To: StateFailed, Event: EventMarkFailed, Cause: cause}},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			controller := NewController(WithClock(testClock{now: testTime}))
-			transition, err := tt.run(controller)
+			transition, err := tc.run(controller)
 			if err != nil {
-				t.Fatalf("%s = %v, want nil", tt.name, err)
+				t.Fatalf("%s = %v, want nil", tc.name, err)
 			}
-			tt.want.Revision = transition.Revision
-			tt.want.At = testTime
-			assertTransitionEqual(t, transition, tt.want)
+			tc.want.Revision = transition.Revision
+			tc.want.At = testTime
+			assertTransitionEqual(t, transition, tc.want)
 			if !controller.Snapshot().IsValid() {
-				t.Fatalf("snapshot after %s is invalid: %+v", tt.name, controller.Snapshot())
+				t.Fatalf("snapshot after %s is invalid: %+v", tc.name, controller.Snapshot())
 			}
 		})
 	}

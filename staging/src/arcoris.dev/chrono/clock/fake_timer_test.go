@@ -107,13 +107,13 @@ func TestFakeTimerNonPositiveDurationIsImmediatelyReady(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			clock := NewFakeClock(start)
-			timer := clock.NewTimer(tt.duration)
+			timer := clock.NewTimer(tc.duration)
 
 			mustEqualTime(t, "timer immediate delivery", mustReceiveTime(t, timer.C()), start)
 			mustNotReceiveTime(t, timer.C())
@@ -242,15 +242,15 @@ func TestFakeTimerResetNonPositiveDurationDeliversImmediately(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			clock := NewFakeClock(start)
 			timer := clock.NewTimer(time.Hour)
 
-			if wasActive := timer.Reset(tt.duration); !wasActive {
+			if wasActive := timer.Reset(tc.duration); !wasActive {
 				t.Fatal("fakeTimer.Reset(non-positive) for active timer = false, want true")
 			}
 

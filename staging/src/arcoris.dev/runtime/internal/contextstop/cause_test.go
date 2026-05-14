@@ -43,12 +43,12 @@ func TestCausePreservesOrdinaryContextSentinels(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := Cause(test.ctx, test.ctx.Err()); !errors.Is(got, test.want) {
-				t.Fatalf("Cause() = %v, want %v", got, test.want)
+			if got := Cause(tc.ctx, tc.ctx.Err()); !errors.Is(got, tc.want) {
+				t.Fatalf("Cause() = %v, want %v", got, tc.want)
 			}
 		})
 	}

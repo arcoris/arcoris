@@ -266,10 +266,10 @@ func TestOutcomeIsValid(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.outcome.IsValid(); got != tt.want {
-				t.Fatalf("Outcome.IsValid() = %v, want %v", got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.outcome.IsValid(); got != tc.want {
+				t.Fatalf("Outcome.IsValid() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -397,19 +397,19 @@ func TestOutcomePredicatesRequireValidOutcome(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.outcome.Succeeded(); got != tt.wantSucceeded {
-				t.Fatalf("Outcome.Succeeded() = %v, want %v", got, tt.wantSucceeded)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.outcome.Succeeded(); got != tc.wantSucceeded {
+				t.Fatalf("Outcome.Succeeded() = %v, want %v", got, tc.wantSucceeded)
 			}
-			if got := tt.outcome.Failed(); got != tt.wantFailed {
-				t.Fatalf("Outcome.Failed() = %v, want %v", got, tt.wantFailed)
+			if got := tc.outcome.Failed(); got != tc.wantFailed {
+				t.Fatalf("Outcome.Failed() = %v, want %v", got, tc.wantFailed)
 			}
-			if got := tt.outcome.Exhausted(); got != tt.wantExhausted {
-				t.Fatalf("Outcome.Exhausted() = %v, want %v", got, tt.wantExhausted)
+			if got := tc.outcome.Exhausted(); got != tc.wantExhausted {
+				t.Fatalf("Outcome.Exhausted() = %v, want %v", got, tc.wantExhausted)
 			}
-			if got := tt.outcome.Interrupted(); got != tt.wantInterrupted {
-				t.Fatalf("Outcome.Interrupted() = %v, want %v", got, tt.wantInterrupted)
+			if got := tc.outcome.Interrupted(); got != tc.wantInterrupted {
+				t.Fatalf("Outcome.Interrupted() = %v, want %v", got, tc.wantInterrupted)
 			}
 		})
 	}
@@ -469,10 +469,10 @@ func TestOutcomeDuration(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.outcome.Duration(); got != tt.want {
-				t.Fatalf("Outcome.Duration() = %s, want %s", got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.outcome.Duration(); got != tc.want {
+				t.Fatalf("Outcome.Duration() = %s, want %s", got, tc.want)
 			}
 		})
 	}
@@ -529,10 +529,10 @@ func TestOutcomeIsZero(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.outcome.IsZero(); got != tt.want {
-				t.Fatalf("Outcome.IsZero() = %v, want %v", got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.outcome.IsZero(); got != tc.want {
+				t.Fatalf("Outcome.IsZero() = %v, want %v", got, tc.want)
 			}
 		})
 	}

@@ -23,12 +23,12 @@ package healthgrpc
 // service maps from being generated on a single List call without changing the
 // configured service mappings or Source evaluation behavior.
 func WithMaxListServices(max int) Option {
-	return func(config *config) error {
+	return func(cfg *config) error {
 		if err := validateMaxListServices(max); err != nil {
 			return err
 		}
 
-		config.maxListServices = max
+		cfg.maxListServices = max
 		return nil
 	}
 }

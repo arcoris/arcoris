@@ -24,29 +24,14 @@ import (
 	"arcoris.dev/chrono/clock"
 )
 
-func TestDefaultEvaluatorConfig(t *testing.T) {
-	t.Parallel()
-
-	config := defaultEvaluatorConfig()
-	if config.clock == nil {
-		t.Fatal("default clock is nil")
-	}
-	if config.defaultTimeout != defaultCheckTimeout {
-		t.Fatalf("default timeout = %s, want %s", config.defaultTimeout, defaultCheckTimeout)
-	}
-	if config.targetTimeouts == nil {
-		t.Fatal("target timeouts map is nil")
-	}
-}
-
 func TestApplyEvaluatorOptions(t *testing.T) {
 	t.Parallel()
 
-	config := defaultEvaluatorConfig()
+	cfg := defaultEvaluatorConfig()
 	fakeClock := clock.NewFakeClock(testObserved)
 
 	err := applyEvaluatorOptions(
-		&config,
+		&cfg,
 		WithDefaultTimeout(2*time.Second),
 		WithTargetTimeout(TargetReady, 3*time.Second),
 		WithClock(fakeClock),
@@ -54,13 +39,13 @@ func TestApplyEvaluatorOptions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("applyEvaluatorOptions() = %v, want nil", err)
 	}
-	if config.defaultTimeout != 2*time.Second {
-		t.Fatalf("default timeout = %s, want 2s", config.defaultTimeout)
+	if cfg.defaultTimeout != 2*time.Second {
+		t.Fatalf("default timeout = %s, want 2s", cfg.defaultTimeout)
 	}
-	if config.targetTimeouts[TargetReady] != 3*time.Second {
-		t.Fatalf("ready timeout = %s, want 3s", config.targetTimeouts[TargetReady])
+	if cfg.targetTimeouts[TargetReady] != 3*time.Second {
+		t.Fatalf("ready timeout = %s, want 3s", cfg.targetTimeouts[TargetReady])
 	}
-	if config.clock != fakeClock {
+	if cfg.clock != fakeClock {
 		t.Fatal("clock was not configured")
 	}
 }
@@ -68,21 +53,21 @@ func TestApplyEvaluatorOptions(t *testing.T) {
 func TestEvaluatorOptionsRejectInvalidInputs(t *testing.T) {
 	t.Parallel()
 
-	config := defaultEvaluatorConfig()
+	cfg := defaultEvaluatorConfig()
 
-	if err := applyEvaluatorOptions(&config, nil); !errors.Is(err, ErrNilEvaluatorOption) {
+	if err := applyEvaluatorOptions(&cfg, nil); !errors.Is(err, ErrNilEvaluatorOption) {
 		t.Fatalf("nil option = %v, want ErrNilEvaluatorOption", err)
 	}
-	if err := WithClock(nil)(&config); !errors.Is(err, ErrNilClock) {
+	if err := WithClock(nil)(&cfg); !errors.Is(err, ErrNilClock) {
 		t.Fatalf("WithClock(nil) = %v, want ErrNilClock", err)
 	}
-	if err := WithDefaultTimeout(-time.Second)(&config); !errors.Is(err, ErrInvalidTimeout) {
+	if err := WithDefaultTimeout(-time.Second)(&cfg); !errors.Is(err, ErrInvalidTimeout) {
 		t.Fatalf("WithDefaultTimeout(-1s) = %v, want ErrInvalidTimeout", err)
 	}
-	if err := WithTargetTimeout(TargetUnknown, time.Second)(&config); !errors.Is(err, ErrInvalidTarget) {
+	if err := WithTargetTimeout(TargetUnknown, time.Second)(&cfg); !errors.Is(err, ErrInvalidTarget) {
 		t.Fatalf("WithTargetTimeout(invalid target) = %v, want ErrInvalidTarget", err)
 	}
-	if err := WithTargetTimeout(TargetReady, -time.Second)(&config); !errors.Is(err, ErrInvalidTimeout) {
+	if err := WithTargetTimeout(TargetReady, -time.Second)(&cfg); !errors.Is(err, ErrInvalidTimeout) {
 		t.Fatalf("WithTargetTimeout(-1s) = %v, want ErrInvalidTimeout", err)
 	}
 }

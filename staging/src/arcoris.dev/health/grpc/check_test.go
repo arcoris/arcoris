@@ -68,7 +68,7 @@ func TestCheckMapsReports(t *testing.T) {
 	tests := []struct {
 		name    string
 		source  Source
-		options []Option
+		opts    []Option
 		service string
 		want    healthpb.HealthCheckResponse_ServingStatus
 	}{
@@ -95,7 +95,7 @@ func TestCheckMapsReports(t *testing.T) {
 		{
 			name:    "degraded live",
 			source:  healthtest.NewTargetSource(map[health.Target]health.Report{health.TargetLive: healthtest.DegradedReport(health.TargetLive)}),
-			options: []Option{WithTargetServices()},
+			opts:    []Option{WithTargetServices()},
 			service: "live",
 			want:    healthpb.HealthCheckResponse_SERVING,
 		},
@@ -105,7 +105,7 @@ func TestCheckMapsReports(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			server := mustNewServer(t, tc.source, tc.options...)
+			server := mustNewServer(t, tc.source, tc.opts...)
 			response, err := server.Check(context.Background(), &healthpb.HealthCheckRequest{Service: tc.service})
 			if err != nil {
 				t.Fatalf("Check() = %v, want nil", err)

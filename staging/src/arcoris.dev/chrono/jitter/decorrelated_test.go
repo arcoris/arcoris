@@ -74,12 +74,12 @@ func TestDecorrelatedSequencesHaveIndependentPreviousState(t *testing.T) {
 	})
 	schedule := Decorrelated(time.Second, 5*time.Second, 2, WithRandomSource(source))
 
-	left := schedule.NewSequence()
-	right := schedule.NewSequence()
+	l := schedule.NewSequence()
+	r := schedule.NewSequence()
 
-	mustNext(t, left, 2*time.Second)
-	mustNext(t, left, 3*time.Second)
-	mustNext(t, right, 2*time.Second)
+	mustNext(t, l, 2*time.Second)
+	mustNext(t, l, 3*time.Second)
+	mustNext(t, r, 2*time.Second)
 }
 
 func TestDecorrelatedUpperBoundUsesMaxDelay(t *testing.T) {

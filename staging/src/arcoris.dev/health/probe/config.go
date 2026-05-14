@@ -64,18 +64,18 @@ func defaultConfig() config {
 	}
 }
 
-// validate reports whether config is complete after options have been applied.
-func (config config) validate() error {
-	if nilClock(config.clock) {
+// validate reports whether cfg is complete after options have been applied.
+func (cfg config) validate() error {
+	if nilClock(cfg.clock) {
 		return ErrNilClock
 	}
-	if err := validateInterval(config.interval); err != nil {
+	if err := validateInterval(cfg.interval); err != nil {
 		return err
 	}
-	if err := validateStaleAfter(config.staleAfter); err != nil {
+	if err := validateStaleAfter(cfg.staleAfter); err != nil {
 		return err
 	}
-	if _, err := normalizeTargets(config.targets); err != nil {
+	if _, err := normalizeTargets(cfg.targets); err != nil {
 		return err
 	}
 

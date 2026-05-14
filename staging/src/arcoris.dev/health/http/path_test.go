@@ -33,12 +33,12 @@ func TestDefaultPathConstants(t *testing.T) {
 		{name: "health", got: DefaultHealthPlainPath, want: "/health"},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if test.got != test.want {
-				t.Fatalf("path constant = %q, want %q", test.got, test.want)
+			if tc.got != tc.want {
+				t.Fatalf("path constant = %q, want %q", tc.got, tc.want)
 			}
 		})
 	}

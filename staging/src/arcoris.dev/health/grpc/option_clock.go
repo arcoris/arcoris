@@ -28,12 +28,12 @@ import (
 // package-health evaluator timeouts or any component lifecycle clock outside
 // healthgrpc.
 func WithClock(clk clock.Clock) Option {
-	return func(config *config) error {
+	return func(cfg *config) error {
 		if nilClock(clk) {
 			return ErrNilClock
 		}
 
-		config.clock = clk
+		cfg.clock = clk
 		return nil
 	}
 }

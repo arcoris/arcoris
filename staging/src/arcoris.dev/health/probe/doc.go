@@ -84,7 +84,7 @@
 // # File ownership
 //
 //   - option.go owns the Option contract and option application order;
-//   - option_config.go owns normalized Runner construction settings;
+//   - config.go owns normalized Runner construction settings;
 //   - option_clock.go and option_clock_error.go own clock configuration;
 //   - option_schedule.go and option_schedule_error.go own probe cadence and
 //     initial-probe configuration;

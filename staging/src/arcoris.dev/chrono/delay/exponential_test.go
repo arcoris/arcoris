@@ -60,12 +60,12 @@ func TestExponentialKeepsFloatStateBetweenIntegerDurations(t *testing.T) {
 func TestExponentialSequencesHaveIndependentState(t *testing.T) {
 	schedule := Exponential(time.Second, 2)
 
-	left := schedule.NewSequence()
-	right := schedule.NewSequence()
+	l := schedule.NewSequence()
+	r := schedule.NewSequence()
 
-	mustNext(t, left, time.Second)
-	mustNext(t, left, 2*time.Second)
-	mustNext(t, right, time.Second)
+	mustNext(t, l, time.Second)
+	mustNext(t, l, 2*time.Second)
+	mustNext(t, r, time.Second)
 }
 
 func TestExponentialSequenceSaturates(t *testing.T) {

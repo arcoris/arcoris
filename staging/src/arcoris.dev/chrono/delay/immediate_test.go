@@ -31,10 +31,10 @@ func TestImmediateSequenceReturnsZeroForever(t *testing.T) {
 func TestImmediateSequencesAreIndependent(t *testing.T) {
 	schedule := Immediate()
 
-	left := schedule.NewSequence()
-	right := schedule.NewSequence()
+	l := schedule.NewSequence()
+	r := schedule.NewSequence()
 
-	mustNext(t, left, 0)
-	mustNext(t, right, 0)
-	mustNext(t, left, 0)
+	mustNext(t, l, 0)
+	mustNext(t, r, 0)
+	mustNext(t, l, 0)
 }

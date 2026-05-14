@@ -34,13 +34,13 @@ func WithService(service string, target health.Target) Option {
 // differently from health.DefaultPolicy. It does not change the target's checks,
 // evaluator execution policy, or package-health aggregation behavior.
 func WithServicePolicy(service string, target health.Target, policy health.TargetPolicy) Option {
-	return func(config *config) error {
+	return func(cfg *config) error {
 		mapping := ServiceMapping{Service: service, Target: target, Policy: policy}
-		if err := validateServiceMapping(mapping, len(config.services)); err != nil {
+		if err := validateServiceMapping(mapping, len(cfg.services)); err != nil {
 			return err
 		}
 
-		config.services = append(config.services, mapping)
+		cfg.services = append(cfg.services, mapping)
 		return nil
 	}
 }
@@ -51,14 +51,14 @@ func WithServicePolicy(service string, target health.Target, policy health.Targe
 // reuse or modify their input slice after NewServer returns without mutating the
 // Server's immutable service index.
 func WithServices(mappings ...ServiceMapping) Option {
-	return func(config *config) error {
+	return func(cfg *config) error {
 		for i, mapping := range mappings {
-			if err := validateServiceMapping(mapping, len(config.services)+i); err != nil {
+			if err := validateServiceMapping(mapping, len(cfg.services)+i); err != nil {
 				return err
 			}
 		}
 
-		config.services = append(config.services, mappings...)
+		cfg.services = append(cfg.services, mappings...)
 		return nil
 	}
 }
@@ -77,13 +77,13 @@ func WithDefaultService(target health.Target) Option {
 // so service order remains deterministic. Additional default mappings created
 // by earlier options are removed to keep the final config duplicate-free.
 func WithDefaultServicePolicy(target health.Target, policy health.TargetPolicy) Option {
-	return func(config *config) error {
+	return func(cfg *config) error {
 		mapping := ServiceMapping{Service: "", Target: target, Policy: policy}
 		if err := validateServiceMapping(mapping, 0); err != nil {
 			return err
 		}
 
-		replaceDefaultServiceMapping(config, mapping)
+		replaceDefaultServiceMapping(cfg, mapping)
 		return nil
 	}
 }
@@ -93,22 +93,22 @@ func WithDefaultServicePolicy(target health.Target, policy health.TargetPolicy) 
 // The option is explicit so the adapter does not publish target-specific names
 // unless the owner wants that gRPC surface.
 func WithTargetServices() Option {
-	return func(config *config) error {
-		config.services = append(config.services, targetServiceMappings()...)
+	return func(cfg *config) error {
+		cfg.services = append(cfg.services, targetServiceMappings()...)
 		return nil
 	}
 }
 
-// replaceDefaultServiceMapping replaces all empty-service mappings in config.
+// replaceDefaultServiceMapping replaces all empty-service mappings in cfg.
 //
 // The first empty-service slot keeps its position, which preserves caller order
 // for List and Services. If the config has no empty-service mapping, the
 // replacement is appended; this keeps the helper robust for direct config tests.
-func replaceDefaultServiceMapping(config *config, mapping ServiceMapping) {
-	services := config.services[:0]
+func replaceDefaultServiceMapping(cfg *config, mapping ServiceMapping) {
+	services := cfg.services[:0]
 	replaced := false
 
-	for _, existing := range config.services {
+	for _, existing := range cfg.services {
 		if existing.Service == "" {
 			if !replaced {
 				services = append(services, mapping)
@@ -123,5 +123,5 @@ func replaceDefaultServiceMapping(config *config, mapping ServiceMapping) {
 		services = append(services, mapping)
 	}
 
-	config.services = services
+	cfg.services = services
 }

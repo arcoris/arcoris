@@ -29,17 +29,17 @@ package probe
 // policy, admission, routing, scheduling, retries, or retry delay growth.
 type Option func(*config) error
 
-// applyOptions applies options to config in order.
+// applyOptions applies options to normalized configuration in order.
 //
 // Later options win for single-value domains. WithTargets replaces the previous
 // target list. Nil options are rejected explicitly so conditional option
 // composition cannot silently drop configuration.
-func applyOptions(config *config, options ...Option) error {
-	for _, option := range options {
-		if option == nil {
+func applyOptions(cfg *config, opts ...Option) error {
+	for _, opt := range opts {
+		if opt == nil {
 			return ErrNilOption
 		}
-		if err := option(config); err != nil {
+		if err := opt(cfg); err != nil {
 			return err
 		}
 	}

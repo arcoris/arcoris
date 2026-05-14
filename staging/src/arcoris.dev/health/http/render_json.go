@@ -30,15 +30,15 @@ type errorResponse struct {
 }
 
 // renderJSONReport writes a JSON response for a health report.
-func renderJSONReport(w http.ResponseWriter, r *http.Request, config config, report health.Report, passed bool) {
+func renderJSONReport(w http.ResponseWriter, r *http.Request, cfg config, report health.Report, passed bool) {
 	writeCommonHeaders(w, FormatJSON)
-	w.WriteHeader(config.statusCodes.statusForReport(passed))
+	w.WriteHeader(cfg.statusCodes.statusForReport(passed))
 
 	if suppressBody(r) {
 		return
 	}
 
-	response := newResponse(report, passed, config.policy, config.detailLevel)
+	response := newResponse(report, passed, cfg.policy, cfg.detailLevel)
 
 	// Encoder failures can only arise from the response writer boundary after
 	// headers have been committed. There is no meaningful recovery path here.
@@ -46,9 +46,9 @@ func renderJSONReport(w http.ResponseWriter, r *http.Request, config config, rep
 }
 
 // renderJSONError writes a generic JSON response for adapter-boundary failures.
-func renderJSONError(w http.ResponseWriter, r *http.Request, config config) {
+func renderJSONError(w http.ResponseWriter, r *http.Request, cfg config) {
 	writeCommonHeaders(w, FormatJSON)
-	w.WriteHeader(config.statusCodes.statusForError())
+	w.WriteHeader(cfg.statusCodes.statusForError())
 
 	if suppressBody(r) {
 		return

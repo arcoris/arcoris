@@ -94,11 +94,11 @@ func TestClassifierFuncReturnsWrappedDecision(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			classifier := ClassifierFunc(tt.fn)
-			if got := classifier.Retryable(errBoom); got != tt.want {
-				t.Fatalf("ClassifierFunc.Retryable() = %v, want %v", got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			classifier := ClassifierFunc(tc.fn)
+			if got := classifier.Retryable(errBoom); got != tc.want {
+				t.Fatalf("ClassifierFunc.Retryable() = %v, want %v", got, tc.want)
 			}
 		})
 	}

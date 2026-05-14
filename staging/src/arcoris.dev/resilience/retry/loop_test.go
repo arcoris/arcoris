@@ -506,16 +506,16 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			stopEvents := 0
 			var stop Event
-			config := tt.config
-			ctx := tt.ctx()
-			if tt.reason == StopReasonDelayExhausted {
+			config := tc.config
+			ctx := tc.ctx()
+			if tc.reason == StopReasonDelayExhausted {
 				config.delay = retryTestSchedule{sequence: &retryTestSequence{}}
 			}
-			if tt.name == "interrupted after failed attempt" {
+			if tc.name == "interrupted after failed attempt" {
 				var cancel context.CancelFunc
 				ctx, cancel = context.WithCancel(context.Background())
 				// Cancelling from the failure observer stops retry at its next
@@ -535,13 +535,13 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 				stop = event
 			}))
 
-			_, err := run(ctx, tt.op, config)
-			if tt.wantErr == nil {
+			_, err := run(ctx, tc.op, config)
+			if tc.wantErr == nil {
 				if err != nil {
 					t.Fatalf("run error = %v, want nil", err)
 				}
-			} else if !errors.Is(err, tt.wantErr) {
-				t.Fatalf("run error = %v, want %v", err, tt.wantErr)
+			} else if !errors.Is(err, tc.wantErr) {
+				t.Fatalf("run error = %v, want %v", err, tc.wantErr)
 			}
 
 			if stopEvents != 1 {
@@ -550,8 +550,8 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 			if !stop.IsValid() {
 				t.Fatalf("stop event is invalid: %+v", stop)
 			}
-			if stop.Outcome.Reason != tt.reason {
-				t.Fatalf("stop reason = %s, want %s", stop.Outcome.Reason, tt.reason)
+			if stop.Outcome.Reason != tc.reason {
+				t.Fatalf("stop reason = %s, want %s", stop.Outcome.Reason, tc.reason)
 			}
 		})
 	}

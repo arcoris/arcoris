@@ -114,10 +114,10 @@ func (s *watchStream) RecvMsg(any) error {
 }
 
 // mustNewServer builds a Server or fails the test.
-func mustNewServer(t *testing.T, source Source, options ...Option) *Server {
+func mustNewServer(t *testing.T, source Source, opts ...Option) *Server {
 	t.Helper()
 
-	server, err := NewServer(source, options...)
+	server, err := NewServer(source, opts...)
 	if err != nil {
 		t.Fatalf("NewServer() = %v, want nil", err)
 	}

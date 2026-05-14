@@ -74,23 +74,23 @@ func TestDefaultConfig(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			config := defaultConfig(test.target)
+			cfg := defaultConfig(tc.target)
 
-			if got := config.policy.Passes(test.status); got != test.shouldPass {
-				t.Fatalf("policy.Passes(%s) = %v, want %v", test.status, got, test.shouldPass)
+			if got := cfg.policy.Passes(tc.status); got != tc.shouldPass {
+				t.Fatalf("policy.Passes(%s) = %v, want %v", tc.status, got, tc.shouldPass)
 			}
-			if config.format != test.format {
-				t.Fatalf("format = %s, want %s", config.format, test.format)
+			if cfg.format != tc.format {
+				t.Fatalf("format = %s, want %s", cfg.format, tc.format)
 			}
-			if config.detailLevel != test.detail {
-				t.Fatalf("detailLevel = %s, want %s", config.detailLevel, test.detail)
+			if cfg.detailLevel != tc.detail {
+				t.Fatalf("detailLevel = %s, want %s", cfg.detailLevel, tc.detail)
 			}
-			if config.statusCodes != test.statusCodes {
-				t.Fatalf("statusCodes = %+v, want %+v", config.statusCodes, test.statusCodes)
+			if cfg.statusCodes != tc.statusCodes {
+				t.Fatalf("statusCodes = %+v, want %+v", cfg.statusCodes, tc.statusCodes)
 			}
 		})
 	}
@@ -115,13 +115,13 @@ func TestDefaultConfigUsesHealthDefaultPolicy(t *testing.T) {
 		{name: "unknown zero policy degraded fails", target: health.TargetUnknown, status: health.StatusDegraded, shouldPass: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			policy := defaultConfig(test.target).policy
-			if got := policy.Passes(test.status); got != test.shouldPass {
-				t.Fatalf("defaultConfig(%s).policy.Passes(%s) = %v, want %v", test.target, test.status, got, test.shouldPass)
+			policy := defaultConfig(tc.target).policy
+			if got := policy.Passes(tc.status); got != tc.shouldPass {
+				t.Fatalf("defaultConfig(%s).policy.Passes(%s) = %v, want %v", tc.target, tc.status, got, tc.shouldPass)
 			}
 		})
 	}
@@ -130,10 +130,10 @@ func TestDefaultConfigUsesHealthDefaultPolicy(t *testing.T) {
 func TestApplyOptions(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig(health.TargetReady)
+	cfg := defaultConfig(health.TargetReady)
 
 	err := applyOptions(
-		&config,
+		&cfg,
 		WithFormat(FormatJSON),
 		WithDetailLevel(DetailFailed),
 		WithFailedStatus(http.StatusTooManyRequests),
@@ -142,23 +142,23 @@ func TestApplyOptions(t *testing.T) {
 		t.Fatalf("applyOptions() = %v, want nil", err)
 	}
 
-	if config.format != FormatJSON {
-		t.Fatalf("format = %s, want json", config.format)
+	if cfg.format != FormatJSON {
+		t.Fatalf("format = %s, want json", cfg.format)
 	}
-	if config.detailLevel != DetailFailed {
-		t.Fatalf("detailLevel = %s, want failed", config.detailLevel)
+	if cfg.detailLevel != DetailFailed {
+		t.Fatalf("detailLevel = %s, want failed", cfg.detailLevel)
 	}
-	if config.statusCodes.Failed != http.StatusTooManyRequests {
-		t.Fatalf("failed status = %d, want %d", config.statusCodes.Failed, http.StatusTooManyRequests)
+	if cfg.statusCodes.Failed != http.StatusTooManyRequests {
+		t.Fatalf("failed status = %d, want %d", cfg.statusCodes.Failed, http.StatusTooManyRequests)
 	}
 }
 
 func TestApplyOptionsRejectsNilOption(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig(health.TargetReady)
+	cfg := defaultConfig(health.TargetReady)
 
-	err := applyOptions(&config, nil)
+	err := applyOptions(&cfg, nil)
 	if !errors.Is(err, ErrNilOption) {
 		t.Fatalf("applyOptions(nil) = %v, want ErrNilOption", err)
 	}
@@ -167,10 +167,10 @@ func TestApplyOptionsRejectsNilOption(t *testing.T) {
 func TestApplyOptionsAppliesInOrder(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig(health.TargetReady)
+	cfg := defaultConfig(health.TargetReady)
 
 	err := applyOptions(
-		&config,
+		&cfg,
 		WithFormat(FormatText),
 		WithFormat(FormatJSON),
 		WithDetailLevel(DetailNone),
@@ -180,26 +180,26 @@ func TestApplyOptionsAppliesInOrder(t *testing.T) {
 		t.Fatalf("applyOptions() = %v, want nil", err)
 	}
 
-	if config.format != FormatJSON {
-		t.Fatalf("format = %s, want json", config.format)
+	if cfg.format != FormatJSON {
+		t.Fatalf("format = %s, want json", cfg.format)
 	}
-	if config.detailLevel != DetailAll {
-		t.Fatalf("detailLevel = %s, want all", config.detailLevel)
+	if cfg.detailLevel != DetailAll {
+		t.Fatalf("detailLevel = %s, want all", cfg.detailLevel)
 	}
 }
 
 func TestWithPolicy(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig(health.TargetReady)
+	cfg := defaultConfig(health.TargetReady)
 	policy := health.ReadyPolicy().WithDegraded(true)
 
-	err := WithPolicy(policy)(&config)
+	err := WithPolicy(policy)(&cfg)
 	if err != nil {
 		t.Fatalf("WithPolicy() = %v, want nil", err)
 	}
 
-	if !config.policy.Passes(health.StatusDegraded) {
+	if !cfg.policy.Passes(health.StatusDegraded) {
 		t.Fatal("custom policy should pass degraded")
 	}
 }
@@ -217,21 +217,21 @@ func TestWithFormat(t *testing.T) {
 		{name: "invalid", format: Format(99), want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			config := defaultConfig(health.TargetReady)
-			err := WithFormat(test.format)(&config)
+			cfg := defaultConfig(health.TargetReady)
+			err := WithFormat(tc.format)(&cfg)
 
-			if got := err == nil; got != test.want {
-				t.Fatalf("WithFormat(%s) ok = %v, want %v; err=%v", test.format, got, test.want, err)
+			if got := err == nil; got != tc.want {
+				t.Fatalf("WithFormat(%s) ok = %v, want %v; err=%v", tc.format, got, tc.want, err)
 			}
-			if test.want && config.format != test.format {
-				t.Fatalf("format = %s, want %s", config.format, test.format)
+			if tc.want && cfg.format != tc.format {
+				t.Fatalf("format = %s, want %s", cfg.format, tc.format)
 			}
-			if !test.want && !errors.Is(err, ErrInvalidFormat) {
-				t.Fatalf("WithFormat(%s) = %v, want ErrInvalidFormat", test.format, err)
+			if !tc.want && !errors.Is(err, ErrInvalidFormat) {
+				t.Fatalf("WithFormat(%s) = %v, want ErrInvalidFormat", tc.format, err)
 			}
 		})
 	}
@@ -251,21 +251,21 @@ func TestWithDetailLevel(t *testing.T) {
 		{name: "invalid", level: DetailLevel(99), want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			config := defaultConfig(health.TargetReady)
-			err := WithDetailLevel(test.level)(&config)
+			cfg := defaultConfig(health.TargetReady)
+			err := WithDetailLevel(tc.level)(&cfg)
 
-			if got := err == nil; got != test.want {
-				t.Fatalf("WithDetailLevel(%s) ok = %v, want %v; err=%v", test.level, got, test.want, err)
+			if got := err == nil; got != tc.want {
+				t.Fatalf("WithDetailLevel(%s) ok = %v, want %v; err=%v", tc.level, got, tc.want, err)
 			}
-			if test.want && config.detailLevel != test.level {
-				t.Fatalf("detailLevel = %s, want %s", config.detailLevel, test.level)
+			if tc.want && cfg.detailLevel != tc.level {
+				t.Fatalf("detailLevel = %s, want %s", cfg.detailLevel, tc.level)
 			}
-			if !test.want && !errors.Is(err, ErrInvalidDetailLevel) {
-				t.Fatalf("WithDetailLevel(%s) = %v, want ErrInvalidDetailLevel", test.level, err)
+			if !tc.want && !errors.Is(err, ErrInvalidDetailLevel) {
+				t.Fatalf("WithDetailLevel(%s) = %v, want ErrInvalidDetailLevel", tc.level, err)
 			}
 		})
 	}
@@ -274,11 +274,11 @@ func TestWithDetailLevel(t *testing.T) {
 func TestWithStatusCodes(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig(health.TargetReady)
+	cfg := defaultConfig(health.TargetReady)
 
 	err := WithStatusCodes(HTTPStatusCodes{
 		Failed: http.StatusTooManyRequests,
-	})(&config)
+	})(&cfg)
 	if err != nil {
 		t.Fatalf("WithStatusCodes() = %v, want nil", err)
 	}
@@ -288,19 +288,19 @@ func TestWithStatusCodes(t *testing.T) {
 		Failed: http.StatusTooManyRequests,
 		Error:  DefaultErrorStatus,
 	}
-	if config.statusCodes != want {
-		t.Fatalf("statusCodes = %+v, want %+v", config.statusCodes, want)
+	if cfg.statusCodes != want {
+		t.Fatalf("statusCodes = %+v, want %+v", cfg.statusCodes, want)
 	}
 }
 
 func TestWithStatusCodesRejectsInvalidMapping(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig(health.TargetReady)
+	cfg := defaultConfig(health.TargetReady)
 
 	err := WithStatusCodes(HTTPStatusCodes{
 		Failed: http.StatusOK,
-	})(&config)
+	})(&cfg)
 	if !errors.Is(err, ErrInvalidHTTPStatusCode) {
 		t.Fatalf("WithStatusCodes(invalid) = %v, want ErrInvalidHTTPStatusCode", err)
 	}
@@ -309,10 +309,10 @@ func TestWithStatusCodesRejectsInvalidMapping(t *testing.T) {
 func TestWithIndividualStatuses(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig(health.TargetReady)
+	cfg := defaultConfig(health.TargetReady)
 
 	err := applyOptions(
-		&config,
+		&cfg,
 		WithPassedStatus(http.StatusNoContent),
 		WithFailedStatus(http.StatusTooManyRequests),
 		WithErrorStatus(http.StatusBadGateway),
@@ -326,8 +326,8 @@ func TestWithIndividualStatuses(t *testing.T) {
 		Failed: http.StatusTooManyRequests,
 		Error:  http.StatusBadGateway,
 	}
-	if config.statusCodes != want {
-		t.Fatalf("statusCodes = %+v, want %+v", config.statusCodes, want)
+	if cfg.statusCodes != want {
+		t.Fatalf("statusCodes = %+v, want %+v", cfg.statusCodes, want)
 	}
 }
 
@@ -335,23 +335,23 @@ func TestWithIndividualStatusesRejectInvalidCodes(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name   string
-		option Option
+		name string
+		opt  Option
 	}{
-		{name: "passed", option: WithPassedStatus(http.StatusServiceUnavailable)},
-		{name: "failed", option: WithFailedStatus(http.StatusOK)},
-		{name: "error", option: WithErrorStatus(http.StatusBadRequest)},
+		{name: "passed", opt: WithPassedStatus(http.StatusServiceUnavailable)},
+		{name: "failed", opt: WithFailedStatus(http.StatusOK)},
+		{name: "error", opt: WithErrorStatus(http.StatusBadRequest)},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			config := defaultConfig(health.TargetReady)
-			err := test.option(&config)
+			cfg := defaultConfig(health.TargetReady)
+			err := tc.opt(&cfg)
 
 			if !errors.Is(err, ErrInvalidHTTPStatusCode) {
-				t.Fatalf("%s option = %v, want ErrInvalidHTTPStatusCode", test.name, err)
+				t.Fatalf("%s option = %v, want ErrInvalidHTTPStatusCode", tc.name, err)
 			}
 		})
 	}

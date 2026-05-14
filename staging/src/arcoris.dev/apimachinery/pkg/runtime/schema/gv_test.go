@@ -35,16 +35,16 @@ func TestGroupVersionParseValidValues(t *testing.T) {
 		{input: "control.arcoris.dev/v1alpha1", want: GroupVersion{Group: "control.arcoris.dev", Version: "v1alpha1"}},
 	}
 
-	for _, tt := range tests {
-		got, err := ParseGroupVersion(tt.input)
+	for _, tc := range tests {
+		got, err := ParseGroupVersion(tc.input)
 		if err != nil {
-			t.Fatalf("ParseGroupVersion(%q) returned error: %v", tt.input, err)
+			t.Fatalf("ParseGroupVersion(%q) returned error: %v", tc.input, err)
 		}
-		if got != tt.want {
-			t.Fatalf("ParseGroupVersion(%q) = %+v, want %+v", tt.input, got, tt.want)
+		if got != tc.want {
+			t.Fatalf("ParseGroupVersion(%q) = %+v, want %+v", tc.input, got, tc.want)
 		}
-		if got.String() != tt.input || got.APIVersion() != tt.input || got.Identifier() != tt.input {
-			t.Fatalf("canonical strings for %q were not stable", tt.input)
+		if got.String() != tc.input || got.APIVersion() != tc.input || got.Identifier() != tc.input {
+			t.Fatalf("canonical strings for %q were not stable", tc.input)
 		}
 	}
 }

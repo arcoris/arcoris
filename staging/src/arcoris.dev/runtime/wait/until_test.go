@@ -238,12 +238,12 @@ func TestUntilPanicsOnNonPositiveInterval(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			mustPanicWith(t, errNonPositiveInterval, func() {
-				_ = Until(context.Background(), tt.interval, Satisfied)
+				_ = Until(context.Background(), tc.interval, Satisfied)
 			})
 		})
 	}

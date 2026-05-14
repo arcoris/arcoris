@@ -26,16 +26,16 @@ import "arcoris.dev/health"
 // contracts.
 type Option func(*config) error
 
-// applyOptions applies options to config in order.
+// applyOptions applies options to normalized configuration in order.
 //
 // Nil options are rejected explicitly so handler construction cannot silently
 // drop part of the caller's intended configuration.
-func applyOptions(config *config, options ...Option) error {
-	for _, option := range options {
-		if option == nil {
+func applyOptions(cfg *config, opts ...Option) error {
+	for _, opt := range opts {
+		if opt == nil {
 			return ErrNilOption
 		}
-		if err := option(config); err != nil {
+		if err := opt(cfg); err != nil {
 			return err
 		}
 	}
@@ -49,8 +49,8 @@ func applyOptions(config *config, options ...Option) error {
 // pass/fail purposes. It does not alter how checks run or how report statuses
 // are produced by package health.
 func WithPolicy(policy health.TargetPolicy) Option {
-	return func(config *config) error {
-		config.policy = policy
+	return func(cfg *config) error {
+		cfg.policy = policy
 		return nil
 	}
 }
@@ -60,12 +60,12 @@ func WithPolicy(policy health.TargetPolicy) Option {
 // Format changes representation only. It does not enable content negotiation or
 // widen the set of diagnostics exposed by the adapter.
 func WithFormat(format Format) Option {
-	return func(config *config) error {
+	return func(cfg *config) error {
 		if err := validateFormat(format); err != nil {
 			return err
 		}
 
-		config.format = format
+		cfg.format = format
 		return nil
 	}
 }
@@ -76,12 +76,12 @@ func WithFormat(format Format) Option {
 // Even DetailAll remains subject to the package's safe DTO boundary and never
 // exposes Result.Cause, panic stacks, raw errors, or context causes.
 func WithDetailLevel(level DetailLevel) Option {
-	return func(config *config) error {
+	return func(cfg *config) error {
 		if err := validateDetailLevel(level); err != nil {
 			return err
 		}
 
-		config.detailLevel = level
+		cfg.detailLevel = level
 		return nil
 	}
 }

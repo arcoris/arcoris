@@ -56,10 +56,10 @@ func TestEventKindString(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.kind.String(); got != tt.want {
-				t.Fatalf("EventKind.String() = %q, want %q", got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.kind.String(); got != tc.want {
+				t.Fatalf("EventKind.String() = %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -128,10 +128,10 @@ func TestEventKindIsAttemptScoped(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.kind.IsAttemptScoped(); got != tt.want {
-				t.Fatalf("EventKind.IsAttemptScoped() = %v, want %v", got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.kind.IsAttemptScoped(); got != tc.want {
+				t.Fatalf("EventKind.IsAttemptScoped() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -170,10 +170,10 @@ func TestEventKindIsTerminal(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.kind.IsTerminal(); got != tt.want {
-				t.Fatalf("EventKind.IsTerminal() = %v, want %v", got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.kind.IsTerminal(); got != tc.want {
+				t.Fatalf("EventKind.IsTerminal() = %v, want %v", got, tc.want)
 			}
 		})
 	}

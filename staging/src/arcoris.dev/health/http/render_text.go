@@ -31,21 +31,21 @@ const (
 )
 
 // renderTextReport writes a text response for a health report.
-func renderTextReport(w http.ResponseWriter, r *http.Request, config config, report health.Report, passed bool) {
+func renderTextReport(w http.ResponseWriter, r *http.Request, cfg config, report health.Report, passed bool) {
 	writeCommonHeaders(w, FormatText)
-	w.WriteHeader(config.statusCodes.statusForReport(passed))
+	w.WriteHeader(cfg.statusCodes.statusForReport(passed))
 
 	if suppressBody(r) {
 		return
 	}
 
-	_, _ = w.Write([]byte(textReportBody(report, passed, config.policy, config.detailLevel)))
+	_, _ = w.Write([]byte(textReportBody(report, passed, cfg.policy, cfg.detailLevel)))
 }
 
 // renderTextError writes a generic text response for adapter-boundary failures.
-func renderTextError(w http.ResponseWriter, r *http.Request, config config) {
+func renderTextError(w http.ResponseWriter, r *http.Request, cfg config) {
 	writeCommonHeaders(w, FormatText)
-	w.WriteHeader(config.statusCodes.statusForError())
+	w.WriteHeader(cfg.statusCodes.statusForError())
 
 	if suppressBody(r) {
 		return

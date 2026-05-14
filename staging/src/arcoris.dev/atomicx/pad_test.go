@@ -75,13 +75,13 @@ func TestPaddedPrimitiveSizesIncludeBothPads(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if tt.size < tt.min {
-				t.Fatalf("unsafe.Sizeof(%s{}) = %d, want at least %d", tt.name, tt.size, tt.min)
+			if tc.size < tc.min {
+				t.Fatalf("unsafe.Sizeof(%s{}) = %d, want at least %d", tc.name, tc.size, tc.min)
 			}
 		})
 	}
@@ -103,13 +103,13 @@ func TestPaddedPrimitiveValueOffsetsKeepLeadingPad(t *testing.T) {
 		{name: "PaddedInt32", offset: unsafe.Offsetof(PaddedInt32{}.value)},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if tt.offset < uintptr(CacheLinePadSize) {
-				t.Fatalf("%s.value offset = %d, want at least %d", tt.name, tt.offset, CacheLinePadSize)
+			if tc.offset < uintptr(CacheLinePadSize) {
+				t.Fatalf("%s.value offset = %d, want at least %d", tc.name, tc.offset, CacheLinePadSize)
 			}
 		})
 	}
@@ -153,14 +153,14 @@ func TestPaddedPrimitiveValueOffsetsKeepTrailingPad(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			trailingPad := tt.size - tt.valueEnd
-			if trailingPad < tt.trailWant {
-				t.Fatalf("%s trailing pad = %d, want at least %d", tt.name, trailingPad, tt.trailWant)
+			trailingPad := tc.size - tc.valueEnd
+			if trailingPad < tc.trailWant {
+				t.Fatalf("%s trailing pad = %d, want at least %d", tc.name, trailingPad, tc.trailWant)
 			}
 		})
 	}
@@ -197,22 +197,22 @@ func TestPaddedPrimitiveAlignment(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
 
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if tt.alignment == 0 {
-				t.Fatalf("unsafe.Alignof(%s{}) = 0, want non-zero alignment", tt.name)
+			if tc.alignment == 0 {
+				t.Fatalf("unsafe.Alignof(%s{}) = 0, want non-zero alignment", tc.name)
 			}
 
-			if tt.size%tt.alignment != 0 {
+			if tc.size%tc.alignment != 0 {
 				t.Fatalf(
 					"unsafe.Sizeof(%s{}) = %d is not aligned to unsafe.Alignof(%s{}) = %d",
-					tt.name,
-					tt.size,
-					tt.name,
-					tt.alignment,
+					tc.name,
+					tc.size,
+					tc.name,
+					tc.alignment,
 				)
 			}
 		})

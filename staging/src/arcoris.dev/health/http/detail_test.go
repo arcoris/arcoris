@@ -32,12 +32,12 @@ func TestDetailLevelString(t *testing.T) {
 		{name: "invalid", level: DetailLevel(99), want: "invalid"},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.level.String(); got != test.want {
-				t.Fatalf("String() = %q, want %q", got, test.want)
+			if got := tc.level.String(); got != tc.want {
+				t.Fatalf("String() = %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -57,12 +57,12 @@ func TestDetailLevelIsValid(t *testing.T) {
 		{name: "invalid", level: DetailLevel(99), want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.level.IsValid(); got != test.want {
-				t.Fatalf("IsValid() = %v, want %v", got, test.want)
+			if got := tc.level.IsValid(); got != tc.want {
+				t.Fatalf("IsValid() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -97,12 +97,12 @@ func TestDetailLevelIncludesChecks(t *testing.T) {
 		{name: "invalid", level: DetailLevel(99), want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.level.IncludesChecks(); got != test.want {
-				t.Fatalf("IncludesChecks() = %v, want %v", got, test.want)
+			if got := tc.level.IncludesChecks(); got != tc.want {
+				t.Fatalf("IncludesChecks() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -122,12 +122,12 @@ func TestDetailLevelIncludesAllChecks(t *testing.T) {
 		{name: "invalid", level: DetailLevel(99), want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.level.IncludesAllChecks(); got != test.want {
-				t.Fatalf("IncludesAllChecks() = %v, want %v", got, test.want)
+			if got := tc.level.IncludesAllChecks(); got != tc.want {
+				t.Fatalf("IncludesAllChecks() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -147,12 +147,12 @@ func TestDetailLevelIncludesFailedChecks(t *testing.T) {
 		{name: "invalid", level: DetailLevel(99), want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.level.IncludesFailedChecks(); got != test.want {
-				t.Fatalf("IncludesFailedChecks() = %v, want %v", got, test.want)
+			if got := tc.level.IncludesFailedChecks(); got != tc.want {
+				t.Fatalf("IncludesFailedChecks() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -172,13 +172,13 @@ func TestValidateDetailLevel(t *testing.T) {
 		{name: "invalid", level: DetailLevel(99), want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := validateDetailLevel(test.level)
-			if got := err == nil; got != test.want {
-				t.Fatalf("validateDetailLevel(%s) ok = %v, want %v; err=%v", test.level, got, test.want, err)
+			err := validateDetailLevel(tc.level)
+			if got := err == nil; got != tc.want {
+				t.Fatalf("validateDetailLevel(%s) ok = %v, want %v; err=%v", tc.level, got, tc.want, err)
 			}
 		})
 	}

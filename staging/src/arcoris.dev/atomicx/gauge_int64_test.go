@@ -278,18 +278,18 @@ func TestInt64GaugeExactBoundaryOperations(t *testing.T) {
 		{name: "SubToMin", start: minInt64 + 1, op: func(g *Int64Gauge) int64 { return g.Sub(1) }, want: minInt64},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			var gauge Int64Gauge
-			gauge.Store(tt.start)
+			gauge.Store(tc.start)
 
-			if got := tt.op(&gauge); got != tt.want {
-				t.Fatalf("%s result = %d, want %d", tt.name, got, tt.want)
+			if got := tc.op(&gauge); got != tc.want {
+				t.Fatalf("%s result = %d, want %d", tc.name, got, tc.want)
 			}
-			if got := gauge.Load(); got != tt.want {
-				t.Fatalf("%s Load() = %d, want %d", tt.name, got, tt.want)
+			if got := gauge.Load(); got != tc.want {
+				t.Fatalf("%s Load() = %d, want %d", tc.name, got, tc.want)
 			}
 		})
 	}

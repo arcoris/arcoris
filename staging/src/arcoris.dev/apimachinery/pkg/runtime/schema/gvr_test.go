@@ -35,13 +35,13 @@ func TestGroupVersionResourceParseValidValues(t *testing.T) {
 		{input: "control.arcoris.dev/v1alpha1:workloadclasses", want: GroupVersionResource{Group: "control.arcoris.dev", Version: "v1alpha1", Resource: "workloadclasses"}},
 	}
 
-	for _, tt := range tests {
-		got, err := ParseGroupVersionResource(tt.input)
+	for _, tc := range tests {
+		got, err := ParseGroupVersionResource(tc.input)
 		if err != nil {
-			t.Fatalf("ParseGroupVersionResource(%q) returned error: %v", tt.input, err)
+			t.Fatalf("ParseGroupVersionResource(%q) returned error: %v", tc.input, err)
 		}
-		if got != tt.want || got.String() != tt.input || got.Identifier() != tt.input {
-			t.Fatalf("ParseGroupVersionResource(%q) = %+v", tt.input, got)
+		if got != tc.want || got.String() != tc.input || got.Identifier() != tc.input {
+			t.Fatalf("ParseGroupVersionResource(%q) = %+v", tc.input, got)
 		}
 	}
 }

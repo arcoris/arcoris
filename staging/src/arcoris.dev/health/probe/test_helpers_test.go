@@ -39,11 +39,11 @@ func newTestEvaluator(t *testing.T) *health.Evaluator {
 	return healthtest.NewEvaluatorForTarget(t, health.TargetReady, healthtest.HealthyChecker("ready_check"))
 }
 
-func newTestRunner(t *testing.T, clk clock.Clock, options ...Option) *Runner {
+func newTestRunner(t *testing.T, clk clock.Clock, opts ...Option) *Runner {
 	t.Helper()
 
 	allOptions := []Option{WithClock(clk), WithTargets(health.TargetReady)}
-	allOptions = append(allOptions, options...)
+	allOptions = append(allOptions, opts...)
 
 	runner, err := NewRunner(newTestEvaluator(t), allOptions...)
 	if err != nil {
@@ -152,12 +152,12 @@ func waitForRunDone(t *testing.T, done <-chan error) error {
 	}
 }
 
-func sameTargets(left []health.Target, right []health.Target) bool {
-	if len(left) != len(right) {
+func sameTargets(l []health.Target, r []health.Target) bool {
+	if len(l) != len(r) {
 		return false
 	}
-	for i := range left {
-		if left[i] != right[i] {
+	for i := range l {
+		if l[i] != r[i] {
 			return false
 		}
 	}

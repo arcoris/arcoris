@@ -99,8 +99,8 @@ func TestEvaluatorParallelRespectsMaxConcurrency(t *testing.T) {
 	for i := 0; i < checkCount; i++ {
 		name := executionCheckName(i)
 		mustRegisterExecutionCheck(t, registry, TargetReady, name, func(context.Context) Result {
-			current := active.Add(1)
-			updateMaxInt64(&maxSeen, current)
+			cur := active.Add(1)
+			updateMaxInt64(&maxSeen, cur)
 			started <- struct{}{}
 
 			<-release

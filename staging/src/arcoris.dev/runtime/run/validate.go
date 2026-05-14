@@ -125,8 +125,8 @@ func requireErrorMode(mode ErrorMode) {
 }
 
 // requireGroupOption panics when option is nil.
-func requireGroupOption(option GroupOption) {
-	if option == nil {
+func requireGroupOption(opt GroupOption) {
+	if opt == nil {
 		panic(errNilGroupOption)
 	}
 }

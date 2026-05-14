@@ -59,11 +59,11 @@ func TestNewControllerConfigIndependentFromOptionSlice(t *testing.T) {
 
 	// The variadic option slice is consumed during construction; mutating the
 	// caller's slice afterward must not rewrite the already returned config.
-	options := []Option{
+	opts := []Option{
 		func(config *controllerConfig) { config.now = func() time.Time { return testTime } },
 	}
-	config := newControllerConfig(options...)
-	options[0] = func(config *controllerConfig) { config.now = func() time.Time { return time.Time{} } }
+	config := newControllerConfig(opts...)
+	opts[0] = func(config *controllerConfig) { config.now = func() time.Time { return time.Time{} } }
 
 	if got := config.now(); !got.Equal(testTime) {
 		t.Fatalf("config.now() = %v, want %v", got, testTime)

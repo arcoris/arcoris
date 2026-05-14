@@ -70,7 +70,7 @@ func Until(ctx context.Context, interval time.Duration, condition ConditionFunc,
 	requireContext(ctx)
 	requirePositiveInterval(interval)
 	requireCondition(condition)
-	config := optionsOf(opts...)
+	cfg := optionsOf(opts...)
 
 	done, err := evaluateUntilCondition(ctx, condition)
 	if err != nil {
@@ -80,7 +80,7 @@ func Until(ctx context.Context, interval time.Duration, condition ConditionFunc,
 		return nil
 	}
 
-	timer := NewTimer(config.interval(interval))
+	timer := NewTimer(cfg.interval(interval))
 	defer timer.StopAndDrain()
 
 	for {
@@ -96,7 +96,7 @@ func Until(ctx context.Context, interval time.Duration, condition ConditionFunc,
 			return nil
 		}
 
-		timer.Reset(config.interval(interval))
+		timer.Reset(cfg.interval(interval))
 	}
 }
 

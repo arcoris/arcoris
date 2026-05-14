@@ -70,16 +70,16 @@ func TestUniqueAndMergeReturnNilForEmptyInput(t *testing.T) {
 func TestUniqueHandlesNonComparableSignals(t *testing.T) {
 	t.Parallel()
 
-	left := nonComparableSignal{name: "custom", data: []int{1}}
-	right := nonComparableSignal{name: "custom", data: []int{2}}
+	l := nonComparableSignal{name: "custom", data: []int{1}}
+	r := nonComparableSignal{name: "custom", data: []int{2}}
 
-	got := Unique([]os.Signal{left, right})
+	got := Unique([]os.Signal{l, r})
 
 	if len(got) != 1 {
 		t.Fatalf("len = %d, want 1", len(got))
 	}
-	if !sameSignal(got[0], left) {
-		t.Fatalf("signal = %v, want %v", got[0], left)
+	if !sameSignal(got[0], l) {
+		t.Fatalf("signal = %v, want %v", got[0], l)
 	}
 }
 
@@ -120,11 +120,11 @@ func TestSignalSetHelpersRejectNilSignals(t *testing.T) {
 		{name: "contains nil member", fn: func() { Contains([]os.Signal{nil}, testSIGINT) }},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNilSignalSetSignal, tt.fn)
+			mustPanicWith(t, errNilSignalSetSignal, tc.fn)
 		})
 	}
 }

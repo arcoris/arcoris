@@ -299,11 +299,11 @@ func mustClose[T any](t *testing.T, ch <-chan T) {
 	}
 }
 
-func sameSignal(left, right os.Signal) bool {
-	if left == nil || right == nil {
-		return left == right
+func sameSignal(l, r os.Signal) bool {
+	if l == nil || r == nil {
+		return l == r
 	}
-	return signalKey(left) == signalKey(right)
+	return signalKey(l) == signalKey(r)
 }
 
 func TestFakeNotifierDeliversOnlyRegisteredSignals(t *testing.T) {

@@ -34,12 +34,12 @@ func TestStateString(t *testing.T) {
 		{State(99), "invalid"},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.want, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.want, func(t *testing.T) {
 			t.Parallel()
 
-			if got := tt.state.String(); got != tt.want {
-				t.Fatalf("State(%d).String() = %q, want %q", tt.state, got, tt.want)
+			if got := tc.state.String(); got != tc.want {
+				t.Fatalf("State(%d).String() = %q, want %q", tc.state, got, tc.want)
 			}
 		})
 	}
@@ -62,12 +62,12 @@ func TestStateIsValid(t *testing.T) {
 		{"invalid", State(99), false},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := tt.state.IsValid(); got != tt.want {
-				t.Fatalf("%s IsValid = %v, want %v", tt.state, got, tt.want)
+			if got := tc.state.IsValid(); got != tc.want {
+				t.Fatalf("%s IsValid = %v, want %v", tc.state, got, tc.want)
 			}
 		})
 	}
@@ -89,9 +89,9 @@ func TestStateIsTerminal(t *testing.T) {
 		{State(99), false},
 	}
 
-	for _, tt := range tests {
-		if got := tt.state.IsTerminal(); got != tt.want {
-			t.Fatalf("%s IsTerminal = %v, want %v", tt.state, got, tt.want)
+	for _, tc := range tests {
+		if got := tc.state.IsTerminal(); got != tc.want {
+			t.Fatalf("%s IsTerminal = %v, want %v", tc.state, got, tc.want)
 		}
 	}
 }
@@ -112,9 +112,9 @@ func TestStateIsActive(t *testing.T) {
 		{State(99), false},
 	}
 
-	for _, tt := range tests {
-		if got := tt.state.IsActive(); got != tt.want {
-			t.Fatalf("%s IsActive = %v, want %v", tt.state, got, tt.want)
+	for _, tc := range tests {
+		if got := tc.state.IsActive(); got != tc.want {
+			t.Fatalf("%s IsActive = %v, want %v", tc.state, got, tc.want)
 		}
 	}
 }

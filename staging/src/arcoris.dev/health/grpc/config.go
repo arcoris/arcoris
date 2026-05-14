@@ -76,17 +76,17 @@ func defaultConfig() config {
 // Final validation catches cross-option issues such as duplicate service names.
 // Individual options still validate their own values early so configuration
 // mistakes point at the option that introduced them.
-func (config config) validate() error {
-	if nilClock(config.clock) {
+func (cfg config) validate() error {
+	if nilClock(cfg.clock) {
 		return ErrNilClock
 	}
-	if err := validateWatchInterval(config.watchInterval); err != nil {
+	if err := validateWatchInterval(cfg.watchInterval); err != nil {
 		return err
 	}
-	if err := validateMaxListServices(config.maxListServices); err != nil {
+	if err := validateMaxListServices(cfg.maxListServices); err != nil {
 		return err
 	}
-	if _, err := normalizeServiceMappings(config.services); err != nil {
+	if _, err := normalizeServiceMappings(cfg.services); err != nil {
 		return err
 	}
 

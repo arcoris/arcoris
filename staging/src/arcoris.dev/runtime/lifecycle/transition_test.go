@@ -80,9 +80,9 @@ func TestTransitionIsValid(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		if got := tt.transition.IsValid(); got != tt.want {
-			t.Fatalf("%s IsValid = %v, want %v", tt.name, got, tt.want)
+	for _, tc := range tests {
+		if got := tc.transition.IsValid(); got != tc.want {
+			t.Fatalf("%s IsValid = %v, want %v", tc.name, got, tc.want)
 		}
 	}
 }
@@ -100,9 +100,9 @@ func TestTransitionIsZero(t *testing.T) {
 		{"non-comparable cause", Transition{Cause: nonComparableError{values: []string{"x"}}}, false},
 	}
 
-	for _, tt := range tests {
-		if got := tt.transition.IsZero(); got != tt.want {
-			t.Fatalf("%s IsZero = %v, want %v", tt.name, got, tt.want)
+	for _, tc := range tests {
+		if got := tc.transition.IsZero(); got != tc.want {
+			t.Fatalf("%s IsZero = %v, want %v", tc.name, got, tc.want)
 		}
 	}
 }
@@ -134,9 +134,9 @@ func TestTransitionIsCommitted(t *testing.T) {
 		{Transition{}, false},
 	}
 
-	for _, tt := range tests {
-		if got := tt.transition.IsCommitted(); got != tt.want {
-			t.Fatalf("%+v IsCommitted = %v, want %v", tt.transition, got, tt.want)
+	for _, tc := range tests {
+		if got := tc.transition.IsCommitted(); got != tc.want {
+			t.Fatalf("%+v IsCommitted = %v, want %v", tc.transition, got, tc.want)
 		}
 	}
 }
@@ -160,18 +160,18 @@ func TestTransitionClassification(t *testing.T) {
 		{"inconsistent failure", Transition{To: StateRunning, Event: EventMarkFailed}, false, false, false, false},
 	}
 
-	for _, tt := range tests {
-		if got := tt.transition.IsTerminal(); got != tt.terminal {
-			t.Fatalf("%s IsTerminal = %v, want %v", tt.name, got, tt.terminal)
+	for _, tc := range tests {
+		if got := tc.transition.IsTerminal(); got != tc.terminal {
+			t.Fatalf("%s IsTerminal = %v, want %v", tc.name, got, tc.terminal)
 		}
-		if got := tt.transition.IsFailure(); got != tt.failure {
-			t.Fatalf("%s IsFailure = %v, want %v", tt.name, got, tt.failure)
+		if got := tc.transition.IsFailure(); got != tc.failure {
+			t.Fatalf("%s IsFailure = %v, want %v", tc.name, got, tc.failure)
 		}
-		if got := tt.transition.IsStartup(); got != tt.startup {
-			t.Fatalf("%s IsStartup = %v, want %v", tt.name, got, tt.startup)
+		if got := tc.transition.IsStartup(); got != tc.startup {
+			t.Fatalf("%s IsStartup = %v, want %v", tc.name, got, tc.startup)
 		}
-		if got := tt.transition.IsShutdown(); got != tt.shutdown {
-			t.Fatalf("%s IsShutdown = %v, want %v", tt.name, got, tt.shutdown)
+		if got := tc.transition.IsShutdown(); got != tc.shutdown {
+			t.Fatalf("%s IsShutdown = %v, want %v", tc.name, got, tc.shutdown)
 		}
 	}
 }

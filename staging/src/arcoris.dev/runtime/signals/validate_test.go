@@ -50,11 +50,11 @@ func TestValidationHelpersRejectMissingDiagnosticText(t *testing.T) {
 		{name: "non-negative buffer", fn: func() { requireNonNegativeBuffer(0, "") }},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNilValidationMessage, tt.fn)
+			mustPanicWith(t, errNilValidationMessage, tc.fn)
 		})
 	}
 }
@@ -79,11 +79,11 @@ func TestValidationHelpersRejectInvalidInputs(t *testing.T) {
 		{name: "negative buffer", message: "non-negative buffer", fn: func() { requireNonNegativeBuffer(-1, "non-negative buffer") }},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, tt.message, tt.fn)
+			mustPanicWith(t, tc.message, tc.fn)
 		})
 	}
 }

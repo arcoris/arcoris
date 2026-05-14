@@ -47,12 +47,12 @@ func TestNilMux(t *testing.T) {
 		{name: "http serve mux", mux: http.NewServeMux(), want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := nilMux(test.mux); got != test.want {
-				t.Fatalf("nilMux() = %v, want %v", got, test.want)
+			if got := nilMux(tc.mux); got != tc.want {
+				t.Fatalf("nilMux() = %v, want %v", got, tc.want)
 			}
 		})
 	}

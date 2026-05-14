@@ -19,13 +19,13 @@ package healthhttp
 // WithStatusCodes configures the full HTTP status code mapping used by the
 // handler.
 func WithStatusCodes(codes HTTPStatusCodes) Option {
-	return func(config *config) error {
+	return func(cfg *config) error {
 		codes = codes.Normalize()
 		if err := codes.Validate(); err != nil {
 			return err
 		}
 
-		config.statusCodes = codes
+		cfg.statusCodes = codes
 		return nil
 	}
 }
@@ -33,8 +33,8 @@ func WithStatusCodes(codes HTTPStatusCodes) Option {
 // WithPassedStatus configures the HTTP status code used when a report passes
 // the configured target policy.
 func WithPassedStatus(code int) Option {
-	return func(config *config) error {
-		codes := config.statusCodes
+	return func(cfg *config) error {
+		codes := cfg.statusCodes
 		codes.Passed = code
 		codes = codes.Normalize()
 
@@ -42,7 +42,7 @@ func WithPassedStatus(code int) Option {
 			return err
 		}
 
-		config.statusCodes = codes
+		cfg.statusCodes = codes
 		return nil
 	}
 }
@@ -50,8 +50,8 @@ func WithPassedStatus(code int) Option {
 // WithFailedStatus configures the HTTP status code used when evaluation
 // succeeds but the report fails the configured target policy.
 func WithFailedStatus(code int) Option {
-	return func(config *config) error {
-		codes := config.statusCodes
+	return func(cfg *config) error {
+		codes := cfg.statusCodes
 		codes.Failed = code
 		codes = codes.Normalize()
 
@@ -59,7 +59,7 @@ func WithFailedStatus(code int) Option {
 			return err
 		}
 
-		config.statusCodes = codes
+		cfg.statusCodes = codes
 		return nil
 	}
 }
@@ -67,8 +67,8 @@ func WithFailedStatus(code int) Option {
 // WithErrorStatus configures the HTTP status code used for adapter-boundary
 // failures such as invalid handler state.
 func WithErrorStatus(code int) Option {
-	return func(config *config) error {
-		codes := config.statusCodes
+	return func(cfg *config) error {
+		codes := cfg.statusCodes
 		codes.Error = code
 		codes = codes.Normalize()
 
@@ -76,7 +76,7 @@ func WithErrorStatus(code int) Option {
 			return err
 		}
 
-		config.statusCodes = codes
+		cfg.statusCodes = codes
 		return nil
 	}
 }

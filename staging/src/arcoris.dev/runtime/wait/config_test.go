@@ -17,7 +17,6 @@
 package wait
 
 import (
-	"math"
 	"testing"
 	"time"
 )
@@ -27,9 +26,9 @@ import (
 func TestDefaultOptionsPreserveBaseInterval(t *testing.T) {
 	t.Parallel()
 
-	config := defaultOptions()
+	cfg := defaultOptions()
 
-	mustEqualDuration(t, "default interval", config.interval(time.Second), time.Second)
+	mustEqualDuration(t, "default interval", cfg.interval(time.Second), time.Second)
 }
 
 // TestOptionsOfWithoutOptionsReturnsDefault verifies option normalization for
@@ -37,31 +36,9 @@ func TestDefaultOptionsPreserveBaseInterval(t *testing.T) {
 func TestOptionsOfWithoutOptionsReturnsDefault(t *testing.T) {
 	t.Parallel()
 
-	config := optionsOf()
+	cfg := optionsOf()
 
-	mustEqualDuration(t, "normalized default interval", config.interval(time.Second), time.Second)
-}
-
-// TestWithJitterStoresFactor verifies that WithJitter updates only the jitter
-// domain of the private normalized configuration.
-func TestWithJitterStoresFactor(t *testing.T) {
-	t.Parallel()
-
-	config := optionsOf(WithJitter(0.25))
-
-	if config.jitterFactor != 0.25 {
-		t.Fatalf("jitterFactor = %v, want 0.25", config.jitterFactor)
-	}
-}
-
-// TestWithJitterZeroDisablesJitter verifies that an explicit zero jitter option
-// is valid and preserves the base interval exactly.
-func TestWithJitterZeroDisablesJitter(t *testing.T) {
-	t.Parallel()
-
-	config := optionsOf(WithJitter(0))
-
-	mustEqualDuration(t, "zero-jitter interval", config.interval(time.Second), time.Second)
+	mustEqualDuration(t, "normalized default interval", cfg.interval(time.Second), time.Second)
 }
 
 // TestOptionsApplyInOrder verifies deterministic last-option-wins behavior for
@@ -69,13 +46,13 @@ func TestWithJitterZeroDisablesJitter(t *testing.T) {
 func TestOptionsApplyInOrder(t *testing.T) {
 	t.Parallel()
 
-	config := optionsOf(
+	cfg := optionsOf(
 		WithJitter(0.50),
 		WithJitter(0.25),
 	)
 
-	if config.jitterFactor != 0.25 {
-		t.Fatalf("jitterFactor = %v, want last configured value 0.25", config.jitterFactor)
+	if cfg.jitterFactor != 0.25 {
+		t.Fatalf("jitterFactor = %v, want last configured value 0.25", cfg.jitterFactor)
 	}
 }
 
@@ -84,12 +61,12 @@ func TestOptionsApplyInOrder(t *testing.T) {
 func TestOptionsLaterJitterCanDisableEarlierJitter(t *testing.T) {
 	t.Parallel()
 
-	config := optionsOf(
+	cfg := optionsOf(
 		WithJitter(0.50),
 		WithJitter(0),
 	)
 
-	mustEqualDuration(t, "disabled jitter interval", config.interval(time.Second), time.Second)
+	mustEqualDuration(t, "disabled jitter interval", cfg.interval(time.Second), time.Second)
 }
 
 // TestOptionsIntervalAppliesJitterWithinBounds verifies that normalized options
@@ -99,9 +76,9 @@ func TestOptionsIntervalAppliesJitterWithinBounds(t *testing.T) {
 
 	base := time.Second
 	factor := 0.25
-	config := optionsOf(WithJitter(factor))
+	cfg := optionsOf(WithJitter(factor))
 
-	got := config.interval(base)
+	got := cfg.interval(base)
 	min := base
 	max := base + maxJitterDelta(base, factor)
 
@@ -118,47 +95,4 @@ func TestOptionsOfPanicsOnNilOption(t *testing.T) {
 	mustPanicWith(t, errNilOption, func() {
 		_ = optionsOf(nil)
 	})
-}
-
-// TestWithJitterPanicsOnInvalidFactor verifies constructor-time validation for
-// jitter factors supplied through options.
-func TestWithJitterPanicsOnInvalidFactor(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name   string
-		factor float64
-		panic  string
-	}{
-		{
-			name:   "negative",
-			factor: -0.1,
-			panic:  errNegativeJitterFactor,
-		},
-		{
-			name:   "nan",
-			factor: math.NaN(),
-			panic:  errNonFiniteJitterFactor,
-		},
-		{
-			name:   "positive infinity",
-			factor: math.Inf(1),
-			panic:  errNonFiniteJitterFactor,
-		},
-		{
-			name:   "negative infinity",
-			factor: math.Inf(-1),
-			panic:  errNonFiniteJitterFactor,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			mustPanicWith(t, tt.panic, func() {
-				_ = WithJitter(tt.factor)
-			})
-		})
-	}
 }

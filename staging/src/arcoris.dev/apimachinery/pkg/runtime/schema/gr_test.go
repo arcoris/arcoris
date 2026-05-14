@@ -35,13 +35,13 @@ func TestGroupResourceParseValidValues(t *testing.T) {
 		{input: "workloadclasses.control.arcoris.dev", want: GroupResource{Group: "control.arcoris.dev", Resource: "workloadclasses"}},
 	}
 
-	for _, tt := range tests {
-		got, err := ParseGroupResource(tt.input)
+	for _, tc := range tests {
+		got, err := ParseGroupResource(tc.input)
 		if err != nil {
-			t.Fatalf("ParseGroupResource(%q) returned error: %v", tt.input, err)
+			t.Fatalf("ParseGroupResource(%q) returned error: %v", tc.input, err)
 		}
-		if got != tt.want || got.String() != tt.input || got.Identifier() != tt.input {
-			t.Fatalf("ParseGroupResource(%q) = %+v", tt.input, got)
+		if got != tc.want || got.String() != tc.input || got.Identifier() != tc.input {
+			t.Fatalf("ParseGroupResource(%q) = %+v", tc.input, got)
 		}
 	}
 }

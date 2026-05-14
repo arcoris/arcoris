@@ -42,12 +42,12 @@ func TestMethodAllowed(t *testing.T) {
 		{name: "empty", method: "", want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := methodAllowed(test.method); got != test.want {
-				t.Fatalf("methodAllowed(%q) = %v, want %v", test.method, got, test.want)
+			if got := methodAllowed(tc.method); got != tc.want {
+				t.Fatalf("methodAllowed(%q) = %v, want %v", tc.method, got, tc.want)
 			}
 		})
 	}

@@ -90,7 +90,7 @@
 //   - status.go owns health-to-gRPC status conversion;
 //   - rpc_error.go owns stable public gRPC error messages;
 //   - option.go owns the Option contract and application order;
-//   - option_config.go owns normalized adapter configuration;
+//   - config.go owns normalized adapter configuration;
 //   - option_clock.go owns clock configuration;
 //   - option_services.go owns service mapping options;
 //   - option_watch.go owns Watch cadence options;

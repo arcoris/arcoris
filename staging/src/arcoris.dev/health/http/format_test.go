@@ -31,12 +31,12 @@ func TestFormatString(t *testing.T) {
 		{name: "invalid", format: Format(99), want: "invalid"},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.format.String(); got != test.want {
-				t.Fatalf("String() = %q, want %q", got, test.want)
+			if got := tc.format.String(); got != tc.want {
+				t.Fatalf("String() = %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -55,12 +55,12 @@ func TestFormatIsValid(t *testing.T) {
 		{name: "invalid", format: Format(99), want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.format.IsValid(); got != test.want {
-				t.Fatalf("IsValid() = %v, want %v", got, test.want)
+			if got := tc.format.IsValid(); got != tc.want {
+				t.Fatalf("IsValid() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -79,12 +79,12 @@ func TestFormatContentType(t *testing.T) {
 		{name: "invalid", format: Format(99), want: ""},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.format.contentType(); got != test.want {
-				t.Fatalf("contentType() = %q, want %q", got, test.want)
+			if got := tc.format.contentType(); got != tc.want {
+				t.Fatalf("contentType() = %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -118,13 +118,13 @@ func TestValidateFormat(t *testing.T) {
 		{name: "invalid", format: Format(99), want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := validateFormat(test.format)
-			if got := err == nil; got != test.want {
-				t.Fatalf("validateFormat(%s) ok = %v, want %v; err=%v", test.format, got, test.want, err)
+			err := validateFormat(tc.format)
+			if got := err == nil; got != tc.want {
+				t.Fatalf("validateFormat(%s) ok = %v, want %v; err=%v", tc.format, got, tc.want, err)
 			}
 		})
 	}

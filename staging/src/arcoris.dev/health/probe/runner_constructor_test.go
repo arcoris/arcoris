@@ -77,37 +77,37 @@ func TestNewRunnerRejectsInvalidConfiguration(t *testing.T) {
 	tests := []struct {
 		name    string
 		eval    *health.Evaluator
-		options []Option
+		opts    []Option
 		wantErr error
 	}{
 		{
 			name:    "nil evaluator",
 			eval:    nil,
-			options: []Option{WithTargets(health.TargetReady)},
+			opts:    []Option{WithTargets(health.TargetReady)},
 			wantErr: ErrNilEvaluator,
 		},
 		{
 			name:    "missing targets",
 			eval:    newTestEvaluator(t),
-			options: nil,
+			opts:    nil,
 			wantErr: ErrNoTargets,
 		},
 		{
 			name:    "invalid target",
 			eval:    newTestEvaluator(t),
-			options: []Option{WithTargets(health.TargetUnknown)},
+			opts:    []Option{WithTargets(health.TargetUnknown)},
 			wantErr: health.ErrInvalidTarget,
 		},
 		{
 			name:    "duplicate target",
 			eval:    newTestEvaluator(t),
-			options: []Option{WithTargets(health.TargetReady, health.TargetReady)},
+			opts:    []Option{WithTargets(health.TargetReady, health.TargetReady)},
 			wantErr: ErrDuplicateTarget,
 		},
 		{
 			name: "invalid interval",
 			eval: newTestEvaluator(t),
-			options: []Option{
+			opts: []Option{
 				WithTargets(health.TargetReady),
 				WithInterval(0),
 			},
@@ -116,7 +116,7 @@ func TestNewRunnerRejectsInvalidConfiguration(t *testing.T) {
 		{
 			name: "invalid stale after",
 			eval: newTestEvaluator(t),
-			options: []Option{
+			opts: []Option{
 				WithTargets(health.TargetReady),
 				WithStaleAfter(-time.Nanosecond),
 			},
@@ -125,7 +125,7 @@ func TestNewRunnerRejectsInvalidConfiguration(t *testing.T) {
 		{
 			name: "nil option",
 			eval: newTestEvaluator(t),
-			options: []Option{
+			opts: []Option{
 				WithTargets(health.TargetReady),
 				nil,
 			},
@@ -137,7 +137,7 @@ func TestNewRunnerRejectsInvalidConfiguration(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := NewRunner(tc.eval, tc.options...)
+			_, err := NewRunner(tc.eval, tc.opts...)
 
 			if !errors.Is(err, tc.wantErr) {
 				t.Fatalf("NewRunner() = %v, want %v", err, tc.wantErr)

@@ -112,12 +112,12 @@ func TestHTTPStatusCodesNormalize(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.codes.Normalize(); got != test.want {
-				t.Fatalf("Normalize() = %+v, want %+v", got, test.want)
+			if got := tc.codes.Normalize(); got != tc.want {
+				t.Fatalf("Normalize() = %+v, want %+v", got, tc.want)
 			}
 		})
 	}
@@ -189,13 +189,13 @@ func TestHTTPStatusCodesValidate(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := test.codes.Validate()
-			if got := err == nil; got != test.want {
-				t.Fatalf("Validate() ok = %v, want %v; err=%v", got, test.want, err)
+			err := tc.codes.Validate()
+			if got := err == nil; got != tc.want {
+				t.Fatalf("Validate() ok = %v, want %v; err=%v", got, tc.want, err)
 			}
 		})
 	}
@@ -247,12 +247,12 @@ func TestValidHTTPStatusCode(t *testing.T) {
 		{name: "above", code: 600, want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := validHTTPStatusCode(test.code); got != test.want {
-				t.Fatalf("validHTTPStatusCode(%d) = %v, want %v", test.code, got, test.want)
+			if got := validHTTPStatusCode(tc.code); got != tc.want {
+				t.Fatalf("validHTTPStatusCode(%d) = %v, want %v", tc.code, got, tc.want)
 			}
 		})
 	}
@@ -275,12 +275,12 @@ func TestStatusClass(t *testing.T) {
 		{name: "5xx false for 404", code: http.StatusNotFound, class: 5, want: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := statusClass(test.code, test.class); got != test.want {
-				t.Fatalf("statusClass(%d, %d) = %v, want %v", test.code, test.class, got, test.want)
+			if got := statusClass(tc.code, tc.class); got != tc.want {
+				t.Fatalf("statusClass(%d, %d) = %v, want %v", tc.code, tc.class, got, tc.want)
 			}
 		})
 	}

@@ -320,12 +320,12 @@ func TestShutdownControllerRejectsNilReceiver(t *testing.T) {
 		{name: "Escalation", fn: func(c *ShutdownController) { c.Escalation() }},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			mustPanicWith(t, errNilShutdownController, func() {
-				tt.fn(nil)
+				tc.fn(nil)
 			})
 		})
 	}
