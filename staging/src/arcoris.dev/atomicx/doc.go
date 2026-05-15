@@ -192,9 +192,14 @@
 //
 // # Padding and false sharing
 //
-// Padded primitives use explicit leading and trailing padding around the atomic
-// value. The padding is intended to reduce false sharing between independently
-// hot fields.
+// Padded primitives use an explicit leading pad before the atomic value and a
+// trailing line-completion pad after the value. The leading pad separates the
+// value from preceding fields. The trailing completion fills the rest of the
+// value's 64-byte slot so following fields and slice elements do not share that
+// slot.
+//
+// CacheLinePadSize is an ARCORIS layout policy, not a runtime-detected hardware
+// cache-line size.
 //
 // False sharing can occur when unrelated variables occupy the same CPU cache
 // line and are updated by different goroutines on different cores. Even when the

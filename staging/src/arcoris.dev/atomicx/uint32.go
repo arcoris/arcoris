@@ -19,7 +19,7 @@ package atomicx
 import "sync/atomic"
 
 // PaddedUint32 is an atomic uint32 isolated from neighboring fields by explicit
-// leading and trailing padding.
+// leading padding and trailing line-completion padding.
 //
 // PaddedUint32 is a low-level primitive for hot uint32 state. It is intended for
 // compact runtime state that is naturally represented as a 32-bit unsigned
@@ -59,13 +59,16 @@ import "sync/atomic"
 //
 // Layout:
 //
-//	[noCopy marker][leading pad][atomic uint32][trailing pad]
+//	[noCopy marker][leading pad][atomic uint32][trailing line-completion pad]
 //
-// Both pads are intentional:
+// The layout follows the default 64-byte ARCORIS policy, not a hardware
+// guarantee:
 //
 //   - the leading pad separates the atomic value from the previous field;
-//   - the trailing pad separates it from the next field;
-//   - the trailing pad also matters when padded values appear in arrays/slices.
+//   - the trailing line-completion pad fills the rest of the atomic value's
+//     64-byte slot;
+//   - the trailing completion matters when padded values appear in arrays,
+//     slices, or before following struct fields.
 //
 // The noCopy marker is a static-analysis marker. It does not participate in
 // synchronization and does not provide runtime protection. Its purpose is to make
@@ -83,7 +86,7 @@ type PaddedUint32 struct {
 	noCopy noCopy
 	_      CacheLinePad
 	value  atomic.Uint32
-	_      CacheLinePad
+	_      [CacheLinePadSize - atomicUint32Size]byte
 }
 
 // Load atomically returns the current uint32 value.

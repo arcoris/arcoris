@@ -19,7 +19,7 @@ package atomicx
 import "sync/atomic"
 
 // PaddedUint64 is an atomic uint64 isolated from neighboring fields by explicit
-// leading and trailing padding.
+// leading padding and trailing line-completion padding.
 //
 // PaddedUint64 is the lowest-level unsigned padded atomic primitive in this
 // package. It intentionally exposes raw unsigned atomic operations and does not
@@ -51,13 +51,16 @@ import "sync/atomic"
 //
 // Layout:
 //
-//	[noCopy marker][leading pad][atomic uint64][trailing pad]
+//	[noCopy marker][leading pad][atomic uint64][trailing line-completion pad]
 //
-// Both pads are intentional:
+// The layout follows the default 64-byte ARCORIS policy, not a hardware
+// guarantee:
 //
 //   - the leading pad separates the atomic value from the previous field;
-//   - the trailing pad separates it from the next field;
-//   - the trailing pad also matters when padded values appear in arrays/slices.
+//   - the trailing line-completion pad fills the rest of the atomic value's
+//     64-byte slot;
+//   - the trailing completion matters when padded values appear in arrays,
+//     slices, or before following struct fields.
 //
 // The noCopy marker is a zero-size static-analysis marker. It does not
 // participate in synchronization and does not provide runtime protection. Its
@@ -76,7 +79,7 @@ type PaddedUint64 struct {
 	noCopy noCopy
 	_      CacheLinePad
 	value  atomic.Uint64
-	_      CacheLinePad
+	_      [CacheLinePadSize - atomicUint64Size]byte
 }
 
 // Load atomically returns the current uint64 value.

@@ -17,33 +17,56 @@
 package atomicx
 
 const (
-	// CacheLinePadSize is the padding width used by atomicx padded primitives.
+	// CacheLinePadSize is the default padding width used by atomicx padded
+	// primitives to reduce false sharing between independently hot fields.
 	//
-	// The value is intentionally fixed by this package instead of being derived
-	// from the current platform at runtime. Go does not expose a stable public
-	// cache-line-size constant, and the exact value is not part of Go's portable
-	// memory model.
+	// The value is intentionally fixed at 64 bytes as the package's default
+	// portability and memory-footprint trade-off. It is not derived from the
+	// current platform at runtime. Go does not expose a stable public cache-line
+	// size constant, and the exact hardware cache-line size is not part of Go's
+	// portable memory model.
 	//
-	// A 128-byte pad is a conservative default for common server platforms:
+	// Atomicx padded primitives use this value in two different ways:
 	//
-	//   - it covers the common 64-byte cache-line case;
-	//   - it gives additional room for adjacent-line effects on wider systems;
-	//   - it keeps the layout deterministic across supported builds.
+	//   - a full leading pad separates the atomic value from preceding fields;
+	//   - a trailing line-completion pad fills the rest of the value's 64-byte
+	//     slot so following fields or slice elements do not share that slot.
 	//
-	// The memory cost is deliberate. Padded atomics are intended for a small
-	// number of hot shared fields that are frequently written by independent
-	// goroutines, such as runtime counters, gauges, queue depths, in-flight
-	// operation counts, controller tick counters, admission counters, dispatch
-	// counters, or component-local accounting state.
-	//
-	// Do not use padded atomics for ordinary per-object metadata, API objects,
-	// per-request structs, per-item storage, or cold fields. Padding every atomic
-	// field in a system can waste memory and reduce cache locality.
-	CacheLinePadSize = 128
+	// Padding is not free. Use padded atomics only for a small number of hot
+	// shared runtime accounting fields. Do not use padded atomics for ordinary
+	// per-object metadata, API objects, per-request structs, per-item storage,
+	// or cold fields.
+	CacheLinePadSize = 64
 )
 
-// CacheLinePad is an explicit padding block used to separate independently hot
-// fields in memory.
+const (
+	// atomicUint64Size is the expected size, in bytes, of sync/atomic.Uint64.
+	//
+	// The value is used to size the trailing line-completion pad after a
+	// PaddedUint64 value. Tests MUST verify this assumption with unsafe.Sizeof.
+	atomicUint64Size = 8
+
+	// atomicUint32Size is the expected size, in bytes, of sync/atomic.Uint32.
+	//
+	// The value is used to size the trailing line-completion pad after a
+	// PaddedUint32 value. Tests MUST verify this assumption with unsafe.Sizeof.
+	atomicUint32Size = 4
+
+	// atomicInt64Size is the expected size, in bytes, of sync/atomic.Int64.
+	//
+	// The value is used to size the trailing line-completion pad after a
+	// PaddedInt64 value. Tests MUST verify this assumption with unsafe.Sizeof.
+	atomicInt64Size = 8
+
+	// atomicInt32Size is the expected size, in bytes, of sync/atomic.Int32.
+	//
+	// The value is used to size the trailing line-completion pad after a
+	// PaddedInt32 value. Tests MUST verify this assumption with unsafe.Sizeof.
+	atomicInt32Size = 4
+)
+
+// CacheLinePad is an explicit 64-byte layout pad used to separate independently
+// hot fields in memory.
 //
 // CacheLinePad is a low-level layout tool. It exists for cases where a struct
 // needs manual spacing between fields that are updated by different goroutines

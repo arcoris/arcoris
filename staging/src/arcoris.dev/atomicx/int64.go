@@ -19,7 +19,7 @@ package atomicx
 import "sync/atomic"
 
 // PaddedInt64 is an atomic int64 isolated from neighboring fields by explicit
-// leading and trailing padding.
+// leading padding and trailing line-completion padding.
 //
 // PaddedInt64 is the signed counterpart of PaddedUint64. It is the lowest-level
 // signed padded atomic primitive in this package and intentionally exposes raw
@@ -44,7 +44,13 @@ import "sync/atomic"
 //
 // Padding reduces false sharing in the same way as PaddedUint64:
 //
-//	[noCopy marker][leading pad][atomic int64][trailing pad]
+//	[noCopy marker][leading pad][atomic int64][trailing line-completion pad]
+//
+// The layout follows the default 64-byte ARCORIS policy, not a hardware
+// guarantee. The leading pad separates the atomic value from the previous field.
+// The trailing line-completion pad fills the rest of the atomic value's 64-byte
+// slot, which matters when padded values appear in arrays, slices, or before
+// following struct fields.
 //
 // The noCopy marker is intentional even though the embedded atomic value already
 // follows the same rule. It makes the copy boundary explicit at the atomicx type
@@ -61,7 +67,7 @@ type PaddedInt64 struct {
 	noCopy noCopy
 	_      CacheLinePad
 	value  atomic.Int64
-	_      CacheLinePad
+	_      [CacheLinePadSize - atomicInt64Size]byte
 }
 
 // Load atomically returns the current int64 value.
