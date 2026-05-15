@@ -22,6 +22,17 @@
 // budget, reserves tail budget for caller-owned cleanup, and derives child
 // contexts whose deadlines do not exceed their parent deadline.
 //
+// Reserve returns three values:
+//   - duration: a finite derived duration, meaningful only when bounded and ok
+//     are both true;
+//   - bounded: whether duration comes from a parent context deadline;
+//   - ok: whether the observed deadline and runtime context state still permit
+//     continuing.
+//
+// Reserve does not choose fallback timeouts for unbounded contexts. When
+// bounded is false, callers must apply their own timeout policy if they still
+// need a finite child budget.
+//
 // Deadline is a lower-level resilience primitive. Retry loops, queue waits,
 // bulkhead acquisition, circuit-breaker probes, cooldown paths, and admission
 // checks can use this package to avoid starting work that cannot complete inside

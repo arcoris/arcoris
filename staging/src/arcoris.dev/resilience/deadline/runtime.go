@@ -29,7 +29,10 @@ import (
 // or the parent context is already done.
 func activeBudget(ctx context.Context, now time.Time) (Budget, bool) {
 	budget := Inspect(ctx, now)
-	if budget.Expired || ctx.Err() != nil {
+	if budget.Expired {
+		return budget, false
+	}
+	if ctx.Err() != nil {
 		return budget, false
 	}
 

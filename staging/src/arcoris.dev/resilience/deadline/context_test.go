@@ -81,6 +81,39 @@ func TestWithBoundedTimeoutUsesEarlierDeadline(t *testing.T) {
 		assertContextDeadline(t, ctx, now)
 	})
 
+	t.Run("already canceled parent yields already canceled child", func(t *testing.T) {
+		t.Parallel()
+
+		parent, parentCancel := context.WithCancel(context.Background())
+		parentCancel()
+
+		ctx, cancel := WithBoundedTimeout(parent, now, time.Second)
+		defer cancel()
+
+		assertContextDeadline(t, ctx, now.Add(time.Second))
+		<-ctx.Done()
+		if ctx.Err() != context.Canceled {
+			t.Fatalf("child Err() = %v, want %v", ctx.Err(), context.Canceled)
+		}
+	})
+
+	t.Run("expired parent deadline keeps parent deadline", func(t *testing.T) {
+		t.Parallel()
+
+		parentDeadline := time.Now().Add(-time.Second)
+		parent, parentCancel := context.WithDeadline(context.Background(), parentDeadline)
+		defer parentCancel()
+
+		ctx, cancel := WithBoundedTimeout(parent, now, time.Second)
+		defer cancel()
+
+		assertContextDeadline(t, ctx, parentDeadline)
+		<-ctx.Done()
+		if ctx.Err() != context.DeadlineExceeded {
+			t.Fatalf("child Err() = %v, want %v", ctx.Err(), context.DeadlineExceeded)
+		}
+	})
+
 	t.Run("parent cancellation cancels child", func(t *testing.T) {
 		t.Parallel()
 

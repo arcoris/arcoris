@@ -77,6 +77,16 @@ func TestCanStartBuildsDecision(t *testing.T) {
 			want: Decision{Reason: ReasonExpired},
 		},
 		{
+			name: "expired deadline takes precedence over context done",
+			ctx: func() context.Context {
+				ctx, cancel := context.WithDeadline(context.Background(), now.Add(-time.Second))
+				t.Cleanup(cancel)
+				cancel()
+				return ctx
+			}(),
+			want: Decision{Reason: ReasonExpired},
+		},
+		{
 			name: "remaining below minimum",
 			ctx:  contextWithDeadline(t, now.Add(10*time.Millisecond)),
 			min:  20 * time.Millisecond,

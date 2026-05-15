@@ -26,10 +26,10 @@ func TestReservePanicsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 
 	requirePanic(t, panicNilContext, func() {
-		_, _ = Reserve(nil, time.Now(), 0)
+		_, _, _ = Reserve(nil, time.Now(), 0)
 	})
 	requirePanic(t, panicNegativeDuration("reserve"), func() {
-		_, _ = Reserve(context.Background(), time.Now(), -time.Nanosecond)
+		_, _, _ = Reserve(context.Background(), time.Now(), -time.Nanosecond)
 	})
 }
 
@@ -42,23 +42,26 @@ func TestReserveSubtractsTailBudget(t *testing.T) {
 	cancel()
 
 	tests := []struct {
-		name    string
-		ctx     context.Context
-		reserve time.Duration
-		want    time.Duration
-		wantOK  bool
+		name        string
+		ctx         context.Context
+		reserve     time.Duration
+		want        time.Duration
+		wantBounded bool
+		wantOK      bool
 	}{
 		{
-			name:   "no deadline",
-			ctx:    context.Background(),
-			want:   0,
-			wantOK: true,
+			name:        "no deadline",
+			ctx:         context.Background(),
+			want:        0,
+			wantBounded: false,
+			wantOK:      true,
 		},
 		{
-			name:    "canceled context",
-			ctx:     canceled,
-			reserve: time.Second,
-			wantOK:  false,
+			name:        "canceled context",
+			ctx:         canceled,
+			reserve:     time.Second,
+			wantBounded: false,
+			wantOK:      false,
 		},
 		{
 			name: "canceled context with future deadline",
@@ -68,40 +71,46 @@ func TestReserveSubtractsTailBudget(t *testing.T) {
 				cancel()
 				return ctx
 			}(),
-			reserve: time.Second,
-			wantOK:  false,
+			reserve:     time.Second,
+			wantBounded: true,
+			wantOK:      false,
 		},
 		{
-			name:    "expired deadline",
-			ctx:     contextWithDeadline(t, now.Add(-time.Second)),
-			reserve: time.Second,
-			wantOK:  false,
+			name:        "expired deadline",
+			ctx:         contextWithDeadline(t, now.Add(-time.Second)),
+			reserve:     time.Second,
+			wantBounded: true,
+			wantOK:      false,
 		},
 		{
-			name:    "zero reserve",
-			ctx:     contextWithDeadline(t, now.Add(5*time.Second)),
-			reserve: 0,
-			want:    5 * time.Second,
-			wantOK:  true,
+			name:        "zero reserve",
+			ctx:         contextWithDeadline(t, now.Add(5*time.Second)),
+			reserve:     0,
+			want:        5 * time.Second,
+			wantBounded: true,
+			wantOK:      true,
 		},
 		{
-			name:    "reserve below remaining",
-			ctx:     contextWithDeadline(t, now.Add(5*time.Second)),
-			reserve: 2 * time.Second,
-			want:    3 * time.Second,
-			wantOK:  true,
+			name:        "reserve below remaining",
+			ctx:         contextWithDeadline(t, now.Add(5*time.Second)),
+			reserve:     2 * time.Second,
+			want:        3 * time.Second,
+			wantBounded: true,
+			wantOK:      true,
 		},
 		{
-			name:    "reserve equal remaining",
-			ctx:     contextWithDeadline(t, now.Add(5*time.Second)),
-			reserve: 5 * time.Second,
-			wantOK:  false,
+			name:        "reserve equal remaining",
+			ctx:         contextWithDeadline(t, now.Add(5*time.Second)),
+			reserve:     5 * time.Second,
+			wantBounded: true,
+			wantOK:      false,
 		},
 		{
-			name:    "reserve above remaining",
-			ctx:     contextWithDeadline(t, now.Add(5*time.Second)),
-			reserve: 6 * time.Second,
-			wantOK:  false,
+			name:        "reserve above remaining",
+			ctx:         contextWithDeadline(t, now.Add(5*time.Second)),
+			reserve:     6 * time.Second,
+			wantBounded: true,
+			wantOK:      false,
 		},
 	}
 
@@ -110,9 +119,17 @@ func TestReserveSubtractsTailBudget(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, ok := Reserve(tt.ctx, now, tt.reserve)
-			if got != tt.want || ok != tt.wantOK {
-				t.Fatalf("Reserve() = (%v, %v), want (%v, %v)", got, ok, tt.want, tt.wantOK)
+			got, bounded, ok := Reserve(tt.ctx, now, tt.reserve)
+			if got != tt.want || bounded != tt.wantBounded || ok != tt.wantOK {
+				t.Fatalf(
+					"Reserve() = (%v, %v, %v), want (%v, %v, %v)",
+					got,
+					bounded,
+					ok,
+					tt.want,
+					tt.wantBounded,
+					tt.wantOK,
+				)
 			}
 		})
 	}

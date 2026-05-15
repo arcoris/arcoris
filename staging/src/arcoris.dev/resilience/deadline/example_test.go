@@ -66,6 +66,22 @@ func ExampleClamp() {
 	// 75ms
 }
 
+func ExampleReserve() {
+	now := time.Now().Add(time.Hour)
+	ctx, cancel := context.WithDeadline(context.Background(), now.Add(200*time.Millisecond))
+	defer cancel()
+
+	d, bounded, ok := deadline.Reserve(ctx, now, 50*time.Millisecond)
+	fmt.Println(ok)
+	fmt.Println(bounded)
+	fmt.Println(d)
+
+	// Output:
+	// true
+	// true
+	// 150ms
+}
+
 func ExampleWithBoundedTimeout() {
 	now := time.Now().Add(time.Hour)
 	parent, cancelParent := context.WithDeadline(context.Background(), now.Add(100*time.Millisecond))

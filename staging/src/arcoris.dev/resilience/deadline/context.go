@@ -28,6 +28,12 @@ import (
 // intended child deadline from the caller-supplied observation time. Passing the
 // observation time explicitly keeps tests deterministic and makes the budget
 // boundary visible to higher-level resilience code.
+//
+// The returned context is still driven by the Go runtime clock. The explicit
+// observation time controls the selected child deadline; it does not make
+// cancellation timing deterministic by itself. Tests that need deterministic
+// cancellation should assert the selected deadline or use higher-level fake-clock
+// code instead of waiting on real time.
 func WithBoundedTimeout(ctx context.Context, now time.Time, timeout time.Duration) (context.Context, context.CancelFunc) {
 	requireContext(ctx)
 	requireNonNegativeDuration("timeout", timeout)
