@@ -17,9 +17,10 @@
 package snapshot
 
 import (
-	"sync/atomic"
+	"sync"
 	"time"
 
+	"arcoris.dev/atomicx"
 	"arcoris.dev/chrono/clock"
 )
 
@@ -28,6 +29,10 @@ import (
 // Publisher is the fast baseline for read-mostly values such as observer lists,
 // handler registries, immutable routing tables, and precomputed dispatch plans.
 // Reads use an atomic pointer load and do not clone the value.
+//
+// Writes are serialized so each commit advances the source-local revision and
+// stores the corresponding record as one ordered publication. Reads remain
+// lock-free by loading the latest published record pointer.
 //
 // Values passed to Publish or PublishStamped must be treated as immutable after
 // publication. If T contains slices, maps, pointers, or other mutable state, the
@@ -41,16 +46,30 @@ type Publisher[T any] struct {
 	// noCopy prevents accidental copies after first use.
 	noCopy noCopy
 
-	// nextRevision generates unique source-local revisions for published records.
-	nextRevision atomic.Uint64
+	// mu serializes Publish and PublishStamped commits.
+	//
+	// The mutex preserves monotonic visible revisions under concurrent
+	// publishers. Without it, one goroutine could reserve a newer revision and
+	// store it before another goroutine stores an older reserved revision.
+	mu sync.Mutex
+
+	// nextRevision is the latest source-local revision assigned to a published
+	// record.
+	//
+	// nextRevision is protected by mu. Readers do not read this field; they load
+	// the revision from the latest immutable record through ptr.
+	nextRevision Revision
 
 	// clock provides local publication timestamps for Stamped values.
 	//
 	// A nil clock means the zero-value Publisher should lazily use RealClock.
 	clock clock.PassiveClock
 
-	// ptr points to the latest immutable published record.
-	ptr atomic.Pointer[record[T]]
+	// ptr is a padded atomic pointer to the latest immutable published record.
+	//
+	// The padding isolates the hot pointer cell from neighboring fields. It does
+	// not provide publication ordering; write-side ordering is provided by mu.
+	ptr atomicx.PaddedPointer[record[T]]
 }
 
 // record is an immutable published value.
@@ -129,10 +148,14 @@ func (p *Publisher[T]) Publish(next T) Snapshot[T] {
 //
 // PublishStamped assigns a fresh source-local revision, records the local
 // publication time using the configured PassiveClock, stores a new immutable
-// record, and returns the published stamped snapshot. If revision overflow is
-// detected, PublishStamped panics before storing a new record.
+// record, and returns the published stamped snapshot. Concurrent publish calls
+// are serialized so readers cannot observe revision rollback. If revision
+// overflow is detected, PublishStamped panics before storing a new record.
 func (p *Publisher[T]) PublishStamped(next T) Stamped[T] {
-	rev := p.advanceRevision()
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	rev := p.nextRevision.Next()
 	updated := p.passiveClock().Now()
 	rec := &record[T]{
 		revision: rev,
@@ -140,28 +163,13 @@ func (p *Publisher[T]) PublishStamped(next T) Stamped[T] {
 		value:    next,
 	}
 
+	p.nextRevision = rev
 	p.ptr.Store(rec)
 
 	return Stamped[T]{
 		Revision: rev,
 		Updated:  updated,
 		Value:    next,
-	}
-}
-
-// advanceRevision reserves the next source-local publication revision.
-//
-// atomic.Uint64.Add wraps on overflow, so Publisher uses a CAS loop to preserve
-// the package-wide rule that ZeroRevision is never a committed publication and
-// revision overflow is a programmer error.
-func (p *Publisher[T]) advanceRevision() Revision {
-	for {
-		cur := p.nextRevision.Load()
-		rev := Revision(cur)
-		next := rev.Next()
-		if p.nextRevision.CompareAndSwap(cur, uint64(next)) {
-			return next
-		}
 	}
 }
 

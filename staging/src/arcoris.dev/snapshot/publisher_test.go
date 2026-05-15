@@ -52,7 +52,7 @@ func TestPublisherPublish(t *testing.T) {
 
 func TestPublisherPublishPanicsOnRevisionOverflowWithoutPublication(t *testing.T) {
 	publisher := NewPublisher[string]()
-	publisher.nextRevision.Store(^uint64(0))
+	publisher.nextRevision = ^Revision(0)
 
 	requirePanicWith(t, "snapshot: revision overflow", func() {
 		_ = publisher.Publish("value")
