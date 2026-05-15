@@ -16,7 +16,10 @@
 
 package liveconfig
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestApplyPublishesValidConfig(t *testing.T) {
 	h := newTestHolder(t, testConfig{Name: "initial", Limit: 1})
@@ -28,6 +31,12 @@ func TestApplyPublishesValidConfig(t *testing.T) {
 	}
 	if !change.Changed {
 		t.Fatal("Apply().Changed = false, want true")
+	}
+	if got, want := change.Reason, ChangeReasonPublished; got != want {
+		t.Fatalf("Apply().Reason = %s, want %s", got, want)
+	}
+	if !change.Accepted() {
+		t.Fatal("Apply().Accepted() = false, want true")
 	}
 	if change.Previous.Revision != prev.Revision {
 		t.Fatalf("Previous revision = %d, want %d", change.Previous.Revision, prev.Revision)
@@ -60,6 +69,12 @@ func TestApplyRejectsInvalidConfigAndKeepsLastGood(t *testing.T) {
 	if change.Changed {
 		t.Fatal("Apply().Changed = true, want false")
 	}
+	if got, want := change.Reason, ChangeReasonValidateFailed; got != want {
+		t.Fatalf("Apply().Reason = %s, want %s", got, want)
+	}
+	if !change.Rejected() {
+		t.Fatal("Apply().Rejected() = false, want true")
+	}
 	if change.Previous.Revision != prev.Revision {
 		t.Fatalf("Previous revision = %d, want %d", change.Previous.Revision, prev.Revision)
 	}
@@ -85,9 +100,12 @@ func TestApplyClearsLastErrorAfterSuccessfulApply(t *testing.T) {
 		t.Fatal("LastError() = nil after rejected Apply")
 	}
 
-	_, err = h.Apply(testConfig{Name: "good", Limit: 2})
+	change, err := h.Apply(testConfig{Name: "good", Limit: 2})
 	if err != nil {
 		t.Fatalf("Apply() error = %v", err)
+	}
+	if got, want := change.Reason, ChangeReasonPublished; got != want {
+		t.Fatalf("Apply().Reason = %s, want %s", got, want)
 	}
 	if got := h.LastError(); got != nil {
 		t.Fatalf("LastError() = %v, want nil", got)
@@ -116,6 +134,12 @@ func TestApplyClearsLastErrorAfterSuccessfulNoop(t *testing.T) {
 	if change.Changed {
 		t.Fatal("Apply().Changed = true, want false")
 	}
+	if got, want := change.Reason, ChangeReasonEqual; got != want {
+		t.Fatalf("Apply().Reason = %s, want %s", got, want)
+	}
+	if !change.Accepted() {
+		t.Fatal("Apply().Accepted() = false, want true")
+	}
 	if got := h.LastError(); got != nil {
 		t.Fatalf("LastError() = %v, want nil", got)
 	}
@@ -135,6 +159,9 @@ func TestApplyEqualConfigDoesNotPublish(t *testing.T) {
 	}
 	if change.Changed {
 		t.Fatal("Apply().Changed = true, want false")
+	}
+	if got, want := change.Reason, ChangeReasonEqual; got != want {
+		t.Fatalf("Apply().Reason = %s, want %s", got, want)
 	}
 	if change.Previous.Revision != prev.Revision {
 		t.Fatalf("Previous revision = %d, want %d", change.Previous.Revision, prev.Revision)
@@ -158,7 +185,42 @@ func TestApplyWithoutEqualPublishesEquivalentConfig(t *testing.T) {
 	if !change.Changed {
 		t.Fatal("Apply().Changed = false, want true")
 	}
+	if got, want := change.Reason, ChangeReasonPublished; got != want {
+		t.Fatalf("Apply().Reason = %s, want %s", got, want)
+	}
 	if got, want := change.Current.Revision, prev.Revision.Next(); got != want {
 		t.Fatalf("Current revision = %d, want %d", got, want)
+	}
+}
+
+func TestApplyNormalizerErrorReturnsNormalizeFailedReason(t *testing.T) {
+	errNormalize := errors.New("normalize failed")
+	h := newTestHolder(
+		t,
+		testConfig{Name: "initial", Limit: 1},
+		WithNormalizer(func(cfg testConfig) (testConfig, error) {
+			if cfg.Name == "bad" {
+				return testConfig{}, errNormalize
+			}
+			return cfg, nil
+		}),
+	)
+	prev := h.Snapshot()
+
+	change, err := h.Apply(testConfig{Name: "bad", Limit: 2})
+	if err != errNormalize {
+		t.Fatalf("Apply() error = %v, want %v", err, errNormalize)
+	}
+	if got, want := change.Reason, ChangeReasonNormalizeFailed; got != want {
+		t.Fatalf("Apply().Reason = %s, want %s", got, want)
+	}
+	if change.Changed {
+		t.Fatal("Apply().Changed = true, want false")
+	}
+	if change.Current.Revision != prev.Revision {
+		t.Fatalf("Current revision = %d, want %d", change.Current.Revision, prev.Revision)
+	}
+	if got := h.LastError(); got != errNormalize {
+		t.Fatalf("LastError() = %v, want %v", got, errNormalize)
 	}
 }

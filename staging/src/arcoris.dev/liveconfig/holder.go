@@ -88,7 +88,7 @@ func New[T any](initial T, opts ...Option[T]) (*Holder[T], error) {
 		),
 	}
 
-	cur, err := h.prepare(initial)
+	cur, _, err := h.prepare(initial)
 	if err != nil {
 		return nil, err
 	}

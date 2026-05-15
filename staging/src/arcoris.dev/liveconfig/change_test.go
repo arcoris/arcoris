@@ -28,18 +28,36 @@ func TestChangeStateMethods(t *testing.T) {
 		change    Change[string]
 		isChanged bool
 		isNoop    bool
+		accepted  bool
+		rejected  bool
 	}{
 		{
-			name:      "changed",
-			change:    Change[string]{Changed: true},
+			name:      "published",
+			change:    Change[string]{Changed: true, Reason: ChangeReasonPublished},
 			isChanged: true,
 			isNoop:    false,
+			accepted:  true,
 		},
 		{
-			name:      "noop",
-			change:    Change[string]{Changed: false},
+			name:      "equal",
+			change:    Change[string]{Changed: false, Reason: ChangeReasonEqual},
 			isChanged: false,
 			isNoop:    true,
+			accepted:  true,
+		},
+		{
+			name:      "normalize failed",
+			change:    Change[string]{Changed: false, Reason: ChangeReasonNormalizeFailed},
+			isChanged: false,
+			isNoop:    true,
+			rejected:  true,
+		},
+		{
+			name:      "validate failed",
+			change:    Change[string]{Changed: false, Reason: ChangeReasonValidateFailed},
+			isChanged: false,
+			isNoop:    true,
+			rejected:  true,
 		},
 	}
 
@@ -51,6 +69,12 @@ func TestChangeStateMethods(t *testing.T) {
 			if got := tt.change.IsNoop(); got != tt.isNoop {
 				t.Fatalf("IsNoop() = %v, want %v", got, tt.isNoop)
 			}
+			if got := tt.change.Accepted(); got != tt.accepted {
+				t.Fatalf("Accepted() = %v, want %v", got, tt.accepted)
+			}
+			if got := tt.change.Rejected(); got != tt.rejected {
+				t.Fatalf("Rejected() = %v, want %v", got, tt.rejected)
+			}
 		})
 	}
 }
@@ -60,6 +84,7 @@ func TestChangeCarriesPreviousAndCurrentSnapshots(t *testing.T) {
 		Previous: snapshot.Snapshot[string]{Revision: 1, Value: "prev"},
 		Current:  snapshot.Snapshot[string]{Revision: 2, Value: "cur"},
 		Changed:  true,
+		Reason:   ChangeReasonPublished,
 	}
 
 	if got, want := change.Previous.Value, "prev"; got != want {
@@ -81,14 +106,16 @@ func TestChangeRevisionRelationship(t *testing.T) {
 				Previous: snapshot.Snapshot[string]{Revision: 1, Value: "prev"},
 				Current:  snapshot.Snapshot[string]{Revision: 2, Value: "cur"},
 				Changed:  true,
+				Reason:   ChangeReasonPublished,
 			},
 		},
 		{
-			name: "noop",
+			name: "equal",
 			change: Change[string]{
 				Previous: snapshot.Snapshot[string]{Revision: 1, Value: "prev"},
 				Current:  snapshot.Snapshot[string]{Revision: 1, Value: "prev"},
 				Changed:  false,
+				Reason:   ChangeReasonEqual,
 			},
 		},
 	}
