@@ -32,6 +32,7 @@ const (
 //
 //   - maximum operation attempts;
 //   - maximum elapsed retry runtime;
+//   - owning context deadline budget exhaustion before the next retry delay;
 //   - configured delay sequence exhaustion.
 //
 // ErrExhausted is a classification sentinel. Retry implementations SHOULD return
@@ -54,9 +55,9 @@ func Exhausted(err error) bool {
 // NewExhaustedError returns an error classified as ErrExhausted.
 //
 // outcome must be valid retry completion metadata whose reason records
-// retry-owned exhaustion: StopReasonMaxAttempts, StopReasonMaxElapsed, or
-// StopReasonDelayExhausted. Invalid outcomes and non-exhausted reasons are
-// programming errors and cause panic.
+// retry-owned exhaustion: StopReasonMaxAttempts, StopReasonMaxElapsed,
+// StopReasonDeadline, or StopReasonDelayExhausted. Invalid outcomes and
+// non-exhausted reasons are programming errors and cause panic.
 //
 // The returned error preserves outcome. Callers can recover it with
 // ExhaustedOutcome. The returned error also unwraps to outcome.LastErr when it is

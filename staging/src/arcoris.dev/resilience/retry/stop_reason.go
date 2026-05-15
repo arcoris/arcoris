@@ -66,6 +66,15 @@ const (
 	// limit.
 	StopReasonMaxElapsed
 
+	// StopReasonDeadline means retry execution stopped because the owning context
+	// deadline budget could not accommodate the next retry delay.
+	//
+	// Deadline exhaustion is retry-owned exhaustion. The retry loop should detect
+	// this after a retryable operation failure and before emitting a retry-delay
+	// event or sleeping for a delay that would consume or exceed the remaining
+	// context deadline budget.
+	StopReasonDeadline
+
 	// StopReasonDelayExhausted means the configured delay sequence had no
 	// next delay for another retry attempt.
 	//
@@ -101,6 +110,8 @@ func (r StopReason) String() string {
 		return "max_attempts"
 	case StopReasonMaxElapsed:
 		return "max_elapsed"
+	case StopReasonDeadline:
+		return "deadline"
 	case StopReasonDelayExhausted:
 		return "delay_exhausted"
 	case StopReasonInterrupted:
@@ -121,6 +132,7 @@ func (r StopReason) IsValid() bool {
 		StopReasonNonRetryable,
 		StopReasonMaxAttempts,
 		StopReasonMaxElapsed,
+		StopReasonDeadline,
 		StopReasonDelayExhausted,
 		StopReasonInterrupted:
 		return true
@@ -146,6 +158,7 @@ func (r StopReason) Failed() bool {
 	case StopReasonNonRetryable,
 		StopReasonMaxAttempts,
 		StopReasonMaxElapsed,
+		StopReasonDeadline,
 		StopReasonDelayExhausted,
 		StopReasonInterrupted:
 		return true
@@ -157,13 +170,14 @@ func (r StopReason) Failed() bool {
 // Exhausted reports whether r records retry-owned exhaustion.
 //
 // Exhaustion means retry wanted or was allowed to continue only until a
-// retry-owned boundary was reached: attempt limit, elapsed-time limit, or finite
-// delay sequence exhaustion. Non-retryable operation errors and retry-owned
-// interruptions are not exhaustion.
+// retry-owned boundary was reached: attempt limit, elapsed-time limit, context
+// deadline budget limit, or finite delay sequence exhaustion. Non-retryable
+// operation errors and retry-owned interruptions are not exhaustion.
 func (r StopReason) Exhausted() bool {
 	switch r {
 	case StopReasonMaxAttempts,
 		StopReasonMaxElapsed,
+		StopReasonDeadline,
 		StopReasonDelayExhausted:
 		return true
 	default:

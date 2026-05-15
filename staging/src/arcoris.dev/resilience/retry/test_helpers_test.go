@@ -75,6 +75,12 @@ func retryTestFinishedAt() time.Time {
 	return time.Unix(101, 0)
 }
 
+// retryFutureNow returns a real future timestamp that can safely back both a
+// fake retry clock and a standard-library context deadline in the same test.
+func retryFutureNow() time.Time {
+	return time.Now().UTC().Add(24 * time.Hour)
+}
+
 // retryTestSuccessOutcome returns an expected success Outcome for n attempts.
 func retryTestSuccessOutcome(n uint) Outcome {
 	return Outcome{

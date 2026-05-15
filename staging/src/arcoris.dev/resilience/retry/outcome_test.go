@@ -102,6 +102,17 @@ func TestOutcomeIsValid(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "deadline",
+			outcome: Outcome{
+				Attempts:   1,
+				StartedAt:  started,
+				FinishedAt: finished,
+				LastErr:    errBoom,
+				Reason:     StopReasonDeadline,
+			},
+			want: true,
+		},
+		{
 			name: "delay exhausted",
 			outcome: Outcome{
 				Attempts:   2,
@@ -223,6 +234,16 @@ func TestOutcomeIsValid(t *testing.T) {
 			want: false,
 		},
 		{
+			name: "deadline without last error",
+			outcome: Outcome{
+				Attempts:   1,
+				StartedAt:  started,
+				FinishedAt: finished,
+				Reason:     StopReasonDeadline,
+			},
+			want: false,
+		},
+		{
 			name: "delay exhausted without last error",
 			outcome: Outcome{
 				Attempts:   2,
@@ -329,6 +350,18 @@ func TestOutcomePredicatesRequireValidOutcome(t *testing.T) {
 				FinishedAt: finished,
 				LastErr:    errBoom,
 				Reason:     StopReasonMaxElapsed,
+			},
+			wantFailed:    true,
+			wantExhausted: true,
+		},
+		{
+			name: "deadline",
+			outcome: Outcome{
+				Attempts:   1,
+				StartedAt:  started,
+				FinishedAt: finished,
+				LastErr:    errBoom,
+				Reason:     StopReasonDeadline,
 			},
 			wantFailed:    true,
 			wantExhausted: true,

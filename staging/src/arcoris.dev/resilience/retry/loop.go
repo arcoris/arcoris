@@ -77,6 +77,10 @@ func run[T any](
 			return zero, execution.exhausted(ctx, StopReasonDelayExhausted)
 		}
 
+		if execution.contextDeadlineWouldBeExceeded(ctx, delay) {
+			return zero, execution.exhausted(ctx, StopReasonDeadline)
+		}
+
 		if execution.maxElapsedWouldBeExceeded(delay) {
 			return zero, execution.exhausted(ctx, StopReasonMaxElapsed)
 		}

@@ -110,6 +110,7 @@ func (o Outcome) IsValid() bool {
 	case StopReasonNonRetryable,
 		StopReasonMaxAttempts,
 		StopReasonMaxElapsed,
+		StopReasonDeadline,
 		StopReasonDelayExhausted:
 		return o.Attempts != 0 && o.LastErr != nil
 
@@ -143,9 +144,10 @@ func (o Outcome) Failed() bool {
 
 // Exhausted reports whether o records retry-owned exhaustion.
 //
-// Exhaustion includes max-attempt exhaustion, max-elapsed exhaustion, and finite
-// delay sequence exhaustion. Non-retryable operation errors and retry-owned
-// interruptions are failures, but they are not exhaustion.
+// Exhaustion includes max-attempt exhaustion, max-elapsed exhaustion, context
+// deadline budget exhaustion, and finite delay sequence exhaustion.
+// Non-retryable operation errors and retry-owned interruptions are failures, but
+// they are not exhaustion.
 func (o Outcome) Exhausted() bool {
 	return o.IsValid() && o.Reason.Exhausted()
 }

@@ -222,6 +222,42 @@ func TestRunStopsAtMaxElapsed(t *testing.T) {
 	}
 }
 
+func TestRunStopsAtContextDeadlineBudget(t *testing.T) {
+	errBoom := errors.New("boom")
+	now := retryFutureNow()
+	fake := clock.NewFakeClock(now)
+	ctx, cancel := context.WithDeadline(context.Background(), now.Add(50*time.Millisecond))
+	defer cancel()
+
+	cfg := configOf(
+		WithClock(fake),
+		WithClassifier(RetryAll()),
+		WithMaxAttempts(10),
+		WithDelaySchedule(delay.Fixed(100*time.Millisecond)),
+	)
+
+	calls := 0
+	_, err := run(ctx, func(context.Context) (int, error) {
+		calls++
+		return 0, errBoom
+	}, cfg)
+
+	if !errors.Is(err, ErrExhausted) {
+		t.Fatalf("run error does not match ErrExhausted: %v", err)
+	}
+	if calls != 1 {
+		t.Fatalf("operation calls = %d, want 1", calls)
+	}
+
+	outcome, ok := ExhaustedOutcome(err)
+	if !ok {
+		t.Fatalf("ExhaustedOutcome returned ok=false")
+	}
+	if outcome.Reason != StopReasonDeadline {
+		t.Fatalf("Outcome.Reason = %s, want %s", outcome.Reason, StopReasonDeadline)
+	}
+}
+
 func TestRunReturnsInterruptedWhenContextAlreadyStopped(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -478,6 +514,26 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 			},
 			wantErr: ErrExhausted,
 			reason:  StopReasonDelayExhausted,
+		},
+		{
+			name: "deadline",
+			ctx: func() context.Context {
+				now := retryFutureNow()
+				ctx, cancel := context.WithDeadline(context.Background(), now.Add(50*time.Millisecond))
+				t.Cleanup(cancel)
+				return ctx
+			},
+			cfg: configOf(
+				WithClock(clock.NewFakeClock(retryFutureNow())),
+				WithClassifier(RetryAll()),
+				WithMaxAttempts(2),
+				WithDelaySchedule(delay.Fixed(100*time.Millisecond)),
+			),
+			op: func(context.Context) (int, error) {
+				return 0, errBoom
+			},
+			wantErr: ErrExhausted,
+			reason:  StopReasonDeadline,
 		},
 		{
 			name: "interrupted before attempt",

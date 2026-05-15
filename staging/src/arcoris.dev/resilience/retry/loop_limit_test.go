@@ -17,10 +17,13 @@
 package retry
 
 import (
+	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"arcoris.dev/chrono/clock"
+	"arcoris.dev/chrono/delay"
 )
 
 func TestRetryExecutionMaxElapsedWouldBeExceeded(t *testing.T) {
@@ -86,5 +89,37 @@ func TestRetryExecutionMaxElapsedWouldBeExceeded(t *testing.T) {
 				t.Fatalf("maxElapsedWouldBeExceeded(%v) = %v, want %v", tc.delay, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestRunContextDeadlineWinsOverMaxElapsed(t *testing.T) {
+	errBoom := errors.New("boom")
+	now := retryFutureNow()
+	fake := clock.NewFakeClock(now)
+	ctx, cancel := context.WithDeadline(context.Background(), now.Add(50*time.Millisecond))
+	defer cancel()
+
+	cfg := configOf(
+		WithClock(fake),
+		WithClassifier(RetryAll()),
+		WithMaxAttempts(2),
+		WithDelaySchedule(delay.Fixed(100*time.Millisecond)),
+		WithMaxElapsed(75*time.Millisecond),
+	)
+
+	_, err := run(ctx, func(context.Context) (int, error) {
+		return 0, errBoom
+	}, cfg)
+
+	if !errors.Is(err, ErrExhausted) {
+		t.Fatalf("run error = %v, want ErrExhausted", err)
+	}
+
+	outcome, ok := ExhaustedOutcome(err)
+	if !ok {
+		t.Fatalf("ExhaustedOutcome returned ok=false")
+	}
+	if outcome.Reason != StopReasonDeadline {
+		t.Fatalf("Outcome.Reason = %s, want %s", outcome.Reason, StopReasonDeadline)
 	}
 }

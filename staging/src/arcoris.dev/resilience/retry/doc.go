@@ -89,6 +89,21 @@
 // lower-level waiting helpers; retry owns higher-level operation retry
 // orchestration and requires clock-backed delay behavior for deterministic tests.
 //
+// # Deadline integration
+//
+// Package retry uses package deadline to avoid scheduling retry delays that
+// would consume or exceed the owning context deadline budget.
+//
+// After a retryable operation failure, retry checks the selected delay against
+// the remaining context deadline budget. A delay equal to or greater than the
+// remaining budget stops execution before retry emits a delay event or sleeps,
+// because it would leave no usable budget for the next attempt.
+//
+// This boundary is reported as ErrExhausted with StopReasonDeadline. It is
+// distinct from ErrInterrupted, which is returned only when retry observes that
+// the context has already stopped or stops while retry is waiting at a
+// retry-owned boundary.
+//
 // # Classification model
 //
 // Classifier decides whether an operation-owned error may be retried. The default
@@ -109,6 +124,7 @@
 //
 //   - max attempts;
 //   - max elapsed runtime;
+//   - owning context deadline budget before retry delay scheduling;
 //   - finite delay sequence exhaustion.
 //
 // Max attempts includes the initial operation call. WithMaxAttempts(1) allows
@@ -118,6 +134,10 @@
 // elapsed duration bounds one retry execution according to the configured clock.
 // Retry should stop before sleeping for a delay that would consume or exceed the
 // remaining elapsed-time budget.
+//
+// Retry also checks the owning context deadline budget before sleeping for a
+// retry delay. A selected delay equal to or greater than the remaining deadline
+// budget stops execution with ErrExhausted and StopReasonDeadline.
 //
 // Retry-owned exhaustion is classified with ErrExhausted. Exhausted errors carry
 // an Outcome and unwrap to the last operation-owned error when one is available.
@@ -133,6 +153,10 @@
 // When retry observes that its owning context is stopped at a retry boundary, it
 // returns ErrInterrupted and preserves the underlying context sentinel or custom
 // context cause.
+//
+// Raw context errors returned by operations remain operation-owned. Context
+// stops observed by retry are ErrInterrupted. Context deadline budget rejection
+// before a retry delay is ErrExhausted with StopReasonDeadline.
 //
 // Raw context.Canceled or context.DeadlineExceeded values returned by an
 // operation are not automatically classified as retry-owned interruption.
@@ -189,7 +213,8 @@
 //   - ErrInterrupted for retry-owned context interruption.
 //
 // ErrExhausted is returned when retry-owned boundaries prevent another attempt
-// after a retryable operation failure. ErrInterrupted is returned when retry
+// after a retryable operation failure, including context deadline budget
+// rejection before a retry delay. ErrInterrupted is returned when retry
 // observes its owning context stop at a retry boundary.
 //
 // Operation-owned errors that are not retried are returned unchanged. The retry
@@ -224,6 +249,8 @@
 //   - validate.go defines package-local programming-error validation;
 //   - option.go and option_*.go define normalized retry configuration;
 //   - delay.go defines clock-backed retry-owned waiting;
+//   - loop_deadline.go owns context deadline budget checks for retry delay
+//     scheduling;
 //   - loop.go defines the private execution engine;
 //   - do.go and do_value.go define public entry points.
 //
