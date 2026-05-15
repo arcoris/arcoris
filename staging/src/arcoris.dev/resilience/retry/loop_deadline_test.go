@@ -59,6 +59,24 @@ func TestRetryExecutionContextDeadlineWouldBeExceeded(t *testing.T) {
 			want: false,
 		},
 		{
+			name: "deadline equals retry clock now",
+			ctx:  retryContextWithDeadline(t, now),
+			d:    0,
+			want: true,
+		},
+		{
+			name: "deadline before retry clock now",
+			ctx:  retryContextWithDeadline(t, now.Add(-time.Millisecond)),
+			d:    0,
+			want: true,
+		},
+		{
+			name: "zero delay with positive remaining",
+			ctx:  retryContextWithDeadline(t, now.Add(100*time.Millisecond)),
+			d:    0,
+			want: false,
+		},
+		{
 			name: "delay equals remaining",
 			ctx:  retryContextWithDeadline(t, now.Add(100*time.Millisecond)),
 			d:    100 * time.Millisecond,
@@ -79,6 +97,45 @@ func TestRetryExecutionContextDeadlineWouldBeExceeded(t *testing.T) {
 				t.Fatalf("contextDeadlineWouldBeExceeded(%v) = %v, want %v", tc.d, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestRunAllowsZeroDelayWithPositiveRemainingDeadlineBudget(t *testing.T) {
+	errBoom := errors.New("boom")
+	now := retryFutureNow()
+	fake := clock.NewFakeClock(now)
+	ctx := retryContextWithDeadline(t, now.Add(100*time.Millisecond))
+	recorder := &retryObserverRecorder{}
+	cfg := configOf(
+		WithClock(fake),
+		WithClassifier(RetryAll()),
+		WithMaxAttempts(2),
+		WithDelaySchedule(delay.Immediate()),
+		WithObserver(recorder),
+	)
+
+	calls := 0
+	_, err := run(ctx, func(context.Context) (int, error) {
+		calls++
+		if calls == 1 {
+			return 0, errBoom
+		}
+		return 7, nil
+	}, cfg)
+
+	if err != nil {
+		t.Fatalf("run error = %v, want nil", err)
+	}
+	if calls != 2 {
+		t.Fatalf("operation calls = %d, want 2", calls)
+	}
+	if retryCountEvents(recorder.events, EventRetryDelay) != 1 {
+		t.Fatalf("retry delay events = %d, want 1", retryCountEvents(recorder.events, EventRetryDelay))
+	}
+
+	stop := retryLastEvent(t, recorder.events)
+	if stop.Outcome.Reason != StopReasonSucceeded {
+		t.Fatalf("stop reason = %s, want %s", stop.Outcome.Reason, StopReasonSucceeded)
 	}
 }
 

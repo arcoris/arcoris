@@ -109,6 +109,28 @@ func TestNewExhaustedErrorReasons(t *testing.T) {
 	}
 }
 
+func TestNewExhaustedErrorDeadlineUnwrapsLastError(t *testing.T) {
+	errBoom := errors.New("boom")
+	outcome := retryTestFailureOutcome(1, StopReasonDeadline, errBoom)
+
+	err := NewExhaustedError(outcome)
+
+	if !errors.Is(err, ErrExhausted) {
+		t.Fatalf("error does not match ErrExhausted: %v", err)
+	}
+	if !errors.Is(err, errBoom) {
+		t.Fatalf("error does not unwrap last error: %v", err)
+	}
+
+	got, ok := ExhaustedOutcome(err)
+	if !ok {
+		t.Fatalf("ExhaustedOutcome returned ok=false")
+	}
+	if got.Reason != StopReasonDeadline {
+		t.Fatalf("Outcome.Reason = %s, want %s", got.Reason, StopReasonDeadline)
+	}
+}
+
 func TestNewExhaustedErrorPanicsOnInvalidOutcome(t *testing.T) {
 	defer func() {
 		recovered := recover()

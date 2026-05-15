@@ -27,7 +27,7 @@ const (
 // exhaustion boundary was reached.
 //
 // Exhaustion is retry-owned. It is returned when retry execution cannot schedule
-// another attempt because one of its configured retry boundaries has been
+// another attempt because one of the retry execution boundaries has been
 // reached:
 //
 //   - maximum operation attempts;

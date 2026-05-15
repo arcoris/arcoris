@@ -29,6 +29,11 @@ import (
 // The check is conservative. A delay equal to the remaining deadline budget is
 // rejected because it would leave no usable budget for the next operation
 // attempt.
+//
+// Already-stopped contexts return false because retry-owned context
+// interruption is handled by the surrounding retry loop. This helper only owns
+// predictive deadline-budget exhaustion for contexts that are still active at
+// the retry boundary.
 func (e *retryExecution) contextDeadlineWouldBeExceeded(ctx context.Context, d time.Duration) bool {
 	requireContext(ctx)
 	requireDelay(d, true)

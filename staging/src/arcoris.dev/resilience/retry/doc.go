@@ -104,6 +104,12 @@
 // the context has already stopped or stops while retry is waiting at a
 // retry-owned boundary.
 //
+// Deadline checks use the configured retry clock as the observation time.
+// Callers that use fake clocks in tests should create context deadlines from
+// the same time base as the configured retry clock. Production code should
+// normally use the standard runtime time domain for both context deadlines and
+// the retry clock.
+//
 // # Classification model
 //
 // Classifier decides whether an operation-owned error may be retried. The default
