@@ -7,6 +7,7 @@ use (
 	./staging/src/arcoris.dev/atomicx
 	./staging/src/arcoris.dev/chrono
 	./staging/src/arcoris.dev/health
+	./staging/src/arcoris.dev/liveconfig
 	./staging/src/arcoris.dev/resilience
 	./staging/src/arcoris.dev/runtime
 	./staging/src/arcoris.dev/snapshot
