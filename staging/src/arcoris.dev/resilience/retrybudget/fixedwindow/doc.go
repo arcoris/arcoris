@@ -25,6 +25,15 @@
 // with TryAdmitRetry, which is an atomic check-and-spend operation. A successful
 // admission records the retry attempt before returning to the caller.
 //
+// Fixed windows are local and observation-aligned. The first window starts when
+// the limiter is created, and subsequent windows start when a write path observes
+// that the previous window has ended. Windows are not aligned to wall-clock
+// boundaries such as minute, hour, or day boundaries.
+//
+// Snapshot reads do not rotate windows. A quiet limiter may keep publishing the
+// last observed window until RecordOriginal or TryAdmitRetry observes time
+// advancement.
+//
 // Limiter is local to one process. It does not coordinate distributed budgets,
 // smooth window boundaries, execute retries, classify errors, compute delays,
 // enforce deadlines, provide a circuit breaker, provide a bulkhead, export

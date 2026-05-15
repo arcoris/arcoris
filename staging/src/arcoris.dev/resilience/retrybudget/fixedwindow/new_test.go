@@ -20,6 +20,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	"arcoris.dev/resilience/retrybudget"
 )
 
 func TestNew(t *testing.T) {
@@ -35,6 +37,50 @@ func TestNew(t *testing.T) {
 	}
 	if snap.Value.Policy.Ratio != 0.25 || snap.Value.Policy.Minimum != 4 {
 		t.Fatalf("Policy = %+v, want ratio=0.25 minimum=4", snap.Value.Policy)
+	}
+}
+
+func TestNewPublishesValidInitialSnapshotWithZeroMinimum(t *testing.T) {
+	l, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(0))
+
+	snap := l.Snapshot()
+	requireValidSnapshot(t, snap)
+
+	if snap.IsZeroRevision() {
+		t.Fatalf("Snapshot revision is zero")
+	}
+	if snap.Value.Kind != retrybudget.KindFixedWindow {
+		t.Fatalf("Kind = %s, want %s", snap.Value.Kind, retrybudget.KindFixedWindow)
+	}
+	if snap.Value.Attempts.Original != 0 || snap.Value.Attempts.Retry != 0 {
+		t.Fatalf("Attempts = %+v, want zero attempts", snap.Value.Attempts)
+	}
+	if snap.Value.Capacity.Allowed != 0 {
+		t.Fatalf("Capacity.Allowed = %d, want 0", snap.Value.Capacity.Allowed)
+	}
+	if snap.Value.Capacity.Available != 0 {
+		t.Fatalf("Capacity.Available = %d, want 0", snap.Value.Capacity.Available)
+	}
+	if !snap.Value.Capacity.Exhausted {
+		t.Fatalf("Capacity.Exhausted = false, want true")
+	}
+	if !snap.Value.Window.Bounded {
+		t.Fatalf("Window.Bounded = false, want true")
+	}
+	if !snap.Value.Policy.Bounded {
+		t.Fatalf("Policy.Bounded = false, want true")
+	}
+	if snap.Value.Policy.Minimum != 0 {
+		t.Fatalf("Policy.Minimum = %d, want 0", snap.Value.Policy.Minimum)
+	}
+}
+
+func TestNewBindsPublisherClock(t *testing.T) {
+	l, _ := newTestLimiter(t)
+
+	stamped := l.published.Stamped()
+	if !stamped.Updated.Equal(fixedWindowTestNow) {
+		t.Fatalf("Stamped.Updated = %s, want %s", stamped.Updated, fixedWindowTestNow)
 	}
 }
 

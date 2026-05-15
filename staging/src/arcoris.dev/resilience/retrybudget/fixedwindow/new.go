@@ -16,6 +16,11 @@
 
 package fixedwindow
 
+import (
+	"arcoris.dev/resilience/retrybudget"
+	"arcoris.dev/snapshot"
+)
+
 // New creates a fixed-window retry budget limiter.
 //
 // New validates opts, starts the first accounting window at the configured
@@ -26,9 +31,12 @@ func New(opts ...Option) (*Limiter, error) {
 		return nil, err
 	}
 
+	publisher := snapshot.NewPublisher[retrybudget.Snapshot](snapshot.WithClock(cfg.clock))
+
 	l := &Limiter{
 		cfg:         cfg,
 		windowStart: cfg.clock.Now(),
+		published:   publisher,
 	}
 
 	l.mu.Lock()

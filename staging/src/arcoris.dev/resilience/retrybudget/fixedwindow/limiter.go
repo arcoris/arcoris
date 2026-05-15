@@ -50,5 +50,5 @@ type Limiter struct {
 	retries uint64
 
 	// published exposes immutable retry-budget snapshots to readers.
-	published snapshot.Publisher[retrybudget.Snapshot]
+	published *snapshot.Publisher[retrybudget.Snapshot]
 }
