@@ -93,8 +93,8 @@ func Decorrelated(
 	f float64,
 	opts ...RandomOption,
 ) delay.Schedule {
-	config := randomOptionsOf(opts...)
-	return decorrelatedJitterWithSource(initial, m, f, config.source)
+	cfg := randomOptionsOf(opts...)
+	return decorrelatedJitterWithSource(initial, m, f, cfg.source)
 }
 
 // decorrelatedJitterWithSource returns a decorrelated-jitter schedule using

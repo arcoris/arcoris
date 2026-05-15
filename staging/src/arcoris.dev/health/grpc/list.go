@@ -33,12 +33,12 @@ import (
 // order so target evaluation and tests remain deterministic.
 func (s *Server) List(
 	ctx context.Context,
-	request *healthpb.HealthListRequest,
+	req *healthpb.HealthListRequest,
 ) (*healthpb.HealthListResponse, error) {
 	if s == nil || nilSource(s.source) {
 		return nil, status.Error(codes.Internal, healthServerUnavailableMessage)
 	}
-	if request == nil {
+	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, nilListRequestMessage)
 	}
 	if len(s.order) > s.config.maxListServices {
@@ -53,15 +53,15 @@ func (s *Server) List(
 
 	for _, service := range s.order {
 		mapping := s.services[service]
-		result, ok := byTarget[mapping.Target]
+		res, ok := byTarget[mapping.Target]
 		if !ok {
-			result = s.evaluateTarget(ctx, mapping.Target)
-			byTarget[mapping.Target] = result
+			res = s.evaluateTarget(ctx, mapping.Target)
+			byTarget[mapping.Target] = res
 		}
 
 		servingStatus := healthpb.HealthCheckResponse_UNKNOWN
-		if !result.failed {
-			servingStatus = ServingStatus(result.status, mapping.Policy)
+		if !res.failed {
+			servingStatus = ServingStatus(res.status, mapping.Policy)
 		}
 		statuses[service] = &healthpb.HealthCheckResponse{Status: servingStatus}
 	}

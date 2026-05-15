@@ -50,18 +50,18 @@ func TestUniformReturnsValuesInsideInclusiveRange(t *testing.T) {
 }
 
 func TestUniformEqualBoundsReturnFixedDelay(t *testing.T) {
-	sequence := Uniform(5*time.Second, 5*time.Second, WithRandom(fixedRandom(99))).NewSequence()
+	seq := Uniform(5*time.Second, 5*time.Second, WithRandom(fixedRandom(99))).NewSequence()
 
-	mustNext(t, sequence, 5*time.Second)
-	mustNext(t, sequence, 5*time.Second)
+	mustNext(t, seq, 5*time.Second)
+	mustNext(t, seq, 5*time.Second)
 }
 
 func TestUniformScheduleRequestsGeneratorPerSequence(t *testing.T) {
 	source := &countingRandomSource{}
-	schedule := Uniform(0, time.Second, WithRandomSource(source))
+	sched := Uniform(0, time.Second, WithRandomSource(source))
 
-	l := schedule.NewSequence()
-	r := schedule.NewSequence()
+	l := sched.NewSequence()
+	r := sched.NewSequence()
 
 	if source.calls != 2 {
 		t.Fatalf("NewRandom calls = %d, want 2", source.calls)
@@ -71,10 +71,10 @@ func TestUniformScheduleRequestsGeneratorPerSequence(t *testing.T) {
 }
 
 func TestUniformSequencesWithSameSeedAreIndependentAndDeterministic(t *testing.T) {
-	schedule := Uniform(time.Second, 10*time.Second, WithSeed(42))
+	sched := Uniform(time.Second, 10*time.Second, WithSeed(42))
 
-	l := schedule.NewSequence()
-	r := schedule.NewSequence()
+	l := sched.NewSequence()
+	r := sched.NewSequence()
 
 	for i := 0; i < 5; i++ {
 		leftDelay, leftOK := l.Next()

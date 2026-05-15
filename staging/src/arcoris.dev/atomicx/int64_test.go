@@ -22,9 +22,9 @@ import "testing"
 func TestPaddedInt64ZeroValue(t *testing.T) {
 	t.Parallel()
 
-	var value PaddedInt64
+	var val PaddedInt64
 
-	if got := value.Load(); got != 0 {
+	if got := val.Load(); got != 0 {
 		t.Fatalf("zero-value PaddedInt64.Load() = %d, want 0", got)
 	}
 }
@@ -33,11 +33,11 @@ func TestPaddedInt64ZeroValue(t *testing.T) {
 func TestPaddedInt64StoreAndLoad(t *testing.T) {
 	t.Parallel()
 
-	var value PaddedInt64
+	var val PaddedInt64
 
-	value.Store(-42)
+	val.Store(-42)
 
-	if got := value.Load(); got != -42 {
+	if got := val.Load(); got != -42 {
 		t.Fatalf("PaddedInt64.Load() after Store(-42) = %d, want -42", got)
 	}
 }
@@ -46,17 +46,17 @@ func TestPaddedInt64StoreAndLoad(t *testing.T) {
 func TestPaddedInt64AddPositiveDelta(t *testing.T) {
 	t.Parallel()
 
-	var value PaddedInt64
+	var val PaddedInt64
 
-	if got := value.Add(10); got != 10 {
+	if got := val.Add(10); got != 10 {
 		t.Fatalf("PaddedInt64.Add(10) = %d, want 10", got)
 	}
 
-	if got := value.Add(5); got != 15 {
+	if got := val.Add(5); got != 15 {
 		t.Fatalf("PaddedInt64.Add(5) = %d, want 15", got)
 	}
 
-	if got := value.Load(); got != 15 {
+	if got := val.Load(); got != 15 {
 		t.Fatalf("PaddedInt64.Load() = %d, want 15", got)
 	}
 }
@@ -65,19 +65,19 @@ func TestPaddedInt64AddPositiveDelta(t *testing.T) {
 func TestPaddedInt64AddNegativeDelta(t *testing.T) {
 	t.Parallel()
 
-	var value PaddedInt64
+	var val PaddedInt64
 
-	value.Store(10)
+	val.Store(10)
 
-	if got := value.Add(-3); got != 7 {
+	if got := val.Add(-3); got != 7 {
 		t.Fatalf("PaddedInt64.Add(-3) = %d, want 7", got)
 	}
 
-	if got := value.Add(-10); got != -3 {
+	if got := val.Add(-10); got != -3 {
 		t.Fatalf("PaddedInt64.Add(-10) = %d, want -3", got)
 	}
 
-	if got := value.Load(); got != -3 {
+	if got := val.Load(); got != -3 {
 		t.Fatalf("PaddedInt64.Load() = %d, want -3", got)
 	}
 }
@@ -86,15 +86,15 @@ func TestPaddedInt64AddNegativeDelta(t *testing.T) {
 func TestPaddedInt64AddZero(t *testing.T) {
 	t.Parallel()
 
-	var value PaddedInt64
+	var val PaddedInt64
 
-	value.Store(-17)
+	val.Store(-17)
 
-	if got := value.Add(0); got != -17 {
+	if got := val.Add(0); got != -17 {
 		t.Fatalf("PaddedInt64.Add(0) = %d, want -17", got)
 	}
 
-	if got := value.Load(); got != -17 {
+	if got := val.Load(); got != -17 {
 		t.Fatalf("PaddedInt64.Load() after Add(0) = %d, want -17", got)
 	}
 }
@@ -103,21 +103,21 @@ func TestPaddedInt64AddZero(t *testing.T) {
 func TestPaddedInt64IncAndDec(t *testing.T) {
 	t.Parallel()
 
-	var value PaddedInt64
+	var val PaddedInt64
 
-	if got := value.Inc(); got != 1 {
+	if got := val.Inc(); got != 1 {
 		t.Fatalf("PaddedInt64.Inc() = %d, want 1", got)
 	}
 
-	if got := value.Dec(); got != 0 {
+	if got := val.Dec(); got != 0 {
 		t.Fatalf("PaddedInt64.Dec() = %d, want 0", got)
 	}
 
-	if got := value.Dec(); got != -1 {
+	if got := val.Dec(); got != -1 {
 		t.Fatalf("second PaddedInt64.Dec() = %d, want -1", got)
 	}
 
-	if got := value.Load(); got != -1 {
+	if got := val.Load(); got != -1 {
 		t.Fatalf("PaddedInt64.Load() = %d, want -1", got)
 	}
 }
@@ -126,15 +126,15 @@ func TestPaddedInt64IncAndDec(t *testing.T) {
 func TestPaddedInt64Swap(t *testing.T) {
 	t.Parallel()
 
-	var value PaddedInt64
+	var val PaddedInt64
 
-	value.Store(-10)
+	val.Store(-10)
 
-	if old := value.Swap(25); old != -10 {
+	if old := val.Swap(25); old != -10 {
 		t.Fatalf("PaddedInt64.Swap(25) old value = %d, want -10", old)
 	}
 
-	if got := value.Load(); got != 25 {
+	if got := val.Load(); got != 25 {
 		t.Fatalf("PaddedInt64.Load() after Swap(25) = %d, want 25", got)
 	}
 }
@@ -143,23 +143,23 @@ func TestPaddedInt64Swap(t *testing.T) {
 func TestPaddedInt64CompareAndSwap(t *testing.T) {
 	t.Parallel()
 
-	var value PaddedInt64
+	var val PaddedInt64
 
-	value.Store(-10)
+	val.Store(-10)
 
-	if swapped := value.CompareAndSwap(9, 20); swapped {
+	if swapped := val.CompareAndSwap(9, 20); swapped {
 		t.Fatalf("PaddedInt64.CompareAndSwap(9, 20) = true, want false")
 	}
 
-	if got := value.Load(); got != -10 {
+	if got := val.Load(); got != -10 {
 		t.Fatalf("PaddedInt64.Load() after failed CAS = %d, want -10", got)
 	}
 
-	if swapped := value.CompareAndSwap(-10, 20); !swapped {
+	if swapped := val.CompareAndSwap(-10, 20); !swapped {
 		t.Fatalf("PaddedInt64.CompareAndSwap(-10, 20) = false, want true")
 	}
 
-	if got := value.Load(); got != 20 {
+	if got := val.Load(); got != 20 {
 		t.Fatalf("PaddedInt64.Load() after successful CAS = %d, want 20", got)
 	}
 }
@@ -168,15 +168,15 @@ func TestPaddedInt64CompareAndSwap(t *testing.T) {
 func TestPaddedInt64RawAddWraps(t *testing.T) {
 	t.Parallel()
 
-	var value PaddedInt64
+	var val PaddedInt64
 
-	value.Store(testMaxInt64)
+	val.Store(testMaxInt64)
 
-	if got := value.Add(1); got != testMinInt64 {
+	if got := val.Add(1); got != testMinInt64 {
 		t.Fatalf("PaddedInt64.Add(1) from max int64 = %d, want %d", got, testMinInt64)
 	}
 
-	if got := value.Load(); got != testMinInt64 {
+	if got := val.Load(); got != testMinInt64 {
 		t.Fatalf("PaddedInt64.Load() after wrap = %d, want %d", got, testMinInt64)
 	}
 }
@@ -188,7 +188,7 @@ func TestPaddedInt64ConcurrentBalancedAdd(t *testing.T) {
 	const goroutines = 16
 	const updatesPerGoroutine = 10_000
 
-	var value PaddedInt64
+	var val PaddedInt64
 
 	runConcurrentIndexed(t, goroutines, func(i int) {
 		delta := int64(1)
@@ -197,11 +197,11 @@ func TestPaddedInt64ConcurrentBalancedAdd(t *testing.T) {
 		}
 
 		for range updatesPerGoroutine {
-			value.Add(delta)
+			val.Add(delta)
 		}
 	})
 
-	if got := value.Load(); got != 0 {
+	if got := val.Load(); got != 0 {
 		t.Fatalf("PaddedInt64.Load() after balanced concurrent updates = %d, want 0", got)
 	}
 }

@@ -35,32 +35,32 @@ type GroupVersion struct {
 // The parser accepts exactly "v1" for a core group version or
 // "control.arcoris.dev/v1alpha1" for a named group version. It does not trim
 // whitespace and rejects slash-heavy API paths such as "apps/v1/resources".
-func ParseGroupVersion(value string) (GroupVersion, error) {
-	if value == "" {
-		return GroupVersion{}, invalid("group/version", value, "version is required")
+func ParseGroupVersion(val string) (GroupVersion, error) {
+	if val == "" {
+		return GroupVersion{}, invalid("group/version", val, "version is required")
 	}
-	if strings.Count(value, "/") > 1 {
-		return GroupVersion{}, invalid("group/version", value, "expected canonical form version or group/version")
+	if strings.Count(val, "/") > 1 {
+		return GroupVersion{}, invalid("group/version", val, "expected canonical form version or group/version")
 	}
-	if !strings.Contains(value, "/") {
-		version, err := ParseVersion(value)
+	if !strings.Contains(val, "/") {
+		version, err := ParseVersion(val)
 		if err != nil {
-			return GroupVersion{}, invalidValue("group/version", value, err)
+			return GroupVersion{}, invalidValue("group/version", val, err)
 		}
 		return GroupVersion{Version: version}, nil
 	}
 
-	groupPart, versionPart, ok := strings.Cut(value, "/")
+	groupPart, versionPart, ok := strings.Cut(val, "/")
 	if !ok || groupPart == "" || versionPart == "" {
-		return GroupVersion{}, invalid("group/version", value, "expected canonical form group/version")
+		return GroupVersion{}, invalid("group/version", val, "expected canonical form group/version")
 	}
 	group, err := ParseGroup(groupPart)
 	if err != nil {
-		return GroupVersion{}, invalidValue("group/version", value, err)
+		return GroupVersion{}, invalidValue("group/version", val, err)
 	}
 	version, err := ParseVersion(versionPart)
 	if err != nil {
-		return GroupVersion{}, invalidValue("group/version", value, err)
+		return GroupVersion{}, invalidValue("group/version", val, err)
 	}
 	return GroupVersion{Group: group, Version: version}, nil
 }
@@ -69,8 +69,8 @@ func ParseGroupVersion(value string) (GroupVersion, error) {
 //
 // The function exists to make object-field parsing explicit while preserving
 // exactly the same strict grammar as ParseGroupVersion.
-func ParseAPIVersion(value string) (GroupVersion, error) {
-	return ParseGroupVersion(value)
+func ParseAPIVersion(val string) (GroupVersion, error) {
+	return ParseGroupVersion(val)
 }
 
 // String returns the canonical group/version string without revalidating it.
@@ -180,9 +180,9 @@ func (gv *GroupVersion) UnmarshalJSON(data []byte) error {
 	if gv == nil {
 		return nilUnmarshalReceiver("group/version")
 	}
-	value, err := unmarshalJSONString("group/version", data)
+	val, err := unmarshalJSONString("group/version", data)
 	if err != nil {
 		return err
 	}
-	return gv.UnmarshalText([]byte(value))
+	return gv.UnmarshalText([]byte(val))
 }

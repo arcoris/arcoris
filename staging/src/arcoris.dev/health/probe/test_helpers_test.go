@@ -35,7 +35,7 @@ func newTestClock() *clock.FakeClock {
 	return clock.NewFakeClock(testNow)
 }
 
-func newTestEvaluator(t *testing.T) Evaluator {
+func newTestEvaluator(t *testing.T) health.Evaluator {
 	t.Helper()
 
 	return healthtest.NewEvaluatorForTarget(t, health.TargetReady, healthtest.HealthyChecker("ready_check"))
@@ -55,17 +55,17 @@ func newTestRunner(t *testing.T, clk clock.Clock, opts ...Option) *Runner {
 	return runner
 }
 
-func waitForSnapshot(t *testing.T, runner *Runner, target health.Target) Snapshot {
+func waitForSnapshot(t *testing.T, r *Runner, target health.Target) Snapshot {
 	t.Helper()
 
-	return waitForSnapshotWhere(t, runner, target, func(Snapshot) bool {
+	return waitForSnapshotWhere(t, r, target, func(Snapshot) bool {
 		return true
 	})
 }
 
 func waitForSnapshotWhere(
 	t *testing.T,
-	runner *Runner,
+	r *Runner,
 	target health.Target,
 	accept func(Snapshot) bool,
 ) Snapshot {
@@ -80,23 +80,23 @@ func waitForSnapshotWhere(
 		case <-deadline:
 			t.Fatalf("timed out waiting for snapshot target=%s", target)
 		case <-ticker.C:
-			snapshot, ok := runner.Snapshot(target)
-			if ok && accept(snapshot) {
-				return snapshot
+			snap, ok := r.Snapshot(target)
+			if ok && accept(snap) {
+				return snap
 			}
 		}
 	}
 }
 
-func waitForRevision(t *testing.T, runner *Runner, target health.Target, revision snapshot.Revision) Snapshot {
+func waitForRevision(t *testing.T, r *Runner, target health.Target, rev snapshot.Revision) Snapshot {
 	t.Helper()
 
-	return waitForSnapshotWhere(t, runner, target, func(snapshot Snapshot) bool {
-		return snapshot.Revision >= revision
+	return waitForSnapshotWhere(t, r, target, func(snap Snapshot) bool {
+		return snap.Revision >= rev
 	})
 }
 
-func waitForRunnerRunning(t *testing.T, runner *Runner) {
+func waitForRunnerRunning(t *testing.T, r *Runner) {
 	t.Helper()
 
 	deadline := time.After(testTimeout)
@@ -108,7 +108,7 @@ func waitForRunnerRunning(t *testing.T, runner *Runner) {
 		case <-deadline:
 			t.Fatal("timed out waiting for runner to start")
 		case <-ticker.C:
-			if runner.running.Load() {
+			if r.running.Load() {
 				return
 			}
 		}
@@ -118,9 +118,9 @@ func waitForRunnerRunning(t *testing.T, runner *Runner) {
 func stepUntilRevision(
 	t *testing.T,
 	clk *clock.FakeClock,
-	runner *Runner,
+	r *Runner,
 	target health.Target,
-	revision snapshot.Revision,
+	rev snapshot.Revision,
 	interval time.Duration,
 ) Snapshot {
 	t.Helper()
@@ -132,11 +132,11 @@ func stepUntilRevision(
 	for {
 		select {
 		case <-deadline:
-			t.Fatalf("timed out waiting for target=%s revision=%d", target, revision)
+			t.Fatalf("timed out waiting for target=%s revision=%d", target, rev)
 		case <-ticker.C:
 			clk.Step(interval)
-			if snapshot, ok := runner.Snapshot(target); ok && snapshot.Revision >= revision {
-				return snapshot
+			if snap, ok := r.Snapshot(target); ok && snap.Revision >= rev {
+				return snap
 			}
 		}
 	}
@@ -167,14 +167,14 @@ func sameTargets(l []health.Target, r []health.Target) bool {
 	return true
 }
 
-func firstScheduleDelay(t *testing.T, schedule delay.Schedule) time.Duration {
+func firstScheduleDelay(t *testing.T, sched delay.Schedule) time.Duration {
 	t.Helper()
 
-	sequence := schedule.NewSequence()
-	if sequence == nil {
+	seq := sched.NewSequence()
+	if seq == nil {
 		t.Fatal("schedule returned nil sequence")
 	}
-	d, ok := sequence.Next()
+	d, ok := seq.Next()
 	if !ok {
 		t.Fatal("schedule sequence exhausted before first delay")
 	}

@@ -32,17 +32,17 @@ import (
 // the standard gRPC health behavior by sending SERVICE_UNKNOWN once and then
 // waiting for the stream to end.
 func (s *Server) Watch(
-	request *healthpb.HealthCheckRequest,
+	req *healthpb.HealthCheckRequest,
 	stream grpc.ServerStreamingServer[healthpb.HealthCheckResponse],
 ) error {
 	if s == nil || nilSource(s.source) || stream == nil {
 		return status.Error(codes.Canceled, watchEndedMessage)
 	}
-	if request == nil {
+	if req == nil {
 		return status.Error(codes.InvalidArgument, nilWatchRequestMessage)
 	}
 
-	mapping, ok := s.service(request.GetService())
+	mapping, ok := s.service(req.GetService())
 	if !ok {
 		if err := sendWatchStatus(stream, healthpb.HealthCheckResponse_SERVICE_UNKNOWN); err != nil {
 			return err

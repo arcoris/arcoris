@@ -21,9 +21,9 @@
 //
 // healthgrpc implements grpc.health.v1.Health using the standard protobuf and
 // service definitions from google.golang.org/grpc/health/grpc_health_v1. It maps
-// gRPC service names to health.Target values, evaluates those targets through a
-// Source, and converts health.Status plus health.TargetPolicy into gRPC serving
-// statuses.
+// gRPC service names to health.Target values, evaluates those targets through
+// health.Evaluator, and converts health.Status plus health.TargetPolicy into
+// gRPC serving statuses.
 //
 // The package is a transport adapter only. It does not define health checks, own
 // a registry, store independent mutable serving state as the source of truth,
@@ -34,11 +34,11 @@
 // # Relationship to health
 //
 // Package health owns the transport-neutral health model: Target, Status,
-// TargetPolicy, Report, and Registry. healthgrpc depends only on a Source
-// interface, which is satisfied by *eval.Evaluator from package health/eval.
-// The Source remains the owner of synchronous evaluation behavior, check
-// execution policy, panic normalization, status aggregation, and report
-// construction.
+// TargetPolicy, Report, Registry, and Evaluator. healthgrpc depends only on
+// health.Evaluator, which is satisfied by *eval.Evaluator from package
+// health/eval. The evaluator remains the owner of synchronous evaluation
+// behavior, check execution policy, panic normalization, status aggregation, and
+// report construction.
 //
 // # Service names
 //
@@ -63,23 +63,24 @@
 //
 // # Watch model
 //
-// Watch is implemented as a per-stream polling adapter over Source. Each stream
-// owns its ticker and sends an initial status followed by changes only. The
-// package does not create a global background runner, does not retain stream
-// references after Watch returns, and does not depend on arcoris.dev/health/probe.
+// Watch is implemented as a per-stream polling adapter over health.Evaluator.
+// Each stream owns its ticker and sends an initial status followed by changes
+// only. The package does not create a global background runner, does not retain
+// stream references after Watch returns, and does not depend on
+// arcoris.dev/health/probe.
 //
 // # Concurrency
 //
 // Server configuration is immutable after NewServer returns. Check, List, Watch,
 // Services, HasService, and Target may be called concurrently as long as the
-// supplied Source is safe for the same evaluation pattern. healthgrpc does not
-// add mutable serving overrides or cache state, so it does not need package-wide
-// locks on request paths.
+// supplied evaluator is safe for the same evaluation pattern. healthgrpc does
+// not add mutable serving overrides or cache state, so it does not need
+// package-wide locks on request paths.
 //
 // # File ownership
 //
-//   - source.go owns the Source boundary;
-//   - source_nil.go owns typed-nil Source detection;
+//   - source.go owns the Source alias;
+//   - source_nil.go owns typed-nil evaluator detection;
 //   - server.go owns the Server type and immutable fields;
 //   - server_constructor.go owns Server construction and service indexing;
 //   - server_services.go owns read-only service inspection;

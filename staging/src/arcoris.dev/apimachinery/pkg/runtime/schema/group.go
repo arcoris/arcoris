@@ -31,8 +31,8 @@ type Group string
 // must be DNS-1123 subdomains. The parser does not trim whitespace, does not
 // lower-case input, and does not accept path-like or underscore-separated
 // alternatives.
-func ParseGroup(value string) (Group, error) {
-	group := Group(value)
+func ParseGroup(val string) (Group, error) {
+	group := Group(val)
 	if err := group.Validate(); err != nil {
 		return "", err
 	}
@@ -106,9 +106,9 @@ func (g *Group) UnmarshalJSON(data []byte) error {
 	if g == nil {
 		return nilUnmarshalReceiver("group")
 	}
-	value, err := unmarshalJSONString("group", data)
+	val, err := unmarshalJSONString("group", data)
 	if err != nil {
 		return err
 	}
-	return g.UnmarshalText([]byte(value))
+	return g.UnmarshalText([]byte(val))
 }

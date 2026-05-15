@@ -56,17 +56,17 @@ type Controller struct {
 // LastTransition. Options configure construction-time dependencies such as the
 // time source, transition guards, and observers.
 func NewController(opts ...Option) *Controller {
-	config := newControllerConfig(opts...)
+	cfg := newControllerConfig(opts...)
 
-	if config.now == nil {
-		config.now = time.Now
+	if cfg.now == nil {
+		cfg.now = time.Now
 	}
 
 	return &Controller{
 		state:     StateNew,
-		now:       config.now,
-		guards:    append([]TransitionGuard(nil), config.guards...),
-		observers: append([]Observer(nil), config.observers...),
+		now:       cfg.now,
+		guards:    append([]TransitionGuard(nil), cfg.guards...),
+		observers: append([]Observer(nil), cfg.observers...),
 		changed:   make(chan struct{}),
 		done:      make(chan struct{}),
 	}

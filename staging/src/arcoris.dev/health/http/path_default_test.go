@@ -53,7 +53,7 @@ func TestDefaultPath(t *testing.T) {
 	}
 }
 
-func TestCompatibilityPathsAreNotTargetDefaults(t *testing.T) {
+func TestGeneralHealthPathIsNotTargetDefault(t *testing.T) {
 	t.Parallel()
 
 	for _, target := range []health.Target{
@@ -69,9 +69,9 @@ func TestCompatibilityPathsAreNotTargetDefaults(t *testing.T) {
 			if !ok {
 				t.Fatalf("DefaultPath(%s) ok = false, want true", target)
 			}
-			if path == DefaultHealthPath || path == DefaultHealthPlainPath {
+			if path == DefaultHealthPath {
 				t.Fatalf(
-					"DefaultPath(%s) = %q, compatibility paths must not be target defaults",
+					"DefaultPath(%s) = %q, general health path must not be a target default",
 					target,
 					path,
 				)

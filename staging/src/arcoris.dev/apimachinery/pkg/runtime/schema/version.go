@@ -30,8 +30,8 @@ type Version string
 // The parser rejects empty input, uppercase variants, release-candidate tags,
 // preview names, and numeric forms such as "1" or "v01". It does not trim
 // whitespace.
-func ParseVersion(value string) (Version, error) {
-	version := Version(value)
+func ParseVersion(val string) (Version, error) {
+	version := Version(val)
 	if err := version.Validate(); err != nil {
 		return "", err
 	}
@@ -102,9 +102,9 @@ func (v *Version) UnmarshalJSON(data []byte) error {
 	if v == nil {
 		return nilUnmarshalReceiver("version")
 	}
-	value, err := unmarshalJSONString("version", data)
+	val, err := unmarshalJSONString("version", data)
 	if err != nil {
 		return err
 	}
-	return v.UnmarshalText([]byte(value))
+	return v.UnmarshalText([]byte(val))
 }

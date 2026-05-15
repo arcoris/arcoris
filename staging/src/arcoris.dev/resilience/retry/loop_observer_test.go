@@ -27,7 +27,7 @@ func TestEmitRetryEventCallsObserversInRegistrationOrder(t *testing.T) {
 		Kind:    EventAttemptStart,
 		Attempt: retryTestAttempt(1),
 	}
-	config := configOf(
+	cfg := configOf(
 		WithObserverFunc(func(_ context.Context, got Event) {
 			order = append(order, "first")
 			if got != event {
@@ -42,7 +42,7 @@ func TestEmitRetryEventCallsObserversInRegistrationOrder(t *testing.T) {
 		}),
 	)
 
-	emitRetryEvent(context.Background(), config, event)
+	emitRetryEvent(context.Background(), cfg, event)
 
 	want := []string{"first", "second"}
 	if len(order) != len(want) {

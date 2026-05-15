@@ -30,9 +30,9 @@ func TestSnapshotIsObserved(t *testing.T) {
 	updated := time.Unix(10, 0)
 
 	tests := []struct {
-		name     string
-		snapshot Snapshot
-		want     bool
+		name string
+		snap Snapshot
+		want bool
 	}{
 		{
 			name: "zero",
@@ -40,21 +40,21 @@ func TestSnapshotIsObserved(t *testing.T) {
 		},
 		{
 			name: "updated without revision",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Updated: updated,
 			},
 			want: false,
 		},
 		{
 			name: "revision without updated",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Revision: 1,
 			},
 			want: false,
 		},
 		{
 			name: "updated and revision without target and report",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Updated:  updated,
 				Revision: 1,
 			},
@@ -62,7 +62,7 @@ func TestSnapshotIsObserved(t *testing.T) {
 		},
 		{
 			name: "target mismatch is not observed",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetReady,
 				Report: health.Report{
 					Target:   health.TargetLive,
@@ -76,7 +76,7 @@ func TestSnapshotIsObserved(t *testing.T) {
 		},
 		{
 			name: "invalid report is not observed",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetReady,
 				Report: health.Report{
 					Target:   health.TargetReady,
@@ -90,7 +90,7 @@ func TestSnapshotIsObserved(t *testing.T) {
 		},
 		{
 			name: "unknown report can still be observed",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetReady,
 				Report: health.Report{
 					Target:   health.TargetReady,
@@ -104,7 +104,7 @@ func TestSnapshotIsObserved(t *testing.T) {
 		},
 		{
 			name: "stale report can still be observed",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetReady,
 				Report: health.Report{
 					Target:   health.TargetReady,
@@ -123,7 +123,7 @@ func TestSnapshotIsObserved(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := tc.snapshot.IsObserved(); got != tc.want {
+			if got := tc.snap.IsObserved(); got != tc.want {
 				t.Fatalf("IsObserved() = %v, want %v", got, tc.want)
 			}
 		})
@@ -137,9 +137,9 @@ func TestSnapshotIsFresh(t *testing.T) {
 	updated := time.Unix(10, 0)
 
 	tests := []struct {
-		name     string
-		snapshot Snapshot
-		want     bool
+		name string
+		snap Snapshot
+		want bool
 	}{
 		{
 			name: "zero",
@@ -147,7 +147,7 @@ func TestSnapshotIsFresh(t *testing.T) {
 		},
 		{
 			name: "observed fresh",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetReady,
 				Report: health.Report{
 					Target:   health.TargetReady,
@@ -161,7 +161,7 @@ func TestSnapshotIsFresh(t *testing.T) {
 		},
 		{
 			name: "observed stale",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetReady,
 				Report: health.Report{
 					Target:   health.TargetReady,
@@ -176,7 +176,7 @@ func TestSnapshotIsFresh(t *testing.T) {
 		},
 		{
 			name: "updated and revision without target and report",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Updated:  updated,
 				Revision: 1,
 			},
@@ -184,7 +184,7 @@ func TestSnapshotIsFresh(t *testing.T) {
 		},
 		{
 			name: "stale without observation",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Stale: true,
 			},
 			want: false,
@@ -195,7 +195,7 @@ func TestSnapshotIsFresh(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := tc.snapshot.IsFresh(); got != tc.want {
+			if got := tc.snap.IsFresh(); got != tc.want {
 				t.Fatalf("IsFresh() = %v, want %v", got, tc.want)
 			}
 		})

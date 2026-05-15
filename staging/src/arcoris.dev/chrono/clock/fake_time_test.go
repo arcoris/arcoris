@@ -27,11 +27,11 @@ func TestFakeClockSinceUsesFakeTime(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
+	clk := NewFakeClock(start)
 
-	clock.Step(10 * time.Second)
+	clk.Step(10 * time.Second)
 
-	if got := clock.Since(start); got != 10*time.Second {
+	if got := clk.Since(start); got != 10*time.Second {
 		t.Fatalf("FakeClock.Since(start) = %s, want %s", got, 10*time.Second)
 	}
 }
@@ -43,11 +43,11 @@ func TestFakeClockSetMovesToFutureTime(t *testing.T) {
 
 	start := fakeClockTestTime()
 	next := start.Add(30 * time.Second)
-	clock := NewFakeClock(start)
+	clk := NewFakeClock(start)
 
-	clock.Set(next)
+	clk.Set(next)
 
-	mustEqualTime(t, "FakeClock.Now() after Set", clock.Now(), next)
+	mustEqualTime(t, "FakeClock.Now() after Set", clk.Now(), next)
 }
 
 // TestFakeClockSetToCurrentTimeIsAllowed verifies that Set may be used to
@@ -56,11 +56,11 @@ func TestFakeClockSetToCurrentTimeIsAllowed(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
+	clk := NewFakeClock(start)
 
-	clock.Set(start)
+	clk.Set(start)
 
-	mustEqualTime(t, "FakeClock.Now() after Set(current)", clock.Now(), start)
+	mustEqualTime(t, "FakeClock.Now() after Set(current)", clk.Now(), start)
 }
 
 // TestFakeClockSetBackwardsPanics verifies the monotonic fake-time invariant.
@@ -71,13 +71,13 @@ func TestFakeClockSetBackwardsPanics(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
+	clk := NewFakeClock(start)
 
 	mustPanicWithValue(t, errFakeClockBackwardSet, func() {
-		clock.Set(start.Add(-time.Nanosecond))
+		clk.Set(start.Add(-time.Nanosecond))
 	})
 
-	mustEqualTime(t, "FakeClock.Now() after failed backward Set", clock.Now(), start)
+	mustEqualTime(t, "FakeClock.Now() after failed backward Set", clk.Now(), start)
 }
 
 // TestFakeClockStepMovesByDuration verifies that Step advances fake time by an
@@ -86,11 +86,11 @@ func TestFakeClockStepMovesByDuration(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
+	clk := NewFakeClock(start)
 
-	clock.Step(15 * time.Second)
+	clk.Step(15 * time.Second)
 
-	mustEqualTime(t, "FakeClock.Now() after Step", clock.Now(), start.Add(15*time.Second))
+	mustEqualTime(t, "FakeClock.Now() after Step", clk.Now(), start.Add(15*time.Second))
 }
 
 // TestFakeClockStepZeroIsAllowed verifies that Step(0) keeps time stable while
@@ -99,11 +99,11 @@ func TestFakeClockStepZeroIsAllowed(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
+	clk := NewFakeClock(start)
 
-	clock.Step(0)
+	clk.Step(0)
 
-	mustEqualTime(t, "FakeClock.Now() after Step(0)", clock.Now(), start)
+	mustEqualTime(t, "FakeClock.Now() after Step(0)", clk.Now(), start)
 }
 
 // TestFakeClockStepNegativePanics verifies that fake time cannot move backwards
@@ -112,13 +112,13 @@ func TestFakeClockStepNegativePanics(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
+	clk := NewFakeClock(start)
 
 	mustPanicWithValue(t, errFakeClockNegativeStep, func() {
-		clock.Step(-time.Nanosecond)
+		clk.Step(-time.Nanosecond)
 	})
 
-	mustEqualTime(t, "FakeClock.Now() after failed negative Step", clock.Now(), start)
+	mustEqualTime(t, "FakeClock.Now() after failed negative Step", clk.Now(), start)
 }
 
 // TestFakeClockPrivateStepNegativePanics verifies the monotonic fake-time
@@ -127,13 +127,13 @@ func TestFakeClockPrivateStepNegativePanics(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
+	clk := NewFakeClock(start)
 
 	mustPanicWithValue(t, errFakeClockNegativeStep, func() {
-		clock.step(-time.Nanosecond)
+		clk.step(-time.Nanosecond)
 	})
 
-	mustEqualTime(t, "FakeClock.Now() after failed private negative step", clock.Now(), start)
+	mustEqualTime(t, "FakeClock.Now() after failed private negative step", clk.Now(), start)
 }
 
 // TestFakeClockStepDeliversDueWaitersTimersAndTickers verifies that time
@@ -142,20 +142,20 @@ func TestFakeClockStepDeliversDueWaitersTimersAndTickers(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
+	clk := NewFakeClock(start)
 
-	waiter := clock.After(10 * time.Second)
-	timer := clock.NewTimer(10 * time.Second)
-	ticker := clock.NewTicker(10 * time.Second)
+	waiter := clk.After(10 * time.Second)
+	timer := clk.NewTimer(10 * time.Second)
+	ticker := clk.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
-	clock.Step(9 * time.Second)
+	clk.Step(9 * time.Second)
 
 	mustNotReceiveTime(t, waiter)
 	mustNotReceiveTime(t, timer.C())
 	mustNotReceiveTime(t, ticker.C())
 
-	clock.Step(time.Second)
+	clk.Step(time.Second)
 
 	want := start.Add(10 * time.Second)
 
@@ -172,28 +172,28 @@ func TestFakeClockStepDeliversDueWaitersTimersAndTickers(t *testing.T) {
 func TestFakeClockCollectsDueDeliveriesInStableOrder(t *testing.T) {
 	t.Parallel()
 
-	clock := NewFakeClock(fakeClockTestTime())
+	clk := NewFakeClock(fakeClockTestTime())
 
-	lateWaiter := clock.After(20 * time.Second)
-	earlyWaiter := clock.After(10 * time.Second)
-	firstSameDeadlineWaiter := clock.After(15 * time.Second)
-	secondSameDeadlineWaiter := clock.After(15 * time.Second)
+	lateWaiter := clk.After(20 * time.Second)
+	earlyWaiter := clk.After(10 * time.Second)
+	firstSameDeadlineWaiter := clk.After(15 * time.Second)
+	secondSameDeadlineWaiter := clk.After(15 * time.Second)
 
-	lateTimer := clock.NewTimer(20 * time.Second)
-	earlyTimer := clock.NewTimer(10 * time.Second)
-	firstSameDeadlineTimer := clock.NewTimer(15 * time.Second)
-	secondSameDeadlineTimer := clock.NewTimer(15 * time.Second)
+	lateTimer := clk.NewTimer(20 * time.Second)
+	earlyTimer := clk.NewTimer(10 * time.Second)
+	firstSameDeadlineTimer := clk.NewTimer(15 * time.Second)
+	secondSameDeadlineTimer := clk.NewTimer(15 * time.Second)
 
-	lateTicker := clock.NewTicker(20 * time.Second)
+	lateTicker := clk.NewTicker(20 * time.Second)
 	defer lateTicker.Stop()
-	earlyTicker := clock.NewTicker(10 * time.Second)
+	earlyTicker := clk.NewTicker(10 * time.Second)
 	defer earlyTicker.Stop()
-	firstSameDeadlineTicker := clock.NewTicker(15 * time.Second)
+	firstSameDeadlineTicker := clk.NewTicker(15 * time.Second)
 	defer firstSameDeadlineTicker.Stop()
-	secondSameDeadlineTicker := clock.NewTicker(15 * time.Second)
+	secondSameDeadlineTicker := clk.NewTicker(15 * time.Second)
 	defer secondSameDeadlineTicker.Stop()
 
-	deliveries := clock.step(20 * time.Second)
+	deliveries := clk.step(20 * time.Second)
 
 	if len(deliveries.waiters) != 4 {
 		t.Fatalf("len(waiter deliveries) = %d, want 4", len(deliveries.waiters))

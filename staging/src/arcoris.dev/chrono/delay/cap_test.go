@@ -31,24 +31,24 @@ func TestCapRejectsInvalidInput(t *testing.T) {
 }
 
 func TestCapCapsAvailableChildDelays(t *testing.T) {
-	sequence := Cap(Delays(time.Second, 3*time.Second), 2*time.Second).NewSequence()
+	seq := Cap(Delays(time.Second, 3*time.Second), 2*time.Second).NewSequence()
 
-	mustNext(t, sequence, time.Second)
-	mustNext(t, sequence, 2*time.Second)
+	mustNext(t, seq, time.Second)
+	mustNext(t, seq, 2*time.Second)
 }
 
 func TestCapAllowsZeroMaximumDelay(t *testing.T) {
-	sequence := Cap(Delays(time.Second), 0).NewSequence()
+	seq := Cap(Delays(time.Second), 0).NewSequence()
 
-	mustNext(t, sequence, 0)
-	mustExhausted(t, sequence)
+	mustNext(t, seq, 0)
+	mustExhausted(t, seq)
 }
 
 func TestCapPreservesChildExhaustion(t *testing.T) {
-	sequence := Cap(Delays(2*time.Second), time.Second).NewSequence()
+	seq := Cap(Delays(2*time.Second), time.Second).NewSequence()
 
-	mustNext(t, sequence, time.Second)
-	mustExhausted(t, sequence)
+	mustNext(t, seq, time.Second)
+	mustExhausted(t, seq)
 }
 
 func TestCapRejectsNilChildSequence(t *testing.T) {
@@ -58,9 +58,9 @@ func TestCapRejectsNilChildSequence(t *testing.T) {
 }
 
 func TestCapRejectsNegativeChildDelay(t *testing.T) {
-	sequence := Cap(ScheduleFunc(func() Sequence { return negativeDelaySequence{} }), time.Second).NewSequence()
+	seq := Cap(ScheduleFunc(func() Sequence { return negativeDelaySequence{} }), time.Second).NewSequence()
 
 	mustPanicWith(t, errCapScheduleReturnedNegativeDelay, func() {
-		sequence.Next()
+		seq.Next()
 	})
 }

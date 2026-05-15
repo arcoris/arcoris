@@ -147,10 +147,10 @@ func (c checkFunc) Name() string {
 // status. Those responsibilities belong to Evaluator so all checker
 // implementations receive consistent boundary behavior.
 func (c checkFunc) Check(ctx context.Context) Result {
-	result := c.fn(ctx)
-	if result.Name == "" {
-		result.Name = c.name
+	res := c.fn(ctx)
+	if res.Name == "" {
+		res.Name = c.name
 	}
 
-	return result
+	return res
 }

@@ -96,9 +96,9 @@ func (c *BlockingChecker) Check(ctx context.Context) health.Result {
 	select {
 	case <-c.release:
 		c.mu.Lock()
-		result := c.result
+		res := c.result
 		c.mu.Unlock()
-		return result
+		return res
 	case <-ctx.Done():
 		return health.Unknown(c.name, health.ReasonCanceled, "health check canceled")
 	}
@@ -110,13 +110,13 @@ func (c *BlockingChecker) Check(ctx context.Context) health.Result {
 // release channel. Later calls may update result for future callers that have
 // not yet read it, but tests should normally release once for deterministic
 // assertions.
-func (c *BlockingChecker) Release(result health.Result) {
+func (c *BlockingChecker) Release(res health.Result) {
 	if c == nil {
 		return
 	}
 
 	c.mu.Lock()
-	c.result = result
+	c.result = res
 	c.mu.Unlock()
 	c.releaseOnce.Do(func() { close(c.release) })
 }
@@ -203,15 +203,15 @@ func (c *SequenceChecker) Check(context.Context) health.Result {
 		return UnknownResult(c.name, health.ReasonNotObserved)
 	}
 
-	result := c.results[0]
+	res := c.results[0]
 	if len(c.results) > 1 {
 		c.results = c.results[1:]
 	}
-	if result.Name == "" {
-		result.Name = c.name
+	if res.Name == "" {
+		res.Name = c.name
 	}
 
-	return result
+	return res
 }
 
 // Calls returns the number of Check calls.

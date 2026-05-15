@@ -27,19 +27,19 @@ import (
 )
 
 func TestRunSucceedsOnFirstAttempt(t *testing.T) {
-	config := configOf()
+	cfg := configOf()
 	calls := 0
 
-	value, err := run(context.Background(), func(context.Context) (int, error) {
+	val, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 42, nil
-	}, config)
+	}, cfg)
 
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
 	}
-	if value != 42 {
-		t.Fatalf("run value = %d, want 42", value)
+	if val != 42 {
+		t.Fatalf("run value = %d, want 42", val)
 	}
 	if calls != 1 {
 		t.Fatalf("operation calls = %d, want 1", calls)
@@ -47,20 +47,20 @@ func TestRunSucceedsOnFirstAttempt(t *testing.T) {
 }
 
 func TestRunDefaultDoesNotRetry(t *testing.T) {
-	config := configOf()
+	cfg := configOf()
 	errBoom := errors.New("boom")
 	calls := 0
 
-	value, err := run(context.Background(), func(context.Context) (int, error) {
+	val, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 99, errBoom
-	}, config)
+	}, cfg)
 
 	if !errors.Is(err, errBoom) {
 		t.Fatalf("run error = %v, want %v", err, errBoom)
 	}
-	if value != 0 {
-		t.Fatalf("run value = %d, want zero value", value)
+	if val != 0 {
+		t.Fatalf("run value = %d, want zero value", val)
 	}
 	if calls != 1 {
 		t.Fatalf("operation calls = %d, want 1", calls)
@@ -68,7 +68,7 @@ func TestRunDefaultDoesNotRetry(t *testing.T) {
 }
 
 func TestRunRetriesRetryableErrors(t *testing.T) {
-	config := configOf(
+	cfg := configOf(
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(3),
 		WithDelaySchedule(delay.Immediate()),
@@ -77,19 +77,19 @@ func TestRunRetriesRetryableErrors(t *testing.T) {
 	errBoom := errors.New("boom")
 	calls := 0
 
-	value, err := run(context.Background(), func(context.Context) (int, error) {
+	val, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		if calls < 3 {
 			return 0, errBoom
 		}
 		return 7, nil
-	}, config)
+	}, cfg)
 
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
 	}
-	if value != 7 {
-		t.Fatalf("run value = %d, want 7", value)
+	if val != 7 {
+		t.Fatalf("run value = %d, want 7", val)
 	}
 	if calls != 3 {
 		t.Fatalf("operation calls = %d, want 3", calls)
@@ -97,7 +97,7 @@ func TestRunRetriesRetryableErrors(t *testing.T) {
 }
 
 func TestRunStopsAtMaxAttempts(t *testing.T) {
-	config := configOf(
+	cfg := configOf(
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(2),
 		WithDelaySchedule(delay.Immediate()),
@@ -109,7 +109,7 @@ func TestRunStopsAtMaxAttempts(t *testing.T) {
 	_, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 0, errBoom
-	}, config)
+	}, cfg)
 
 	if !errors.Is(err, ErrExhausted) {
 		t.Fatalf("run error does not match ErrExhausted: %v", err)
@@ -134,7 +134,7 @@ func TestRunStopsAtMaxAttempts(t *testing.T) {
 }
 
 func TestRunReturnsOriginalNonRetryableError(t *testing.T) {
-	config := configOf(
+	cfg := configOf(
 		WithClassifier(NeverRetry()),
 		WithMaxAttempts(5),
 		WithDelaySchedule(delay.Immediate()),
@@ -146,7 +146,7 @@ func TestRunReturnsOriginalNonRetryableError(t *testing.T) {
 	_, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 0, errBoom
-	}, config)
+	}, cfg)
 
 	if !errors.Is(err, errBoom) {
 		t.Fatalf("run error = %v, want %v", err, errBoom)
@@ -160,7 +160,7 @@ func TestRunReturnsOriginalNonRetryableError(t *testing.T) {
 }
 
 func TestRunStopsWhenDelaySequenceIsExhausted(t *testing.T) {
-	config := configOf(
+	cfg := configOf(
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(10),
 		WithDelaySchedule(delay.Limit(delay.Immediate(), 1)),
@@ -172,7 +172,7 @@ func TestRunStopsWhenDelaySequenceIsExhausted(t *testing.T) {
 	_, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 0, errBoom
-	}, config)
+	}, cfg)
 
 	if !errors.Is(err, ErrExhausted) {
 		t.Fatalf("run error does not match ErrExhausted: %v", err)
@@ -191,7 +191,7 @@ func TestRunStopsWhenDelaySequenceIsExhausted(t *testing.T) {
 }
 
 func TestRunStopsAtMaxElapsed(t *testing.T) {
-	config := configOf(
+	cfg := configOf(
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(10),
 		WithDelaySchedule(delay.Fixed(time.Hour)),
@@ -204,7 +204,7 @@ func TestRunStopsAtMaxElapsed(t *testing.T) {
 	_, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 0, errBoom
-	}, config)
+	}, cfg)
 
 	if !errors.Is(err, ErrExhausted) {
 		t.Fatalf("run error does not match ErrExhausted: %v", err)
@@ -228,7 +228,7 @@ func TestRunReturnsInterruptedWhenContextAlreadyStopped(t *testing.T) {
 
 	var stop Event
 	stopEvents := 0
-	config := configOf(
+	cfg := configOf(
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(3),
 		WithDelaySchedule(delay.Immediate()),
@@ -246,7 +246,7 @@ func TestRunReturnsInterruptedWhenContextAlreadyStopped(t *testing.T) {
 	_, err := run(ctx, func(context.Context) (int, error) {
 		calls++
 		return 0, errors.New("boom")
-	}, config)
+	}, cfg)
 
 	if !errors.Is(err, ErrInterrupted) {
 		t.Fatalf("run error does not match ErrInterrupted: %v", err)
@@ -274,7 +274,7 @@ func TestRunReturnsInterruptedWhenContextAlreadyStopped(t *testing.T) {
 func TestRunEmitsObserverEvents(t *testing.T) {
 	var events []Event
 
-	config := configOf(
+	cfg := configOf(
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(2),
 		WithDelaySchedule(delay.Immediate()),
@@ -292,7 +292,7 @@ func TestRunEmitsObserverEvents(t *testing.T) {
 	_, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 0, errBoom
-	}, config)
+	}, cfg)
 
 	if !errors.Is(err, ErrExhausted) {
 		t.Fatalf("run error does not match ErrExhausted: %v", err)
@@ -319,11 +319,11 @@ func TestRunEmitsObserverEvents(t *testing.T) {
 }
 
 func TestRunOperationOwnedContextErrorIsNotInterrupted(t *testing.T) {
-	config := configOf()
+	cfg := configOf()
 
 	var stop Event
 	observedStop := false
-	config.observers = append(config.observers, ObserverFunc(func(_ context.Context, event Event) {
+	cfg.observers = append(cfg.observers, ObserverFunc(func(_ context.Context, event Event) {
 		if event.Kind == EventRetryStop {
 			stop = event
 			observedStop = true
@@ -332,7 +332,7 @@ func TestRunOperationOwnedContextErrorIsNotInterrupted(t *testing.T) {
 
 	_, err := run(context.Background(), func(context.Context) (int, error) {
 		return 0, context.Canceled
-	}, config)
+	}, cfg)
 
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("run error = %v, want context.Canceled", err)
@@ -359,7 +359,7 @@ func TestRunReturnsInterruptedWhenContextStopsDuringDelay(t *testing.T) {
 	defer cancel()
 
 	stopEvents := make(chan Event, 1)
-	config := configOf(
+	cfg := configOf(
 		WithClock(signalingClock),
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(2),
@@ -375,7 +375,7 @@ func TestRunReturnsInterruptedWhenContextStopsDuringDelay(t *testing.T) {
 	go func() {
 		_, err := run(ctx, func(context.Context) (int, error) {
 			return 0, errBoom
-		}, config)
+		}, cfg)
 		errs <- err
 	}()
 
@@ -414,24 +414,24 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 	tests := []struct {
 		name    string
 		ctx     func() context.Context
-		config  config
+		cfg     config
 		op      ValueOperation[int]
 		wantErr error
 		reason  StopReason
 	}{
 		{
-			name:   "succeeded",
-			ctx:    context.Background,
-			config: configOf(),
+			name: "succeeded",
+			ctx:  context.Background,
+			cfg:  configOf(),
 			op: func(context.Context) (int, error) {
 				return 1, nil
 			},
 			reason: StopReasonSucceeded,
 		},
 		{
-			name:   "non retryable",
-			ctx:    context.Background,
-			config: configOf(),
+			name: "non retryable",
+			ctx:  context.Background,
+			cfg:  configOf(),
 			op: func(context.Context) (int, error) {
 				return 0, errBoom
 			},
@@ -441,7 +441,7 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 		{
 			name: "max attempts",
 			ctx:  context.Background,
-			config: configOf(
+			cfg: configOf(
 				WithClassifier(RetryAll()),
 				WithMaxAttempts(1),
 			),
@@ -454,7 +454,7 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 		{
 			name: "max elapsed",
 			ctx:  context.Background,
-			config: configOf(
+			cfg: configOf(
 				WithClassifier(RetryAll()),
 				WithMaxAttempts(2),
 				WithDelaySchedule(delay.Fixed(time.Second)),
@@ -469,7 +469,7 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 		{
 			name: "delay exhausted",
 			ctx:  context.Background,
-			config: configOf(
+			cfg: configOf(
 				WithClassifier(RetryAll()),
 				WithMaxAttempts(2),
 			),
@@ -486,7 +486,7 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 				cancel()
 				return ctx
 			},
-			config:  configOf(),
+			cfg:     configOf(),
 			op:      func(context.Context) (int, error) { return 0, nil },
 			wantErr: ErrInterrupted,
 			reason:  StopReasonInterrupted,
@@ -494,7 +494,7 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 		{
 			name: "interrupted after failed attempt",
 			ctx:  context.Background,
-			config: configOf(
+			cfg: configOf(
 				WithClassifier(RetryAll()),
 				WithMaxAttempts(2),
 			),
@@ -510,10 +510,10 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			stopEvents := 0
 			var stop Event
-			config := tc.config
+			cfg := tc.cfg
 			ctx := tc.ctx()
 			if tc.reason == StopReasonDelayExhausted {
-				config.delay = retryTestSchedule{sequence: &retryTestSequence{}}
+				cfg.delay = retryTestSchedule{sequence: &retryTestSequence{}}
 			}
 			if tc.name == "interrupted after failed attempt" {
 				var cancel context.CancelFunc
@@ -521,13 +521,13 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 				// Cancelling from the failure observer stops retry at its next
 				// context boundary, after LastErr has been set but before delay
 				// selection can happen.
-				config.observers = append(config.observers, ObserverFunc(func(_ context.Context, event Event) {
+				cfg.observers = append(cfg.observers, ObserverFunc(func(_ context.Context, event Event) {
 					if event.Kind == EventAttemptFailure {
 						cancel()
 					}
 				}))
 			}
-			config.observers = append(config.observers, ObserverFunc(func(_ context.Context, event Event) {
+			cfg.observers = append(cfg.observers, ObserverFunc(func(_ context.Context, event Event) {
 				if event.Kind != EventRetryStop {
 					return
 				}
@@ -535,7 +535,7 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 				stop = event
 			}))
 
-			_, err := run(ctx, tc.op, config)
+			_, err := run(ctx, tc.op, cfg)
 			if tc.wantErr == nil {
 				if err != nil {
 					t.Fatalf("run error = %v, want nil", err)

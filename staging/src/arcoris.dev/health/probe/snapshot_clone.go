@@ -52,7 +52,7 @@ func cloneObservation(obs observation) observation {
 //
 // Revision, Updated, Target, and Stale are value fields and are intentionally
 // preserved exactly. Only the embedded Report needs cloning.
-func cloneSnapshot(snapshot Snapshot) Snapshot {
-	snapshot.Report = cloneReport(snapshot.Report)
-	return snapshot
+func cloneSnapshot(snap Snapshot) Snapshot {
+	snap.Report = cloneReport(snap.Report)
+	return snap
 }

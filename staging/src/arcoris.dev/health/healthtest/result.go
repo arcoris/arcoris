@@ -79,8 +79,8 @@ func UnknownResult(name string, reason health.Reason) health.Result {
 // The helper keeps the rest of the result untouched so tests can build unusual
 // or intentionally invalid values while still avoiding zero timestamps when the
 // observation time is not the behavior under test.
-func ResultWithObservation(result health.Result) health.Result {
-	return result.WithObserved(ObservedTime)
+func ResultWithObservation(res health.Result) health.Result {
+	return res.WithObserved(ObservedTime)
 }
 
 // ResultWithDuration returns result with duration set.
@@ -88,8 +88,8 @@ func ResultWithObservation(result health.Result) health.Result {
 // Duration is often rendered by transport adapters, so this helper makes those
 // fixtures explicit without requiring each test to remember the fluent Result
 // method name.
-func ResultWithDuration(result health.Result, duration time.Duration) health.Result {
-	return result.WithDuration(duration)
+func ResultWithDuration(res health.Result, d time.Duration) health.Result {
+	return res.WithDuration(d)
 }
 
 // ResultWithPrivateCause returns result with an internal cause for leakage tests.
@@ -97,6 +97,6 @@ func ResultWithDuration(result health.Result, duration time.Duration) health.Res
 // The cause text is intentionally recognizable. Public adapters should never
 // expose Result.Cause, so tests can scan rendered output for "private cause" and
 // fail loudly if an adapter accidentally leaks internal diagnostics.
-func ResultWithPrivateCause(result health.Result) health.Result {
-	return result.WithCause(errors.New("private cause"))
+func ResultWithPrivateCause(res health.Result) health.Result {
+	return res.WithCause(errors.New("private cause"))
 }

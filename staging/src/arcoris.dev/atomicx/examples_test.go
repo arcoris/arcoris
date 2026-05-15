@@ -23,12 +23,12 @@ func ExampleUint64Counter() {
 	var counter Uint64Counter
 
 	counter.Inc()
-	previous := counter.Snapshot()
+	prev := counter.Snapshot()
 
 	counter.Add(4)
-	current := counter.Snapshot()
+	cur := counter.Snapshot()
 
-	delta := current.DeltaSince(previous)
+	delta := cur.DeltaSince(prev)
 
 	fmt.Println(counter.Load())
 	fmt.Println(delta.Value)
@@ -47,9 +47,9 @@ func ExampleUint64Gauge() {
 	gauge.Add(10)
 	gauge.Sub(3)
 
-	current, ok := gauge.TryAdd(5)
+	cur, ok := gauge.TryAdd(5)
 
-	fmt.Println(current)
+	fmt.Println(cur)
 	fmt.Println(ok)
 	fmt.Println(gauge.Load())
 
@@ -66,9 +66,9 @@ func ExampleInt64Gauge() {
 	gauge.Add(10)
 	gauge.Sub(15)
 
-	current, ok := gauge.TryAdd(3)
+	cur, ok := gauge.TryAdd(3)
 
-	fmt.Println(current)
+	fmt.Println(cur)
 	fmt.Println(ok)
 	fmt.Println(gauge.Load())
 
@@ -83,12 +83,12 @@ func ExampleUint32Counter() {
 	var counter Uint32Counter
 
 	counter.Add(10)
-	previous := counter.Snapshot()
+	prev := counter.Snapshot()
 
 	counter.Add(7)
-	current := counter.Snapshot()
+	cur := counter.Snapshot()
 
-	delta := current.DeltaSince(previous)
+	delta := cur.DeltaSince(prev)
 
 	fmt.Println(counter.Load())
 	fmt.Println(delta.Value)

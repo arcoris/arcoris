@@ -60,31 +60,31 @@ func newStepClock(values ...time.Time) *stepClock {
 	return &stepClock{values: values}
 }
 
-func (clock *stepClock) Now() time.Time {
-	if len(clock.values) == 0 {
+func (clk *stepClock) Now() time.Time {
+	if len(clk.values) == 0 {
 		return time.Time{}
 	}
-	if clock.next >= len(clock.values) {
-		clock.current = clock.values[len(clock.values)-1]
-		return clock.current
+	if clk.next >= len(clk.values) {
+		clk.current = clk.values[len(clk.values)-1]
+		return clk.current
 	}
 
-	value := clock.values[clock.next]
-	clock.next++
-	clock.current = value
+	val := clk.values[clk.next]
+	clk.next++
+	clk.current = val
 
-	return value
+	return val
 }
 
-func (clock *stepClock) Since(ts time.Time) time.Duration {
-	return clock.current.Sub(ts)
+func (clk *stepClock) Since(ts time.Time) time.Duration {
+	return clk.current.Sub(ts)
 }
 
-func mustCheck(t *testing.T, name string, result Result) Checker {
+func mustCheck(t *testing.T, name string, res Result) Checker {
 	t.Helper()
 
 	checker, err := NewCheck(name, func(context.Context) Result {
-		return result
+		return res
 	})
 	if err != nil {
 		t.Fatalf("NewCheck(%q) = %v, want nil", name, err)

@@ -97,8 +97,8 @@ func (e InvalidScheduleDelayError) Is(target error) bool {
 }
 
 // validateSchedule validates the reusable probe schedule.
-func validateSchedule(schedule delay.Schedule) error {
-	if nilSchedule(schedule) {
+func validateSchedule(sched delay.Schedule) error {
+	if nilSchedule(sched) {
 		return ErrNilSchedule
 	}
 
@@ -106,28 +106,28 @@ func validateSchedule(schedule delay.Schedule) error {
 }
 
 // newSequence creates and validates one per-Run schedule sequence.
-func newSequence(schedule delay.Schedule) (delay.Sequence, error) {
-	if err := validateSchedule(schedule); err != nil {
+func newSequence(sched delay.Schedule) (delay.Sequence, error) {
+	if err := validateSchedule(sched); err != nil {
 		return nil, err
 	}
 
-	sequence := schedule.NewSequence()
-	if sequence == nil {
+	seq := sched.NewSequence()
+	if seq == nil {
 		return nil, ErrNilSequence
 	}
 
-	return sequence, nil
+	return seq, nil
 }
 
-func nilSchedule(schedule delay.Schedule) bool {
-	if schedule == nil {
+func nilSchedule(sched delay.Schedule) bool {
+	if sched == nil {
 		return true
 	}
 
-	value := reflect.ValueOf(schedule)
-	switch value.Kind() {
+	val := reflect.ValueOf(sched)
+	switch val.Kind() {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
-		return value.IsNil()
+		return val.IsNil()
 	default:
 		return false
 	}

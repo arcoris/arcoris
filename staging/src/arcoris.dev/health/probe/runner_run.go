@@ -55,13 +55,13 @@ func (r *Runner) Run(ctx context.Context) error {
 		return nil
 	}
 
-	sequence, err := newSequence(r.schedule)
+	seq, err := newSequence(r.schedule)
 	if err != nil {
 		return err
 	}
 
 	for {
-		wait, ok, err := nextDelay(ctx, sequence)
+		wait, ok, err := nextDelay(ctx, seq)
 		if err != nil {
 			return err
 		}
@@ -79,8 +79,8 @@ func (r *Runner) Run(ctx context.Context) error {
 	}
 }
 
-func nextDelay(ctx context.Context, sequence delay.Sequence) (time.Duration, bool, error) {
-	d, ok := sequence.Next()
+func nextDelay(ctx context.Context, seq delay.Sequence) (time.Duration, bool, error) {
+	d, ok := seq.Next()
 	if !ok {
 		if ctx.Err() != nil {
 			return 0, false, nil

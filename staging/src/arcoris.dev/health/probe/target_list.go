@@ -36,11 +36,11 @@ func normalizeTargets(targets []health.Target) ([]health.Target, error) {
 			return nil, health.InvalidTargetError{Target: target}
 		}
 
-		if previous, exists := seen[target]; exists {
+		if prev, exists := seen[target]; exists {
 			return nil, DuplicateTargetError{
 				Target:        target,
 				Index:         index,
-				PreviousIndex: previous,
+				PreviousIndex: prev,
 			}
 		}
 

@@ -24,11 +24,20 @@ import (
 	"arcoris.dev/health"
 )
 
-// SourceFunc adapts a function to an evaluator-shaped health report source.
+// SourceFunc adapts a function to health.Evaluator.
 //
-// The shape intentionally matches eval.Evaluator.Evaluate and adapter source
-// interfaces such as healthgrpc.Source without importing any adapter package.
+// The shape intentionally matches health.Evaluator without importing any
+// adapter package.
 type SourceFunc func(context.Context, health.Target) (health.Report, error)
+
+var (
+	_ health.Evaluator = SourceFunc(nil)
+	_ health.Evaluator = (*StaticSource)(nil)
+	_ health.Evaluator = (*TargetSource)(nil)
+	_ health.Evaluator = (*ErrorSource)(nil)
+	_ health.Evaluator = (*CountingSource)(nil)
+	_ health.Evaluator = (*SequenceSource)(nil)
+)
 
 // Evaluate calls fn with ctx and target.
 //
@@ -47,7 +56,7 @@ type StaticSource struct {
 	report health.Report
 }
 
-// NewStaticSource returns a Source that always returns report.
+// NewStaticSource returns an evaluator that always returns report.
 //
 // The report is copied at construction and on every Evaluate call. Tests may
 // mutate their original report or the returned report without affecting later
@@ -81,7 +90,7 @@ type TargetSource struct {
 	reports map[health.Target]health.Report
 }
 
-// NewTargetSource returns a Source backed by reports.
+// NewTargetSource returns an evaluator backed by reports.
 //
 // reports is copied deeply enough for health.Report.Checks so caller mutations
 // do not affect later evaluations.
@@ -116,7 +125,7 @@ type ErrorSource struct {
 	err error
 }
 
-// NewErrorSource returns a Source that always fails with err.
+// NewErrorSource returns an evaluator that always fails with err.
 //
 // A nil err is replaced with a stable package-owned error so the source remains
 // useful even when the test does not care about the exact raw cause.
@@ -130,8 +139,8 @@ func NewErrorSource(err error) *ErrorSource {
 
 // Evaluate returns the configured error.
 //
-// The returned report is always zero because Source failures should be handled
-// by the adapter path under test, not by inspecting partial reports.
+// The returned report is always zero because evaluator failures should be
+// handled by the adapter path under test, not by inspecting partial reports.
 func (s *ErrorSource) Evaluate(context.Context, health.Target) (health.Report, error) {
 	if s == nil || s.err == nil {
 		return health.Report{}, errors.New("healthtest source error")
@@ -158,7 +167,7 @@ type CountingSource struct {
 	calls map[health.Target]int
 }
 
-// NewCountingSource returns a call-counting Source backed by reports.
+// NewCountingSource returns a call-counting evaluator backed by reports.
 //
 // Reports are copied at construction and on read. Callers may mutate their input
 // map or returned reports without changing source state.
@@ -261,7 +270,7 @@ type SequenceSource struct {
 	calls map[health.Target]int
 }
 
-// NewSequenceSource returns a Source backed by a report sequence for target.
+// NewSequenceSource returns an evaluator backed by a report sequence for target.
 //
 // The report slice and each report's Checks slice are copied so caller
 // mutations cannot rewrite the sequence.

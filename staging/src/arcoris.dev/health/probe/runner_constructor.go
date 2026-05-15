@@ -16,7 +16,11 @@
 
 package probe
 
-import "reflect"
+import (
+	"reflect"
+
+	"arcoris.dev/health"
+)
 
 // NewRunner returns a Runner that periodically evaluates targets with evaluator.
 //
@@ -24,8 +28,8 @@ import "reflect"
 // WithTargets. NewRunner validates configuration and creates the private cache,
 // but it does not start goroutines. Callers start probing by calling Run with an
 // owner-controlled context.
-func NewRunner(evaluator Evaluator, opts ...Option) (*Runner, error) {
-	if nilEvaluator(evaluator) {
+func NewRunner(e health.Evaluator, opts ...Option) (*Runner, error) {
+	if nilEvaluator(e) {
 		return nil, ErrNilEvaluator
 	}
 
@@ -44,7 +48,7 @@ func NewRunner(evaluator Evaluator, opts ...Option) (*Runner, error) {
 	// clock tests: the commit time recorded by snapshot.Store must advance with
 	// the same deterministic clock that Runner uses at read time.
 	return &Runner{
-		evaluator:    evaluator,
+		evaluator:    e,
 		store:        newStore(targets, cfg.clock),
 		clock:        cfg.clock,
 		targets:      targets,
@@ -54,15 +58,15 @@ func NewRunner(evaluator Evaluator, opts ...Option) (*Runner, error) {
 	}, nil
 }
 
-func nilEvaluator(evaluator Evaluator) bool {
-	if evaluator == nil {
+func nilEvaluator(e health.Evaluator) bool {
+	if e == nil {
 		return true
 	}
 
-	value := reflect.ValueOf(evaluator)
-	switch value.Kind() {
+	val := reflect.ValueOf(e)
+	switch val.Kind() {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
-		return value.IsNil()
+		return val.IsNil()
 	default:
 		return false
 	}

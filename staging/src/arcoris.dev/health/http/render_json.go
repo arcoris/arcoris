@@ -38,11 +38,11 @@ func renderJSONReport(w http.ResponseWriter, r *http.Request, cfg config, report
 		return
 	}
 
-	response := newResponse(report, passed, cfg.policy, cfg.detailLevel)
+	resp := newResponse(report, passed, cfg.policy, cfg.detailLevel)
 
 	// Encoder failures can only arise from the response writer boundary after
 	// headers have been committed. There is no meaningful recovery path here.
-	_ = json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(resp)
 }
 
 // renderJSONError writes a generic JSON response for adapter-boundary failures.

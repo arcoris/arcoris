@@ -25,18 +25,18 @@ func TestWithObserverAppendsObservers(t *testing.T) {
 	first := ObserverFunc(func(context.Context, Event) {})
 	second := ObserverFunc(func(context.Context, Event) {})
 
-	config := configOf(
+	cfg := configOf(
 		WithObserver(first),
 		WithObserver(second),
 	)
 
-	if len(config.observers) != 2 {
-		t.Fatalf("observers len = %d, want 2", len(config.observers))
+	if len(cfg.observers) != 2 {
+		t.Fatalf("observers len = %d, want 2", len(cfg.observers))
 	}
-	if config.observers[0] == nil {
+	if cfg.observers[0] == nil {
 		t.Fatalf("first observer is nil")
 	}
-	if config.observers[1] == nil {
+	if cfg.observers[1] == nil {
 		t.Fatalf("second observer is nil")
 	}
 }
@@ -50,15 +50,15 @@ func TestWithObserverPanicsOnNilObserver(t *testing.T) {
 func TestWithObserverFunc(t *testing.T) {
 	called := false
 
-	config := configOf(WithObserverFunc(func(context.Context, Event) {
+	cfg := configOf(WithObserverFunc(func(context.Context, Event) {
 		called = true
 	}))
 
-	if len(config.observers) != 1 {
-		t.Fatalf("observers len = %d, want 1", len(config.observers))
+	if len(cfg.observers) != 1 {
+		t.Fatalf("observers len = %d, want 1", len(cfg.observers))
 	}
 
-	config.observers[0].ObserveRetry(context.Background(), Event{})
+	cfg.observers[0].ObserveRetry(context.Background(), Event{})
 
 	if !called {
 		t.Fatalf("observer function was not called")

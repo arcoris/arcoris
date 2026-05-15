@@ -36,11 +36,11 @@ func normalizeServiceMappings(mappings []ServiceMapping) ([]ServiceMapping, erro
 		if err := validateServiceMapping(mapping, index); err != nil {
 			return nil, err
 		}
-		if previous, exists := seen[mapping.Service]; exists {
+		if prev, exists := seen[mapping.Service]; exists {
 			return nil, DuplicateServiceError{
 				Service:       mapping.Service,
 				Index:         index,
-				PreviousIndex: previous,
+				PreviousIndex: prev,
 			}
 		}
 

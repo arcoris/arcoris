@@ -16,18 +16,11 @@
 
 package healthgrpc
 
-import (
-	"context"
-
-	"arcoris.dev/health"
-)
+import "arcoris.dev/health"
 
 // Source evaluates one health target and returns a package-health report.
 //
-// Source is the only health model boundary used by healthgrpc. *eval.Evaluator
-// satisfies this interface. Implementations own check execution and report
+// Source is an alias for health.Evaluator kept as the transport-facing name in
+// healthgrpc documentation. Implementations own check execution and report
 // construction; healthgrpc owns only the gRPC adapter mapping.
-type Source interface {
-	// Evaluate synchronously evaluates target and returns the resulting report.
-	Evaluate(ctx context.Context, target health.Target) (health.Report, error)
-}
+type Source = health.Evaluator

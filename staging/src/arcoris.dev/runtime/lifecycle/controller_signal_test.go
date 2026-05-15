@@ -62,8 +62,8 @@ func TestControllerSignalChangedWakesWaitersAfterNonTerminalTransition(t *testin
 	controller := NewController()
 	results := make(chan Snapshot, 1)
 	go func() {
-		snapshot, _ := controller.WaitState(context.Background(), StateStarting)
-		results <- snapshot
+		snap, _ := controller.WaitState(context.Background(), StateStarting)
+		results <- snap
 	}()
 
 	_, _ = controller.BeginStart()
@@ -153,9 +153,9 @@ func TestControllerSignalWaitSnapshotReturnsSignals(t *testing.T) {
 	t.Parallel()
 
 	controller := NewController()
-	snapshot, changed, done := controller.waitSnapshot()
-	if !snapshot.IsValid() {
-		t.Fatalf("waitSnapshot snapshot is invalid: %+v", snapshot)
+	snap, changed, done := controller.waitSnapshot()
+	if !snap.IsValid() {
+		t.Fatalf("waitSnapshot snapshot is invalid: %+v", snap)
 	}
 	if changed == nil || done == nil {
 		t.Fatalf("waitSnapshot returned changed=%v done=%v, want non-nil", changed, done)
@@ -165,8 +165,8 @@ func TestControllerSignalWaitSnapshotReturnsSignals(t *testing.T) {
 func TestControllerSignalCommitTimeUsesClockValue(t *testing.T) {
 	t.Parallel()
 
-	clock := &countingClock{now: testTime}
-	controller := NewController(WithClock(clock))
+	clk := &countingClock{now: testTime}
+	controller := NewController(WithClock(clk))
 	transition, err := controller.BeginStart()
 	if err != nil {
 		t.Fatalf("BeginStart = %v", err)
@@ -174,8 +174,8 @@ func TestControllerSignalCommitTimeUsesClockValue(t *testing.T) {
 	if !transition.At.Equal(testTime) {
 		t.Fatalf("Transition.At = %v, want %v", transition.At, testTime)
 	}
-	if clock.calls != 1 {
-		t.Fatalf("clock calls = %d, want 1", clock.calls)
+	if clk.calls != 1 {
+		t.Fatalf("clock calls = %d, want 1", clk.calls)
 	}
 }
 

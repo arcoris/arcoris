@@ -27,7 +27,7 @@ func TestResultConstructors(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		result Result
+		res    Result
 		status Status
 		reason Reason
 	}{
@@ -42,14 +42,14 @@ func TestResultConstructors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if tc.result.Name != "storage" {
-				t.Fatalf("Name = %q, want storage", tc.result.Name)
+			if tc.res.Name != "storage" {
+				t.Fatalf("Name = %q, want storage", tc.res.Name)
 			}
-			if tc.result.Status != tc.status {
-				t.Fatalf("Status = %s, want %s", tc.result.Status, tc.status)
+			if tc.res.Status != tc.status {
+				t.Fatalf("Status = %s, want %s", tc.res.Status, tc.status)
 			}
-			if tc.result.Reason != tc.reason {
-				t.Fatalf("Reason = %s, want %s", tc.result.Reason, tc.reason)
+			if tc.res.Reason != tc.reason {
+				t.Fatalf("Reason = %s, want %s", tc.res.Reason, tc.reason)
 			}
 		})
 	}
@@ -60,37 +60,37 @@ func TestResultWithMethods(t *testing.T) {
 
 	cause := errors.New("cause")
 	observed := testObserved
-	result := Healthy("storage").
+	res := Healthy("storage").
 		WithCause(cause).
 		WithObserved(observed).
 		WithDuration(time.Second).
 		WithMessage("message").
 		WithReason(ReasonFatal)
 
-	if result.Cause != cause || result.Observed != observed || result.Duration != time.Second {
-		t.Fatalf("metadata not preserved: %+v", result)
+	if res.Cause != cause || res.Observed != observed || res.Duration != time.Second {
+		t.Fatalf("metadata not preserved: %+v", res)
 	}
-	if result.Message != "message" || result.Reason != ReasonFatal {
-		t.Fatalf("message/reason not preserved: %+v", result)
+	if res.Message != "message" || res.Reason != ReasonFatal {
+		t.Fatalf("message/reason not preserved: %+v", res)
 	}
 }
 
 func TestResultNormalize(t *testing.T) {
 	t.Parallel()
 
-	result := Result{Status: Status(99), Duration: -time.Second}.Normalize("storage", testObserved)
+	res := Result{Status: Status(99), Duration: -time.Second}.Normalize("storage", testObserved)
 
-	if result.Name != "storage" {
-		t.Fatalf("Name = %q, want storage", result.Name)
+	if res.Name != "storage" {
+		t.Fatalf("Name = %q, want storage", res.Name)
 	}
-	if result.Status != StatusUnknown {
-		t.Fatalf("Status = %s, want unknown", result.Status)
+	if res.Status != StatusUnknown {
+		t.Fatalf("Status = %s, want unknown", res.Status)
 	}
-	if result.Observed != testObserved {
-		t.Fatalf("Observed = %v, want %v", result.Observed, testObserved)
+	if res.Observed != testObserved {
+		t.Fatalf("Observed = %v, want %v", res.Observed, testObserved)
 	}
-	if result.Duration != 0 {
-		t.Fatalf("Duration = %s, want 0", result.Duration)
+	if res.Duration != 0 {
+		t.Fatalf("Duration = %s, want 0", res.Duration)
 	}
 }
 
@@ -98,20 +98,20 @@ func TestResultPredicates(t *testing.T) {
 	t.Parallel()
 
 	cause := errors.New("cause")
-	result := Degraded("storage", ReasonOverloaded, "overloaded").
+	res := Degraded("storage", ReasonOverloaded, "overloaded").
 		WithCause(cause).
 		WithObserved(testObserved)
 
-	if !result.IsValid() || !result.IsNamed() || !result.IsObserved() || !result.HasCause() {
-		t.Fatalf("predicate mismatch for %+v", result)
+	if !res.IsValid() || !res.IsNamed() || !res.IsObserved() || !res.HasCause() {
+		t.Fatalf("predicate mismatch for %+v", res)
 	}
-	if !result.HasReason(ReasonOverloaded) || result.HasReason(ReasonFatal) {
-		t.Fatalf("reason predicate mismatch for %+v", result)
+	if !res.HasReason(ReasonOverloaded) || res.HasReason(ReasonFatal) {
+		t.Fatalf("reason predicate mismatch for %+v", res)
 	}
-	if result.IsAffirmative() || result.IsNegative() || !result.IsKnown() || !result.IsOperational() {
-		t.Fatalf("status predicate mismatch for %+v", result)
+	if res.IsAffirmative() || res.IsNegative() || !res.IsKnown() || !res.IsOperational() {
+		t.Fatalf("status predicate mismatch for %+v", res)
 	}
-	if !Unhealthy("storage", ReasonFatal, "fatal").MoreSevereThan(result) {
+	if !Unhealthy("storage", ReasonFatal, "fatal").MoreSevereThan(res) {
 		t.Fatal("unhealthy result should be more severe than degraded")
 	}
 	if (Result{Status: StatusHealthy, Duration: -time.Second}).IsValid() {

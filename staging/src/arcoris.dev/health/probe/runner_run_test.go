@@ -41,9 +41,9 @@ func TestRunnerRunPerformsInitialProbe(t *testing.T) {
 		done <- runner.Run(ctx)
 	}()
 
-	snapshot := waitForSnapshot(t, runner, health.TargetReady)
-	if !snapshot.IsFresh() {
-		t.Fatalf("snapshot IsFresh() = false, want true: %#v", snapshot)
+	snap := waitForSnapshot(t, runner, health.TargetReady)
+	if !snap.IsFresh() {
+		t.Fatalf("snapshot IsFresh() = false, want true: %#v", snap)
 	}
 
 	cancel()
@@ -72,9 +72,9 @@ func TestRunnerRunWaitsForScheduleDelayWhenInitialProbeDisabled(t *testing.T) {
 		t.Fatal("Snapshot before schedule delay ok = true, want false")
 	}
 
-	snapshot := stepUntilRevision(t, clk, runner, health.TargetReady, 1, interval)
-	if snapshot.Revision != 1 {
-		t.Fatalf("Revision = %d, want 1", snapshot.Revision)
+	snap := stepUntilRevision(t, clk, runner, health.TargetReady, 1, interval)
+	if snap.Revision != 1 {
+		t.Fatalf("Revision = %d, want 1", snap.Revision)
 	}
 
 	cancel()
@@ -122,9 +122,9 @@ func TestRunnerRunUsesScheduleDelays(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	schedule := delay.Delays(time.Second, 3*time.Second)
+	sched := delay.Delays(time.Second, 3*time.Second)
 	clk := newTestClock()
-	runner := newTestRunner(t, clk, WithSchedule(schedule), WithInitialProbe(false))
+	runner := newTestRunner(t, clk, WithSchedule(sched), WithInitialProbe(false))
 	done := make(chan error, 1)
 
 	go func() {
@@ -164,12 +164,12 @@ func TestRunnerRunAcceptsZeroScheduleDelay(t *testing.T) {
 	if !errors.Is(err, ErrExhaustedSchedule) {
 		t.Fatalf("Run() = %v, want ErrExhaustedSchedule", err)
 	}
-	snapshot, ok := runner.Snapshot(health.TargetReady)
+	snap, ok := runner.Snapshot(health.TargetReady)
 	if !ok {
 		t.Fatal("Snapshot() ok = false, want true")
 	}
-	if snapshot.Revision != 1 {
-		t.Fatalf("Revision = %d, want 1", snapshot.Revision)
+	if snap.Revision != 1 {
+		t.Fatalf("Revision = %d, want 1", snap.Revision)
 	}
 }
 
@@ -192,9 +192,9 @@ func TestRunnerRunInitialProbeBeforeScheduleDelay(t *testing.T) {
 		done <- runner.Run(ctx)
 	}()
 
-	snapshot := waitForRevision(t, runner, health.TargetReady, 1)
-	if snapshot.Revision != 1 {
-		t.Fatalf("Revision = %d, want 1", snapshot.Revision)
+	snap := waitForRevision(t, runner, health.TargetReady, 1)
+	if snap.Revision != 1 {
+		t.Fatalf("Revision = %d, want 1", snap.Revision)
 	}
 
 	cancel()
@@ -322,9 +322,9 @@ func TestRunnerRunCanRestartAfterStop(t *testing.T) {
 		secondDone <- runner.Run(secondCtx)
 	}()
 	waitForRunnerRunning(t, runner)
-	snapshot := stepUntilRevision(t, clk, runner, health.TargetReady, 1, interval)
-	if snapshot.Revision != 1 {
-		t.Fatalf("Revision = %d, want 1", snapshot.Revision)
+	snap := stepUntilRevision(t, clk, runner, health.TargetReady, 1, interval)
+	if snap.Revision != 1 {
+		t.Fatalf("Revision = %d, want 1", snap.Revision)
 	}
 
 	secondCancel()

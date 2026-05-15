@@ -28,7 +28,7 @@ func TestResultFixtures(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		result     health.Result
+		res        health.Result
 		wantStatus health.Status
 		wantReason health.Reason
 	}{
@@ -43,10 +43,10 @@ func TestResultFixtures(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			AssertResultStatus(t, tc.result, tc.wantStatus)
-			AssertResultReason(t, tc.result, tc.wantReason)
-			if !tc.result.Observed.Equal(ObservedTime) {
-				t.Fatalf("Observed = %v, want %v", tc.result.Observed, ObservedTime)
+			AssertResultStatus(t, tc.res, tc.wantStatus)
+			AssertResultReason(t, tc.res, tc.wantReason)
+			if !tc.res.Observed.Equal(ObservedTime) {
+				t.Fatalf("Observed = %v, want %v", tc.res.Observed, ObservedTime)
 			}
 		})
 	}
@@ -55,12 +55,12 @@ func TestResultFixtures(t *testing.T) {
 func TestResultTransformers(t *testing.T) {
 	t.Parallel()
 
-	result := ResultWithPrivateCause(ResultWithDuration(HealthyResult("storage"), 15*time.Millisecond))
+	res := ResultWithPrivateCause(ResultWithDuration(HealthyResult("storage"), 15*time.Millisecond))
 
-	if result.Duration != 15*time.Millisecond {
-		t.Fatalf("Duration = %s, want 15ms", result.Duration)
+	if res.Duration != 15*time.Millisecond {
+		t.Fatalf("Duration = %s, want 15ms", res.Duration)
 	}
-	if result.Cause == nil || result.Cause.Error() != "private cause" {
-		t.Fatalf("Cause = %v, want private cause", result.Cause)
+	if res.Cause == nil || res.Cause.Error() != "private cause" {
+		t.Fatalf("Cause = %v, want private cause", res.Cause)
 	}
 }

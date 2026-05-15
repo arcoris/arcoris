@@ -55,8 +55,8 @@ const (
 // randomness and MUST NOT be used for security decisions.
 //
 // Jitter panics when factor is negative, NaN, or infinite.
-func Jitter(duration time.Duration, factor float64) time.Duration {
-	return jitterWithDraw(duration, factor, randomJitterDelta)
+func Jitter(d time.Duration, factor float64) time.Duration {
+	return jitterWithDraw(d, factor, randomJitterDelta)
 }
 
 // jitterWithDraw returns duration plus a jitter delta selected by draw.
@@ -67,18 +67,18 @@ func Jitter(duration time.Duration, factor float64) time.Duration {
 // [0, maxDelta]. Public callers cannot provide draw; the invariant is enforced
 // by the package-owned randomJitterDelta implementation.
 func jitterWithDraw(
-	duration time.Duration,
+	d time.Duration,
 	factor float64,
 	draw func(maxDelta time.Duration) time.Duration,
 ) time.Duration {
 	requireJitterFactor(factor)
 
-	maxDelta := maxJitterDelta(duration, factor)
+	maxDelta := maxJitterDelta(d, factor)
 	if maxDelta <= 0 {
-		return duration
+		return d
 	}
 
-	return duration + draw(maxDelta)
+	return d + draw(maxDelta)
 }
 
 // randomJitterDelta returns a pseudo-random jitter delta in [0, maxDelta].
@@ -97,17 +97,17 @@ func randomJitterDelta(maxDelta time.Duration) time.Duration {
 // duration+result never overflows time.Duration. Non-positive durations and zero
 // factors return zero because positive jitter is not meaningful for immediate or
 // disabled waits.
-func maxJitterDelta(duration time.Duration, factor float64) time.Duration {
-	if duration <= 0 || factor == 0 {
+func maxJitterDelta(d time.Duration, factor float64) time.Duration {
+	if d <= 0 || factor == 0 {
 		return 0
 	}
 
-	available := maxDuration - duration
+	available := maxDuration - d
 	if available <= 0 {
 		return 0
 	}
 
-	requested := float64(duration) * factor
+	requested := float64(d) * factor
 	if requested <= 0 {
 		return 0
 	}

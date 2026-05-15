@@ -67,7 +67,7 @@ func newWatchStream() *watchStream {
 }
 
 // Send records a detached response or returns the configured send error.
-func (s *watchStream) Send(response *healthpb.HealthCheckResponse) error {
+func (s *watchStream) Send(resp *healthpb.HealthCheckResponse) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -75,7 +75,7 @@ func (s *watchStream) Send(response *healthpb.HealthCheckResponse) error {
 		return s.sendErr
 	}
 
-	copied := &healthpb.HealthCheckResponse{Status: response.GetStatus()}
+	copied := &healthpb.HealthCheckResponse{Status: resp.GetStatus()}
 	s.responses = append(s.responses, copied)
 	select {
 	case s.sent <- copied:
@@ -114,7 +114,7 @@ func (s *watchStream) RecvMsg(any) error {
 }
 
 // mustNewServer builds a Server or fails the test.
-func mustNewServer(t *testing.T, source Source, opts ...Option) *Server {
+func mustNewServer(t *testing.T, source health.Evaluator, opts ...Option) *Server {
 	t.Helper()
 
 	server, err := NewServer(source, opts...)
@@ -143,8 +143,8 @@ func mustReceiveStatus(
 	t.Helper()
 
 	select {
-	case response := <-stream.sent:
-		return response.GetStatus()
+	case resp := <-stream.sent:
+		return resp.GetStatus()
 	case <-time.After(testTimeout):
 		t.Fatal("timed out waiting for watch response")
 		return healthpb.HealthCheckResponse_UNKNOWN
@@ -156,8 +156,8 @@ func assertNoWatchStatus(t *testing.T, stream *watchStream) {
 	t.Helper()
 
 	select {
-	case response := <-stream.sent:
-		t.Fatalf("unexpected watch response: %s", response.GetStatus())
+	case resp := <-stream.sent:
+		t.Fatalf("unexpected watch response: %s", resp.GetStatus())
 	default:
 	}
 }

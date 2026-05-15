@@ -32,8 +32,8 @@ package retry
 func WithClassifier(classifier Classifier) Option {
 	requireClassifier(classifier)
 
-	return func(config *config) {
-		config.classifier = classifier
+	return func(cfg *config) {
+		cfg.classifier = classifier
 	}
 }
 

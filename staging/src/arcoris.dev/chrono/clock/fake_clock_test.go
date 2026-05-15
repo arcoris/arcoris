@@ -24,9 +24,9 @@ func TestNewFakeClockInitializesCurrentTime(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
+	clk := NewFakeClock(start)
 
-	mustEqualTime(t, "FakeClock.Now()", clock.Now(), start)
+	mustEqualTime(t, "FakeClock.Now()", clk.Now(), start)
 }
 
 // TestNewFakeClockInitializesRegistries verifies that fake waiters, timers, and
@@ -37,33 +37,33 @@ func TestNewFakeClockInitializesCurrentTime(t *testing.T) {
 func TestNewFakeClockInitializesRegistries(t *testing.T) {
 	t.Parallel()
 
-	clock := NewFakeClock(fakeClockTestTime())
+	clk := NewFakeClock(fakeClockTestTime())
 
-	clock.mu.Lock()
-	defer clock.mu.Unlock()
+	clk.mu.Lock()
+	defer clk.mu.Unlock()
 
-	if clock.waiters == nil {
+	if clk.waiters == nil {
 		t.Fatal("FakeClock.waiters is nil")
 	}
 
-	if clock.timers == nil {
+	if clk.timers == nil {
 		t.Fatal("FakeClock.timers is nil")
 	}
 
-	if clock.tickers == nil {
+	if clk.tickers == nil {
 		t.Fatal("FakeClock.tickers is nil")
 	}
 
-	if len(clock.waiters) != 0 {
-		t.Fatalf("len(FakeClock.waiters) = %d, want 0", len(clock.waiters))
+	if len(clk.waiters) != 0 {
+		t.Fatalf("len(FakeClock.waiters) = %d, want 0", len(clk.waiters))
 	}
 
-	if len(clock.timers) != 0 {
-		t.Fatalf("len(FakeClock.timers) = %d, want 0", len(clock.timers))
+	if len(clk.timers) != 0 {
+		t.Fatalf("len(FakeClock.timers) = %d, want 0", len(clk.timers))
 	}
 
-	if len(clock.tickers) != 0 {
-		t.Fatalf("len(FakeClock.tickers) = %d, want 0", len(clock.tickers))
+	if len(clk.tickers) != 0 {
+		t.Fatalf("len(FakeClock.tickers) = %d, want 0", len(clk.tickers))
 	}
 }
 
@@ -73,10 +73,10 @@ func TestFakeClockDoesNotAdvanceWithRealTime(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
+	clk := NewFakeClock(start)
 
-	first := clock.Now()
-	second := clock.Now()
+	first := clk.Now()
+	second := clk.Now()
 
 	mustEqualTime(t, "first FakeClock.Now()", first, start)
 	mustEqualTime(t, "second FakeClock.Now()", second, start)
@@ -87,13 +87,13 @@ func TestFakeClockDoesNotAdvanceWithRealTime(t *testing.T) {
 func TestFakeClockRegistriesBecomeEmptyAfterDueDelivery(t *testing.T) {
 	t.Parallel()
 
-	clock := NewFakeClock(fakeClockTestTime())
+	clk := NewFakeClock(fakeClockTestTime())
 
-	waiter := clock.After(5)
-	timer := clock.NewTimer(5)
-	ticker := clock.NewTicker(5)
+	waiter := clk.After(5)
+	timer := clk.NewTimer(5)
+	ticker := clk.NewTicker(5)
 
-	clock.Step(5)
+	clk.Step(5)
 
 	_ = mustReceiveTime(t, waiter)
 	_ = mustReceiveTime(t, timer.C())
@@ -101,18 +101,18 @@ func TestFakeClockRegistriesBecomeEmptyAfterDueDelivery(t *testing.T) {
 
 	ticker.Stop()
 
-	clock.mu.Lock()
-	defer clock.mu.Unlock()
+	clk.mu.Lock()
+	defer clk.mu.Unlock()
 
-	if len(clock.waiters) != 0 {
-		t.Fatalf("len(FakeClock.waiters) = %d, want 0", len(clock.waiters))
+	if len(clk.waiters) != 0 {
+		t.Fatalf("len(FakeClock.waiters) = %d, want 0", len(clk.waiters))
 	}
 
-	if len(clock.timers) != 0 {
-		t.Fatalf("len(FakeClock.timers) = %d, want 0", len(clock.timers))
+	if len(clk.timers) != 0 {
+		t.Fatalf("len(FakeClock.timers) = %d, want 0", len(clk.timers))
 	}
 
-	if len(clock.tickers) != 0 {
-		t.Fatalf("len(FakeClock.tickers) = %d, want 0", len(clock.tickers))
+	if len(clk.tickers) != 0 {
+		t.Fatalf("len(FakeClock.tickers) = %d, want 0", len(clk.tickers))
 	}
 }

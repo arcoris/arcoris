@@ -28,16 +28,16 @@ func TestFixedRejectsNegativeDelay(t *testing.T) {
 }
 
 func TestFixedReturnsConfiguredDelayForever(t *testing.T) {
-	sequence := Fixed(3 * time.Second).NewSequence()
+	seq := Fixed(3 * time.Second).NewSequence()
 
-	mustNext(t, sequence, 3*time.Second)
-	mustNext(t, sequence, 3*time.Second)
-	mustNext(t, sequence, 3*time.Second)
+	mustNext(t, seq, 3*time.Second)
+	mustNext(t, seq, 3*time.Second)
+	mustNext(t, seq, 3*time.Second)
 }
 
 func TestFixedAllowsZeroDelay(t *testing.T) {
-	sequence := Fixed(0).NewSequence()
+	seq := Fixed(0).NewSequence()
 
-	mustNext(t, sequence, 0)
-	mustNext(t, sequence, 0)
+	mustNext(t, seq, 0)
+	mustNext(t, seq, 0)
 }

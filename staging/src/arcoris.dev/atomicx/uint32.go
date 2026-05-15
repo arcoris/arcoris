@@ -107,8 +107,8 @@ func (p *PaddedUint32) Load() uint32 {
 // Store does not validate the value. If the uint32 represents an enum-like state
 // machine, the caller is responsible for validating allowed states and
 // transitions.
-func (p *PaddedUint32) Store(value uint32) {
-	p.value.Store(value)
+func (p *PaddedUint32) Store(val uint32) {
+	p.value.Store(val)
 }
 
 // Add atomically adds delta to the current uint32 value and returns the new

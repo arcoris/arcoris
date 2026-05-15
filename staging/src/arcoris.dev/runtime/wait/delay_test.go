@@ -39,16 +39,16 @@ func TestDelayReturnsNilForNonPositiveDuration(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name     string
-		duration time.Duration
+		name string
+		d    time.Duration
 	}{
 		{
-			name:     "zero",
-			duration: 0,
+			name: "zero",
+			d:    0,
 		},
 		{
-			name:     "negative",
-			duration: -time.Second,
+			name: "negative",
+			d:    -time.Second,
 		},
 	}
 
@@ -56,7 +56,7 @@ func TestDelayReturnsNilForNonPositiveDuration(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if err := Delay(context.Background(), tc.duration); err != nil {
+			if err := Delay(context.Background(), tc.d); err != nil {
 				t.Fatalf("Delay(...) = %v, want nil", err)
 			}
 		})

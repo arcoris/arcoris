@@ -43,33 +43,33 @@ func TestProportionalRejectsInvalidInput(t *testing.T) {
 }
 
 func TestProportionalReturnsValueInsideSymmetricRange(t *testing.T) {
-	sequence := Proportional(delay.Fixed(10*time.Second), 0.5, WithRandom(fixedRandom(10*time.Second))).NewSequence()
+	seq := Proportional(delay.Fixed(10*time.Second), 0.5, WithRandom(fixedRandom(10*time.Second))).NewSequence()
 
-	mustNext(t, sequence, 15*time.Second)
+	mustNext(t, seq, 15*time.Second)
 }
 
 func TestProportionalCanReturnLowerBound(t *testing.T) {
-	sequence := Proportional(delay.Fixed(10*time.Second), 0.5, WithRandom(fixedRandom(0))).NewSequence()
+	seq := Proportional(delay.Fixed(10*time.Second), 0.5, WithRandom(fixedRandom(0))).NewSequence()
 
-	mustNext(t, sequence, 5*time.Second)
+	mustNext(t, seq, 5*time.Second)
 }
 
 func TestProportionalRatioZeroReturnsBaseDelay(t *testing.T) {
-	sequence := Proportional(delay.Fixed(10*time.Second), 0, WithRandom(fixedRandom(99))).NewSequence()
+	seq := Proportional(delay.Fixed(10*time.Second), 0, WithRandom(fixedRandom(99))).NewSequence()
 
-	mustNext(t, sequence, 10*time.Second)
+	mustNext(t, seq, 10*time.Second)
 }
 
 func TestProportionalLeavesZeroBaseDelayAtZero(t *testing.T) {
-	sequence := Proportional(delay.Fixed(0), 0.5, WithRandom(fixedRandom(99))).NewSequence()
+	seq := Proportional(delay.Fixed(0), 0.5, WithRandom(fixedRandom(99))).NewSequence()
 
-	mustNext(t, sequence, 0)
+	mustNext(t, seq, 0)
 }
 
 func TestProportionalPreservesChildExhaustion(t *testing.T) {
-	sequence := Proportional(delay.Delays(), 0.5, WithRandom(fixedRandom(0))).NewSequence()
+	seq := Proportional(delay.Delays(), 0.5, WithRandom(fixedRandom(0))).NewSequence()
 
-	mustExhausted(t, sequence)
+	mustExhausted(t, seq)
 }
 
 func TestProportionalTransformSaturates(t *testing.T) {

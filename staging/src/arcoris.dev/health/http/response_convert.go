@@ -20,7 +20,7 @@ import "arcoris.dev/health"
 
 // newResponse converts a core health report into the adapter's safe DTO.
 func newResponse(report health.Report, passed bool, policy health.TargetPolicy, detail DetailLevel) Response {
-	response := Response{
+	resp := Response{
 		Target:         report.Target.String(),
 		Status:         report.Status.String(),
 		Passed:         passed,
@@ -30,10 +30,10 @@ func newResponse(report health.Report, passed bool, policy health.TargetPolicy, 
 
 	checks := selectChecks(report, policy, detail)
 	if len(checks) > 0 {
-		response.Checks = newCheckResponses(checks, policy)
+		resp.Checks = newCheckResponses(checks, policy)
 	}
 
-	return response
+	return resp
 }
 
 // newCheckResponses converts selected results into safe HTTP DTOs.
@@ -51,14 +51,14 @@ func newCheckResponses(checks []health.Result, policy health.TargetPolicy) []Che
 }
 
 // newCheckResponse converts one core health result into a safe DTO.
-func newCheckResponse(result health.Result, policy health.TargetPolicy) CheckResponse {
+func newCheckResponse(res health.Result, policy health.TargetPolicy) CheckResponse {
 	return CheckResponse{
-		Name:           result.Name,
-		Status:         result.Status.String(),
-		Passed:         policy.Passes(result.Status),
-		Reason:         formatReason(result.Reason),
-		Message:        result.Message,
-		Observed:       formatTimestamp(result.Observed),
-		DurationMillis: durationMillis(result.Duration),
+		Name:           res.Name,
+		Status:         res.Status.String(),
+		Passed:         policy.Passes(res.Status),
+		Reason:         formatReason(res.Reason),
+		Message:        res.Message,
+		Observed:       formatTimestamp(res.Observed),
+		DurationMillis: durationMillis(res.Duration),
 	}
 }

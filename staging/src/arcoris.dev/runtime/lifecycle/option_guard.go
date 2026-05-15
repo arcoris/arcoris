@@ -28,12 +28,12 @@ package lifecycle
 //
 // A nil guard is ignored. This keeps conditional option construction safe.
 func WithGuard(guard TransitionGuard) Option {
-	return func(config *controllerConfig) {
+	return func(cfg *controllerConfig) {
 		if guard == nil {
 			return
 		}
 
-		config.guards = append(config.guards, guard)
+		cfg.guards = append(cfg.guards, guard)
 	}
 }
 
@@ -45,13 +45,13 @@ func WithGuard(guard TransitionGuard) Option {
 // Nil guards are ignored. This makes it safe to build guard lists from optional
 // dependencies without adding special-case filtering at call sites.
 func WithGuards(guards ...TransitionGuard) Option {
-	return func(config *controllerConfig) {
+	return func(cfg *controllerConfig) {
 		for _, guard := range guards {
 			if guard == nil {
 				continue
 			}
 
-			config.guards = append(config.guards, guard)
+			cfg.guards = append(cfg.guards, guard)
 		}
 	}
 }

@@ -69,8 +69,8 @@ type Evaluator struct {
 // WithTargetTimeout to override the timeout for a specific target,
 // WithExecutionPolicy or WithParallelChecks to change default execution, and
 // target-specific execution options to override execution for a specific target.
-func NewEvaluator(registry *health.Registry, opts ...EvaluatorOption) (*Evaluator, error) {
-	if registry == nil {
+func NewEvaluator(r *health.Registry, opts ...EvaluatorOption) (*Evaluator, error) {
+	if r == nil {
 		return nil, ErrNilRegistry
 	}
 
@@ -90,7 +90,7 @@ func NewEvaluator(registry *health.Registry, opts ...EvaluatorOption) (*Evaluato
 	}
 
 	return &Evaluator{
-		registry:                registry,
+		registry:                r,
 		clock:                   cfg.clock,
 		defaultTimeout:          cfg.defaultTimeout,
 		targetTimeouts:          targetTimeouts,

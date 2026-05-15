@@ -91,9 +91,9 @@ func TestReportCheckAccessors(t *testing.T) {
 		},
 	}
 
-	result, ok := report.Check("queue")
-	if !ok || result.Status != StatusDegraded {
-		t.Fatalf("Check(queue) = %+v, %v; want degraded true", result, ok)
+	res, ok := report.Check("queue")
+	if !ok || res.Status != StatusDegraded {
+		t.Fatalf("Check(queue) = %+v, %v; want degraded true", res, ok)
 	}
 	if _, ok := report.Check("missing"); ok {
 		t.Fatal("Check(missing) ok = true, want false")

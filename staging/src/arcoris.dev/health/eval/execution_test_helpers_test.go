@@ -29,7 +29,7 @@ const executionTestTimeout = 5 * time.Second
 
 func mustRegisterExecutionCheck(
 	t *testing.T,
-	registry *health.Registry,
+	r *health.Registry,
 	target health.Target,
 	name string,
 	fn health.CheckFunc,
@@ -41,19 +41,19 @@ func mustRegisterExecutionCheck(
 		t.Fatalf("health.NewCheck(%q) = %v, want nil", name, err)
 	}
 
-	if err := registry.Register(target, chk); err != nil {
+	if err := r.Register(target, chk); err != nil {
 		t.Fatalf("Register(%s, %q) = %v, want nil", target, name, err)
 	}
 }
 
 func mustExecutionEvaluator(
 	t *testing.T,
-	registry *health.Registry,
+	r *health.Registry,
 	opts ...EvaluatorOption,
 ) *Evaluator {
 	t.Helper()
 
-	evaluator, err := NewEvaluator(registry, opts...)
+	evaluator, err := NewEvaluator(r, opts...)
 	if err != nil {
 		t.Fatalf("NewEvaluator() = %v, want nil", err)
 	}
@@ -90,13 +90,13 @@ func executionCheckName(i int) string {
 	return "check_extra"
 }
 
-func updateMaxInt64(maxSeen *atomic.Int64, current int64) {
+func updateMaxInt64(maxSeen *atomic.Int64, cur int64) {
 	for {
 		prev := maxSeen.Load()
-		if current <= prev {
+		if cur <= prev {
 			return
 		}
-		if maxSeen.CompareAndSwap(prev, current) {
+		if maxSeen.CompareAndSwap(prev, cur) {
 			return
 		}
 	}

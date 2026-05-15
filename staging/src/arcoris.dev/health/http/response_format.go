@@ -32,12 +32,12 @@ func formatTimestamp(ts time.Time) string {
 }
 
 // durationMillis converts a duration into whole milliseconds for public output.
-func durationMillis(duration time.Duration) int64 {
-	if duration <= 0 {
+func durationMillis(d time.Duration) int64 {
+	if d <= 0 {
 		return 0
 	}
 
-	return duration.Milliseconds()
+	return d.Milliseconds()
 }
 
 // formatReason converts a core health reason into the public string form.

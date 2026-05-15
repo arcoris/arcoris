@@ -76,7 +76,7 @@ func TestNewRunnerRejectsInvalidConfiguration(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		eval    Evaluator
+		eval    health.Evaluator
 		opts    []Option
 		wantErr error
 	}{

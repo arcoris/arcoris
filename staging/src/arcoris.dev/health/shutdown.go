@@ -270,13 +270,13 @@ func (c sourceContextCheck) Name() string {
 func (c sourceContextCheck) Check(ctx context.Context) Result {
 	select {
 	case <-c.source.Done():
-		result := Unhealthy(c.name, c.reason, c.message)
+		res := Unhealthy(c.name, c.reason, c.message)
 
 		if cause := context.Cause(c.source); cause != nil {
-			result = result.WithCause(cause)
+			res = res.WithCause(cause)
 		}
 
-		return result
+		return res
 
 	default:
 		return Healthy(c.name)

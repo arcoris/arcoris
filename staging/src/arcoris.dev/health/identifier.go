@@ -23,15 +23,15 @@ package health
 // reports, diagnostics, metrics labels, tests, and transport adapters. The
 // helper deliberately rejects empty values; callers that own an empty sentinel,
 // such as ReasonNone, must handle that case before calling it.
-func validLowerSnakeIdentifier(value string, maxLength int) bool {
-	if len(value) == 0 || len(value) > maxLength {
+func validLowerSnakeIdentifier(val string, maxLength int) bool {
+	if len(val) == 0 || len(val) > maxLength {
 		return false
 	}
 
 	previousUnderscore := false
 
-	for i := 0; i < len(value); i++ {
-		c := value[i]
+	for i := 0; i < len(val); i++ {
+		c := val[i]
 
 		switch {
 		case c >= 'a' && c <= 'z':

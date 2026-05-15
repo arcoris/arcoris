@@ -25,8 +25,8 @@ type Maybe[T any] struct {
 }
 
 // Some returns a Maybe containing value.
-func Some[T any](value T) Maybe[T] {
-	return Maybe[T]{value: value, ok: true}
+func Some[T any](val T) Maybe[T] {
+	return Maybe[T]{value: val, ok: true}
 }
 
 // None returns a Maybe with no value.
@@ -38,9 +38,9 @@ func None[T any]() Maybe[T] {
 //
 // When ok is false, value is discarded so the returned Maybe does not retain
 // references owned by the caller.
-func From[T any](value T, ok bool) Maybe[T] {
+func From[T any](val T, ok bool) Maybe[T] {
 	if ok {
-		return Some(value)
+		return Some(val)
 	}
 	return None[T]()
 }

@@ -25,19 +25,19 @@ import (
 // targetEvaluation is the per-target List cache entry.
 //
 // List may expose several service names for the same health.Target. This value
-// lets the method evaluate that target once, remember whether Source failed,
+// lets the method evaluate that target once, remember whether evaluation failed,
 // and apply each service's own policy afterward.
 type targetEvaluation struct {
-	// status is the package-health status returned by Source.
+	// status is the package-health status returned by the evaluator.
 	status health.Status
 
-	// failed records Source failure without storing or exposing the raw error.
+	// failed records evaluator failure without storing or exposing the raw error.
 	failed bool
 }
 
 // evaluateTarget evaluates target for List and normalizes failures.
 //
-// A Source error is intentionally reduced to failed=true. List maps affected
+// An evaluator error is intentionally reduced to failed=true. List maps affected
 // service responses to gRPC UNKNOWN and never exposes the raw error text.
 func (s *Server) evaluateTarget(ctx context.Context, target health.Target) targetEvaluation {
 	report, err := s.source.Evaluate(ctx, target)

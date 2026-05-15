@@ -75,6 +75,6 @@ type Uint64CounterSnapshot struct {
 // Multiple wraps between two samples cannot be detected from two uint64 values
 // alone. Callers that rely on accurate activity windows must sample frequently
 // enough to make multiple wraps impossible in practice.
-func (s Uint64CounterSnapshot) DeltaSince(previous Uint64CounterSnapshot) Uint64CounterDelta {
-	return NewUint64CounterDelta(previous.Value, s.Value)
+func (s Uint64CounterSnapshot) DeltaSince(prev Uint64CounterSnapshot) Uint64CounterDelta {
+	return NewUint64CounterDelta(prev.Value, s.Value)
 }

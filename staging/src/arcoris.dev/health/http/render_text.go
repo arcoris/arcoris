@@ -77,20 +77,20 @@ func textReportBody(report health.Report, passed bool, policy health.TargetPolic
 }
 
 // writeTextCheck appends one safe check line to builder.
-func writeTextCheck(builder *strings.Builder, result health.Result, policy health.TargetPolicy) {
+func writeTextCheck(builder *strings.Builder, res health.Result, policy health.TargetPolicy) {
 	marker := "[-]"
-	if policy.Passes(result.Status) {
+	if policy.Passes(res.Status) {
 		marker = "[+]"
 	}
 
-	fmt.Fprintf(builder, "%s %s %s", marker, result.Name, result.Status.String())
+	fmt.Fprintf(builder, "%s %s %s", marker, res.Name, res.Status.String())
 
-	if reason := formatReason(result.Reason); reason != "" {
+	if reason := formatReason(res.Reason); reason != "" {
 		fmt.Fprintf(builder, " %s", reason)
 	}
 
-	if result.Message != "" {
-		fmt.Fprintf(builder, ": %s", result.Message)
+	if res.Message != "" {
+		fmt.Fprintf(builder, ": %s", res.Message)
 	}
 
 	builder.WriteByte('\n')

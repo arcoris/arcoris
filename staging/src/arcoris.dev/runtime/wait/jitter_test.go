@@ -39,16 +39,16 @@ func TestJitterReturnsOriginalDurationForNonPositiveDurations(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name     string
-		duration time.Duration
+		name string
+		d    time.Duration
 	}{
 		{
-			name:     "zero",
-			duration: 0,
+			name: "zero",
+			d:    0,
 		},
 		{
-			name:     "negative",
-			duration: -time.Second,
+			name: "negative",
+			d:    -time.Second,
 		},
 	}
 
@@ -56,8 +56,8 @@ func TestJitterReturnsOriginalDurationForNonPositiveDurations(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := Jitter(tc.duration, 1); got != tc.duration {
-				t.Fatalf("Jitter(%v, 1) = %v, want %v", tc.duration, got, tc.duration)
+			if got := Jitter(tc.d, 1); got != tc.d {
+				t.Fatalf("Jitter(%v, 1) = %v, want %v", tc.d, got, tc.d)
 			}
 		})
 	}
@@ -133,52 +133,52 @@ func TestMaxJitterDelta(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name     string
-		duration time.Duration
-		factor   float64
-		want     time.Duration
+		name   string
+		d      time.Duration
+		factor float64
+		want   time.Duration
 	}{
 		{
-			name:     "zero duration",
-			duration: 0,
-			factor:   1,
-			want:     0,
+			name:   "zero duration",
+			d:      0,
+			factor: 1,
+			want:   0,
 		},
 		{
-			name:     "negative duration",
-			duration: -time.Second,
-			factor:   1,
-			want:     0,
+			name:   "negative duration",
+			d:      -time.Second,
+			factor: 1,
+			want:   0,
 		},
 		{
-			name:     "zero factor",
-			duration: time.Second,
-			factor:   0,
-			want:     0,
+			name:   "zero factor",
+			d:      time.Second,
+			factor: 0,
+			want:   0,
 		},
 		{
-			name:     "fractional factor",
-			duration: 10 * time.Second,
-			factor:   0.25,
-			want:     2500 * time.Millisecond,
+			name:   "fractional factor",
+			d:      10 * time.Second,
+			factor: 0.25,
+			want:   2500 * time.Millisecond,
 		},
 		{
-			name:     "sub nanosecond delta rounds down",
-			duration: time.Nanosecond,
-			factor:   0.5,
-			want:     0,
+			name:   "sub nanosecond delta rounds down",
+			d:      time.Nanosecond,
+			factor: 0.5,
+			want:   0,
 		},
 		{
-			name:     "saturates before duration overflow",
-			duration: maxDuration - time.Second,
-			factor:   2,
-			want:     time.Second,
+			name:   "saturates before duration overflow",
+			d:      maxDuration - time.Second,
+			factor: 2,
+			want:   time.Second,
 		},
 		{
-			name:     "max duration has no remaining headroom",
-			duration: maxDuration,
-			factor:   1,
-			want:     0,
+			name:   "max duration has no remaining headroom",
+			d:      maxDuration,
+			factor: 1,
+			want:   0,
 		},
 	}
 
@@ -186,8 +186,8 @@ func TestMaxJitterDelta(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := maxJitterDelta(tc.duration, tc.factor); got != tc.want {
-				t.Fatalf("maxJitterDelta(%v, %v) = %v, want %v", tc.duration, tc.factor, got, tc.want)
+			if got := maxJitterDelta(tc.d, tc.factor); got != tc.want {
+				t.Fatalf("maxJitterDelta(%v, %v) = %v, want %v", tc.d, tc.factor, got, tc.want)
 			}
 		})
 	}

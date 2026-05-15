@@ -43,11 +43,11 @@ func TestValueOperationAcceptsContextAwareFunction(t *testing.T) {
 		return 42, nil
 	}
 
-	value, err := op(context.Background())
+	val, err := op(context.Background())
 	if err != nil {
 		t.Fatalf("ValueOperation returned unexpected error: %v", err)
 	}
-	if value != 42 {
-		t.Fatalf("ValueOperation returned %d, want 42", value)
+	if val != 42 {
+		t.Fatalf("ValueOperation returned %d, want 42", val)
 	}
 }

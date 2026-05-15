@@ -26,9 +26,9 @@ import (
 func TestWithClock(t *testing.T) {
 	fake := clock.NewFakeClock(time.Unix(10, 0))
 
-	config := configOf(WithClock(fake))
+	cfg := configOf(WithClock(fake))
 
-	if config.clock != fake {
+	if cfg.clock != fake {
 		t.Fatalf("configured clock was not stored")
 	}
 }

@@ -316,8 +316,8 @@ func stepClockUntilStatus(
 	for {
 		clk.Step(step)
 		select {
-		case response := <-stream.sent:
-			return response.GetStatus()
+		case resp := <-stream.sent:
+			return resp.GetStatus()
 		case <-deadline:
 			t.Fatal("timed out waiting for watch status after clock step")
 			return healthpb.HealthCheckResponse_UNKNOWN

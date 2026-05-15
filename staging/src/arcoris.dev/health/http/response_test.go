@@ -33,25 +33,25 @@ func TestNewResponseWithDetailNone(t *testing.T) {
 	report := healthtest.MixedReport(health.TargetReady)
 	policy := health.ReadyPolicy()
 
-	response := newResponse(report, report.Passed(policy), policy, DetailNone)
+	resp := newResponse(report, report.Passed(policy), policy, DetailNone)
 
-	if response.Target != "ready" {
-		t.Fatalf("Target = %q, want ready", response.Target)
+	if resp.Target != "ready" {
+		t.Fatalf("Target = %q, want ready", resp.Target)
 	}
-	if response.Status != "unhealthy" {
-		t.Fatalf("Status = %q, want unhealthy", response.Status)
+	if resp.Status != "unhealthy" {
+		t.Fatalf("Status = %q, want unhealthy", resp.Status)
 	}
-	if response.Passed {
+	if resp.Passed {
 		t.Fatal("Passed = true, want false")
 	}
-	if response.Observed == "" {
+	if resp.Observed == "" {
 		t.Fatal("Observed is empty, want timestamp")
 	}
-	if response.DurationMillis != 25 {
-		t.Fatalf("DurationMillis = %d, want 25", response.DurationMillis)
+	if resp.DurationMillis != 25 {
+		t.Fatalf("DurationMillis = %d, want 25", resp.DurationMillis)
 	}
-	if response.Checks != nil {
-		t.Fatalf("Checks = %+v, want nil", response.Checks)
+	if resp.Checks != nil {
+		t.Fatalf("Checks = %+v, want nil", resp.Checks)
 	}
 }
 
@@ -61,18 +61,18 @@ func TestNewResponseWithDetailFailed(t *testing.T) {
 	report := healthtest.MixedReport(health.TargetReady)
 	policy := health.ReadyPolicy()
 
-	response := newResponse(report, report.Passed(policy), policy, DetailFailed)
+	resp := newResponse(report, report.Passed(policy), policy, DetailFailed)
 
-	if len(response.Checks) != 3 {
-		t.Fatalf("Checks length = %d, want 3", len(response.Checks))
+	if len(resp.Checks) != 3 {
+		t.Fatalf("Checks length = %d, want 3", len(resp.Checks))
 	}
 
 	wantNames := []string{"queue", "cache", "database"}
 	for i, want := range wantNames {
-		if response.Checks[i].Name != want {
-			t.Fatalf("Checks[%d].Name = %q, want %q", i, response.Checks[i].Name, want)
+		if resp.Checks[i].Name != want {
+			t.Fatalf("Checks[%d].Name = %q, want %q", i, resp.Checks[i].Name, want)
 		}
-		if response.Checks[i].Passed {
+		if resp.Checks[i].Passed {
 			t.Fatalf("Checks[%d].Passed = true, want false", i)
 		}
 	}
@@ -84,23 +84,23 @@ func TestNewResponseWithDetailAll(t *testing.T) {
 	report := healthtest.MixedReport(health.TargetReady)
 	policy := health.ReadyPolicy()
 
-	response := newResponse(report, report.Passed(policy), policy, DetailAll)
+	resp := newResponse(report, report.Passed(policy), policy, DetailAll)
 
-	if len(response.Checks) != len(report.Checks) {
-		t.Fatalf("Checks length = %d, want %d", len(response.Checks), len(report.Checks))
+	if len(resp.Checks) != len(report.Checks) {
+		t.Fatalf("Checks length = %d, want %d", len(resp.Checks), len(report.Checks))
 	}
 
-	if response.Checks[0].Name != "storage" {
-		t.Fatalf("Checks[0].Name = %q, want storage", response.Checks[0].Name)
+	if resp.Checks[0].Name != "storage" {
+		t.Fatalf("Checks[0].Name = %q, want storage", resp.Checks[0].Name)
 	}
-	if !response.Checks[0].Passed {
+	if !resp.Checks[0].Passed {
 		t.Fatal("healthy storage check should pass ready policy")
 	}
 
-	if response.Checks[1].Name != "queue" {
-		t.Fatalf("Checks[1].Name = %q, want queue", response.Checks[1].Name)
+	if resp.Checks[1].Name != "queue" {
+		t.Fatalf("Checks[1].Name = %q, want queue", resp.Checks[1].Name)
 	}
-	if response.Checks[1].Passed {
+	if resp.Checks[1].Passed {
 		t.Fatal("degraded queue check should fail ready policy")
 	}
 }
@@ -129,18 +129,18 @@ func TestNewResponseUsesPolicyForCheckPassed(t *testing.T) {
 func TestNewCheckResponseOmitsReasonNone(t *testing.T) {
 	t.Parallel()
 
-	result := health.Healthy("storage")
-	response := newCheckResponse(result, health.ReadyPolicy())
+	res := health.Healthy("storage")
+	resp := newCheckResponse(res, health.ReadyPolicy())
 
-	if response.Reason != "" {
-		t.Fatalf("Reason = %q, want empty", response.Reason)
+	if resp.Reason != "" {
+		t.Fatalf("Reason = %q, want empty", resp.Reason)
 	}
 }
 
 func TestNewCheckResponseIncludesSafeFields(t *testing.T) {
 	t.Parallel()
 
-	result := health.Degraded(
+	res := health.Degraded(
 		"queue",
 		health.ReasonOverloaded,
 		"queue is above soft capacity",
@@ -148,28 +148,28 @@ func TestNewCheckResponseIncludesSafeFields(t *testing.T) {
 		WithDuration(1500 * time.Millisecond).
 		WithCause(errors.New("private cause"))
 
-	response := newCheckResponse(result, health.ReadyPolicy())
+	resp := newCheckResponse(res, health.ReadyPolicy())
 
-	if response.Name != "queue" {
-		t.Fatalf("Name = %q, want queue", response.Name)
+	if resp.Name != "queue" {
+		t.Fatalf("Name = %q, want queue", resp.Name)
 	}
-	if response.Status != "degraded" {
-		t.Fatalf("Status = %q, want degraded", response.Status)
+	if resp.Status != "degraded" {
+		t.Fatalf("Status = %q, want degraded", resp.Status)
 	}
-	if response.Passed {
+	if resp.Passed {
 		t.Fatal("Passed = true, want false")
 	}
-	if response.Reason != "overloaded" {
-		t.Fatalf("Reason = %q, want overloaded", response.Reason)
+	if resp.Reason != "overloaded" {
+		t.Fatalf("Reason = %q, want overloaded", resp.Reason)
 	}
-	if response.Message != "queue is above soft capacity" {
-		t.Fatalf("Message = %q, want safe message", response.Message)
+	if resp.Message != "queue is above soft capacity" {
+		t.Fatalf("Message = %q, want safe message", resp.Message)
 	}
-	if response.Observed == "" {
+	if resp.Observed == "" {
 		t.Fatal("Observed is empty, want timestamp")
 	}
-	if response.DurationMillis != 1500 {
-		t.Fatalf("DurationMillis = %d, want 1500", response.DurationMillis)
+	if resp.DurationMillis != 1500 {
+		t.Fatalf("DurationMillis = %d, want 1500", resp.DurationMillis)
 	}
 }
 
@@ -178,9 +178,9 @@ func TestResponseJSONDoesNotExposeCause(t *testing.T) {
 
 	report := healthtest.MixedReport(health.TargetReady)
 	policy := health.ReadyPolicy()
-	response := newResponse(report, false, policy, DetailAll)
+	resp := newResponse(report, false, policy, DetailAll)
 
-	data, err := json.Marshal(response)
+	data, err := json.Marshal(resp)
 	if err != nil {
 		t.Fatalf("json.Marshal() = %v, want nil", err)
 	}
@@ -256,23 +256,23 @@ func TestDurationMillis(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name     string
-		duration time.Duration
-		want     int64
+		name string
+		d    time.Duration
+		want int64
 	}{
-		{name: "zero", duration: 0, want: 0},
-		{name: "negative", duration: -time.Second, want: 0},
-		{name: "sub millisecond", duration: time.Microsecond, want: 0},
-		{name: "one millisecond", duration: time.Millisecond, want: 1},
-		{name: "second", duration: time.Second, want: 1000},
+		{name: "zero", d: 0, want: 0},
+		{name: "negative", d: -time.Second, want: 0},
+		{name: "sub millisecond", d: time.Microsecond, want: 0},
+		{name: "one millisecond", d: time.Millisecond, want: 1},
+		{name: "second", d: time.Second, want: 1000},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := durationMillis(tc.duration); got != tc.want {
-				t.Fatalf("durationMillis(%s) = %d, want %d", tc.duration, got, tc.want)
+			if got := durationMillis(tc.d); got != tc.want {
+				t.Fatalf("durationMillis(%s) = %d, want %d", tc.d, got, tc.want)
 			}
 		})
 	}

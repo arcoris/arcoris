@@ -28,8 +28,8 @@ var _ Timer = (*fakeTimer)(nil)
 func TestFakeTimerChannelIsStable(t *testing.T) {
 	t.Parallel()
 
-	clock := NewFakeClock(fakeClockTestTime())
-	timer := clock.NewTimer(time.Hour)
+	clk := NewFakeClock(fakeClockTestTime())
+	timer := clk.NewTimer(time.Hour)
 
 	first := timer.C()
 	second := timer.C()
@@ -48,10 +48,10 @@ func TestFakeTimerChannelIsStable(t *testing.T) {
 func TestFakeTimerDoesNotFireBeforeDeadline(t *testing.T) {
 	t.Parallel()
 
-	clock := NewFakeClock(fakeClockTestTime())
-	timer := clock.NewTimer(10 * time.Second)
+	clk := NewFakeClock(fakeClockTestTime())
+	timer := clk.NewTimer(10 * time.Second)
 
-	clock.Step(9 * time.Second)
+	clk.Step(9 * time.Second)
 
 	mustNotReceiveTime(t, timer.C())
 }
@@ -62,10 +62,10 @@ func TestFakeTimerFiresWhenDeadlineIsReached(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
-	timer := clock.NewTimer(10 * time.Second)
+	clk := NewFakeClock(start)
+	timer := clk.NewTimer(10 * time.Second)
 
-	clock.Step(10 * time.Second)
+	clk.Step(10 * time.Second)
 
 	mustEqualTime(t, "timer delivery", mustReceiveTime(t, timer.C()), start.Add(10*time.Second))
 	mustNotReceiveTime(t, timer.C())
@@ -77,10 +77,10 @@ func TestFakeTimerFiresWhenDeadlineIsPassed(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
-	timer := clock.NewTimer(10 * time.Second)
+	clk := NewFakeClock(start)
+	timer := clk.NewTimer(10 * time.Second)
 
-	clock.Step(30 * time.Second)
+	clk.Step(30 * time.Second)
 
 	mustEqualTime(t, "timer delivery", mustReceiveTime(t, timer.C()), start.Add(30*time.Second))
 	mustNotReceiveTime(t, timer.C())
@@ -94,16 +94,16 @@ func TestFakeTimerNonPositiveDurationIsImmediatelyReady(t *testing.T) {
 	start := fakeClockTestTime()
 
 	tests := []struct {
-		name     string
-		duration time.Duration
+		name string
+		d    time.Duration
 	}{
 		{
-			name:     "zero",
-			duration: 0,
+			name: "zero",
+			d:    0,
 		},
 		{
-			name:     "negative",
-			duration: -time.Second,
+			name: "negative",
+			d:    -time.Second,
 		},
 	}
 
@@ -112,8 +112,8 @@ func TestFakeTimerNonPositiveDurationIsImmediatelyReady(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			clock := NewFakeClock(start)
-			timer := clock.NewTimer(tc.duration)
+			clk := NewFakeClock(start)
+			timer := clk.NewTimer(tc.d)
 
 			mustEqualTime(t, "timer immediate delivery", mustReceiveTime(t, timer.C()), start)
 			mustNotReceiveTime(t, timer.C())
@@ -126,14 +126,14 @@ func TestFakeTimerNonPositiveDurationIsImmediatelyReady(t *testing.T) {
 func TestFakeTimerStopPreventsDelivery(t *testing.T) {
 	t.Parallel()
 
-	clock := NewFakeClock(fakeClockTestTime())
-	timer := clock.NewTimer(10 * time.Second)
+	clk := NewFakeClock(fakeClockTestTime())
+	timer := clk.NewTimer(10 * time.Second)
 
 	if stopped := timer.Stop(); !stopped {
 		t.Fatal("fakeTimer.Stop() = false for active timer, want true")
 	}
 
-	clock.Step(10 * time.Second)
+	clk.Step(10 * time.Second)
 
 	mustNotReceiveTime(t, timer.C())
 
@@ -147,10 +147,10 @@ func TestFakeTimerStopPreventsDelivery(t *testing.T) {
 func TestFakeTimerStopAfterFireReportsInactive(t *testing.T) {
 	t.Parallel()
 
-	clock := NewFakeClock(fakeClockTestTime())
-	timer := clock.NewTimer(5 * time.Second)
+	clk := NewFakeClock(fakeClockTestTime())
+	timer := clk.NewTimer(5 * time.Second)
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 	_ = mustReceiveTime(t, timer.C())
 
 	if stopped := timer.Stop(); stopped {
@@ -164,17 +164,17 @@ func TestFakeTimerResetActiveTimerMovesDeadline(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
-	timer := clock.NewTimer(10 * time.Second)
+	clk := NewFakeClock(start)
+	timer := clk.NewTimer(10 * time.Second)
 
 	if wasActive := timer.Reset(20 * time.Second); !wasActive {
 		t.Fatal("fakeTimer.Reset() for active timer = false, want true")
 	}
 
-	clock.Step(19 * time.Second)
+	clk.Step(19 * time.Second)
 	mustNotReceiveTime(t, timer.C())
 
-	clock.Step(time.Second)
+	clk.Step(time.Second)
 	mustEqualTime(t, "timer delivery after Reset", mustReceiveTime(t, timer.C()), start.Add(20*time.Second))
 }
 
@@ -184,8 +184,8 @@ func TestFakeTimerResetStoppedTimerReactivates(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
-	timer := clock.NewTimer(10 * time.Second)
+	clk := NewFakeClock(start)
+	timer := clk.NewTimer(10 * time.Second)
 
 	if stopped := timer.Stop(); !stopped {
 		t.Fatal("fakeTimer.Stop() = false for active timer, want true")
@@ -195,7 +195,7 @@ func TestFakeTimerResetStoppedTimerReactivates(t *testing.T) {
 		t.Fatal("fakeTimer.Reset() after Stop = true, want false")
 	}
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 
 	mustEqualTime(t, "timer delivery after Reset from stopped state", mustReceiveTime(t, timer.C()), start.Add(5*time.Second))
 }
@@ -206,17 +206,17 @@ func TestFakeTimerResetFiredTimerReactivates(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
-	timer := clock.NewTimer(5 * time.Second)
+	clk := NewFakeClock(start)
+	timer := clk.NewTimer(5 * time.Second)
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 	_ = mustReceiveTime(t, timer.C())
 
 	if wasActive := timer.Reset(3 * time.Second); wasActive {
 		t.Fatal("fakeTimer.Reset() after fire = true, want false")
 	}
 
-	clock.Step(3 * time.Second)
+	clk.Step(3 * time.Second)
 
 	mustEqualTime(t, "timer delivery after Reset from fired state", mustReceiveTime(t, timer.C()), start.Add(8*time.Second))
 }
@@ -229,16 +229,16 @@ func TestFakeTimerResetNonPositiveDurationDeliversImmediately(t *testing.T) {
 	start := fakeClockTestTime()
 
 	tests := []struct {
-		name     string
-		duration time.Duration
+		name string
+		d    time.Duration
 	}{
 		{
-			name:     "zero",
-			duration: 0,
+			name: "zero",
+			d:    0,
 		},
 		{
-			name:     "negative",
-			duration: -time.Second,
+			name: "negative",
+			d:    -time.Second,
 		},
 	}
 
@@ -247,10 +247,10 @@ func TestFakeTimerResetNonPositiveDurationDeliversImmediately(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			clock := NewFakeClock(start)
-			timer := clock.NewTimer(time.Hour)
+			clk := NewFakeClock(start)
+			timer := clk.NewTimer(time.Hour)
 
-			if wasActive := timer.Reset(tc.duration); !wasActive {
+			if wasActive := timer.Reset(tc.d); !wasActive {
 				t.Fatal("fakeTimer.Reset(non-positive) for active timer = false, want true")
 			}
 
@@ -268,10 +268,10 @@ func TestFakeTimerResetDropsImmediateDeliveryWhenChannelIsFull(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
-	timer := clock.NewTimer(5 * time.Second)
+	clk := NewFakeClock(start)
+	timer := clk.NewTimer(5 * time.Second)
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 
 	done := make(chan struct{})
 	go func() {

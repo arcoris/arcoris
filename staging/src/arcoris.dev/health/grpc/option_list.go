@@ -21,7 +21,7 @@ package healthgrpc
 //
 // The limit is an adapter safety guardrail. It prevents unexpectedly large
 // service maps from being generated on a single List call without changing the
-// configured service mappings or Source evaluation behavior.
+// configured service mappings or evaluator behavior.
 func WithMaxListServices(max int) Option {
 	return func(cfg *config) error {
 		if err := validateMaxListServices(max); err != nil {

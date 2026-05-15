@@ -31,36 +31,36 @@ func TestLimitRejectsInvalidInput(t *testing.T) {
 }
 
 func TestLimitReturnsPointerSequence(t *testing.T) {
-	schedule := Limit(Fixed(time.Second), 1)
+	sched := Limit(Fixed(time.Second), 1)
 
-	if _, ok := schedule.NewSequence().(*limitSequence); !ok {
-		t.Fatalf("NewSequence() = %T, want *limitSequence", schedule.NewSequence())
+	if _, ok := sched.NewSequence().(*limitSequence); !ok {
+		t.Fatalf("NewSequence() = %T, want *limitSequence", sched.NewSequence())
 	}
 }
 
 func TestLimitExposesOnlyConfiguredNumberOfValues(t *testing.T) {
-	sequence := Limit(Fixed(time.Second), 2).NewSequence()
+	seq := Limit(Fixed(time.Second), 2).NewSequence()
 
-	mustNext(t, sequence, time.Second)
-	mustNext(t, sequence, time.Second)
-	mustExhausted(t, sequence)
+	mustNext(t, seq, time.Second)
+	mustNext(t, seq, time.Second)
+	mustExhausted(t, seq)
 }
 
 func TestLimitPreservesEarlyChildExhaustion(t *testing.T) {
-	sequence := Limit(Delays(time.Second), 3).NewSequence()
+	seq := Limit(Delays(time.Second), 3).NewSequence()
 
-	mustNext(t, sequence, time.Second)
-	mustExhausted(t, sequence)
+	mustNext(t, seq, time.Second)
+	mustExhausted(t, seq)
 }
 
 func TestLimitZeroDoesNotCreateChildSequence(t *testing.T) {
 	called := false
-	sequence := Limit(ScheduleFunc(func() Sequence {
+	seq := Limit(ScheduleFunc(func() Sequence {
 		called = true
 		return Immediate().NewSequence()
 	}), 0).NewSequence()
 
-	mustExhausted(t, sequence)
+	mustExhausted(t, seq)
 	if called {
 		t.Fatal("zero limit created child sequence")
 	}
@@ -68,11 +68,11 @@ func TestLimitZeroDoesNotCreateChildSequence(t *testing.T) {
 
 func TestLimitDoesNotCallChildAfterExhaustion(t *testing.T) {
 	child := &countingSequence{values: []time.Duration{time.Second, 2 * time.Second}}
-	sequence := Limit(ScheduleFunc(func() Sequence { return child }), 1).NewSequence()
+	seq := Limit(ScheduleFunc(func() Sequence { return child }), 1).NewSequence()
 
-	mustNext(t, sequence, time.Second)
-	mustExhausted(t, sequence)
-	mustExhausted(t, sequence)
+	mustNext(t, seq, time.Second)
+	mustExhausted(t, seq)
+	mustExhausted(t, seq)
 	if child.calls != 1 {
 		t.Fatalf("child calls = %d, want 1", child.calls)
 	}
@@ -85,9 +85,9 @@ func TestLimitRejectsNilChildSequence(t *testing.T) {
 }
 
 func TestLimitRejectsNegativeChildDelay(t *testing.T) {
-	sequence := Limit(ScheduleFunc(func() Sequence { return negativeDelaySequence{} }), 1).NewSequence()
+	seq := Limit(ScheduleFunc(func() Sequence { return negativeDelaySequence{} }), 1).NewSequence()
 
 	mustPanicWith(t, errLimitScheduleReturnedNegativeDelay, func() {
-		sequence.Next()
+		seq.Next()
 	})
 }

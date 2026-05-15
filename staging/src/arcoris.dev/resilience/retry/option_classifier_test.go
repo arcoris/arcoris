@@ -24,20 +24,20 @@ import (
 func TestWithClassifier(t *testing.T) {
 	classifier := RetryAll()
 
-	config := configOf(WithClassifier(classifier))
+	cfg := configOf(WithClassifier(classifier))
 
-	if !config.classifier.Retryable(errors.New("boom")) {
+	if !cfg.classifier.Retryable(errors.New("boom")) {
 		t.Fatalf("configured classifier did not retry non-nil error")
 	}
 }
 
 func TestWithClassifierLastWins(t *testing.T) {
-	config := configOf(
+	cfg := configOf(
 		WithClassifier(NeverRetry()),
 		WithClassifier(RetryAll()),
 	)
 
-	if !config.classifier.Retryable(errors.New("boom")) {
+	if !cfg.classifier.Retryable(errors.New("boom")) {
 		t.Fatalf("last classifier option did not win")
 	}
 }
@@ -51,14 +51,14 @@ func TestWithClassifierPanicsOnNilClassifier(t *testing.T) {
 func TestWithRetryable(t *testing.T) {
 	errExpected := errors.New("expected")
 
-	config := configOf(WithRetryable(func(err error) bool {
+	cfg := configOf(WithRetryable(func(err error) bool {
 		return errors.Is(err, errExpected)
 	}))
 
-	if !config.classifier.Retryable(errExpected) {
+	if !cfg.classifier.Retryable(errExpected) {
 		t.Fatalf("configured retryable func rejected expected error")
 	}
-	if config.classifier.Retryable(errors.New("other")) {
+	if cfg.classifier.Retryable(errors.New("other")) {
 		t.Fatalf("configured retryable func accepted unexpected error")
 	}
 }

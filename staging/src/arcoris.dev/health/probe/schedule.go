@@ -46,13 +46,13 @@ func WithInterval(interval time.Duration) Option {
 // schedules, result-dependent backoff, retry behavior, and jitter-specific
 // options remain outside the base runner contract; callers can compose those at
 // the delay.Schedule layer.
-func WithSchedule(schedule delay.Schedule) Option {
+func WithSchedule(sched delay.Schedule) Option {
 	return func(cfg *config) error {
-		if err := validateSchedule(schedule); err != nil {
+		if err := validateSchedule(sched); err != nil {
 			return err
 		}
 
-		cfg.schedule = schedule
+		cfg.schedule = sched
 		return nil
 	}
 }

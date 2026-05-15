@@ -108,8 +108,8 @@ func (p *PaddedInt32) Load() int32 {
 // Store does not validate the value. If the int32 represents a constrained
 // state machine or bounded signed state, the caller is responsible for
 // validating allowed states and transitions.
-func (p *PaddedInt32) Store(value int32) {
-	p.value.Store(value)
+func (p *PaddedInt32) Store(val int32) {
+	p.value.Store(val)
 }
 
 // Add atomically adds delta to the current int32 value and returns the new value.

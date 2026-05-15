@@ -63,12 +63,12 @@ func prepareChecks(target Target, checks []Checker) ([]preparedCheck, error) {
 			continue
 		}
 
-		if previous, exists := seen[name]; exists {
+		if prev, exists := seen[name]; exists {
 			failures = append(failures, DuplicateCheckError{
 				Target:        target,
 				Name:          name,
 				Index:         index,
-				PreviousIndex: previous,
+				PreviousIndex: prev,
 			})
 			continue
 		}
@@ -98,15 +98,15 @@ func nilChecker(chk Checker) bool {
 		return true
 	}
 
-	value := reflect.ValueOf(chk)
-	switch value.Kind() {
+	val := reflect.ValueOf(chk)
+	switch val.Kind() {
 	case reflect.Chan,
 		reflect.Func,
 		reflect.Interface,
 		reflect.Map,
 		reflect.Pointer,
 		reflect.Slice:
-		return value.IsNil()
+		return val.IsNil()
 	default:
 		return false
 	}

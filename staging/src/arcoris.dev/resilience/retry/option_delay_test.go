@@ -24,12 +24,12 @@ import (
 )
 
 func TestWithDelaySchedule(t *testing.T) {
-	schedule := delay.Fixed(250 * time.Millisecond)
+	sched := delay.Fixed(250 * time.Millisecond)
 
-	config := configOf(WithDelaySchedule(schedule))
+	cfg := configOf(WithDelaySchedule(sched))
 
-	sequence := config.delay.NewSequence()
-	delay, ok := sequence.Next()
+	seq := cfg.delay.NewSequence()
+	delay, ok := seq.Next()
 	if !ok {
 		t.Fatalf("configured delay sequence exhausted")
 	}
@@ -39,12 +39,12 @@ func TestWithDelaySchedule(t *testing.T) {
 }
 
 func TestWithDelayScheduleLastWins(t *testing.T) {
-	config := configOf(
+	cfg := configOf(
 		WithDelaySchedule(delay.Fixed(100*time.Millisecond)),
 		WithDelaySchedule(delay.Fixed(200*time.Millisecond)),
 	)
 
-	delay, ok := config.delay.NewSequence().Next()
+	delay, ok := cfg.delay.NewSequence().Next()
 	if !ok {
 		t.Fatalf("configured delay sequence exhausted")
 	}

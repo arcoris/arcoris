@@ -100,8 +100,8 @@ type jitterTransform func(base time.Duration, r RandomGenerator) time.Duration
 // Schedule, and delegates the final validated construction to
 // newJitterScheduleWithSource.
 func newJitterSchedule(sched delay.Schedule, xf jitterTransform, opts ...RandomOption) delay.Schedule {
-	config := randomOptionsOf(opts...)
-	return newJitterScheduleWithSource(sched, xf, config.source)
+	cfg := randomOptionsOf(opts...)
+	return newJitterScheduleWithSource(sched, xf, cfg.source)
 }
 
 // newJitterScheduleWithSource wires shared jitter mechanics to source.

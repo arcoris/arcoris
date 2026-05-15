@@ -27,12 +27,12 @@ func TestWaitTerminalReturnsStoppedSnapshot(t *testing.T) {
 
 	controller := NewController()
 	_, _ = controller.BeginStop()
-	snapshot, err := controller.WaitTerminal(context.Background())
+	snap, err := controller.WaitTerminal(context.Background())
 	if err != nil {
 		t.Fatalf("WaitTerminal = %v, want nil", err)
 	}
-	if snapshot.State != StateStopped {
-		t.Fatalf("snapshot.State = %s, want stopped", snapshot.State)
+	if snap.State != StateStopped {
+		t.Fatalf("snapshot.State = %s, want stopped", snap.State)
 	}
 }
 
@@ -43,12 +43,12 @@ func TestWaitTerminalReturnsFailedSnapshotWithCause(t *testing.T) {
 	controller := NewController()
 	_, _ = controller.BeginStart()
 	_, _ = controller.MarkFailed(cause)
-	snapshot, err := controller.WaitTerminal(context.Background())
+	snap, err := controller.WaitTerminal(context.Background())
 	if err != nil {
 		t.Fatalf("WaitTerminal = %v, want nil", err)
 	}
-	if snapshot.State != StateFailed || snapshot.FailureCause != cause {
-		t.Fatalf("snapshot = %+v, want failed with cause", snapshot)
+	if snap.State != StateFailed || snap.FailureCause != cause {
+		t.Fatalf("snapshot = %+v, want failed with cause", snap)
 	}
 }
 
@@ -61,12 +61,12 @@ func TestWaitTerminalWaitsUntilTerminalCommitted(t *testing.T) {
 	results := make(chan Snapshot, 1)
 	errs := make(chan error, 1)
 	go func() {
-		snapshot, err := controller.WaitTerminal(context.Background())
+		snap, err := controller.WaitTerminal(context.Background())
 		if err != nil {
 			errs <- err
 			return
 		}
-		results <- snapshot
+		results <- snap
 	}()
 
 	_, _ = controller.BeginStart()

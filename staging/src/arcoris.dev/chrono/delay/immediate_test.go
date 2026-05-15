@@ -21,18 +21,18 @@ import (
 )
 
 func TestImmediateSequenceReturnsZeroForever(t *testing.T) {
-	sequence := Immediate().NewSequence()
+	seq := Immediate().NewSequence()
 
 	for i := 0; i < 3; i++ {
-		mustNext(t, sequence, 0)
+		mustNext(t, seq, 0)
 	}
 }
 
 func TestImmediateSequencesAreIndependent(t *testing.T) {
-	schedule := Immediate()
+	sched := Immediate()
 
-	l := schedule.NewSequence()
-	r := schedule.NewSequence()
+	l := sched.NewSequence()
+	r := sched.NewSequence()
 
 	mustNext(t, l, 0)
 	mustNext(t, r, 0)

@@ -31,32 +31,32 @@ func TestLinearRejectsNegativeInput(t *testing.T) {
 }
 
 func TestLinearAllowsZeroInitialDelay(t *testing.T) {
-	sequence := Linear(0, time.Second).NewSequence()
+	seq := Linear(0, time.Second).NewSequence()
 
-	mustNext(t, sequence, 0)
-	mustNext(t, sequence, time.Second)
+	mustNext(t, seq, 0)
+	mustNext(t, seq, time.Second)
 }
 
 func TestLinearSequenceGrowsByStep(t *testing.T) {
-	sequence := Linear(time.Second, 500*time.Millisecond).NewSequence()
+	seq := Linear(time.Second, 500*time.Millisecond).NewSequence()
 
-	mustNext(t, sequence, time.Second)
-	mustNext(t, sequence, 1500*time.Millisecond)
-	mustNext(t, sequence, 2*time.Second)
+	mustNext(t, seq, time.Second)
+	mustNext(t, seq, 1500*time.Millisecond)
+	mustNext(t, seq, 2*time.Second)
 }
 
 func TestLinearZeroStepBehavesLikeFixed(t *testing.T) {
-	sequence := Linear(time.Second, 0).NewSequence()
+	seq := Linear(time.Second, 0).NewSequence()
 
-	mustNext(t, sequence, time.Second)
-	mustNext(t, sequence, time.Second)
+	mustNext(t, seq, time.Second)
+	mustNext(t, seq, time.Second)
 }
 
 func TestLinearSequencesHaveIndependentIndexes(t *testing.T) {
-	schedule := Linear(time.Second, time.Second)
+	sched := Linear(time.Second, time.Second)
 
-	l := schedule.NewSequence()
-	r := schedule.NewSequence()
+	l := sched.NewSequence()
+	r := sched.NewSequence()
 
 	mustNext(t, l, time.Second)
 	mustNext(t, l, 2*time.Second)

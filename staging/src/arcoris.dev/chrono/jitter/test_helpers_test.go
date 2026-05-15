@@ -100,9 +100,9 @@ func (r *sequenceRandom) Int63() int64 {
 	if len(r.values) == 0 {
 		return 0
 	}
-	value := r.values[r.next%len(r.values)]
+	val := r.values[r.next%len(r.values)]
 	r.next++
-	return value
+	return val
 }
 
 // countingSequence records how many times Next is called.
@@ -117,9 +117,9 @@ func (s *countingSequence) Next() (time.Duration, bool) {
 	if len(s.values) == 0 {
 		return 0, false
 	}
-	value := s.values[0]
+	val := s.values[0]
 	s.values = s.values[1:]
-	return value, true
+	return val, true
 }
 
 // countingRandomSource records how many generators were requested.
@@ -129,9 +129,9 @@ type countingRandomSource struct {
 
 // NewRandom returns a deterministic generator based on the call index.
 func (s *countingRandomSource) NewRandom() RandomGenerator {
-	value := int64(s.calls)
+	val := int64(s.calls)
 	s.calls++
-	return fixedRandom(value)
+	return fixedRandom(val)
 }
 
 // negativeDelaySequence violates the Sequence contract for wrapper tests.

@@ -89,15 +89,15 @@ func defaultControllerConfig() controllerConfig {
 // observers are stored as interface values; the lifecycle package does not clone
 // the concrete objects behind those interfaces.
 func newControllerConfig(opts ...Option) controllerConfig {
-	config := defaultControllerConfig()
+	cfg := defaultControllerConfig()
 
 	for _, opt := range opts {
 		if opt == nil {
 			continue
 		}
 
-		opt(&config)
+		opt(&cfg)
 	}
 
-	return config
+	return cfg
 }

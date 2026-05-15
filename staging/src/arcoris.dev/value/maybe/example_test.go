@@ -23,8 +23,8 @@ import (
 func ExampleMaybe_Load() {
 	m := maybe.Some("ready")
 
-	value, ok := m.Load()
-	fmt.Println(value, ok)
+	val, ok := m.Load()
+	fmt.Println(val, ok)
 
 	// Output:
 	// ready true
@@ -33,8 +33,8 @@ func ExampleMaybe_Load() {
 func ExampleNone() {
 	m := maybe.None[string]()
 
-	value, ok := m.Load()
-	fmt.Println(value, ok)
+	val, ok := m.Load()
+	fmt.Println(val, ok)
 
 	// Output:
 	//  false

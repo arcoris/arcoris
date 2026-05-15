@@ -34,27 +34,27 @@ type ResourcePath struct {
 //
 // The parser accepts exactly one optional slash. Empty resources, empty
 // subresources after a slash, and deeper paths are rejected.
-func ParseResourcePath(value string) (ResourcePath, error) {
-	if value == "" {
-		return ResourcePath{}, invalid("resource path", value, "resource is required")
+func ParseResourcePath(val string) (ResourcePath, error) {
+	if val == "" {
+		return ResourcePath{}, invalid("resource path", val, "resource is required")
 	}
-	parts := strings.Split(value, "/")
+	parts := strings.Split(val, "/")
 	if len(parts) > 2 {
-		return ResourcePath{}, invalid("resource path", value, "expected canonical form resource or resource/subresource")
+		return ResourcePath{}, invalid("resource path", val, "expected canonical form resource or resource/subresource")
 	}
 	resource, err := ParseResource(parts[0])
 	if err != nil {
-		return ResourcePath{}, invalidValue("resource path", value, err)
+		return ResourcePath{}, invalidValue("resource path", val, err)
 	}
 	if len(parts) == 1 {
 		return ResourcePath{Resource: resource}, nil
 	}
 	if parts[1] == "" {
-		return ResourcePath{}, invalid("resource path", value, "subresource is required after '/'")
+		return ResourcePath{}, invalid("resource path", val, "subresource is required after '/'")
 	}
 	subresource, err := ParseSubresource(parts[1])
 	if err != nil {
-		return ResourcePath{}, invalidValue("resource path", value, err)
+		return ResourcePath{}, invalidValue("resource path", val, err)
 	}
 	return ResourcePath{Resource: resource, Subresource: subresource}, nil
 }
@@ -150,9 +150,9 @@ func (rp *ResourcePath) UnmarshalJSON(data []byte) error {
 	if rp == nil {
 		return nilUnmarshalReceiver("resource path")
 	}
-	value, err := unmarshalJSONString("resource path", data)
+	val, err := unmarshalJSONString("resource path", data)
 	if err != nil {
 		return err
 	}
-	return rp.UnmarshalText([]byte(value))
+	return rp.UnmarshalText([]byte(val))
 }

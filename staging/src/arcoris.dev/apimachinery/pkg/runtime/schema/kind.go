@@ -30,8 +30,8 @@ type Kind string
 // The parser accepts only ASCII letters and digits after the initial uppercase
 // letter. It rejects separators, whitespace, Unicode display names, and
 // lowercase starts.
-func ParseKind(value string) (Kind, error) {
-	kind := Kind(value)
+func ParseKind(val string) (Kind, error) {
+	kind := Kind(val)
 	if err := kind.Validate(); err != nil {
 		return "", err
 	}
@@ -100,9 +100,9 @@ func (k *Kind) UnmarshalJSON(data []byte) error {
 	if k == nil {
 		return nilUnmarshalReceiver("kind")
 	}
-	value, err := unmarshalJSONString("kind", data)
+	val, err := unmarshalJSONString("kind", data)
 	if err != nil {
 		return err
 	}
-	return k.UnmarshalText([]byte(value))
+	return k.UnmarshalText([]byte(val))
 }

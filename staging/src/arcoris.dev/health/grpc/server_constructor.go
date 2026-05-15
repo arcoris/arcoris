@@ -16,13 +16,15 @@
 
 package healthgrpc
 
+import "arcoris.dev/health"
+
 // NewServer builds a standard gRPC health service adapter over source.
 //
 // Construction validates the full adapter configuration and builds an immutable
 // service index. It does not start goroutines, allocate Watch streams, register
 // itself with a grpc.Server, or ask source to evaluate anything. Evaluation is
 // owned by Check, List, and Watch at request time.
-func NewServer(source Source, opts ...Option) (*Server, error) {
+func NewServer(source health.Evaluator, opts ...Option) (*Server, error) {
 	if nilSource(source) {
 		return nil, ErrNilSource
 	}

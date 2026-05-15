@@ -87,6 +87,6 @@ type Uint32CounterSnapshot struct {
 // Prefer Uint64Counter for long-lived or high-rate counters unless a 32-bit
 // counter is part of a deliberate bounded state model or external protocol
 // boundary.
-func (s Uint32CounterSnapshot) DeltaSince(previous Uint32CounterSnapshot) Uint32CounterDelta {
-	return NewUint32CounterDelta(previous.Value, s.Value)
+func (s Uint32CounterSnapshot) DeltaSince(prev Uint32CounterSnapshot) Uint32CounterDelta {
+	return NewUint32CounterDelta(prev.Value, s.Value)
 }

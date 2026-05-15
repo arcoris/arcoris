@@ -57,11 +57,11 @@ func TestDecorrelatedReturnsValuesInsideExpectedRanges(t *testing.T) {
 			int64(3 * time.Second),
 		}}
 	})
-	sequence := Decorrelated(time.Second, 5*time.Second, 2, WithRandomSource(source)).NewSequence()
+	seq := Decorrelated(time.Second, 5*time.Second, 2, WithRandomSource(source)).NewSequence()
 
-	first := mustNextInRange(t, sequence, time.Second, 2*time.Second)
-	second := mustNextInRange(t, sequence, time.Second, 4*time.Second)
-	third := mustNextInRange(t, sequence, time.Second, 5*time.Second)
+	first := mustNextInRange(t, seq, time.Second, 2*time.Second)
+	second := mustNextInRange(t, seq, time.Second, 4*time.Second)
+	third := mustNextInRange(t, seq, time.Second, 5*time.Second)
 
 	if first != 2*time.Second || second != 3*time.Second || third != 4*time.Second {
 		t.Fatalf("delays = %s, %s, %s; want 2s, 3s, 4s", first, second, third)
@@ -72,10 +72,10 @@ func TestDecorrelatedSequencesHaveIndependentPreviousState(t *testing.T) {
 	source := RandomSourceFunc(func() RandomGenerator {
 		return &sequenceRandom{values: []int64{int64(time.Second), int64(2 * time.Second)}}
 	})
-	schedule := Decorrelated(time.Second, 5*time.Second, 2, WithRandomSource(source))
+	sched := Decorrelated(time.Second, 5*time.Second, 2, WithRandomSource(source))
 
-	l := schedule.NewSequence()
-	r := schedule.NewSequence()
+	l := sched.NewSequence()
+	r := sched.NewSequence()
 
 	mustNext(t, l, 2*time.Second)
 	mustNext(t, l, 3*time.Second)
@@ -83,7 +83,7 @@ func TestDecorrelatedSequencesHaveIndependentPreviousState(t *testing.T) {
 }
 
 func TestDecorrelatedUpperBoundUsesMaxDelay(t *testing.T) {
-	sequence := &decorrelatedJitterSequence{
+	seq := &decorrelatedJitterSequence{
 		initial:    time.Second,
 		maxDelay:   3 * time.Second,
 		multiplier: 10,
@@ -91,13 +91,13 @@ func TestDecorrelatedUpperBoundUsesMaxDelay(t *testing.T) {
 		random:     fixedRandom(0),
 	}
 
-	if got := sequence.upperBound(); got != 3*time.Second {
+	if got := seq.upperBound(); got != 3*time.Second {
 		t.Fatalf("upperBound() = %s, want 3s", got)
 	}
 }
 
 func TestDecorrelatedUpperBoundSaturates(t *testing.T) {
-	sequence := &decorrelatedJitterSequence{
+	seq := &decorrelatedJitterSequence{
 		initial:    time.Second,
 		maxDelay:   maxDuration,
 		multiplier: 2,
@@ -105,7 +105,7 @@ func TestDecorrelatedUpperBoundSaturates(t *testing.T) {
 		random:     fixedRandom(0),
 	}
 
-	if got := sequence.upperBound(); got != maxDuration {
+	if got := seq.upperBound(); got != maxDuration {
 		t.Fatalf("upperBound() = %s, want %s", got, maxDuration)
 	}
 }

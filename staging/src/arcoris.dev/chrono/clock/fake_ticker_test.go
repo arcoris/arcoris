@@ -28,8 +28,8 @@ var _ Ticker = (*fakeTicker)(nil)
 func TestFakeTickerChannelIsStable(t *testing.T) {
 	t.Parallel()
 
-	clock := NewFakeClock(fakeClockTestTime())
-	ticker := clock.NewTicker(time.Hour)
+	clk := NewFakeClock(fakeClockTestTime())
+	ticker := clk.NewTicker(time.Hour)
 	defer ticker.Stop()
 
 	first := ticker.C()
@@ -50,16 +50,16 @@ func TestFakeTickerPanicsForNonPositiveInterval(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name     string
-		duration time.Duration
+		name string
+		d    time.Duration
 	}{
 		{
-			name:     "zero",
-			duration: 0,
+			name: "zero",
+			d:    0,
 		},
 		{
-			name:     "negative",
-			duration: -time.Second,
+			name: "negative",
+			d:    -time.Second,
 		},
 	}
 
@@ -68,10 +68,10 @@ func TestFakeTickerPanicsForNonPositiveInterval(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			clock := NewFakeClock(fakeClockTestTime())
+			clk := NewFakeClock(fakeClockTestTime())
 
 			mustPanicWithValue(t, errFakeTickerNonPositiveInterval, func() {
-				_ = clock.NewTicker(tc.duration)
+				_ = clk.NewTicker(tc.d)
 			})
 		})
 	}
@@ -82,11 +82,11 @@ func TestFakeTickerPanicsForNonPositiveInterval(t *testing.T) {
 func TestFakeTickerDoesNotTickBeforeInterval(t *testing.T) {
 	t.Parallel()
 
-	clock := NewFakeClock(fakeClockTestTime())
-	ticker := clock.NewTicker(10 * time.Second)
+	clk := NewFakeClock(fakeClockTestTime())
+	ticker := clk.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
-	clock.Step(9 * time.Second)
+	clk.Step(9 * time.Second)
 
 	mustNotReceiveTime(t, ticker.C())
 }
@@ -96,11 +96,11 @@ func TestFakeTickerTicksWhenIntervalIsReached(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
-	ticker := clock.NewTicker(10 * time.Second)
+	clk := NewFakeClock(start)
+	ticker := clk.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
-	clock.Step(10 * time.Second)
+	clk.Step(10 * time.Second)
 
 	mustEqualTime(t, "ticker delivery", mustReceiveTime(t, ticker.C()), start.Add(10*time.Second))
 	mustNotReceiveTime(t, ticker.C())
@@ -112,17 +112,17 @@ func TestFakeTickerTicksRepeatedlyAcrossAdvanceCalls(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
-	ticker := clock.NewTicker(5 * time.Second)
+	clk := NewFakeClock(start)
+	ticker := clk.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 	mustEqualTime(t, "first ticker delivery", mustReceiveTime(t, ticker.C()), start.Add(5*time.Second))
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 	mustEqualTime(t, "second ticker delivery", mustReceiveTime(t, ticker.C()), start.Add(10*time.Second))
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 	mustEqualTime(t, "third ticker delivery", mustReceiveTime(t, ticker.C()), start.Add(15*time.Second))
 }
 
@@ -133,16 +133,16 @@ func TestFakeTickerDeliversAtMostOneTickPerAdvance(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
-	ticker := clock.NewTicker(5 * time.Second)
+	clk := NewFakeClock(start)
+	ticker := clk.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	clock.Step(30 * time.Second)
+	clk.Step(30 * time.Second)
 
 	mustEqualTime(t, "ticker delivery after large Step", mustReceiveTime(t, ticker.C()), start.Add(30*time.Second))
 	mustNotReceiveTime(t, ticker.C())
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 	mustEqualTime(t, "ticker delivery after next Step", mustReceiveTime(t, ticker.C()), start.Add(35*time.Second))
 }
 
@@ -151,12 +151,12 @@ func TestFakeTickerDeliversAtMostOneTickPerAdvance(t *testing.T) {
 func TestFakeTickerStopPreventsFutureTicks(t *testing.T) {
 	t.Parallel()
 
-	clock := NewFakeClock(fakeClockTestTime())
-	ticker := clock.NewTicker(5 * time.Second)
+	clk := NewFakeClock(fakeClockTestTime())
+	ticker := clk.NewTicker(5 * time.Second)
 
 	ticker.Stop()
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 	mustNotReceiveTime(t, ticker.C())
 
 	ticker.Stop()
@@ -168,18 +168,18 @@ func TestFakeTickerResetChangesInterval(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
-	ticker := clock.NewTicker(10 * time.Second)
+	clk := NewFakeClock(start)
+	ticker := clk.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
-	clock.Step(4 * time.Second)
+	clk.Step(4 * time.Second)
 
 	ticker.Reset(3 * time.Second)
 
-	clock.Step(2 * time.Second)
+	clk.Step(2 * time.Second)
 	mustNotReceiveTime(t, ticker.C())
 
-	clock.Step(time.Second)
+	clk.Step(time.Second)
 	mustEqualTime(t, "ticker delivery after Reset", mustReceiveTime(t, ticker.C()), start.Add(7*time.Second))
 }
 
@@ -189,14 +189,14 @@ func TestFakeTickerResetStoppedTickerReactivates(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
-	ticker := clock.NewTicker(10 * time.Second)
+	clk := NewFakeClock(start)
+	ticker := clk.NewTicker(10 * time.Second)
 
 	ticker.Stop()
 	ticker.Reset(3 * time.Second)
 	defer ticker.Stop()
 
-	clock.Step(3 * time.Second)
+	clk.Step(3 * time.Second)
 
 	mustEqualTime(t, "ticker delivery after Reset from stopped state", mustReceiveTime(t, ticker.C()), start.Add(3*time.Second))
 }
@@ -208,14 +208,14 @@ func TestFakeTickerResetDropsDeliveryWhenChannelIsFull(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
-	ticker := clock.NewTicker(5 * time.Second)
+	clk := NewFakeClock(start)
+	ticker := clk.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 
 	ticker.Reset(3 * time.Second)
-	clock.Step(3 * time.Second)
+	clk.Step(3 * time.Second)
 
 	mustEqualTime(t, "stale ticker delivery", mustReceiveTime(t, ticker.C()), start.Add(5*time.Second))
 	mustNotReceiveTime(t, ticker.C())
@@ -227,16 +227,16 @@ func TestFakeTickerResetPanicsForNonPositiveInterval(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name     string
-		duration time.Duration
+		name string
+		d    time.Duration
 	}{
 		{
-			name:     "zero",
-			duration: 0,
+			name: "zero",
+			d:    0,
 		},
 		{
-			name:     "negative",
-			duration: -time.Second,
+			name: "negative",
+			d:    -time.Second,
 		},
 	}
 
@@ -245,12 +245,12 @@ func TestFakeTickerResetPanicsForNonPositiveInterval(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			clock := NewFakeClock(fakeClockTestTime())
-			ticker := clock.NewTicker(time.Hour)
+			clk := NewFakeClock(fakeClockTestTime())
+			ticker := clk.NewTicker(time.Hour)
 			defer ticker.Stop()
 
 			mustPanicWithValue(t, errFakeTickerNonPositiveInterval, func() {
-				ticker.Reset(tc.duration)
+				ticker.Reset(tc.d)
 			})
 		})
 	}
@@ -262,18 +262,18 @@ func TestFakeTickerDropsDeliveryWhenChannelIsFull(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
-	ticker := clock.NewTicker(5 * time.Second)
+	clk := NewFakeClock(start)
+	ticker := clk.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 	mustEqualTime(t, "first ticker delivery", mustReceiveTime(t, ticker.C()), start.Add(5*time.Second))
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 
 	done := make(chan struct{})
 	go func() {
-		clock.Step(5 * time.Second)
+		clk.Step(5 * time.Second)
 		close(done)
 	}()
 	mustReceiveSignal(t, done)

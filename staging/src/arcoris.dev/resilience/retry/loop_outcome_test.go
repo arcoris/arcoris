@@ -185,11 +185,11 @@ func TestStopEventIncludesAttemptAfterAttempt(t *testing.T) {
 }
 
 func retryOutcomeTestExecution(observers ...Observer) *retryExecution {
-	config := configOf(WithClock(clock.NewFakeClock(retryTestFinishedAt())))
-	config.observers = append(config.observers, observers...)
+	cfg := configOf(WithClock(clock.NewFakeClock(retryTestFinishedAt())))
+	cfg.observers = append(cfg.observers, observers...)
 
 	return &retryExecution{
-		config:      config,
+		config:      cfg,
 		startedAt:   retryTestStartedAt(),
 		attempts:    1,
 		lastAttempt: retryTestAttempt(1),

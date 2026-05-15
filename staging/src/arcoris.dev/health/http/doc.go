@@ -45,9 +45,9 @@
 //   - /livez
 //   - /readyz
 //
-// Compatibility constants such as /healthz and /health are provided only for
-// callers that want to install them explicitly. They are not registered by
-// default because they do not carry stable target semantics across systems.
+// DefaultHealthPath is provided for callers that want to install a general
+// health endpoint explicitly. It is not registered by default because it does
+// not carry stable target semantics across systems.
 //
 // # Non-goals
 //

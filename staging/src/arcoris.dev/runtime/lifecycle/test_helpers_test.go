@@ -167,8 +167,8 @@ func mustReceiveSnapshot(t *testing.T, ch <-chan Snapshot) Snapshot {
 	t.Helper()
 
 	select {
-	case snapshot := <-ch:
-		return snapshot
+	case snap := <-ch:
+		return snap
 	case <-time.After(time.Second):
 		// The timeout is only a deadlock guard; tests synchronize through channels.
 		t.Fatal("snapshot was not received before safety timeout")

@@ -28,13 +28,13 @@ func TestDelaysRejectsNegativeDelay(t *testing.T) {
 }
 
 func TestDelaysReturnsConfiguredValuesThenExhausts(t *testing.T) {
-	sequence := Delays(0, time.Second, 2*time.Second).NewSequence()
+	seq := Delays(0, time.Second, 2*time.Second).NewSequence()
 
-	mustNext(t, sequence, 0)
-	mustNext(t, sequence, time.Second)
-	mustNext(t, sequence, 2*time.Second)
-	mustExhausted(t, sequence)
-	mustExhausted(t, sequence)
+	mustNext(t, seq, 0)
+	mustNext(t, seq, time.Second)
+	mustNext(t, seq, 2*time.Second)
+	mustExhausted(t, seq)
+	mustExhausted(t, seq)
 }
 
 func TestDelaysAllowsEmptyInput(t *testing.T) {
@@ -43,20 +43,20 @@ func TestDelaysAllowsEmptyInput(t *testing.T) {
 
 func TestDelaysCopiesCallerSlice(t *testing.T) {
 	delays := []time.Duration{time.Second, 2 * time.Second}
-	schedule := Delays(delays...)
+	sched := Delays(delays...)
 	delays[0] = time.Hour
 
-	sequence := schedule.NewSequence()
-	mustNext(t, sequence, time.Second)
-	mustNext(t, sequence, 2*time.Second)
-	mustExhausted(t, sequence)
+	seq := sched.NewSequence()
+	mustNext(t, seq, time.Second)
+	mustNext(t, seq, 2*time.Second)
+	mustExhausted(t, seq)
 }
 
 func TestDelaysSequencesHaveIndependentCursors(t *testing.T) {
-	schedule := Delays(time.Second, 2*time.Second)
+	sched := Delays(time.Second, 2*time.Second)
 
-	l := schedule.NewSequence()
-	r := schedule.NewSequence()
+	l := sched.NewSequence()
+	r := sched.NewSequence()
 
 	mustNext(t, l, time.Second)
 	mustNext(t, l, 2*time.Second)

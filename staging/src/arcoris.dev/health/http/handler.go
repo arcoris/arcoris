@@ -17,17 +17,11 @@
 package healthhttp
 
 import (
-	"context"
 	"net/http"
 	"reflect"
 
 	"arcoris.dev/health"
 )
-
-// Evaluator is the health evaluation boundary used by Handler.
-type Evaluator interface {
-	Evaluate(ctx context.Context, target health.Target) (health.Report, error)
-}
 
 // Handler adapts one concrete health target to an HTTP endpoint.
 //
@@ -40,7 +34,7 @@ type Evaluator interface {
 // Handler stores only adapter configuration. It never exposes Result.Cause,
 // panic stacks, raw errors, or context causes to callers.
 type Handler struct {
-	evaluator Evaluator
+	evaluator health.Evaluator
 	target    health.Target
 	config    config
 }
@@ -50,8 +44,8 @@ type Handler struct {
 // evaluator MUST be non-nil. target MUST be concrete. Options configure only
 // HTTP-adapter policy such as response format, safe detail level, and status
 // code mapping.
-func NewHandler(evaluator Evaluator, target health.Target, opts ...Option) (*Handler, error) {
-	if nilEvaluator(evaluator) {
+func NewHandler(e health.Evaluator, target health.Target, opts ...Option) (*Handler, error) {
+	if nilEvaluator(e) {
 		return nil, ErrNilEvaluator
 	}
 	if !target.IsConcrete() {
@@ -63,7 +57,7 @@ func NewHandler(evaluator Evaluator, target health.Target, opts ...Option) (*Han
 		return nil, err
 	}
 
-	return &Handler{evaluator: evaluator, target: target, config: cfg}, nil
+	return &Handler{evaluator: e, target: target, config: cfg}, nil
 }
 
 // ServeHTTP evaluates the configured health target and writes a safe response.
@@ -95,15 +89,15 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	renderReport(w, r, h.config, report, passed)
 }
 
-func nilEvaluator(evaluator Evaluator) bool {
-	if evaluator == nil {
+func nilEvaluator(e health.Evaluator) bool {
+	if e == nil {
 		return true
 	}
 
-	value := reflect.ValueOf(evaluator)
-	switch value.Kind() {
+	val := reflect.ValueOf(e)
+	switch val.Kind() {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
-		return value.IsNil()
+		return val.IsNil()
 	default:
 		return false
 	}

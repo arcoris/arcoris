@@ -92,8 +92,8 @@ func (g *Int32Gauge) Load() int32 {
 // Store is appropriate for initialization, tests, owner-controlled publication,
 // or explicit state handoff. Ordinary runtime accounting should prefer Add and
 // Sub so overflow and underflow are detected at the update point.
-func (g *Int32Gauge) Store(value int32) {
-	g.value.Store(value)
+func (g *Int32Gauge) Store(val int32) {
+	g.value.Store(val)
 }
 
 // Add atomically adds delta to the signed gauge and returns the new value.
@@ -128,17 +128,17 @@ func (g *Int32Gauge) TryAdd(delta int32) (int32, bool) {
 	}
 
 	for {
-		current := g.value.Load()
+		cur := g.value.Load()
 
-		if delta > 0 && current > maxInt32-delta {
-			return current, false
+		if delta > 0 && cur > maxInt32-delta {
+			return cur, false
 		}
-		if delta < 0 && current < minInt32-delta {
-			return current, false
+		if delta < 0 && cur < minInt32-delta {
+			return cur, false
 		}
 
-		next := current + delta
-		if g.value.CompareAndSwap(current, next) {
+		next := cur + delta
+		if g.value.CompareAndSwap(cur, next) {
 			return next, true
 		}
 	}
@@ -180,17 +180,17 @@ func (g *Int32Gauge) TrySub(delta int32) (int32, bool) {
 	}
 
 	for {
-		current := g.value.Load()
+		cur := g.value.Load()
 
-		if delta > 0 && current < minInt32+delta {
-			return current, false
+		if delta > 0 && cur < minInt32+delta {
+			return cur, false
 		}
-		if delta < 0 && current > maxInt32+delta {
-			return current, false
+		if delta < 0 && cur > maxInt32+delta {
+			return cur, false
 		}
 
-		next := current - delta
-		if g.value.CompareAndSwap(current, next) {
+		next := cur - delta
+		if g.value.CompareAndSwap(cur, next) {
 			return next, true
 		}
 	}

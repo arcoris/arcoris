@@ -43,36 +43,36 @@ func (c *Controller) WaitState(ctx context.Context, target State) (Snapshot, err
 		ctx = context.Background()
 	}
 
-	snapshot, changed, done := c.waitSnapshot()
+	snap, changed, done := c.waitSnapshot()
 
 	if !target.IsValid() {
-		return snapshot, newWaitStateError(snapshot, target, ErrInvalidWaitTarget)
+		return snap, newWaitStateError(snap, target, ErrInvalidWaitTarget)
 	}
 
 	for {
-		if snapshot.State == target {
-			return snapshot, nil
+		if snap.State == target {
+			return snap, nil
 		}
 
-		if !canReachState(snapshot.State, target) {
-			return snapshot, newWaitStateError(snapshot, target, ErrWaitTargetUnreachable)
+		if !canReachState(snap.State, target) {
+			return snap, newWaitStateError(snap, target, ErrWaitTargetUnreachable)
 		}
 
 		select {
 		case <-changed:
-			snapshot, changed, done = c.waitSnapshot()
+			snap, changed, done = c.waitSnapshot()
 
 		case <-done:
-			snapshot, _, _ = c.waitSnapshot()
-			if snapshot.State == target {
-				return snapshot, nil
+			snap, _, _ = c.waitSnapshot()
+			if snap.State == target {
+				return snap, nil
 			}
 
-			return snapshot, newWaitStateError(snapshot, target, ErrWaitTargetUnreachable)
+			return snap, newWaitStateError(snap, target, ErrWaitTargetUnreachable)
 
 		case <-ctx.Done():
-			snapshot, _, _ = c.waitSnapshot()
-			return snapshot, newWaitStateError(snapshot, target, ctx.Err())
+			snap, _, _ = c.waitSnapshot()
+			return snap, newWaitStateError(snap, target, ctx.Err())
 		}
 	}
 }

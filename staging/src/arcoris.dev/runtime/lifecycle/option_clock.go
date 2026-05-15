@@ -28,11 +28,11 @@ package lifecycle
 // is not called while reducing transitions, validating transition rules, running
 // guards, or notifying observers.
 func WithClock(source TimeSource) Option {
-	return func(config *controllerConfig) {
+	return func(cfg *controllerConfig) {
 		if source == nil {
 			return
 		}
 
-		config.now = source.Now
+		cfg.now = source.Now
 	}
 }

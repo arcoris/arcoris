@@ -35,21 +35,21 @@ type GroupVersionKind struct {
 //
 // The parser intentionally rejects dotted legacy forms such as
 // "Kind.version.group"; ARCORIS uses a single unambiguous string grammar.
-func ParseGroupVersionKind(value string) (GroupVersionKind, error) {
-	if value == "" {
-		return GroupVersionKind{}, invalid("group/version/kind", value, "group/version and kind are required")
+func ParseGroupVersionKind(val string) (GroupVersionKind, error) {
+	if val == "" {
+		return GroupVersionKind{}, invalid("group/version/kind", val, "group/version and kind are required")
 	}
-	gvPart, kindPart, ok := strings.Cut(value, ", Kind=")
+	gvPart, kindPart, ok := strings.Cut(val, ", Kind=")
 	if !ok || gvPart == "" || kindPart == "" {
-		return GroupVersionKind{}, invalid("group/version/kind", value, "expected canonical form group/version, Kind=Kind")
+		return GroupVersionKind{}, invalid("group/version/kind", val, "expected canonical form group/version, Kind=Kind")
 	}
 	gv, err := ParseGroupVersion(gvPart)
 	if err != nil {
-		return GroupVersionKind{}, invalidValue("group/version/kind", value, err)
+		return GroupVersionKind{}, invalidValue("group/version/kind", val, err)
 	}
 	kind, err := ParseKind(kindPart)
 	if err != nil {
-		return GroupVersionKind{}, invalidValue("group/version/kind", value, err)
+		return GroupVersionKind{}, invalidValue("group/version/kind", val, err)
 	}
 	return GroupVersionKind{Group: gv.Group, Version: gv.Version, Kind: kind}, nil
 }
@@ -178,9 +178,9 @@ func (gvk *GroupVersionKind) UnmarshalJSON(data []byte) error {
 	if gvk == nil {
 		return nilUnmarshalReceiver("group/version/kind")
 	}
-	value, err := unmarshalJSONString("group/version/kind", data)
+	val, err := unmarshalJSONString("group/version/kind", data)
 	if err != nil {
 		return err
 	}
-	return gvk.UnmarshalText([]byte(value))
+	return gvk.UnmarshalText([]byte(val))
 }

@@ -160,8 +160,8 @@ func (r Result) WithObserved(observed time.Time) Result {
 // The method does not reject negative values because Result is a plain value
 // type. Call Normalize to defensively repair invalid durations at ownership
 // boundaries.
-func (r Result) WithDuration(duration time.Duration) Result {
-	r.Duration = duration
+func (r Result) WithDuration(d time.Duration) Result {
+	r.Duration = d
 	return r
 }
 

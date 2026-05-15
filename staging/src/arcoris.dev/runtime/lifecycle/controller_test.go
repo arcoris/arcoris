@@ -41,9 +41,9 @@ func TestNewControllerInitialRevision(t *testing.T) {
 func TestNewControllerInitialSnapshotValid(t *testing.T) {
 	t.Parallel()
 
-	snapshot := NewController().Snapshot()
-	if !snapshot.IsValid() {
-		t.Fatalf("initial snapshot %+v is invalid", snapshot)
+	snap := NewController().Snapshot()
+	if !snap.IsValid() {
+		t.Fatalf("initial snapshot %+v is invalid", snap)
 	}
 }
 
@@ -78,8 +78,8 @@ func TestNewControllerFallsBackWhenOptionClearsClock(t *testing.T) {
 
 	// NewController normalizes config after options run, so even a package-local
 	// option that clears the clock cannot produce zero commit timestamps.
-	controller := NewController(Option(func(config *controllerConfig) {
-		config.now = nil
+	controller := NewController(Option(func(cfg *controllerConfig) {
+		cfg.now = nil
 	}))
 	transition, err := controller.BeginStart()
 	if err != nil {

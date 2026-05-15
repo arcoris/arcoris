@@ -25,6 +25,8 @@ import (
 	"arcoris.dev/health"
 )
 
+var _ health.Evaluator = (*Evaluator)(nil)
+
 func TestNewEvaluatorRejectsInvalidInputs(t *testing.T) {
 	t.Parallel()
 

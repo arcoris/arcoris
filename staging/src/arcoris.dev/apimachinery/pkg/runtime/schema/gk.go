@@ -35,28 +35,28 @@ type GroupKind struct {
 // Core kinds use the bare Kind form. Named groups use Kind.group, where the
 // group suffix is a DNS-1123 subdomain. The parser rejects malformed kinds and
 // groups without attempting alternate interpretations.
-func ParseGroupKind(value string) (GroupKind, error) {
-	if value == "" {
-		return GroupKind{}, invalid("group/kind", value, "kind is required")
+func ParseGroupKind(val string) (GroupKind, error) {
+	if val == "" {
+		return GroupKind{}, invalid("group/kind", val, "kind is required")
 	}
-	kindPart, groupPart, hasGroup := strings.Cut(value, ".")
+	kindPart, groupPart, hasGroup := strings.Cut(val, ".")
 	if !hasGroup {
-		kind, err := ParseKind(value)
+		kind, err := ParseKind(val)
 		if err != nil {
-			return GroupKind{}, invalidValue("group/kind", value, err)
+			return GroupKind{}, invalidValue("group/kind", val, err)
 		}
 		return GroupKind{Kind: kind}, nil
 	}
 	if kindPart == "" || groupPart == "" {
-		return GroupKind{}, invalid("group/kind", value, "expected canonical form kind.group")
+		return GroupKind{}, invalid("group/kind", val, "expected canonical form kind.group")
 	}
 	kind, err := ParseKind(kindPart)
 	if err != nil {
-		return GroupKind{}, invalidValue("group/kind", value, err)
+		return GroupKind{}, invalidValue("group/kind", val, err)
 	}
 	group, err := ParseGroup(groupPart)
 	if err != nil {
-		return GroupKind{}, invalidValue("group/kind", value, err)
+		return GroupKind{}, invalidValue("group/kind", val, err)
 	}
 	return GroupKind{Group: group, Kind: kind}, nil
 }
@@ -143,9 +143,9 @@ func (gk *GroupKind) UnmarshalJSON(data []byte) error {
 	if gk == nil {
 		return nilUnmarshalReceiver("group/kind")
 	}
-	value, err := unmarshalJSONString("group/kind", data)
+	val, err := unmarshalJSONString("group/kind", data)
 	if err != nil {
 		return err
 	}
-	return gk.UnmarshalText([]byte(value))
+	return gk.UnmarshalText([]byte(val))
 }

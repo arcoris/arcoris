@@ -30,24 +30,24 @@ func TestRenderReportText(t *testing.T) {
 	t.Parallel()
 
 	report := healthtest.MixedReport(health.TargetReady)
-	config := defaultConfig(health.TargetReady)
-	config.detailLevel = DetailAll
+	cfg := defaultConfig(health.TargetReady)
+	cfg.detailLevel = DetailAll
 
 	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
 
-	renderReport(recorder, request, config, report, false)
+	renderReport(recorder, req, cfg, report, false)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != DefaultFailedStatus {
-		t.Fatalf("status = %d, want %d", response.StatusCode, DefaultFailedStatus)
+	if resp.StatusCode != DefaultFailedStatus {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, DefaultFailedStatus)
 	}
-	if got := response.Header.Get(headerCacheControl); got != headerValueNoStore {
+	if got := resp.Header.Get(headerCacheControl); got != headerValueNoStore {
 		t.Fatalf("Cache-Control = %q, want %q", got, headerValueNoStore)
 	}
-	if got := response.Header.Get(headerXContentTypeOptions); got != headerValueNoSniff {
+	if got := resp.Header.Get(headerXContentTypeOptions); got != headerValueNoSniff {
 		t.Fatalf("X-Content-Type-Options = %q, want %q", got, headerValueNoSniff)
 	}
 	if strings.Contains(recorder.Body.String(), "private cause") {
@@ -59,19 +59,19 @@ func TestRenderReportJSON(t *testing.T) {
 	t.Parallel()
 
 	report := healthtest.MixedReport(health.TargetReady)
-	config := defaultConfig(health.TargetReady)
-	config.format = FormatJSON
-	config.detailLevel = DetailAll
+	cfg := defaultConfig(health.TargetReady)
+	cfg.format = FormatJSON
+	cfg.detailLevel = DetailAll
 
 	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
 
-	renderReport(recorder, request, config, report, false)
+	renderReport(recorder, req, cfg, report, false)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if got := response.Header.Get(headerContentType); got != contentTypeJSON {
+	if got := resp.Header.Get(headerContentType); got != contentTypeJSON {
 		t.Fatalf("Content-Type = %q, want %q", got, contentTypeJSON)
 	}
 	if strings.Contains(recorder.Body.String(), "private cause") {
@@ -83,15 +83,15 @@ func TestRenderHandlerErrorText(t *testing.T) {
 	t.Parallel()
 
 	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
 
-	renderHandlerError(recorder, request, defaultConfig(health.TargetReady))
+	renderHandlerError(recorder, req, defaultConfig(health.TargetReady))
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != DefaultErrorStatus {
-		t.Fatalf("status = %d, want %d", response.StatusCode, DefaultErrorStatus)
+	if resp.StatusCode != DefaultErrorStatus {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, DefaultErrorStatus)
 	}
 	if got := recorder.Body.String(); got != textHandlerError {
 		t.Fatalf("body = %q, want %q", got, textHandlerError)
@@ -101,18 +101,18 @@ func TestRenderHandlerErrorText(t *testing.T) {
 func TestRenderHandlerErrorJSON(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig(health.TargetReady)
-	config.format = FormatJSON
+	cfg := defaultConfig(health.TargetReady)
+	cfg.format = FormatJSON
 
 	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
 
-	renderHandlerError(recorder, request, config)
+	renderHandlerError(recorder, req, cfg)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if got := response.Header.Get(headerContentType); got != contentTypeJSON {
+	if got := resp.Header.Get(headerContentType); got != contentTypeJSON {
 		t.Fatalf("Content-Type = %q, want %q", got, contentTypeJSON)
 	}
 	if strings.Contains(recorder.Body.String(), "private") {
@@ -124,14 +124,14 @@ func TestRenderSuppressesHeadBody(t *testing.T) {
 	t.Parallel()
 
 	report := healthtest.MixedReport(health.TargetReady)
-	config := defaultConfig(health.TargetReady)
-	config.format = FormatJSON
-	config.detailLevel = DetailAll
+	cfg := defaultConfig(health.TargetReady)
+	cfg.format = FormatJSON
+	cfg.detailLevel = DetailAll
 
 	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodHead, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodHead, DefaultReadyPath, nil)
 
-	renderReport(recorder, request, config, report, false)
+	renderReport(recorder, req, cfg, report, false)
 
 	if recorder.Body.Len() != 0 {
 		t.Fatalf("HEAD body length = %d, want 0", recorder.Body.Len())

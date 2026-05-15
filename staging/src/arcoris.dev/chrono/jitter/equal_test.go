@@ -30,27 +30,27 @@ func TestEqualRejectsNilSchedule(t *testing.T) {
 }
 
 func TestEqualReturnsValueInsideUpperHalfRange(t *testing.T) {
-	sequence := Equal(delay.Fixed(10*time.Second), WithRandom(fixedRandom(5*time.Second))).NewSequence()
+	seq := Equal(delay.Fixed(10*time.Second), WithRandom(fixedRandom(5*time.Second))).NewSequence()
 
-	mustNext(t, sequence, 10*time.Second)
+	mustNext(t, seq, 10*time.Second)
 }
 
 func TestEqualCanReturnLowerBound(t *testing.T) {
-	sequence := Equal(delay.Fixed(10*time.Second), WithRandom(fixedRandom(0))).NewSequence()
+	seq := Equal(delay.Fixed(10*time.Second), WithRandom(fixedRandom(0))).NewSequence()
 
-	mustNext(t, sequence, 5*time.Second)
+	mustNext(t, seq, 5*time.Second)
 }
 
 func TestEqualLeavesZeroBaseDelayAtZero(t *testing.T) {
-	sequence := Equal(delay.Fixed(0), WithRandom(fixedRandom(99))).NewSequence()
+	seq := Equal(delay.Fixed(0), WithRandom(fixedRandom(99))).NewSequence()
 
-	mustNext(t, sequence, 0)
+	mustNext(t, seq, 0)
 }
 
 func TestEqualPreservesChildExhaustion(t *testing.T) {
-	sequence := Equal(delay.Delays(), WithRandom(fixedRandom(0))).NewSequence()
+	seq := Equal(delay.Delays(), WithRandom(fixedRandom(0))).NewSequence()
 
-	mustExhausted(t, sequence)
+	mustExhausted(t, seq)
 }
 
 func TestEqualTransformUsesIntegerHalfLowerBound(t *testing.T) {

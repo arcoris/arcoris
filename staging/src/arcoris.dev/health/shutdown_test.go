@@ -33,8 +33,8 @@ func TestSourceChannelChecks(t *testing.T) {
 	if checker.Name() != "shutdown" {
 		t.Fatalf("Name() = %q, want shutdown", checker.Name())
 	}
-	if result := checker.Check(context.Background()); result.Status != StatusHealthy {
-		t.Fatalf("open channel status = %s, want healthy", result.Status)
+	if res := checker.Check(context.Background()); res.Status != StatusHealthy {
+		t.Fatalf("open channel status = %s, want healthy", res.Status)
 	}
 
 	close(done)
@@ -54,9 +54,9 @@ func TestDrainChannelCheck(t *testing.T) {
 	}
 
 	close(draining)
-	result := checker.Check(context.Background())
-	if result.Status != StatusUnhealthy || result.Reason != ReasonDraining {
-		t.Fatalf("drain result = %+v, want unhealthy draining", result)
+	res := checker.Check(context.Background())
+	if res.Status != StatusUnhealthy || res.Reason != ReasonDraining {
+		t.Fatalf("drain result = %+v, want unhealthy draining", res)
 	}
 }
 
@@ -72,8 +72,8 @@ func TestSourceContextChecks(t *testing.T) {
 	if checker.Name() != "shutdown" {
 		t.Fatalf("Name() = %q, want shutdown", checker.Name())
 	}
-	if result := checker.Check(context.Background()); result.Status != StatusHealthy {
-		t.Fatalf("active source status = %s, want healthy", result.Status)
+	if res := checker.Check(context.Background()); res.Status != StatusHealthy {
+		t.Fatalf("active source status = %s, want healthy", res.Status)
 	}
 
 	cancel(cause)
@@ -96,9 +96,9 @@ func TestContextDrainCheck(t *testing.T) {
 	}
 
 	cancel()
-	result := checker.Check(context.Background())
-	if result.Status != StatusUnhealthy || result.Reason != ReasonDraining {
-		t.Fatalf("drain result = %+v, want unhealthy draining", result)
+	res := checker.Check(context.Background())
+	if res.Status != StatusUnhealthy || res.Reason != ReasonDraining {
+		t.Fatalf("drain result = %+v, want unhealthy draining", res)
 	}
 }
 

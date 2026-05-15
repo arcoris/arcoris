@@ -51,31 +51,31 @@ func newStepClock(values ...time.Time) *stepClock {
 	return &stepClock{values: values}
 }
 
-func (clock *stepClock) Now() time.Time {
-	if len(clock.values) == 0 {
+func (clk *stepClock) Now() time.Time {
+	if len(clk.values) == 0 {
 		return time.Time{}
 	}
-	if clock.next >= len(clock.values) {
-		clock.current = clock.values[len(clock.values)-1]
-		return clock.current
+	if clk.next >= len(clk.values) {
+		clk.current = clk.values[len(clk.values)-1]
+		return clk.current
 	}
 
-	value := clock.values[clock.next]
-	clock.next++
-	clock.current = value
+	val := clk.values[clk.next]
+	clk.next++
+	clk.current = val
 
-	return value
+	return val
 }
 
-func (clock *stepClock) Since(ts time.Time) time.Duration {
-	return clock.current.Sub(ts)
+func (clk *stepClock) Since(ts time.Time) time.Duration {
+	return clk.current.Sub(ts)
 }
 
-func mustCheck(t *testing.T, name string, result health.Result) health.Checker {
+func mustCheck(t *testing.T, name string, res health.Result) health.Checker {
 	t.Helper()
 
 	checker, err := health.NewCheck(name, func(context.Context) health.Result {
-		return result
+		return res
 	})
 	if err != nil {
 		t.Fatalf("health.NewCheck(%q) = %v, want nil", name, err)
@@ -95,10 +95,10 @@ func mustRegistry(t *testing.T, target health.Target, checks ...health.Checker) 
 	return registry
 }
 
-func mustEvaluator(t *testing.T, registry *health.Registry, opts ...EvaluatorOption) *Evaluator {
+func mustEvaluator(t *testing.T, r *health.Registry, opts ...EvaluatorOption) *Evaluator {
 	t.Helper()
 
-	evaluator, err := NewEvaluator(registry, opts...)
+	evaluator, err := NewEvaluator(r, opts...)
 	if err != nil {
 		t.Fatalf("NewEvaluator() = %v, want nil", err)
 	}

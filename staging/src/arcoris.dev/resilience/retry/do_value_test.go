@@ -27,7 +27,7 @@ import (
 func TestDoValueSucceeds(t *testing.T) {
 	calls := 0
 
-	value, err := DoValue(context.Background(), func(context.Context) (int, error) {
+	val, err := DoValue(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 42, nil
 	})
@@ -35,8 +35,8 @@ func TestDoValueSucceeds(t *testing.T) {
 	if err != nil {
 		t.Fatalf("DoValue returned error: %v", err)
 	}
-	if value != 42 {
-		t.Fatalf("DoValue value = %d, want 42", value)
+	if val != 42 {
+		t.Fatalf("DoValue value = %d, want 42", val)
 	}
 	if calls != 1 {
 		t.Fatalf("operation calls = %d, want 1", calls)
@@ -47,7 +47,7 @@ func TestDoValueReturnsOriginalNonRetryableErrorAndZeroValue(t *testing.T) {
 	errBoom := errors.New("boom")
 	calls := 0
 
-	value, err := DoValue(context.Background(), func(context.Context) (int, error) {
+	val, err := DoValue(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 99, errBoom
 	})
@@ -58,8 +58,8 @@ func TestDoValueReturnsOriginalNonRetryableErrorAndZeroValue(t *testing.T) {
 	if errors.Is(err, ErrExhausted) {
 		t.Fatalf("non-retryable error matched ErrExhausted")
 	}
-	if value != 0 {
-		t.Fatalf("DoValue value = %d, want zero value", value)
+	if val != 0 {
+		t.Fatalf("DoValue value = %d, want zero value", val)
 	}
 	if calls != 1 {
 		t.Fatalf("operation calls = %d, want 1", calls)
@@ -70,7 +70,7 @@ func TestDoValueRetriesAndReturnsSuccessfulValue(t *testing.T) {
 	errBoom := errors.New("boom")
 	calls := 0
 
-	value, err := DoValue(
+	val, err := DoValue(
 		context.Background(),
 		func(context.Context) (int, error) {
 			calls++
@@ -87,8 +87,8 @@ func TestDoValueRetriesAndReturnsSuccessfulValue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("DoValue returned error: %v", err)
 	}
-	if value != 42 {
-		t.Fatalf("DoValue value = %d, want 42", value)
+	if val != 42 {
+		t.Fatalf("DoValue value = %d, want 42", val)
 	}
 	if calls != 3 {
 		t.Fatalf("operation calls = %d, want 3", calls)
@@ -99,7 +99,7 @@ func TestDoValueReturnsExhaustedAndZeroValue(t *testing.T) {
 	errBoom := errors.New("boom")
 	calls := 0
 
-	value, err := DoValue(
+	val, err := DoValue(
 		context.Background(),
 		func(context.Context) (int, error) {
 			calls++
@@ -116,8 +116,8 @@ func TestDoValueReturnsExhaustedAndZeroValue(t *testing.T) {
 	if !errors.Is(err, errBoom) {
 		t.Fatalf("DoValue error does not preserve last operation error: %v", err)
 	}
-	if value != 0 {
-		t.Fatalf("DoValue value = %d, want zero value", value)
+	if val != 0 {
+		t.Fatalf("DoValue value = %d, want zero value", val)
 	}
 	if calls != 2 {
 		t.Fatalf("operation calls = %d, want 2", calls)
@@ -141,7 +141,7 @@ func TestDoValueReturnsInterruptedAndZeroValueWhenContextAlreadyStopped(t *testi
 
 	calls := 0
 
-	value, err := DoValue(
+	val, err := DoValue(
 		ctx,
 		func(context.Context) (int, error) {
 			calls++
@@ -158,8 +158,8 @@ func TestDoValueReturnsInterruptedAndZeroValueWhenContextAlreadyStopped(t *testi
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("DoValue error does not preserve context.Canceled: %v", err)
 	}
-	if value != 0 {
-		t.Fatalf("DoValue value = %d, want zero value", value)
+	if val != 0 {
+		t.Fatalf("DoValue value = %d, want zero value", val)
 	}
 	if calls != 0 {
 		t.Fatalf("operation calls = %d, want 0", calls)

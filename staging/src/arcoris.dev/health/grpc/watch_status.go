@@ -27,7 +27,7 @@ import (
 
 // watchServingStatus evaluates mapping and returns the gRPC Watch status.
 //
-// Source failures are reported as UNKNOWN instead of stream errors. This keeps
+// Evaluator failures are reported as UNKNOWN instead of stream errors. This keeps
 // Watch alive across transient evaluation failures and avoids exposing raw
 // errors to clients.
 func (s *Server) watchServingStatus(

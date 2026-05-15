@@ -125,8 +125,8 @@ func signalKey(sig os.Signal) string {
 }
 
 // typeName returns a compact package-local type name for signal set keys.
-func typeName(value any) string {
-	typeOf := reflect.TypeOf(value)
+func typeName(val any) string {
+	typeOf := reflect.TypeOf(val)
 	if typeOf == nil {
 		return "<nil>"
 	}

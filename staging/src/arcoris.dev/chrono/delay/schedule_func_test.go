@@ -21,23 +21,23 @@ import (
 )
 
 func TestScheduleFuncRejectsNilFunction(t *testing.T) {
-	var schedule ScheduleFunc
+	var sched ScheduleFunc
 
 	mustPanicWith(t, errNilScheduleFunc, func() {
-		_ = schedule.NewSequence()
+		_ = sched.NewSequence()
 	})
 }
 
 func TestScheduleFuncRejectsNilSequence(t *testing.T) {
-	schedule := ScheduleFunc(func() Sequence { return nil })
+	sched := ScheduleFunc(func() Sequence { return nil })
 
 	mustPanicWith(t, errScheduleFuncReturnedNilSequence, func() {
-		_ = schedule.NewSequence()
+		_ = sched.NewSequence()
 	})
 }
 
 func TestScheduleFuncReturnsSequence(t *testing.T) {
-	schedule := ScheduleFunc(func() Sequence { return Immediate().NewSequence() })
+	sched := ScheduleFunc(func() Sequence { return Immediate().NewSequence() })
 
-	mustNext(t, schedule.NewSequence(), 0)
+	mustNext(t, sched.NewSequence(), 0)
 }

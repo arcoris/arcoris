@@ -54,9 +54,9 @@ func TestSnapshotIsValid(t *testing.T) {
 	updated := time.Unix(10, 0)
 
 	tests := []struct {
-		name     string
-		snapshot Snapshot
-		want     bool
+		name string
+		snap Snapshot
+		want bool
 	}{
 		{
 			name: "zero snapshot is valid absence of observation",
@@ -64,7 +64,7 @@ func TestSnapshotIsValid(t *testing.T) {
 		},
 		{
 			name: "valid healthy snapshot",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetReady,
 				Report: health.Report{
 					Target:   health.TargetReady,
@@ -81,7 +81,7 @@ func TestSnapshotIsValid(t *testing.T) {
 		},
 		{
 			name: "valid unknown snapshot",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetReady,
 				Report: health.Report{
 					Target:   health.TargetReady,
@@ -95,7 +95,7 @@ func TestSnapshotIsValid(t *testing.T) {
 		},
 		{
 			name: "valid stale snapshot",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetLive,
 				Report: health.Report{
 					Target:   health.TargetLive,
@@ -110,14 +110,14 @@ func TestSnapshotIsValid(t *testing.T) {
 		},
 		{
 			name: "updated and revision without target and report",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Updated:  updated,
 				Revision: 1,
 			},
 		},
 		{
 			name: "non concrete target",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetUnknown,
 				Report: health.Report{
 					Target:   health.TargetUnknown,
@@ -130,7 +130,7 @@ func TestSnapshotIsValid(t *testing.T) {
 		},
 		{
 			name: "target mismatch",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetReady,
 				Report: health.Report{
 					Target:   health.TargetLive,
@@ -143,7 +143,7 @@ func TestSnapshotIsValid(t *testing.T) {
 		},
 		{
 			name: "invalid report status",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetReady,
 				Report: health.Report{
 					Target:   health.TargetReady,
@@ -156,7 +156,7 @@ func TestSnapshotIsValid(t *testing.T) {
 		},
 		{
 			name: "invalid report duration",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetReady,
 				Report: health.Report{
 					Target:   health.TargetReady,
@@ -170,7 +170,7 @@ func TestSnapshotIsValid(t *testing.T) {
 		},
 		{
 			name: "missing updated",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetReady,
 				Report: health.Report{
 					Target:   health.TargetReady,
@@ -182,7 +182,7 @@ func TestSnapshotIsValid(t *testing.T) {
 		},
 		{
 			name: "missing revision",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetReady,
 				Report: health.Report{
 					Target:   health.TargetReady,
@@ -194,7 +194,7 @@ func TestSnapshotIsValid(t *testing.T) {
 		},
 		{
 			name: "stale without observation",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Stale: true,
 			},
 		},
@@ -204,7 +204,7 @@ func TestSnapshotIsValid(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := tc.snapshot.IsValid(); got != tc.want {
+			if got := tc.snap.IsValid(); got != tc.want {
 				t.Fatalf("IsValid() = %v, want %v", got, tc.want)
 			}
 		})

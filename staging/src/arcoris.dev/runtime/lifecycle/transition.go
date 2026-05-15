@@ -194,8 +194,8 @@ func (t Transition) IsShutdown() bool {
 // validation, failure-cause validation, and guard validation. The method is
 // intentionally package-local so ordinary callers cannot fabricate committed
 // transitions.
-func (t Transition) withCommitMetadata(revision uint64, at time.Time) Transition {
-	t.Revision = revision
+func (t Transition) withCommitMetadata(rev uint64, at time.Time) Transition {
+	t.Revision = rev
 	t.At = at
 	return t
 }

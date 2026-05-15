@@ -38,21 +38,21 @@ type GroupVersionResourcePath struct {
 // The parser requires a colon between group/version and resource path and then
 // applies the strict ResourcePath parser to the right-hand side. URL-like
 // "group/version/resource" input is rejected.
-func ParseGroupVersionResourcePath(value string) (GroupVersionResourcePath, error) {
-	if value == "" {
-		return GroupVersionResourcePath{}, invalid("group/version/resource path", value, "group/version and resource are required")
+func ParseGroupVersionResourcePath(val string) (GroupVersionResourcePath, error) {
+	if val == "" {
+		return GroupVersionResourcePath{}, invalid("group/version/resource path", val, "group/version and resource are required")
 	}
-	gvPart, pathPart, ok := strings.Cut(value, ":")
+	gvPart, pathPart, ok := strings.Cut(val, ":")
 	if !ok || gvPart == "" || pathPart == "" || strings.Contains(pathPart, ":") {
-		return GroupVersionResourcePath{}, invalid("group/version/resource path", value, "expected canonical form group/version:resource[/subresource]")
+		return GroupVersionResourcePath{}, invalid("group/version/resource path", val, "expected canonical form group/version:resource[/subresource]")
 	}
 	gv, err := ParseGroupVersion(gvPart)
 	if err != nil {
-		return GroupVersionResourcePath{}, invalidValue("group/version/resource path", value, err)
+		return GroupVersionResourcePath{}, invalidValue("group/version/resource path", val, err)
 	}
 	path, err := ParseResourcePath(pathPart)
 	if err != nil {
-		return GroupVersionResourcePath{}, invalidValue("group/version/resource path", value, err)
+		return GroupVersionResourcePath{}, invalidValue("group/version/resource path", val, err)
 	}
 	return GroupVersionResourcePath{
 		Group:       gv.Group,
@@ -186,9 +186,9 @@ func (gvrp *GroupVersionResourcePath) UnmarshalJSON(data []byte) error {
 	if gvrp == nil {
 		return nilUnmarshalReceiver("group/version/resource path")
 	}
-	value, err := unmarshalJSONString("group/version/resource path", data)
+	val, err := unmarshalJSONString("group/version/resource path", data)
 	if err != nil {
 		return err
 	}
-	return gvrp.UnmarshalText([]byte(value))
+	return gvrp.UnmarshalText([]byte(val))
 }

@@ -37,8 +37,8 @@ func newRecordingMux() *recordingMux {
 	}
 }
 
-func (mux *recordingMux) Handle(pattern string, handler http.Handler) {
-	mux.handlers[pattern] = handler
+func (mux *recordingMux) Handle(pattern string, h http.Handler) {
+	mux.handlers[pattern] = h
 }
 
 func (mux *recordingMux) handler(pattern string) (http.Handler, bool) {
@@ -46,10 +46,10 @@ func (mux *recordingMux) handler(pattern string) (http.Handler, bool) {
 	return handler, ok
 }
 
-func mustNewHandler(t *testing.T, evaluator Evaluator, target health.Target, opts ...Option) *Handler {
+func mustNewHandler(t *testing.T, e health.Evaluator, target health.Target, opts ...Option) *Handler {
 	t.Helper()
 
-	handler, err := NewHandler(evaluator, target, opts...)
+	handler, err := NewHandler(e, target, opts...)
 	if err != nil {
 		t.Fatalf("NewHandler() = %v, want nil", err)
 	}

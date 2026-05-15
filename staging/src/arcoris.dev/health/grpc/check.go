@@ -26,23 +26,23 @@ import (
 
 // Check implements grpc.health.v1.Health.Check for one configured service.
 //
-// The method evaluates exactly one mapped package-health target through Source
-// and converts the resulting report status through the mapping policy. Unknown
-// services and Source failures are returned as generic gRPC errors so raw health
-// causes, panic details, credentials, or infrastructure addresses cannot leak
-// through the transport boundary.
+// The method evaluates exactly one mapped package-health target through
+// health.Evaluator and converts the resulting report status through the mapping
+// policy. Unknown services and evaluator failures are returned as generic gRPC
+// errors so raw health causes, panic details, credentials, or infrastructure
+// addresses cannot leak through the transport boundary.
 func (s *Server) Check(
 	ctx context.Context,
-	request *healthpb.HealthCheckRequest,
+	req *healthpb.HealthCheckRequest,
 ) (*healthpb.HealthCheckResponse, error) {
 	if s == nil || nilSource(s.source) {
 		return nil, status.Error(codes.Internal, healthServerUnavailableMessage)
 	}
-	if request == nil {
+	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, nilCheckRequestMessage)
 	}
 
-	mapping, ok := s.service(request.GetService())
+	mapping, ok := s.service(req.GetService())
 	if !ok {
 		return nil, status.Error(codes.NotFound, unknownServiceMessage)
 	}

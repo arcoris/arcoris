@@ -22,8 +22,8 @@ import (
 	"arcoris.dev/value/result"
 )
 
-func cloneStrings(value []string) []string {
-	return slices.Clone(value)
+func cloneStrings(val []string) []string {
+	return slices.Clone(val)
 }
 
 func TestCloneOK(t *testing.T) {

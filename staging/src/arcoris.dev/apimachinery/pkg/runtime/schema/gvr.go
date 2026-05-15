@@ -34,21 +34,21 @@ type GroupVersionResource struct {
 //
 // Legacy dotted triplets and path-like forms are rejected because they are not
 // canonical ARCORIS schema identifiers.
-func ParseGroupVersionResource(value string) (GroupVersionResource, error) {
-	if value == "" {
-		return GroupVersionResource{}, invalid("group/version/resource", value, "group/version and resource are required")
+func ParseGroupVersionResource(val string) (GroupVersionResource, error) {
+	if val == "" {
+		return GroupVersionResource{}, invalid("group/version/resource", val, "group/version and resource are required")
 	}
-	gvPart, resourcePart, ok := strings.Cut(value, ":")
+	gvPart, resourcePart, ok := strings.Cut(val, ":")
 	if !ok || gvPart == "" || resourcePart == "" || strings.Contains(resourcePart, ":") {
-		return GroupVersionResource{}, invalid("group/version/resource", value, "expected canonical form group/version:resource")
+		return GroupVersionResource{}, invalid("group/version/resource", val, "expected canonical form group/version:resource")
 	}
 	gv, err := ParseGroupVersion(gvPart)
 	if err != nil {
-		return GroupVersionResource{}, invalidValue("group/version/resource", value, err)
+		return GroupVersionResource{}, invalidValue("group/version/resource", val, err)
 	}
 	resource, err := ParseResource(resourcePart)
 	if err != nil {
-		return GroupVersionResource{}, invalidValue("group/version/resource", value, err)
+		return GroupVersionResource{}, invalidValue("group/version/resource", val, err)
 	}
 	return GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: resource}, nil
 }
@@ -166,9 +166,9 @@ func (gvr *GroupVersionResource) UnmarshalJSON(data []byte) error {
 	if gvr == nil {
 		return nilUnmarshalReceiver("group/version/resource")
 	}
-	value, err := unmarshalJSONString("group/version/resource", data)
+	val, err := unmarshalJSONString("group/version/resource", data)
 	if err != nil {
 		return err
 	}
-	return gvr.UnmarshalText([]byte(value))
+	return gvr.UnmarshalText([]byte(val))
 }

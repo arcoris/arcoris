@@ -33,7 +33,6 @@ func TestValidatePath(t *testing.T) {
 		{name: "live", path: DefaultLivePath, want: true},
 		{name: "ready", path: DefaultReadyPath, want: true},
 		{name: "healthz", path: DefaultHealthPath, want: true},
-		{name: "health", path: DefaultHealthPlainPath, want: true},
 		{name: "nested", path: "/internal/health/ready", want: true},
 		{name: "empty", path: "", want: false},
 		{name: "relative", path: "readyz", want: false},

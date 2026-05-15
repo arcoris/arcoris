@@ -65,12 +65,12 @@ type Uint64CounterDelta struct {
 // need to know that a wrap was observed.
 //
 // Multiple wraps cannot be detected from previous and current alone.
-func NewUint64CounterDelta(previous, current uint64) Uint64CounterDelta {
+func NewUint64CounterDelta(prev, cur uint64) Uint64CounterDelta {
 	return Uint64CounterDelta{
-		Previous: previous,
-		Current:  current,
-		Value:    current - previous,
-		Wrapped:  current < previous,
+		Previous: prev,
+		Current:  cur,
+		Value:    cur - prev,
+		Wrapped:  cur < prev,
 	}
 }
 

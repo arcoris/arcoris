@@ -36,7 +36,7 @@ import "arcoris.dev/chrono/clock"
 func WithClock(c clock.Clock) Option {
 	requireClock(c)
 
-	return func(config *config) {
-		config.clock = c
+	return func(cfg *config) {
+		cfg.clock = c
 	}
 }

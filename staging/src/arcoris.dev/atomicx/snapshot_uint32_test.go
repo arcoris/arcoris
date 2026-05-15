@@ -22,10 +22,10 @@ import "testing"
 func TestUint32CounterSnapshotZeroValue(t *testing.T) {
 	t.Parallel()
 
-	var snapshot Uint32CounterSnapshot
+	var snap Uint32CounterSnapshot
 
-	if snapshot.Value != 0 {
-		t.Fatalf("zero-value Uint32CounterSnapshot.Value = %d, want 0", snapshot.Value)
+	if snap.Value != 0 {
+		t.Fatalf("zero-value Uint32CounterSnapshot.Value = %d, want 0", snap.Value)
 	}
 }
 
@@ -57,12 +57,12 @@ func TestUint32CounterSnapshotIsIndependentFromLaterCounterUpdates(t *testing.T)
 	var counter Uint32Counter
 
 	counter.Add(10)
-	snapshot := counter.Snapshot()
+	snap := counter.Snapshot()
 
 	counter.Add(90)
 
-	if snapshot.Value != 10 {
-		t.Fatalf("snapshot Value changed after counter update: got %d, want 10", snapshot.Value)
+	if snap.Value != 10 {
+		t.Fatalf("snapshot Value changed after counter update: got %d, want 10", snap.Value)
 	}
 
 	if got := counter.Load(); got != 100 {

@@ -30,7 +30,6 @@ func TestDefaultPathConstants(t *testing.T) {
 		{name: "live", got: DefaultLivePath, want: "/livez"},
 		{name: "ready", got: DefaultReadyPath, want: "/readyz"},
 		{name: "healthz", got: DefaultHealthPath, want: "/healthz"},
-		{name: "health", got: DefaultHealthPlainPath, want: "/health"},
 	}
 
 	for _, tc := range tests {
@@ -63,20 +62,10 @@ func TestPrimaryDefaultPathsAreValid(t *testing.T) {
 	}
 }
 
-func TestCompatibilityPathsAreValid(t *testing.T) {
+func TestGeneralHealthPathIsValid(t *testing.T) {
 	t.Parallel()
 
-	for _, path := range []string{
-		DefaultHealthPath,
-		DefaultHealthPlainPath,
-	} {
-		path := path
-		t.Run(path, func(t *testing.T) {
-			t.Parallel()
-
-			if err := ValidatePath(path); err != nil {
-				t.Fatalf("ValidatePath(%q) = %v, want nil", path, err)
-			}
-		})
+	if err := ValidatePath(DefaultHealthPath); err != nil {
+		t.Fatalf("ValidatePath(%q) = %v, want nil", DefaultHealthPath, err)
 	}
 }

@@ -28,8 +28,8 @@ type Resource string
 //
 // The parser accepts only a non-empty DNS-1123 single label. Dots, slashes,
 // underscores, uppercase letters, and surrounding whitespace are rejected.
-func ParseResource(value string) (Resource, error) {
-	resource := Resource(value)
+func ParseResource(val string) (Resource, error) {
+	resource := Resource(val)
 	if err := resource.Validate(); err != nil {
 		return "", err
 	}
@@ -100,9 +100,9 @@ func (r *Resource) UnmarshalJSON(data []byte) error {
 	if r == nil {
 		return nilUnmarshalReceiver("resource")
 	}
-	value, err := unmarshalJSONString("resource", data)
+	val, err := unmarshalJSONString("resource", data)
 	if err != nil {
 		return err
 	}
-	return r.UnmarshalText([]byte(value))
+	return r.UnmarshalText([]byte(val))
 }

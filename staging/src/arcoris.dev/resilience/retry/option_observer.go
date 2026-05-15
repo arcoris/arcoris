@@ -32,8 +32,8 @@ import "context"
 func WithObserver(observer Observer) Option {
 	requireObserver(observer)
 
-	return func(config *config) {
-		config.observers = append(config.observers, observer)
+	return func(cfg *config) {
+		cfg.observers = append(cfg.observers, observer)
 	}
 }
 

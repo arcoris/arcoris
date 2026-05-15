@@ -39,9 +39,9 @@ func TestNewJitterScheduleRejectsInvalidInput(t *testing.T) {
 }
 
 func TestJitterPreservesChildExhaustion(t *testing.T) {
-	sequence := newJitterSchedule(delay.Delays(), fullJitterTransform, WithRandom(fixedRandom(0))).NewSequence()
+	seq := newJitterSchedule(delay.Delays(), fullJitterTransform, WithRandom(fixedRandom(0))).NewSequence()
 
-	mustExhausted(t, sequence)
+	mustExhausted(t, seq)
 }
 
 func TestJitterRejectsNilChildSequence(t *testing.T) {
@@ -51,29 +51,29 @@ func TestJitterRejectsNilChildSequence(t *testing.T) {
 }
 
 func TestJitterRejectsNegativeChildDelay(t *testing.T) {
-	sequence := newJitterSchedule(delay.ScheduleFunc(func() delay.Sequence { return negativeDelaySequence{} }), fullJitterTransform).NewSequence()
+	seq := newJitterSchedule(delay.ScheduleFunc(func() delay.Sequence { return negativeDelaySequence{} }), fullJitterTransform).NewSequence()
 
 	mustPanicWith(t, errJitterScheduleReturnedNegativeDelay, func() {
-		sequence.Next()
+		seq.Next()
 	})
 }
 
 func TestJitterRejectsNegativeTransformOutput(t *testing.T) {
-	sequence := newJitterSchedule(delay.Fixed(time.Second), func(time.Duration, RandomGenerator) time.Duration {
+	seq := newJitterSchedule(delay.Fixed(time.Second), func(time.Duration, RandomGenerator) time.Duration {
 		return -time.Nanosecond
 	}).NewSequence()
 
 	mustPanicWith(t, errJitterTransformReturnedNegativeDelay, func() {
-		sequence.Next()
+		seq.Next()
 	})
 }
 
 func TestJitterRequestsRandomGeneratorPerSequence(t *testing.T) {
 	source := &countingRandomSource{}
-	schedule := newJitterScheduleWithSource(delay.Fixed(time.Second), fullJitterTransform, source)
+	sched := newJitterScheduleWithSource(delay.Fixed(time.Second), fullJitterTransform, source)
 
-	l := schedule.NewSequence()
-	r := schedule.NewSequence()
+	l := sched.NewSequence()
+	r := sched.NewSequence()
 
 	if source.calls != 2 {
 		t.Fatalf("NewRandom calls = %d, want 2", source.calls)

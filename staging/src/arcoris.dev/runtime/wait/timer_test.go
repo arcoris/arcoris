@@ -59,16 +59,16 @@ func TestTimerWaitReturnsNilForImmediateTimer(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name     string
-		duration time.Duration
+		name string
+		d    time.Duration
 	}{
 		{
-			name:     "zero",
-			duration: 0,
+			name: "zero",
+			d:    0,
 		},
 		{
-			name:     "negative",
-			duration: -time.Second,
+			name: "negative",
+			d:    -time.Second,
 		},
 	}
 
@@ -76,7 +76,7 @@ func TestTimerWaitReturnsNilForImmediateTimer(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			timer := NewTimer(tc.duration)
+			timer := NewTimer(tc.d)
 
 			if err := timer.Wait(context.Background()); err != nil {
 				t.Fatalf("Timer.Wait(...) = %v, want nil", err)

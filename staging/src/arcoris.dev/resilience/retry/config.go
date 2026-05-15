@@ -103,7 +103,7 @@ func defaultConfig() config {
 // This mirrors ordinary functional-option behavior and makes composed option
 // lists deterministic.
 func configOf(opts ...Option) config {
-	config := defaultConfig()
-	config.apply(opts...)
-	return config
+	cfg := defaultConfig()
+	cfg.apply(opts...)
+	return cfg
 }

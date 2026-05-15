@@ -41,27 +41,27 @@ func TestExponentialRejectsInvalidInput(t *testing.T) {
 }
 
 func TestExponentialSequenceGrowsByMultiplier(t *testing.T) {
-	sequence := Exponential(time.Second, 2).NewSequence()
+	seq := Exponential(time.Second, 2).NewSequence()
 
-	mustNext(t, sequence, time.Second)
-	mustNext(t, sequence, 2*time.Second)
-	mustNext(t, sequence, 4*time.Second)
+	mustNext(t, seq, time.Second)
+	mustNext(t, seq, 2*time.Second)
+	mustNext(t, seq, 4*time.Second)
 }
 
 func TestExponentialKeepsFloatStateBetweenIntegerDurations(t *testing.T) {
-	sequence := Exponential(2*time.Nanosecond, 1.5).NewSequence()
+	seq := Exponential(2*time.Nanosecond, 1.5).NewSequence()
 
-	mustNext(t, sequence, 2*time.Nanosecond)
-	mustNext(t, sequence, 3*time.Nanosecond)
-	mustNext(t, sequence, 4*time.Nanosecond)
-	mustNext(t, sequence, 6*time.Nanosecond)
+	mustNext(t, seq, 2*time.Nanosecond)
+	mustNext(t, seq, 3*time.Nanosecond)
+	mustNext(t, seq, 4*time.Nanosecond)
+	mustNext(t, seq, 6*time.Nanosecond)
 }
 
 func TestExponentialSequencesHaveIndependentState(t *testing.T) {
-	schedule := Exponential(time.Second, 2)
+	sched := Exponential(time.Second, 2)
 
-	l := schedule.NewSequence()
-	r := schedule.NewSequence()
+	l := sched.NewSequence()
+	r := sched.NewSequence()
 
 	mustNext(t, l, time.Second)
 	mustNext(t, l, 2*time.Second)
@@ -69,8 +69,8 @@ func TestExponentialSequencesHaveIndependentState(t *testing.T) {
 }
 
 func TestExponentialSequenceSaturates(t *testing.T) {
-	sequence := &exponentialSequence{next: maxDurationFloat, multiplier: 2}
+	seq := &exponentialSequence{next: maxDurationFloat, multiplier: 2}
 
-	mustNext(t, sequence, maxDuration)
-	mustNext(t, sequence, maxDuration)
+	mustNext(t, seq, maxDuration)
+	mustNext(t, seq, maxDuration)
 }

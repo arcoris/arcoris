@@ -97,8 +97,8 @@ const (
 // Uniform panics when minDelay is negative, maxDelay is smaller than minDelay, a
 // random option is nil, or the configured random source is nil.
 func Uniform(lo, hi time.Duration, opts ...RandomOption) delay.Schedule {
-	config := randomOptionsOf(opts...)
-	return randomWithSource(lo, hi, config.source)
+	cfg := randomOptionsOf(opts...)
+	return randomWithSource(lo, hi, cfg.source)
 }
 
 // randomWithSource returns a random delay schedule using source for per-sequence

@@ -44,8 +44,8 @@ func (s Stamped[T]) IsZeroRevision() bool {
 
 // ChangedSince reports whether the stamped snapshot revision differs from
 // revision.
-func (s Stamped[T]) ChangedSince(revision Revision) bool {
-	return s.Revision.ChangedSince(revision)
+func (s Stamped[T]) ChangedSince(rev Revision) bool {
+	return s.Revision.ChangedSince(rev)
 }
 
 // Age returns the duration from Updated to now.
@@ -60,11 +60,11 @@ func (s Stamped[T]) Age(now time.Time) time.Duration {
 // and a different Value.
 //
 // The method does not clone either value.
-func (s Stamped[T]) WithValue(value T) Stamped[T] {
+func (s Stamped[T]) WithValue(val T) Stamped[T] {
 	return Stamped[T]{
 		Revision: s.Revision,
 		Updated:  s.Updated,
-		Value:    value,
+		Value:    val,
 	}
 }
 

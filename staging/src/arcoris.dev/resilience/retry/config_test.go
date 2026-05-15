@@ -23,27 +23,27 @@ import (
 )
 
 func TestDefaultConfig(t *testing.T) {
-	config := defaultConfig()
+	cfg := defaultConfig()
 
-	requireClock(config.clock)
-	requireDelaySchedule(config.delay)
-	requireClassifier(config.classifier)
+	requireClock(cfg.clock)
+	requireDelaySchedule(cfg.delay)
+	requireClassifier(cfg.classifier)
 
-	if config.maxAttempts != 1 {
-		t.Fatalf("default maxAttempts = %d, want 1", config.maxAttempts)
+	if cfg.maxAttempts != 1 {
+		t.Fatalf("default maxAttempts = %d, want 1", cfg.maxAttempts)
 	}
-	if config.maxElapsed != 0 {
-		t.Fatalf("default maxElapsed = %s, want 0", config.maxElapsed)
+	if cfg.maxElapsed != 0 {
+		t.Fatalf("default maxElapsed = %s, want 0", cfg.maxElapsed)
 	}
-	if len(config.observers) != 0 {
-		t.Fatalf("default observers len = %d, want 0", len(config.observers))
+	if len(cfg.observers) != 0 {
+		t.Fatalf("default observers len = %d, want 0", len(cfg.observers))
 	}
-	if config.classifier.Retryable(errors.New("boom")) {
+	if cfg.classifier.Retryable(errors.New("boom")) {
 		t.Fatalf("default classifier retried error, want conservative NeverRetry behavior")
 	}
 
-	sequence := config.delay.NewSequence()
-	delay, ok := sequence.Next()
+	seq := cfg.delay.NewSequence()
+	delay, ok := seq.Next()
 	if !ok {
 		t.Fatalf("default delay exhausted, want immediate sequence")
 	}
@@ -60,7 +60,7 @@ func TestConfigOfAppliesOptionsInOrder(t *testing.T) {
 		return true
 	})
 
-	config := configOf(
+	cfg := configOf(
 		WithMaxAttempts(2),
 		WithMaxAttempts(3),
 		WithMaxElapsed(time.Second),
@@ -69,13 +69,13 @@ func TestConfigOfAppliesOptionsInOrder(t *testing.T) {
 		WithClassifier(secondClassifier),
 	)
 
-	if config.maxAttempts != 3 {
-		t.Fatalf("maxAttempts = %d, want 3", config.maxAttempts)
+	if cfg.maxAttempts != 3 {
+		t.Fatalf("maxAttempts = %d, want 3", cfg.maxAttempts)
 	}
-	if config.maxElapsed != 2*time.Second {
-		t.Fatalf("maxElapsed = %s, want %s", config.maxElapsed, 2*time.Second)
+	if cfg.maxElapsed != 2*time.Second {
+		t.Fatalf("maxElapsed = %s, want %s", cfg.maxElapsed, 2*time.Second)
 	}
-	if !config.classifier.Retryable(errors.New("boom")) {
+	if !cfg.classifier.Retryable(errors.New("boom")) {
 		t.Fatalf("last classifier option did not win")
 	}
 }

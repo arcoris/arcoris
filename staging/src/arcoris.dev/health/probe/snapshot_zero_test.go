@@ -41,9 +41,9 @@ func TestSnapshotIsZero(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name     string
-		snapshot Snapshot
-		want     bool
+		name string
+		snap Snapshot
+		want bool
 	}{
 		{
 			name: "zero",
@@ -51,13 +51,13 @@ func TestSnapshotIsZero(t *testing.T) {
 		},
 		{
 			name: "target set",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Target: health.TargetReady,
 			},
 		},
 		{
 			name: "report target set",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Report: health.Report{
 					Target: health.TargetReady,
 					Status: health.StatusUnknown,
@@ -66,7 +66,7 @@ func TestSnapshotIsZero(t *testing.T) {
 		},
 		{
 			name: "report status set",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Report: health.Report{
 					Target: health.TargetUnknown,
 					Status: health.StatusHealthy,
@@ -75,7 +75,7 @@ func TestSnapshotIsZero(t *testing.T) {
 		},
 		{
 			name: "report observed set",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Report: health.Report{
 					Target:   health.TargetUnknown,
 					Status:   health.StatusUnknown,
@@ -85,7 +85,7 @@ func TestSnapshotIsZero(t *testing.T) {
 		},
 		{
 			name: "report duration set",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Report: health.Report{
 					Target:   health.TargetUnknown,
 					Status:   health.StatusUnknown,
@@ -95,7 +95,7 @@ func TestSnapshotIsZero(t *testing.T) {
 		},
 		{
 			name: "report checks set",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Report: health.Report{
 					Target: health.TargetUnknown,
 					Status: health.StatusUnknown,
@@ -107,19 +107,19 @@ func TestSnapshotIsZero(t *testing.T) {
 		},
 		{
 			name: "updated set",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Updated: time.Unix(10, 0),
 			},
 		},
 		{
 			name: "revision set",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Revision: 1,
 			},
 		},
 		{
 			name: "stale set",
-			snapshot: Snapshot{
+			snap: Snapshot{
 				Stale: true,
 			},
 		},
@@ -129,7 +129,7 @@ func TestSnapshotIsZero(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := tc.snapshot.IsZero(); got != tc.want {
+			if got := tc.snap.IsZero(); got != tc.want {
 				t.Fatalf("IsZero() = %v, want %v", got, tc.want)
 			}
 		})

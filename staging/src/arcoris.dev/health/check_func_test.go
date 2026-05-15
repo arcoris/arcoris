@@ -48,9 +48,9 @@ func TestCheckFuncCheckerFillsEmptyResultName(t *testing.T) {
 		t.Fatalf("Name() = %q, want storage", got)
 	}
 
-	result := checker.Check(context.Background())
-	if result.Name != "storage" {
-		t.Fatalf("result name = %q, want storage", result.Name)
+	res := checker.Check(context.Background())
+	if res.Name != "storage" {
+		t.Fatalf("result name = %q, want storage", res.Name)
 	}
 }
 
@@ -65,15 +65,15 @@ func TestNewErrorCheckMapsErrors(t *testing.T) {
 		t.Fatalf("NewErrorCheck() = %v, want nil", err)
 	}
 
-	result := checker.Check(context.Background())
-	if result.Status != StatusUnhealthy {
-		t.Fatalf("status = %s, want unhealthy", result.Status)
+	res := checker.Check(context.Background())
+	if res.Status != StatusUnhealthy {
+		t.Fatalf("status = %s, want unhealthy", res.Status)
 	}
-	if result.Reason != ReasonFatal {
-		t.Fatalf("reason = %s, want fatal", result.Reason)
+	if res.Reason != ReasonFatal {
+		t.Fatalf("reason = %s, want fatal", res.Reason)
 	}
-	if !errors.Is(result.Cause, cause) {
-		t.Fatalf("cause = %v, want %v", result.Cause, cause)
+	if !errors.Is(res.Cause, cause) {
+		t.Fatalf("cause = %v, want %v", res.Cause, cause)
 	}
 }
 
@@ -96,8 +96,8 @@ func TestNewErrorCheckMapsNilErrorToHealthy(t *testing.T) {
 		t.Fatalf("NewErrorCheck() = %v, want nil", err)
 	}
 
-	if result := checker.Check(context.Background()); result.Status != StatusHealthy {
-		t.Fatalf("status = %s, want healthy", result.Status)
+	if res := checker.Check(context.Background()); res.Status != StatusHealthy {
+		t.Fatalf("status = %s, want healthy", res.Status)
 	}
 }
 
@@ -134,7 +134,7 @@ func TestMustErrorCheckReturnsCheckerOnValidInput(t *testing.T) {
 	checker := MustErrorCheck("storage", func(context.Context) error {
 		return nil
 	})
-	if result := checker.Check(context.Background()); result.Status != StatusHealthy {
-		t.Fatalf("status = %s, want healthy", result.Status)
+	if res := checker.Check(context.Background()); res.Status != StatusHealthy {
+		t.Fatalf("status = %s, want healthy", res.Status)
 	}
 }

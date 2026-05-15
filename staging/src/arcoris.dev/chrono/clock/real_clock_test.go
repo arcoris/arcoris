@@ -32,9 +32,9 @@ const (
 func TestRealClockZeroValueIsUsable(t *testing.T) {
 	t.Parallel()
 
-	var clock RealClock
+	var clk RealClock
 
-	if got := clock.Now(); got.IsZero() {
+	if got := clk.Now(); got.IsZero() {
 		t.Fatal("RealClock.Now() returned zero time")
 	}
 }
@@ -44,10 +44,10 @@ func TestRealClockZeroValueIsUsable(t *testing.T) {
 func TestRealClockSinceReturnsNonNegativeElapsedDuration(t *testing.T) {
 	t.Parallel()
 
-	var clock RealClock
+	var clk RealClock
 
-	start := clock.Now()
-	elapsed := clock.Since(start)
+	start := clk.Now()
+	elapsed := clk.Since(start)
 
 	if elapsed < 0 {
 		t.Fatalf("RealClock.Since(start) = %s, want non-negative duration", elapsed)
@@ -60,9 +60,9 @@ func TestRealClockSinceReturnsNonNegativeElapsedDuration(t *testing.T) {
 func TestRealClockAfterDelivers(t *testing.T) {
 	t.Parallel()
 
-	var clock RealClock
+	var clk RealClock
 
-	if got := mustReceiveTime(t, clock.After(realClockTestDelay)); got.IsZero() {
+	if got := mustReceiveTime(t, clk.After(realClockTestDelay)); got.IsZero() {
 		t.Fatal("RealClock.After delivered zero time")
 	}
 }
@@ -72,12 +72,12 @@ func TestRealClockAfterDelivers(t *testing.T) {
 func TestRealClockSleepAcceptsNonPositiveDurations(t *testing.T) {
 	t.Parallel()
 
-	var clock RealClock
+	var clk RealClock
 
 	done := make(chan struct{})
 	go func() {
-		clock.Sleep(0)
-		clock.Sleep(-time.Second)
+		clk.Sleep(0)
+		clk.Sleep(-time.Second)
 		close(done)
 	}()
 
@@ -89,9 +89,9 @@ func TestRealClockSleepAcceptsNonPositiveDurations(t *testing.T) {
 func TestRealClockNewTimerReturnsUsableTimer(t *testing.T) {
 	t.Parallel()
 
-	var clock RealClock
+	var clk RealClock
 
-	timer := clock.NewTimer(realClockTestDelay)
+	timer := clk.NewTimer(realClockTestDelay)
 	if timer == nil {
 		t.Fatal("RealClock.NewTimer returned nil")
 	}
@@ -111,9 +111,9 @@ func TestRealClockNewTimerReturnsUsableTimer(t *testing.T) {
 func TestRealClockNewTickerReturnsUsableTicker(t *testing.T) {
 	t.Parallel()
 
-	var clock RealClock
+	var clk RealClock
 
-	ticker := clock.NewTicker(realClockTestDelay)
+	ticker := clk.NewTicker(realClockTestDelay)
 	if ticker == nil {
 		t.Fatal("RealClock.NewTicker returned nil")
 	}

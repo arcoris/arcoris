@@ -29,8 +29,8 @@ type CloneFunc[T any] func(T) T
 // Identity is appropriate only for immutable or copy-safe values. It must not be
 // used for values whose maps, slices, pointers, buffers, or other mutable fields
 // could be mutated by readers after a snapshot is returned.
-func Identity[T any](value T) T {
-	return value
+func Identity[T any](val T) T {
+	return val
 }
 
 // requireClone returns clone or panics when clone is nil.

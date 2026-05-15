@@ -35,28 +35,28 @@ type GroupResource struct {
 // Core resources use the bare resource form. Named groups use resource.group.
 // The parser rejects dotted resource names because the first dot is always the
 // boundary between resource and group.
-func ParseGroupResource(value string) (GroupResource, error) {
-	if value == "" {
-		return GroupResource{}, invalid("group/resource", value, "resource is required")
+func ParseGroupResource(val string) (GroupResource, error) {
+	if val == "" {
+		return GroupResource{}, invalid("group/resource", val, "resource is required")
 	}
-	resourcePart, groupPart, hasGroup := strings.Cut(value, ".")
+	resourcePart, groupPart, hasGroup := strings.Cut(val, ".")
 	if !hasGroup {
-		resource, err := ParseResource(value)
+		resource, err := ParseResource(val)
 		if err != nil {
-			return GroupResource{}, invalidValue("group/resource", value, err)
+			return GroupResource{}, invalidValue("group/resource", val, err)
 		}
 		return GroupResource{Resource: resource}, nil
 	}
 	if resourcePart == "" || groupPart == "" {
-		return GroupResource{}, invalid("group/resource", value, "expected canonical form resource.group")
+		return GroupResource{}, invalid("group/resource", val, "expected canonical form resource.group")
 	}
 	resource, err := ParseResource(resourcePart)
 	if err != nil {
-		return GroupResource{}, invalidValue("group/resource", value, err)
+		return GroupResource{}, invalidValue("group/resource", val, err)
 	}
 	group, err := ParseGroup(groupPart)
 	if err != nil {
-		return GroupResource{}, invalidValue("group/resource", value, err)
+		return GroupResource{}, invalidValue("group/resource", val, err)
 	}
 	return GroupResource{Group: group, Resource: resource}, nil
 }
@@ -144,9 +144,9 @@ func (gr *GroupResource) UnmarshalJSON(data []byte) error {
 	if gr == nil {
 		return nilUnmarshalReceiver("group/resource")
 	}
-	value, err := unmarshalJSONString("group/resource", data)
+	val, err := unmarshalJSONString("group/resource", data)
 	if err != nil {
 		return err
 	}
-	return gr.UnmarshalText([]byte(value))
+	return gr.UnmarshalText([]byte(val))
 }

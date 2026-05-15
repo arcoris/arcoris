@@ -19,8 +19,8 @@ package jitter
 import "testing"
 
 func TestDefaultRandomConfigUsesDefaultSource(t *testing.T) {
-	config := defaultRandomConfig()
-	if config.source == nil {
+	cfg := defaultRandomConfig()
+	if cfg.source == nil {
 		t.Fatal("defaultRandomConfig().source is nil")
 	}
 }
@@ -33,8 +33,8 @@ func TestRandomOptionsOfRejectsNilOption(t *testing.T) {
 
 func TestRandomOptionsOfRejectsNilConfiguredSource(t *testing.T) {
 	mustPanicWith(t, errNilRandomSource, func() {
-		_ = randomOptionsOf(func(config *randomConfig) {
-			config.source = nil
+		_ = randomOptionsOf(func(cfg *randomConfig) {
+			cfg.source = nil
 		})
 	})
 }
@@ -47,10 +47,10 @@ func TestWithRandomSourceRejectsNilSource(t *testing.T) {
 
 func TestWithRandomSourceStoresSource(t *testing.T) {
 	source := &countingRandomSource{}
-	config := randomOptionsOf(WithRandomSource(source))
+	cfg := randomOptionsOf(WithRandomSource(source))
 
-	if config.source != source {
-		t.Fatalf("source = %T, want original source", config.source)
+	if cfg.source != source {
+		t.Fatalf("source = %T, want original source", cfg.source)
 	}
 }
 
@@ -62,9 +62,9 @@ func TestWithRandomRejectsNilRandom(t *testing.T) {
 
 func TestWithRandomUsesSameGeneratorAdapter(t *testing.T) {
 	random := fixedRandom(3)
-	config := randomOptionsOf(WithRandom(random))
+	cfg := randomOptionsOf(WithRandom(random))
 
-	if got := config.source.NewRandom(); got != random {
+	if got := cfg.source.NewRandom(); got != random {
 		t.Fatalf("NewRandom() = %v, want configured random", got)
 	}
 }
@@ -76,18 +76,18 @@ func TestWithRandomFuncRejectsNilFunction(t *testing.T) {
 }
 
 func TestWithRandomFuncAdaptsFunction(t *testing.T) {
-	config := randomOptionsOf(WithRandomFunc(func() int64 { return 9 }))
+	cfg := randomOptionsOf(WithRandomFunc(func() int64 { return 9 }))
 
-	if got := config.source.NewRandom().Int63(); got != 9 {
+	if got := cfg.source.NewRandom().Int63(); got != 9 {
 		t.Fatalf("Int63() = %d, want 9", got)
 	}
 }
 
 func TestWithSeedCreatesFreshDeterministicGenerators(t *testing.T) {
-	config := randomOptionsOf(WithSeed(42))
+	cfg := randomOptionsOf(WithSeed(42))
 
-	l := config.source.NewRandom()
-	r := config.source.NewRandom()
+	l := cfg.source.NewRandom()
+	r := cfg.source.NewRandom()
 
 	for i := 0; i < 5; i++ {
 		if got, want := l.Int63(), r.Int63(); got != want {

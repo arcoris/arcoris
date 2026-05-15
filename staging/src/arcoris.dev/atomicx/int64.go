@@ -77,8 +77,8 @@ func (p *PaddedInt64) Load() int64 {
 // Store is appropriate for initialization, owner-controlled publication, tests,
 // or explicit handoff semantics. For signed gauge accounting with invariant
 // checks, prefer Int64Gauge.
-func (p *PaddedInt64) Store(value int64) {
-	p.value.Store(value)
+func (p *PaddedInt64) Store(val int64) {
+	p.value.Store(val)
 }
 
 // Add atomically adds delta to the current int64 value and returns the new value.

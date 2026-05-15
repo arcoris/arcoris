@@ -90,13 +90,13 @@ func TestControllerApplyDoesNotMutateOnInvalidTransition(t *testing.T) {
 	t.Parallel()
 
 	controller := NewController()
-	snapshot, changed, done := controller.waitSnapshot()
+	snap, changed, done := controller.waitSnapshot()
 	_, err := controller.MarkRunning()
 	if err == nil {
 		t.Fatal("MarkRunning err = nil, want invalid transition")
 	}
 	mustMatch(t, err, ErrInvalidTransition)
-	assertSnapshotEqual(t, controller.Snapshot(), snapshot)
+	assertSnapshotEqual(t, controller.Snapshot(), snap)
 	mustNotSignalClosed(t, changed)
 	mustNotSignalClosed(t, done)
 }
@@ -106,7 +106,7 @@ func TestControllerApplyTerminalTransitionError(t *testing.T) {
 
 	controller := NewController()
 	_, _ = controller.BeginStop()
-	snapshot, changed, done := controller.waitSnapshot()
+	snap, changed, done := controller.waitSnapshot()
 
 	_, err := controller.BeginStart()
 	if err == nil {
@@ -114,7 +114,7 @@ func TestControllerApplyTerminalTransitionError(t *testing.T) {
 	}
 	mustMatch(t, err, ErrTerminalState)
 	mustMatch(t, err, ErrInvalidTransition)
-	assertSnapshotEqual(t, controller.Snapshot(), snapshot)
+	assertSnapshotEqual(t, controller.Snapshot(), snap)
 	mustSignalClosed(t, changed)
 	mustSignalClosed(t, done)
 }

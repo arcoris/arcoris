@@ -29,8 +29,8 @@ type Subresource string
 //
 // Empty input is accepted as the canonical absent-subresource value. Non-empty
 // input must be a DNS-1123 single label and is not trimmed or normalized.
-func ParseSubresource(value string) (Subresource, error) {
-	subresource := Subresource(value)
+func ParseSubresource(val string) (Subresource, error) {
+	subresource := Subresource(val)
 	if err := subresource.Validate(); err != nil {
 		return "", err
 	}
@@ -99,9 +99,9 @@ func (s *Subresource) UnmarshalJSON(data []byte) error {
 	if s == nil {
 		return nilUnmarshalReceiver("subresource")
 	}
-	value, err := unmarshalJSONString("subresource", data)
+	val, err := unmarshalJSONString("subresource", data)
 	if err != nil {
 		return err
 	}
-	return s.UnmarshalText([]byte(value))
+	return s.UnmarshalText([]byte(val))
 }

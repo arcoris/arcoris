@@ -32,13 +32,13 @@ import (
 //
 // This helper is for successful fixture construction. Tests that need to assert
 // NewEvaluator error behavior should call eval.NewEvaluator directly.
-func NewEvaluator(t testing.TB, registry *health.Registry, opts ...eval.EvaluatorOption) *eval.Evaluator {
+func NewEvaluator(t testing.TB, r *health.Registry, opts ...eval.EvaluatorOption) *eval.Evaluator {
 	t.Helper()
 
 	allOptions := []eval.EvaluatorOption{eval.WithDefaultTimeout(0)}
 	allOptions = append(allOptions, opts...)
 
-	evaluator, err := eval.NewEvaluator(registry, allOptions...)
+	evaluator, err := eval.NewEvaluator(r, allOptions...)
 	if err != nil {
 		t.Fatalf("eval.NewEvaluator() = %v, want nil", err)
 	}
@@ -73,10 +73,10 @@ func NewEvaluatorWithResults(
 	t.Helper()
 
 	checks := make([]health.Checker, 0, len(results))
-	for _, result := range results {
-		result := result
+	for _, res := range results {
+		result := res
 		checks = append(checks, FuncChecker(result.Name, func(context.Context) health.Result {
-			return result
+			return res
 		}))
 	}
 

@@ -24,7 +24,7 @@ import "arcoris.dev/health"
 // before mutating mux. Path ownership remains router-neutral: healthhttp checks
 // only broad HTTP-path safety invariants and leaves duplicate route behavior to
 // the concrete mux implementation.
-func Install(mux Mux, path string, evaluator Evaluator, target health.Target, opts ...Option) error {
+func Install(mux Mux, path string, e health.Evaluator, target health.Target, opts ...Option) error {
 	if nilMux(mux) {
 		return ErrNilMux
 	}
@@ -32,7 +32,7 @@ func Install(mux Mux, path string, evaluator Evaluator, target health.Target, op
 		return err
 	}
 
-	handler, err := NewHandler(evaluator, target, opts...)
+	handler, err := NewHandler(e, target, opts...)
 	if err != nil {
 		return err
 	}
@@ -44,8 +44,8 @@ func Install(mux Mux, path string, evaluator Evaluator, target health.Target, op
 // InstallDefaults registers the default startup, liveness, and readiness health
 // endpoints on mux.
 //
-// Compatibility paths such as "/healthz" and "/health" are not installed by
-// default because they do not have universal target semantics.
+// DefaultHealthPath is not installed by default because general health has no
+// universal target semantics.
 //
 // The function constructs every handler before registering any route. If the
 // evaluator or any option is invalid, mux is left untouched and no partial
@@ -54,14 +54,14 @@ func Install(mux Mux, path string, evaluator Evaluator, target health.Target, op
 // Options apply to every installed endpoint. Callers that need different
 // per-target policy or representation settings should call Install directly for
 // each route instead of relying on InstallDefaults.
-func InstallDefaults(mux Mux, evaluator Evaluator, opts ...Option) error {
+func InstallDefaults(mux Mux, e health.Evaluator, opts ...Option) error {
 	if nilMux(mux) {
 		return ErrNilMux
 	}
 
 	handlers := make([]defaultHandler, 0, len(defaultHandlers))
 	for _, item := range defaultHandlers {
-		handler, err := NewHandler(evaluator, item.target, opts...)
+		handler, err := NewHandler(e, item.target, opts...)
 		if err != nil {
 			return err
 		}

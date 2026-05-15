@@ -32,7 +32,7 @@ const (
 	// unknownServiceMessage is the generic Check error for unconfigured services.
 	unknownServiceMessage = "unknown service"
 
-	// healthEvaluationFailedMessage hides Source error details from Check clients.
+	// healthEvaluationFailedMessage hides evaluator error details from Check clients.
 	healthEvaluationFailedMessage = "health evaluation failed"
 
 	// tooManyHealthServicesMessage reports the List guardrail without dumping config.

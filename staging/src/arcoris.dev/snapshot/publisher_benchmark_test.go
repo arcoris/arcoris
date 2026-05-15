@@ -49,10 +49,10 @@ func BenchmarkPublisherSnapshotSlice100(b *testing.B) {
 
 func BenchmarkPublisherPublishSlice100(b *testing.B) {
 	publisher := NewPublisher[[]string]()
-	value := make([]string, 100)
+	val := make([]string, 100)
 
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		_ = publisher.Publish(value)
+		_ = publisher.Publish(val)
 	}
 }

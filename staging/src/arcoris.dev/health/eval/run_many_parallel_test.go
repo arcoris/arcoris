@@ -249,14 +249,14 @@ func TestEvaluatorParallelPreservesNormalization(t *testing.T) {
 				t.Fatalf("checks = %d, want 1", len(report.Checks))
 			}
 
-			result := report.Checks[0]
-			if result.Status != tc.wantStatus {
-				t.Fatalf("health.Status = %s, want %s", result.Status, tc.wantStatus)
+			res := report.Checks[0]
+			if res.Status != tc.wantStatus {
+				t.Fatalf("health.Status = %s, want %s", res.Status, tc.wantStatus)
 			}
-			if result.Reason != tc.wantReason {
-				t.Fatalf("health.Reason = %s, want %s", result.Reason, tc.wantReason)
+			if res.Reason != tc.wantReason {
+				t.Fatalf("health.Reason = %s, want %s", res.Reason, tc.wantReason)
 			}
-			if result.Observed.IsZero() {
+			if res.Observed.IsZero() {
 				t.Fatal("Observed is zero")
 			}
 		})

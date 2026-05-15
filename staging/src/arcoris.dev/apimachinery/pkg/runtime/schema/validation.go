@@ -43,16 +43,16 @@ const (
 // value, and a stable human-readable reason. Parse and validation functions
 // use this consistently so callers do not need package-specific error types to
 // understand failures.
-func invalid(name, value, reason string) error {
-	return fmt.Errorf("schema: invalid %s %q: %s", name, value, reason)
+func invalid(name, val, reason string) error {
+	return fmt.Errorf("schema: invalid %s %q: %s", name, val, reason)
 }
 
 // invalidValue wraps an error from a nested identifier while preserving the
 // outer composite identity that failed. This keeps errors useful when, for
 // example, a GroupVersionResource is rejected because only its version segment
 // is malformed.
-func invalidValue(name, value string, err error) error {
-	return fmt.Errorf("schema: invalid %s %q: %w", name, value, err)
+func invalidValue(name, val string, err error) error {
+	return fmt.Errorf("schema: invalid %s %q: %w", name, val, err)
 }
 
 // nilUnmarshalReceiver reports programmer misuse of an Unmarshal method. It is
@@ -64,44 +64,44 @@ func nilUnmarshalReceiver(name string) error {
 // marshalJSONString serializes the already canonical String form after running
 // the type's full Validate contract. This rejects invalid direct literals even
 // when a caller constructed a value without using the strict parser.
-func marshalJSONString(name, value string, validate func() error) ([]byte, error) {
+func marshalJSONString(name, val string, validate func() error) ([]byte, error) {
 	if err := validate(); err != nil {
 		return nil, err
 	}
-	return json.Marshal(value)
+	return json.Marshal(val)
 }
 
 // unmarshalJSONString enforces the scalar JSON contract for every identifier.
 // Object form, arrays, numbers, booleans, and null are rejected before the
 // caller-specific strict parser sees the string payload.
 func unmarshalJSONString(name string, data []byte) (string, error) {
-	var value *string
-	if err := json.Unmarshal(data, &value); err != nil {
+	var val *string
+	if err := json.Unmarshal(data, &val); err != nil {
 		return "", fmt.Errorf("schema: invalid %s JSON: expected string: %w", name, err)
 	}
-	if value == nil {
+	if val == nil {
 		return "", invalid(name+" JSON", "null", "expected string")
 	}
-	return *value, nil
+	return *val, nil
 }
 
 // validateGroupValue enforces the API group grammar. The empty value is valid
 // and means the core group; every non-empty value must be a DNS-1123 subdomain
 // made of one or more DNS labels separated by single dots.
-func validateGroupValue(value string) error {
-	if value == "" {
+func validateGroupValue(val string) error {
+	if val == "" {
 		return nil
 	}
-	if len(value) > maxDNS1123SubdomainLength {
-		return invalid("group", value, "group length must be no more than 253 characters")
+	if len(val) > maxDNS1123SubdomainLength {
+		return invalid("group", val, "group length must be no more than 253 characters")
 	}
-	labels := strings.Split(value, ".")
+	labels := strings.Split(val, ".")
 	for _, label := range labels {
 		if label == "" {
-			return invalid("group", value, "group must not contain empty DNS labels")
+			return invalid("group", val, "group must not contain empty DNS labels")
 		}
 		if err := validateDNS1123LabelValue(label); err != nil {
-			return invalid("group", value, "group must be a DNS-1123 subdomain")
+			return invalid("group", val, "group must be a DNS-1123 subdomain")
 		}
 	}
 	return nil
@@ -110,18 +110,18 @@ func validateGroupValue(value string) error {
 // validateDNS1123SingleLabel validates resource-like identifiers that must be a
 // single DNS label. Resource requires a non-empty label; Subresource sets
 // allowEmpty because an empty subresource is the canonical "absent" value.
-func validateDNS1123SingleLabel(name, value string, allowEmpty bool) error {
-	if value == "" {
+func validateDNS1123SingleLabel(name, val string, allowEmpty bool) error {
+	if val == "" {
 		if allowEmpty {
 			return nil
 		}
-		return invalid(name, value, name+" must be non-empty")
+		return invalid(name, val, name+" must be non-empty")
 	}
-	if strings.Contains(value, ".") {
-		return invalid(name, value, name+" must be a DNS-1123 single label")
+	if strings.Contains(val, ".") {
+		return invalid(name, val, name+" must be a DNS-1123 single label")
 	}
-	if err := validateDNS1123LabelValue(value); err != nil {
-		return invalid(name, value, name+" must be a DNS-1123 single label")
+	if err := validateDNS1123LabelValue(val); err != nil {
+		return invalid(name, val, name+" must be a DNS-1123 single label")
 	}
 	return nil
 }
@@ -129,18 +129,18 @@ func validateDNS1123SingleLabel(name, value string, allowEmpty bool) error {
 // validateDNS1123LabelValue validates one DNS-1123 label without interpreting
 // dots as separators. It is shared by group labels, resources, and
 // subresources so their edge-character and length behavior remains identical.
-func validateDNS1123LabelValue(value string) error {
-	if value == "" {
+func validateDNS1123LabelValue(val string) error {
+	if val == "" {
 		return fmt.Errorf("DNS label must be non-empty")
 	}
-	if len(value) > maxDNS1123LabelLength {
+	if len(val) > maxDNS1123LabelLength {
 		return fmt.Errorf("DNS label length must be no more than 63 characters")
 	}
-	if !isDNS1123LabelEdge(value[0]) || !isDNS1123LabelEdge(value[len(value)-1]) {
+	if !isDNS1123LabelEdge(val[0]) || !isDNS1123LabelEdge(val[len(val)-1]) {
 		return fmt.Errorf("DNS label must start and end with a lowercase letter or digit")
 	}
-	for i := 1; i < len(value)-1; i++ {
-		if !isDNS1123LabelChar(value[i]) {
+	for i := 1; i < len(val)-1; i++ {
+		if !isDNS1123LabelChar(val[i]) {
 			return fmt.Errorf("DNS label may contain only lowercase letters, digits, and '-'")
 		}
 	}
@@ -150,47 +150,47 @@ func validateDNS1123LabelValue(value string) error {
 // validateVersionValue validates the strict ARCORIS version token grammar:
 // vN, vNalphaM, or vNbetaM. The implementation is deliberately manual rather
 // than regexp-based so leading-zero and suffix rules stay explicit.
-func validateVersionValue(value string) error {
-	if value == "" {
-		return invalid("version", value, "version must be non-empty")
+func validateVersionValue(val string) error {
+	if val == "" {
+		return invalid("version", val, "version must be non-empty")
 	}
-	if len(value) < 2 || value[0] != 'v' {
-		return invalid("version", value, "version must match vN, vNalphaM, or vNbetaM")
+	if len(val) < 2 || val[0] != 'v' {
+		return invalid("version", val, "version must match vN, vNalphaM, or vNbetaM")
 	}
 
 	i := 1
-	if value[i] == '0' {
+	if val[i] == '0' {
 		i++
-	} else if isASCIINonZeroDigit(value[i]) {
+	} else if isASCIINonZeroDigit(val[i]) {
 		i++
-		for i < len(value) && isASCIIDigit(value[i]) {
+		for i < len(val) && isASCIIDigit(val[i]) {
 			i++
 		}
 	} else {
-		return invalid("version", value, "version must match vN, vNalphaM, or vNbetaM")
+		return invalid("version", val, "version must match vN, vNalphaM, or vNbetaM")
 	}
 
-	if i == len(value) {
+	if i == len(val) {
 		return nil
 	}
 
-	if strings.HasPrefix(value[i:], "alpha") {
+	if strings.HasPrefix(val[i:], "alpha") {
 		i += len("alpha")
-	} else if strings.HasPrefix(value[i:], "beta") {
+	} else if strings.HasPrefix(val[i:], "beta") {
 		i += len("beta")
 	} else {
-		return invalid("version", value, "version must match vN, vNalphaM, or vNbetaM")
+		return invalid("version", val, "version must match vN, vNalphaM, or vNbetaM")
 	}
 
-	if i == len(value) || !isASCIINonZeroDigit(value[i]) {
-		return invalid("version", value, "version must match vN, vNalphaM, or vNbetaM")
+	if i == len(val) || !isASCIINonZeroDigit(val[i]) {
+		return invalid("version", val, "version must match vN, vNalphaM, or vNbetaM")
 	}
 	i++
-	for i < len(value) && isASCIIDigit(value[i]) {
+	for i < len(val) && isASCIIDigit(val[i]) {
 		i++
 	}
-	if i != len(value) {
-		return invalid("version", value, "version must match vN, vNalphaM, or vNbetaM")
+	if i != len(val) {
+		return invalid("version", val, "version must match vN, vNalphaM, or vNbetaM")
 	}
 	return nil
 }
@@ -198,16 +198,16 @@ func validateVersionValue(value string) error {
 // validateKindValue validates the schema kind grammar. Kinds are ASCII-only
 // because they are API identifiers, not user display strings, and must be
 // stable across serializers and generated code.
-func validateKindValue(value string) error {
-	if value == "" {
-		return invalid("kind", value, "kind must be non-empty")
+func validateKindValue(val string) error {
+	if val == "" {
+		return invalid("kind", val, "kind must be non-empty")
 	}
-	if !isASCIIUpper(value[0]) {
-		return invalid("kind", value, "kind must start with an uppercase ASCII letter")
+	if !isASCIIUpper(val[0]) {
+		return invalid("kind", val, "kind must start with an uppercase ASCII letter")
 	}
-	for i := 1; i < len(value); i++ {
-		if !isASCIIAlpha(value[i]) && !isASCIIDigit(value[i]) {
-			return invalid("kind", value, "kind may contain only ASCII letters and digits")
+	for i := 1; i < len(val); i++ {
+		if !isASCIIAlpha(val[i]) && !isASCIIDigit(val[i]) {
+			return invalid("kind", val, "kind may contain only ASCII letters and digits")
 		}
 	}
 	return nil

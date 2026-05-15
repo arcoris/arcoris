@@ -203,8 +203,8 @@ func mustNotReceiveTimerValue(t *testing.T, ch <-chan time.Time) {
 	t.Helper()
 
 	select {
-	case value := <-ch:
-		t.Fatalf("received timer value %v, want no delivery", value)
+	case val := <-ch:
+		t.Fatalf("received timer value %v, want no delivery", val)
 	case <-time.After(10 * time.Millisecond):
 	}
 }

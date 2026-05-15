@@ -33,8 +33,8 @@ import "time"
 func WithMaxAttempts(n uint) Option {
 	requireMaxAttempts(n)
 
-	return func(config *config) {
-		config.maxAttempts = n
+	return func(cfg *config) {
+		cfg.maxAttempts = n
 	}
 }
 
@@ -51,7 +51,7 @@ func WithMaxAttempts(n uint) Option {
 func WithMaxElapsed(d time.Duration) Option {
 	requireMaxElapsed(d)
 
-	return func(config *config) {
-		config.maxElapsed = d
+	return func(cfg *config) {
+		cfg.maxElapsed = d
 	}
 }

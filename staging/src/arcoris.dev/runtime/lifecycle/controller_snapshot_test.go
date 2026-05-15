@@ -42,8 +42,8 @@ func TestControllerSnapshotConsistentPointInTimeView(t *testing.T) {
 	// LastTransition, and FailureCause describe the same committed point in time.
 	controller := NewController(WithClock(testClock{now: testTime}))
 	transition, _ := controller.BeginStart()
-	snapshot := controller.Snapshot()
-	assertSnapshotEqual(t, snapshot, Snapshot{
+	snap := controller.Snapshot()
+	assertSnapshotEqual(t, snap, Snapshot{
 		State:          StateStarting,
 		Revision:       transition.Revision,
 		LastTransition: transition,
@@ -67,8 +67,8 @@ func TestControllerSnapshotValidAcrossTransitions(t *testing.T) {
 		if _, err := step(); err != nil {
 			t.Fatalf("transition = %v", err)
 		}
-		if snapshot := controller.Snapshot(); !snapshot.IsValid() {
-			t.Fatalf("snapshot after transition is invalid: %+v", snapshot)
+		if snap := controller.Snapshot(); !snap.IsValid() {
+			t.Fatalf("snapshot after transition is invalid: %+v", snap)
 		}
 	}
 }
@@ -80,8 +80,8 @@ func TestControllerSnapshotAfterFailedLifecycleIncludesCause(t *testing.T) {
 	controller := NewController()
 	_, _ = controller.BeginStart()
 	transition, _ := controller.MarkFailed(cause)
-	snapshot := controller.Snapshot()
-	assertSnapshotEqual(t, snapshot, Snapshot{
+	snap := controller.Snapshot()
+	assertSnapshotEqual(t, snap, Snapshot{
 		State:          StateFailed,
 		Revision:       transition.Revision,
 		LastTransition: transition,
@@ -96,10 +96,10 @@ func TestControllerSnapshotIsCopyable(t *testing.T) {
 	// own their read-model copy.
 	controller := NewController()
 	_, _ = controller.BeginStart()
-	snapshot := controller.Snapshot()
-	snapshot.State = StateFailed
-	snapshot.Revision = 99
-	snapshot.LastTransition = Transition{}
+	snap := controller.Snapshot()
+	snap.State = StateFailed
+	snap.Revision = 99
+	snap.LastTransition = Transition{}
 
 	got := controller.Snapshot()
 	if got.State != StateStarting || got.Revision != 1 || got.LastTransition.IsZero() {

@@ -21,8 +21,8 @@ import (
 	"arcoris.dev/value/maybe"
 )
 
-func cloneStrings(value []string) []string {
-	return slices.Clone(value)
+func cloneStrings(val []string) []string {
+	return slices.Clone(val)
 }
 
 func TestCloneSome(t *testing.T) {

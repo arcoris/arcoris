@@ -37,8 +37,8 @@ func BenchmarkStoreReplaceSmallValue(b *testing.B) {
 }
 
 func BenchmarkStoreSnapshotSlice100(b *testing.B) {
-	value := make([]string, 100)
-	store := NewStore(value, cloneStrings)
+	val := make([]string, 100)
+	store := NewStore(val, cloneStrings)
 
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -47,8 +47,8 @@ func BenchmarkStoreSnapshotSlice100(b *testing.B) {
 }
 
 func BenchmarkStoreUpdateSlice100(b *testing.B) {
-	value := make([]string, 100)
-	store := NewStore(value, cloneStrings)
+	val := make([]string, 100)
+	store := NewStore(val, cloneStrings)
 
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {

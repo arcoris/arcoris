@@ -82,16 +82,16 @@ func TestValidateScheduleRejectsNil(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name     string
-		schedule delay.Schedule
+		name  string
+		sched delay.Schedule
 	}{
 		{
-			name:     "nil interface",
-			schedule: nil,
+			name:  "nil interface",
+			sched: nil,
 		},
 		{
-			name:     "typed nil",
-			schedule: (*nilSequenceSchedule)(nil),
+			name:  "typed nil",
+			sched: (*nilSequenceSchedule)(nil),
 		},
 	}
 
@@ -99,7 +99,7 @@ func TestValidateScheduleRejectsNil(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if err := validateSchedule(tc.schedule); !errors.Is(err, ErrNilSchedule) {
+			if err := validateSchedule(tc.sched); !errors.Is(err, ErrNilSchedule) {
 				t.Fatalf("validateSchedule() = %v, want ErrNilSchedule", err)
 			}
 		})

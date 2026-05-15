@@ -50,15 +50,15 @@ func nilRegistrar(registrar grpc.ServiceRegistrar) bool {
 		return true
 	}
 
-	value := reflect.ValueOf(registrar)
-	switch value.Kind() {
+	val := reflect.ValueOf(registrar)
+	switch val.Kind() {
 	case reflect.Chan,
 		reflect.Func,
 		reflect.Interface,
 		reflect.Map,
 		reflect.Ptr,
 		reflect.Slice:
-		return value.IsNil()
+		return val.IsNil()
 	default:
 		return false
 	}

@@ -38,9 +38,9 @@
 // # Relationship to health
 //
 // Package health owns the transport-neutral health contracts: Target, Result,
-// Report, Registry, Gate, and TargetPolicy. Package probe depends on a small
-// local Evaluator interface instead of reading registries or executing checks
-// itself. Package health/eval provides the default synchronous evaluator.
+// Report, Registry, Gate, TargetPolicy, and Evaluator. Package probe depends on
+// health.Evaluator instead of reading registries or executing checks itself.
+// Package health/eval provides the default synchronous evaluator.
 //
 // # Transport adapters
 //

@@ -129,15 +129,15 @@ func (s *Store[T]) ReplaceStamped(next T) Stamped[T] {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	revision := s.revision.Next()
+	rev := s.revision.Next()
 	updated := s.clock.Now()
 
 	s.value = stored
-	s.revision = revision
+	s.revision = rev
 	s.updated = updated
 
 	return Stamped[T]{
-		Revision: revision,
+		Revision: rev,
 		Updated:  updated,
 		Value:    s.clone(s.value),
 	}
@@ -177,15 +177,15 @@ func (s *Store[T]) UpdateStamped(update func(T) T) Stamped[T] {
 	working := s.clone(s.value)
 	next := update(working)
 	stored := s.clone(next)
-	revision := s.revision.Next()
+	rev := s.revision.Next()
 	updated := s.clock.Now()
 
 	s.value = stored
-	s.revision = revision
+	s.revision = rev
 	s.updated = updated
 
 	return Stamped[T]{
-		Revision: revision,
+		Revision: rev,
 		Updated:  updated,
 		Value:    s.clone(s.value),
 	}

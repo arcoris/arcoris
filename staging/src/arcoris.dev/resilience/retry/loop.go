@@ -36,14 +36,14 @@ import "context"
 func run[T any](
 	ctx context.Context,
 	op ValueOperation[T],
-	config config,
+	cfg config,
 ) (T, error) {
 	requireContext(ctx)
 	requireValueOperation(op)
 
 	var zero T
 
-	execution := newRetryExecution(config)
+	execution := newRetryExecution(cfg)
 
 	for {
 		if err := execution.contextStop(ctx); err != nil {
@@ -52,10 +52,10 @@ func run[T any](
 
 		attempt := execution.nextAttempt(ctx)
 
-		value, err := op(ctx)
+		val, err := op(ctx)
 		if err == nil {
 			execution.succeeded(ctx)
-			return value, nil
+			return val, nil
 		}
 
 		execution.recordFailure(ctx, attempt, err)

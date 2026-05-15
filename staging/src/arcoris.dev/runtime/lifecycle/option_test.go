@@ -26,11 +26,11 @@ func TestDefaultControllerConfigUsesNonNilClock(t *testing.T) {
 
 	// The construction-time config boundary guarantees Controller always has a
 	// usable time source even when callers provide no options.
-	config := defaultControllerConfig()
-	if config.now == nil {
+	cfg := defaultControllerConfig()
+	if cfg.now == nil {
 		t.Fatal("default now = nil, want time source")
 	}
-	if config.now().IsZero() {
+	if cfg.now().IsZero() {
 		t.Fatal("default now returned zero time")
 	}
 }
@@ -38,8 +38,8 @@ func TestDefaultControllerConfigUsesNonNilClock(t *testing.T) {
 func TestNewControllerConfigIgnoresNilOptions(t *testing.T) {
 	t.Parallel()
 
-	config := newControllerConfig(nil)
-	if config.now == nil {
+	cfg := newControllerConfig(nil)
+	if cfg.now == nil {
 		t.Fatal("config now = nil, want default")
 	}
 }
@@ -60,12 +60,12 @@ func TestNewControllerConfigIndependentFromOptionSlice(t *testing.T) {
 	// The variadic option slice is consumed during construction; mutating the
 	// caller's slice afterward must not rewrite the already returned config.
 	opts := []Option{
-		func(config *controllerConfig) { config.now = func() time.Time { return testTime } },
+		func(cfg *controllerConfig) { cfg.now = func() time.Time { return testTime } },
 	}
-	config := newControllerConfig(opts...)
-	opts[0] = func(config *controllerConfig) { config.now = func() time.Time { return time.Time{} } }
+	cfg := newControllerConfig(opts...)
+	opts[0] = func(cfg *controllerConfig) { cfg.now = func() time.Time { return time.Time{} } }
 
-	if got := config.now(); !got.Equal(testTime) {
+	if got := cfg.now(); !got.Equal(testTime) {
 		t.Fatalf("config.now() = %v, want %v", got, testTime)
 	}
 }

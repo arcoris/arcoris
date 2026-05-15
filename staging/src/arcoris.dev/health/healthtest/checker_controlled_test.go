@@ -38,8 +38,8 @@ func TestBlockingCheckerRelease(t *testing.T) {
 	checker.Release(HealthyResult("storage"))
 
 	select {
-	case result := <-done:
-		AssertResultStatus(t, result, health.StatusHealthy)
+	case res := <-done:
+		AssertResultStatus(t, res, health.StatusHealthy)
 	case <-time.After(time.Second):
 		t.Fatal("blocking checker did not return")
 	}
@@ -62,9 +62,9 @@ func TestBlockingCheckerCancellation(t *testing.T) {
 	cancel()
 
 	select {
-	case result := <-done:
-		AssertResultStatus(t, result, health.StatusUnknown)
-		AssertResultReason(t, result, health.ReasonCanceled)
+	case res := <-done:
+		AssertResultStatus(t, res, health.StatusUnknown)
+		AssertResultReason(t, res, health.ReasonCanceled)
 	case <-time.After(time.Second):
 		t.Fatal("blocking checker did not observe cancellation")
 	}
@@ -112,9 +112,9 @@ func TestSequenceCheckerFillsEmptyResultName(t *testing.T) {
 	t.Parallel()
 
 	checker := NewSequenceChecker("storage", health.Result{Status: health.StatusHealthy})
-	result := checker.Check(context.Background())
-	if result.Name != "storage" {
-		t.Fatalf("result name = %q, want storage", result.Name)
+	res := checker.Check(context.Background())
+	if res.Name != "storage" {
+		t.Fatalf("result name = %q, want storage", res.Name)
 	}
 }
 

@@ -45,10 +45,10 @@ func nilMux(mux Mux) bool {
 		return true
 	}
 
-	value := reflect.ValueOf(mux)
-	switch value.Kind() {
+	val := reflect.ValueOf(mux)
+	switch val.Kind() {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
-		return value.IsNil()
+		return val.IsNil()
 	default:
 		return false
 	}

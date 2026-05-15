@@ -67,7 +67,7 @@ func TestCheckMapsReports(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		source  Source
+		source  health.Evaluator
 		opts    []Option
 		service string
 		want    healthpb.HealthCheckResponse_ServingStatus
@@ -106,12 +106,12 @@ func TestCheckMapsReports(t *testing.T) {
 			t.Parallel()
 
 			server := mustNewServer(t, tc.source, tc.opts...)
-			response, err := server.Check(context.Background(), &healthpb.HealthCheckRequest{Service: tc.service})
+			resp, err := server.Check(context.Background(), &healthpb.HealthCheckRequest{Service: tc.service})
 			if err != nil {
 				t.Fatalf("Check() = %v, want nil", err)
 			}
-			if response.GetStatus() != tc.want {
-				t.Fatalf("Status = %s, want %s", response.GetStatus(), tc.want)
+			if resp.GetStatus() != tc.want {
+				t.Fatalf("Status = %s, want %s", resp.GetStatus(), tc.want)
 			}
 		})
 	}

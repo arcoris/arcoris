@@ -16,27 +16,31 @@
 
 package healthgrpc
 
-import "reflect"
+import (
+	"reflect"
 
-// nilSource recognizes nil Source values, including typed nil implementations.
+	"arcoris.dev/health"
+)
+
+// nilSource recognizes nil evaluator values, including typed nil implementations.
 //
 // Constructors reject typed nil inputs so request paths never accidentally call
 // through an interface containing a nil pointer. RPC handlers keep the same
 // boundary for nil Server defensive behavior.
-func nilSource(source Source) bool {
+func nilSource(source health.Evaluator) bool {
 	if source == nil {
 		return true
 	}
 
-	value := reflect.ValueOf(source)
-	switch value.Kind() {
+	val := reflect.ValueOf(source)
+	switch val.Kind() {
 	case reflect.Chan,
 		reflect.Func,
 		reflect.Interface,
 		reflect.Map,
 		reflect.Ptr,
 		reflect.Slice:
-		return value.IsNil()
+		return val.IsNil()
 	default:
 		return false
 	}

@@ -24,9 +24,9 @@ import (
 func TestWithClockNilLeavesClockUnchanged(t *testing.T) {
 	t.Parallel()
 
-	config := controllerConfig{now: func() time.Time { return testTime }}
-	WithClock(nil)(&config)
-	if got := config.now(); !got.Equal(testTime) {
+	cfg := controllerConfig{now: func() time.Time { return testTime }}
+	WithClock(nil)(&cfg)
+	if got := cfg.now(); !got.Equal(testTime) {
 		t.Fatalf("config.now() = %v, want %v", got, testTime)
 	}
 }
@@ -49,9 +49,9 @@ func TestWithClockCustomSourceUsedForCommittedTransition(t *testing.T) {
 func TestWithClockDoesNotCallNowDuringConfigConstruction(t *testing.T) {
 	t.Parallel()
 
-	clock := &countingClock{now: testTime}
-	_ = newControllerConfig(WithClock(clock))
-	if clock.calls != 0 {
-		t.Fatalf("clock calls during config construction = %d, want 0", clock.calls)
+	clk := &countingClock{now: testTime}
+	_ = newControllerConfig(WithClock(clk))
+	if clk.calls != 0 {
+		t.Fatalf("clock calls during config construction = %d, want 0", clk.calls)
 	}
 }

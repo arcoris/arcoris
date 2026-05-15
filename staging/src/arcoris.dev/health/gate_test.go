@@ -34,8 +34,8 @@ func TestGateConstructionAndCheck(t *testing.T) {
 	if got := gate.Name(); got != "ready_gate" {
 		t.Fatalf("Name() = %q, want ready_gate", got)
 	}
-	if result := gate.Check(context.Background()); result.Name != "ready_gate" || result.Status != StatusHealthy {
-		t.Fatalf("Check() = %+v, want named healthy", result)
+	if res := gate.Check(context.Background()); res.Name != "ready_gate" || res.Status != StatusHealthy {
+		t.Fatalf("Check() = %+v, want named healthy", res)
 	}
 }
 
@@ -107,8 +107,8 @@ func TestNilGateBehavior(t *testing.T) {
 	if gate.Name() != "" {
 		t.Fatal("nil Gate Name() should be empty")
 	}
-	if result := gate.Check(context.Background()); !errors.Is(result.Cause, ErrNilChecker) {
-		t.Fatalf("nil Gate Check cause = %v, want ErrNilChecker", result.Cause)
+	if res := gate.Check(context.Background()); !errors.Is(res.Cause, ErrNilChecker) {
+		t.Fatalf("nil Gate Check cause = %v, want ErrNilChecker", res.Cause)
 	}
 	if err := gate.Set(Healthy("ready_gate")); !errors.Is(err, ErrNilChecker) {
 		t.Fatalf("nil Gate Set() = %v, want ErrNilChecker", err)

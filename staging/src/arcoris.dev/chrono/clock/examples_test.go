@@ -36,12 +36,12 @@ func observedAge(c PassiveClock, startedAt time.Time) time.Duration {
 // Clock. This keeps read-only code independent from timers, tickers, sleeps, and
 // runtime loop ownership.
 func ExamplePassiveClock() {
-	clock := NewFakeClock(exampleStartTime())
+	clk := NewFakeClock(exampleStartTime())
 
-	startedAt := clock.Now()
-	clock.Step(250 * time.Millisecond)
+	startedAt := clk.Now()
+	clk.Step(250 * time.Millisecond)
 
-	fmt.Println(observedAge(clock, startedAt))
+	fmt.Println(observedAge(clk, startedAt))
 
 	// Output:
 	// 250ms
@@ -52,14 +52,14 @@ func ExamplePassiveClock() {
 // After is useful when the caller does not need to stop or reset the wait. For
 // cancelable or resettable waits, use NewTimer instead.
 func ExampleClock_After() {
-	clock := NewFakeClock(exampleStartTime())
+	clk := NewFakeClock(exampleStartTime())
 
-	ch := clock.After(10 * time.Second)
+	ch := clk.After(10 * time.Second)
 
-	clock.Step(9 * time.Second)
+	clk.Step(9 * time.Second)
 	fmt.Println("before deadline")
 
-	clock.Step(time.Second)
+	clk.Step(time.Second)
 	fmt.Println((<-ch).Format(time.RFC3339))
 
 	// Output:
@@ -73,12 +73,12 @@ func ExampleClock_After() {
 // cooldowns, queue wake-up deadlines, lease checks, and other one-shot waits
 // that need explicit lifecycle ownership.
 func ExampleClock_NewTimer() {
-	clock := NewFakeClock(exampleStartTime())
+	clk := NewFakeClock(exampleStartTime())
 
-	timer := clock.NewTimer(10 * time.Second)
+	timer := clk.NewTimer(10 * time.Second)
 
 	timer.Reset(3 * time.Second)
-	clock.Step(3 * time.Second)
+	clk.Step(3 * time.Second)
 
 	fmt.Println((<-timer.C()).Format(time.RFC3339))
 
@@ -91,15 +91,15 @@ func ExampleClock_NewTimer() {
 // Fake tickers are advanced explicitly by the owning FakeClock. This makes
 // controller-loop tests deterministic and avoids real sleeps.
 func ExampleClock_NewTicker() {
-	clock := NewFakeClock(exampleStartTime())
+	clk := NewFakeClock(exampleStartTime())
 
-	ticker := clock.NewTicker(5 * time.Second)
+	ticker := clk.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 	fmt.Println((<-ticker.C()).Format(time.RFC3339))
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 	fmt.Println((<-ticker.C()).Format(time.RFC3339))
 
 	// Output:
@@ -112,15 +112,15 @@ func ExampleClock_NewTicker() {
 //
 // Reset schedules the next tick relative to the clock's current time.
 func ExampleTicker_Reset() {
-	clock := NewFakeClock(exampleStartTime())
+	clk := NewFakeClock(exampleStartTime())
 
-	ticker := clock.NewTicker(10 * time.Second)
+	ticker := clk.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
-	clock.Step(4 * time.Second)
+	clk.Step(4 * time.Second)
 	ticker.Reset(2 * time.Second)
 
-	clock.Step(2 * time.Second)
+	clk.Step(2 * time.Second)
 
 	fmt.Println((<-ticker.C()).Format(time.RFC3339))
 
@@ -133,22 +133,22 @@ func ExampleTicker_Reset() {
 // FakeClock.Sleep blocks until another goroutine advances the same fake clock
 // far enough to release the sleeper.
 func ExampleFakeClock_Sleep() {
-	clock := NewFakeClock(exampleStartTime())
+	clk := NewFakeClock(exampleStartTime())
 
 	done := make(chan struct{})
 
 	go func() {
-		clock.Sleep(5 * time.Second)
+		clk.Sleep(5 * time.Second)
 		close(done)
 	}()
 
-	for !clock.HasWaiters() {
+	for !clk.HasWaiters() {
 		// The yield avoids a pure busy spin while waiting for the goroutine to
 		// register its fake-time waiter.
 		runtime.Gosched()
 	}
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 
 	<-done
 	fmt.Println("released")

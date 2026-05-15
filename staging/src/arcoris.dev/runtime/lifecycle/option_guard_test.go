@@ -21,9 +21,9 @@ import "testing"
 func TestWithGuardIgnoresNil(t *testing.T) {
 	t.Parallel()
 
-	config := newControllerConfig(WithGuard(nil))
-	if len(config.guards) != 0 {
-		t.Fatalf("guards len = %d, want 0", len(config.guards))
+	cfg := newControllerConfig(WithGuard(nil))
+	if len(cfg.guards) != 0 {
+		t.Fatalf("guards len = %d, want 0", len(cfg.guards))
 	}
 }
 
@@ -31,9 +31,9 @@ func TestWithGuardAppendsOneGuard(t *testing.T) {
 	t.Parallel()
 
 	guard := TransitionGuardFunc(func(Transition) error { return nil })
-	config := newControllerConfig(WithGuard(guard))
-	if len(config.guards) != 1 || config.guards[0] == nil {
-		t.Fatalf("guards = %v, want one guard", config.guards)
+	cfg := newControllerConfig(WithGuard(guard))
+	if len(cfg.guards) != 1 || cfg.guards[0] == nil {
+		t.Fatalf("guards = %v, want one guard", cfg.guards)
 	}
 }
 
@@ -41,9 +41,9 @@ func TestWithGuardsIgnoresNilEntries(t *testing.T) {
 	t.Parallel()
 
 	guard := TransitionGuardFunc(func(Transition) error { return nil })
-	config := newControllerConfig(WithGuards(nil, guard, nil))
-	if len(config.guards) != 1 || config.guards[0] == nil {
-		t.Fatalf("guards = %v, want only non-nil guard", config.guards)
+	cfg := newControllerConfig(WithGuards(nil, guard, nil))
+	if len(cfg.guards) != 1 || cfg.guards[0] == nil {
+		t.Fatalf("guards = %v, want only non-nil guard", cfg.guards)
 	}
 }
 
@@ -56,9 +56,9 @@ func TestWithGuardsPreservesOrder(t *testing.T) {
 	first := TransitionGuardFunc(func(Transition) error { order = append(order, "first"); return nil })
 	second := TransitionGuardFunc(func(Transition) error { order = append(order, "second"); return nil })
 	third := TransitionGuardFunc(func(Transition) error { order = append(order, "third"); return nil })
-	config := newControllerConfig(WithGuard(first), WithGuards(second, third))
+	cfg := newControllerConfig(WithGuard(first), WithGuards(second, third))
 
-	if err := allowTransition(config.guards, Transition{}); err != nil {
+	if err := allowTransition(cfg.guards, Transition{}); err != nil {
 		t.Fatalf("allowTransition = %v, want nil", err)
 	}
 	assertDeepEqual(t, order, []string{"first", "second", "third"})

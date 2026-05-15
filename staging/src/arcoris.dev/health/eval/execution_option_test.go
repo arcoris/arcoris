@@ -26,13 +26,13 @@ import (
 func TestEvaluatorConfigDefaultExecutionPolicy(t *testing.T) {
 	t.Parallel()
 
-	config := defaultEvaluatorConfig()
+	cfg := defaultEvaluatorConfig()
 	want := DefaultExecutionPolicy()
 
-	if config.executionPolicy != want {
-		t.Fatalf("execution policy = %+v, want %+v", config.executionPolicy, want)
+	if cfg.executionPolicy != want {
+		t.Fatalf("execution policy = %+v, want %+v", cfg.executionPolicy, want)
 	}
-	if config.targetExecutionPolicies == nil {
+	if cfg.targetExecutionPolicies == nil {
 		t.Fatal("targetExecutionPolicies is nil")
 	}
 }
@@ -40,23 +40,23 @@ func TestEvaluatorConfigDefaultExecutionPolicy(t *testing.T) {
 func TestWithExecutionPolicy(t *testing.T) {
 	t.Parallel()
 
-	config := defaultEvaluatorConfig()
-	err := WithExecutionPolicy(ParallelExecutionPolicy(4))(&config)
+	cfg := defaultEvaluatorConfig()
+	err := WithExecutionPolicy(ParallelExecutionPolicy(4))(&cfg)
 	if err != nil {
 		t.Fatalf("WithExecutionPolicy() = %v, want nil", err)
 	}
 
 	want := ParallelExecutionPolicy(4)
-	if config.executionPolicy != want {
-		t.Fatalf("execution policy = %+v, want %+v", config.executionPolicy, want)
+	if cfg.executionPolicy != want {
+		t.Fatalf("execution policy = %+v, want %+v", cfg.executionPolicy, want)
 	}
 }
 
 func TestWithExecutionPolicyRejectsInvalidPolicy(t *testing.T) {
 	t.Parallel()
 
-	config := defaultEvaluatorConfig()
-	err := WithExecutionPolicy(ParallelExecutionPolicy(0))(&config)
+	cfg := defaultEvaluatorConfig()
+	err := WithExecutionPolicy(ParallelExecutionPolicy(0))(&cfg)
 
 	if !errors.Is(err, ErrInvalidExecutionPolicy) {
 		t.Fatalf("WithExecutionPolicy(invalid) = %v, want ErrInvalidExecutionPolicy", err)
@@ -66,14 +66,14 @@ func TestWithExecutionPolicyRejectsInvalidPolicy(t *testing.T) {
 func TestWithTargetExecutionPolicy(t *testing.T) {
 	t.Parallel()
 
-	config := defaultEvaluatorConfig()
-	err := WithTargetExecutionPolicy(health.TargetReady, ParallelExecutionPolicy(4))(&config)
+	cfg := defaultEvaluatorConfig()
+	err := WithTargetExecutionPolicy(health.TargetReady, ParallelExecutionPolicy(4))(&cfg)
 	if err != nil {
 		t.Fatalf("WithTargetExecutionPolicy() = %v, want nil", err)
 	}
 
 	want := ParallelExecutionPolicy(4)
-	if got := config.targetExecutionPolicies[health.TargetReady]; got != want {
+	if got := cfg.targetExecutionPolicies[health.TargetReady]; got != want {
 		t.Fatalf("target execution policy = %+v, want %+v", got, want)
 	}
 }
@@ -81,8 +81,8 @@ func TestWithTargetExecutionPolicy(t *testing.T) {
 func TestWithTargetExecutionPolicyRejectsInvalidTarget(t *testing.T) {
 	t.Parallel()
 
-	config := defaultEvaluatorConfig()
-	err := WithTargetExecutionPolicy(health.TargetUnknown, ParallelExecutionPolicy(4))(&config)
+	cfg := defaultEvaluatorConfig()
+	err := WithTargetExecutionPolicy(health.TargetUnknown, ParallelExecutionPolicy(4))(&cfg)
 
 	if !errors.Is(err, health.ErrInvalidTarget) {
 		t.Fatalf("WithTargetExecutionPolicy(invalid target) = %v, want health.ErrInvalidTarget", err)
@@ -92,8 +92,8 @@ func TestWithTargetExecutionPolicyRejectsInvalidTarget(t *testing.T) {
 func TestWithTargetExecutionPolicyRejectsInvalidPolicy(t *testing.T) {
 	t.Parallel()
 
-	config := defaultEvaluatorConfig()
-	err := WithTargetExecutionPolicy(health.TargetReady, ParallelExecutionPolicy(0))(&config)
+	cfg := defaultEvaluatorConfig()
+	err := WithTargetExecutionPolicy(health.TargetReady, ParallelExecutionPolicy(0))(&cfg)
 
 	if !errors.Is(err, ErrInvalidExecutionPolicy) {
 		t.Fatalf("WithTargetExecutionPolicy(invalid policy) = %v, want ErrInvalidExecutionPolicy", err)
@@ -103,9 +103,9 @@ func TestWithTargetExecutionPolicyRejectsInvalidPolicy(t *testing.T) {
 func TestExecutionOptionConveniences(t *testing.T) {
 	t.Parallel()
 
-	config := defaultEvaluatorConfig()
+	cfg := defaultEvaluatorConfig()
 	err := applyEvaluatorOptions(
-		&config,
+		&cfg,
 		WithParallelChecks(8),
 		WithTargetParallelChecks(health.TargetReady, 4),
 		WithTargetSequentialChecks(health.TargetLive),
@@ -114,13 +114,13 @@ func TestExecutionOptionConveniences(t *testing.T) {
 		t.Fatalf("applyEvaluatorOptions() = %v, want nil", err)
 	}
 
-	if got, want := config.executionPolicy, ParallelExecutionPolicy(8); got != want {
+	if got, want := cfg.executionPolicy, ParallelExecutionPolicy(8); got != want {
 		t.Fatalf("default execution policy = %+v, want %+v", got, want)
 	}
-	if got, want := config.targetExecutionPolicies[health.TargetReady], ParallelExecutionPolicy(4); got != want {
+	if got, want := cfg.targetExecutionPolicies[health.TargetReady], ParallelExecutionPolicy(4); got != want {
 		t.Fatalf("ready execution policy = %+v, want %+v", got, want)
 	}
-	if got, want := config.targetExecutionPolicies[health.TargetLive], DefaultExecutionPolicy(); got != want {
+	if got, want := cfg.targetExecutionPolicies[health.TargetLive], DefaultExecutionPolicy(); got != want {
 		t.Fatalf("live execution policy = %+v, want %+v", got, want)
 	}
 }
@@ -128,9 +128,9 @@ func TestExecutionOptionConveniences(t *testing.T) {
 func TestExecutionOptionsApplyInOrder(t *testing.T) {
 	t.Parallel()
 
-	config := defaultEvaluatorConfig()
+	cfg := defaultEvaluatorConfig()
 	err := applyEvaluatorOptions(
-		&config,
+		&cfg,
 		WithParallelChecks(2),
 		WithParallelChecks(4),
 		WithTargetParallelChecks(health.TargetReady, 2),
@@ -140,10 +140,10 @@ func TestExecutionOptionsApplyInOrder(t *testing.T) {
 		t.Fatalf("applyEvaluatorOptions() = %v, want nil", err)
 	}
 
-	if got, want := config.executionPolicy, ParallelExecutionPolicy(4); got != want {
+	if got, want := cfg.executionPolicy, ParallelExecutionPolicy(4); got != want {
 		t.Fatalf("default execution policy = %+v, want %+v", got, want)
 	}
-	if got, want := config.targetExecutionPolicies[health.TargetReady], ParallelExecutionPolicy(6); got != want {
+	if got, want := cfg.targetExecutionPolicies[health.TargetReady], ParallelExecutionPolicy(6); got != want {
 		t.Fatalf("ready execution policy = %+v, want %+v", got, want)
 	}
 }

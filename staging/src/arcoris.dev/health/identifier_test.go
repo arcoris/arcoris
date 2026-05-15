@@ -22,29 +22,29 @@ func TestValidLowerSnakeIdentifier(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name  string
-		value string
-		max   int
-		want  bool
+		name string
+		val  string
+		max  int
+		want bool
 	}{
-		{name: "simple", value: "storage", max: 32, want: true},
-		{name: "digits_after_first", value: "pool_1", max: 32, want: true},
-		{name: "empty", value: "", max: 32, want: false},
-		{name: "too_long", value: "storage", max: 3, want: false},
-		{name: "digit_first", value: "1pool", max: 32, want: false},
-		{name: "leading_underscore", value: "_pool", max: 32, want: false},
-		{name: "trailing_underscore", value: "pool_", max: 32, want: false},
-		{name: "repeated_underscore", value: "pool__main", max: 32, want: false},
-		{name: "uppercase", value: "Pool", max: 32, want: false},
-		{name: "dash", value: "pool-main", max: 32, want: false},
+		{name: "simple", val: "storage", max: 32, want: true},
+		{name: "digits_after_first", val: "pool_1", max: 32, want: true},
+		{name: "empty", val: "", max: 32, want: false},
+		{name: "too_long", val: "storage", max: 3, want: false},
+		{name: "digit_first", val: "1pool", max: 32, want: false},
+		{name: "leading_underscore", val: "_pool", max: 32, want: false},
+		{name: "trailing_underscore", val: "pool_", max: 32, want: false},
+		{name: "repeated_underscore", val: "pool__main", max: 32, want: false},
+		{name: "uppercase", val: "Pool", max: 32, want: false},
+		{name: "dash", val: "pool-main", max: 32, want: false},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := validLowerSnakeIdentifier(tc.value, tc.max); got != tc.want {
-				t.Fatalf("validLowerSnakeIdentifier(%q, %d) = %v, want %v", tc.value, tc.max, got, tc.want)
+			if got := validLowerSnakeIdentifier(tc.val, tc.max); got != tc.want {
+				t.Fatalf("validLowerSnakeIdentifier(%q, %d) = %v, want %v", tc.val, tc.max, got, tc.want)
 			}
 		})
 	}

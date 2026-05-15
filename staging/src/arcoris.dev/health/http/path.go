@@ -36,20 +36,14 @@ const (
 	// maps to health.TargetReady in default installs.
 	DefaultReadyPath = "/readyz"
 
-	// DefaultHealthPath is the conventional Kubernetes-style aggregate health
-	// path.
+	// DefaultHealthPath is the canonical HTTP path for general health evaluation.
 	//
-	// This package intentionally does not assign DefaultHealthPath a built-in
-	// target meaning. Different systems use "/healthz" as liveness, readiness,
-	// or aggregate health. Callers that need this compatibility path should bind
-	// it explicitly to the target they want.
+	// General health answers whether the component is broadly healthy according
+	// to the caller's bound health target or aggregate handler. It is
+	// intentionally separate from startup, liveness, and readiness paths, which
+	// have narrower operational meanings.
+	//
+	// The package provides this path as the canonical general health route, but
+	// callers still decide which handler or target is bound to it.
 	DefaultHealthPath = "/healthz"
-
-	// DefaultHealthPlainPath is the conventional plain aggregate health path.
-	//
-	// Like DefaultHealthPath, this path is intentionally not installed by default
-	// because "/health" has no universal target meaning. It is provided as a
-	// compatibility constant for applications that already expose or expect this
-	// route.
-	DefaultHealthPlainPath = "/health"
 )

@@ -16,14 +16,18 @@
 
 package healthgrpc
 
-import healthpb "google.golang.org/grpc/health/grpc_health_v1"
+import (
+	"arcoris.dev/health"
 
-// Server implements the standard grpc.health.v1.Health service over Source.
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+)
+
+// Server implements the standard grpc.health.v1.Health service over health.Evaluator.
 //
 // A Server is intentionally a thin adapter. Its immutable configuration maps
 // transport service names to package-health targets and policies. It does not
-// cache reports, maintain serving state, or mutate the Source; every RPC that
-// needs health state asks Source to evaluate the configured target.
+// cache reports, maintain serving state, or mutate the evaluator; every RPC
+// that needs health state asks the evaluator to evaluate the configured target.
 type Server struct {
 	// UnimplementedHealthServer keeps the generated service forward-compatible
 	// if the standard gRPC health API grows additional methods.
@@ -31,7 +35,7 @@ type Server struct {
 
 	// source is the only runtime health boundary. The adapter never reaches into
 	// registries or check lists directly.
-	source Source
+	source health.Evaluator
 
 	// services provides immutable lookup by exact gRPC service name.
 	services map[string]ServiceMapping

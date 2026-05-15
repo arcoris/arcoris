@@ -66,13 +66,13 @@ func NewRegistry(t testing.TB, groups ...TargetChecks) *health.Registry {
 // The helper is intentionally narrow: it owns only health-domain registration
 // setup. It does not provide generic error assertions or hide registry behavior
 // in production-style constructors.
-func Register(t testing.TB, registry *health.Registry, target health.Target, checks ...health.Checker) {
+func Register(t testing.TB, r *health.Registry, target health.Target, checks ...health.Checker) {
 	t.Helper()
 
-	if registry == nil {
+	if r == nil {
 		t.Fatalf("healthtest.Register(%s) registry = nil", target)
 	}
-	if err := registry.Register(target, checks...); err != nil {
+	if err := r.Register(target, checks...); err != nil {
 		t.Fatalf("healthtest.Register(%s) = %v, want nil", target, err)
 	}
 }

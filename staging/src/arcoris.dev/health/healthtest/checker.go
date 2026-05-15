@@ -53,8 +53,8 @@ type Checker struct {
 //
 // The result name is not rewritten to match name. That preserves mismatch cases
 // for evaluator tests and adapter tests that verify normalization boundaries.
-func StaticChecker(name string, result health.Result) Checker {
-	return Checker{NameValue: name, ResultValue: result}
+func StaticChecker(name string, res health.Result) Checker {
+	return Checker{NameValue: name, ResultValue: res}
 }
 
 // FuncChecker returns a Checker backed by fn.

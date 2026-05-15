@@ -75,8 +75,8 @@ type Timer struct {
 //
 // The returned Timer is not context-bound. Context ownership is applied by Wait,
 // which converts wait-owned context stops into ErrInterrupted or ErrTimeout.
-func NewTimer(duration time.Duration) *Timer {
-	return &Timer{timer: time.NewTimer(duration)}
+func NewTimer(d time.Duration) *Timer {
+	return &Timer{timer: time.NewTimer(d)}
 }
 
 // C returns the timer delivery channel.
@@ -189,11 +189,11 @@ func (t *Timer) StopAndDrain() bool {
 // those values before calling Reset.
 //
 // Reset panics when called on a nil or zero-value Timer.
-func (t *Timer) Reset(duration time.Duration) bool {
+func (t *Timer) Reset(d time.Duration) bool {
 	t.requireUsable()
 
 	wasActive := stopAndDrainRuntimeTimer(t.timer)
-	t.timer.Reset(duration)
+	t.timer.Reset(d)
 	return wasActive
 }
 

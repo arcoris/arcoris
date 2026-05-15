@@ -107,8 +107,8 @@ func (p *PaddedUint64) Load() uint64 {
 //   - Uint64Gauge exposes Store only for controlled current-state publication.
 //
 // Store does not validate the value and cannot fail.
-func (p *PaddedUint64) Store(value uint64) {
-	p.value.Store(value)
+func (p *PaddedUint64) Store(val uint64) {
+	p.value.Store(val)
 }
 
 // Add atomically adds delta to the current uint64 value and returns the new

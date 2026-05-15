@@ -26,11 +26,11 @@ import (
 func TestFakeClockAfterDoesNotDeliverBeforeDeadline(t *testing.T) {
 	t.Parallel()
 
-	clock := NewFakeClock(fakeClockTestTime())
+	clk := NewFakeClock(fakeClockTestTime())
 
-	ch := clock.After(10 * time.Second)
+	ch := clk.After(10 * time.Second)
 
-	clock.Step(9 * time.Second)
+	clk.Step(9 * time.Second)
 	mustNotReceiveTime(t, ch)
 }
 
@@ -40,11 +40,11 @@ func TestFakeClockAfterDeliversWhenDeadlineIsReached(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
+	clk := NewFakeClock(start)
 
-	ch := clock.After(10 * time.Second)
+	ch := clk.After(10 * time.Second)
 
-	clock.Step(10 * time.Second)
+	clk.Step(10 * time.Second)
 
 	mustEqualTime(t, "After delivery", mustReceiveTime(t, ch), start.Add(10*time.Second))
 	mustNotReceiveTime(t, ch)
@@ -56,11 +56,11 @@ func TestFakeClockAfterDeliversWhenDeadlineIsPassed(t *testing.T) {
 	t.Parallel()
 
 	start := fakeClockTestTime()
-	clock := NewFakeClock(start)
+	clk := NewFakeClock(start)
 
-	ch := clock.After(10 * time.Second)
+	ch := clk.After(10 * time.Second)
 
-	clock.Step(30 * time.Second)
+	clk.Step(30 * time.Second)
 
 	mustEqualTime(t, "After delivery", mustReceiveTime(t, ch), start.Add(30*time.Second))
 	mustNotReceiveTime(t, ch)
@@ -74,16 +74,16 @@ func TestFakeClockAfterNonPositiveDurationIsImmediatelyReady(t *testing.T) {
 	start := fakeClockTestTime()
 
 	tests := []struct {
-		name     string
-		duration time.Duration
+		name string
+		d    time.Duration
 	}{
 		{
-			name:     "zero",
-			duration: 0,
+			name: "zero",
+			d:    0,
 		},
 		{
-			name:     "negative",
-			duration: -time.Second,
+			name: "negative",
+			d:    -time.Second,
 		},
 	}
 
@@ -92,9 +92,9 @@ func TestFakeClockAfterNonPositiveDurationIsImmediatelyReady(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			clock := NewFakeClock(start)
+			clk := NewFakeClock(start)
 
-			ch := clock.After(tc.duration)
+			ch := clk.After(tc.d)
 
 			mustEqualTime(t, "After immediate delivery", mustReceiveTime(t, ch), start)
 			mustNotReceiveTime(t, ch)
@@ -107,22 +107,22 @@ func TestFakeClockAfterNonPositiveDurationIsImmediatelyReady(t *testing.T) {
 func TestFakeClockSleepBlocksUntilStep(t *testing.T) {
 	t.Parallel()
 
-	clock := NewFakeClock(fakeClockTestTime())
+	clk := NewFakeClock(fakeClockTestTime())
 	done := make(chan struct{})
 
 	go func() {
-		clock.Sleep(10 * time.Second)
+		clk.Sleep(10 * time.Second)
 		close(done)
 	}()
 
-	waitUntil(t, "Sleep waiter is registered", clock.HasWaiters)
+	waitUntil(t, "Sleep waiter is registered", clk.HasWaiters)
 
 	mustNotReceiveSignal(t, done)
 
-	clock.Step(9 * time.Second)
+	clk.Step(9 * time.Second)
 	mustNotReceiveSignal(t, done)
 
-	clock.Step(time.Second)
+	clk.Step(time.Second)
 	mustReceiveSignal(t, done)
 }
 
@@ -132,16 +132,16 @@ func TestFakeClockSleepNonPositiveDurationReturns(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name     string
-		duration time.Duration
+		name string
+		d    time.Duration
 	}{
 		{
-			name:     "zero",
-			duration: 0,
+			name: "zero",
+			d:    0,
 		},
 		{
-			name:     "negative",
-			duration: -time.Second,
+			name: "negative",
+			d:    -time.Second,
 		},
 	}
 
@@ -150,11 +150,11 @@ func TestFakeClockSleepNonPositiveDurationReturns(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			clock := NewFakeClock(fakeClockTestTime())
+			clk := NewFakeClock(fakeClockTestTime())
 			done := make(chan struct{})
 
 			go func() {
-				clock.Sleep(tc.duration)
+				clk.Sleep(tc.d)
 				close(done)
 			}()
 
@@ -168,22 +168,22 @@ func TestFakeClockSleepNonPositiveDurationReturns(t *testing.T) {
 func TestFakeClockHasWaitersReportsPendingAfterAndSleep(t *testing.T) {
 	t.Parallel()
 
-	clock := NewFakeClock(fakeClockTestTime())
+	clk := NewFakeClock(fakeClockTestTime())
 
-	if clock.HasWaiters() {
+	if clk.HasWaiters() {
 		t.Fatal("FakeClock.HasWaiters() = true before any waiters, want false")
 	}
 
-	ch := clock.After(5 * time.Second)
+	ch := clk.After(5 * time.Second)
 
-	if !clock.HasWaiters() {
+	if !clk.HasWaiters() {
 		t.Fatal("FakeClock.HasWaiters() = false after After registration, want true")
 	}
 
-	clock.Step(5 * time.Second)
+	clk.Step(5 * time.Second)
 	_ = mustReceiveTime(t, ch)
 
-	if clock.HasWaiters() {
+	if clk.HasWaiters() {
 		t.Fatal("FakeClock.HasWaiters() = true after waiter delivery, want false")
 	}
 }
@@ -193,14 +193,14 @@ func TestFakeClockHasWaitersReportsPendingAfterAndSleep(t *testing.T) {
 func TestFakeClockHasWaitersDoesNotReportTimersOrTickers(t *testing.T) {
 	t.Parallel()
 
-	clock := NewFakeClock(fakeClockTestTime())
+	clk := NewFakeClock(fakeClockTestTime())
 
-	timer := clock.NewTimer(time.Hour)
-	ticker := clock.NewTicker(time.Hour)
+	timer := clk.NewTimer(time.Hour)
+	ticker := clk.NewTicker(time.Hour)
 	defer timer.Stop()
 	defer ticker.Stop()
 
-	if clock.HasWaiters() {
+	if clk.HasWaiters() {
 		t.Fatal("FakeClock.HasWaiters() = true with only timer/ticker registered, want false")
 	}
 }

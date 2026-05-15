@@ -69,12 +69,12 @@ type Uint32CounterDelta struct {
 // Multiple wraps cannot be detected from previous and current alone. Because
 // uint32 wraps relatively quickly under high event rates, callers must choose the
 // sampling cadence carefully.
-func NewUint32CounterDelta(previous, current uint32) Uint32CounterDelta {
+func NewUint32CounterDelta(prev, cur uint32) Uint32CounterDelta {
 	return Uint32CounterDelta{
-		Previous: previous,
-		Current:  current,
-		Value:    current - previous,
-		Wrapped:  current < previous,
+		Previous: prev,
+		Current:  cur,
+		Value:    cur - prev,
+		Wrapped:  cur < prev,
 	}
 }
 

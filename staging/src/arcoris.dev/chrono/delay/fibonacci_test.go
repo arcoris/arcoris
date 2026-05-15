@@ -31,20 +31,20 @@ func TestFibonacciRejectsNonPositiveBaseDelay(t *testing.T) {
 }
 
 func TestFibonacciSequenceUsesFibonacciGrowth(t *testing.T) {
-	sequence := Fibonacci(time.Second).NewSequence()
+	seq := Fibonacci(time.Second).NewSequence()
 
-	mustNext(t, sequence, time.Second)
-	mustNext(t, sequence, time.Second)
-	mustNext(t, sequence, 2*time.Second)
-	mustNext(t, sequence, 3*time.Second)
-	mustNext(t, sequence, 5*time.Second)
+	mustNext(t, seq, time.Second)
+	mustNext(t, seq, time.Second)
+	mustNext(t, seq, 2*time.Second)
+	mustNext(t, seq, 3*time.Second)
+	mustNext(t, seq, 5*time.Second)
 }
 
 func TestFibonacciSequencesHaveIndependentState(t *testing.T) {
-	schedule := Fibonacci(time.Second)
+	sched := Fibonacci(time.Second)
 
-	l := schedule.NewSequence()
-	r := schedule.NewSequence()
+	l := sched.NewSequence()
+	r := sched.NewSequence()
 
 	mustNext(t, l, time.Second)
 	mustNext(t, l, time.Second)
@@ -52,9 +52,9 @@ func TestFibonacciSequencesHaveIndependentState(t *testing.T) {
 }
 
 func TestFibonacciSequenceSaturates(t *testing.T) {
-	sequence := &fibonacciSequence{previous: maxDuration, current: time.Nanosecond}
+	seq := &fibonacciSequence{previous: maxDuration, current: time.Nanosecond}
 
-	mustNext(t, sequence, time.Nanosecond)
-	mustNext(t, sequence, maxDuration)
-	mustNext(t, sequence, maxDuration)
+	mustNext(t, seq, time.Nanosecond)
+	mustNext(t, seq, maxDuration)
+	mustNext(t, seq, maxDuration)
 }

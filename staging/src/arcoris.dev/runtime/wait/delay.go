@@ -52,15 +52,15 @@ import (
 // busy loop.
 //
 // Delay panics when ctx is nil.
-func Delay(ctx context.Context, duration time.Duration) error {
+func Delay(ctx context.Context, d time.Duration) error {
 	requireContext(ctx)
 
 	if err := contextStopError(ctx); err != nil {
 		return err
 	}
-	if duration <= 0 {
+	if d <= 0 {
 		return nil
 	}
 
-	return NewTimer(duration).Wait(ctx)
+	return NewTimer(d).Wait(ctx)
 }

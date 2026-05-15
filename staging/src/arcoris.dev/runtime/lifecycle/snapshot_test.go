@@ -37,9 +37,9 @@ func TestSnapshotIsValid(t *testing.T) {
 	failureTransition := Transition{From: StateRunning, To: StateFailed, Event: EventMarkFailed, Cause: cause, Revision: 2, At: testTime}
 
 	tests := []struct {
-		name     string
-		snapshot Snapshot
-		want     bool
+		name string
+		snap Snapshot
+		want bool
 	}{
 		// Snapshot is an immutable read model; the zero value represents the
 		// initial StateNew observation before any transition has committed.
@@ -62,7 +62,7 @@ func TestSnapshotIsValid(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		if got := tc.snapshot.IsValid(); got != tc.want {
+		if got := tc.snap.IsValid(); got != tc.want {
 			t.Fatalf("%s IsValid = %v, want %v", tc.name, got, tc.want)
 		}
 	}
@@ -73,7 +73,7 @@ func TestSnapshotPredicates(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		snapshot      Snapshot
+		snap          Snapshot
 		hasTransition bool
 		terminal      bool
 		active        bool
@@ -88,22 +88,22 @@ func TestSnapshotPredicates(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		if got := tc.snapshot.HasTransition(); got != tc.hasTransition {
+		if got := tc.snap.HasTransition(); got != tc.hasTransition {
 			t.Fatalf("%s HasTransition = %v, want %v", tc.name, got, tc.hasTransition)
 		}
-		if got := tc.snapshot.IsTerminal(); got != tc.terminal {
+		if got := tc.snap.IsTerminal(); got != tc.terminal {
 			t.Fatalf("%s IsTerminal = %v, want %v", tc.name, got, tc.terminal)
 		}
-		if got := tc.snapshot.IsActive(); got != tc.active {
+		if got := tc.snap.IsActive(); got != tc.active {
 			t.Fatalf("%s IsActive = %v, want %v", tc.name, got, tc.active)
 		}
-		if got := tc.snapshot.AcceptsWork(); got != tc.acceptsWork {
+		if got := tc.snap.AcceptsWork(); got != tc.acceptsWork {
 			t.Fatalf("%s AcceptsWork = %v, want %v", tc.name, got, tc.acceptsWork)
 		}
-		if got := tc.snapshot.IsFailed(); got != tc.failed {
+		if got := tc.snap.IsFailed(); got != tc.failed {
 			t.Fatalf("%s IsFailed = %v, want %v", tc.name, got, tc.failed)
 		}
-		if got := tc.snapshot.IsStopped(); got != tc.stopped {
+		if got := tc.snap.IsStopped(); got != tc.stopped {
 			t.Fatalf("%s IsStopped = %v, want %v", tc.name, got, tc.stopped)
 		}
 	}

@@ -21,9 +21,9 @@ import "testing"
 func TestWithObserverIgnoresNil(t *testing.T) {
 	t.Parallel()
 
-	config := newControllerConfig(WithObserver(nil))
-	if len(config.observers) != 0 {
-		t.Fatalf("observers len = %d, want 0", len(config.observers))
+	cfg := newControllerConfig(WithObserver(nil))
+	if len(cfg.observers) != 0 {
+		t.Fatalf("observers len = %d, want 0", len(cfg.observers))
 	}
 }
 
@@ -31,9 +31,9 @@ func TestWithObserverAppendsOneObserver(t *testing.T) {
 	t.Parallel()
 
 	observer := ObserverFunc(func(Transition) {})
-	config := newControllerConfig(WithObserver(observer))
-	if len(config.observers) != 1 || config.observers[0] == nil {
-		t.Fatalf("observers = %v, want one observer", config.observers)
+	cfg := newControllerConfig(WithObserver(observer))
+	if len(cfg.observers) != 1 || cfg.observers[0] == nil {
+		t.Fatalf("observers = %v, want one observer", cfg.observers)
 	}
 }
 
@@ -41,9 +41,9 @@ func TestWithObserversIgnoresNilEntries(t *testing.T) {
 	t.Parallel()
 
 	observer := ObserverFunc(func(Transition) {})
-	config := newControllerConfig(WithObservers(nil, observer, nil))
-	if len(config.observers) != 1 || config.observers[0] == nil {
-		t.Fatalf("observers = %v, want only non-nil observer", config.observers)
+	cfg := newControllerConfig(WithObservers(nil, observer, nil))
+	if len(cfg.observers) != 1 || cfg.observers[0] == nil {
+		t.Fatalf("observers = %v, want only non-nil observer", cfg.observers)
 	}
 }
 
@@ -56,8 +56,8 @@ func TestWithObserversPreservesOrder(t *testing.T) {
 	first := ObserverFunc(func(Transition) { order = append(order, "first") })
 	second := ObserverFunc(func(Transition) { order = append(order, "second") })
 	third := ObserverFunc(func(Transition) { order = append(order, "third") })
-	config := newControllerConfig(WithObserver(first), WithObservers(second, third))
+	cfg := newControllerConfig(WithObserver(first), WithObservers(second, third))
 
-	notifyObservers(config.observers, Transition{})
+	notifyObservers(cfg.observers, Transition{})
 	assertDeepEqual(t, order, []string{"first", "second", "third"})
 }

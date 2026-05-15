@@ -42,8 +42,8 @@ type PanicChecker struct {
 //
 // The name is not validated here; registry or evaluator setup remains the owner
 // of checker-name validation in tests that need that boundary.
-func NewPanicChecker(name string, value any) PanicChecker {
-	return PanicChecker{NameValue: name, Value: value}
+func NewPanicChecker(name string, val any) PanicChecker {
+	return PanicChecker{NameValue: name, Value: val}
 }
 
 // Name returns the configured checker name.

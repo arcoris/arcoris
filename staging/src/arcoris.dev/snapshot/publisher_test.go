@@ -95,10 +95,10 @@ func TestPublisherRevision(t *testing.T) {
 
 func TestPublisherDoesNotClonePublishedValue(t *testing.T) {
 	publisher := NewPublisher[[]string]()
-	value := []string{"a"}
+	val := []string{"a"}
 
-	publisher.Publish(value)
-	value[0] = "changed"
+	publisher.Publish(val)
+	val[0] = "changed"
 
 	// This test documents Publisher's immutable-publication contract. Publisher
 	// does not clone values; callers must publish values they will not mutate.

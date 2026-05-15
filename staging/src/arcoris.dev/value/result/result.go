@@ -26,8 +26,8 @@ type Result[T any] struct {
 }
 
 // OK returns a successful Result containing value.
-func OK[T any](value T) Result[T] {
-	return Result[T]{value: value}
+func OK[T any](val T) Result[T] {
+	return Result[T]{value: val}
 }
 
 // Err returns a failed Result containing err.
@@ -41,11 +41,11 @@ func Err[T any](err error) Result[T] {
 }
 
 // From returns OK(value) when err is nil and Err(err) otherwise.
-func From[T any](value T, err error) Result[T] {
+func From[T any](val T, err error) Result[T] {
 	if err != nil {
 		return Err[T](err)
 	}
-	return OK(value)
+	return OK(val)
 }
 
 // IsOK reports whether r contains a successful value.

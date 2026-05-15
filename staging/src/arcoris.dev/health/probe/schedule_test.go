@@ -59,9 +59,9 @@ func TestWithIntervalRejectsInvalidValue(t *testing.T) {
 func TestWithSchedule(t *testing.T) {
 	t.Parallel()
 
-	schedule := delay.Delays(10 * time.Second)
+	sched := delay.Delays(10 * time.Second)
 	cfg := defaultConfig()
-	err := WithSchedule(schedule)(&cfg)
+	err := WithSchedule(sched)(&cfg)
 	if err != nil {
 		t.Fatalf("WithSchedule() = %v, want nil", err)
 	}
@@ -74,16 +74,16 @@ func TestWithScheduleRejectsNil(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name     string
-		schedule delay.Schedule
+		name  string
+		sched delay.Schedule
 	}{
 		{
-			name:     "nil interface",
-			schedule: nil,
+			name:  "nil interface",
+			sched: nil,
 		},
 		{
-			name:     "typed nil",
-			schedule: (*nilSequenceSchedule)(nil),
+			name:  "typed nil",
+			sched: (*nilSequenceSchedule)(nil),
 		},
 	}
 
@@ -92,7 +92,7 @@ func TestWithScheduleRejectsNil(t *testing.T) {
 			t.Parallel()
 
 			cfg := defaultConfig()
-			err := WithSchedule(tc.schedule)(&cfg)
+			err := WithSchedule(tc.sched)(&cfg)
 
 			if !errors.Is(err, ErrNilSchedule) {
 				t.Fatalf("WithSchedule() = %v, want ErrNilSchedule", err)

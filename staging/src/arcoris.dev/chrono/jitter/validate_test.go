@@ -58,22 +58,20 @@ func TestRequireValidationHelpersRejectInvalidInput(t *testing.T) {
 }
 
 func TestRequireJitterFactorRejectsInvalidValues(t *testing.T) {
-	for _, value := range []float64{-1, math.NaN(), math.Inf(1)} {
-		value := value
+	for _, val := range []float64{-1, math.NaN(), math.Inf(1)} {
 		t.Run("invalid", func(t *testing.T) {
 			mustPanicWith(t, errInvalidJitterFactor, func() {
-				requireJitterFactor(value)
+				requireJitterFactor(val)
 			})
 		})
 	}
 }
 
 func TestRequireJitterRatioRejectsInvalidValues(t *testing.T) {
-	for _, value := range []float64{-1, 1.1, math.NaN(), math.Inf(1)} {
-		value := value
+	for _, val := range []float64{-1, 1.1, math.NaN(), math.Inf(1)} {
 		t.Run("invalid", func(t *testing.T) {
 			mustPanicWith(t, errInvalidJitterRatio, func() {
-				requireJitterRatio(value)
+				requireJitterRatio(val)
 			})
 		})
 	}

@@ -29,8 +29,8 @@ func TestRunnerSnapshotNilRunner(t *testing.T) {
 
 	var runner *Runner
 
-	if snapshot, ok := runner.Snapshot(health.TargetReady); ok || !snapshot.IsZero() {
-		t.Fatalf("Snapshot() = %#v, %v; want zero false", snapshot, ok)
+	if snap, ok := runner.Snapshot(health.TargetReady); ok || !snap.IsZero() {
+		t.Fatalf("Snapshot() = %#v, %v; want zero false", snap, ok)
 	}
 	if snapshots := runner.Snapshots(); snapshots != nil {
 		t.Fatalf("Snapshots() = %#v, want nil", snapshots)
@@ -48,8 +48,8 @@ func TestRunnerSnapshotRejectsInvalidOrUnconfiguredTarget(t *testing.T) {
 		health.TargetLive,
 	}
 	for _, target := range tests {
-		if snapshot, ok := runner.Snapshot(target); ok || !snapshot.IsZero() {
-			t.Fatalf("Snapshot(%s) = %#v, %v; want zero false", target, snapshot, ok)
+		if snap, ok := runner.Snapshot(target); ok || !snap.IsZero() {
+			t.Fatalf("Snapshot(%s) = %#v, %v; want zero false", target, snap, ok)
 		}
 	}
 }
@@ -66,29 +66,29 @@ func TestRunnerSnapshotComputesStaleAtReadTime(t *testing.T) {
 		t.Fatal("store.update() = false, want true")
 	}
 
-	snapshot, ok := runner.Snapshot(health.TargetReady)
+	snap, ok := runner.Snapshot(health.TargetReady)
 	if !ok {
 		t.Fatal("Snapshot() ok = false, want true")
 	}
-	if snapshot.Stale {
+	if snap.Stale {
 		t.Fatal("Stale = true, want false")
 	}
 
 	clk.Step(time.Second)
-	snapshot, ok = runner.Snapshot(health.TargetReady)
+	snap, ok = runner.Snapshot(health.TargetReady)
 	if !ok {
 		t.Fatal("Snapshot() ok = false, want true")
 	}
-	if snapshot.Stale {
+	if snap.Stale {
 		t.Fatal("Stale at exact boundary = true, want false")
 	}
 
 	clk.Step(time.Nanosecond)
-	snapshot, ok = runner.Snapshot(health.TargetReady)
+	snap, ok = runner.Snapshot(health.TargetReady)
 	if !ok {
 		t.Fatal("Snapshot() ok = false, want true")
 	}
-	if !snapshot.Stale {
+	if !snap.Stale {
 		t.Fatal("Stale = false, want true")
 	}
 }
@@ -136,11 +136,11 @@ func TestRunnerSnapshotReadsAreDetached(t *testing.T) {
 		t.Fatal("store.update() = false, want true")
 	}
 
-	snapshot, ok := runner.Snapshot(health.TargetReady)
+	snap, ok := runner.Snapshot(health.TargetReady)
 	if !ok {
 		t.Fatal("Snapshot() ok = false, want true")
 	}
-	snapshot.Report.Checks[0] = health.Unhealthy("mutated_snapshot", health.ReasonFatal, "mutated")
+	snap.Report.Checks[0] = health.Unhealthy("mutated_snapshot", health.ReasonFatal, "mutated")
 
 	snapshots := runner.Snapshots()
 	if len(snapshots) != 1 {

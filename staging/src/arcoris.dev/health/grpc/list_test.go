@@ -57,12 +57,12 @@ func TestListReturnsConfiguredServices(t *testing.T) {
 	})
 	server := mustNewServer(t, source, WithTargetServices())
 
-	response, err := server.List(context.Background(), &healthpb.HealthListRequest{})
+	resp, err := server.List(context.Background(), &healthpb.HealthListRequest{})
 	if err != nil {
 		t.Fatalf("List() = %v, want nil", err)
 	}
 
-	statuses := response.GetStatuses()
+	statuses := resp.GetStatuses()
 	if len(statuses) != 4 {
 		t.Fatalf("statuses length = %d, want 4", len(statuses))
 	}
@@ -104,12 +104,12 @@ func TestListEvaluatesSharedTargetOnce(t *testing.T) {
 	})
 	server := mustNewServer(t, source, WithService("ready-alt", health.TargetReady))
 
-	response, err := server.List(context.Background(), &healthpb.HealthListRequest{})
+	resp, err := server.List(context.Background(), &healthpb.HealthListRequest{})
 	if err != nil {
 		t.Fatalf("List() = %v, want nil", err)
 	}
-	if len(response.GetStatuses()) != 2 {
-		t.Fatalf("statuses length = %d, want 2", len(response.GetStatuses()))
+	if len(resp.GetStatuses()) != 2 {
+		t.Fatalf("statuses length = %d, want 2", len(resp.GetStatuses()))
 	}
 	if calls := source.Calls(health.TargetReady); calls != 1 {
 		t.Fatalf("ready calls = %d, want 1", calls)
@@ -131,11 +131,11 @@ func TestListEvaluationErrorMapsAffectedServicesToUnknown(t *testing.T) {
 		WithService("live", health.TargetLive),
 	)
 
-	response, err := server.List(context.Background(), &healthpb.HealthListRequest{})
+	resp, err := server.List(context.Background(), &healthpb.HealthListRequest{})
 	if err != nil {
 		t.Fatalf("List() = %v, want nil", err)
 	}
-	statuses := response.GetStatuses()
+	statuses := resp.GetStatuses()
 	if statuses[""].GetStatus() != healthpb.HealthCheckResponse_UNKNOWN {
 		t.Fatalf("default status = %s, want UNKNOWN", statuses[""].GetStatus())
 	}

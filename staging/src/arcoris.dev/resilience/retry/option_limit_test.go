@@ -22,21 +22,21 @@ import (
 )
 
 func TestWithMaxAttempts(t *testing.T) {
-	config := configOf(WithMaxAttempts(3))
+	cfg := configOf(WithMaxAttempts(3))
 
-	if config.maxAttempts != 3 {
-		t.Fatalf("maxAttempts = %d, want 3", config.maxAttempts)
+	if cfg.maxAttempts != 3 {
+		t.Fatalf("maxAttempts = %d, want 3", cfg.maxAttempts)
 	}
 }
 
 func TestWithMaxAttemptsLastWins(t *testing.T) {
-	config := configOf(
+	cfg := configOf(
 		WithMaxAttempts(2),
 		WithMaxAttempts(5),
 	)
 
-	if config.maxAttempts != 5 {
-		t.Fatalf("maxAttempts = %d, want 5", config.maxAttempts)
+	if cfg.maxAttempts != 5 {
+		t.Fatalf("maxAttempts = %d, want 5", cfg.maxAttempts)
 	}
 }
 
@@ -47,29 +47,29 @@ func TestWithMaxAttemptsPanicsOnZero(t *testing.T) {
 }
 
 func TestWithMaxElapsed(t *testing.T) {
-	config := configOf(WithMaxElapsed(5 * time.Second))
+	cfg := configOf(WithMaxElapsed(5 * time.Second))
 
-	if config.maxElapsed != 5*time.Second {
-		t.Fatalf("maxElapsed = %s, want %s", config.maxElapsed, 5*time.Second)
+	if cfg.maxElapsed != 5*time.Second {
+		t.Fatalf("maxElapsed = %s, want %s", cfg.maxElapsed, 5*time.Second)
 	}
 }
 
 func TestWithMaxElapsedAllowsZero(t *testing.T) {
-	config := configOf(WithMaxElapsed(0))
+	cfg := configOf(WithMaxElapsed(0))
 
-	if config.maxElapsed != 0 {
-		t.Fatalf("maxElapsed = %s, want 0", config.maxElapsed)
+	if cfg.maxElapsed != 0 {
+		t.Fatalf("maxElapsed = %s, want 0", cfg.maxElapsed)
 	}
 }
 
 func TestWithMaxElapsedLastWins(t *testing.T) {
-	config := configOf(
+	cfg := configOf(
 		WithMaxElapsed(time.Second),
 		WithMaxElapsed(2*time.Second),
 	)
 
-	if config.maxElapsed != 2*time.Second {
-		t.Fatalf("maxElapsed = %s, want %s", config.maxElapsed, 2*time.Second)
+	if cfg.maxElapsed != 2*time.Second {
+		t.Fatalf("maxElapsed = %s, want %s", cfg.maxElapsed, 2*time.Second)
 	}
 }
 

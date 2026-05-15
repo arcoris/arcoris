@@ -28,12 +28,12 @@ package lifecycle
 //
 // A nil observer is ignored. This keeps conditional option construction safe.
 func WithObserver(observer Observer) Option {
-	return func(config *controllerConfig) {
+	return func(cfg *controllerConfig) {
 		if observer == nil {
 			return
 		}
 
-		config.observers = append(config.observers, observer)
+		cfg.observers = append(cfg.observers, observer)
 	}
 }
 
@@ -47,13 +47,13 @@ func WithObserver(observer Observer) Option {
 // optional diagnostics, tracing, metrics, or test integrations without adding
 // special-case filtering at call sites.
 func WithObservers(observers ...Observer) Option {
-	return func(config *controllerConfig) {
+	return func(cfg *controllerConfig) {
 		for _, observer := range observers {
 			if observer == nil {
 				continue
 			}
 
-			config.observers = append(config.observers, observer)
+			cfg.observers = append(cfg.observers, observer)
 		}
 	}
 }

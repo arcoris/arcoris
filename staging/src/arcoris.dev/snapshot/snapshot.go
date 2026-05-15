@@ -39,17 +39,17 @@ func (s Snapshot[T]) IsZeroRevision() bool {
 }
 
 // ChangedSince reports whether the snapshot revision differs from revision.
-func (s Snapshot[T]) ChangedSince(revision Revision) bool {
-	return s.Revision.ChangedSince(revision)
+func (s Snapshot[T]) ChangedSince(rev Revision) bool {
+	return s.Revision.ChangedSince(rev)
 }
 
 // WithValue returns a snapshot with the same Revision and a different Value.
 //
 // WithValue is useful for adapting a read model while preserving the revision
 // that the derived value came from. The method does not clone either value.
-func (s Snapshot[T]) WithValue(value T) Snapshot[T] {
+func (s Snapshot[T]) WithValue(val T) Snapshot[T] {
 	return Snapshot[T]{
 		Revision: s.Revision,
-		Value:    value,
+		Value:    val,
 	}
 }

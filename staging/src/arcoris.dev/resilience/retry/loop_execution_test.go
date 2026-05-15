@@ -29,12 +29,12 @@ import (
 func TestNewRetryExecutionCreatesOwnedDelaySequence(t *testing.T) {
 	now := time.Unix(10, 0)
 	fake := clock.NewFakeClock(now)
-	config := configOf(WithClock(fake))
-	config.delay = retryTestSchedule{
+	cfg := configOf(WithClock(fake))
+	cfg.delay = retryTestSchedule{
 		sequence: &retryTestSequence{delays: []time.Duration{time.Second}},
 	}
 
-	execution := newRetryExecution(config)
+	execution := newRetryExecution(cfg)
 
 	if execution.startedAt != now {
 		t.Fatalf("startedAt = %v, want %v", execution.startedAt, now)
@@ -50,11 +50,11 @@ func TestNewRetryExecutionCreatesOwnedDelaySequence(t *testing.T) {
 }
 
 func TestNewRetryExecutionPanicsWhenDelayScheduleReturnsNilSequence(t *testing.T) {
-	config := configOf()
-	config.delay = retryTestSchedule{}
+	cfg := configOf()
+	cfg.delay = retryTestSchedule{}
 
 	expectPanic(t, panicNilDelaySequence, func() {
-		_ = newRetryExecution(config)
+		_ = newRetryExecution(cfg)
 	})
 }
 
@@ -62,7 +62,7 @@ func TestRetryExecutionRecordsAttemptsFailuresAndDelayEvents(t *testing.T) {
 	var events []Event
 
 	fake := clock.NewFakeClock(time.Unix(20, 0))
-	config := configOf(
+	cfg := configOf(
 		WithClock(fake),
 		WithClassifier(RetryAll()),
 		WithMaxAttempts(2),
@@ -74,7 +74,7 @@ func TestRetryExecutionRecordsAttemptsFailuresAndDelayEvents(t *testing.T) {
 			events = append(events, event)
 		}),
 	)
-	execution := newRetryExecution(config)
+	execution := newRetryExecution(cfg)
 	errBoom := errors.New("boom")
 
 	attempt := execution.nextAttempt(context.Background())

@@ -102,13 +102,13 @@ func (e *WaitError) Unwrap() error {
 // The helper is package-local because wait.go should be the normal producer of
 // wait errors. Public callers can still inspect WaitError values returned by
 // wait methods.
-func newWaitError(snapshot Snapshot, err error) *WaitError {
+func newWaitError(snap Snapshot, err error) *WaitError {
 	if err == nil {
 		err = ErrWaitTargetUnreachable
 	}
 
 	return &WaitError{
-		Snapshot: snapshot,
+		Snapshot: snap,
 		Err:      err,
 	}
 }
@@ -117,13 +117,13 @@ func newWaitError(snapshot Snapshot, err error) *WaitError {
 //
 // HasTarget is set explicitly because StateNew is a valid zero-value state and
 // cannot be used to represent an absent target.
-func newWaitStateError(snapshot Snapshot, target State, err error) *WaitError {
+func newWaitStateError(snap Snapshot, target State, err error) *WaitError {
 	if err == nil {
 		err = ErrWaitTargetUnreachable
 	}
 
 	return &WaitError{
-		Snapshot:  snapshot,
+		Snapshot:  snap,
 		Target:    target,
 		HasTarget: true,
 		Err:       err,

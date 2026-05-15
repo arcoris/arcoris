@@ -30,27 +30,27 @@ func TestFullRejectsNilSchedule(t *testing.T) {
 }
 
 func TestFullReturnsValueInsideFullRange(t *testing.T) {
-	sequence := Full(delay.Fixed(10*time.Second), WithRandom(fixedRandom(10*time.Second))).NewSequence()
+	seq := Full(delay.Fixed(10*time.Second), WithRandom(fixedRandom(10*time.Second))).NewSequence()
 
-	mustNext(t, sequence, 10*time.Second)
+	mustNext(t, seq, 10*time.Second)
 }
 
 func TestFullCanReturnZero(t *testing.T) {
-	sequence := Full(delay.Fixed(10*time.Second), WithRandom(fixedRandom(0))).NewSequence()
+	seq := Full(delay.Fixed(10*time.Second), WithRandom(fixedRandom(0))).NewSequence()
 
-	mustNext(t, sequence, 0)
+	mustNext(t, seq, 0)
 }
 
 func TestFullLeavesZeroBaseDelayAtZero(t *testing.T) {
-	sequence := Full(delay.Fixed(0), WithRandom(fixedRandom(99))).NewSequence()
+	seq := Full(delay.Fixed(0), WithRandom(fixedRandom(99))).NewSequence()
 
-	mustNext(t, sequence, 0)
+	mustNext(t, seq, 0)
 }
 
 func TestFullPreservesChildExhaustion(t *testing.T) {
-	sequence := Full(delay.Delays(), WithRandom(fixedRandom(0))).NewSequence()
+	seq := Full(delay.Delays(), WithRandom(fixedRandom(0))).NewSequence()
 
-	mustExhausted(t, sequence)
+	mustExhausted(t, seq)
 }
 
 func TestFullTransformRange(t *testing.T) {

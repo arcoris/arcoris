@@ -22,35 +22,35 @@ import (
 )
 
 func TestSequenceFuncRejectsNilFunction(t *testing.T) {
-	var sequence SequenceFunc
+	var seq SequenceFunc
 
 	mustPanicWith(t, errNilSequenceFunc, func() {
-		sequence.Next()
+		seq.Next()
 	})
 }
 
 func TestSequenceFuncRejectsNegativeAvailableDelay(t *testing.T) {
-	sequence := SequenceFunc(func() (time.Duration, bool) {
+	seq := SequenceFunc(func() (time.Duration, bool) {
 		return -time.Nanosecond, true
 	})
 
 	mustPanicWith(t, errSequenceFuncReturnedNegativeDelay, func() {
-		sequence.Next()
+		seq.Next()
 	})
 }
 
 func TestSequenceFuncAllowsIgnoredNegativeDelayWhenExhausted(t *testing.T) {
-	sequence := SequenceFunc(func() (time.Duration, bool) {
+	seq := SequenceFunc(func() (time.Duration, bool) {
 		return -time.Nanosecond, false
 	})
 
-	mustExhausted(t, sequence)
+	mustExhausted(t, seq)
 }
 
 func TestSequenceFuncReturnsFunctionResult(t *testing.T) {
-	sequence := SequenceFunc(func() (time.Duration, bool) {
+	seq := SequenceFunc(func() (time.Duration, bool) {
 		return time.Second, true
 	})
 
-	mustNext(t, sequence, time.Second)
+	mustNext(t, seq, time.Second)
 }

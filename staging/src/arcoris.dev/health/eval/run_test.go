@@ -30,12 +30,12 @@ func TestEvaluateCheckHandlesNilChecker(t *testing.T) {
 
 	evaluator := mustEvaluator(t, health.NewRegistry(), WithClock(newStepClock(testObserved, testObserved)))
 
-	result := evaluator.evaluateCheck(context.Background(), nil, 0)
-	if result.Status != health.StatusUnknown || result.Reason != health.ReasonNotObserved {
-		t.Fatalf("nil checker result = %+v", result)
+	res := evaluator.evaluateCheck(context.Background(), nil, 0)
+	if res.Status != health.StatusUnknown || res.Reason != health.ReasonNotObserved {
+		t.Fatalf("nil checker result = %+v", res)
 	}
-	if !errors.Is(result.Cause, health.ErrNilChecker) {
-		t.Fatalf("nil checker cause = %v, want health.ErrNilChecker", result.Cause)
+	if !errors.Is(res.Cause, health.ErrNilChecker) {
+		t.Fatalf("nil checker cause = %v, want health.ErrNilChecker", res.Cause)
 	}
 }
 
@@ -54,12 +54,12 @@ func TestRunCheckTimeout(t *testing.T) {
 	}
 	evaluator := mustEvaluator(t, health.NewRegistry())
 
-	result := evaluator.runCheck(context.Background(), checker, time.Nanosecond)
-	if result.Status != health.StatusUnknown || result.Reason != health.ReasonTimeout {
-		t.Fatalf("timeout result = %+v, want unknown timeout", result)
+	res := evaluator.runCheck(context.Background(), checker, time.Nanosecond)
+	if res.Status != health.StatusUnknown || res.Reason != health.ReasonTimeout {
+		t.Fatalf("timeout result = %+v, want unknown timeout", res)
 	}
-	if !errors.Is(result.Cause, context.DeadlineExceeded) {
-		t.Fatalf("timeout cause = %v, want context deadline", result.Cause)
+	if !errors.Is(res.Cause, context.DeadlineExceeded) {
+		t.Fatalf("timeout cause = %v, want context deadline", res.Cause)
 	}
 }
 
@@ -74,9 +74,9 @@ func TestRunCheckReturnsResultBeforeTimeout(t *testing.T) {
 	}
 	evaluator := mustEvaluator(t, health.NewRegistry())
 
-	result := evaluator.runCheck(context.Background(), checker, time.Second)
-	if result.Status != health.StatusHealthy {
-		t.Fatalf("status = %s, want healthy", result.Status)
+	res := evaluator.runCheck(context.Background(), checker, time.Second)
+	if res.Status != health.StatusHealthy {
+		t.Fatalf("status = %s, want healthy", res.Status)
 	}
 }
 
@@ -99,12 +99,12 @@ func TestRunCheckParentCancellation(t *testing.T) {
 	}
 	evaluator := mustEvaluator(t, health.NewRegistry())
 
-	result := evaluator.runCheck(ctx, checker, time.Second)
-	if result.Status != health.StatusUnknown || result.Reason != health.ReasonCanceled {
-		t.Fatalf("cancel result = %+v, want unknown canceled", result)
+	res := evaluator.runCheck(ctx, checker, time.Second)
+	if res.Status != health.StatusUnknown || res.Reason != health.ReasonCanceled {
+		t.Fatalf("cancel result = %+v, want unknown canceled", res)
 	}
-	if !errors.Is(result.Cause, cause) {
-		t.Fatalf("cancel cause = %v, want custom cause", result.Cause)
+	if !errors.Is(res.Cause, cause) {
+		t.Fatalf("cancel cause = %v, want custom cause", res.Cause)
 	}
 }
 
@@ -121,12 +121,12 @@ func TestRunCheckWithZeroTimeoutRunsInline(t *testing.T) {
 	}
 	evaluator := mustEvaluator(t, health.NewRegistry())
 
-	result := evaluator.runCheck(context.Background(), checker, 0)
+	res := evaluator.runCheck(context.Background(), checker, 0)
 	if !called {
 		t.Fatal("checker was not called")
 	}
-	if result.Status != health.StatusHealthy {
-		t.Fatalf("status = %s, want healthy", result.Status)
+	if res.Status != health.StatusHealthy {
+		t.Fatalf("status = %s, want healthy", res.Status)
 	}
 }
 
@@ -140,14 +140,14 @@ func TestCallCheckRecoversPanic(t *testing.T) {
 		},
 	}
 
-	result := callCheck(context.Background(), checker)
-	if result.Status != health.StatusUnhealthy || result.Reason != health.ReasonPanic {
-		t.Fatalf("panic result = %+v, want unhealthy panic", result)
+	res := callCheck(context.Background(), checker)
+	if res.Status != health.StatusUnhealthy || res.Reason != health.ReasonPanic {
+		t.Fatalf("panic result = %+v, want unhealthy panic", res)
 	}
 
 	var panicErr PanicError
-	if !errors.As(result.Cause, &panicErr) {
-		t.Fatalf("panic cause = %T, want PanicError", result.Cause)
+	if !errors.As(res.Cause, &panicErr) {
+		t.Fatalf("panic cause = %T, want PanicError", res.Cause)
 	}
 	if panicErr.Value != "boom" || len(panicErr.Stack) == 0 {
 		t.Fatalf("panic details = %+v", panicErr)
@@ -157,66 +157,66 @@ func TestCallCheckRecoversPanic(t *testing.T) {
 func TestNormalizeEvaluatedResult(t *testing.T) {
 	t.Parallel()
 
-	result := normalizeEvaluatedResult(
+	res := normalizeEvaluatedResult(
 		health.Result{Status: health.StatusHealthy, Duration: -time.Second},
 		"storage",
 		testObserved,
 		time.Second,
 	)
-	if result.Name != "storage" {
-		t.Fatalf("name = %q, want storage", result.Name)
+	if res.Name != "storage" {
+		t.Fatalf("name = %q, want storage", res.Name)
 	}
-	if result.Observed != testObserved {
-		t.Fatalf("observed = %v, want %v", result.Observed, testObserved)
+	if res.Observed != testObserved {
+		t.Fatalf("observed = %v, want %v", res.Observed, testObserved)
 	}
-	if result.Duration != time.Second {
-		t.Fatalf("duration = %s, want 1s", result.Duration)
+	if res.Duration != time.Second {
+		t.Fatalf("duration = %s, want 1s", res.Duration)
 	}
 
-	result = normalizeEvaluatedResult(
+	res = normalizeEvaluatedResult(
 		health.Result{Status: health.StatusHealthy, Duration: -time.Second},
 		"storage",
 		testObserved,
 		-time.Second,
 	)
-	if result.Duration != 0 {
-		t.Fatalf("negative fallback duration = %s, want 0", result.Duration)
+	if res.Duration != 0 {
+		t.Fatalf("negative fallback duration = %s, want 0", res.Duration)
 	}
 }
 
 func TestNormalizeEvaluatedResultRejectsMismatchedResultName(t *testing.T) {
 	t.Parallel()
 
-	result := normalizeEvaluatedResult(
+	res := normalizeEvaluatedResult(
 		health.Healthy("database"),
 		"storage",
 		testObserved,
 		time.Second,
 	)
 
-	if result.Name != "storage" || result.Status != health.StatusUnknown || result.Reason != health.ReasonMisconfigured {
-		t.Fatalf("mismatched result normalization = %+v, want unknown misconfigured storage", result)
+	if res.Name != "storage" || res.Status != health.StatusUnknown || res.Reason != health.ReasonMisconfigured {
+		t.Fatalf("mismatched result normalization = %+v, want unknown misconfigured storage", res)
 	}
-	if !errors.Is(result.Cause, ErrMismatchedCheckResult) {
-		t.Fatalf("cause = %v, want ErrMismatchedCheckResult", result.Cause)
+	if !errors.Is(res.Cause, ErrMismatchedCheckResult) {
+		t.Fatalf("cause = %v, want ErrMismatchedCheckResult", res.Cause)
 	}
 }
 
 func TestNormalizeEvaluatedResultRejectsInvalidReason(t *testing.T) {
 	t.Parallel()
 
-	result := normalizeEvaluatedResult(
+	res := normalizeEvaluatedResult(
 		health.Result{Status: health.StatusHealthy, Reason: health.Reason("bad-reason")},
 		"storage",
 		testObserved,
 		time.Second,
 	)
 
-	if result.Name != "storage" || result.Status != health.StatusUnknown || result.Reason != health.ReasonMisconfigured {
-		t.Fatalf("invalid reason normalization = %+v, want unknown misconfigured storage", result)
+	if res.Name != "storage" || res.Status != health.StatusUnknown || res.Reason != health.ReasonMisconfigured {
+		t.Fatalf("invalid reason normalization = %+v, want unknown misconfigured storage", res)
 	}
-	if !errors.Is(result.Cause, ErrInvalidCheckResult) {
-		t.Fatalf("cause = %v, want ErrInvalidCheckResult", result.Cause)
+	if !errors.Is(res.Cause, ErrInvalidCheckResult) {
+		t.Fatalf("cause = %v, want ErrInvalidCheckResult", res.Cause)
 	}
 }
 

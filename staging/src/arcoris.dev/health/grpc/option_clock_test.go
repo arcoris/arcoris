@@ -27,11 +27,11 @@ func TestWithClockAcceptsValidClock(t *testing.T) {
 	t.Parallel()
 
 	clk := testClock()
-	config := defaultConfig()
-	if err := WithClock(clk)(&config); err != nil {
+	cfg := defaultConfig()
+	if err := WithClock(clk)(&cfg); err != nil {
 		t.Fatalf("WithClock() = %v, want nil", err)
 	}
-	if config.clock != clk {
+	if cfg.clock != clk {
 		t.Fatal("clock was not applied")
 	}
 }
@@ -39,8 +39,8 @@ func TestWithClockAcceptsValidClock(t *testing.T) {
 func TestWithClockRejectsNilClock(t *testing.T) {
 	t.Parallel()
 
-	config := defaultConfig()
-	err := WithClock(nil)(&config)
+	cfg := defaultConfig()
+	err := WithClock(nil)(&cfg)
 	if !errors.Is(err, ErrNilClock) {
 		t.Fatalf("WithClock(nil) = %v, want ErrNilClock", err)
 	}
@@ -50,8 +50,8 @@ func TestWithClockRejectsTypedNilClock(t *testing.T) {
 	t.Parallel()
 
 	var clk *clock.FakeClock
-	config := defaultConfig()
-	err := WithClock(clk)(&config)
+	cfg := defaultConfig()
+	err := WithClock(clk)(&cfg)
 	if !errors.Is(err, ErrNilClock) {
 		t.Fatalf("WithClock(typed nil) = %v, want ErrNilClock", err)
 	}

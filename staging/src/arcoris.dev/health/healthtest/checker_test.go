@@ -58,11 +58,11 @@ func TestStatusCheckers(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			result := tc.checker.Check(context.Background())
-			AssertResultStatus(t, result, tc.wantStatus)
-			AssertResultReason(t, result, tc.wantReason)
-			if result.Name != tc.checker.Name() {
-				t.Fatalf("result name = %q, want checker name %q", result.Name, tc.checker.Name())
+			res := tc.checker.Check(context.Background())
+			AssertResultStatus(t, res, tc.wantStatus)
+			AssertResultReason(t, res, tc.wantReason)
+			if res.Name != tc.checker.Name() {
+				t.Fatalf("result name = %q, want checker name %q", res.Name, tc.checker.Name())
 			}
 		})
 	}

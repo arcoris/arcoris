@@ -66,30 +66,30 @@ func TestWriteMethodNotAllowed(t *testing.T) {
 	t.Parallel()
 
 	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodPost, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodPost, DefaultReadyPath, nil)
 
-	writeMethodNotAllowed(recorder, request)
+	writeMethodNotAllowed(recorder, req)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("status = %d, want %d", response.StatusCode, http.StatusMethodNotAllowed)
+	if resp.StatusCode != http.StatusMethodNotAllowed {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, http.StatusMethodNotAllowed)
 	}
 
-	if got := response.Header.Get(headerAllow); got != allowedMethodsHeader {
+	if got := resp.Header.Get(headerAllow); got != allowedMethodsHeader {
 		t.Fatalf("Allow header = %q, want %q", got, allowedMethodsHeader)
 	}
 
-	contentType := response.Header.Get("Content-Type")
+	contentType := resp.Header.Get("Content-Type")
 	if !strings.HasPrefix(contentType, "text/plain") {
 		t.Fatalf("Content-Type = %q, want text/plain", contentType)
 	}
 
-	if got := response.Header.Get("X-Content-Type-Options"); got != "nosniff" {
+	if got := resp.Header.Get("X-Content-Type-Options"); got != "nosniff" {
 		t.Fatalf("X-Content-Type-Options = %q, want nosniff", got)
 	}
-	if got := response.Header.Get("Cache-Control"); got != "no-store" {
+	if got := resp.Header.Get("Cache-Control"); got != "no-store" {
 		t.Fatalf("Cache-Control = %q, want no-store", got)
 	}
 }

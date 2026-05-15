@@ -35,12 +35,12 @@ func (e *Evaluator) evaluateCheck(ctx context.Context, check health.Checker, tim
 		name = check.Name()
 	}
 
-	result := e.runCheck(ctx, check, timeout)
+	res := e.runCheck(ctx, check, timeout)
 
 	finished := e.clock.Now()
-	duration := nonNegativeDuration(e.clock.Since(started))
+	d := nonNegativeDuration(e.clock.Since(started))
 
-	return normalizeEvaluatedResult(result, name, finished, duration)
+	return normalizeEvaluatedResult(res, name, finished, d)
 }
 
 // runCheck runs check and returns a raw health.Result.
@@ -72,8 +72,8 @@ func (e *Evaluator) runCheck(ctx context.Context, check health.Checker, timeout 
 	}()
 
 	select {
-	case result := <-resultCh:
-		return result
+	case res := <-resultCh:
+		return res
 
 	case <-checkCtx.Done():
 		return interruptedResult(check.Name(), checkCtx)
@@ -81,10 +81,10 @@ func (e *Evaluator) runCheck(ctx context.Context, check health.Checker, timeout 
 }
 
 // callCheck invokes check and converts panics into health results.
-func callCheck(ctx context.Context, check health.Checker) (result health.Result) {
+func callCheck(ctx context.Context, check health.Checker) (res health.Result) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			result = health.Unhealthy(
+			res = health.Unhealthy(
 				check.Name(),
 				health.ReasonPanic,
 				"health check panicked",
@@ -127,54 +127,54 @@ func interruptedResult(name string, ctx context.Context) health.Result {
 // empty, but it must not return another checker's name. Invalid reasons are also
 // converted into unknown misconfiguration results so Evaluator never returns an
 // invalid health.Report because of malformed checker output.
-func normalizeEvaluatedResult(result health.Result, defaultName string, observed time.Time, duration time.Duration) health.Result {
-	duration = nonNegativeDuration(duration)
+func normalizeEvaluatedResult(res health.Result, defaultName string, observed time.Time, d time.Duration) health.Result {
+	d = nonNegativeDuration(d)
 
-	if result.Name != "" && result.Name != defaultName {
+	if res.Name != "" && res.Name != defaultName {
 		return health.Unknown(
 			defaultName,
 			health.ReasonMisconfigured,
 			"health check returned a mismatched result name",
 		).WithCause(MismatchedCheckResultError{
 			CheckName:  defaultName,
-			ResultName: result.Name,
-		}).WithObserved(observed).WithDuration(duration)
+			ResultName: res.Name,
+		}).WithObserved(observed).WithDuration(d)
 	}
 
-	if !result.Reason.IsValid() {
+	if !res.Reason.IsValid() {
 		return health.Unknown(
 			defaultName,
 			health.ReasonMisconfigured,
 			"health check returned an invalid reason",
 		).WithCause(InvalidCheckResultError{
 			CheckName: defaultName,
-			Result:    result,
-		}).WithObserved(observed).WithDuration(duration)
+			Result:    res,
+		}).WithObserved(observed).WithDuration(d)
 	}
 
-	result = result.Normalize(defaultName, observed)
+	res = res.Normalize(defaultName, observed)
 
-	if result.Duration == 0 {
-		result.Duration = duration
+	if res.Duration == 0 {
+		res.Duration = d
 	}
 
-	if result.Duration < 0 {
-		result.Duration = 0
+	if res.Duration < 0 {
+		res.Duration = 0
 	}
 
-	return result
+	return res
 }
 
 // nonNegativeDuration returns duration unless it is negative.
 //
 // Negative durations can occur with mutable fake clocks. Runtime reports should
 // remain conservative and never expose negative elapsed time.
-func nonNegativeDuration(duration time.Duration) time.Duration {
-	if duration < 0 {
+func nonNegativeDuration(d time.Duration) time.Duration {
+	if d < 0 {
 		return 0
 	}
 
-	return duration
+	return d
 }
 
 // nilChecker reports whether chk is nil, including typed nil interface values.
@@ -183,10 +183,10 @@ func nilChecker(chk health.Checker) bool {
 		return true
 	}
 
-	value := reflect.ValueOf(chk)
-	switch value.Kind() {
+	val := reflect.ValueOf(chk)
+	switch val.Kind() {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
-		return value.IsNil()
+		return val.IsNil()
 	default:
 		return false
 	}

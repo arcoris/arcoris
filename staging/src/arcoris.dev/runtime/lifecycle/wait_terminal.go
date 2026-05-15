@@ -34,7 +34,7 @@ import "context"
 //
 // WaitTerminal is safe to call concurrently with transition methods.
 func (c *Controller) WaitTerminal(ctx context.Context) (Snapshot, error) {
-	return c.Wait(ctx, func(snapshot Snapshot) bool {
-		return snapshot.IsTerminal()
+	return c.Wait(ctx, func(snap Snapshot) bool {
+		return snap.IsTerminal()
 	})
 }

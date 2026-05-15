@@ -99,8 +99,8 @@ func (g *Uint64Gauge) Load() uint64 {
 //
 // Store does not validate an accounting transition. It replaces the value
 // unconditionally.
-func (g *Uint64Gauge) Store(value uint64) {
-	g.value.Store(value)
+func (g *Uint64Gauge) Store(val uint64) {
+	g.value.Store(val)
 }
 
 // Add atomically adds delta to the gauge and returns the new value.
@@ -135,13 +135,13 @@ func (g *Uint64Gauge) TryAdd(delta uint64) (uint64, bool) {
 	}
 
 	for {
-		current := g.value.Load()
-		if current > maxUint64-delta {
-			return current, false
+		cur := g.value.Load()
+		if cur > maxUint64-delta {
+			return cur, false
 		}
 
-		next := current + delta
-		if g.value.CompareAndSwap(current, next) {
+		next := cur + delta
+		if g.value.CompareAndSwap(cur, next) {
 			return next, true
 		}
 	}
@@ -180,13 +180,13 @@ func (g *Uint64Gauge) TrySub(delta uint64) (uint64, bool) {
 	}
 
 	for {
-		current := g.value.Load()
-		if current < delta {
-			return current, false
+		cur := g.value.Load()
+		if cur < delta {
+			return cur, false
 		}
 
-		next := current - delta
-		if g.value.CompareAndSwap(current, next) {
+		next := cur - delta
+		if g.value.CompareAndSwap(cur, next) {
 			return next, true
 		}
 	}

@@ -24,25 +24,25 @@ import (
 func TestWaitStateImmediateSuccess(t *testing.T) {
 	t.Parallel()
 
-	snapshot, err := NewController().WaitState(context.Background(), StateNew)
+	snap, err := NewController().WaitState(context.Background(), StateNew)
 	if err != nil {
 		t.Fatalf("WaitState current = %v", err)
 	}
-	if snapshot.State != StateNew {
-		t.Fatalf("snapshot.State = %s, want new", snapshot.State)
+	if snap.State != StateNew {
+		t.Fatalf("snapshot.State = %s, want new", snap.State)
 	}
 }
 
 func TestWaitStateRejectsInvalidTarget(t *testing.T) {
 	t.Parallel()
 
-	snapshot, err := NewController().WaitState(context.Background(), State(99))
+	snap, err := NewController().WaitState(context.Background(), State(99))
 	if err == nil {
 		t.Fatal("WaitState invalid target err = nil, want error")
 	}
 	mustMatch(t, err, ErrInvalidWaitTarget)
-	if snapshot.State != StateNew {
-		t.Fatalf("snapshot.State = %s, want latest new", snapshot.State)
+	if snap.State != StateNew {
+		t.Fatalf("snapshot.State = %s, want latest new", snap.State)
 	}
 }
 
@@ -53,13 +53,13 @@ func TestWaitStateRejectsUnreachableTargetBeforeBlocking(t *testing.T) {
 	// progress, to reject targets that can no longer be reached.
 	controller := NewController()
 	_, _ = controller.BeginStart()
-	snapshot, err := controller.WaitState(context.Background(), StateNew)
+	snap, err := controller.WaitState(context.Background(), StateNew)
 	if err == nil {
 		t.Fatal("WaitState backward err = nil, want unreachable")
 	}
 	mustMatch(t, err, ErrWaitTargetUnreachable)
-	if snapshot.State != StateStarting {
-		t.Fatalf("snapshot.State = %s, want starting", snapshot.State)
+	if snap.State != StateStarting {
+		t.Fatalf("snapshot.State = %s, want starting", snap.State)
 	}
 }
 
@@ -70,12 +70,12 @@ func TestWaitStateWaitsUntilReachableTargetCommits(t *testing.T) {
 	results := make(chan Snapshot, 1)
 	errs := make(chan error, 1)
 	go func() {
-		snapshot, err := controller.WaitState(context.Background(), StateRunning)
+		snap, err := controller.WaitState(context.Background(), StateRunning)
 		if err != nil {
 			errs <- err
 			return
 		}
-		results <- snapshot
+		results <- snap
 	}()
 
 	_, _ = controller.BeginStart()
@@ -95,13 +95,13 @@ func TestWaitStateTerminalBeforeTarget(t *testing.T) {
 
 	controller := NewController()
 	_, _ = controller.BeginStop()
-	snapshot, err := controller.WaitState(context.Background(), StateRunning)
+	snap, err := controller.WaitState(context.Background(), StateRunning)
 	if err == nil {
 		t.Fatal("WaitState err = nil, want unreachable")
 	}
 	mustMatch(t, err, ErrWaitTargetUnreachable)
-	if snapshot.State != StateStopped {
-		t.Fatalf("snapshot.State = %s, want stopped", snapshot.State)
+	if snap.State != StateStopped {
+		t.Fatalf("snapshot.State = %s, want stopped", snap.State)
 	}
 }
 
@@ -124,13 +124,13 @@ func TestWaitStateContextCancellationAndDeadline(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	snapshot, err := NewController().WaitState(ctx, StateRunning)
+	snap, err := NewController().WaitState(ctx, StateRunning)
 	if err == nil {
 		t.Fatal("WaitState cancel err = nil, want canceled")
 	}
 	mustMatch(t, err, context.Canceled)
-	if snapshot.State != StateNew {
-		t.Fatalf("snapshot.State = %s, want new", snapshot.State)
+	if snap.State != StateNew {
+		t.Fatalf("snapshot.State = %s, want new", snap.State)
 	}
 
 	deadlineCtx, deadlineCancel := context.WithDeadline(context.Background(), testTime)
@@ -145,11 +145,11 @@ func TestWaitStateContextCancellationAndDeadline(t *testing.T) {
 func TestWaitStateNilContextBehavesAsBackground(t *testing.T) {
 	t.Parallel()
 
-	snapshot, err := NewController().WaitState(nil, StateNew)
+	snap, err := NewController().WaitState(nil, StateNew)
 	if err != nil {
 		t.Fatalf("WaitState nil context = %v, want nil", err)
 	}
-	if snapshot.State != StateNew {
-		t.Fatalf("snapshot.State = %s, want new", snapshot.State)
+	if snap.State != StateNew {
+		t.Fatalf("snapshot.State = %s, want new", snap.State)
 	}
 }

@@ -88,14 +88,14 @@ func NewGate(name string, initial Result) (*Gate, error) {
 		return nil, err
 	}
 
-	result, err := normalizeGateResult(name, initial)
+	res, err := normalizeGateResult(name, initial)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Gate{
 		name:   name,
-		result: result,
+		result: res,
 	}, nil
 }
 
@@ -157,12 +157,12 @@ func (g *Gate) Check(ctx context.Context) Result {
 // Set does not modify Observed, Duration, Reason, Message, or Cause except for
 // filling an empty Name. The component owner remains responsible for publishing
 // meaningful observation metadata when it has that information.
-func (g *Gate) Set(result Result) error {
+func (g *Gate) Set(res Result) error {
 	if g == nil {
 		return ErrNilChecker
 	}
 
-	normalized, err := normalizeGateResult(g.name, result)
+	normalized, err := normalizeGateResult(g.name, res)
 	if err != nil {
 		return err
 	}
@@ -240,24 +240,24 @@ func (g *Gate) Unhealthy(reason Reason, message string) error {
 
 // normalizeGateResult validates result for storage in a gate and fills an empty
 // result name with the gate name.
-func normalizeGateResult(name string, result Result) (Result, error) {
-	if result.Name == "" {
-		result.Name = name
-	} else if result.Name != name {
+func normalizeGateResult(name string, res Result) (Result, error) {
+	if res.Name == "" {
+		res.Name = name
+	} else if res.Name != name {
 		return Result{}, MismatchedGateResultError{
 			GateName:   name,
-			ResultName: result.Name,
+			ResultName: res.Name,
 		}
 	}
 
-	if !result.IsValid() {
+	if !res.IsValid() {
 		return Result{}, InvalidGateResultError{
 			GateName: name,
-			Result:   result,
+			Result:   res,
 		}
 	}
 
-	return result, nil
+	return res, nil
 }
 
 // InvalidGateResultError describes a structurally invalid Result rejected by a

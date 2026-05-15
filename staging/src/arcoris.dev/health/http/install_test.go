@@ -42,16 +42,16 @@ func TestInstall(t *testing.T) {
 		t.Fatal("registered handler not found")
 	}
 
-	request := httptest.NewRequest(http.MethodGet, "/internal/readyz", nil)
+	req := httptest.NewRequest(http.MethodGet, "/internal/readyz", nil)
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.ServeHTTP(recorder, req)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != DefaultPassedStatus {
-		t.Fatalf("status = %d, want %d", response.StatusCode, DefaultPassedStatus)
+	if resp.StatusCode != DefaultPassedStatus {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, DefaultPassedStatus)
 	}
 }
 
@@ -83,18 +83,18 @@ func TestInstallAppliesOptions(t *testing.T) {
 		t.Fatal("registered handler not found")
 	}
 
-	request := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.ServeHTTP(recorder, req)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != DefaultPassedStatus {
-		t.Fatalf("status = %d, want %d", response.StatusCode, DefaultPassedStatus)
+	if resp.StatusCode != DefaultPassedStatus {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, DefaultPassedStatus)
 	}
-	if got := response.Header.Get(headerContentType); got != contentTypeJSON {
+	if got := resp.Header.Get(headerContentType); got != contentTypeJSON {
 		t.Fatalf("Content-Type = %q, want %q", got, contentTypeJSON)
 	}
 }
@@ -207,22 +207,22 @@ func TestInstallDefaults(t *testing.T) {
 				t.Fatalf("handler for %s not registered", path)
 			}
 
-			request := httptest.NewRequest(http.MethodGet, path, nil)
+			req := httptest.NewRequest(http.MethodGet, path, nil)
 			recorder := httptest.NewRecorder()
 
-			handler.ServeHTTP(recorder, request)
+			handler.ServeHTTP(recorder, req)
 
-			response := recorder.Result()
-			defer response.Body.Close()
+			resp := recorder.Result()
+			defer resp.Body.Close()
 
-			if response.StatusCode != DefaultPassedStatus {
-				t.Fatalf("status for %s = %d, want %d", path, response.StatusCode, DefaultPassedStatus)
+			if resp.StatusCode != DefaultPassedStatus {
+				t.Fatalf("status for %s = %d, want %d", path, resp.StatusCode, DefaultPassedStatus)
 			}
 		})
 	}
 }
 
-func TestInstallDefaultsDoesNotInstallCompatibilityPaths(t *testing.T) {
+func TestInstallDefaultsDoesNotInstallGeneralHealthPath(t *testing.T) {
 	t.Parallel()
 
 	mux := newRecordingMux()
@@ -233,13 +233,8 @@ func TestInstallDefaultsDoesNotInstallCompatibilityPaths(t *testing.T) {
 		t.Fatalf("InstallDefaults() = %v, want nil", err)
 	}
 
-	for _, path := range []string{
-		DefaultHealthPath,
-		DefaultHealthPlainPath,
-	} {
-		if _, ok := mux.handler(path); ok {
-			t.Fatalf("compatibility path %s was registered by InstallDefaults", path)
-		}
+	if _, ok := mux.handler(DefaultHealthPath); ok {
+		t.Fatalf("general health path %s was registered by InstallDefaults", DefaultHealthPath)
 	}
 }
 
@@ -269,15 +264,15 @@ func TestInstallDefaultsAppliesOptionsToAllHandlers(t *testing.T) {
 			t.Fatalf("handler for %s not registered", path)
 		}
 
-		request := httptest.NewRequest(http.MethodGet, path, nil)
+		req := httptest.NewRequest(http.MethodGet, path, nil)
 		recorder := httptest.NewRecorder()
 
-		handler.ServeHTTP(recorder, request)
+		handler.ServeHTTP(recorder, req)
 
-		response := recorder.Result()
-		defer response.Body.Close()
+		resp := recorder.Result()
+		defer resp.Body.Close()
 
-		if got := response.Header.Get(headerContentType); got != contentTypeJSON {
+		if got := resp.Header.Get(headerContentType); got != contentTypeJSON {
 			t.Fatalf("Content-Type for %s = %q, want %q", path, got, contentTypeJSON)
 		}
 	}
@@ -370,8 +365,5 @@ func TestDefaultHandlersUsePrimaryDefaultPathsOnly(t *testing.T) {
 
 	if _, ok := seen[DefaultHealthPath]; ok {
 		t.Fatalf("DefaultHealthPath must not be installed by default")
-	}
-	if _, ok := seen[DefaultHealthPlainPath]; ok {
-		t.Fatalf("DefaultHealthPlainPath must not be installed by default")
 	}
 }

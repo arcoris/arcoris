@@ -33,17 +33,17 @@ func (r *Runner) Snapshot(target health.Target) (Snapshot, bool) {
 		return Snapshot{}, false
 	}
 
-	snapshot, ok := r.store.snapshot(target)
+	snap, ok := r.store.snapshot(target)
 	if !ok {
 		return Snapshot{}, false
 	}
 
-	snapshot = r.withReadStale(snapshot)
-	if !snapshot.IsObserved() {
+	snap = r.withReadStale(snap)
+	if !snap.IsObserved() {
 		return Snapshot{}, false
 	}
 
-	return snapshot, true
+	return snap, true
 }
 
 // Snapshots returns all observed snapshots in configured target order.
@@ -63,24 +63,24 @@ func (r *Runner) Snapshots() []Snapshot {
 
 	stored := r.store.snapshots()
 	snapshots := make([]Snapshot, 0, len(stored))
-	for _, snapshot := range stored {
-		snapshot = r.withReadStale(snapshot)
-		if snapshot.IsObserved() {
-			snapshots = append(snapshots, snapshot)
+	for _, snap := range stored {
+		snap = r.withReadStale(snap)
+		if snap.IsObserved() {
+			snapshots = append(snapshots, snap)
 		}
 	}
 
 	return snapshots
 }
 
-func (r *Runner) withReadStale(snapshot Snapshot) Snapshot {
+func (r *Runner) withReadStale(snap Snapshot) Snapshot {
 	// Stale is not stored in observation or snapshot.Store. It is recomputed on
 	// every read so a snapshot can age naturally without forcing a write.
-	if !snapshot.IsObserved() {
-		snapshot.Stale = false
-		return snapshot
+	if !snap.IsObserved() {
+		snap.Stale = false
+		return snap
 	}
 
-	snapshot.Stale = isStale(r.clock.Since(snapshot.Updated), r.staleAfter)
-	return snapshot
+	snap.Stale = isStale(r.clock.Since(snap.Updated), r.staleAfter)
+	return snap
 }

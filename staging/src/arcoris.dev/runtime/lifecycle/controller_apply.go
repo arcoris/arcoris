@@ -61,22 +61,22 @@ func (c *Controller) apply(event Event, cause error) (Transition, error) {
 	c.mu.Lock()
 	c.ensureInitializedLocked()
 
-	current := c.state
+	cur := c.state
 
-	transition, ok := reduceTransition(current, event, cause)
+	transition, ok := reduceTransition(cur, event, cause)
 	if !ok {
 		err := ErrInvalidTransition
-		if current.IsTerminal() {
+		if cur.IsTerminal() {
 			err = ErrTerminalState
 		}
 
 		c.mu.Unlock()
-		return Transition{}, newTransitionError(current, event, err)
+		return Transition{}, newTransitionError(cur, event, err)
 	}
 
 	if transition.Event.RequiresCause() && transition.Cause == nil {
 		c.mu.Unlock()
-		return Transition{}, newTransitionError(current, event, ErrFailureCauseRequired)
+		return Transition{}, newTransitionError(cur, event, ErrFailureCauseRequired)
 	}
 
 	if err := allowTransition(c.guards, transition); err != nil {

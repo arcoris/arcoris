@@ -253,13 +253,13 @@ func (t *fakeTicker) isDueLocked(now time.Time) bool {
 // A due ticker is rescheduled to now + interval. This preserves deterministic
 // one-tick-per-advance behavior and avoids unbounded catch-up loops when tests
 // advance fake time by a large duration.
-func (t *fakeTicker) collectDueDeliveryLocked(now time.Time, sequence uint64) (fakeTickerDelivery, bool) {
+func (t *fakeTicker) collectDueDeliveryLocked(now time.Time, seq uint64) (fakeTickerDelivery, bool) {
 	if !t.isDueLocked(now) {
 		return fakeTickerDelivery{}, false
 	}
 
 	t.next = now.Add(t.interval)
-	t.sequence = sequence
+	t.sequence = seq
 
 	return fakeTickerDelivery{
 		ch:    t.ch,

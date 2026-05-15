@@ -52,36 +52,36 @@ func (c *Controller) Wait(ctx context.Context, predicate Predicate) (Snapshot, e
 		ctx = context.Background()
 	}
 
-	snapshot, changed, done := c.waitSnapshot()
+	snap, changed, done := c.waitSnapshot()
 
 	if predicate == nil {
-		return snapshot, newWaitError(snapshot, ErrInvalidWaitPredicate)
+		return snap, newWaitError(snap, ErrInvalidWaitPredicate)
 	}
 
 	for {
-		if predicate(snapshot) {
-			return snapshot, nil
+		if predicate(snap) {
+			return snap, nil
 		}
 
-		if snapshot.IsTerminal() {
-			return snapshot, newWaitError(snapshot, ErrWaitTargetUnreachable)
+		if snap.IsTerminal() {
+			return snap, newWaitError(snap, ErrWaitTargetUnreachable)
 		}
 
 		select {
 		case <-changed:
-			snapshot, changed, done = c.waitSnapshot()
+			snap, changed, done = c.waitSnapshot()
 
 		case <-done:
-			snapshot, _, _ = c.waitSnapshot()
-			if predicate(snapshot) {
-				return snapshot, nil
+			snap, _, _ = c.waitSnapshot()
+			if predicate(snap) {
+				return snap, nil
 			}
 
-			return snapshot, newWaitError(snapshot, ErrWaitTargetUnreachable)
+			return snap, newWaitError(snap, ErrWaitTargetUnreachable)
 
 		case <-ctx.Done():
-			snapshot, _, _ = c.waitSnapshot()
-			return snapshot, newWaitError(snapshot, ctx.Err())
+			snap, _, _ = c.waitSnapshot()
+			return snap, newWaitError(snap, ctx.Err())
 		}
 	}
 }

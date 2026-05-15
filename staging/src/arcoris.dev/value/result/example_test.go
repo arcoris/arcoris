@@ -24,8 +24,8 @@ import (
 func ExampleResult_Load_ok() {
 	r := result.OK("ready")
 
-	value, err := r.Load()
-	fmt.Println(value, err)
+	val, err := r.Load()
+	fmt.Println(val, err)
 
 	// Output:
 	// ready <nil>
@@ -34,8 +34,8 @@ func ExampleResult_Load_ok() {
 func ExampleResult_Load_err() {
 	r := result.Err[string](errors.New("failed"))
 
-	value, err := r.Load()
-	fmt.Println(value, err)
+	val, err := r.Load()
+	fmt.Println(val, err)
 
 	// Output:
 	//  failed

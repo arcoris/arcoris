@@ -91,8 +91,8 @@ func (g *Uint32Gauge) Load() uint32 {
 // Store is appropriate for initialization, tests, owner-controlled publication,
 // or explicit state handoff. Ordinary runtime accounting should prefer Add and
 // Sub so overflow and underflow are detected at the update point.
-func (g *Uint32Gauge) Store(value uint32) {
-	g.value.Store(value)
+func (g *Uint32Gauge) Store(val uint32) {
+	g.value.Store(val)
 }
 
 // Add atomically adds delta to the gauge and returns the new value.
@@ -120,13 +120,13 @@ func (g *Uint32Gauge) TryAdd(delta uint32) (uint32, bool) {
 	}
 
 	for {
-		current := g.value.Load()
-		if current > maxUint32-delta {
-			return current, false
+		cur := g.value.Load()
+		if cur > maxUint32-delta {
+			return cur, false
 		}
 
-		next := current + delta
-		if g.value.CompareAndSwap(current, next) {
+		next := cur + delta
+		if g.value.CompareAndSwap(cur, next) {
 			return next, true
 		}
 	}
@@ -157,13 +157,13 @@ func (g *Uint32Gauge) TrySub(delta uint32) (uint32, bool) {
 	}
 
 	for {
-		current := g.value.Load()
-		if current < delta {
-			return current, false
+		cur := g.value.Load()
+		if cur < delta {
+			return cur, false
 		}
 
-		next := current - delta
-		if g.value.CompareAndSwap(current, next) {
+		next := cur - delta
+		if g.value.CompareAndSwap(cur, next) {
 			return next, true
 		}
 	}

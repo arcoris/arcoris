@@ -142,16 +142,16 @@ func TestHandlerServeHTTPReadyHealthy(t *testing.T) {
 	)
 	handler := mustNewHandler(t, evaluator, health.TargetReady)
 
-	request := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.ServeHTTP(recorder, req)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != DefaultPassedStatus {
-		t.Fatalf("status = %d, want %d", response.StatusCode, DefaultPassedStatus)
+	if resp.StatusCode != DefaultPassedStatus {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, DefaultPassedStatus)
 	}
 	if got := recorder.Body.String(); got != textOK {
 		t.Fatalf("body = %q, want %q", got, textOK)
@@ -167,16 +167,16 @@ func TestHandlerServeHTTPReadyDegradedFailsByDefault(t *testing.T) {
 	)
 	handler := mustNewHandler(t, evaluator, health.TargetReady)
 
-	request := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.ServeHTTP(recorder, req)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != DefaultFailedStatus {
-		t.Fatalf("status = %d, want %d", response.StatusCode, DefaultFailedStatus)
+	if resp.StatusCode != DefaultFailedStatus {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, DefaultFailedStatus)
 	}
 	if got := recorder.Body.String(); got != textUnhealthy {
 		t.Fatalf("body = %q, want %q", got, textUnhealthy)
@@ -192,16 +192,16 @@ func TestHandlerServeHTTPLiveDegradedPassesByDefault(t *testing.T) {
 	)
 	handler := mustNewHandler(t, evaluator, health.TargetLive)
 
-	request := httptest.NewRequest(http.MethodGet, DefaultLivePath, nil)
+	req := httptest.NewRequest(http.MethodGet, DefaultLivePath, nil)
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.ServeHTTP(recorder, req)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != DefaultPassedStatus {
-		t.Fatalf("status = %d, want %d", response.StatusCode, DefaultPassedStatus)
+	if resp.StatusCode != DefaultPassedStatus {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, DefaultPassedStatus)
 	}
 	if got := recorder.Body.String(); got != textOK {
 		t.Fatalf("body = %q, want %q", got, textOK)
@@ -222,16 +222,16 @@ func TestHandlerServeHTTPWithCustomPolicy(t *testing.T) {
 		WithPolicy(health.ReadyPolicy().WithDegraded(true)),
 	)
 
-	request := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.ServeHTTP(recorder, req)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != DefaultPassedStatus {
-		t.Fatalf("status = %d, want %d", response.StatusCode, DefaultPassedStatus)
+	if resp.StatusCode != DefaultPassedStatus {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, DefaultPassedStatus)
 	}
 }
 
@@ -254,18 +254,18 @@ func TestHandlerServeHTTPJSON(t *testing.T) {
 		WithDetailLevel(DetailAll),
 	)
 
-	request := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.ServeHTTP(recorder, req)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != DefaultFailedStatus {
-		t.Fatalf("status = %d, want %d", response.StatusCode, DefaultFailedStatus)
+	if resp.StatusCode != DefaultFailedStatus {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, DefaultFailedStatus)
 	}
-	if got := response.Header.Get(headerContentType); got != contentTypeJSON {
+	if got := resp.Header.Get(headerContentType); got != contentTypeJSON {
 		t.Fatalf("Content-Type = %q, want %q", got, contentTypeJSON)
 	}
 	if !strings.Contains(recorder.Body.String(), `"target":"ready"`) {
@@ -291,16 +291,16 @@ func TestHandlerServeHTTPHeadSuppressesBody(t *testing.T) {
 		WithDetailLevel(DetailAll),
 	)
 
-	request := httptest.NewRequest(http.MethodHead, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodHead, DefaultReadyPath, nil)
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.ServeHTTP(recorder, req)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != DefaultPassedStatus {
-		t.Fatalf("status = %d, want %d", response.StatusCode, DefaultPassedStatus)
+	if resp.StatusCode != DefaultPassedStatus {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, DefaultPassedStatus)
 	}
 	if recorder.Body.Len() != 0 {
 		t.Fatalf("HEAD body length = %d, want 0; body=%q", recorder.Body.Len(), recorder.Body.String())
@@ -316,18 +316,18 @@ func TestHandlerServeHTTPRejectsUnsupportedMethod(t *testing.T) {
 	)
 	handler := mustNewHandler(t, evaluator, health.TargetReady)
 
-	request := httptest.NewRequest(http.MethodPost, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodPost, DefaultReadyPath, nil)
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.ServeHTTP(recorder, req)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("status = %d, want %d", response.StatusCode, http.StatusMethodNotAllowed)
+	if resp.StatusCode != http.StatusMethodNotAllowed {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, http.StatusMethodNotAllowed)
 	}
-	if got := response.Header.Get(headerAllow); got != allowedMethodsHeader {
+	if got := resp.Header.Get(headerAllow); got != allowedMethodsHeader {
 		t.Fatalf("Allow header = %q, want %q", got, allowedMethodsHeader)
 	}
 }
@@ -343,16 +343,16 @@ func TestHandlerServeHTTPNoChecksFails(t *testing.T) {
 
 	handler := mustNewHandler(t, evaluator, health.TargetReady)
 
-	request := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.ServeHTTP(recorder, req)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != DefaultFailedStatus {
-		t.Fatalf("status = %d, want %d", response.StatusCode, DefaultFailedStatus)
+	if resp.StatusCode != DefaultFailedStatus {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, DefaultFailedStatus)
 	}
 }
 
@@ -362,10 +362,10 @@ func TestHandlerServeHTTPPassesRequestContext(t *testing.T) {
 	type contextKey struct{}
 
 	key := contextKey{}
-	value := "request-value"
+	val := "request-value"
 
 	checker, err := health.NewCheck("context_check", func(ctx context.Context) health.Result {
-		if ctx.Value(key) != value {
+		if ctx.Value(key) != val {
 			return health.Unhealthy(
 				"context_check",
 				health.ReasonMisconfigured,
@@ -391,18 +391,18 @@ func TestHandlerServeHTTPPassesRequestContext(t *testing.T) {
 
 	handler := mustNewHandler(t, evaluator, health.TargetReady)
 
-	request := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
-	request = request.WithContext(context.WithValue(request.Context(), key, value))
+	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+	req = req.WithContext(context.WithValue(req.Context(), key, val))
 
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.ServeHTTP(recorder, req)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != DefaultPassedStatus {
-		t.Fatalf("status = %d, want %d; body=%q", response.StatusCode, DefaultPassedStatus, recorder.Body.String())
+	if resp.StatusCode != DefaultPassedStatus {
+		t.Fatalf("status = %d, want %d; body=%q", resp.StatusCode, DefaultPassedStatus, recorder.Body.String())
 	}
 }
 
@@ -418,11 +418,11 @@ func TestHandlerServeHTTPRejectsNilRequest(t *testing.T) {
 
 	handler.ServeHTTP(recorder, nil)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != DefaultErrorStatus {
-		t.Fatalf("status = %d, want %d", response.StatusCode, DefaultErrorStatus)
+	if resp.StatusCode != DefaultErrorStatus {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, DefaultErrorStatus)
 	}
 	if got := recorder.Body.String(); got != textHandlerError {
 		t.Fatalf("body = %q, want %q", got, textHandlerError)
@@ -434,16 +434,16 @@ func TestNilHandlerServeHTTP(t *testing.T) {
 
 	var handler *Handler
 
-	request := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.ServeHTTP(recorder, req)
 
-	response := recorder.Result()
-	defer response.Body.Close()
+	resp := recorder.Result()
+	defer resp.Body.Close()
 
-	if response.StatusCode != DefaultErrorStatus {
-		t.Fatalf("status = %d, want %d", response.StatusCode, DefaultErrorStatus)
+	if resp.StatusCode != DefaultErrorStatus {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, DefaultErrorStatus)
 	}
 	if got := recorder.Body.String(); got != textHandlerError {
 		t.Fatalf("body = %q, want %q", got, textHandlerError)

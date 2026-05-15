@@ -110,11 +110,11 @@ func AssertInvalidReport(t testing.TB, report health.Report) {
 //
 // Result status is asserted directly instead of through report aggregation when
 // tests focus on checker or DTO conversion behavior.
-func AssertResultStatus(t testing.TB, result health.Result, want health.Status) {
+func AssertResultStatus(t testing.TB, res health.Result, want health.Status) {
 	t.Helper()
 
-	if result.Status != want {
-		t.Fatalf("result status = %s, want %s", result.Status, want)
+	if res.Status != want {
+		t.Fatalf("result status = %s, want %s", res.Status, want)
 	}
 }
 
@@ -122,10 +122,10 @@ func AssertResultStatus(t testing.TB, result health.Result, want health.Status) 
 //
 // Reason is asserted separately from message and cause because only Reason is
 // stable, machine-readable, and safe for public adapter logic.
-func AssertResultReason(t testing.TB, result health.Result, want health.Reason) {
+func AssertResultReason(t testing.TB, res health.Result, want health.Reason) {
 	t.Helper()
 
-	if result.Reason != want {
-		t.Fatalf("result reason = %s, want %s", result.Reason, want)
+	if res.Reason != want {
+		t.Fatalf("result reason = %s, want %s", res.Reason, want)
 	}
 }

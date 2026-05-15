@@ -132,10 +132,10 @@ func (p *Publisher[T]) Publish(next T) Snapshot[T] {
 // record, and returns the published stamped snapshot. If revision overflow is
 // detected, PublishStamped panics before storing a new record.
 func (p *Publisher[T]) PublishStamped(next T) Stamped[T] {
-	revision := p.advanceRevision()
+	rev := p.advanceRevision()
 	updated := p.passiveClock().Now()
 	rec := &record[T]{
-		revision: revision,
+		revision: rev,
 		updated:  updated,
 		value:    next,
 	}
@@ -143,7 +143,7 @@ func (p *Publisher[T]) PublishStamped(next T) Stamped[T] {
 	p.ptr.Store(rec)
 
 	return Stamped[T]{
-		Revision: revision,
+		Revision: rev,
 		Updated:  updated,
 		Value:    next,
 	}
@@ -157,8 +157,8 @@ func (p *Publisher[T]) PublishStamped(next T) Stamped[T] {
 func (p *Publisher[T]) advanceRevision() Revision {
 	for {
 		cur := p.nextRevision.Load()
-		revision := Revision(cur)
-		next := revision.Next()
+		rev := Revision(cur)
+		next := rev.Next()
 		if p.nextRevision.CompareAndSwap(cur, uint64(next)) {
 			return next
 		}
