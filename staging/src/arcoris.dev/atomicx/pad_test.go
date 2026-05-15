@@ -22,6 +22,10 @@ import (
 	"unsafe"
 )
 
+type padTestValue struct {
+	value int
+}
+
 // TestCacheLinePadSize verifies the package's fixed false-sharing pad width.
 func TestCacheLinePadSize(t *testing.T) {
 	t.Parallel()
@@ -74,6 +78,11 @@ func TestAtomicWrapperValueSizes(t *testing.T) {
 			got:  unsafe.Sizeof(atomic.Int32{}),
 			want: uintptr(atomicInt32Size),
 		},
+		{
+			name: "atomic.Pointer",
+			got:  unsafe.Sizeof(atomic.Pointer[padTestValue]{}),
+			want: uintptr(atomicPointerSize),
+		},
 	}
 
 	for _, tc := range tests {
@@ -122,6 +131,12 @@ func TestPaddedPrimitiveSizesIncludeLeadingPadAndValueSlot(t *testing.T) {
 			min: uintptr(CacheLinePadSize + atomicInt32Size +
 				(CacheLinePadSize - atomicInt32Size)),
 		},
+		{
+			name: "PaddedPointer",
+			size: unsafe.Sizeof(PaddedPointer[padTestValue]{}),
+			min: uintptr(CacheLinePadSize + atomicPointerSize +
+				(CacheLinePadSize - atomicPointerSize)),
+		},
 	}
 
 	for _, tc := range tests {
@@ -150,6 +165,7 @@ func TestPaddedPrimitiveValueOffsetsKeepLeadingPad(t *testing.T) {
 		{name: "PaddedUint32", offset: unsafe.Offsetof(PaddedUint32{}.value)},
 		{name: "PaddedInt64", offset: unsafe.Offsetof(PaddedInt64{}.value)},
 		{name: "PaddedInt32", offset: unsafe.Offsetof(PaddedInt32{}.value)},
+		{name: "PaddedPointer", offset: unsafe.Offsetof(PaddedPointer[padTestValue]{}.value)},
 	}
 
 	for _, tc := range tests {
@@ -199,6 +215,13 @@ func TestPaddedPrimitiveTrailingCompletionPadsFillValueSlot(t *testing.T) {
 			valueEnd:  unsafe.Offsetof(PaddedInt32{}.value) + unsafe.Sizeof(PaddedInt32{}.value),
 			trailWant: uintptr(CacheLinePadSize - atomicInt32Size),
 		},
+		{
+			name: "PaddedPointer",
+			size: unsafe.Sizeof(PaddedPointer[padTestValue]{}),
+			valueEnd: unsafe.Offsetof(PaddedPointer[padTestValue]{}.value) +
+				unsafe.Sizeof(PaddedPointer[padTestValue]{}.value),
+			trailWant: uintptr(CacheLinePadSize - atomicPointerSize),
+		},
 	}
 
 	for _, tc := range tests {
@@ -242,6 +265,11 @@ func TestPaddedPrimitiveAlignment(t *testing.T) {
 			name:      "PaddedInt32",
 			size:      unsafe.Sizeof(PaddedInt32{}),
 			alignment: unsafe.Alignof(PaddedInt32{}),
+		},
+		{
+			name:      "PaddedPointer",
+			size:      unsafe.Sizeof(PaddedPointer[padTestValue]{}),
+			alignment: unsafe.Alignof(PaddedPointer[padTestValue]{}),
 		},
 	}
 

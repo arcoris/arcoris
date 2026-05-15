@@ -43,13 +43,16 @@
 //   - PaddedUint64;
 //   - PaddedUint32;
 //   - PaddedInt64;
-//   - PaddedInt32.
+//   - PaddedInt32;
+//   - PaddedPointer.
 //
 // They expose raw atomic operations and intentionally do not enforce semantic
-// accounting rules. For example, PaddedUint64.Add uses ordinary unsigned
-// arithmetic and may wrap. PaddedInt64.Add follows atomic.Int64 semantics and
-// does not reject signed overflow or underflow. Raw padded atomics are storage
-// cells, not domain-aware accounting types.
+// accounting or ownership rules. For example, PaddedUint64.Add uses ordinary
+// unsigned arithmetic and may wrap. PaddedInt64.Add follows atomic.Int64
+// semantics and does not reject signed overflow or underflow. PaddedPointer
+// additionally does not own, clone, freeze, retain, release, or validate the
+// pointed value. Raw padded atomics are storage cells, not domain-aware
+// accounting types.
 //
 // Counters are monotonic lifetime event counters:
 //
@@ -106,7 +109,8 @@
 //   - uint64.go;
 //   - uint32.go;
 //   - int64.go;
-//   - int32.go.
+//   - int32.go;
+//   - pointer.go.
 //
 // Mutable counters live in:
 //
@@ -181,6 +185,11 @@
 // state model, such as a compact state word, bitmask, explicit state-machine
 // transition, or owner-controlled publication protocol.
 //
+// Use PaddedPointer only for raw pointer-publication cells where the caller owns
+// the lifetime and immutability protocol of the pointed object. Use
+// snapshot.Publisher when the caller needs revisioned publication of immutable
+// read models.
+//
 // Prefer semantic wrappers when the value has common accounting meaning:
 //
 //   - use Uint64Counter for general lifetime event accounting;
@@ -231,6 +240,7 @@
 //   - PaddedUint32;
 //   - PaddedInt64;
 //   - PaddedInt32;
+//   - PaddedPointer;
 //   - Uint64Counter;
 //   - Uint32Counter;
 //   - Uint64Gauge;

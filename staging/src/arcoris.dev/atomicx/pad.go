@@ -63,6 +63,13 @@ const (
 	// The value is used to size the trailing line-completion pad after a
 	// PaddedInt32 value. Tests MUST verify this assumption with unsafe.Sizeof.
 	atomicInt32Size = 4
+
+	// atomicPointerSize is the expected size, in bytes, of sync/atomic.Pointer[T]
+	// on ARCORIS supported 64-bit targets.
+	//
+	// The value is used to size the trailing line-completion pad after a
+	// PaddedPointer value. Tests MUST verify this assumption with unsafe.Sizeof.
+	atomicPointerSize = 8
 )
 
 // CacheLinePad is an explicit 64-byte layout pad used to separate independently
@@ -73,9 +80,10 @@ const (
 // and are likely to contend through false sharing.
 //
 // Prefer the corresponding Padded* type when the hot field itself is an atomic
-// integer: PaddedUint64, PaddedUint32, PaddedInt64, or PaddedInt32. Use
-// CacheLinePad directly only when the caller intentionally owns the surrounding
-// struct layout and wants to separate larger groups of fields.
+// integer or pointer: PaddedUint64, PaddedUint32, PaddedInt64, PaddedInt32, or
+// PaddedPointer. Use CacheLinePad directly only when the caller intentionally
+// owns the surrounding struct layout and wants to separate larger groups of
+// fields.
 //
 // CacheLinePad has no behavior. Its only purpose is memory layout. It is safe to
 // copy because it does not contain synchronization state or mutable runtime
