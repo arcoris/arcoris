@@ -21,19 +21,28 @@ import (
 	"time"
 )
 
-// Reserve subtracts reserve from ctx's remaining budget at now.
+// Reserve subtracts reserve from ctx's remaining deadline budget at now.
 //
 // Reserve is useful when a caller must leave tail budget for cleanup, response
-// writing, release paths, or parent-owned coordination.
+// writing, release paths, or parent-owned coordination before starting or
+// continuing caller-owned work.
 //
-// The returned duration is meaningful only when both bounded and ok are true.
-// bounded reports whether duration was derived from an active parent deadline.
-// ok reports whether the current deadline and runtime context state still allow
+// The returned duration is meaningful only when both bounded and ok are true. In
+// that case, duration is the finite budget remaining after reserve has been
+// subtracted from the parent context deadline budget.
+//
+// bounded reports whether ctx had an explicit deadline at the observation
+// boundary. When bounded is true and ok is false, the context was deadline-bound,
+// but no usable caller budget remains. When bounded is false, ctx has no
+// deadline and duration is not a finite budget.
+//
+// ok reports whether the observed deadline and runtime context state still allow
 // caller-owned work to continue.
 //
 // When ctx has no deadline and is still active, Reserve returns zero, false,
-// true. Reserve does not choose fallback timeouts for unbounded contexts.
-// Callers must apply their own policy when bounded is false.
+// true. Reserve does not choose fallback timeouts for unbounded contexts. Callers
+// that require a finite child budget must apply their own timeout policy when
+// bounded is false.
 func Reserve(ctx context.Context, now time.Time, reserve time.Duration) (duration time.Duration, bounded bool, ok bool) {
 	requireContext(ctx)
 	requireNonNegativeDuration("reserve", reserve)
