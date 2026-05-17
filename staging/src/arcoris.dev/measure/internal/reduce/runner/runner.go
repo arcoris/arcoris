@@ -16,7 +16,7 @@
 
 package runner
 
-import "arcoris.dev/measure/internal/reduce"
+import "arcoris.dev/measure/internal/reduce/core"
 
 // Runner owns normalized options and scratch storage for repeated reductions.
 //
@@ -24,25 +24,25 @@ import "arcoris.dev/measure/internal/reduce"
 // scratch buffers. Use one Runner per concurrent caller.
 type Runner[T any] struct {
 	// opts is normalized once during construction to avoid repeated defaulting.
-	opts reduce.Options
+	opts core.Options
 
 	// scratch stores reusable ranges and partial-result slots between calls.
-	scratch reduce.Scratch[T]
+	scratch core.Scratch[T]
 }
 
 // New returns a Runner with normalized options and empty scratch storage.
-func New[T any](opts reduce.Options) Runner[T] {
-	return Runner[T]{opts: reduce.NormalizeOptions(opts)}
+func New[T any](opts core.Options) Runner[T] {
+	return Runner[T]{opts: core.NormalizeOptions(opts)}
 }
 
 // DoInto executes a reduction using runner-owned scratch buffers.
-func (r *Runner[T]) DoInto(n int, mapRange reduce.IntoMapper[T], mergeFn reduce.Merger[T]) (T, bool) {
+func (r *Runner[T]) DoInto(n int, mapRange core.IntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
 	return DoInto(n, r.opts, &r.scratch, mapRange, mergeFn)
 }
 
 // DoIndexedInto executes an indexed reduction using runner-owned scratch
 // buffers.
-func (r *Runner[T]) DoIndexedInto(n int, mapRange reduce.IndexedIntoMapper[T], mergeFn reduce.Merger[T]) (T, bool) {
+func (r *Runner[T]) DoIndexedInto(n int, mapRange core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
 	return DoIndexedInto(n, r.opts, &r.scratch, mapRange, mergeFn)
 }
 

@@ -19,19 +19,19 @@ package planner
 import (
 	"testing"
 
-	"arcoris.dev/measure/internal/reduce"
+	"arcoris.dev/measure/internal/reduce/core"
 )
 
 func TestPlanDispatchesByStrategy(t *testing.T) {
-	seq := Plan(10, reduce.Options{Strategy: reduce.StrategySequential}, nil)
+	seq := Plan(10, core.Options{Strategy: core.StrategySequential}, nil)
 	if len(seq) != 1 {
 		t.Fatalf("sequential len = %d, want 1", len(seq))
 	}
-	fixed := Plan(10, reduce.Options{Strategy: reduce.StrategyFixed, ChunkSize: 3}, nil)
+	fixed := Plan(10, core.Options{Strategy: core.StrategyFixed, ChunkSize: 3}, nil)
 	if len(fixed) != 4 {
 		t.Fatalf("fixed len = %d, want 4", len(fixed))
 	}
-	stat := Plan(1000, reduce.Options{Strategy: reduce.StrategyStatic, Workers: 2, MinItemsPerWorker: 100}, nil)
+	stat := Plan(1000, core.Options{Strategy: core.StrategyStatic, Workers: 2, MinItemsPerWorker: 100}, nil)
 	if len(stat) != 2 {
 		t.Fatalf("static len = %d, want 2", len(stat))
 	}

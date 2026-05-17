@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-package reduce
+package core
 
 import "testing"
 

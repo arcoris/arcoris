@@ -14,25 +14,24 @@
   limitations under the License.
 */
 
-// Package reduce defines the shared domain contracts for ARCORIS measurement
-// range reductions.
+// Package core defines shared contracts for internal ARCORIS range reductions.
 //
 // A reduction splits an in-memory index interval into ranges, computes
-// range-local partial results, and merges those partials into one value. Root
-// reduce owns only the data model and callback contracts needed by that pattern:
-// Range, Options, strategies, mapper callbacks, merger callbacks, and Scratch.
+// range-local or worker-local partial results, and merges those partials into
+// one value. Core owns only the data model and callback contracts needed by that
+// pattern: Range, Options, Strategy, MergeMode, mapper callbacks, Merger, and
+// Scratch.
 //
-// Execution details are deliberately kept in focused subpackages:
+// Execution details live outside this package:
 //
 //   - planner builds deterministic non-overlapping ranges;
 //   - runner executes range-local reducers;
 //   - merge combines worker-local partial results;
 //   - layout keeps cache-line layout helpers tied to arcoris.dev/atomicx.
 //
-// Root reduce does not import those implementations. The dependency direction is
-// intentional: implementation packages depend on stable domain contracts, which
-// avoids import cycles and keeps planning, execution, and merging separately
-// testable. This package is not a public MapReduce API; it is an internal
-// primitive for measurement packages that already know how to map and merge
-// their own partial-result types.
-package reduce
+// Core must not import those implementation packages. The dependency direction
+// is intentional: implementation packages depend on stable contracts, avoiding
+// import cycles and keeping planning, execution, and merging separately
+// testable. This package is not a public MapReduce API and does not expose a
+// user-facing measurement surface.
+package core

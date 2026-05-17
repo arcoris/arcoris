@@ -19,18 +19,18 @@ package planner
 import (
 	"testing"
 
-	"arcoris.dev/measure/internal/reduce"
+	"arcoris.dev/measure/internal/reduce/core"
 )
 
 func TestStaticSmallInputFallsBackToSingleRange(t *testing.T) {
-	got := Static(100, reduce.Options{Workers: 4, MinItemsPerWorker: 64}, nil)
+	got := Static(100, core.Options{Workers: 4, MinItemsPerWorker: 64}, nil)
 	if len(got) != 1 || got[0].Start != 0 || got[0].End != 100 {
 		t.Fatalf("Static fallback = %#v", got)
 	}
 }
 
 func TestStaticCoversInputWithoutGapsOrOverlap(t *testing.T) {
-	got := Static(1000, reduce.Options{Workers: 4, MinItemsPerWorker: 100}, nil)
+	got := Static(1000, core.Options{Workers: 4, MinItemsPerWorker: 100}, nil)
 	assertPlanCovers(t, got, 1000)
 	if len(got) != 4 {
 		t.Fatalf("range count = %d, want 4", len(got))
@@ -38,7 +38,7 @@ func TestStaticCoversInputWithoutGapsOrOverlap(t *testing.T) {
 }
 
 func TestStaticRespectsMinItemsPerWorker(t *testing.T) {
-	got := Static(1000, reduce.Options{Workers: 100, MinItemsPerWorker: 200}, nil)
+	got := Static(1000, core.Options{Workers: 100, MinItemsPerWorker: 200}, nil)
 	assertPlanCovers(t, got, 1000)
 	if len(got) != 5 {
 		t.Fatalf("range count = %d, want 5", len(got))

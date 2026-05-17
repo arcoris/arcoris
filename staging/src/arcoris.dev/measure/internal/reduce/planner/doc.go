@@ -19,5 +19,5 @@
 // Planner functions are pure and side-effect free except for reusing the dst
 // slice supplied by the caller. They do not start goroutines, allocate partial
 // results, or merge values. Their only job is to transform an input size and
-// root reduce options into non-overlapping root reduce ranges covering [0:n).
+// core options into non-overlapping core ranges covering [0:n).
 package planner

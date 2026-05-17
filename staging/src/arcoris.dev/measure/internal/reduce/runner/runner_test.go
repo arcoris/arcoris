@@ -19,13 +19,13 @@ package runner
 import (
 	"testing"
 
-	"arcoris.dev/measure/internal/reduce"
+	"arcoris.dev/measure/internal/reduce/core"
 )
 
 func TestRunnerReusesScratch(t *testing.T) {
-	r := New[int](reduce.Options{Workers: 4, MinItemsPerWorker: 10, Strategy: reduce.StrategyStatic})
+	r := New[int](core.Options{Workers: 4, MinItemsPerWorker: 10, Strategy: core.StrategyStatic})
 	for i := 0; i < 3; i++ {
-		got, ok := r.DoInto(100, func(rng reduce.Range, dst *int) {
+		got, ok := r.DoInto(100, func(rng core.Range, dst *int) {
 			for x := rng.Start; x < rng.End; x++ {
 				*dst += x
 			}

@@ -20,16 +20,16 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"arcoris.dev/measure/internal/reduce"
+	"arcoris.dev/measure/internal/reduce/core"
 )
 
 func TestDoIndexedIntoPassesWorkerIndexes(t *testing.T) {
-	var scratch reduce.Scratch[int]
+	var scratch core.Scratch[int]
 	_, ok := DoIndexedInto[int](
 		1000,
-		reduce.Options{Workers: 4, MinItemsPerWorker: 100, Strategy: reduce.StrategyStatic},
+		core.Options{Workers: 4, MinItemsPerWorker: 100, Strategy: core.StrategyStatic},
 		&scratch,
-		func(worker int, r reduce.Range, dst *int) {
+		func(worker int, r core.Range, dst *int) {
 			*dst = worker + r.Len()
 		},
 		func(dst *int, src int) { *dst += src },
@@ -51,9 +51,9 @@ func TestDoIndexedIntoBoundsFixedWorkerSlots(t *testing.T) {
 	var maxWorker atomic.Int64
 	_, ok := DoIndexedInto[int](
 		100,
-		reduce.Options{Workers: 2, MinItemsPerWorker: 1, ChunkSize: 10, Strategy: reduce.StrategyFixed},
+		core.Options{Workers: 2, MinItemsPerWorker: 1, ChunkSize: 10, Strategy: core.StrategyFixed},
 		nil,
-		func(worker int, r reduce.Range, dst *int) {
+		func(worker int, r core.Range, dst *int) {
 			for {
 				old := maxWorker.Load()
 				if int64(worker) <= old || maxWorker.CompareAndSwap(old, int64(worker)) {

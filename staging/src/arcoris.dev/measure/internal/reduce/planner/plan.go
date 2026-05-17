@@ -16,19 +16,19 @@
 
 package planner
 
-import "arcoris.dev/measure/internal/reduce"
+import "arcoris.dev/measure/internal/reduce/core"
 
 // Plan selects the planning function implied by opts.
 //
 // Plan normalizes opts before dispatch. StrategyDynamic deliberately produces
 // the same fixed-size ranges as StrategyFixed; the runner package decides
 // whether those chunks are claimed dynamically or consumed as a static plan.
-func Plan(n int, opts reduce.Options, dst []reduce.Range) []reduce.Range {
-	opts = reduce.NormalizeOptions(opts)
+func Plan(n int, opts core.Options, dst []core.Range) []core.Range {
+	opts = core.NormalizeOptions(opts)
 	switch opts.Strategy {
-	case reduce.StrategySequential:
+	case core.StrategySequential:
 		return Sequential(n, dst)
-	case reduce.StrategyFixed, reduce.StrategyDynamic:
+	case core.StrategyFixed, core.StrategyDynamic:
 		return Fixed(n, opts, dst)
 	default:
 		return Static(n, opts, dst)

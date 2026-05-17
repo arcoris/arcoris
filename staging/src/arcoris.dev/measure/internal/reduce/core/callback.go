@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-package reduce
+package core
 
 // Mapper computes a complete partial result for one planned range.
 //

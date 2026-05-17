@@ -19,18 +19,18 @@ package merge
 import (
 	"testing"
 
-	"arcoris.dev/measure/internal/reduce"
+	"arcoris.dev/measure/internal/reduce/core"
 )
 
 func TestMergeDispatchesLinear(t *testing.T) {
-	got, ok := Merge([]string{"a", "b"}, reduce.MergeLinear, func(dst *string, src string) { *dst += src })
+	got, ok := Merge([]string{"a", "b"}, core.MergeLinear, func(dst *string, src string) { *dst += src })
 	if !ok || got != "ab" {
 		t.Fatalf("got %q ok=%v, want ab true", got, ok)
 	}
 }
 
 func TestMergeDispatchesPairwise(t *testing.T) {
-	got, ok := Merge([]int{1, 2, 3, 4}, reduce.MergePairwise, func(dst *int, src int) { *dst += src })
+	got, ok := Merge([]int{1, 2, 3, 4}, core.MergePairwise, func(dst *int, src int) { *dst += src })
 	if !ok || got != 10 {
 		t.Fatalf("got %d ok=%v, want 10 true", got, ok)
 	}

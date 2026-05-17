@@ -14,14 +14,16 @@
   limitations under the License.
 */
 
-package reduce
+package core
 
 // Scratch owns reusable planning and partial-result buffers for one partial
 // result type.
 //
 // Scratch is for sequential reuse by one caller. Do not share one Scratch
-// between simultaneous reductions because runners mutate its slices and may
-// treat reused partial slots as dirty.
+// between simultaneous reductions because planners and runners mutate its slices
+// and may treat reused partial slots as dirty. Reset keeps backing arrays and
+// can retain references stored in those arrays; Clear zeroes retained slots
+// while keeping capacity; Release drops backing storage.
 type Scratch[T any] struct {
 	// Ranges stores the most recent planned ranges. Planner packages may reuse
 	// and overwrite this slice on each call.
@@ -32,11 +34,44 @@ type Scratch[T any] struct {
 	Partials []T
 }
 
-// Reset clears logical scratch contents while retaining backing storage for
-// future reductions.
+// Reset clears logical slice lengths while retaining backing storage.
+//
+// Reset is the cheapest reuse operation. It does not zero backing arrays, so it
+// may retain references in old range or partial slots until those slots are
+// overwritten, cleared, or released.
 func (s *Scratch[T]) Reset() {
 	s.Ranges = s.Ranges[:0]
 	s.Partials = s.Partials[:0]
+}
+
+// Clear zeroes retained backing slots while keeping backing storage.
+//
+// Clear scans the full retained capacity of Ranges and Partials, then resets
+// both lengths to zero. It is more expensive than Reset, but it removes
+// references from dirty slots even after a previous Reset shortened the slices.
+func (s *Scratch[T]) Clear() {
+	var zeroRange Range
+	ranges := s.Ranges[:cap(s.Ranges)]
+	for i := range ranges {
+		ranges[i] = zeroRange
+	}
+	var zeroPartial T
+	partials := s.Partials[:cap(s.Partials)]
+	for i := range partials {
+		partials[i] = zeroPartial
+	}
+	s.Ranges = ranges[:0]
+	s.Partials = partials[:0]
+}
+
+// Release drops all scratch backing storage.
+//
+// Release is the strongest memory-management operation: both slices become nil,
+// allowing their backing arrays and any references stored in them to be garbage
+// collected when no other references exist.
+func (s *Scratch[T]) Release() {
+	s.Ranges = nil
+	s.Partials = nil
 }
 
 // EnsurePartials returns a zeroed partial-result slice of length n.

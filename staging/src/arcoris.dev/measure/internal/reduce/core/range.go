@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-package reduce
+package core
 
 // Range identifies a half-open index interval [Start, End).
 //

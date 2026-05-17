@@ -16,14 +16,14 @@
 
 package merge
 
-import "arcoris.dev/measure/internal/reduce"
+import "arcoris.dev/measure/internal/reduce/core"
 
 // Linear merges partials from left to right.
 //
 // Linear returns false for an empty slice. For non-empty input it copies the
 // first partial into the result and folds the remaining partials into that
 // result without modifying the input slice.
-func Linear[T any](partials []T, mergeFn reduce.Merger[T]) (T, bool) {
+func Linear[T any](partials []T, mergeFn core.Merger[T]) (T, bool) {
 	var zero T
 	if len(partials) == 0 {
 		return zero, false

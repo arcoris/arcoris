@@ -14,13 +14,15 @@
   limitations under the License.
 */
 
-package reduce
+package core
 
-// Merger folds src into dst.
-//
-// Merge implementations call Merger after mapper execution has completed and do
-// so from one goroutine. Merger may mutate only dst; src is a by-value partial.
-// For floating-point reductions, callers should choose a merge mode with the
-// expected rounding behavior for their algorithm because grouping can affect the
-// final bits.
-type Merger[T any] func(dst *T, src T)
+import "testing"
+
+func TestMergerCallback(t *testing.T) {
+	merge := Merger[int](func(dst *int, src int) { *dst += src })
+	got := 3
+	merge(&got, 4)
+	if got != 7 {
+		t.Fatalf("merged value = %d, want 7", got)
+	}
+}

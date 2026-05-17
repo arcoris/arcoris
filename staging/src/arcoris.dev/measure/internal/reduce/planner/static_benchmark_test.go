@@ -19,12 +19,12 @@ package planner
 import (
 	"testing"
 
-	"arcoris.dev/measure/internal/reduce"
+	"arcoris.dev/measure/internal/reduce/core"
 )
 
 func BenchmarkStatic(b *testing.B) {
-	var ranges []reduce.Range
-	opts := reduce.Options{Workers: 8, MinItemsPerWorker: 1024, Strategy: reduce.StrategyStatic}
+	var ranges []core.Range
+	opts := core.Options{Workers: 8, MinItemsPerWorker: 1024, Strategy: core.StrategyStatic}
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		ranges = Static(1_000_000, opts, ranges)

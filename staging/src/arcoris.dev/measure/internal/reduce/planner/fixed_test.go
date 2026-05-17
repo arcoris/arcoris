@@ -19,12 +19,12 @@ package planner
 import (
 	"testing"
 
-	"arcoris.dev/measure/internal/reduce"
+	"arcoris.dev/measure/internal/reduce/core"
 )
 
 func TestFixedCoversInputWithFixedChunks(t *testing.T) {
-	got := Fixed(10, reduce.Options{ChunkSize: 4}, nil)
-	want := []reduce.Range{{Start: 0, End: 4}, {Start: 4, End: 8}, {Start: 8, End: 10}}
+	got := Fixed(10, core.Options{ChunkSize: 4}, nil)
+	want := []core.Range{{Start: 0, End: 4}, {Start: 4, End: 8}, {Start: 8, End: 10}}
 	if len(got) != len(want) {
 		t.Fatalf("len = %d, want %d: %#v", len(got), len(want), got)
 	}

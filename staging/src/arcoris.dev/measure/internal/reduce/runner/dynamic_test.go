@@ -20,15 +20,15 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"arcoris.dev/measure/internal/reduce"
+	"arcoris.dev/measure/internal/reduce/core"
 )
 
 func TestDoDynamicIntoProcessesEveryIndexOnce(t *testing.T) {
 	result, ok := DoDynamicInto[int](
 		1000,
-		reduce.Options{Workers: 4, MinItemsPerWorker: 100, ChunkSize: 17, Strategy: reduce.StrategyDynamic},
+		core.Options{Workers: 4, MinItemsPerWorker: 100, ChunkSize: 17, Strategy: core.StrategyDynamic},
 		nil,
-		func(_ int, r reduce.Range, dst *int) {
+		func(_ int, r core.Range, dst *int) {
 			for i := r.Start; i < r.End; i++ {
 				*dst += i
 			}
@@ -48,9 +48,9 @@ func TestDoDynamicIntoSkipsIdlePartials(t *testing.T) {
 	var mergeCalls atomic.Int64
 	result, ok := DoDynamicInto[int](
 		10,
-		reduce.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 100, Strategy: reduce.StrategyDynamic},
+		core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 100, Strategy: core.StrategyDynamic},
 		nil,
-		func(_ int, r reduce.Range, dst *int) {
+		func(_ int, r core.Range, dst *int) {
 			*dst += r.Len()
 		},
 		func(dst *int, src int) {

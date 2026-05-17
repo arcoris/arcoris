@@ -16,27 +16,27 @@
 
 package planner
 
-import "arcoris.dev/measure/internal/reduce"
+import "arcoris.dev/measure/internal/reduce/core"
 
 // Fixed returns stable fixed-size chunks covering [0:n).
 //
 // Fixed ignores Workers and MinItemsPerWorker. It is a planning primitive for
 // fixed-grain execution and tuning; runners decide how many workers consume the
 // resulting chunks.
-func Fixed(n int, opts reduce.Options, dst []reduce.Range) []reduce.Range {
+func Fixed(n int, opts core.Options, dst []core.Range) []core.Range {
 	dst = dst[:0]
 	if n <= 0 {
 		return dst
 	}
 
-	opts = reduce.NormalizeOptions(opts)
+	opts = core.NormalizeOptions(opts)
 	chunk := opts.ChunkSize
 	if chunk <= 0 {
-		chunk = reduce.DefaultChunkSize
+		chunk = core.DefaultChunkSize
 	}
 	chunks := 1 + (n-1)/chunk
 	if cap(dst) < chunks {
-		dst = make([]reduce.Range, 0, chunks)
+		dst = make([]core.Range, 0, chunks)
 	}
 
 	for start := 0; start < n; {
@@ -44,7 +44,7 @@ func Fixed(n int, opts reduce.Options, dst []reduce.Range) []reduce.Range {
 		if end > n {
 			end = n
 		}
-		dst = append(dst, reduce.Range{Start: start, End: end})
+		dst = append(dst, core.Range{Start: start, End: end})
 		start = end
 	}
 	return dst

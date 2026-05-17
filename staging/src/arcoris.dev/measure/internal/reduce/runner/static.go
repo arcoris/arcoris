@@ -20,7 +20,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"arcoris.dev/measure/internal/reduce"
+	"arcoris.dev/measure/internal/reduce/core"
 	"arcoris.dev/measure/internal/reduce/merge"
 	"arcoris.dev/measure/internal/reduce/planner"
 )
@@ -30,8 +30,8 @@ import (
 // Do is the simplest entry point when the mapper naturally returns a complete
 // partial value. It allocates temporary scratch as needed; repeated callers
 // should prefer DoInto with caller-owned Scratch or Runner.
-func Do[T any](n int, opts reduce.Options, mapRange reduce.Mapper[T], mergeFn reduce.Merger[T]) (T, bool) {
-	return DoInto(n, opts, nil, func(r reduce.Range, dst *T) { *dst = mapRange(r) }, mergeFn)
+func Do[T any](n int, opts core.Options, mapRange core.Mapper[T], mergeFn core.Merger[T]) (T, bool) {
+	return DoInto(n, opts, nil, func(r core.Range, dst *T) { *dst = mapRange(r) }, mergeFn)
 }
 
 // DoInto executes a planned reduction using caller-owned scratch.
@@ -40,22 +40,22 @@ func Do[T any](n int, opts reduce.Options, mapRange reduce.Mapper[T], mergeFn re
 // it returns the zero value and false. For non-empty input it returns the merged
 // partial and true. The scratch argument may be nil, but passing one lets callers
 // reuse range and partial buffers across calls.
-func DoInto[T any](n int, opts reduce.Options, scratch *reduce.Scratch[T], mapRange reduce.IntoMapper[T], mergeFn reduce.Merger[T]) (T, bool) {
+func DoInto[T any](n int, opts core.Options, scratch *core.Scratch[T], mapRange core.IntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
 	}
-	opts = reduce.NormalizeOptions(opts)
-	if opts.Strategy == reduce.StrategyDynamic {
-		return DoDynamicInto(n, opts, scratch, func(_ int, r reduce.Range, dst *T) { mapRange(r, dst) }, mergeFn)
+	opts = core.NormalizeOptions(opts)
+	if opts.Strategy == core.StrategyDynamic {
+		return DoDynamicInto(n, opts, scratch, func(_ int, r core.Range, dst *T) { mapRange(r, dst) }, mergeFn)
 	}
 	if shouldRunSequential(n, opts) {
 		var partial T
-		mapRange(reduce.Range{Start: 0, End: n}, &partial)
+		mapRange(core.Range{Start: 0, End: n}, &partial)
 		return partial, true
 	}
 	if scratch == nil {
-		scratch = new(reduce.Scratch[T])
+		scratch = new(core.Scratch[T])
 	}
 	scratch.Ranges = planner.Plan(n, opts, scratch.Ranges)
 	ranges := scratch.Ranges
@@ -68,7 +68,7 @@ func DoInto[T any](n int, opts reduce.Options, scratch *reduce.Scratch[T], mapRa
 		return partial, true
 	}
 	partials := scratch.EnsurePartialsDirty(len(ranges))
-	runRangesInto(ranges, partials, opts.Workers, func(_ int, r reduce.Range, dst *T) { mapRange(r, dst) })
+	runRangesInto(ranges, partials, opts.Workers, func(_ int, r core.Range, dst *T) { mapRange(r, dst) })
 	return merge.Merge(partials, opts.MergeMode, mergeFn)
 }
 
@@ -77,7 +77,7 @@ func DoInto[T any](n int, opts reduce.Options, scratch *reduce.Scratch[T], mapRa
 //
 // The partial slice remains indexed by range, so merge order stays deterministic
 // even when a small worker set consumes many fixed chunks.
-func runRangesInto[T any](ranges []reduce.Range, partials []T, workers int, mapRange reduce.IndexedIntoMapper[T]) {
+func runRangesInto[T any](ranges []core.Range, partials []T, workers int, mapRange core.IndexedIntoMapper[T]) {
 	workers = activeWorkers(workers, len(ranges))
 	if workers == len(ranges) {
 		runRangesOneToOne(ranges, partials, mapRange)
@@ -107,7 +107,7 @@ func runRangesInto[T any](ranges []reduce.Range, partials []T, workers int, mapR
 // runRangesOneToOne is the low-overhead path for static plans where each range
 // has its own worker goroutine. Workers compute into stack-local partials to
 // avoid false sharing while the hot loop runs.
-func runRangesOneToOne[T any](ranges []reduce.Range, partials []T, mapRange reduce.IndexedIntoMapper[T]) {
+func runRangesOneToOne[T any](ranges []core.Range, partials []T, mapRange core.IndexedIntoMapper[T]) {
 	var wg sync.WaitGroup
 	wg.Add(len(ranges))
 	for worker, r := range ranges {
@@ -143,6 +143,6 @@ func activeWorkers(workers, jobs int) int {
 
 // shouldRunSequential reports whether n and opts should bypass goroutine
 // startup and execute as one full-input range.
-func shouldRunSequential(n int, opts reduce.Options) bool {
-	return opts.Strategy == reduce.StrategySequential || opts.Workers <= 1 || n/2 < opts.MinItemsPerWorker
+func shouldRunSequential(n int, opts core.Options) bool {
+	return opts.Strategy == core.StrategySequential || opts.Workers <= 1 || n/2 < opts.MinItemsPerWorker
 }

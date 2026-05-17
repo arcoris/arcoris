@@ -16,7 +16,7 @@
 
 package planner
 
-import "arcoris.dev/measure/internal/reduce"
+import "arcoris.dev/measure/internal/reduce/core"
 
 // Static returns a stable contiguous range plan for uniform-cost reductions.
 //
@@ -25,16 +25,16 @@ import "arcoris.dev/measure/internal/reduce"
 // order, caps the range count by Workers, and keeps range sizes as balanced as
 // integer division allows. For small inputs it returns one range so runners can
 // use the sequential fast path.
-func Static(n int, opts reduce.Options, dst []reduce.Range) []reduce.Range {
+func Static(n int, opts core.Options, dst []core.Range) []core.Range {
 	dst = dst[:0]
 	if n <= 0 {
 		return dst
 	}
 
-	opts = reduce.NormalizeOptions(opts)
+	opts = core.NormalizeOptions(opts)
 	workers := opts.Workers
 	if workers <= 1 || n/2 < opts.MinItemsPerWorker {
-		return append(dst, reduce.Range{Start: 0, End: n})
+		return append(dst, core.Range{Start: 0, End: n})
 	}
 	if workers > n {
 		workers = n
@@ -48,10 +48,10 @@ func Static(n int, opts reduce.Options, dst []reduce.Range) []reduce.Range {
 		workers = maxWorkersByGrain
 	}
 	if workers <= 1 {
-		return append(dst, reduce.Range{Start: 0, End: n})
+		return append(dst, core.Range{Start: 0, End: n})
 	}
 	if cap(dst) < workers {
-		dst = make([]reduce.Range, 0, workers)
+		dst = make([]core.Range, 0, workers)
 	}
 
 	base := n / workers
@@ -64,7 +64,7 @@ func Static(n int, opts reduce.Options, dst []reduce.Range) []reduce.Range {
 			size++
 		}
 		end := start + size
-		dst = append(dst, reduce.Range{Start: start, End: end})
+		dst = append(dst, core.Range{Start: start, End: end})
 		start = end
 	}
 	return dst

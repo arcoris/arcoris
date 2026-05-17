@@ -17,7 +17,7 @@
 // Package runner executes range reductions.
 //
 // Runner functions are responsible for strategy normalization, worker startup,
-// partial-result storage, and final merge. They use root reduce domain types and
+// partial-result storage, and final merge. They use core domain types and
 // deliberately avoid context cancellation, error aggregation, and panic recovery
 // on the hot path. Callers that need those policies should implement them around
 // the mapper before entering runner.

@@ -23,15 +23,9 @@ import (
 	"arcoris.dev/atomicx"
 )
 
-func TestCacheLinePadSizeUsesAtomicx(t *testing.T) {
-	if CacheLinePadSize != atomicx.CacheLinePadSize {
-		t.Fatalf("CacheLinePadSize = %d, want atomicx %d", CacheLinePadSize, atomicx.CacheLinePadSize)
-	}
-}
-
 func TestPaddedHasAtLeastTwoPadsAroundValue(t *testing.T) {
 	var p Padded[uint64]
-	if unsafe.Sizeof(p) < uintptr(CacheLinePadSize*2)+unsafe.Sizeof(uint64(0)) {
+	if unsafe.Sizeof(p) < uintptr(atomicx.CacheLinePadSize*2)+unsafe.Sizeof(uint64(0)) {
 		t.Fatalf("Padded size = %d, too small", unsafe.Sizeof(p))
 	}
 }

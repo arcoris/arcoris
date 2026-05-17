@@ -19,7 +19,7 @@ package planner
 import (
 	"testing"
 
-	"arcoris.dev/measure/internal/reduce"
+	"arcoris.dev/measure/internal/reduce/core"
 )
 
 func FuzzStaticCoverage(f *testing.F) {
@@ -30,7 +30,7 @@ func FuzzStaticCoverage(f *testing.F) {
 		if n < 0 || n > 1_000_000 {
 			return
 		}
-		plan := Static(n, reduce.Options{Workers: workers, MinItemsPerWorker: minItems}, nil)
+		plan := Static(n, core.Options{Workers: workers, MinItemsPerWorker: minItems}, nil)
 		pos := 0
 		for i, r := range plan {
 			if r.Empty() {

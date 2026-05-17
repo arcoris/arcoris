@@ -19,15 +19,15 @@ package runner
 import (
 	"testing"
 
-	"arcoris.dev/measure/internal/reduce"
+	"arcoris.dev/measure/internal/reduce/core"
 )
 
 func TestDoIntoProcessesEveryIndexOnce(t *testing.T) {
 	result, ok := DoInto[int](
 		1000,
-		reduce.Options{Workers: 4, MinItemsPerWorker: 100, Strategy: reduce.StrategyStatic},
+		core.Options{Workers: 4, MinItemsPerWorker: 100, Strategy: core.StrategyStatic},
 		nil,
-		func(r reduce.Range, dst *int) {
+		func(r core.Range, dst *int) {
 			for i := r.Start; i < r.End; i++ {
 				*dst += i
 			}
@@ -47,9 +47,9 @@ func TestDoIntoSequentialFastPath(t *testing.T) {
 	var calls int
 	_, ok := DoInto[int](
 		10,
-		reduce.Options{Workers: 8, MinItemsPerWorker: 100, Strategy: reduce.StrategyStatic},
+		core.Options{Workers: 8, MinItemsPerWorker: 100, Strategy: core.StrategyStatic},
 		nil,
-		func(r reduce.Range, dst *int) {
+		func(r core.Range, dst *int) {
 			calls++
 			*dst = r.Len()
 		},

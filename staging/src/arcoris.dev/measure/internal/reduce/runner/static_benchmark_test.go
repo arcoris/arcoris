@@ -19,7 +19,7 @@ package runner
 import (
 	"testing"
 
-	"arcoris.dev/measure/internal/reduce"
+	"arcoris.dev/measure/internal/reduce/core"
 )
 
 func BenchmarkDoIntoStaticSum(b *testing.B) {
@@ -27,11 +27,11 @@ func BenchmarkDoIntoStaticSum(b *testing.B) {
 	for i := range values {
 		values[i] = i
 	}
-	opts := reduce.Options{Workers: 8, MinItemsPerWorker: 1024, Strategy: reduce.StrategyStatic}
-	var scratch reduce.Scratch[int]
+	opts := core.Options{Workers: 8, MinItemsPerWorker: 1024, Strategy: core.StrategyStatic}
+	var scratch core.Scratch[int]
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		got, ok := DoInto[int](len(values), opts, &scratch, func(r reduce.Range, dst *int) {
+		got, ok := DoInto[int](len(values), opts, &scratch, func(r core.Range, dst *int) {
 			chunk := values[r.Start:r.End]
 			for j := 0; j < len(chunk); j++ {
 				*dst += chunk[j]
@@ -48,11 +48,11 @@ func BenchmarkDoIntoFixedSmallChunks(b *testing.B) {
 	for i := range values {
 		values[i] = i
 	}
-	opts := reduce.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 32, Strategy: reduce.StrategyFixed}
-	var scratch reduce.Scratch[int]
+	opts := core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 32, Strategy: core.StrategyFixed}
+	var scratch core.Scratch[int]
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		got, ok := DoInto[int](len(values), opts, &scratch, func(r reduce.Range, dst *int) {
+		got, ok := DoInto[int](len(values), opts, &scratch, func(r core.Range, dst *int) {
 			for _, value := range values[r.Start:r.End] {
 				*dst += value
 			}

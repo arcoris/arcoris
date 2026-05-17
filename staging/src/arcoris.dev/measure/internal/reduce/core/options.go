@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-package reduce
+package core
 
 import "runtime"
 
@@ -60,8 +60,8 @@ type Options struct {
 	MergeMode MergeMode
 }
 
-// NormalizeOptions returns options with invalid or zero values replaced by
-// reduce defaults.
+// NormalizeOptions returns options with invalid or zero values replaced by core
+// defaults.
 //
 // NormalizeOptions does not mutate its input. It also resolves StrategyAuto so
 // downstream packages can switch on a concrete strategy without repeating

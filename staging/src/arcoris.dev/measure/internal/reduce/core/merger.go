@@ -14,18 +14,13 @@
   limitations under the License.
 */
 
-package reduce
+package core
 
-import "testing"
-
-func TestStrategyAndMergeDefaultsRemainStable(t *testing.T) {
-	if StrategyAuto != 0 {
-		t.Fatalf("StrategyAuto = %d, want 0", StrategyAuto)
-	}
-	if MergeLinear != 0 {
-		t.Fatalf("MergeLinear = %d, want 0", MergeLinear)
-	}
-	if StrategyDynamic <= StrategyStatic {
-		t.Fatalf("strategy order changed: static=%d dynamic=%d", StrategyStatic, StrategyDynamic)
-	}
-}
+// Merger folds src into dst.
+//
+// Merge implementations call Merger after mapper execution has completed and do
+// so from one goroutine. Merger may mutate only dst; src is a by-value partial.
+// For floating-point reductions, callers should choose a merge mode with the
+// expected rounding behavior for their algorithm because grouping can affect the
+// final bits.
+type Merger[T any] func(dst *T, src T)

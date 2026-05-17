@@ -18,11 +18,6 @@ package layout
 
 import "arcoris.dev/atomicx"
 
-const (
-	// CacheLinePadSize is the canonical ARCORIS cache-line padding width.
-	CacheLinePadSize = atomicx.CacheLinePadSize
-)
-
 // CacheLinePad aliases the canonical ARCORIS cache-line pad type.
 //
 // Keeping the alias here lets reduction code share the same cache-line contract

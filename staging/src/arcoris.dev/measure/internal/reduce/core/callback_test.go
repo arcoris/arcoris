@@ -14,15 +14,21 @@
   limitations under the License.
 */
 
-package reduce
+package core
 
 import "testing"
 
-func TestMergerCallback(t *testing.T) {
-	merge := Merger[int](func(dst *int, src int) { *dst += src })
-	got := 3
-	merge(&got, 4)
-	if got != 7 {
-		t.Fatalf("merged value = %d, want 7", got)
+func TestMapperCallbacks(t *testing.T) {
+	mapper := Mapper[int](func(r Range) int { return r.Len() })
+	into := IntoMapper[int](func(r Range, dst *int) { *dst += r.Len() })
+	indexed := IndexedIntoMapper[int](func(worker int, r Range, dst *int) {
+		*dst += worker + r.Len()
+	})
+
+	got := mapper(Range{Start: 0, End: 3})
+	into(Range{Start: 0, End: 2}, &got)
+	indexed(4, Range{Start: 0, End: 1}, &got)
+	if got != 10 {
+		t.Fatalf("callback result = %d, want 10", got)
 	}
 }

@@ -17,6 +17,6 @@
 // Package merge combines completed partial results.
 //
 // Merge functions never execute mappers and never create range plans. They only
-// combine already-computed partial values using root reduce merger contracts.
+// combine already-computed partial values using core merger contracts.
 // All merge algorithms run synchronously in the caller goroutine.
 package merge

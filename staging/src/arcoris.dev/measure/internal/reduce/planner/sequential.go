@@ -16,16 +16,16 @@
 
 package planner
 
-import "arcoris.dev/measure/internal/reduce"
+import "arcoris.dev/measure/internal/reduce/core"
 
 // Sequential returns a single range covering [0:n).
 //
 // For n <= 0 it returns dst truncated to zero length. The function never
 // allocates when dst has enough capacity for one range.
-func Sequential(n int, dst []reduce.Range) []reduce.Range {
+func Sequential(n int, dst []core.Range) []core.Range {
 	dst = dst[:0]
 	if n <= 0 {
 		return dst
 	}
-	return append(dst, reduce.Range{Start: 0, End: n})
+	return append(dst, core.Range{Start: 0, End: n})
 }

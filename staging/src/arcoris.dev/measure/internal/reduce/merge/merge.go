@@ -16,14 +16,14 @@
 
 package merge
 
-import "arcoris.dev/measure/internal/reduce"
+import "arcoris.dev/measure/internal/reduce/core"
 
 // Merge dispatches to the merge algorithm selected by mode.
 //
 // The input slice order is the merge order contract. Unknown modes fall back to
 // linear merging so the zero value and any future invalid values remain safe.
-func Merge[T any](partials []T, mode reduce.MergeMode, mergeFn reduce.Merger[T]) (T, bool) {
-	if mode == reduce.MergePairwise {
+func Merge[T any](partials []T, mode core.MergeMode, mergeFn core.Merger[T]) (T, bool) {
+	if mode == core.MergePairwise {
 		return PairwiseInPlace(partials, mergeFn)
 	}
 	return Linear(partials, mergeFn)

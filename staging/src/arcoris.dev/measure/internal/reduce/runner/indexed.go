@@ -17,7 +17,7 @@
 package runner
 
 import (
-	"arcoris.dev/measure/internal/reduce"
+	"arcoris.dev/measure/internal/reduce/core"
 	"arcoris.dev/measure/internal/reduce/merge"
 	"arcoris.dev/measure/internal/reduce/planner"
 )
@@ -28,22 +28,22 @@ import (
 // The worker index is an execution slot, not necessarily the range index for
 // fixed plans with more chunks than workers. Merge order remains range order for
 // planned strategies and worker order for dynamic strategy.
-func DoIndexedInto[T any](n int, opts reduce.Options, scratch *reduce.Scratch[T], mapRange reduce.IndexedIntoMapper[T], mergeFn reduce.Merger[T]) (T, bool) {
+func DoIndexedInto[T any](n int, opts core.Options, scratch *core.Scratch[T], mapRange core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
 	}
-	opts = reduce.NormalizeOptions(opts)
-	if opts.Strategy == reduce.StrategyDynamic {
+	opts = core.NormalizeOptions(opts)
+	if opts.Strategy == core.StrategyDynamic {
 		return DoDynamicInto(n, opts, scratch, mapRange, mergeFn)
 	}
 	if shouldRunSequential(n, opts) {
 		var partial T
-		mapRange(0, reduce.Range{Start: 0, End: n}, &partial)
+		mapRange(0, core.Range{Start: 0, End: n}, &partial)
 		return partial, true
 	}
 	if scratch == nil {
-		scratch = new(reduce.Scratch[T])
+		scratch = new(core.Scratch[T])
 	}
 	scratch.Ranges = planner.Plan(n, opts, scratch.Ranges)
 	ranges := scratch.Ranges

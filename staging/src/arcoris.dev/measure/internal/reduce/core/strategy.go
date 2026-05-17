@@ -14,13 +14,13 @@
   limitations under the License.
 */
 
-package reduce
+package core
 
 // Strategy selects how an input interval is split and scheduled.
 //
-// Strategy values are part of the root reduce domain contract. Planner and
-// runner packages interpret the same values so callers can configure planning
-// and execution with one Options value.
+// Strategy values are part of the core reduction contract. Planner and runner
+// packages interpret the same values so callers can configure planning and
+// execution with one Options value.
 type Strategy uint8
 
 const (

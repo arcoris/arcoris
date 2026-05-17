@@ -16,7 +16,7 @@
 
 package merge
 
-import "arcoris.dev/measure/internal/reduce"
+import "arcoris.dev/measure/internal/reduce/core"
 
 // PairwiseInPlace merges partials in pairwise rounds.
 //
@@ -24,7 +24,7 @@ import "arcoris.dev/measure/internal/reduce"
 // reuses partials as working storage, reducing adjacent pairs until one value
 // remains. Callers must not depend on partials preserving its original contents
 // after this call.
-func PairwiseInPlace[T any](partials []T, mergeFn reduce.Merger[T]) (T, bool) {
+func PairwiseInPlace[T any](partials []T, mergeFn core.Merger[T]) (T, bool) {
 	var zero T
 	if len(partials) == 0 {
 		return zero, false
