@@ -12,4 +12,5 @@ use (
 	./staging/src/arcoris.dev/runtime
 	./staging/src/arcoris.dev/snapshot
 	./staging/src/arcoris.dev/value
+	./staging/src/arcoris.dev/measure
 )
