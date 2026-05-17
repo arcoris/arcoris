@@ -16,46 +16,33 @@
 
 package runner
 
-import (
-	"arcoris.dev/measure/internal/reduce/core"
-	"arcoris.dev/measure/internal/reduce/merge"
-	"arcoris.dev/measure/internal/reduce/planner"
-)
+import "arcoris.dev/measure/internal/reduce/core"
 
-// DoIndexedInto executes a planned reduction while exposing the worker slot to
-// the mapper.
+// ReduceIndexedInto executes a reduction while exposing the worker slot to the
+// mapper.
 //
 // The worker index is an execution slot, not necessarily the range index for
-// fixed plans with more chunks than workers. Merge order remains range order for
-// planned strategies and worker order for dynamic strategy.
-func DoIndexedInto[T any](n int, opts core.Options, scratch *core.Scratch[T], mapRange core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
+// fixed plans with more chunks than workers. Merge order remains range order
+// for static range-local execution and active worker order for fixed or dynamic
+// worker-local execution.
+func ReduceIndexedInto[T any](n int, opts core.Options, scratch *core.Scratch[T], mapRange core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
 	}
 	opts = core.NormalizeOptions(opts)
-	if opts.Strategy == core.StrategyDynamic {
-		return DoDynamicInto(n, opts, scratch, mapRange, mergeFn)
+	if opts.Strategy == core.StrategySequential {
+		return reduceSequentiallyIndexed(n, mapRange)
 	}
-	if shouldRunSequential(n, opts) {
-		var partial T
-		mapRange(0, core.Range{Start: 0, End: n}, &partial)
-		return partial, true
+	if shouldReduceSequentially(n, opts) {
+		return reduceSequentiallyIndexed(n, mapRange)
 	}
-	if scratch == nil {
-		scratch = new(core.Scratch[T])
+	switch opts.Strategy {
+	case core.StrategyDynamic:
+		return reduceDynamicWorkerPartials(n, opts, scratch, mapRange, mergeFn)
+	case core.StrategyFixed:
+		return reduceFixedWorkerPartials(n, opts, scratch, mapRange, mergeFn)
+	default:
+		return reduceStaticRangePartials(n, opts, scratch, mapRange, mergeFn)
 	}
-	scratch.Ranges = planner.Plan(n, opts, scratch.Ranges)
-	ranges := scratch.Ranges
-	if len(ranges) == 0 {
-		return zero, false
-	}
-	if len(ranges) == 1 {
-		var partial T
-		mapRange(0, ranges[0], &partial)
-		return partial, true
-	}
-	partials := scratch.EnsurePartialsDirty(len(ranges))
-	runRangesInto(ranges, partials, opts.Workers, mapRange)
-	return merge.Merge(partials, opts.MergeMode, mergeFn)
 }

@@ -25,8 +25,8 @@
 // Execution details live outside this package:
 //
 //   - planner builds deterministic non-overlapping ranges;
-//   - runner executes range-local reducers;
-//   - merge combines worker-local partial results;
+//   - runner executes range-local or worker-local reductions;
+//   - merge folds completed partial results;
 //   - layout keeps cache-line layout helpers tied to arcoris.dev/atomicx.
 //
 // Core must not import those implementation packages. The dependency direction

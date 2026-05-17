@@ -24,16 +24,14 @@ import (
 	"arcoris.dev/measure/internal/reduce/merge"
 )
 
-// reduceDynamicWorkerPartials executes dynamic chunk-claiming reduction with
-// one partial per active worker.
+// reduceFixedWorkerPartials executes fixed-size chunks with one accumulator per
+// active worker and then merges only those active worker-local partials.
 //
-// Dynamic execution is intended for variable-cost chunks. Each worker keeps one
-// local partial result and repeatedly maps chunks claimed from an atomic cursor.
-// Only workers that claimed at least one chunk are merged, because generic
-// partial values do not have a guaranteed zero-value identity. Merge order is
-// active worker-slot order, not input-range order, so floating-point callers
-// should expect different grouping from static execution.
-func reduceDynamicWorkerPartials[T any](n int, opts core.Options, scratch *core.Scratch[T], mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
+// Fixed worker-local execution is the default fixed strategy because a tiny
+// chunk size can produce many more chunks than workers. Keeping partials at
+// worker cardinality bounds scratch use and merge cost without assuming that a
+// zero-value partial is a merge identity.
+func reduceFixedWorkerPartials[T any](n int, opts core.Options, scratch *core.Scratch[T], mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
@@ -55,20 +53,22 @@ func reduceDynamicWorkerPartials[T any](n int, opts core.Options, scratch *core.
 	}
 	partials := scratch.EnsurePartialsDirty(workers)
 	used := scratch.EnsureUsed(workers)
-	fillWorkerPartialsDynamic(n, chunk, partials, used, mapChunk, mergeFn)
+	fillWorkerPartialsFixed(n, chunk, partials, used, mapChunk, mergeFn)
 	active := compactUsedPartials(partials, used)
 	return merge.Merge(active, opts.MergeMode, mergeFn)
 }
 
-// fillWorkerPartialsDynamic maps dynamically claimed chunks into worker-local
-// partial slots.
+// fillWorkerPartialsFixed maps fixed-size chunks into worker-local partial
+// slots.
 //
-// The cursor advances by chunk index, so each atomic operation assigns one
-// whole chunk. That keeps scheduling cost out of the per-element loop and lets
-// idle worker slots remain inactive instead of contributing dirty or zero-value
-// partials to the final merge. Each chunk maps into a temporary partial and is
-// folded into the worker-local accumulator with mergeFn.
-func fillWorkerPartialsDynamic[T any](n int, chunk int, partials []T, used []bool, mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) {
+// The partial and used slices are indexed by worker slot. A worker writes its
+// partial only after it has processed at least one chunk, so idle workers leave
+// dirty partial slots untouched and are removed by compactUsedPartials before
+// merging. Each chunk maps into a fresh temporary partial before mergeFn folds
+// it into the worker-local accumulator, so mappers may assign chunk results
+// rather than manually accumulating across chunks. The atomic cursor advances
+// once per chunk, never per element.
+func fillWorkerPartialsFixed[T any](n int, chunk int, partials []T, used []bool, mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) {
 	chunks := chunkCount(n, chunk)
 	var next atomic.Int64
 	var wg sync.WaitGroup
@@ -106,13 +106,4 @@ func fillWorkerPartialsDynamic[T any](n int, chunk int, partials []T, used []boo
 		}()
 	}
 	wg.Wait()
-}
-
-// chunkCount returns the number of chunks needed to cover n items with chunk
-// size chunk. The formula avoids n+chunk overflow for large inputs.
-func chunkCount(n, chunk int) int {
-	if n <= 0 || chunk <= 0 {
-		return 0
-	}
-	return 1 + (n-1)/chunk
 }

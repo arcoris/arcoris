@@ -23,9 +23,9 @@ import (
 	"arcoris.dev/measure/internal/reduce/core"
 )
 
-func TestDoIndexedIntoPassesWorkerIndexes(t *testing.T) {
+func TestReduceIndexedIntoPassesWorkerSlots(t *testing.T) {
 	var scratch core.Scratch[int]
-	_, ok := DoIndexedInto[int](
+	_, ok := ReduceIndexedInto[int](
 		1000,
 		core.Options{Workers: 4, MinItemsPerWorker: 100, Strategy: core.StrategyStatic},
 		&scratch,
@@ -35,7 +35,7 @@ func TestDoIndexedIntoPassesWorkerIndexes(t *testing.T) {
 		func(dst *int, src int) { *dst += src },
 	)
 	if !ok {
-		t.Fatal("expected ok")
+		t.Fatal("ReduceIndexedInto returned false for non-empty input")
 	}
 	if len(scratch.Partials) != 4 {
 		t.Fatalf("partials = %d, want 4", len(scratch.Partials))
@@ -47,9 +47,21 @@ func TestDoIndexedIntoPassesWorkerIndexes(t *testing.T) {
 	}
 }
 
-func TestDoIndexedIntoBoundsFixedWorkerSlots(t *testing.T) {
+func TestReduceIndexedIntoStaticProcessesEveryIndexOnce(t *testing.T) {
+	assertReduceIndexedCoversInput(t, core.Options{Workers: 4, MinItemsPerWorker: 10, Strategy: core.StrategyStatic})
+}
+
+func TestReduceIndexedIntoFixedProcessesEveryIndexOnce(t *testing.T) {
+	assertReduceIndexedCoversInput(t, core.Options{Workers: 3, MinItemsPerWorker: 1, ChunkSize: 7, Strategy: core.StrategyFixed})
+}
+
+func TestReduceIndexedIntoDynamicProcessesEveryIndexOnce(t *testing.T) {
+	assertReduceIndexedCoversInput(t, core.Options{Workers: 5, MinItemsPerWorker: 1, ChunkSize: 11, Strategy: core.StrategyDynamic})
+}
+
+func TestReduceIndexedIntoBoundsWorkerSlotsForFixed(t *testing.T) {
 	var maxWorker atomic.Int64
-	_, ok := DoIndexedInto[int](
+	_, ok := ReduceIndexedInto[int](
 		100,
 		core.Options{Workers: 2, MinItemsPerWorker: 1, ChunkSize: 10, Strategy: core.StrategyFixed},
 		nil,
@@ -60,14 +72,39 @@ func TestDoIndexedIntoBoundsFixedWorkerSlots(t *testing.T) {
 					break
 				}
 			}
-			*dst = r.Len()
+			*dst += r.Len()
 		},
 		func(dst *int, src int) { *dst += src },
 	)
 	if !ok {
-		t.Fatal("expected ok")
+		t.Fatal("ReduceIndexedInto returned false for non-empty input")
 	}
 	if got := maxWorker.Load(); got >= 2 {
 		t.Fatalf("max worker = %d, want < 2", got)
 	}
+}
+
+func assertReduceIndexedCoversInput(t *testing.T, opts core.Options) {
+	t.Helper()
+	const n = 257
+	seen := make([]atomic.Int64, n)
+	got, ok := ReduceIndexedInto[int](
+		n,
+		opts,
+		nil,
+		func(_ int, r core.Range, dst *int) {
+			for i := r.Start; i < r.End; i++ {
+				seen[i].Add(1)
+				*dst += 1
+			}
+		},
+		func(dst *int, src int) { *dst += src },
+	)
+	if !ok {
+		t.Fatal("ReduceIndexedInto returned false for non-empty input")
+	}
+	if got != n {
+		t.Fatalf("ReduceIndexedInto() = %d, want %d", got, n)
+	}
+	assertEveryIndexOnce(t, seen)
 }

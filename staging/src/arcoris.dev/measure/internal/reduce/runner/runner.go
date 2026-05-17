@@ -26,7 +26,8 @@ type Runner[T any] struct {
 	// opts is normalized once during construction to avoid repeated defaulting.
 	opts core.Options
 
-	// scratch stores reusable ranges and partial-result slots between calls.
+	// scratch stores reusable ranges, partial-result slots, and active-worker
+	// flags between calls.
 	scratch core.Scratch[T]
 }
 
@@ -35,15 +36,15 @@ func New[T any](opts core.Options) Runner[T] {
 	return Runner[T]{opts: core.NormalizeOptions(opts)}
 }
 
-// DoInto executes a reduction using runner-owned scratch buffers.
-func (r *Runner[T]) DoInto(n int, mapRange core.IntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
-	return DoInto(n, r.opts, &r.scratch, mapRange, mergeFn)
+// ReduceInto executes a reduction using runner-owned scratch buffers.
+func (r *Runner[T]) ReduceInto(n int, mapRange core.IntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
+	return ReduceInto(n, r.opts, &r.scratch, mapRange, mergeFn)
 }
 
-// DoIndexedInto executes an indexed reduction using runner-owned scratch
+// ReduceIndexedInto executes an indexed reduction using runner-owned scratch
 // buffers.
-func (r *Runner[T]) DoIndexedInto(n int, mapRange core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
-	return DoIndexedInto(n, r.opts, &r.scratch, mapRange, mergeFn)
+func (r *Runner[T]) ReduceIndexedInto(n int, mapRange core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
+	return ReduceIndexedInto(n, r.opts, &r.scratch, mapRange, mergeFn)
 }
 
 // Reset clears runner-owned scratch contents while retaining backing storage.

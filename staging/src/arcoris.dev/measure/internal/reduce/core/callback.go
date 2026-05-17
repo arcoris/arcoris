@@ -34,8 +34,9 @@ type IntoMapper[T any] func(Range, *T)
 
 // IndexedIntoMapper maps a range while exposing the execution slot.
 //
-// Static and fixed runners pass the worker slot currently processing the range.
-// Dynamic runners call the mapper repeatedly for chunks claimed by the same
-// worker, so dst acts as that worker's accumulator. The worker value is stable
-// only within one reduction call.
+// Static range-local runners pass the worker slot currently processing the
+// planned range. Fixed and dynamic worker-local runners pass the worker slot
+// that claimed the current chunk; each chunk receives a fresh destination and
+// the runner folds chunk partials into that worker's accumulator with Merger.
+// The worker value is stable only within one reduction call.
 type IndexedIntoMapper[T any] func(worker int, r Range, dst *T)

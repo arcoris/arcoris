@@ -25,7 +25,7 @@ import (
 func TestRunnerReusesScratch(t *testing.T) {
 	r := New[int](core.Options{Workers: 4, MinItemsPerWorker: 10, Strategy: core.StrategyStatic})
 	for i := 0; i < 3; i++ {
-		got, ok := r.DoInto(100, func(rng core.Range, dst *int) {
+		got, ok := r.ReduceInto(100, func(rng core.Range, dst *int) {
 			for x := rng.Start; x < rng.End; x++ {
 				*dst += x
 			}
@@ -36,5 +36,18 @@ func TestRunnerReusesScratch(t *testing.T) {
 		if got != 4950 {
 			t.Fatalf("got %d, want 4950", got)
 		}
+	}
+}
+
+func TestRunnerReduceIndexedIntoReusesScratch(t *testing.T) {
+	r := New[int](core.Options{Workers: 3, MinItemsPerWorker: 1, ChunkSize: 7, Strategy: core.StrategyFixed})
+	got, ok := r.ReduceIndexedInto(42, func(_ int, rng core.Range, dst *int) {
+		*dst += rng.Len()
+	}, func(dst *int, src int) { *dst += src })
+	if !ok {
+		t.Fatal("expected ok")
+	}
+	if got != 42 {
+		t.Fatalf("got %d, want 42", got)
 	}
 }

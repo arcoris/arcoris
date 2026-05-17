@@ -16,8 +16,8 @@
 
 package core
 
-// Scratch owns reusable planning and partial-result buffers for one partial
-// result type.
+// Scratch owns reusable planning, partial-result, and active-slot buffers for
+// one partial result type.
 //
 // Scratch is for sequential reuse by one caller. Do not share one Scratch
 // between simultaneous reductions because planners and runners mutate its slices
@@ -32,6 +32,11 @@ type Scratch[T any] struct {
 	// Partials stores worker-local or range-local partial results. Runner
 	// packages may reuse and overwrite this slice on each call.
 	Partials []T
+
+	// Used stores runner-owned active-slot metadata. Worker-local execution uses
+	// it to mark which partial slots contain meaningful values, because zero-value
+	// partials are not assumed to be merge identities.
+	Used []bool
 }
 
 // Reset clears logical slice lengths while retaining backing storage.
@@ -42,13 +47,15 @@ type Scratch[T any] struct {
 func (s *Scratch[T]) Reset() {
 	s.Ranges = s.Ranges[:0]
 	s.Partials = s.Partials[:0]
+	s.Used = s.Used[:0]
 }
 
 // Clear zeroes retained backing slots while keeping backing storage.
 //
-// Clear scans the full retained capacity of Ranges and Partials, then resets
-// both lengths to zero. It is more expensive than Reset, but it removes
-// references from dirty slots even after a previous Reset shortened the slices.
+// Clear scans the full retained capacity of Ranges, Partials, and Used, then
+// resets their lengths to zero. It is more expensive than Reset, but it removes
+// references and stale active flags even after a previous Reset shortened the
+// slices.
 func (s *Scratch[T]) Clear() {
 	var zeroRange Range
 	ranges := s.Ranges[:cap(s.Ranges)]
@@ -60,18 +67,24 @@ func (s *Scratch[T]) Clear() {
 	for i := range partials {
 		partials[i] = zeroPartial
 	}
+	used := s.Used[:cap(s.Used)]
+	for i := range used {
+		used[i] = false
+	}
 	s.Ranges = ranges[:0]
 	s.Partials = partials[:0]
+	s.Used = used[:0]
 }
 
 // Release drops all scratch backing storage.
 //
-// Release is the strongest memory-management operation: both slices become nil,
-// allowing their backing arrays and any references stored in them to be garbage
-// collected when no other references exist.
+// Release is the strongest memory-management operation: all retained slices
+// become nil, allowing their backing arrays and any references stored in them to
+// be garbage collected when no other references exist.
 func (s *Scratch[T]) Release() {
 	s.Ranges = nil
 	s.Partials = nil
+	s.Used = nil
 }
 
 // EnsurePartials returns a zeroed partial-result slice of length n.
@@ -112,4 +125,38 @@ func (s *Scratch[T]) EnsurePartialsDirty(n int) []T {
 	}
 	s.Partials = s.Partials[:n]
 	return s.Partials
+}
+
+// EnsureUsed returns an inactive flag slice of length n.
+func (s *Scratch[T]) EnsureUsed(n int) []bool {
+	if n <= 0 {
+		s.Used = s.Used[:0]
+		return s.Used
+	}
+	if cap(s.Used) < n {
+		s.Used = make([]bool, n)
+		return s.Used
+	}
+	s.Used = s.Used[:n]
+	for i := range s.Used {
+		s.Used[i] = false
+	}
+	return s.Used
+}
+
+// EnsureUsedDirty returns an active-slot flag slice of length n without
+// clearing reused slots.
+//
+// Runners use this only when they will set every used flag before reading it.
+func (s *Scratch[T]) EnsureUsedDirty(n int) []bool {
+	if n <= 0 {
+		s.Used = s.Used[:0]
+		return s.Used
+	}
+	if cap(s.Used) < n {
+		s.Used = make([]bool, n)
+		return s.Used
+	}
+	s.Used = s.Used[:n]
+	return s.Used
 }
