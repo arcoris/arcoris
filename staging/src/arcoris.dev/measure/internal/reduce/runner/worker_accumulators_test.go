@@ -26,9 +26,16 @@ import (
 func TestFillFixedChunkWorkerAccumulatorsUsesChunkCountForWorkers(t *testing.T) {
 	partials := make([]int, activeWorkers(8, chunkCount(10, 100)))
 	used := make([]bool, len(partials))
-	fillFixedChunkWorkerAccumulators(10, 100, chunkCount(10, 100), partials, used, func(_ int, r core.Range, dst *int) {
-		*dst += r.Len()
-	})
+	fillFixedChunkWorkerAccumulators(
+		10,
+		100,
+		chunkCount(10, 100),
+		partials,
+		used,
+		func(_ int, r core.Range, dst *int) {
+			*dst += r.Len()
+		},
+	)
 	active := compactUsedPartials(partials, used)
 	if len(active) != 1 {
 		t.Fatalf("active workers = %d, want 1", len(active))
@@ -43,12 +50,19 @@ func TestFillDynamicChunkWorkerAccumulatorsProcessesEveryIndexOnce(t *testing.T)
 	partials := make([]int, 4)
 	used := make([]bool, 4)
 	seen := make([]atomic.Int64, n)
-	fillDynamicChunkWorkerAccumulators(n, 13, chunkCount(n, 13), partials, used, func(_ int, r core.Range, dst *int) {
-		for i := r.Start; i < r.End; i++ {
-			seen[i].Add(1)
-			*dst += 1
-		}
-	})
+	fillDynamicChunkWorkerAccumulators(
+		n,
+		13,
+		chunkCount(n, 13),
+		partials,
+		used,
+		func(_ int, r core.Range, dst *int) {
+			for i := r.Start; i < r.End; i++ {
+				seen[i].Add(1)
+				*dst += 1
+			}
+		},
+	)
 	assertEveryIndexOnce(t, seen)
 	if got := sumInts(compactUsedPartials(partials, used)); got != n {
 		t.Fatalf("active partial sum = %d, want %d", got, n)

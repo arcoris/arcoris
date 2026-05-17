@@ -27,17 +27,23 @@ import (
 
 // accumulateBalancedWorkerPartials assigns each balanced range to one
 // worker-local partial and merges those active partials in range/worker order.
-func accumulateBalancedWorkerPartials[T any](n int, opts core.Options, scratch *core.Scratch[T], accumulate core.IndexedAccumulator[T], mergeFn core.Merger[T]) (T, bool) {
+func accumulateBalancedWorkerPartials[T any](
+	n int,
+	opts core.Options,
+	scratch *core.Scratch[T],
+	accumulate core.IndexedAccumulator[T],
+	mergeFn core.Merger[T],
+) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
 	}
+
 	opts = core.NormalizeOptions(opts)
-	if scratch == nil {
-		scratch = new(core.Scratch[T])
-	}
+	scratch = ensureScratch(scratch)
 	scratch.Ranges = planner.Balanced(n, opts, scratch.Ranges)
 	ranges := scratch.Ranges
+
 	if len(ranges) == 0 {
 		return zero, false
 	}
@@ -53,60 +59,64 @@ func accumulateBalancedWorkerPartials[T any](n int, opts core.Options, scratch *
 
 // accumulateFixedChunkWorkerPartials accumulates statically assigned chunks
 // directly into worker-local partials.
-func accumulateFixedChunkWorkerPartials[T any](n int, opts core.Options, scratch *core.Scratch[T], accumulate core.IndexedAccumulator[T], mergeFn core.Merger[T]) (T, bool) {
+func accumulateFixedChunkWorkerPartials[T any](
+	n int,
+	opts core.Options,
+	scratch *core.Scratch[T],
+	accumulate core.IndexedAccumulator[T],
+	mergeFn core.Merger[T],
+) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
 	}
+
 	opts = core.NormalizeOptions(opts)
 	if shouldReduceSequentially(n, opts) {
 		return accumulateSequentiallyIndexed(n, accumulate)
 	}
-	chunk := opts.ChunkSize
-	if chunk <= 0 {
-		chunk = core.DefaultChunkSize
-	}
-	chunks := chunkCount(n, chunk)
-	workers := activeWorkers(opts.Workers, chunks)
-	if workers <= 1 {
+
+	work := chunkWorkers(n, opts)
+	if work.workers <= 1 {
 		return accumulateSequentiallyIndexed(n, accumulate)
 	}
-	if scratch == nil {
-		scratch = new(core.Scratch[T])
-	}
-	partials := scratch.EnsurePartialsDirty(workers)
-	used := scratch.EnsureUsed(workers)
-	fillFixedChunkWorkerAccumulators(n, chunk, chunks, partials, used, accumulate)
+
+	scratch = ensureScratch(scratch)
+	partials := scratch.EnsurePartialsDirty(work.workers)
+	used := scratch.EnsureUsed(work.workers)
+	fillFixedChunkWorkerAccumulators(n, work.size, work.count, partials, used, accumulate)
 	active := compactUsedPartials(partials, used)
 	return merge.Merge(active, opts.MergeMode, mergeFn)
 }
 
 // accumulateDynamicChunkWorkerPartials accumulates dynamically claimed chunks
 // directly into worker-local partials.
-func accumulateDynamicChunkWorkerPartials[T any](n int, opts core.Options, scratch *core.Scratch[T], accumulate core.IndexedAccumulator[T], mergeFn core.Merger[T]) (T, bool) {
+func accumulateDynamicChunkWorkerPartials[T any](
+	n int,
+	opts core.Options,
+	scratch *core.Scratch[T],
+	accumulate core.IndexedAccumulator[T],
+	mergeFn core.Merger[T],
+) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
 	}
+
 	opts = core.NormalizeOptions(opts)
 	if shouldReduceSequentially(n, opts) {
 		return accumulateSequentiallyIndexed(n, accumulate)
 	}
-	chunk := opts.ChunkSize
-	if chunk <= 0 {
-		chunk = core.DefaultChunkSize
-	}
-	chunks := chunkCount(n, chunk)
-	workers := activeWorkers(opts.Workers, chunks)
-	if workers <= 1 {
+
+	work := chunkWorkers(n, opts)
+	if work.workers <= 1 {
 		return accumulateSequentiallyIndexed(n, accumulate)
 	}
-	if scratch == nil {
-		scratch = new(core.Scratch[T])
-	}
-	partials := scratch.EnsurePartialsDirty(workers)
-	used := scratch.EnsureUsed(workers)
-	fillDynamicChunkWorkerAccumulators(n, chunk, chunks, partials, used, accumulate)
+
+	scratch = ensureScratch(scratch)
+	partials := scratch.EnsurePartialsDirty(work.workers)
+	used := scratch.EnsureUsed(work.workers)
+	fillDynamicChunkWorkerAccumulators(n, work.size, work.count, partials, used, accumulate)
 	active := compactUsedPartials(partials, used)
 	return merge.Merge(active, opts.MergeMode, mergeFn)
 }
@@ -116,7 +126,12 @@ func accumulateDynamicChunkWorkerPartials[T any](n int, opts core.Options, scrat
 // Balanced accumulation preserves the same range order as the planned ranges,
 // but it calls the Accumulate-family callback directly into a worker-local
 // partial instead of asking for a complete temporary partial first.
-func fillBalancedWorkerAccumulators[T any](ranges []core.Range, partials []T, used []bool, accumulate core.IndexedAccumulator[T]) {
+func fillBalancedWorkerAccumulators[T any](
+	ranges []core.Range,
+	partials []T,
+	used []bool,
+	accumulate core.IndexedAccumulator[T],
+) {
 	var wg sync.WaitGroup
 	wg.Add(len(ranges))
 	for worker, r := range ranges {
@@ -133,7 +148,14 @@ func fillBalancedWorkerAccumulators[T any](ranges []core.Range, partials []T, us
 
 // fillFixedChunkWorkerAccumulators calls accumulate directly on each
 // worker-local partial for a deterministic contiguous block of chunks.
-func fillFixedChunkWorkerAccumulators[T any](n int, chunk int, chunks int, partials []T, used []bool, accumulate core.IndexedAccumulator[T]) {
+func fillFixedChunkWorkerAccumulators[T any](
+	n int,
+	chunk int,
+	chunks int,
+	partials []T,
+	used []bool,
+	accumulate core.IndexedAccumulator[T],
+) {
 	var wg sync.WaitGroup
 	wg.Add(len(partials))
 	for worker := range partials {
@@ -157,7 +179,14 @@ func fillFixedChunkWorkerAccumulators[T any](n int, chunk int, chunks int, parti
 
 // fillDynamicChunkWorkerAccumulators uses one atomic operation per chunk and
 // accumulates claimed chunks directly into worker-local partials.
-func fillDynamicChunkWorkerAccumulators[T any](n int, chunk int, chunks int, partials []T, used []bool, accumulate core.IndexedAccumulator[T]) {
+func fillDynamicChunkWorkerAccumulators[T any](
+	n int,
+	chunk int,
+	chunks int,
+	partials []T,
+	used []bool,
+	accumulate core.IndexedAccumulator[T],
+) {
 	var next atomic.Int64
 	var wg sync.WaitGroup
 	wg.Add(len(partials))

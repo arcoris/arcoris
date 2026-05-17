@@ -16,13 +16,15 @@
 
 package runner
 
-import "arcoris.dev/measure/internal/reduce/core"
-
 // fixedChunkBlock returns the half-open chunk-index block assigned to worker.
 //
 // FixedChunks uses contiguous chunk blocks to keep ownership deterministic and
 // locality-friendly. The distribution is balanced by at most one chunk.
-func fixedChunkBlock(chunks int, workers int, worker int) (int, int) {
+func fixedChunkBlock(
+	chunks int,
+	workers int,
+	worker int,
+) (int, int) {
 	if chunks <= 0 || workers <= 0 || worker < 0 || worker >= workers {
 		return 0, 0
 	}
@@ -34,14 +36,4 @@ func fixedChunkBlock(chunks int, workers int, worker int) (int, int) {
 		end++
 	}
 	return start, end
-}
-
-// chunkRange converts a chunk index into an input index range.
-func chunkRange(n int, chunk int, chunkIndex int) core.Range {
-	start := chunkIndex * chunk
-	end := start + chunk
-	if end > n {
-		end = n
-	}
-	return core.Range{Start: start, End: end}
 }

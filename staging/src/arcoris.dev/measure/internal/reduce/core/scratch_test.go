@@ -30,7 +30,12 @@ func TestScratchResetKeepsBackingStorage(t *testing.T) {
 
 	s.Reset()
 	if len(s.Ranges) != 0 || len(s.Partials) != 0 || len(s.Used) != 0 {
-		t.Fatalf("Reset lengths = ranges:%d partials:%d used:%d, want zero", len(s.Ranges), len(s.Partials), len(s.Used))
+		t.Fatalf(
+			"Reset lengths = ranges:%d partials:%d used:%d, want zero",
+			len(s.Ranges),
+			len(s.Partials),
+			len(s.Used),
+		)
 	}
 	if cap(s.Ranges) != rangeCap || cap(s.Partials) != partialCap || cap(s.Used) != usedCap {
 		t.Fatal("Reset changed backing capacity")
@@ -64,7 +69,12 @@ func TestScratchClearZeroesVisibleSlots(t *testing.T) {
 
 	s.Clear()
 	if len(s.Ranges) != 0 || len(s.Partials) != 0 || len(s.Used) != 0 {
-		t.Fatalf("Clear lengths = ranges:%d partials:%d used:%d, want zero", len(s.Ranges), len(s.Partials), len(s.Used))
+		t.Fatalf(
+			"Clear lengths = ranges:%d partials:%d used:%d, want zero",
+			len(s.Ranges),
+			len(s.Partials),
+			len(s.Used),
+		)
 	}
 	if cap(s.Ranges) != rangeCap || cap(s.Partials) != partialCap || cap(s.Used) != usedCap {
 		t.Fatal("Clear changed backing capacity")
@@ -102,7 +112,12 @@ func TestScratchReleaseDropsBackingStorage(t *testing.T) {
 
 	s.Release()
 	if s.Ranges != nil || s.Partials != nil || s.Used != nil {
-		t.Fatalf("Release slices = ranges:%#v partials:%#v used:%#v, want nil", s.Ranges, s.Partials, s.Used)
+		t.Fatalf(
+			"Release slices = ranges:%#v partials:%#v used:%#v, want nil",
+			s.Ranges,
+			s.Partials,
+			s.Used,
+		)
 	}
 }
 

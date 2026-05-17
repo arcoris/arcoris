@@ -14,19 +14,29 @@
   limitations under the License.
 */
 
-package core
+package runner
 
-import "testing"
+import "arcoris.dev/measure/internal/reduce/core"
 
-func TestStrategyAndMergeDefaultsRemainStable(t *testing.T) {
-	if StrategyAuto != 0 {
-		t.Fatalf("StrategyAuto = %d, want 0", StrategyAuto)
+// chunkRange converts a chunk index into an input index range.
+func chunkRange(
+	n int,
+	chunk int,
+	chunkIndex int,
+) core.Range {
+	start := chunkIndex * chunk
+	end := start + chunk
+	if end > n {
+		end = n
 	}
-	if StrategyDynamicChunks <= StrategyBalanced {
-		t.Fatalf(
-			"strategy order changed: balanced=%d dynamicChunks=%d",
-			StrategyBalanced,
-			StrategyDynamicChunks,
-		)
+	return core.Range{Start: start, End: end}
+}
+
+// chunkCount returns the number of chunks needed to cover n items with chunk
+// size chunk. The formula avoids n+chunk overflow for large inputs.
+func chunkCount(n, chunk int) int {
+	if n <= 0 || chunk <= 0 {
+		return 0
 	}
+	return 1 + (n-1)/chunk
 }

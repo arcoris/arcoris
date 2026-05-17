@@ -50,18 +50,3 @@ const (
 	// floating-point grouping than balanced range execution.
 	StrategyDynamicChunks
 )
-
-// MergeMode selects how completed partial results are combined.
-//
-// Merge modes operate on already-computed partials. They do not affect planning
-// or mapper scheduling.
-type MergeMode uint8
-
-const (
-	// MergeLinear merges partial results from left to right in slice order.
-	MergeLinear MergeMode = iota
-
-	// MergePairwise merges partial results in pairwise rounds, reusing the
-	// partial slice as working storage.
-	MergePairwise
-)

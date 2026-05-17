@@ -104,7 +104,12 @@ func TestReduceBalancedRangePartialsMergesByRangeIndex(t *testing.T) {
 	var scratch core.Scratch[string]
 	got, ok := reduceBalancedRangePartials(
 		9,
-		core.Options{Workers: 3, MinItemsPerWorker: 1, Strategy: core.StrategyBalanced, MergeMode: core.MergeLinear},
+		core.Options{
+			Workers:           3,
+			MinItemsPerWorker: 1,
+			Strategy:          core.StrategyBalanced,
+			MergeMode:         core.MergeLinear,
+		},
 		&scratch,
 		func(_ int, r core.Range, dst *string) {
 			*dst = strconv.Itoa(r.Start)

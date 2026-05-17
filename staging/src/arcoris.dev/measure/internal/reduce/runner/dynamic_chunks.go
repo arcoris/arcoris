@@ -33,30 +33,32 @@ import (
 // partial values do not have a guaranteed zero-value identity. Merge order is
 // active worker-slot order, not input-range order, so floating-point callers
 // should expect different grouping from balanced execution.
-func reduceDynamicChunkWorkerPartials[T any](n int, opts core.Options, scratch *core.Scratch[T], mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
+func reduceDynamicChunkWorkerPartials[T any](
+	n int,
+	opts core.Options,
+	scratch *core.Scratch[T],
+	mapChunk core.IndexedIntoMapper[T],
+	mergeFn core.Merger[T],
+) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
 	}
+
 	opts = core.NormalizeOptions(opts)
 	if shouldReduceSequentially(n, opts) {
 		return reduceSequentiallyIndexed(n, mapChunk)
 	}
-	chunk := opts.ChunkSize
-	if chunk <= 0 {
-		chunk = core.DefaultChunkSize
-	}
-	chunks := chunkCount(n, chunk)
-	workers := activeWorkers(opts.Workers, chunks)
-	if workers <= 1 {
+
+	work := chunkWorkers(n, opts)
+	if work.workers <= 1 {
 		return reduceSequentiallyIndexed(n, mapChunk)
 	}
-	if scratch == nil {
-		scratch = new(core.Scratch[T])
-	}
-	partials := scratch.EnsurePartialsDirty(workers)
-	used := scratch.EnsureUsed(workers)
-	fillDynamicChunkWorkerPartials(n, chunk, chunks, partials, used, mapChunk, mergeFn)
+
+	scratch = ensureScratch(scratch)
+	partials := scratch.EnsurePartialsDirty(work.workers)
+	used := scratch.EnsureUsed(work.workers)
+	fillDynamicChunkWorkerPartials(n, work.size, work.count, partials, used, mapChunk, mergeFn)
 	active := compactUsedPartials(partials, used)
 	return merge.Merge(active, opts.MergeMode, mergeFn)
 }
@@ -69,7 +71,15 @@ func reduceDynamicChunkWorkerPartials[T any](n int, opts core.Options, scratch *
 // idle worker slots remain inactive instead of contributing dirty or zero-value
 // partials to the final merge. Each chunk maps into a temporary partial and is
 // folded into the worker-local accumulator with mergeFn.
-func fillDynamicChunkWorkerPartials[T any](n int, chunk int, chunks int, partials []T, used []bool, mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) {
+func fillDynamicChunkWorkerPartials[T any](
+	n int,
+	chunk int,
+	chunks int,
+	partials []T,
+	used []bool,
+	mapChunk core.IndexedIntoMapper[T],
+	mergeFn core.Merger[T],
+) {
 	var next atomic.Int64
 	var wg sync.WaitGroup
 	wg.Add(len(partials))
@@ -101,13 +111,4 @@ func fillDynamicChunkWorkerPartials[T any](n int, chunk int, chunks int, partial
 		}()
 	}
 	wg.Wait()
-}
-
-// chunkCount returns the number of chunks needed to cover n items with chunk
-// size chunk. The formula avoids n+chunk overflow for large inputs.
-func chunkCount(n, chunk int) int {
-	if n <= 0 || chunk <= 0 {
-		return 0
-	}
-	return 1 + (n-1)/chunk
 }

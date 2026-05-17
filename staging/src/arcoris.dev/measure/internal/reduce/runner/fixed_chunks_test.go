@@ -23,7 +23,14 @@ func TestFixedChunksChunkBlockAssignsContiguousChunks(t *testing.T) {
 	for worker := range want {
 		start, end := fixedChunkBlock(16, 4, worker)
 		if start != want[worker][0] || end != want[worker][1] {
-			t.Fatalf("worker %d block = [%d,%d), want [%d,%d)", worker, start, end, want[worker][0], want[worker][1])
+			t.Fatalf(
+				"worker %d block = [%d,%d), want [%d,%d)",
+				worker,
+				start,
+				end,
+				want[worker][0],
+				want[worker][1],
+			)
 		}
 	}
 }
@@ -33,14 +40,14 @@ func TestFixedChunksChunkBlockBalancesRemainder(t *testing.T) {
 	for worker := range want {
 		start, end := fixedChunkBlock(10, 3, worker)
 		if start != want[worker][0] || end != want[worker][1] {
-			t.Fatalf("worker %d block = [%d,%d), want [%d,%d)", worker, start, end, want[worker][0], want[worker][1])
+			t.Fatalf(
+				"worker %d block = [%d,%d), want [%d,%d)",
+				worker,
+				start,
+				end,
+				want[worker][0],
+				want[worker][1],
+			)
 		}
-	}
-}
-
-func TestChunkRangeClampsLastChunk(t *testing.T) {
-	got := chunkRange(10, 4, 2)
-	if got.Start != 8 || got.End != 10 {
-		t.Fatalf("chunkRange() = [%d,%d), want [8,10)", got.Start, got.End)
 	}
 }

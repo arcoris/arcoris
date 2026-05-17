@@ -48,22 +48,41 @@ func TestReduceIndexedIntoPassesWorkerSlots(t *testing.T) {
 }
 
 func TestReduceIndexedIntoBalancedProcessesEveryIndexOnce(t *testing.T) {
-	assertReduceIndexedCoversInput(t, core.Options{Workers: 4, MinItemsPerWorker: 10, Strategy: core.StrategyBalanced})
+	assertReduceIndexedCoversInput(t, core.Options{
+		Workers:           4,
+		MinItemsPerWorker: 10,
+		Strategy:          core.StrategyBalanced,
+	})
 }
 
 func TestReduceIndexedIntoFixedChunksProcessesEveryIndexOnce(t *testing.T) {
-	assertReduceIndexedCoversInput(t, core.Options{Workers: 3, MinItemsPerWorker: 1, ChunkSize: 7, Strategy: core.StrategyFixedChunks})
+	assertReduceIndexedCoversInput(t, core.Options{
+		Workers:           3,
+		MinItemsPerWorker: 1,
+		ChunkSize:         7,
+		Strategy:          core.StrategyFixedChunks,
+	})
 }
 
 func TestReduceIndexedIntoDynamicChunksProcessesEveryIndexOnce(t *testing.T) {
-	assertReduceIndexedCoversInput(t, core.Options{Workers: 5, MinItemsPerWorker: 1, ChunkSize: 11, Strategy: core.StrategyDynamicChunks})
+	assertReduceIndexedCoversInput(t, core.Options{
+		Workers:           5,
+		MinItemsPerWorker: 1,
+		ChunkSize:         11,
+		Strategy:          core.StrategyDynamicChunks,
+	})
 }
 
 func TestReduceIndexedIntoBoundsWorkerSlotsForFixedChunks(t *testing.T) {
 	var maxWorker atomic.Int64
 	_, ok := ReduceIndexedInto[int](
 		100,
-		core.Options{Workers: 2, MinItemsPerWorker: 1, ChunkSize: 10, Strategy: core.StrategyFixedChunks},
+		core.Options{
+			Workers:           2,
+			MinItemsPerWorker: 1,
+			ChunkSize:         10,
+			Strategy:          core.StrategyFixedChunks,
+		},
 		nil,
 		func(worker int, r core.Range, dst *int) {
 			for {

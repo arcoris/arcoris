@@ -25,7 +25,11 @@ import "arcoris.dev/measure/internal/reduce/core"
 // order, caps the range count by Workers, and keeps range sizes as balanced as
 // integer division allows. For small inputs it returns one range so runners can
 // use the sequential fast path.
-func Balanced(n int, opts core.Options, dst []core.Range) []core.Range {
+func Balanced(
+	n int,
+	opts core.Options,
+	dst []core.Range,
+) []core.Range {
 	dst = dst[:0]
 	if n <= 0 {
 		return dst

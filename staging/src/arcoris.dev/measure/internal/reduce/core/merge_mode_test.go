@@ -18,15 +18,15 @@ package core
 
 import "testing"
 
-func TestStrategyAndMergeDefaultsRemainStable(t *testing.T) {
-	if StrategyAuto != 0 {
-		t.Fatalf("StrategyAuto = %d, want 0", StrategyAuto)
+func TestMergeModeDefaultsRemainStable(t *testing.T) {
+	if MergeLinear != 0 {
+		t.Fatalf("MergeLinear = %d, want 0", MergeLinear)
 	}
-	if StrategyDynamicChunks <= StrategyBalanced {
+	if MergePairwise <= MergeLinear {
 		t.Fatalf(
-			"strategy order changed: balanced=%d dynamicChunks=%d",
-			StrategyBalanced,
-			StrategyDynamicChunks,
+			"merge mode order changed: linear=%d pairwise=%d",
+			MergeLinear,
+			MergePairwise,
 		)
 	}
 }

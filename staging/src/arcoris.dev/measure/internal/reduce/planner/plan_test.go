@@ -31,7 +31,15 @@ func TestPlanDispatchesByStrategy(t *testing.T) {
 	if len(fixed) != 4 {
 		t.Fatalf("fixed len = %d, want 4", len(fixed))
 	}
-	balanced := Plan(1000, core.Options{Strategy: core.StrategyBalanced, Workers: 2, MinItemsPerWorker: 100}, nil)
+	balanced := Plan(
+		1000,
+		core.Options{
+			Strategy:          core.StrategyBalanced,
+			Workers:           2,
+			MinItemsPerWorker: 100,
+		},
+		nil,
+	)
 	if len(balanced) != 2 {
 		t.Fatalf("balanced len = %d, want 2", len(balanced))
 	}

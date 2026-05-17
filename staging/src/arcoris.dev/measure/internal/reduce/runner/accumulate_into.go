@@ -24,8 +24,26 @@ import "arcoris.dev/measure/internal/reduce/core"
 // Unlike ReduceInto, the accumulator may receive the same dst many times and
 // must add to existing state. This avoids one chunkPartial and one mergeFn call
 // per chunk for algorithms that naturally update reusable partial storage.
-func AccumulateInto[T any](n int, opts core.Options, scratch *core.Scratch[T], accumulate core.Accumulator[T], mergeFn core.Merger[T]) (T, bool) {
-	return AccumulateIndexedInto(n, opts, scratch, func(_ int, r core.Range, dst *T) {
+func AccumulateInto[T any](
+	n int,
+	opts core.Options,
+	scratch *core.Scratch[T],
+	accumulate core.Accumulator[T],
+	mergeFn core.Merger[T],
+) (T, bool) {
+	return AccumulateIndexedInto(
+		n,
+		opts,
+		scratch,
+		indexedAccumulator(accumulate),
+		mergeFn,
+	)
+}
+
+// indexedAccumulator adapts the non-indexed Accumulate callback to the indexed
+// form used by the shared dispatch path.
+func indexedAccumulator[T any](accumulate core.Accumulator[T]) core.IndexedAccumulator[T] {
+	return func(_ int, r core.Range, dst *T) {
 		accumulate(r, dst)
-	}, mergeFn)
+	}
 }

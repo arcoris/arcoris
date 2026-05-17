@@ -32,17 +32,23 @@ import (
 // balanced planning model. It is intentionally not the chunk-strategy default:
 // fine-grained chunk plans can create far more ranges than workers, which would
 // inflate scratch storage and merge work.
-func reduceBalancedRangePartials[T any](n int, opts core.Options, scratch *core.Scratch[T], mapRange core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
+func reduceBalancedRangePartials[T any](
+	n int,
+	opts core.Options,
+	scratch *core.Scratch[T],
+	mapRange core.IndexedIntoMapper[T],
+	mergeFn core.Merger[T],
+) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
 	}
+
 	opts = core.NormalizeOptions(opts)
-	if scratch == nil {
-		scratch = new(core.Scratch[T])
-	}
+	scratch = ensureScratch(scratch)
 	scratch.Ranges = planner.Balanced(n, opts, scratch.Ranges)
 	ranges := scratch.Ranges
+
 	if len(ranges) == 0 {
 		return zero, false
 	}
@@ -63,7 +69,12 @@ func reduceBalancedRangePartials[T any](n int, opts core.Options, scratch *core.
 // by range order, but it can allocate and merge too many partials for
 // fine-grained chunk plans. The queued path is useful when a deterministic
 // balanced plan has more ranges than available workers.
-func fillRangePartialsQueued[T any](ranges []core.Range, partials []T, workers int, mapRange core.IndexedIntoMapper[T]) {
+func fillRangePartialsQueued[T any](
+	ranges []core.Range,
+	partials []T,
+	workers int,
+	mapRange core.IndexedIntoMapper[T],
+) {
 	workers = activeWorkers(workers, len(ranges))
 	if workers == len(ranges) {
 		fillRangePartialsOneToOne(ranges, partials, mapRange)
@@ -76,13 +87,13 @@ func fillRangePartialsQueued[T any](ranges []core.Range, partials []T, workers i
 	for worker := 0; worker < workers; worker++ {
 		go func() {
 			for {
-				i := int(next.Add(1) - 1)
-				if i >= len(ranges) {
+				rangeIndex := int(next.Add(1) - 1)
+				if rangeIndex >= len(ranges) {
 					break
 				}
 				var local T
-				mapRange(worker, ranges[i], &local)
-				partials[i] = local
+				mapRange(worker, ranges[rangeIndex], &local)
+				partials[rangeIndex] = local
 			}
 			wg.Done()
 		}()
@@ -96,7 +107,11 @@ func fillRangePartialsQueued[T any](ranges []core.Range, partials []T, workers i
 // range-indexed partial slot. That keeps writes out of shared storage while the
 // mapper's hot loop is running and preserves deterministic range-order merge
 // input.
-func fillRangePartialsOneToOne[T any](ranges []core.Range, partials []T, mapRange core.IndexedIntoMapper[T]) {
+func fillRangePartialsOneToOne[T any](
+	ranges []core.Range,
+	partials []T,
+	mapRange core.IndexedIntoMapper[T],
+) {
 	var wg sync.WaitGroup
 	wg.Add(len(ranges))
 	for worker, r := range ranges {

@@ -23,7 +23,10 @@ import "arcoris.dev/measure/internal/reduce/core"
 // Sequential execution has exactly one partial and does not call the merger.
 // It is used both for explicit StrategySequential and for automatic fallback
 // when the input is too small to amortize worker startup.
-func reduceSequentially[T any](n int, mapRange core.IntoMapper[T]) (T, bool) {
+func reduceSequentially[T any](
+	n int,
+	mapRange core.IntoMapper[T],
+) (T, bool) {
 	return reduceSequentiallyIndexed(n, func(_ int, r core.Range, dst *T) {
 		mapRange(r, dst)
 	})
@@ -34,7 +37,10 @@ func reduceSequentially[T any](n int, mapRange core.IntoMapper[T]) (T, bool) {
 //
 // Keeping the indexed form separate lets ReduceIndexedInto preserve worker-slot
 // semantics even when a parallel strategy falls back to the sequential path.
-func reduceSequentiallyIndexed[T any](n int, mapRange core.IndexedIntoMapper[T]) (T, bool) {
+func reduceSequentiallyIndexed[T any](
+	n int,
+	mapRange core.IndexedIntoMapper[T],
+) (T, bool) {
 	var partial T
 	mapRange(0, core.Range{Start: 0, End: n}, &partial)
 	return partial, true
@@ -42,7 +48,10 @@ func reduceSequentiallyIndexed[T any](n int, mapRange core.IndexedIntoMapper[T])
 
 // accumulateSequentially accumulates the whole input into one partial in the
 // current goroutine.
-func accumulateSequentially[T any](n int, accumulate core.Accumulator[T]) (T, bool) {
+func accumulateSequentially[T any](
+	n int,
+	accumulate core.Accumulator[T],
+) (T, bool) {
 	return accumulateSequentiallyIndexed(n, func(_ int, r core.Range, dst *T) {
 		accumulate(r, dst)
 	})
@@ -50,7 +59,10 @@ func accumulateSequentially[T any](n int, accumulate core.Accumulator[T]) (T, bo
 
 // accumulateSequentiallyIndexed accumulates the whole input into worker slot
 // zero. It performs no final merge because there is only one partial.
-func accumulateSequentiallyIndexed[T any](n int, accumulate core.IndexedAccumulator[T]) (T, bool) {
+func accumulateSequentiallyIndexed[T any](
+	n int,
+	accumulate core.IndexedAccumulator[T],
+) (T, bool) {
 	var partial T
 	accumulate(0, core.Range{Start: 0, End: n}, &partial)
 	return partial, true

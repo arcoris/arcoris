@@ -30,7 +30,12 @@ func TestReduceDynamicChunkWorkerPartialsProcessesEveryIndexOnce(t *testing.T) {
 	seen := make([]atomic.Int64, n)
 	got, ok := reduceDynamicChunkWorkerPartials[int](
 		n,
-		core.Options{Workers: 4, MinItemsPerWorker: 1, ChunkSize: 17, Strategy: core.StrategyDynamicChunks},
+		core.Options{
+			Workers:           4,
+			MinItemsPerWorker: 1,
+			ChunkSize:         17,
+			Strategy:          core.StrategyDynamicChunks,
+		},
 		nil,
 		func(_ int, r core.Range, dst *int) {
 			for i := r.Start; i < r.End; i++ {
@@ -53,7 +58,12 @@ func TestReduceDynamicChunkWorkerPartialsDoesNotMergeInactiveWorkers(t *testing.
 	var zeroMerged atomic.Int64
 	got, ok := reduceDynamicChunkWorkerPartials[nonNeutralPartial](
 		10,
-		core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 100, Strategy: core.StrategyDynamicChunks},
+		core.Options{
+			Workers:           8,
+			MinItemsPerWorker: 1,
+			ChunkSize:         100,
+			Strategy:          core.StrategyDynamicChunks,
+		},
 		nil,
 		func(_ int, r core.Range, dst *nonNeutralPartial) {
 			dst.Value += r.Len()
@@ -83,7 +93,12 @@ func TestReduceDynamicChunkWorkerPartialsUsesChunkSize(t *testing.T) {
 	var lengths []int
 	got, ok := reduceDynamicChunkWorkerPartials[int](
 		10,
-		core.Options{Workers: 3, MinItemsPerWorker: 1, ChunkSize: 3, Strategy: core.StrategyDynamicChunks},
+		core.Options{
+			Workers:           3,
+			MinItemsPerWorker: 1,
+			ChunkSize:         3,
+			Strategy:          core.StrategyDynamicChunks,
+		},
 		nil,
 		func(_ int, r core.Range, dst *int) {
 			mu.Lock()
@@ -115,7 +130,12 @@ func TestReduceDynamicChunkWorkerPartialsSequentialFallbackMapsOnce(t *testing.T
 	var calls atomic.Int64
 	got, ok := reduceDynamicChunkWorkerPartials[int](
 		10,
-		core.Options{Workers: 8, MinItemsPerWorker: 100, ChunkSize: 1, Strategy: core.StrategyDynamicChunks},
+		core.Options{
+			Workers:           8,
+			MinItemsPerWorker: 100,
+			ChunkSize:         1,
+			Strategy:          core.StrategyDynamicChunks,
+		},
 		nil,
 		func(_ int, r core.Range, dst *int) {
 			calls.Add(1)
@@ -150,9 +170,17 @@ func TestReduceDynamicChunkWorkerPartialsEmptyReturnsFalse(t *testing.T) {
 func TestFillDynamicChunkWorkerPartialsMarksOnlyActiveWorkers(t *testing.T) {
 	partials := make([]int, 4)
 	used := make([]bool, 4)
-	fillDynamicChunkWorkerPartials(5, 100, chunkCount(5, 100), partials, used, func(_ int, r core.Range, dst *int) {
-		*dst = r.Len()
-	}, func(dst *int, src int) { *dst += src })
+	fillDynamicChunkWorkerPartials(
+		5,
+		100,
+		chunkCount(5, 100),
+		partials,
+		used,
+		func(_ int, r core.Range, dst *int) {
+			*dst = r.Len()
+		},
+		func(dst *int, src int) { *dst += src },
+	)
 	active := compactUsedPartials(partials, used)
 	if len(active) != 1 {
 		t.Fatalf("active partials = %d, want 1", len(active))

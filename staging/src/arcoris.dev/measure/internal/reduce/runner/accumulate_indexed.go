@@ -25,24 +25,51 @@ import "arcoris.dev/measure/internal/reduce/core"
 // repeatedly with the same worker-local dst, so it must preserve and extend
 // existing partial state. Strategy-specific paths remain private so all dispatch
 // policy stays auditable here.
-func AccumulateIndexedInto[T any](n int, opts core.Options, scratch *core.Scratch[T], accumulate core.IndexedAccumulator[T], mergeFn core.Merger[T]) (T, bool) {
+func AccumulateIndexedInto[T any](
+	n int,
+	opts core.Options,
+	scratch *core.Scratch[T],
+	accumulate core.IndexedAccumulator[T],
+	mergeFn core.Merger[T],
+) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
 	}
+
 	opts = core.NormalizeOptions(opts)
-	if opts.Strategy == core.StrategySequential {
+
+	switch {
+	case opts.Strategy == core.StrategySequential:
+		return accumulateSequentiallyIndexed(n, accumulate)
+	case shouldReduceSequentially(n, opts):
 		return accumulateSequentiallyIndexed(n, accumulate)
 	}
-	if shouldReduceSequentially(n, opts) {
-		return accumulateSequentiallyIndexed(n, accumulate)
-	}
+
 	switch opts.Strategy {
 	case core.StrategyFixedChunks:
-		return accumulateFixedChunkWorkerPartials(n, opts, scratch, accumulate, mergeFn)
+		return accumulateFixedChunkWorkerPartials(
+			n,
+			opts,
+			scratch,
+			accumulate,
+			mergeFn,
+		)
 	case core.StrategyDynamicChunks:
-		return accumulateDynamicChunkWorkerPartials(n, opts, scratch, accumulate, mergeFn)
+		return accumulateDynamicChunkWorkerPartials(
+			n,
+			opts,
+			scratch,
+			accumulate,
+			mergeFn,
+		)
 	default:
-		return accumulateBalancedWorkerPartials(n, opts, scratch, accumulate, mergeFn)
+		return accumulateBalancedWorkerPartials(
+			n,
+			opts,
+			scratch,
+			accumulate,
+			mergeFn,
+		)
 	}
 }

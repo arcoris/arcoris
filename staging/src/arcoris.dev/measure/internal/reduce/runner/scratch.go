@@ -14,19 +14,15 @@
   limitations under the License.
 */
 
-package core
+package runner
 
-import "testing"
+import "arcoris.dev/measure/internal/reduce/core"
 
-func TestStrategyAndMergeDefaultsRemainStable(t *testing.T) {
-	if StrategyAuto != 0 {
-		t.Fatalf("StrategyAuto = %d, want 0", StrategyAuto)
+// ensureScratch returns caller storage when available and otherwise allocates a
+// fresh scratch buffer holder for the current reduction.
+func ensureScratch[T any](scratch *core.Scratch[T]) *core.Scratch[T] {
+	if scratch != nil {
+		return scratch
 	}
-	if StrategyDynamicChunks <= StrategyBalanced {
-		t.Fatalf(
-			"strategy order changed: balanced=%d dynamicChunks=%d",
-			StrategyBalanced,
-			StrategyDynamicChunks,
-		)
-	}
+	return new(core.Scratch[T])
 }

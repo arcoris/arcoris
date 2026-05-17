@@ -24,6 +24,19 @@ import "arcoris.dev/measure/internal/reduce/core"
 // Reduce is the simplest entry point when the mapper naturally returns a
 // complete partial value. It allocates temporary scratch as needed; repeated
 // callers should prefer ReduceInto with caller-owned Scratch or Runner.
-func Reduce[T any](n int, opts core.Options, mapRange core.Mapper[T], mergeFn core.Merger[T]) (T, bool) {
-	return ReduceInto(n, opts, nil, func(r core.Range, dst *T) { *dst = mapRange(r) }, mergeFn)
+func Reduce[T any](
+	n int,
+	opts core.Options,
+	mapRange core.Mapper[T],
+	mergeFn core.Merger[T],
+) (T, bool) {
+	return ReduceInto(
+		n,
+		opts,
+		nil,
+		func(r core.Range, dst *T) {
+			*dst = mapRange(r)
+		},
+		mergeFn,
+	)
 }

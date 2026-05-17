@@ -25,24 +25,51 @@ import "arcoris.dev/measure/internal/reduce/core"
 // fixed plans with more chunks than workers. Merge order remains range order
 // for balanced range-local execution and active worker order for fixed or dynamic
 // worker-local execution.
-func ReduceIndexedInto[T any](n int, opts core.Options, scratch *core.Scratch[T], mapRange core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
+func ReduceIndexedInto[T any](
+	n int,
+	opts core.Options,
+	scratch *core.Scratch[T],
+	mapRange core.IndexedIntoMapper[T],
+	mergeFn core.Merger[T],
+) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
 	}
+
 	opts = core.NormalizeOptions(opts)
-	if opts.Strategy == core.StrategySequential {
+
+	switch {
+	case opts.Strategy == core.StrategySequential:
+		return reduceSequentiallyIndexed(n, mapRange)
+	case shouldReduceSequentially(n, opts):
 		return reduceSequentiallyIndexed(n, mapRange)
 	}
-	if shouldReduceSequentially(n, opts) {
-		return reduceSequentiallyIndexed(n, mapRange)
-	}
+
 	switch opts.Strategy {
 	case core.StrategyDynamicChunks:
-		return reduceDynamicChunkWorkerPartials(n, opts, scratch, mapRange, mergeFn)
+		return reduceDynamicChunkWorkerPartials(
+			n,
+			opts,
+			scratch,
+			mapRange,
+			mergeFn,
+		)
 	case core.StrategyFixedChunks:
-		return reduceFixedChunkWorkerPartials(n, opts, scratch, mapRange, mergeFn)
+		return reduceFixedChunkWorkerPartials(
+			n,
+			opts,
+			scratch,
+			mapRange,
+			mergeFn,
+		)
 	default:
-		return reduceBalancedRangePartials(n, opts, scratch, mapRange, mergeFn)
+		return reduceBalancedRangePartials(
+			n,
+			opts,
+			scratch,
+			mapRange,
+			mergeFn,
+		)
 	}
 }

@@ -30,7 +30,11 @@ func BenchmarkFixedChunks_1M_Chunk64K(b *testing.B) {
 	benchmarkFixedChunks(b, 1_000_000, 64*1024)
 }
 
-func benchmarkFixedChunks(b *testing.B, n int, chunk int) {
+func benchmarkFixedChunks(
+	b *testing.B,
+	n int,
+	chunk int,
+) {
 	opts := core.Options{ChunkSize: chunk, Strategy: core.StrategyFixedChunks}
 	var ranges []core.Range
 	b.ReportAllocs()

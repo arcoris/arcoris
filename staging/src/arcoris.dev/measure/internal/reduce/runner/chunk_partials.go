@@ -30,30 +30,32 @@ import (
 // This is the Reduce-family fixed-chunk path: mappers may assign each chunk
 // partial because the runner owns per-chunk folding with mergeFn. Chunk
 // ownership is balanced and contiguous; no atomic cursor is used.
-func reduceFixedChunkWorkerPartials[T any](n int, opts core.Options, scratch *core.Scratch[T], mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
+func reduceFixedChunkWorkerPartials[T any](
+	n int,
+	opts core.Options,
+	scratch *core.Scratch[T],
+	mapChunk core.IndexedIntoMapper[T],
+	mergeFn core.Merger[T],
+) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
 	}
+
 	opts = core.NormalizeOptions(opts)
 	if shouldReduceSequentially(n, opts) {
 		return reduceSequentiallyIndexed(n, mapChunk)
 	}
-	chunk := opts.ChunkSize
-	if chunk <= 0 {
-		chunk = core.DefaultChunkSize
-	}
-	chunks := chunkCount(n, chunk)
-	workers := activeWorkers(opts.Workers, chunks)
-	if workers <= 1 {
+
+	work := chunkWorkers(n, opts)
+	if work.workers <= 1 {
 		return reduceSequentiallyIndexed(n, mapChunk)
 	}
-	if scratch == nil {
-		scratch = new(core.Scratch[T])
-	}
-	partials := scratch.EnsurePartialsDirty(workers)
-	used := scratch.EnsureUsed(workers)
-	fillFixedChunkWorkerPartials(n, chunk, chunks, partials, used, mapChunk, mergeFn)
+
+	scratch = ensureScratch(scratch)
+	partials := scratch.EnsurePartialsDirty(work.workers)
+	used := scratch.EnsureUsed(work.workers)
+	fillFixedChunkWorkerPartials(n, work.size, work.count, partials, used, mapChunk, mergeFn)
 	active := compactUsedPartials(partials, used)
 	return merge.Merge(active, opts.MergeMode, mergeFn)
 }
@@ -67,7 +69,15 @@ func reduceFixedChunkWorkerPartials[T any](n int, opts core.Options, scratch *co
 // merging. Each chunk maps into a fresh temporary partial before mergeFn folds
 // it into the worker-local accumulator, so mappers may assign chunk results
 // rather than manually accumulating across chunks.
-func fillFixedChunkWorkerPartials[T any](n int, chunk int, chunks int, partials []T, used []bool, mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) {
+func fillFixedChunkWorkerPartials[T any](
+	n int,
+	chunk int,
+	chunks int,
+	partials []T,
+	used []bool,
+	mapChunk core.IndexedIntoMapper[T],
+	mergeFn core.Merger[T],
+) {
 	var wg sync.WaitGroup
 	wg.Add(len(partials))
 	for worker := range partials {

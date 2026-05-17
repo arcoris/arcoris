@@ -120,7 +120,12 @@ func TestReduceIntoFixedChunksUsesWorkerLocalPartials(t *testing.T) {
 	var scratch core.Scratch[int]
 	got, ok := ReduceInto[int](
 		n,
-		core.Options{Workers: 4, MinItemsPerWorker: 1, ChunkSize: 10, Strategy: core.StrategyFixedChunks},
+		core.Options{
+			Workers:           4,
+			MinItemsPerWorker: 1,
+			ChunkSize:         10,
+			Strategy:          core.StrategyFixedChunks,
+		},
 		&scratch,
 		func(r core.Range, dst *int) {
 			*dst = r.Len()
@@ -137,7 +142,11 @@ func TestReduceIntoFixedChunksUsesWorkerLocalPartials(t *testing.T) {
 		t.Fatalf("partials = %d, want one slot per worker", len(scratch.Partials))
 	}
 	if chunks := chunkCount(n, 10); len(scratch.Partials) >= chunks {
-		t.Fatalf("partials = %d, chunks = %d; fixed execution should not allocate per chunk", len(scratch.Partials), chunks)
+		t.Fatalf(
+			"partials = %d, chunks = %d; fixed execution should not allocate per chunk",
+			len(scratch.Partials),
+			chunks,
+		)
 	}
 }
 
@@ -145,7 +154,12 @@ func TestReduceIntoDynamicChunksSkipsIdlePartials(t *testing.T) {
 	var zeroMerged atomic.Int64
 	got, ok := ReduceInto[nonNeutralPartial](
 		10,
-		core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 100, Strategy: core.StrategyDynamicChunks},
+		core.Options{
+			Workers:           8,
+			MinItemsPerWorker: 1,
+			ChunkSize:         100,
+			Strategy:          core.StrategyDynamicChunks,
+		},
 		nil,
 		func(r core.Range, dst *nonNeutralPartial) {
 			dst.Value = r.Len()

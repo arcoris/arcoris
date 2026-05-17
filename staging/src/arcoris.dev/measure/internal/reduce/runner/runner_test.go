@@ -40,7 +40,12 @@ func TestRunnerReusesScratch(t *testing.T) {
 }
 
 func TestRunnerReduceIndexedIntoReusesScratch(t *testing.T) {
-	r := New[int](core.Options{Workers: 3, MinItemsPerWorker: 1, ChunkSize: 7, Strategy: core.StrategyFixedChunks})
+	r := New[int](core.Options{
+		Workers:           3,
+		MinItemsPerWorker: 1,
+		ChunkSize:         7,
+		Strategy:          core.StrategyFixedChunks,
+	})
 	got, ok := r.ReduceIndexedInto(42, func(_ int, rng core.Range, dst *int) {
 		*dst += rng.Len()
 	}, func(dst *int, src int) { *dst += src })
@@ -53,7 +58,12 @@ func TestRunnerReduceIndexedIntoReusesScratch(t *testing.T) {
 }
 
 func TestRunnerAccumulateIntoReusesScratch(t *testing.T) {
-	r := New[int](core.Options{Workers: 3, MinItemsPerWorker: 1, ChunkSize: 7, Strategy: core.StrategyFixedChunks})
+	r := New[int](core.Options{
+		Workers:           3,
+		MinItemsPerWorker: 1,
+		ChunkSize:         7,
+		Strategy:          core.StrategyFixedChunks,
+	})
 	got, ok := r.AccumulateInto(42, func(rng core.Range, dst *int) {
 		*dst += rng.Len()
 	}, func(dst *int, src int) { *dst += src })
@@ -66,7 +76,12 @@ func TestRunnerAccumulateIntoReusesScratch(t *testing.T) {
 }
 
 func TestRunnerClearAndReleaseMemoryManagement(t *testing.T) {
-	r := New[*int](core.Options{Workers: 2, MinItemsPerWorker: 1, ChunkSize: 1, Strategy: core.StrategyFixedChunks})
+	r := New[*int](core.Options{
+		Workers:           2,
+		MinItemsPerWorker: 1,
+		ChunkSize:         1,
+		Strategy:          core.StrategyFixedChunks,
+	})
 	value := 1
 	_, ok := r.ReduceInto(4, func(_ core.Range, dst **int) {
 		*dst = &value

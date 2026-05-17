@@ -23,7 +23,11 @@ import (
 )
 
 func TestMergeDispatchesLinear(t *testing.T) {
-	got, ok := Merge([]string{"a", "b"}, core.MergeLinear, func(dst *string, src string) { *dst += src })
+	got, ok := Merge(
+		[]string{"a", "b"},
+		core.MergeLinear,
+		func(dst *string, src string) { *dst += src },
+	)
 	if !ok || got != "ab" {
 		t.Fatalf("got %q ok=%v, want ab true", got, ok)
 	}

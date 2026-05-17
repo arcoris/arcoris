@@ -37,7 +37,12 @@ func BenchmarkReduceInto_Balanced(b *testing.B) {
 
 func BenchmarkReduceInto_FixedChunks(b *testing.B) {
 	values := benchmarkValues(65_536)
-	opts := core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 32, Strategy: core.StrategyFixedChunks}
+	opts := core.Options{
+		Workers:           8,
+		MinItemsPerWorker: 1,
+		ChunkSize:         32,
+		Strategy:          core.StrategyFixedChunks,
+	}
 	benchmarkReduceIntoSum(b, values, opts)
 }
 
@@ -49,13 +54,23 @@ func BenchmarkReduceIndexedInto_Balanced(b *testing.B) {
 
 func BenchmarkReduceIndexedInto_FixedChunks(b *testing.B) {
 	values := benchmarkValues(65_536)
-	opts := core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 32, Strategy: core.StrategyFixedChunks}
+	opts := core.Options{
+		Workers:           8,
+		MinItemsPerWorker: 1,
+		ChunkSize:         32,
+		Strategy:          core.StrategyFixedChunks,
+	}
 	benchmarkReduceIndexedIntoSum(b, values, opts)
 }
 
 func BenchmarkReduceInto_DynamicChunks(b *testing.B) {
 	values := benchmarkValues(65_536)
-	opts := core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 256, Strategy: core.StrategyDynamicChunks}
+	opts := core.Options{
+		Workers:           8,
+		MinItemsPerWorker: 1,
+		ChunkSize:         256,
+		Strategy:          core.StrategyDynamicChunks,
+	}
 	benchmarkReduceIntoSum(b, values, opts)
 }
 
@@ -73,32 +88,60 @@ func BenchmarkAccumulateInto_Balanced(b *testing.B) {
 
 func BenchmarkAccumulateInto_FixedChunks(b *testing.B) {
 	values := benchmarkValues(65_536)
-	opts := core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 32, Strategy: core.StrategyFixedChunks}
+	opts := core.Options{
+		Workers:           8,
+		MinItemsPerWorker: 1,
+		ChunkSize:         32,
+		Strategy:          core.StrategyFixedChunks,
+	}
 	benchmarkAccumulateIntoSum(b, values, opts)
 }
 
 func BenchmarkAccumulateInto_DynamicChunks(b *testing.B) {
 	values := benchmarkValues(65_536)
-	opts := core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 256, Strategy: core.StrategyDynamicChunks}
+	opts := core.Options{
+		Workers:           8,
+		MinItemsPerWorker: 1,
+		ChunkSize:         256,
+		Strategy:          core.StrategyDynamicChunks,
+	}
 	benchmarkAccumulateIntoSum(b, values, opts)
 }
 
 func BenchmarkReduceVsAccumulate_FixedChunks(b *testing.B) {
 	values := benchmarkValues(65_536)
-	opts := core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 32, Strategy: core.StrategyFixedChunks}
+	opts := core.Options{
+		Workers:           8,
+		MinItemsPerWorker: 1,
+		ChunkSize:         32,
+		Strategy:          core.StrategyFixedChunks,
+	}
 	b.Run("reduce", func(b *testing.B) { benchmarkReduceIntoSum(b, values, opts) })
 	b.Run("accumulate", func(b *testing.B) { benchmarkAccumulateIntoSum(b, values, opts) })
 }
 
 func BenchmarkReduceVsAccumulate_DynamicChunks(b *testing.B) {
 	values := benchmarkValues(65_536)
-	opts := core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 256, Strategy: core.StrategyDynamicChunks}
+	opts := core.Options{
+		Workers:           8,
+		MinItemsPerWorker: 1,
+		ChunkSize:         256,
+		Strategy:          core.StrategyDynamicChunks,
+	}
 	b.Run("reduce", func(b *testing.B) { benchmarkReduceIntoSum(b, values, opts) })
 	b.Run("accumulate", func(b *testing.B) { benchmarkAccumulateIntoSum(b, values, opts) })
 }
 
 func BenchmarkFillRangePartialsQueued(b *testing.B) {
-	ranges := planner.Balanced(1_000_000, core.Options{Workers: 64, MinItemsPerWorker: 1, Strategy: core.StrategyBalanced}, nil)
+	ranges := planner.Balanced(
+		1_000_000,
+		core.Options{
+			Workers:           64,
+			MinItemsPerWorker: 1,
+			Strategy:          core.StrategyBalanced,
+		},
+		nil,
+	)
 	partials := make([]int, len(ranges))
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -116,9 +159,17 @@ func BenchmarkFillFixedChunkWorkerPartials(b *testing.B) {
 		for j := range used {
 			used[j] = false
 		}
-		fillFixedChunkWorkerPartials(1_000_000, 1024, chunkCount(1_000_000, 1024), partials, used, func(_ int, r core.Range, dst *int) {
-			*dst = r.Len()
-		}, func(dst *int, src int) { *dst += src })
+		fillFixedChunkWorkerPartials(
+			1_000_000,
+			1024,
+			chunkCount(1_000_000, 1024),
+			partials,
+			used,
+			func(_ int, r core.Range, dst *int) {
+				*dst = r.Len()
+			},
+			func(dst *int, src int) { *dst += src },
+		)
 	}
 }
 
@@ -131,7 +182,11 @@ func BenchmarkCompactUsedPartials(b *testing.B) {
 	}
 }
 
-func benchmarkReduceIntoSum(b *testing.B, values []int, opts core.Options) {
+func benchmarkReduceIntoSum(
+	b *testing.B,
+	values []int,
+	opts core.Options,
+) {
 	var scratch core.Scratch[int]
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -144,20 +199,34 @@ func benchmarkReduceIntoSum(b *testing.B, values []int, opts core.Options) {
 	}
 }
 
-func benchmarkReduceIndexedIntoSum(b *testing.B, values []int, opts core.Options) {
+func benchmarkReduceIndexedIntoSum(
+	b *testing.B,
+	values []int,
+	opts core.Options,
+) {
 	var scratch core.Scratch[int]
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		got, ok := ReduceIndexedInto[int](len(values), opts, &scratch, func(_ int, r core.Range, dst *int) {
-			sumRange(values, r, dst)
-		}, func(dst *int, src int) { *dst += src })
+		got, ok := ReduceIndexedInto[int](
+			len(values),
+			opts,
+			&scratch,
+			func(_ int, r core.Range, dst *int) {
+				sumRange(values, r, dst)
+			},
+			func(dst *int, src int) { *dst += src },
+		)
 		if !ok || got == 0 {
 			b.Fatalf("unexpected result: %d ok=%v", got, ok)
 		}
 	}
 }
 
-func benchmarkAccumulateIntoSum(b *testing.B, values []int, opts core.Options) {
+func benchmarkAccumulateIntoSum(
+	b *testing.B,
+	values []int,
+	opts core.Options,
+) {
 	var scratch core.Scratch[int]
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -178,7 +247,11 @@ func benchmarkValues(n int) []int {
 	return values
 }
 
-func sumRange(values []int, r core.Range, dst *int) {
+func sumRange(
+	values []int,
+	r core.Range,
+	dst *int,
+) {
 	for _, value := range values[r.Start:r.End] {
 		*dst += value
 	}

@@ -16,17 +16,17 @@
 
 package core
 
-import "testing"
+// MergeMode selects how completed partial results are combined.
+//
+// Merge modes operate on already-computed partials. They do not affect planning
+// or mapper scheduling.
+type MergeMode uint8
 
-func TestStrategyAndMergeDefaultsRemainStable(t *testing.T) {
-	if StrategyAuto != 0 {
-		t.Fatalf("StrategyAuto = %d, want 0", StrategyAuto)
-	}
-	if StrategyDynamicChunks <= StrategyBalanced {
-		t.Fatalf(
-			"strategy order changed: balanced=%d dynamicChunks=%d",
-			StrategyBalanced,
-			StrategyDynamicChunks,
-		)
-	}
-}
+const (
+	// MergeLinear merges partial results from left to right in slice order.
+	MergeLinear MergeMode = iota
+
+	// MergePairwise merges partial results in pairwise rounds, reusing the
+	// partial slice as working storage.
+	MergePairwise
+)

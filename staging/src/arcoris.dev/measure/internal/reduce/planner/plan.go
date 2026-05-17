@@ -23,7 +23,11 @@ import "arcoris.dev/measure/internal/reduce/core"
 // Plan normalizes opts before dispatch. StrategyDynamicChunks deliberately produces
 // the same fixed-size ranges as StrategyFixedChunks; the runner package decides
 // whether those chunks are claimed dynamically or consumed as a balanced plan.
-func Plan(n int, opts core.Options, dst []core.Range) []core.Range {
+func Plan(
+	n int,
+	opts core.Options,
+	dst []core.Range,
+) []core.Range {
 	opts = core.NormalizeOptions(opts)
 	switch opts.Strategy {
 	case core.StrategySequential:

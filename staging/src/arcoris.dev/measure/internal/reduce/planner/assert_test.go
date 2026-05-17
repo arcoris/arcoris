@@ -24,7 +24,11 @@ import (
 
 // assertPlanCovers verifies that ranges exactly cover [0:n) without empty
 // ranges, gaps, or overlaps.
-func assertPlanCovers(t *testing.T, ranges []core.Range, n int) {
+func assertPlanCovers(
+	t *testing.T,
+	ranges []core.Range,
+	n int,
+) {
 	t.Helper()
 	pos := 0
 	for i, r := range ranges {

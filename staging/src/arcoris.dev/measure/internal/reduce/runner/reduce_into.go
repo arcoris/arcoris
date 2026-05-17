@@ -24,8 +24,26 @@ import "arcoris.dev/measure/internal/reduce/core"
 // ReduceIndexedInto owns all strategy dispatch. Keeping ReduceInto as a thin
 // adapter makes the exported entry points consistent and prevents one strategy
 // path from gaining different fallback behavior than the indexed path.
-func ReduceInto[T any](n int, opts core.Options, scratch *core.Scratch[T], mapRange core.IntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
-	return ReduceIndexedInto(n, opts, scratch, func(_ int, r core.Range, dst *T) {
+func ReduceInto[T any](
+	n int,
+	opts core.Options,
+	scratch *core.Scratch[T],
+	mapRange core.IntoMapper[T],
+	mergeFn core.Merger[T],
+) (T, bool) {
+	return ReduceIndexedInto(
+		n,
+		opts,
+		scratch,
+		indexedIntoMapper(mapRange),
+		mergeFn,
+	)
+}
+
+// indexedIntoMapper adapts the non-indexed Reduce mapper to the indexed form
+// used by the shared dispatch path.
+func indexedIntoMapper[T any](mapRange core.IntoMapper[T]) core.IndexedIntoMapper[T] {
+	return func(_ int, r core.Range, dst *T) {
 		mapRange(r, dst)
-	}, mergeFn)
+	}
 }

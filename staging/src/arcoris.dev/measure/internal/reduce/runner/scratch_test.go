@@ -14,19 +14,23 @@
   limitations under the License.
 */
 
-package core
+package runner
 
-import "testing"
+import (
+	"testing"
 
-func TestStrategyAndMergeDefaultsRemainStable(t *testing.T) {
-	if StrategyAuto != 0 {
-		t.Fatalf("StrategyAuto = %d, want 0", StrategyAuto)
+	"arcoris.dev/measure/internal/reduce/core"
+)
+
+func TestEnsureScratchReusesCallerStorage(t *testing.T) {
+	scratch := &core.Scratch[int]{}
+	if got := ensureScratch(scratch); got != scratch {
+		t.Fatal("ensureScratch did not reuse caller scratch")
 	}
-	if StrategyDynamicChunks <= StrategyBalanced {
-		t.Fatalf(
-			"strategy order changed: balanced=%d dynamicChunks=%d",
-			StrategyBalanced,
-			StrategyDynamicChunks,
-		)
+}
+
+func TestEnsureScratchAllocatesWhenNil(t *testing.T) {
+	if got := ensureScratch[int](nil); got == nil {
+		t.Fatal("ensureScratch returned nil")
 	}
 }

@@ -44,7 +44,9 @@ func TestActiveWorkersUsesRequestedWorkersWhenValid(t *testing.T) {
 func TestShouldReduceSequentiallyIgnoresExplicitStrategySequential(t *testing.T) {
 	opts := core.Options{Workers: 8, MinItemsPerWorker: 1, Strategy: core.StrategySequential}
 	if shouldReduceSequentially(100, opts) {
-		t.Fatal("shouldReduceSequentially() = true, want false; dispatch handles StrategySequential explicitly")
+		t.Fatal(
+			"shouldReduceSequentially() = true, want false; dispatch handles StrategySequential explicitly",
+		)
 	}
 }
 
@@ -77,12 +79,23 @@ func TestEnoughItemsForParallelBoundaries(t *testing.T) {
 		{name: "disabled threshold", n: 1, minItemsPerWorker: 0, want: true},
 		{name: "below two workers", n: 99, minItemsPerWorker: 50, want: false},
 		{name: "exactly two workers", n: 100, minItemsPerWorker: 50, want: true},
-		{name: "large threshold avoids overflow", n: math.MaxInt, minItemsPerWorker: math.MaxInt, want: false},
+		{
+			name:              "large threshold avoids overflow",
+			n:                 math.MaxInt,
+			minItemsPerWorker: math.MaxInt,
+			want:              false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := enoughItemsForParallel(tt.n, tt.minItemsPerWorker); got != tt.want {
-				t.Fatalf("enoughItemsForParallel(%d, %d) = %v, want %v", tt.n, tt.minItemsPerWorker, got, tt.want)
+				t.Fatalf(
+					"enoughItemsForParallel(%d, %d) = %v, want %v",
+					tt.n,
+					tt.minItemsPerWorker,
+					got,
+					tt.want,
+				)
 			}
 		})
 	}

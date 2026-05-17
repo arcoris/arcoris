@@ -28,14 +28,22 @@ func TestFillFixedChunkWorkerPartialsProcessesEveryIndexOnce(t *testing.T) {
 	partials := make([]int, 4)
 	used := make([]bool, 4)
 	seen := make([]atomic.Int64, n)
-	fillFixedChunkWorkerPartials(n, 13, chunkCount(n, 13), partials, used, func(_ int, r core.Range, dst *int) {
-		count := 0
-		for i := r.Start; i < r.End; i++ {
-			seen[i].Add(1)
-			count++
-		}
-		*dst = count
-	}, func(dst *int, src int) { *dst += src })
+	fillFixedChunkWorkerPartials(
+		n,
+		13,
+		chunkCount(n, 13),
+		partials,
+		used,
+		func(_ int, r core.Range, dst *int) {
+			count := 0
+			for i := r.Start; i < r.End; i++ {
+				seen[i].Add(1)
+				count++
+			}
+			*dst = count
+		},
+		func(dst *int, src int) { *dst += src },
+	)
 	assertEveryIndexOnce(t, seen)
 	if got := sumInts(compactUsedPartials(partials, used)); got != n {
 		t.Fatalf("active partial sum = %d, want %d", got, n)
@@ -46,7 +54,12 @@ func TestReduceFixedChunkWorkerPartialsDoesNotMergeInactiveWorkers(t *testing.T)
 	var zeroMerged atomic.Int64
 	got, ok := reduceFixedChunkWorkerPartials[nonNeutralPartial](
 		10,
-		core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 100, Strategy: core.StrategyFixedChunks},
+		core.Options{
+			Workers:           8,
+			MinItemsPerWorker: 1,
+			ChunkSize:         100,
+			Strategy:          core.StrategyFixedChunks,
+		},
 		nil,
 		func(_ int, r core.Range, dst *nonNeutralPartial) {
 			dst.Value += r.Len()
@@ -75,7 +88,12 @@ func TestReduceFixedChunkWorkerPartialsUsesFewerPartialsThanChunks(t *testing.T)
 	var scratch core.Scratch[int]
 	got, ok := reduceFixedChunkWorkerPartials[int](
 		1000,
-		core.Options{Workers: 4, MinItemsPerWorker: 1, ChunkSize: 10, Strategy: core.StrategyFixedChunks},
+		core.Options{
+			Workers:           4,
+			MinItemsPerWorker: 1,
+			ChunkSize:         10,
+			Strategy:          core.StrategyFixedChunks,
+		},
 		&scratch,
 		func(_ int, r core.Range, dst *int) { *dst += r.Len() },
 		func(dst *int, src int) { *dst += src },
@@ -90,16 +108,28 @@ func TestReduceFixedChunkWorkerPartialsUsesFewerPartialsThanChunks(t *testing.T)
 		t.Fatalf("partials = %d, want one slot per worker", len(scratch.Partials))
 	}
 	if chunks := chunkCount(1000, 10); len(scratch.Partials) >= chunks {
-		t.Fatalf("partials = %d, chunks = %d; want fewer partials than chunks", len(scratch.Partials), chunks)
+		t.Fatalf(
+			"partials = %d, chunks = %d; want fewer partials than chunks",
+			len(scratch.Partials),
+			chunks,
+		)
 	}
 }
 
 func TestFillFixedChunkWorkerPartialsAccumulatesMultipleChunksPerWorker(t *testing.T) {
 	partials := make([]int, 2)
 	used := make([]bool, 2)
-	fillFixedChunkWorkerPartials(100, 1, chunkCount(100, 1), partials, used, func(_ int, r core.Range, dst *int) {
-		*dst = r.Len()
-	}, func(dst *int, src int) { *dst += src })
+	fillFixedChunkWorkerPartials(
+		100,
+		1,
+		chunkCount(100, 1),
+		partials,
+		used,
+		func(_ int, r core.Range, dst *int) {
+			*dst = r.Len()
+		},
+		func(dst *int, src int) { *dst += src },
+	)
 	active := compactUsedPartials(partials, used)
 	if len(active) == 0 {
 		t.Fatal("expected at least one active worker")

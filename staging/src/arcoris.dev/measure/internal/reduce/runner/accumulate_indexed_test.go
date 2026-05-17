@@ -52,7 +52,12 @@ func TestAccumulateIndexedIntoDynamicChunksAccumulatesWorkerLocalState(t *testin
 	var calls [2]atomic.Int64
 	got, ok := AccumulateIndexedInto[int](
 		100,
-		core.Options{Workers: 2, MinItemsPerWorker: 1, ChunkSize: 1, Strategy: core.StrategyDynamicChunks},
+		core.Options{
+			Workers:           2,
+			MinItemsPerWorker: 1,
+			ChunkSize:         1,
+			Strategy:          core.StrategyDynamicChunks,
+		},
 		nil,
 		func(worker int, _ core.Range, dst *int) {
 			calls[worker].Add(1)
@@ -67,7 +72,11 @@ func TestAccumulateIndexedIntoDynamicChunksAccumulatesWorkerLocalState(t *testin
 		t.Fatalf("AccumulateIndexedInto() = %d, want 100", got)
 	}
 	if calls[0].Load() <= 1 && calls[1].Load() <= 1 {
-		t.Fatalf("worker calls = [%d %d], want repeated calls into at least one worker accumulator", calls[0].Load(), calls[1].Load())
+		t.Fatalf(
+			"worker calls = [%d %d], want repeated calls into at least one worker accumulator",
+			calls[0].Load(),
+			calls[1].Load(),
+		)
 	}
 }
 
@@ -75,7 +84,12 @@ func TestAccumulateIndexedIntoDoesNotMergeInactiveWorkers(t *testing.T) {
 	var inactiveMerged atomic.Int64
 	got, ok := AccumulateIndexedInto[nonNeutralPartial](
 		10,
-		core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 100, Strategy: core.StrategyDynamicChunks},
+		core.Options{
+			Workers:           8,
+			MinItemsPerWorker: 1,
+			ChunkSize:         100,
+			Strategy:          core.StrategyDynamicChunks,
+		},
 		nil,
 		func(_ int, r core.Range, dst *nonNeutralPartial) {
 			dst.Value += r.Len()

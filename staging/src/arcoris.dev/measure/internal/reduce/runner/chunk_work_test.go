@@ -14,19 +14,23 @@
   limitations under the License.
 */
 
-package core
+package runner
 
-import "testing"
+import (
+	"testing"
 
-func TestStrategyAndMergeDefaultsRemainStable(t *testing.T) {
-	if StrategyAuto != 0 {
-		t.Fatalf("StrategyAuto = %d, want 0", StrategyAuto)
+	"arcoris.dev/measure/internal/reduce/core"
+)
+
+func TestChunkWorkersUsesChunkCount(t *testing.T) {
+	work := chunkWorkers(10, core.Options{Workers: 8, ChunkSize: 100})
+	if work.size != 100 {
+		t.Fatalf("chunk size = %d, want 100", work.size)
 	}
-	if StrategyDynamicChunks <= StrategyBalanced {
-		t.Fatalf(
-			"strategy order changed: balanced=%d dynamicChunks=%d",
-			StrategyBalanced,
-			StrategyDynamicChunks,
-		)
+	if work.count != 1 {
+		t.Fatalf("chunk count = %d, want 1", work.count)
+	}
+	if work.workers != 1 {
+		t.Fatalf("workers = %d, want 1", work.workers)
 	}
 }
