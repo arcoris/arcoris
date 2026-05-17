@@ -49,14 +49,14 @@ func TestShouldReduceSequentiallyIgnoresExplicitStrategySequential(t *testing.T)
 }
 
 func TestShouldReduceSequentiallyRespectsWorkerCount(t *testing.T) {
-	opts := core.Options{Workers: 1, MinItemsPerWorker: 1, Strategy: core.StrategyStatic}
+	opts := core.Options{Workers: 1, MinItemsPerWorker: 1, Strategy: core.StrategyBalanced}
 	if !shouldReduceSequentially(100, opts) {
 		t.Fatal("shouldReduceSequentially() = false, want true")
 	}
 }
 
 func TestShouldReduceSequentiallyRespectsMinimumItemsPerWorker(t *testing.T) {
-	opts := core.Options{Workers: 8, MinItemsPerWorker: 100, Strategy: core.StrategyStatic}
+	opts := core.Options{Workers: 8, MinItemsPerWorker: 100, Strategy: core.StrategyBalanced}
 	if !shouldReduceSequentially(100, opts) {
 		t.Fatal("shouldReduceSequentially() = false, want true below threshold")
 	}

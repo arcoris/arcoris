@@ -25,14 +25,14 @@ import (
 	"arcoris.dev/measure/internal/reduce/planner"
 )
 
-// reduceStaticRangePartials plans balanced contiguous ranges, fills one partial
+// reduceBalancedRangePartials plans balanced contiguous ranges, fills one partial
 // per planned range, and merges those partials in range order.
 //
-// Range-local partial execution is deterministic and matches StrategyStatic's
-// balanced planning model. It is intentionally not the fixed-strategy default:
-// fine-grained fixed plans can create far more ranges than workers, which would
+// Range-local partial execution is deterministic and matches StrategyBalanced's
+// balanced planning model. It is intentionally not the chunk-strategy default:
+// fine-grained chunk plans can create far more ranges than workers, which would
 // inflate scratch storage and merge work.
-func reduceStaticRangePartials[T any](n int, opts core.Options, scratch *core.Scratch[T], mapRange core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
+func reduceBalancedRangePartials[T any](n int, opts core.Options, scratch *core.Scratch[T], mapRange core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
@@ -41,7 +41,7 @@ func reduceStaticRangePartials[T any](n int, opts core.Options, scratch *core.Sc
 	if scratch == nil {
 		scratch = new(core.Scratch[T])
 	}
-	scratch.Ranges = planner.Static(n, opts, scratch.Ranges)
+	scratch.Ranges = planner.Balanced(n, opts, scratch.Ranges)
 	ranges := scratch.Ranges
 	if len(ranges) == 0 {
 		return zero, false
@@ -61,8 +61,8 @@ func reduceStaticRangePartials[T any](n int, opts core.Options, scratch *core.Sc
 //
 // Range-local partial execution is deterministic because partials stay indexed
 // by range order, but it can allocate and merge too many partials for
-// fine-grained fixed plans. The queued path is useful when a deterministic
-// static plan has more ranges than available workers.
+// fine-grained chunk plans. The queued path is useful when a deterministic
+// balanced plan has more ranges than available workers.
 func fillRangePartialsQueued[T any](ranges []core.Range, partials []T, workers int, mapRange core.IndexedIntoMapper[T]) {
 	workers = activeWorkers(workers, len(ranges))
 	if workers == len(ranges) {
@@ -80,8 +80,9 @@ func fillRangePartialsQueued[T any](ranges []core.Range, partials []T, workers i
 				if i >= len(ranges) {
 					break
 				}
-				clearPartial(partials, i)
-				mapRange(worker, ranges[i], &partials[i])
+				var local T
+				mapRange(worker, ranges[i], &local)
+				partials[i] = local
 			}
 			wg.Done()
 		}()

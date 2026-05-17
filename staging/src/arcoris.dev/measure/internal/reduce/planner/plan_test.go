@@ -27,12 +27,16 @@ func TestPlanDispatchesByStrategy(t *testing.T) {
 	if len(seq) != 1 {
 		t.Fatalf("sequential len = %d, want 1", len(seq))
 	}
-	fixed := Plan(10, core.Options{Strategy: core.StrategyFixed, ChunkSize: 3}, nil)
+	fixed := Plan(10, core.Options{Strategy: core.StrategyFixedChunks, ChunkSize: 3}, nil)
 	if len(fixed) != 4 {
 		t.Fatalf("fixed len = %d, want 4", len(fixed))
 	}
-	stat := Plan(1000, core.Options{Strategy: core.StrategyStatic, Workers: 2, MinItemsPerWorker: 100}, nil)
-	if len(stat) != 2 {
-		t.Fatalf("static len = %d, want 2", len(stat))
+	balanced := Plan(1000, core.Options{Strategy: core.StrategyBalanced, Workers: 2, MinItemsPerWorker: 100}, nil)
+	if len(balanced) != 2 {
+		t.Fatalf("balanced len = %d, want 2", len(balanced))
+	}
+	dyn := Plan(10, core.Options{Strategy: core.StrategyDynamicChunks, ChunkSize: 3}, nil)
+	if len(dyn) != len(fixed) {
+		t.Fatalf("dynamic inspection len = %d, want fixed chunk len %d", len(dyn), len(fixed))
 	}
 }

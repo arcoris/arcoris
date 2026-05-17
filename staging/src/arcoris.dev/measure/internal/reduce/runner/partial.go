@@ -16,19 +16,17 @@
 
 package runner
 
-// clearPartial removes stale scratch state before a mapper writes directly into
-// a reused partial slot.
-func clearPartial[T any](partials []T, i int) {
-	var zero T
-	partials[i] = zero
-}
-
 // compactUsedPartials compacts active partial slots in worker-index order.
 //
-// The function never allocates and does not preserve inactive slots.
+// The function never allocates and does not preserve inactive slots. The two
+// slices must have identical length because they describe the same worker-slot
+// storage; a mismatch indicates an internal runner bug and panics.
 func compactUsedPartials[T any](partials []T, used []bool) []T {
+	if len(partials) != len(used) {
+		panic("reduce runner: partial and used slices have different lengths")
+	}
 	write := 0
-	for read := 0; read < len(partials) && read < len(used); read++ {
+	for read := range partials {
 		if !used[read] {
 			continue
 		}

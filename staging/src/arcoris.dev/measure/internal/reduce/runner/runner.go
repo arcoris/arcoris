@@ -47,5 +47,23 @@ func (r *Runner[T]) ReduceIndexedInto(n int, mapRange core.IndexedIntoMapper[T],
 	return ReduceIndexedInto(n, r.opts, &r.scratch, mapRange, mergeFn)
 }
 
+// AccumulateInto executes a worker-local accumulation reduction using
+// runner-owned scratch buffers.
+func (r *Runner[T]) AccumulateInto(n int, accumulate core.Accumulator[T], mergeFn core.Merger[T]) (T, bool) {
+	return AccumulateInto(n, r.opts, &r.scratch, accumulate, mergeFn)
+}
+
+// AccumulateIndexedInto executes an indexed worker-local accumulation reduction
+// using runner-owned scratch buffers.
+func (r *Runner[T]) AccumulateIndexedInto(n int, accumulate core.IndexedAccumulator[T], mergeFn core.Merger[T]) (T, bool) {
+	return AccumulateIndexedInto(n, r.opts, &r.scratch, accumulate, mergeFn)
+}
+
 // Reset clears runner-owned scratch contents while retaining backing storage.
 func (r *Runner[T]) Reset() { r.scratch.Reset() }
+
+// Clear zeroes runner-owned scratch storage while retaining capacity.
+func (r *Runner[T]) Clear() { r.scratch.Clear() }
+
+// Release drops runner-owned scratch backing storage.
+func (r *Runner[T]) Release() { r.scratch.Release() }

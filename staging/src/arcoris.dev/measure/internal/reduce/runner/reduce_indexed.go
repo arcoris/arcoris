@@ -23,7 +23,7 @@ import "arcoris.dev/measure/internal/reduce/core"
 //
 // The worker index is an execution slot, not necessarily the range index for
 // fixed plans with more chunks than workers. Merge order remains range order
-// for static range-local execution and active worker order for fixed or dynamic
+// for balanced range-local execution and active worker order for fixed or dynamic
 // worker-local execution.
 func ReduceIndexedInto[T any](n int, opts core.Options, scratch *core.Scratch[T], mapRange core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
 	var zero T
@@ -38,11 +38,11 @@ func ReduceIndexedInto[T any](n int, opts core.Options, scratch *core.Scratch[T]
 		return reduceSequentiallyIndexed(n, mapRange)
 	}
 	switch opts.Strategy {
-	case core.StrategyDynamic:
-		return reduceDynamicWorkerPartials(n, opts, scratch, mapRange, mergeFn)
-	case core.StrategyFixed:
-		return reduceFixedWorkerPartials(n, opts, scratch, mapRange, mergeFn)
+	case core.StrategyDynamicChunks:
+		return reduceDynamicChunkWorkerPartials(n, opts, scratch, mapRange, mergeFn)
+	case core.StrategyFixedChunks:
+		return reduceFixedChunkWorkerPartials(n, opts, scratch, mapRange, mergeFn)
 	default:
-		return reduceStaticRangePartials(n, opts, scratch, mapRange, mergeFn)
+		return reduceBalancedRangePartials(n, opts, scratch, mapRange, mergeFn)
 	}
 }

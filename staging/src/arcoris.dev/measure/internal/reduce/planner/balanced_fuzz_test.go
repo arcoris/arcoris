@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-package runner
+package planner
 
 import (
 	"testing"
@@ -22,17 +22,27 @@ import (
 	"arcoris.dev/measure/internal/reduce/core"
 )
 
-func TestReduceWrapsMapper(t *testing.T) {
-	got, ok := Reduce[int](
-		10,
-		core.Options{Workers: 2, MinItemsPerWorker: 1, Strategy: core.StrategyBalanced},
-		func(r core.Range) int { return r.Len() },
-		func(dst *int, src int) { *dst += src },
-	)
-	if !ok {
-		t.Fatal("Reduce returned false for non-empty input")
-	}
-	if got != 10 {
-		t.Fatalf("Reduce() = %d, want 10", got)
-	}
+func FuzzBalancedCoverage(f *testing.F) {
+	f.Add(1000, 4, 100)
+	f.Add(1, 8, 64)
+	f.Add(0, 8, 64)
+	f.Fuzz(func(t *testing.T, n int, workers int, minItems int) {
+		if n < 0 || n > 1_000_000 {
+			return
+		}
+		plan := Balanced(n, core.Options{Workers: workers, MinItemsPerWorker: minItems}, nil)
+		pos := 0
+		for i, r := range plan {
+			if r.Empty() {
+				t.Fatalf("range[%d] empty: %#v", i, r)
+			}
+			if r.Start != pos {
+				t.Fatalf("range[%d].Start=%d want %d plan=%#v", i, r.Start, pos, plan)
+			}
+			pos = r.End
+		}
+		if pos != n {
+			t.Fatalf("covered %d, want %d plan=%#v", pos, n, plan)
+		}
+	})
 }

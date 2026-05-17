@@ -22,12 +22,27 @@ import (
 	"arcoris.dev/measure/internal/reduce/core"
 )
 
-func BenchmarkStatic(b *testing.B) {
-	var ranges []core.Range
-	opts := core.Options{Workers: 8, MinItemsPerWorker: 1024, Strategy: core.StrategyStatic}
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		ranges = Static(1_000_000, opts, ranges)
-	}
-	_ = ranges
+func FuzzFixedChunksCoverage(f *testing.F) {
+	f.Add(1000, 64)
+	f.Add(1, 64)
+	f.Add(0, 64)
+	f.Fuzz(func(t *testing.T, n int, chunk int) {
+		if n < 0 || n > 1_000_000 {
+			return
+		}
+		plan := FixedChunks(n, core.Options{ChunkSize: chunk}, nil)
+		pos := 0
+		for i, r := range plan {
+			if r.Empty() {
+				t.Fatalf("range[%d] empty: %#v", i, r)
+			}
+			if r.Start != pos {
+				t.Fatalf("range[%d].Start=%d want %d plan=%#v", i, r.Start, pos, plan)
+			}
+			pos = r.End
+		}
+		if pos != n {
+			t.Fatalf("covered %d, want %d plan=%#v", pos, n, plan)
+		}
+	})
 }

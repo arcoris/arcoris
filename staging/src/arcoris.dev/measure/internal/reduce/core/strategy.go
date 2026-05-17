@@ -26,27 +26,29 @@ type Strategy uint8
 const (
 	// StrategyAuto lets implementations select the package default.
 	//
-	// NormalizeOptions currently resolves it to StrategyStatic because
+	// NormalizeOptions currently resolves it to StrategyBalanced because
 	// contiguous ranges have the lowest scheduling overhead for uniform
 	// in-memory reductions.
 	StrategyAuto Strategy = iota
 
-	// StrategySequential forces one range covering the full input and avoids
-	// worker goroutines.
+	// StrategySequential forces one [0:n) range in the current goroutine. It
+	// produces one partial and performs no merge.
 	StrategySequential
 
-	// StrategyStatic splits work into a bounded number of balanced contiguous
-	// ranges. It is the default for uniform per-element work.
-	StrategyStatic
+	// StrategyBalanced splits work into a bounded number of balanced contiguous
+	// ranges. It is the default for uniform per-element work and gives the
+	// Reduce family deterministic range-order merge input.
+	StrategyBalanced
 
-	// StrategyFixed splits work into fixed-size chunks. It is useful for
-	// grain-size tuning and for work where fixed chunks improve locality.
-	StrategyFixed
+	// StrategyFixedChunks splits work into fixed-size chunks assigned to workers
+	// deterministically. It is useful for grain-size tuning and locality-sensitive
+	// reductions that do not need load-balancing through an atomic cursor.
+	StrategyFixedChunks
 
-	// StrategyDynamic lets workers claim fixed-size chunks from a shared cursor.
-	// It is intended for variable-cost chunks and can produce different
-	// floating-point grouping than static range execution.
-	StrategyDynamic
+	// StrategyDynamicChunks lets workers claim fixed-size chunks from an atomic
+	// cursor. It is intended for variable-cost chunks and can produce different
+	// floating-point grouping than balanced range execution.
+	StrategyDynamicChunks
 )
 
 // MergeMode selects how completed partial results are combined.

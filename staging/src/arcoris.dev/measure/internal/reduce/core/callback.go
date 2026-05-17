@@ -16,27 +16,48 @@
 
 package core
 
-// Mapper computes a complete partial result for one planned range.
+// Mapper computes a complete partial result for one range or chunk.
 //
-// Mapper is called once per range, not once per element. Keep hot per-element
-// loops inside the mapper so runners do not add callback overhead. Runners may
-// invoke Mapper concurrently, so any captured state must be immutable or
-// synchronized by the caller.
+// Mapper is part of the Reduce family: each call owns one fresh mapping
+// operation and returns the full partial for that operation. The runner may
+// merge the produced partial later. Keep hot per-element loops inside the
+// mapper so runners do not add callback overhead. Runners may invoke Mapper
+// concurrently, so captured shared state must be immutable or synchronized by
+// the caller.
 type Mapper[T any] func(Range) T
 
-// IntoMapper maps one planned range into dst.
+// IntoMapper writes a complete partial for one range or chunk into dst.
 //
-// Runners pass a zero-value destination for each planned range. Implementations
-// may assign fields or accumulate into dst, whichever is faster for the partial
-// type. The destination is owned by the current mapper call; captured state is
-// still the caller's responsibility to protect when reductions run in parallel.
+// IntoMapper is part of the Reduce family. The destination is fresh for the
+// current mapping operation, so implementations may assign the result directly
+// and are not required to preserve previous dst contents. The runner may merge
+// the produced partial later. This callback is generic and safe, but it is not
+// the maximum-performance worker-local accumulation contract.
 type IntoMapper[T any] func(Range, *T)
 
-// IndexedIntoMapper maps a range while exposing the execution slot.
+// IndexedIntoMapper writes a complete partial while exposing the execution slot.
 //
-// Static range-local runners pass the worker slot currently processing the
-// planned range. Fixed and dynamic worker-local runners pass the worker slot
-// that claimed the current chunk; each chunk receives a fresh destination and
-// the runner folds chunk partials into that worker's accumulator with Merger.
-// The worker value is stable only within one reduction call.
+// IndexedIntoMapper is the indexed Reduce-family form. The destination is fresh
+// for the current range or chunk, so implementations may assign it. Balanced
+// range-local runners pass the worker currently processing the planned range.
+// FixedChunks and DynamicChunks runners pass the worker that owns or claimed the
+// current chunk. The worker value is stable only within one reduction call.
 type IndexedIntoMapper[T any] func(worker int, r Range, dst *T)
+
+// Accumulator adds one range or chunk directly into a worker-local partial.
+//
+// Accumulator is part of the Accumulate family. The destination belongs to a
+// worker-local partial, and a runner may call the accumulator multiple times
+// with the same dst. Implementations must accumulate into dst and must not
+// blindly overwrite previous state unless replacement is the intended
+// accumulation behavior. Captured shared state must be immutable or synchronized
+// by the caller.
+type Accumulator[T any] func(r Range, dst *T)
+
+// IndexedAccumulator adds one range or chunk into a worker-local partial while
+// exposing the execution slot.
+//
+// IndexedAccumulator has the same ownership and accumulation contract as
+// Accumulator. The worker value identifies the worker-local partial being
+// updated during the current reduction call.
+type IndexedAccumulator[T any] func(worker int, r Range, dst *T)

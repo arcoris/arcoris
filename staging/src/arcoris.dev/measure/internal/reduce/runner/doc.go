@@ -18,23 +18,29 @@
 //
 // Runner functions are responsible for strategy normalization, worker startup,
 // partial-result storage, and final merge. Reduce, ReduceInto, and
-// ReduceIndexedInto are the only exported entry points; strategy-specific paths
-// stay private so all dispatch rules remain visible in one place.
+// ReduceIndexedInto are the map-then-merge entry points. AccumulateInto and
+// AccumulateIndexedInto are the worker-local accumulation entry points.
+// Strategy-specific paths stay private so dispatch rules remain visible in one
+// place per API family.
+//
+// The Reduce family calls mappers with a fresh destination for one range or
+// chunk. Mappers may assign dst, and the runner merges produced partials later.
+// The Accumulate family calls accumulators directly on worker-local partials.
+// Accumulators may receive the same dst many times and must add to existing
+// state, avoiding a chunkPartial plus mergeFn call for every chunk.
 //
 // Execution model:
 //
 //   - StrategySequential plans one [0:n) range, executes in the current
 //     goroutine, produces one partial, and performs no merge.
-//   - StrategyStatic plans balanced contiguous ranges and uses range-local
-//     partials: one partial slot per planned range, merged in range order for
-//     deterministic non-commutative folding.
-//   - StrategyFixed uses fixed chunk sizes but worker-local execution by
-//     default: one partial per active worker, merged in active worker order.
-//     This avoids one partial per chunk when fine chunk sizes create far more
-//     chunks than workers.
-//   - StrategyDynamic also uses worker-local execution. Workers claim chunks
-//     from an atomic cursor, fill one active partial each, and idle workers are
-//     compacted away before merge.
+//   - StrategyBalanced plans balanced contiguous ranges. Reduce uses
+//     range-local partials merged in range order; Accumulate assigns balanced
+//     ranges to worker-local partials.
+//   - StrategyFixedChunks uses deterministic contiguous chunk blocks per worker.
+//     Reduce folds complete chunk partials into worker partials; Accumulate
+//     updates worker partials directly. No atomic cursor is used.
+//   - StrategyDynamicChunks uses worker-local execution with atomic chunk
+//     claiming. Idle workers are compacted away before merge.
 //
 // Worker-local paths never assume that the zero value of a generic partial is a
 // merge identity. A worker publishes a partial only after claiming at least one

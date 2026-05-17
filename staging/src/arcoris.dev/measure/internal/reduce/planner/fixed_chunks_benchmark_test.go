@@ -22,16 +22,20 @@ import (
 	"arcoris.dev/measure/internal/reduce/core"
 )
 
-func TestFixedCoversInputWithFixedChunks(t *testing.T) {
-	got := Fixed(10, core.Options{ChunkSize: 4}, nil)
-	want := []core.Range{{Start: 0, End: 4}, {Start: 4, End: 8}, {Start: 8, End: 10}}
-	if len(got) != len(want) {
-		t.Fatalf("len = %d, want %d: %#v", len(got), len(want), got)
+func BenchmarkFixedChunks_1M_Chunk1K(b *testing.B) {
+	benchmarkFixedChunks(b, 1_000_000, 1_024)
+}
+
+func BenchmarkFixedChunks_1M_Chunk64K(b *testing.B) {
+	benchmarkFixedChunks(b, 1_000_000, 64*1024)
+}
+
+func benchmarkFixedChunks(b *testing.B, n int, chunk int) {
+	opts := core.Options{ChunkSize: chunk, Strategy: core.StrategyFixedChunks}
+	var ranges []core.Range
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		ranges = FixedChunks(n, opts, ranges)
 	}
-	for i := range want {
-		if got[i] != want[i] {
-			t.Fatalf("range[%d] = %#v, want %#v", i, got[i], want[i])
-		}
-	}
-	assertPlanCovers(t, got, 10)
+	_ = ranges
 }

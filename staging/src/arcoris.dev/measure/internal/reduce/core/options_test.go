@@ -30,7 +30,7 @@ func TestNormalizeOptions(t *testing.T) {
 			want: Options{
 				MinItemsPerWorker: DefaultMinItemsPerWorker,
 				ChunkSize:         DefaultChunkSize,
-				Strategy:          StrategyStatic,
+				Strategy:          StrategyBalanced,
 			},
 		},
 		{
@@ -39,14 +39,14 @@ func TestNormalizeOptions(t *testing.T) {
 				Workers:           3,
 				MinItemsPerWorker: 17,
 				ChunkSize:         11,
-				Strategy:          StrategyDynamic,
+				Strategy:          StrategyDynamicChunks,
 				MergeMode:         MergePairwise,
 			},
 			want: Options{
 				Workers:           3,
 				MinItemsPerWorker: 17,
 				ChunkSize:         11,
-				Strategy:          StrategyDynamic,
+				Strategy:          StrategyDynamicChunks,
 				MergeMode:         MergePairwise,
 			},
 		},

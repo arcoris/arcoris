@@ -69,7 +69,7 @@ func TestReduceIntoSmallInputFallsBackToSequential(t *testing.T) {
 	var calls atomic.Int64
 	got, ok := ReduceInto[int](
 		10,
-		core.Options{Workers: 8, MinItemsPerWorker: 100, Strategy: core.StrategyStatic},
+		core.Options{Workers: 8, MinItemsPerWorker: 100, Strategy: core.StrategyBalanced},
 		nil,
 		func(r core.Range, dst *int) {
 			calls.Add(1)
@@ -91,12 +91,12 @@ func TestReduceIntoSmallInputFallsBackToSequential(t *testing.T) {
 	}
 }
 
-func TestReduceIntoStaticProcessesEveryIndexOnce(t *testing.T) {
+func TestReduceIntoBalancedProcessesEveryIndexOnce(t *testing.T) {
 	const n = 1000
 	seen := make([]atomic.Int64, n)
 	got, ok := ReduceInto[int](
 		n,
-		core.Options{Workers: 4, MinItemsPerWorker: 100, Strategy: core.StrategyStatic},
+		core.Options{Workers: 4, MinItemsPerWorker: 100, Strategy: core.StrategyBalanced},
 		nil,
 		func(r core.Range, dst *int) {
 			for i := r.Start; i < r.End; i++ {
@@ -107,7 +107,7 @@ func TestReduceIntoStaticProcessesEveryIndexOnce(t *testing.T) {
 		func(dst *int, src int) { *dst += src },
 	)
 	if !ok {
-		t.Fatal("ReduceInto returned false for static input")
+		t.Fatal("ReduceInto returned false for balanced input")
 	}
 	if want := (n - 1) * n / 2; got != want {
 		t.Fatalf("ReduceInto() = %d, want %d", got, want)
@@ -115,12 +115,12 @@ func TestReduceIntoStaticProcessesEveryIndexOnce(t *testing.T) {
 	assertEveryIndexOnce(t, seen)
 }
 
-func TestReduceIntoFixedUsesWorkerLocalPartials(t *testing.T) {
+func TestReduceIntoFixedChunksUsesWorkerLocalPartials(t *testing.T) {
 	const n = 1000
 	var scratch core.Scratch[int]
 	got, ok := ReduceInto[int](
 		n,
-		core.Options{Workers: 4, MinItemsPerWorker: 1, ChunkSize: 10, Strategy: core.StrategyFixed},
+		core.Options{Workers: 4, MinItemsPerWorker: 1, ChunkSize: 10, Strategy: core.StrategyFixedChunks},
 		&scratch,
 		func(r core.Range, dst *int) {
 			*dst = r.Len()
@@ -141,11 +141,11 @@ func TestReduceIntoFixedUsesWorkerLocalPartials(t *testing.T) {
 	}
 }
 
-func TestReduceIntoDynamicDispatchSkipsIdlePartials(t *testing.T) {
+func TestReduceIntoDynamicChunksSkipsIdlePartials(t *testing.T) {
 	var zeroMerged atomic.Int64
 	got, ok := ReduceInto[nonNeutralPartial](
 		10,
-		core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 100, Strategy: core.StrategyDynamic},
+		core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 100, Strategy: core.StrategyDynamicChunks},
 		nil,
 		func(r core.Range, dst *nonNeutralPartial) {
 			dst.Value = r.Len()

@@ -27,7 +27,7 @@ func TestReduceIndexedIntoPassesWorkerSlots(t *testing.T) {
 	var scratch core.Scratch[int]
 	_, ok := ReduceIndexedInto[int](
 		1000,
-		core.Options{Workers: 4, MinItemsPerWorker: 100, Strategy: core.StrategyStatic},
+		core.Options{Workers: 4, MinItemsPerWorker: 100, Strategy: core.StrategyBalanced},
 		&scratch,
 		func(worker int, r core.Range, dst *int) {
 			*dst = worker + r.Len()
@@ -47,23 +47,23 @@ func TestReduceIndexedIntoPassesWorkerSlots(t *testing.T) {
 	}
 }
 
-func TestReduceIndexedIntoStaticProcessesEveryIndexOnce(t *testing.T) {
-	assertReduceIndexedCoversInput(t, core.Options{Workers: 4, MinItemsPerWorker: 10, Strategy: core.StrategyStatic})
+func TestReduceIndexedIntoBalancedProcessesEveryIndexOnce(t *testing.T) {
+	assertReduceIndexedCoversInput(t, core.Options{Workers: 4, MinItemsPerWorker: 10, Strategy: core.StrategyBalanced})
 }
 
-func TestReduceIndexedIntoFixedProcessesEveryIndexOnce(t *testing.T) {
-	assertReduceIndexedCoversInput(t, core.Options{Workers: 3, MinItemsPerWorker: 1, ChunkSize: 7, Strategy: core.StrategyFixed})
+func TestReduceIndexedIntoFixedChunksProcessesEveryIndexOnce(t *testing.T) {
+	assertReduceIndexedCoversInput(t, core.Options{Workers: 3, MinItemsPerWorker: 1, ChunkSize: 7, Strategy: core.StrategyFixedChunks})
 }
 
-func TestReduceIndexedIntoDynamicProcessesEveryIndexOnce(t *testing.T) {
-	assertReduceIndexedCoversInput(t, core.Options{Workers: 5, MinItemsPerWorker: 1, ChunkSize: 11, Strategy: core.StrategyDynamic})
+func TestReduceIndexedIntoDynamicChunksProcessesEveryIndexOnce(t *testing.T) {
+	assertReduceIndexedCoversInput(t, core.Options{Workers: 5, MinItemsPerWorker: 1, ChunkSize: 11, Strategy: core.StrategyDynamicChunks})
 }
 
-func TestReduceIndexedIntoBoundsWorkerSlotsForFixed(t *testing.T) {
+func TestReduceIndexedIntoBoundsWorkerSlotsForFixedChunks(t *testing.T) {
 	var maxWorker atomic.Int64
 	_, ok := ReduceIndexedInto[int](
 		100,
-		core.Options{Workers: 2, MinItemsPerWorker: 1, ChunkSize: 10, Strategy: core.StrategyFixed},
+		core.Options{Workers: 2, MinItemsPerWorker: 1, ChunkSize: 10, Strategy: core.StrategyFixedChunks},
 		nil,
 		func(worker int, r core.Range, dst *int) {
 			for {

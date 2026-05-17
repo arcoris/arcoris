@@ -28,6 +28,31 @@ func TestPairwiseInPlaceProducesEquivalentSum(t *testing.T) {
 	}
 }
 
+func TestPairwiseInPlaceUsesPairwiseGrouping(t *testing.T) {
+	got, ok := PairwiseInPlace([]string{"a", "b", "c", "d"}, func(dst *string, src string) {
+		*dst = "(" + *dst + "+" + src + ")"
+	})
+	if !ok {
+		t.Fatal("expected non-empty merge")
+	}
+	if got != "((a+b)+(c+d))" {
+		t.Fatalf("got %q, want pairwise grouping", got)
+	}
+}
+
+func TestPairwiseInPlaceMutatesInputAsWorkStorage(t *testing.T) {
+	partials := []string{"a", "b", "c", "d"}
+	_, ok := PairwiseInPlace(partials, func(dst *string, src string) {
+		*dst = "(" + *dst + "+" + src + ")"
+	})
+	if !ok {
+		t.Fatal("expected non-empty merge")
+	}
+	if partials[0] != "((a+b)+(c+d))" {
+		t.Fatalf("partials[0] = %q, want mutated work storage", partials[0])
+	}
+}
+
 func TestPairwiseInPlaceEmpty(t *testing.T) {
 	_, ok := PairwiseInPlace[int](nil, func(dst *int, src int) { *dst += src })
 	if ok {

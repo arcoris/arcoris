@@ -27,7 +27,8 @@ const (
 	// small inputs.
 	DefaultMinItemsPerWorker = 64 * 1024
 
-	// DefaultChunkSize is the default grain size for fixed and dynamic plans.
+	// DefaultChunkSize is the default grain size for fixed-chunk and
+	// dynamic-chunk plans.
 	//
 	// Callers with unusual locality, cache behavior, or load-balance needs should
 	// benchmark their algorithm and override this value with Options.ChunkSize.
@@ -37,26 +38,33 @@ const (
 // Options configures planning, execution, and merge behavior for one reduction.
 //
 // Zero Options are valid. NormalizeOptions fills safe defaults before planners
-// and runners consume the value.
+// and runners consume the value. The defaults favor balanced contiguous ranges
+// because many measurement reductions are memory-bound and cheap per element;
+// callers should benchmark before choosing fine chunk sizes or more workers.
 type Options struct {
 	// Workers is the maximum number of worker goroutines used by parallel
 	// runners. Values less than or equal to zero resolve to runtime.GOMAXPROCS(0)
-	// during normalization.
+	// during normalization. Chunk strategies cap this further by chunk count.
 	Workers int
 
 	// MinItemsPerWorker prevents parallel execution when the input is too small
-	// to amortize worker startup, synchronization, and merge costs.
+	// to amortize worker startup, synchronization, and merge costs. It is a
+	// fallback policy, not a planning correctness requirement.
 	MinItemsPerWorker int
 
-	// ChunkSize controls StrategyFixed and StrategyDynamic grain size. It is
-	// ignored by StrategyStatic and StrategySequential.
+	// ChunkSize controls StrategyFixedChunks and StrategyDynamicChunks grain
+	// size. Smaller chunks can improve load balance or locality experiments but
+	// can also increase mapper and merge overhead. It is ignored by
+	// StrategyBalanced and StrategySequential.
 	ChunkSize int
 
-	// Strategy selects the range planning and execution strategy.
+	// Strategy selects the range planning and execution strategy. StrategyAuto
+	// normalizes to StrategyBalanced.
 	Strategy Strategy
 
-	// MergeMode selects the post-worker merge algorithm. The zero value is
-	// MergeLinear.
+	// MergeMode selects how completed partials are folded. It affects only final
+	// partial-result folding, not range planning or mapper scheduling. The zero
+	// value is MergeLinear.
 	MergeMode MergeMode
 }
 
@@ -80,7 +88,7 @@ func NormalizeOptions(opts Options) Options {
 		opts.ChunkSize = DefaultChunkSize
 	}
 	if opts.Strategy == StrategyAuto {
-		opts.Strategy = StrategyStatic
+		opts.Strategy = StrategyBalanced
 	}
 	return opts
 }

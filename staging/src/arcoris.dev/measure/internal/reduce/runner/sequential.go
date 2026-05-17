@@ -39,3 +39,19 @@ func reduceSequentiallyIndexed[T any](n int, mapRange core.IndexedIntoMapper[T])
 	mapRange(0, core.Range{Start: 0, End: n}, &partial)
 	return partial, true
 }
+
+// accumulateSequentially accumulates the whole input into one partial in the
+// current goroutine.
+func accumulateSequentially[T any](n int, accumulate core.Accumulator[T]) (T, bool) {
+	return accumulateSequentiallyIndexed(n, func(_ int, r core.Range, dst *T) {
+		accumulate(r, dst)
+	})
+}
+
+// accumulateSequentiallyIndexed accumulates the whole input into worker slot
+// zero. It performs no final merge because there is only one partial.
+func accumulateSequentiallyIndexed[T any](n int, accumulate core.IndexedAccumulator[T]) (T, bool) {
+	var partial T
+	accumulate(0, core.Range{Start: 0, End: n}, &partial)
+	return partial, true
+}

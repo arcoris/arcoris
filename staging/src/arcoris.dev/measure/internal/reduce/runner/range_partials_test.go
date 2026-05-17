@@ -80,7 +80,7 @@ func TestFillRangePartialsQueuedKeepsPartialsIndexedByRange(t *testing.T) {
 	}
 }
 
-func TestFillRangePartialsQueuedClearsDirtySlots(t *testing.T) {
+func TestFillRangePartialsQueuedPublishesLocalPartialsOverDirtySlots(t *testing.T) {
 	type partial struct {
 		Values []int
 	}
@@ -100,11 +100,11 @@ func TestFillRangePartialsQueuedClearsDirtySlots(t *testing.T) {
 	}
 }
 
-func TestReduceStaticRangePartialsMergesByRangeIndex(t *testing.T) {
+func TestReduceBalancedRangePartialsMergesByRangeIndex(t *testing.T) {
 	var scratch core.Scratch[string]
-	got, ok := reduceStaticRangePartials(
+	got, ok := reduceBalancedRangePartials(
 		9,
-		core.Options{Workers: 3, MinItemsPerWorker: 1, Strategy: core.StrategyStatic, MergeMode: core.MergeLinear},
+		core.Options{Workers: 3, MinItemsPerWorker: 1, Strategy: core.StrategyBalanced, MergeMode: core.MergeLinear},
 		&scratch,
 		func(_ int, r core.Range, dst *string) {
 			*dst = strconv.Itoa(r.Start)
@@ -112,12 +112,12 @@ func TestReduceStaticRangePartialsMergesByRangeIndex(t *testing.T) {
 			*dst += src
 		})
 	if !ok {
-		t.Fatal("reduceStaticRangePartials returned false for non-empty input")
+		t.Fatal("reduceBalancedRangePartials returned false for non-empty input")
 	}
 	if got != "036" {
-		t.Fatalf("reduceStaticRangePartials() = %q, want range-index order %q", got, "036")
+		t.Fatalf("reduceBalancedRangePartials() = %q, want range-index order %q", got, "036")
 	}
 	if len(scratch.Partials) != 3 {
-		t.Fatalf("partials = %d, want one partial per planned static range", len(scratch.Partials))
+		t.Fatalf("partials = %d, want one partial per planned balanced range", len(scratch.Partials))
 	}
 }

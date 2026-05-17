@@ -18,17 +18,6 @@ package runner
 
 import "testing"
 
-func TestClearPartialZeroesSlot(t *testing.T) {
-	partials := []string{"a", "b", "c"}
-	clearPartial(partials, 1)
-	want := []string{"a", "", "c"}
-	for i := range want {
-		if partials[i] != want[i] {
-			t.Fatalf("partials = %#v, want %#v", partials, want)
-		}
-	}
-}
-
 func TestCompactUsedPartialsRemovesInactiveSlots(t *testing.T) {
 	partials := []string{"w0", "idle", "w2", "idle", "w4"}
 	used := []bool{true, false, true, false, true}
@@ -60,6 +49,15 @@ func TestCompactUsedPartialsReturnsEmptyForNoActiveSlots(t *testing.T) {
 	if len(got) != 0 {
 		t.Fatalf("compactUsedPartials() length = %d, want 0", len(got))
 	}
+}
+
+func TestCompactUsedPartialsPanicsOnLengthMismatch(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatal("compactUsedPartials did not panic on mismatched lengths")
+		}
+	}()
+	_ = compactUsedPartials([]int{1, 2}, []bool{true})
 }
 
 func TestCompactUsedPartialsAllocatesNothing(t *testing.T) {

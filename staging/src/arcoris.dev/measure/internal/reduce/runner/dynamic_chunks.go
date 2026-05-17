@@ -24,7 +24,7 @@ import (
 	"arcoris.dev/measure/internal/reduce/merge"
 )
 
-// reduceDynamicWorkerPartials executes dynamic chunk-claiming reduction with
+// reduceDynamicChunkWorkerPartials executes dynamic chunk-claiming reduction with
 // one partial per active worker.
 //
 // Dynamic execution is intended for variable-cost chunks. Each worker keeps one
@@ -32,8 +32,8 @@ import (
 // Only workers that claimed at least one chunk are merged, because generic
 // partial values do not have a guaranteed zero-value identity. Merge order is
 // active worker-slot order, not input-range order, so floating-point callers
-// should expect different grouping from static execution.
-func reduceDynamicWorkerPartials[T any](n int, opts core.Options, scratch *core.Scratch[T], mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
+// should expect different grouping from balanced execution.
+func reduceDynamicChunkWorkerPartials[T any](n int, opts core.Options, scratch *core.Scratch[T], mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
@@ -46,7 +46,8 @@ func reduceDynamicWorkerPartials[T any](n int, opts core.Options, scratch *core.
 	if chunk <= 0 {
 		chunk = core.DefaultChunkSize
 	}
-	workers := activeWorkers(opts.Workers, n)
+	chunks := chunkCount(n, chunk)
+	workers := activeWorkers(opts.Workers, chunks)
 	if workers <= 1 {
 		return reduceSequentiallyIndexed(n, mapChunk)
 	}
@@ -55,12 +56,12 @@ func reduceDynamicWorkerPartials[T any](n int, opts core.Options, scratch *core.
 	}
 	partials := scratch.EnsurePartialsDirty(workers)
 	used := scratch.EnsureUsed(workers)
-	fillWorkerPartialsDynamic(n, chunk, partials, used, mapChunk, mergeFn)
+	fillDynamicChunkWorkerPartials(n, chunk, chunks, partials, used, mapChunk, mergeFn)
 	active := compactUsedPartials(partials, used)
 	return merge.Merge(active, opts.MergeMode, mergeFn)
 }
 
-// fillWorkerPartialsDynamic maps dynamically claimed chunks into worker-local
+// fillDynamicChunkWorkerPartials maps dynamically claimed chunks into worker-local
 // partial slots.
 //
 // The cursor advances by chunk index, so each atomic operation assigns one
@@ -68,8 +69,7 @@ func reduceDynamicWorkerPartials[T any](n int, opts core.Options, scratch *core.
 // idle worker slots remain inactive instead of contributing dirty or zero-value
 // partials to the final merge. Each chunk maps into a temporary partial and is
 // folded into the worker-local accumulator with mergeFn.
-func fillWorkerPartialsDynamic[T any](n int, chunk int, partials []T, used []bool, mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) {
-	chunks := chunkCount(n, chunk)
+func fillDynamicChunkWorkerPartials[T any](n int, chunk int, chunks int, partials []T, used []bool, mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) {
 	var next atomic.Int64
 	var wg sync.WaitGroup
 	wg.Add(len(partials))
@@ -84,13 +84,8 @@ func fillWorkerPartialsDynamic[T any](n int, chunk int, partials []T, used []boo
 				if chunkIndex >= chunks {
 					break
 				}
-				start := chunkIndex * chunk
-				end := start + chunk
-				if end > n {
-					end = n
-				}
 				chunkPartial = zero
-				mapChunk(worker, core.Range{Start: start, End: end}, &chunkPartial)
+				mapChunk(worker, chunkRange(n, chunk, chunkIndex), &chunkPartial)
 				if active {
 					mergeFn(&local, chunkPartial)
 				} else {

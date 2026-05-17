@@ -18,20 +18,19 @@ package runner
 
 import (
 	"sync"
-	"sync/atomic"
 
 	"arcoris.dev/measure/internal/reduce/core"
 	"arcoris.dev/measure/internal/reduce/merge"
 )
 
-// reduceFixedWorkerPartials executes fixed-size chunks with one accumulator per
-// active worker and then merges only those active worker-local partials.
+// reduceFixedChunkWorkerPartials maps fixed-size chunks to complete chunk
+// partials, folds those chunk partials into worker-local partials, and merges
+// active workers in deterministic worker order.
 //
-// Fixed worker-local execution is the default fixed strategy because a tiny
-// chunk size can produce many more chunks than workers. Keeping partials at
-// worker cardinality bounds scratch use and merge cost without assuming that a
-// zero-value partial is a merge identity.
-func reduceFixedWorkerPartials[T any](n int, opts core.Options, scratch *core.Scratch[T], mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
+// This is the Reduce-family fixed-chunk path: mappers may assign each chunk
+// partial because the runner owns per-chunk folding with mergeFn. Chunk
+// ownership is balanced and contiguous; no atomic cursor is used.
+func reduceFixedChunkWorkerPartials[T any](n int, opts core.Options, scratch *core.Scratch[T], mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) (T, bool) {
 	var zero T
 	if n <= 0 {
 		return zero, false
@@ -44,7 +43,8 @@ func reduceFixedWorkerPartials[T any](n int, opts core.Options, scratch *core.Sc
 	if chunk <= 0 {
 		chunk = core.DefaultChunkSize
 	}
-	workers := activeWorkers(opts.Workers, n)
+	chunks := chunkCount(n, chunk)
+	workers := activeWorkers(opts.Workers, chunks)
 	if workers <= 1 {
 		return reduceSequentiallyIndexed(n, mapChunk)
 	}
@@ -53,24 +53,21 @@ func reduceFixedWorkerPartials[T any](n int, opts core.Options, scratch *core.Sc
 	}
 	partials := scratch.EnsurePartialsDirty(workers)
 	used := scratch.EnsureUsed(workers)
-	fillWorkerPartialsFixed(n, chunk, partials, used, mapChunk, mergeFn)
+	fillFixedChunkWorkerPartials(n, chunk, chunks, partials, used, mapChunk, mergeFn)
 	active := compactUsedPartials(partials, used)
 	return merge.Merge(active, opts.MergeMode, mergeFn)
 }
 
-// fillWorkerPartialsFixed maps fixed-size chunks into worker-local partial
-// slots.
+// fillFixedChunkWorkerPartials maps statically assigned fixed chunks into
+// worker-local partial slots.
 //
 // The partial and used slices are indexed by worker slot. A worker writes its
 // partial only after it has processed at least one chunk, so idle workers leave
 // dirty partial slots untouched and are removed by compactUsedPartials before
 // merging. Each chunk maps into a fresh temporary partial before mergeFn folds
 // it into the worker-local accumulator, so mappers may assign chunk results
-// rather than manually accumulating across chunks. The atomic cursor advances
-// once per chunk, never per element.
-func fillWorkerPartialsFixed[T any](n int, chunk int, partials []T, used []bool, mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) {
-	chunks := chunkCount(n, chunk)
-	var next atomic.Int64
+// rather than manually accumulating across chunks.
+func fillFixedChunkWorkerPartials[T any](n int, chunk int, chunks int, partials []T, used []bool, mapChunk core.IndexedIntoMapper[T], mergeFn core.Merger[T]) {
 	var wg sync.WaitGroup
 	wg.Add(len(partials))
 	for worker := range partials {
@@ -79,18 +76,10 @@ func fillWorkerPartialsFixed[T any](n int, chunk int, partials []T, used []bool,
 			var chunkPartial T
 			var zero T
 			active := false
-			for {
-				chunkIndex := int(next.Add(1) - 1)
-				if chunkIndex >= chunks {
-					break
-				}
-				start := chunkIndex * chunk
-				end := start + chunk
-				if end > n {
-					end = n
-				}
+			startChunk, endChunk := fixedChunkBlock(chunks, len(partials), worker)
+			for chunkIndex := startChunk; chunkIndex < endChunk; chunkIndex++ {
 				chunkPartial = zero
-				mapChunk(worker, core.Range{Start: start, End: end}, &chunkPartial)
+				mapChunk(worker, chunkRange(n, chunk, chunkIndex), &chunkPartial)
 				if active {
 					mergeFn(&local, chunkPartial)
 				} else {

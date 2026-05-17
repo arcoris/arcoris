@@ -22,27 +22,24 @@ import (
 	"arcoris.dev/measure/internal/reduce/core"
 )
 
-func FuzzStaticCoverage(f *testing.F) {
-	f.Add(1000, 4, 100)
-	f.Add(1, 8, 64)
-	f.Add(0, 8, 64)
-	f.Fuzz(func(t *testing.T, n int, workers int, minItems int) {
-		if n < 0 || n > 1_000_000 {
-			return
-		}
-		plan := Static(n, core.Options{Workers: workers, MinItemsPerWorker: minItems}, nil)
-		pos := 0
-		for i, r := range plan {
-			if r.Empty() {
-				t.Fatalf("range[%d] empty: %#v", i, r)
-			}
-			if r.Start != pos {
-				t.Fatalf("range[%d].Start=%d want %d plan=%#v", i, r.Start, pos, plan)
-			}
-			pos = r.End
-		}
-		if pos != n {
-			t.Fatalf("covered %d, want %d plan=%#v", pos, n, plan)
-		}
-	})
+func BenchmarkBalanced_1K(b *testing.B) {
+	benchmarkBalanced(b, 1_024)
+}
+
+func BenchmarkBalanced_64K(b *testing.B) {
+	benchmarkBalanced(b, 64*1024)
+}
+
+func BenchmarkBalanced_1M(b *testing.B) {
+	benchmarkBalanced(b, 1_000_000)
+}
+
+func benchmarkBalanced(b *testing.B, n int) {
+	opts := core.Options{Workers: 8, MinItemsPerWorker: 1024, Strategy: core.StrategyBalanced}
+	var ranges []core.Range
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		ranges = Balanced(n, opts, ranges)
+	}
+	_ = ranges
 }

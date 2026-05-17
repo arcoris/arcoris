@@ -23,12 +23,12 @@ import (
 	"arcoris.dev/measure/internal/reduce/core"
 )
 
-func TestFillWorkerPartialsFixedProcessesEveryIndexOnce(t *testing.T) {
+func TestFillFixedChunkWorkerPartialsProcessesEveryIndexOnce(t *testing.T) {
 	const n = 257
 	partials := make([]int, 4)
 	used := make([]bool, 4)
 	seen := make([]atomic.Int64, n)
-	fillWorkerPartialsFixed(n, 13, partials, used, func(_ int, r core.Range, dst *int) {
+	fillFixedChunkWorkerPartials(n, 13, chunkCount(n, 13), partials, used, func(_ int, r core.Range, dst *int) {
 		count := 0
 		for i := r.Start; i < r.End; i++ {
 			seen[i].Add(1)
@@ -42,11 +42,11 @@ func TestFillWorkerPartialsFixedProcessesEveryIndexOnce(t *testing.T) {
 	}
 }
 
-func TestReduceFixedWorkerPartialsDoesNotMergeInactiveWorkers(t *testing.T) {
+func TestReduceFixedChunkWorkerPartialsDoesNotMergeInactiveWorkers(t *testing.T) {
 	var zeroMerged atomic.Int64
-	got, ok := reduceFixedWorkerPartials[nonNeutralPartial](
+	got, ok := reduceFixedChunkWorkerPartials[nonNeutralPartial](
 		10,
-		core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 100, Strategy: core.StrategyFixed},
+		core.Options{Workers: 8, MinItemsPerWorker: 1, ChunkSize: 100, Strategy: core.StrategyFixedChunks},
 		nil,
 		func(_ int, r core.Range, dst *nonNeutralPartial) {
 			dst.Value += r.Len()
@@ -61,30 +61,30 @@ func TestReduceFixedWorkerPartialsDoesNotMergeInactiveWorkers(t *testing.T) {
 		},
 	)
 	if !ok {
-		t.Fatal("reduceFixedWorkerPartials returned false for non-empty input")
+		t.Fatal("reduceFixedChunkWorkerPartials returned false for non-empty input")
 	}
 	if got.Value != 10 || !got.Active {
-		t.Fatalf("reduceFixedWorkerPartials() = %#v, want active value 10", got)
+		t.Fatalf("reduceFixedChunkWorkerPartials() = %#v, want active value 10", got)
 	}
 	if zeroMerged.Load() != 0 {
 		t.Fatalf("merged %d inactive zero-value partials", zeroMerged.Load())
 	}
 }
 
-func TestReduceFixedWorkerPartialsUsesFewerPartialsThanChunks(t *testing.T) {
+func TestReduceFixedChunkWorkerPartialsUsesFewerPartialsThanChunks(t *testing.T) {
 	var scratch core.Scratch[int]
-	got, ok := reduceFixedWorkerPartials[int](
+	got, ok := reduceFixedChunkWorkerPartials[int](
 		1000,
-		core.Options{Workers: 4, MinItemsPerWorker: 1, ChunkSize: 10, Strategy: core.StrategyFixed},
+		core.Options{Workers: 4, MinItemsPerWorker: 1, ChunkSize: 10, Strategy: core.StrategyFixedChunks},
 		&scratch,
 		func(_ int, r core.Range, dst *int) { *dst += r.Len() },
 		func(dst *int, src int) { *dst += src },
 	)
 	if !ok {
-		t.Fatal("reduceFixedWorkerPartials returned false for non-empty input")
+		t.Fatal("reduceFixedChunkWorkerPartials returned false for non-empty input")
 	}
 	if got != 1000 {
-		t.Fatalf("reduceFixedWorkerPartials() = %d, want 1000", got)
+		t.Fatalf("reduceFixedChunkWorkerPartials() = %d, want 1000", got)
 	}
 	if len(scratch.Partials) != 4 {
 		t.Fatalf("partials = %d, want one slot per worker", len(scratch.Partials))
@@ -94,10 +94,10 @@ func TestReduceFixedWorkerPartialsUsesFewerPartialsThanChunks(t *testing.T) {
 	}
 }
 
-func TestFillWorkerPartialsFixedAccumulatesMultipleChunksPerWorker(t *testing.T) {
+func TestFillFixedChunkWorkerPartialsAccumulatesMultipleChunksPerWorker(t *testing.T) {
 	partials := make([]int, 2)
 	used := make([]bool, 2)
-	fillWorkerPartialsFixed(100, 1, partials, used, func(_ int, r core.Range, dst *int) {
+	fillFixedChunkWorkerPartials(100, 1, chunkCount(100, 1), partials, used, func(_ int, r core.Range, dst *int) {
 		*dst = r.Len()
 	}, func(dst *int, src int) { *dst += src })
 	active := compactUsedPartials(partials, used)

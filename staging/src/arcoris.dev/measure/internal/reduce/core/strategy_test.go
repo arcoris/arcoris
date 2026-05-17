@@ -25,7 +25,7 @@ func TestStrategyAndMergeDefaultsRemainStable(t *testing.T) {
 	if MergeLinear != 0 {
 		t.Fatalf("MergeLinear = %d, want 0", MergeLinear)
 	}
-	if StrategyDynamic <= StrategyStatic {
-		t.Fatalf("strategy order changed: static=%d dynamic=%d", StrategyStatic, StrategyDynamic)
+	if StrategyDynamicChunks <= StrategyBalanced {
+		t.Fatalf("strategy order changed: balanced=%d dynamicChunks=%d", StrategyBalanced, StrategyDynamicChunks)
 	}
 }

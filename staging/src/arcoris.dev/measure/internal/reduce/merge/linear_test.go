@@ -19,12 +19,28 @@ package merge
 import "testing"
 
 func TestLinearMergesInOrder(t *testing.T) {
-	got, ok := Linear([]string{"a", "b", "c"}, func(dst *string, src string) { *dst += src })
+	got, ok := Linear([]string{"a", "b", "c", "d"}, func(dst *string, src string) {
+		*dst = "(" + *dst + "+" + src + ")"
+	})
 	if !ok {
 		t.Fatal("expected non-empty merge")
 	}
-	if got != "abc" {
-		t.Fatalf("got %q, want abc", got)
+	if got != "(((a+b)+c)+d)" {
+		t.Fatalf("got %q, want linear left fold", got)
+	}
+}
+
+func TestLinearDoesNotMutateInput(t *testing.T) {
+	partials := []string{"a", "b", "c"}
+	_, ok := Linear(partials, func(dst *string, src string) { *dst += src })
+	if !ok {
+		t.Fatal("expected non-empty merge")
+	}
+	want := []string{"a", "b", "c"}
+	for i := range want {
+		if partials[i] != want[i] {
+			t.Fatalf("partials = %#v, want %#v", partials, want)
+		}
 	}
 }
 
