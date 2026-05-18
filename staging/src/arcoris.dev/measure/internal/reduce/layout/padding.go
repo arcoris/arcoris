@@ -27,9 +27,9 @@ type CacheLinePad = atomicx.CacheLinePad
 // Padded stores Value between cache-line pads.
 //
 // Padded is a layout utility for rare cases where a caller intentionally places
-// independently hot worker slots in adjacent memory. It is not used by default
-// runners because workers compute into local variables and write one partial
-// slot once.
+// independently hot worker slots in adjacent memory. It is not part of the
+// default runner execution path: workers compute into local variables and write
+// one partial slot once.
 type Padded[T any] struct {
 	// _leading separates Value from fields or slice elements that may precede this
 	// slot in memory.

@@ -20,9 +20,10 @@ import "arcoris.dev/measure/internal/reduce/core"
 
 // Plan selects the planning function implied by opts.
 //
-// Plan normalizes opts before dispatch. StrategyDynamicChunks deliberately produces
-// the same fixed-size ranges as StrategyFixedChunks; the runner package decides
-// whether those chunks are claimed dynamically or consumed as a balanced plan.
+// Plan normalizes opts before dispatch. StrategyDynamicChunks deliberately
+// produces the same inspectable fixed-size ranges as StrategyFixedChunks.
+// Dynamic runner execution does not require a materialized plan and may claim
+// chunks through an atomic cursor instead.
 func Plan(
 	n int,
 	opts core.Options,

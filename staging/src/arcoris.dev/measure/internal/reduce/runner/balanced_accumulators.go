@@ -24,17 +24,17 @@ import (
 	"arcoris.dev/measure/internal/reduce/planner"
 )
 
-// reduceBalancedRangePartials plans balanced contiguous ranges, fills one partial
-// per planned range, and merges those partials in range order.
+// accumulateBalancedWorkerPartials assigns each balanced range to one
+// worker-local partial and merges those active partials in range order.
 //
-// Range-local partial execution is deterministic and matches StrategyBalanced's
-// balanced planning model. The current balanced planner never produces more
-// ranges than worker slots, so this path stays one-to-one by design.
-func reduceBalancedRangePartials[T any](
+// Balanced accumulation still starts each worker-local partial from the zero
+// value of T. Accumulators that need maps, slices, or other internal buffers
+// must lazily initialize them before their first update.
+func accumulateBalancedWorkerPartials[T any](
 	n int,
 	opts core.Options,
 	scratch *core.Scratch[T],
-	mapRange core.IndexedIntoMapper[T],
+	accumulate core.IndexedAccumulator[T],
 	mergeFn core.Merger[T],
 ) (T, bool) {
 	var zero T
@@ -51,34 +51,35 @@ func reduceBalancedRangePartials[T any](
 		return zero, false
 	}
 	if len(ranges) == 1 {
-		var partial T
-		mapRange(0, ranges[0], &partial)
-		return partial, true
+		return accumulateSequentiallyIndexed(n, accumulate)
 	}
+
 	partials := scratch.EnsurePartialsDirty(len(ranges))
-	fillRangePartialsOneToOne(ranges, partials, mapRange)
-	return merge.Merge(partials, opts.MergeMode, mergeFn)
+	used := scratch.EnsureUsed(len(ranges))
+	fillBalancedWorkerAccumulators(ranges, partials, used, accumulate)
+	active := compactUsedPartials(partials, used)
+	return merge.Merge(active, opts.MergeMode, mergeFn)
 }
 
-// fillRangePartialsOneToOne maps each range in its own goroutine.
+// fillBalancedWorkerAccumulators assigns one balanced range to each worker
+// slot.
 //
-// This is the only range-local fill mode used by the current balanced runner.
-// Each goroutine computes into a stack-local partial before publishing to the
-// range-indexed partial slot. That keeps writes out of shared storage while the
-// mapper's hot loop is running and preserves deterministic range-order merge
-// input.
-func fillRangePartialsOneToOne[T any](
+// The current balanced planner never returns more ranges than worker slots, so
+// this path stays one-to-one and deterministic.
+func fillBalancedWorkerAccumulators[T any](
 	ranges []core.Range,
 	partials []T,
-	mapRange core.IndexedIntoMapper[T],
+	used []bool,
+	accumulate core.IndexedAccumulator[T],
 ) {
 	var wg sync.WaitGroup
 	wg.Add(len(ranges))
 	for worker, r := range ranges {
 		go func() {
 			var local T
-			mapRange(worker, r, &local)
+			accumulate(worker, r, &local)
 			partials[worker] = local
+			used[worker] = true
 			wg.Done()
 		}()
 	}

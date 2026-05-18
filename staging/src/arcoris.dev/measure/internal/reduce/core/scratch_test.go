@@ -102,6 +102,69 @@ func TestScratchClearZeroesPointersAfterReset(t *testing.T) {
 	}
 }
 
+func TestScratchClearOnZeroValueIsSafe(t *testing.T) {
+	var s Scratch[int]
+
+	s.Clear()
+	if s.Ranges == nil && s.Partials == nil && s.Used == nil {
+		return
+	}
+	if len(s.Ranges) != 0 || len(s.Partials) != 0 || len(s.Used) != 0 {
+		t.Fatalf(
+			"Clear lengths = ranges:%d partials:%d used:%d, want zero",
+			len(s.Ranges),
+			len(s.Partials),
+			len(s.Used),
+		)
+	}
+}
+
+func TestScratchClearAfterReleaseIsSafe(t *testing.T) {
+	s := Scratch[int]{
+		Ranges:   []Range{{Start: 1, End: 2}},
+		Partials: []int{1},
+		Used:     []bool{true},
+	}
+
+	s.Release()
+	s.Clear()
+	if s.Ranges != nil || s.Partials != nil || s.Used != nil {
+		t.Fatalf(
+			"Clear after Release = ranges:%#v partials:%#v used:%#v, want nil",
+			s.Ranges,
+			s.Partials,
+			s.Used,
+		)
+	}
+}
+
+func TestScratchClearAfterEnsurePartialsAndUsedZeroesRetainedStorage(t *testing.T) {
+	value := 42
+	s := Scratch[*int]{}
+
+	partials := s.EnsurePartials(2)
+	partials[0] = &value
+	partials[1] = &value
+	used := s.EnsureUsedDirty(2)
+	used[0] = true
+	used[1] = true
+
+	s.Clear()
+
+	retainedPartials := s.Partials[:cap(s.Partials)]
+	for i, partial := range retainedPartials {
+		if partial != nil {
+			t.Fatalf("retained partial[%d] = %p, want nil", i, partial)
+		}
+	}
+	retainedUsed := s.Used[:cap(s.Used)]
+	for i, active := range retainedUsed {
+		if active {
+			t.Fatalf("retained used[%d] = true, want false", i)
+		}
+	}
+}
+
 func TestScratchReleaseDropsBackingStorage(t *testing.T) {
 	value := 42
 	s := Scratch[*int]{

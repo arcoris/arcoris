@@ -128,6 +128,7 @@ func TestReduceDynamicChunkWorkerPartialsUsesChunkSize(t *testing.T) {
 
 func TestReduceDynamicChunkWorkerPartialsSequentialFallbackMapsOnce(t *testing.T) {
 	var calls atomic.Int64
+	var maxLen atomic.Int64
 	got, ok := reduceDynamicChunkWorkerPartials[int](
 		10,
 		core.Options{
@@ -139,6 +140,7 @@ func TestReduceDynamicChunkWorkerPartialsSequentialFallbackMapsOnce(t *testing.T
 		nil,
 		func(_ int, r core.Range, dst *int) {
 			calls.Add(1)
+			maxLen.Store(int64(r.Len()))
 			*dst = r.Len()
 		},
 		func(dst *int, src int) { *dst += src },
@@ -151,6 +153,39 @@ func TestReduceDynamicChunkWorkerPartialsSequentialFallbackMapsOnce(t *testing.T
 	}
 	if calls.Load() != 1 {
 		t.Fatalf("mapper calls = %d, want 1", calls.Load())
+	}
+	if maxLen.Load() != 10 {
+		t.Fatalf("max range len = %d, want full sequential range 10", maxLen.Load())
+	}
+}
+
+func TestReduceDynamicChunkWorkerPartialsParallelRespectsChunkSize(t *testing.T) {
+	var maxLen atomic.Int64
+	got, ok := reduceDynamicChunkWorkerPartials[int](
+		10,
+		core.Options{
+			Workers:           4,
+			MinItemsPerWorker: 1,
+			ChunkSize:         3,
+			Strategy:          core.StrategyDynamicChunks,
+		},
+		nil,
+		func(_ int, r core.Range, dst *int) {
+			for {
+				old := maxLen.Load()
+				if int64(r.Len()) <= old || maxLen.CompareAndSwap(old, int64(r.Len())) {
+					break
+				}
+			}
+			*dst = r.Len()
+		},
+		func(dst *int, src int) { *dst += src },
+	)
+	if !ok || got != 10 {
+		t.Fatalf("reduceDynamicChunkWorkerPartials() = %d ok=%v, want 10 true", got, ok)
+	}
+	if maxLen.Load() > 3 {
+		t.Fatalf("max range len = %d, want <= 3", maxLen.Load())
 	}
 }
 

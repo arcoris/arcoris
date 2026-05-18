@@ -142,6 +142,61 @@ func TestFillFixedChunkWorkerPartialsAccumulatesMultipleChunksPerWorker(t *testi
 	t.Fatalf("active partials = %#v, want at least one worker to accumulate multiple chunks", active)
 }
 
+func TestReduceFixedChunkWorkerPartialsSequentialFallbackCanExceedChunkSize(t *testing.T) {
+	var maxLen atomic.Int64
+	got, ok := reduceFixedChunkWorkerPartials[int](
+		10,
+		core.Options{
+			Workers:           8,
+			MinItemsPerWorker: 100,
+			ChunkSize:         3,
+			Strategy:          core.StrategyFixedChunks,
+		},
+		nil,
+		func(_ int, r core.Range, dst *int) {
+			maxLen.Store(int64(r.Len()))
+			*dst = r.Len()
+		},
+		func(dst *int, src int) { *dst += src },
+	)
+	if !ok || got != 10 {
+		t.Fatalf("reduceFixedChunkWorkerPartials() = %d ok=%v, want 10 true", got, ok)
+	}
+	if maxLen.Load() != 10 {
+		t.Fatalf("max range len = %d, want full sequential range 10", maxLen.Load())
+	}
+}
+
+func TestReduceFixedChunkWorkerPartialsParallelRespectsChunkSize(t *testing.T) {
+	var maxLen atomic.Int64
+	got, ok := reduceFixedChunkWorkerPartials[int](
+		10,
+		core.Options{
+			Workers:           4,
+			MinItemsPerWorker: 1,
+			ChunkSize:         3,
+			Strategy:          core.StrategyFixedChunks,
+		},
+		nil,
+		func(_ int, r core.Range, dst *int) {
+			for {
+				old := maxLen.Load()
+				if int64(r.Len()) <= old || maxLen.CompareAndSwap(old, int64(r.Len())) {
+					break
+				}
+			}
+			*dst = r.Len()
+		},
+		func(dst *int, src int) { *dst += src },
+	)
+	if !ok || got != 10 {
+		t.Fatalf("reduceFixedChunkWorkerPartials() = %d ok=%v, want 10 true", got, ok)
+	}
+	if maxLen.Load() > 3 {
+		t.Fatalf("max range len = %d, want <= 3", maxLen.Load())
+	}
+}
+
 func sumInts(values []int) int {
 	total := 0
 	for _, value := range values {

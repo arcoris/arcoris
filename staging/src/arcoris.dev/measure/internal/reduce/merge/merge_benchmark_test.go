@@ -37,7 +37,7 @@ func BenchmarkMergeLinear_SmallStruct(b *testing.B) {
 	}
 }
 
-func BenchmarkMergePairwise_SmallStruct(b *testing.B) {
+func BenchmarkMergePairwise_SmallStruct_IncludingCopy(b *testing.B) {
 	partials := make([]smallStruct, 64)
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -61,7 +61,7 @@ func BenchmarkMergeLinear_LargeStruct(b *testing.B) {
 	}
 }
 
-func BenchmarkMergePairwise_LargeStruct(b *testing.B) {
+func BenchmarkMergePairwise_LargeStruct_IncludingCopy(b *testing.B) {
 	partials := make([]largeStruct, 64)
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {

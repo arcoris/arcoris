@@ -54,8 +54,11 @@ type Options struct {
 
 	// ChunkSize controls StrategyFixedChunks and StrategyDynamicChunks grain
 	// size. Smaller chunks can improve load balance or locality experiments but
-	// can also increase mapper and merge overhead. It is ignored by
-	// StrategyBalanced and StrategySequential.
+	// can also increase mapper and merge overhead. ChunkSize is not a hard
+	// maximum callback range length: sequential fallback may still pass one full
+	// [0:n) range even when a chunk strategy is selected. Callbacks must handle
+	// any valid range they receive. ChunkSize is ignored by StrategyBalanced and
+	// StrategySequential.
 	ChunkSize int
 
 	// Strategy selects the range planning and execution strategy. StrategyAuto

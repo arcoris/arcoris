@@ -31,8 +31,10 @@ type Mapper[T any] func(Range) T
 // IntoMapper is part of the Reduce family. The destination is fresh for the
 // current mapping operation, so implementations may assign the result directly
 // and are not required to preserve previous dst contents. The runner may merge
-// the produced partial later. This callback is generic and safe, but it is not
-// the maximum-performance worker-local accumulation contract.
+// the produced partial later. Chunk strategies may therefore call mergeFn once
+// per chunk when they fold those chunk partials into worker-local storage. This
+// callback is generic and safe, but it is not the maximum-performance
+// worker-local accumulation contract for buffer-backed partials.
 type IntoMapper[T any] func(Range, *T)
 
 // IndexedIntoMapper writes a complete partial while exposing the execution slot.
@@ -41,23 +43,27 @@ type IntoMapper[T any] func(Range, *T)
 // for the current range or chunk, so implementations may assign it. Balanced
 // range-local runners pass the worker currently processing the planned range.
 // FixedChunks and DynamicChunks runners pass the worker that owns or claimed the
-// current chunk. The worker value is stable only within one reduction call.
+// current chunk. Chunk strategies may call mergeFn once per chunk after the
+// mapper returns. The worker value is stable only within one reduction call.
 type IndexedIntoMapper[T any] func(worker int, r Range, dst *T)
 
 // Accumulator adds one range or chunk directly into a worker-local partial.
 //
 // Accumulator is part of the Accumulate family. The destination belongs to a
 // worker-local partial, and a runner may call the accumulator multiple times
-// with the same dst. Implementations must accumulate into dst and must not
-// blindly overwrite previous state unless replacement is the intended
-// accumulation behavior. Captured shared state must be immutable or synchronized
-// by the caller.
+// with the same dst. Worker-local partials start from the zero value of T, so
+// implementations that need internal maps, slices, or buffers must initialize
+// them lazily inside the accumulator. Implementations must accumulate into dst
+// and must not blindly overwrite previous state unless replacement is the
+// intended accumulation behavior. Captured shared state must be immutable or
+// synchronized by the caller.
 type Accumulator[T any] func(r Range, dst *T)
 
 // IndexedAccumulator adds one range or chunk into a worker-local partial while
 // exposing the execution slot.
 //
 // IndexedAccumulator has the same ownership and accumulation contract as
-// Accumulator. The worker value identifies the worker-local partial being
-// updated during the current reduction call.
+// Accumulator. Worker-local partials start from the zero value of T, and the
+// worker value identifies the worker-local partial being updated during the
+// current reduction call.
 type IndexedAccumulator[T any] func(worker int, r Range, dst *T)

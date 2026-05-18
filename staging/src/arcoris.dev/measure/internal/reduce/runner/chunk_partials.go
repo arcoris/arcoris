@@ -68,7 +68,9 @@ func reduceFixedChunkWorkerPartials[T any](
 // dirty partial slots untouched and are removed by compactUsedPartials before
 // merging. Each chunk maps into a fresh temporary partial before mergeFn folds
 // it into the worker-local accumulator, so mappers may assign chunk results
-// rather than manually accumulating across chunks.
+// rather than manually accumulating across chunks. That extra mergeFn call per
+// chunk is the main reason buffer-backed algorithms should prefer the
+// Accumulate family when they can update worker-local state directly.
 func fillFixedChunkWorkerPartials[T any](
 	n int,
 	chunk int,

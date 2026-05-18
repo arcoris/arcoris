@@ -22,8 +22,10 @@ package core
 // Scratch is for sequential reuse by one caller. Do not share one Scratch
 // between simultaneous reductions because planners and runners mutate its slices
 // and may treat reused partial slots as dirty. Reset keeps backing arrays and
-// can retain references stored in those arrays; Clear zeroes retained slots
-// while keeping capacity; Release drops backing storage.
+// can retain references stored in those arrays; pairwise merge paths may also
+// leave intermediate reference-bearing partials in retained slots until Clear
+// or Release runs. Clear zeroes retained slots while keeping capacity; Release
+// drops backing storage.
 type Scratch[T any] struct {
 	// Ranges stores the most recent planned ranges. Planner packages may reuse
 	// and overwrite this slice on each call.
@@ -54,8 +56,8 @@ func (s *Scratch[T]) Reset() {
 //
 // Clear scans the full retained capacity of Ranges, Partials, and Used, then
 // resets their lengths to zero. It is more expensive than Reset, but it removes
-// references and stale active flags even after a previous Reset shortened the
-// slices.
+// references, pairwise intermediate values, and stale active flags even after a
+// previous Reset shortened the slices.
 func (s *Scratch[T]) Clear() {
 	var zeroRange Range
 	ranges := s.Ranges[:cap(s.Ranges)]

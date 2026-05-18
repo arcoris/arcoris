@@ -18,7 +18,6 @@ package runner
 
 import (
 	"strconv"
-	"sync/atomic"
 	"testing"
 
 	"arcoris.dev/measure/internal/reduce/core"
@@ -38,49 +37,7 @@ func TestFillRangePartialsOneToOneProcessesEachRange(t *testing.T) {
 	}
 }
 
-func TestFillRangePartialsQueuedProcessesEveryRangeOnce(t *testing.T) {
-	ranges := []core.Range{
-		{Start: 0, End: 3},
-		{Start: 3, End: 5},
-		{Start: 5, End: 8},
-		{Start: 8, End: 13},
-	}
-	partials := make([]int, len(ranges))
-	calls := make([]atomic.Int64, len(ranges))
-	fillRangePartialsQueued(ranges, partials, 2, func(_ int, r core.Range, dst *int) {
-		for i, planned := range ranges {
-			if planned == r {
-				calls[i].Add(1)
-				break
-			}
-		}
-		*dst = r.Len()
-	})
-	for i, r := range ranges {
-		if got := calls[i].Load(); got != 1 {
-			t.Fatalf("range %d processed %d times, want 1", i, got)
-		}
-		if partials[i] != r.Len() {
-			t.Fatalf("partials[%d] = %d, want %d", i, partials[i], r.Len())
-		}
-	}
-}
-
-func TestFillRangePartialsQueuedKeepsPartialsIndexedByRange(t *testing.T) {
-	ranges := []core.Range{{Start: 10, End: 11}, {Start: 20, End: 22}, {Start: 30, End: 33}}
-	partials := make([]int, len(ranges))
-	fillRangePartialsQueued(ranges, partials, 1, func(_ int, r core.Range, dst *int) {
-		*dst = r.Start
-	})
-	want := []int{10, 20, 30}
-	for i := range want {
-		if partials[i] != want[i] {
-			t.Fatalf("partials = %#v, want %#v", partials, want)
-		}
-	}
-}
-
-func TestFillRangePartialsQueuedPublishesLocalPartialsOverDirtySlots(t *testing.T) {
+func TestFillRangePartialsOneToOnePublishesLocalPartialsOverDirtySlots(t *testing.T) {
 	type partial struct {
 		Values []int
 	}
@@ -90,7 +47,7 @@ func TestFillRangePartialsQueuedPublishesLocalPartialsOverDirtySlots(t *testing.
 		{Values: []int{200}},
 		{Values: []int{300}},
 	}
-	fillRangePartialsQueued(ranges, partials, 1, func(_ int, r core.Range, dst *partial) {
+	fillRangePartialsOneToOne(ranges, partials, func(_ int, r core.Range, dst *partial) {
 		dst.Values = append(dst.Values, r.Start)
 	})
 	for i, r := range ranges {

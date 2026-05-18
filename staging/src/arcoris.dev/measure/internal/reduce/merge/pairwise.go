@@ -23,7 +23,9 @@ import "arcoris.dev/measure/internal/reduce/core"
 // PairwiseInPlace returns false for an empty slice. For non-empty input it
 // reuses partials as working storage, reducing adjacent pairs until one value
 // remains. Callers must not depend on partials preserving its original contents
-// after this call.
+// after this call. When partials contain references and the backing slice is
+// reused through core.Scratch, intermediate merged values can remain retained
+// in scratch slots until the caller clears or releases that scratch storage.
 func PairwiseInPlace[T any](
 	partials []T,
 	mergeFn core.Merger[T],

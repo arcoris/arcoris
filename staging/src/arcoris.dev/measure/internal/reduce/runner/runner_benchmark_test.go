@@ -16,12 +16,9 @@
 
 package runner
 
-import (
-	"testing"
+import "testing"
 
-	"arcoris.dev/measure/internal/reduce/core"
-	"arcoris.dev/measure/internal/reduce/planner"
-)
+import "arcoris.dev/measure/internal/reduce/core"
 
 func BenchmarkReduceInto_Sequential(b *testing.B) {
 	values := benchmarkValues(64 * 1024)
@@ -132,23 +129,54 @@ func BenchmarkReduceVsAccumulate_DynamicChunks(b *testing.B) {
 	b.Run("accumulate", func(b *testing.B) { benchmarkAccumulateIntoSum(b, values, opts) })
 }
 
-func BenchmarkFillRangePartialsQueued(b *testing.B) {
-	ranges := planner.Balanced(
-		1_000_000,
-		core.Options{
-			Workers:           64,
-			MinItemsPerWorker: 1,
-			Strategy:          core.StrategyBalanced,
-		},
-		nil,
-	)
-	partials := make([]int, len(ranges))
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		fillRangePartialsQueued(ranges, partials, 8, func(_ int, r core.Range, dst *int) {
-			*dst = r.Len()
-		})
+func BenchmarkReduceInto_BucketPartial_FixedChunks(b *testing.B) {
+	opts := core.Options{
+		Workers:           8,
+		MinItemsPerWorker: 1,
+		ChunkSize:         32,
+		Strategy:          core.StrategyFixedChunks,
 	}
+	benchmarkReduceIntoBucketPartial(b, 65_536, opts)
+}
+
+func BenchmarkAccumulateInto_BucketPartial_FixedChunks(b *testing.B) {
+	opts := core.Options{
+		Workers:           8,
+		MinItemsPerWorker: 1,
+		ChunkSize:         32,
+		Strategy:          core.StrategyFixedChunks,
+	}
+	benchmarkAccumulateIntoBucketPartial(b, 65_536, opts)
+}
+
+func BenchmarkReduceVsAccumulate_BufferBackedPartial_FixedChunks(b *testing.B) {
+	opts := core.Options{
+		Workers:           8,
+		MinItemsPerWorker: 1,
+		ChunkSize:         32,
+		Strategy:          core.StrategyFixedChunks,
+	}
+	b.Run("reduce", func(b *testing.B) {
+		benchmarkReduceIntoBucketPartial(b, 65_536, opts)
+	})
+	b.Run("accumulate", func(b *testing.B) {
+		benchmarkAccumulateIntoBucketPartial(b, 65_536, opts)
+	})
+}
+
+func BenchmarkReduceVsAccumulate_BufferBackedPartial_DynamicChunks(b *testing.B) {
+	opts := core.Options{
+		Workers:           8,
+		MinItemsPerWorker: 1,
+		ChunkSize:         256,
+		Strategy:          core.StrategyDynamicChunks,
+	}
+	b.Run("reduce", func(b *testing.B) {
+		benchmarkReduceIntoBucketPartial(b, 65_536, opts)
+	})
+	b.Run("accumulate", func(b *testing.B) {
+		benchmarkAccumulateIntoBucketPartial(b, 65_536, opts)
+	})
 }
 
 func BenchmarkFillFixedChunkWorkerPartials(b *testing.B) {
@@ -174,13 +202,23 @@ func BenchmarkFillFixedChunkWorkerPartials(b *testing.B) {
 }
 
 func BenchmarkCompactUsedPartials(b *testing.B) {
-	partials := []int{1, 2, 3, 4, 5, 6, 7, 8}
-	used := []bool{true, false, true, true, false, true, false, true}
+	basePartials := []int{1, 2, 3, 4, 5, 6, 7, 8}
+	baseUsed := []bool{true, false, true, true, false, true, false, true}
+	partials := append([]int(nil), basePartials...)
+	used := append([]bool(nil), baseUsed...)
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
+		copy(partials, basePartials)
+		copy(used, baseUsed)
 		_ = compactUsedPartials(partials, used)
 	}
 }
+
+type bucketPartial struct {
+	Buckets []uint64
+}
+
+const bucketCount = 64
 
 func benchmarkReduceIntoSum(
 	b *testing.B,
@@ -195,6 +233,37 @@ func benchmarkReduceIntoSum(
 		}, func(dst *int, src int) { *dst += src })
 		if !ok || got == 0 {
 			b.Fatalf("unexpected result: %d ok=%v", got, ok)
+		}
+	}
+}
+
+func benchmarkReduceIntoBucketPartial(
+	b *testing.B,
+	n int,
+	opts core.Options,
+) {
+	var scratch core.Scratch[bucketPartial]
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		got, ok := ReduceInto[bucketPartial](
+			n,
+			opts,
+			&scratch,
+			func(r core.Range, dst *bucketPartial) {
+				dst.Buckets = make([]uint64, bucketCount)
+				fillBucketRange(r, dst.Buckets)
+			},
+			func(dst *bucketPartial, src bucketPartial) {
+				if dst.Buckets == nil {
+					dst.Buckets = make([]uint64, len(src.Buckets))
+				}
+				for i := range src.Buckets {
+					dst.Buckets[i] += src.Buckets[i]
+				}
+			},
+		)
+		if !ok || len(got.Buckets) != bucketCount {
+			b.Fatalf("unexpected result: len=%d ok=%v", len(got.Buckets), ok)
 		}
 	}
 }
@@ -239,6 +308,39 @@ func benchmarkAccumulateIntoSum(
 	}
 }
 
+func benchmarkAccumulateIntoBucketPartial(
+	b *testing.B,
+	n int,
+	opts core.Options,
+) {
+	var scratch core.Scratch[bucketPartial]
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		got, ok := AccumulateInto[bucketPartial](
+			n,
+			opts,
+			&scratch,
+			func(r core.Range, dst *bucketPartial) {
+				if dst.Buckets == nil {
+					dst.Buckets = make([]uint64, bucketCount)
+				}
+				fillBucketRange(r, dst.Buckets)
+			},
+			func(dst *bucketPartial, src bucketPartial) {
+				if dst.Buckets == nil {
+					dst.Buckets = make([]uint64, len(src.Buckets))
+				}
+				for i := range src.Buckets {
+					dst.Buckets[i] += src.Buckets[i]
+				}
+			},
+		)
+		if !ok || len(got.Buckets) != bucketCount {
+			b.Fatalf("unexpected result: len=%d ok=%v", len(got.Buckets), ok)
+		}
+	}
+}
+
 func benchmarkValues(n int) []int {
 	values := make([]int, n)
 	for i := range values {
@@ -254,5 +356,11 @@ func sumRange(
 ) {
 	for _, value := range values[r.Start:r.End] {
 		*dst += value
+	}
+}
+
+func fillBucketRange(r core.Range, buckets []uint64) {
+	for i := r.Start; i < r.End; i++ {
+		buckets[i%len(buckets)]++
 	}
 }
