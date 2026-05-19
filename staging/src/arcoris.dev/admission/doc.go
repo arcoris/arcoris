@@ -45,17 +45,25 @@
 //
 // # Catalog registries
 //
-// KindRegistry catalogs stable ComponentKindDescriptor values. ComponentRegistry
-// catalogs stable ComponentDescriptor values and validates them against a
-// KindRegistry. Both registries are explicitly owner-created; admission does not
-// provide package-level registration, init-time registration, global mutable
-// registries, or process-wide singleton catalogs.
+// ReasonRegistry catalogs stable ReasonDescriptor values. KindRegistry catalogs
+// stable ComponentKindDescriptor values. ComponentRegistry catalogs stable
+// ComponentDescriptor values and validates them against a KindRegistry. Catalog
+// aggregates those owner-created registries behind one metadata boundary.
 //
-// These registries are for known metadata catalogs, deterministic listing,
-// docs/tests/config validation, and future chain validation foundations. They
-// are not runtime instance registries and they do not perform admission,
-// capacity ownership, health checks, metrics, logging, tracing, scheduling, or
-// service discovery.
+// Built-in catalog constructors return ordinary owner-created registries. They
+// do not create global mutable state. Admission does not provide package-level
+// Register functions, init-time registration, global mutable registries, or
+// process-wide singleton catalogs.
+//
+// Catalog registries are metadata catalogs, not enforcement engines. Result
+// validity still depends on Decision, Effect, and grant-shape invariants.
+// Registry membership can support deterministic listing, docs/tests/config
+// validation, and future chain validation foundations, but ordinary Result
+// construction does not require a registry lookup.
+//
+// Runtime instances, live admitters, chains, queues, health state, metrics,
+// tracing attributes, dynamic discovery, config ownership, scheduling, and
+// service discovery remain outside admission.
 //
 // # Side effects
 //
