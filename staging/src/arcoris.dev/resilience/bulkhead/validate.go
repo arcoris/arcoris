@@ -16,25 +16,22 @@
 
 package bulkhead
 
-import "errors"
+const (
+	// errNilBulkhead is the panic value used when a method is called on a nil
+	// Bulkhead receiver.
+	errNilBulkhead = "bulkhead: nil bulkhead"
 
-var (
-	// ErrInvalidLimit reports a zero bulkhead capacity.
-	//
-	// A bulkhead with zero capacity could never admit work. Callers that need a
-	// permanently rejecting policy should model that explicitly instead of
-	// constructing an unusable limiter.
-	ErrInvalidLimit = errors.New("bulkhead: invalid limit")
+	// errUninitializedBulkhead is the panic value used when a zero Bulkhead value
+	// is used instead of a value created by New.
+	errUninitializedBulkhead = "bulkhead: uninitialized bulkhead"
 )
 
-// validateConfig verifies construction-time limiter configuration.
-func validateConfig(cfg config) error {
-	if cfg.limit == 0 {
-		return ErrInvalidLimit
+// requireReady panics when b is nil or was not created by New.
+func (b *Bulkhead) requireReady() {
+	if b == nil {
+		panic(errNilBulkhead)
 	}
-	if cfg.clock == nil {
-		return ErrNilClock
+	if b.ledger == nil {
+		panic(errUninitializedBulkhead)
 	}
-
-	return nil
 }

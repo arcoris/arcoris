@@ -14,23 +14,24 @@
   limitations under the License.
 */
 
-// Package resilience groups failure-control primitives for ARCORIS internals.
+// Package resilience groups failure-control and execution-protection primitives
+// for ARCORIS internals.
 //
-// The currently implemented package is retry. It owns bounded retry execution:
-// attempts, retryability classification, retry-owned limits, context
-// interruption, outcomes, observer events, and consumption of caller-provided
-// delay.Schedule values.
+// Resilience packages compose lower-level building blocks into local protection
+// behavior:
 //
-// Deterministic delay formulas, randomized delay transforms, fake clocks, and
-// timer abstractions belong to arcoris.dev/chrono. Runtime waiting mechanics
-// belong to arcoris.dev/runtime. Health models and HTTP or gRPC adapters belong
-// to arcoris.dev/health.
+//   - retry owns bounded retry execution.
+//   - deadline owns helpers for execution budgets derived from context
+//     deadlines.
+//   - retrybudget owns retry amplification limits.
+//   - bulkhead owns bounded in-flight isolation.
 //
-// Future failure-control siblings such as deadline, retrybudget,
-// circuitbreaker, and bulkhead should live in this module when they are
-// implemented. They are intentionally not added by this migration.
+// chrono owns clocks, delays, jitter, and time primitives. runtime owns task,
+// wait, and lifecycle mechanics. capacity owns local scalar capacity accounting.
+// resilience composes those lower-level primitives into failure-control and
+// execution-protection behavior.
 //
-// resilience must not import health or transport adapter packages. retry depends
-// only on the Go standard library plus arcoris.dev/chrono/clock and
-// arcoris.dev/chrono/delay.
+// The root resilience layer must not import health or transport adapters.
+// Health, metrics, logging, tracing, routing, scheduling, and admission policy
+// are outside root resilience responsibility.
 package resilience

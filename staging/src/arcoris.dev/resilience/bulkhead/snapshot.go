@@ -16,24 +16,19 @@
 
 package bulkhead
 
-// Snapshot is the domain read model published by a Limiter.
+import "arcoris.dev/capacity"
+
+// Amount is the number of local in-flight capacity units managed by a Bulkhead.
 //
-// Snapshot is intentionally separate from snapshot.Snapshot[Snapshot]. This type
-// contains bulkhead state only; source-local revision and update timestamps are
-// provided by package snapshot.
-type Snapshot struct {
-	// Capacity describes current permit usage and available capacity.
-	Capacity CapacitySnapshot
+// The alias is intentionally the same scalar type used by capacity.Ledger. The
+// bulkhead layer gives the units execution-protection meaning but does not
+// redefine the accounting model.
+type Amount = capacity.Amount
 
-	// Stats describes lifetime admission counters.
-	Stats StatsSnapshot
-}
-
-// IsValid reports whether s satisfies the bulkhead snapshot invariants.
-func (s Snapshot) IsValid() bool {
-	if !s.Capacity.IsValid() || !s.Stats.IsValid() {
-		return false
-	}
-
-	return s.Stats.InFlight() == s.Capacity.InFlight
-}
+// Snapshot is the copyable read model of one Bulkhead's local capacity state.
+//
+// Snapshot is an alias of capacity.Snapshot because bulkhead does not maintain
+// parallel diagnostic counters. Limit, Reserved, Available, and Debt are exactly
+// the live in-flight capacity state owned by the underlying ledger. This keeps
+// debt semantics identical when a limit is reduced below active leases.
+type Snapshot = capacity.Snapshot

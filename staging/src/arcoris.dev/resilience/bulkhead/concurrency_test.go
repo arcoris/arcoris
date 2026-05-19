@@ -22,100 +22,64 @@ import (
 	"testing"
 )
 
-func TestLimiterConcurrentTryAcquireDoesNotExceedLimit(t *testing.T) {
-	l, err := New(8)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
-	}
+func TestConcurrentAcquireDoesNotOverspend(t *testing.T) {
+	b := New(8)
 
 	const workers = 64
-	var wg sync.WaitGroup
 	var acquired atomic.Uint64
-
+	var wg sync.WaitGroup
 	start := make(chan struct{})
-	permits := make(chan *Permit, workers)
+	leases := make(chan *Lease, workers)
+
 	for range workers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			<-start
 
-			permit, dec := l.TryAcquire()
-			if dec.Allowed {
-				if permit == nil {
-					t.Errorf("allowed decision returned nil permit")
-					return
-				}
+			lease, _, ok := b.TryAcquire()
+			if ok {
 				acquired.Add(1)
-				permits <- permit
-				return
-			}
-			if permit != nil {
-				t.Errorf("denied decision returned non-nil permit")
+				leases <- lease
 			}
 		}()
 	}
 
 	close(start)
 	wg.Wait()
-	close(permits)
+	close(leases)
 
 	if got := acquired.Load(); got != 8 {
 		t.Fatalf("acquired = %d, want 8", got)
 	}
+	requireSnapshotValue(t, b.Snapshot(), 8, 8, 0, 0)
 
-	snap := l.Snapshot()
-	if got := snap.Value.Capacity.InFlight; got != 8 {
-		t.Fatalf("InFlight = %d, want 8", got)
+	for lease := range leases {
+		lease.Release()
 	}
-	if got := snap.Value.Stats.Rejected; got != workers-8 {
-		t.Fatalf("Rejected = %d, want %d", got, workers-8)
-	}
-
-	for permit := range permits {
-		permit.Release()
-	}
-
-	snap = l.Snapshot()
-	if got := snap.Value.Capacity.InFlight; got != 0 {
-		t.Fatalf("InFlight after release = %d, want 0", got)
-	}
-	if got := snap.Value.Stats.Released; got != 8 {
-		t.Fatalf("Released = %d, want 8", got)
-	}
+	requireSnapshotValue(t, b.Snapshot(), 8, 0, 8, 0)
 }
 
-func TestPermitConcurrentReleaseIsOnce(t *testing.T) {
-	l, err := New(1)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
+func TestConcurrentReleaseIsRaceSafe(t *testing.T) {
+	b := New(32)
+	leases := make([]*Lease, 0, 32)
+	for range 32 {
+		lease, _, ok := b.TryAcquire()
+		if !ok {
+			t.Fatal("TryAcquire failed")
+		}
+		leases = append(leases, lease)
 	}
 
-	permit, dec := l.TryAcquire()
-	if permit == nil || !dec.Allowed {
-		t.Fatalf("TryAcquire = %v %+v, want allowed", permit, dec)
-	}
-
-	const releasers = 32
 	var wg sync.WaitGroup
-	start := make(chan struct{})
-	for range releasers {
+	for _, lease := range leases {
 		wg.Add(1)
-		go func() {
+		go func(l *Lease) {
 			defer wg.Done()
-			<-start
-			permit.Release()
-		}()
+			l.Release()
+		}(lease)
 	}
-
-	close(start)
 	wg.Wait()
 
-	snap := l.Snapshot()
-	if got := snap.Value.Stats.Released; got != 1 {
-		t.Fatalf("Released = %d, want 1", got)
-	}
-	if got := snap.Value.Capacity.InFlight; got != 0 {
-		t.Fatalf("InFlight = %d, want 0", got)
-	}
+	requireSnapshotValue(t, b.Snapshot(), 32, 0, 32, 0)
 }

@@ -16,10 +16,18 @@
 
 package bulkhead
 
-import "arcoris.dev/snapshot"
-
-var (
-	// Compile-time contract checks for Bulkhead's read-facing snapshot APIs.
-	_ snapshot.Source[Snapshot] = (*Bulkhead)(nil)
-	_ snapshot.RevisionSource   = (*Bulkhead)(nil)
+const (
+	// errInvalidLease is the panic value used when a Lease method is called on a
+	// nil or zero Lease instead of a value returned by Bulkhead.TryAcquire.
+	errInvalidLease = "bulkhead: invalid lease"
 )
+
+// requireReady panics when l is nil or not returned by Bulkhead.TryAcquire.
+//
+// The check intentionally happens before delegating to capacity.Reservation so
+// bulkhead reports misuse of the resilience-domain lease boundary.
+func (l *Lease) requireReady() {
+	if l == nil || l.reservation == nil {
+		panic(errInvalidLease)
+	}
+}

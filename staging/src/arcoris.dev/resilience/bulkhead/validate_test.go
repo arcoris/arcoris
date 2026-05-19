@@ -16,34 +16,36 @@
 
 package bulkhead
 
-import (
-	"errors"
-	"testing"
-)
+import "testing"
 
-func TestValidateConfigRejectsZeroLimit(t *testing.T) {
+func TestBulkheadPanicsOnNilOrUninitializedReceiver(t *testing.T) {
 	t.Parallel()
 
-	cfg := newConfig(0)
-	if err := validateConfig(cfg); !errors.Is(err, ErrInvalidLimit) {
-		t.Fatalf("validateConfig error = %v, want %v", err, ErrInvalidLimit)
-	}
+	var nilBulkhead *Bulkhead
+	requirePanic(t, errNilBulkhead, func() { _ = nilBulkhead.Snapshot() })
+	requirePanic(t, errNilBulkhead, func() { _ = nilBulkhead.Revision() })
+	requirePanic(t, errNilBulkhead, func() { _ = nilBulkhead.SetLimit(1) })
+	requirePanic(t, errNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquire() })
+
+	var zero Bulkhead
+	requirePanic(t, errUninitializedBulkhead, func() { _ = zero.Snapshot() })
+	requirePanic(t, errUninitializedBulkhead, func() { _ = zero.Revision() })
+	requirePanic(t, errUninitializedBulkhead, func() { _ = zero.SetLimit(1) })
+	requirePanic(t, errUninitializedBulkhead, func() { _, _, _ = zero.TryAcquire() })
 }
 
-func TestValidateConfigRejectsNilClock(t *testing.T) {
+func TestLeasePanicsOnNilOrUninitializedReceiver(t *testing.T) {
 	t.Parallel()
 
-	cfg := newConfig(1)
-	cfg.clock = nil
-	if err := validateConfig(cfg); !errors.Is(err, ErrNilClock) {
-		t.Fatalf("validateConfig error = %v, want %v", err, ErrNilClock)
-	}
-}
+	var nilLease *Lease
+	requirePanic(t, errInvalidLease, func() { _ = nilLease.Amount() })
+	requirePanic(t, errInvalidLease, func() { _ = nilLease.Released() })
+	requirePanic(t, errInvalidLease, func() { _ = nilLease.Release() })
+	requirePanic(t, errInvalidLease, func() { _, _ = nilLease.TryRelease() })
 
-func TestValidateConfigAcceptsValidConfig(t *testing.T) {
-	t.Parallel()
-
-	if err := validateConfig(newConfig(1)); err != nil {
-		t.Fatalf("validateConfig returned error: %v", err)
-	}
+	var zero Lease
+	requirePanic(t, errInvalidLease, func() { _ = zero.Amount() })
+	requirePanic(t, errInvalidLease, func() { _ = zero.Released() })
+	requirePanic(t, errInvalidLease, func() { _ = zero.Release() })
+	requirePanic(t, errInvalidLease, func() { _, _ = zero.TryRelease() })
 }

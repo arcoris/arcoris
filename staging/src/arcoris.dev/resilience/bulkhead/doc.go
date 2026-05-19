@@ -14,34 +14,22 @@
   limitations under the License.
 */
 
-// Package bulkhead provides local concurrency isolation for ARCORIS component
+// Package bulkhead provides bounded in-flight isolation for ARCORIS component
 // internals.
 //
-// A bulkhead bounds the number of operations that may execute inside one
-// protected section at the same time. Callers acquire a Permit before entering
-// the protected section and release the Permit when the section is left. When no
-// capacity is available, the limiter rejects the admission attempt immediately.
+// A Bulkhead is a small resilience-domain wrapper around capacity.Ledger. It
+// reserves one local capacity unit before protected work starts and returns that
+// unit when the Lease is released. When no capacity is available, TryAcquire
+// rejects immediately.
 //
-// The package models a local, non-blocking bulkhead. It does not queue waiters,
-// park goroutines, schedule work, retry operations, classify operation errors,
-// enforce request deadlines, rate-limit throughput, perform circuit breaking,
-// coordinate distributed capacity, export metrics, or integrate with health.
-// Those concerns belong to packages layered above this primitive.
+// The package is local and non-blocking. It does not wait, queue callers,
+// observe contexts, implement fairness, rate-limit throughput, retry work,
+// classify operation failures, integrate with health, export metrics, log, trace,
+// schedule work, or manage worker pools. Those policies belong above this
+// primitive.
 //
-// The first implementation intentionally exposes TryAcquire only. This keeps
-// the package focused on concurrency isolation and avoids embedding fairness,
-// waiter lifecycle, cancellation, wake-up ordering, or queue scheduling policy in
-// the base bulkhead. Future packages may build blocking, queued, keyed, or
-// dynamically reconfigured bulkheads on top of this foundation.
-//
-// A Limiter owns coherent mutable state under an internal mutex and publishes a
-// revisioned read model through package snapshot. Snapshot reads are delegated to
-// snapshot.Publisher and do not acquire the limiter mutex. Permits are
-// release-once capabilities: releasing the same Permit more than once is a
-// no-op and cannot underflow the limiter.
-//
-// Revisions are source-local publication versions inherited from package
-// snapshot. They are useful for cheap change detection by consumers of the same
-// limiter, but they are not a global ordering across different limiters or
-// components.
+// capacity owns scalar accounting and lease/release semantics. bulkhead owns the
+// resilience meaning: bounded in-flight isolation around protected execution.
+// The public read model is intentionally the capacity snapshot itself so callers
+// see the same Limit, Reserved, Available, and Debt semantics at both layers.
 package bulkhead

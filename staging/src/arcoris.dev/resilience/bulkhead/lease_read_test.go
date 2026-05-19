@@ -16,10 +16,28 @@
 
 package bulkhead
 
-import "arcoris.dev/snapshot"
+import "testing"
 
-var (
-	// Compile-time contract checks for Bulkhead's read-facing snapshot APIs.
-	_ snapshot.Source[Snapshot] = (*Bulkhead)(nil)
-	_ snapshot.RevisionSource   = (*Bulkhead)(nil)
-)
+func TestLeaseAmountAndReleasedReflectReservation(t *testing.T) {
+	t.Parallel()
+
+	b := New(1)
+	lease, _, ok := b.TryAcquire()
+	if !ok {
+		t.Fatal("TryAcquire failed")
+	}
+	if lease.Amount() != 1 {
+		t.Fatalf("Amount() = %d, want 1", lease.Amount())
+	}
+	if lease.Released() {
+		t.Fatal("Released() before release = true, want false")
+	}
+
+	lease.Release()
+	if !lease.Released() {
+		t.Fatal("Released() after release = false, want true")
+	}
+	if lease.Amount() != 1 {
+		t.Fatalf("Amount() after release = %d, want 1", lease.Amount())
+	}
+}

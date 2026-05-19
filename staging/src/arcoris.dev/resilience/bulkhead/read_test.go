@@ -16,10 +16,24 @@
 
 package bulkhead
 
-import "arcoris.dev/snapshot"
+import "testing"
 
-var (
-	// Compile-time contract checks for Bulkhead's read-facing snapshot APIs.
-	_ snapshot.Source[Snapshot] = (*Bulkhead)(nil)
-	_ snapshot.RevisionSource   = (*Bulkhead)(nil)
-)
+func TestSnapshotRemainsValid(t *testing.T) {
+	t.Parallel()
+
+	b := New(2)
+	snap := b.Snapshot()
+	if !snap.Value.IsValid() {
+		t.Fatalf("snapshot is invalid: %+v", snap.Value)
+	}
+	requireSnapshotValue(t, snap, 2, 0, 2, 0)
+}
+
+func TestRevisionMatchesSnapshotRevision(t *testing.T) {
+	t.Parallel()
+
+	b := New(1)
+	if got, want := b.Revision(), b.Snapshot().Revision; got != want {
+		t.Fatalf("Revision() = %d, want %d", got, want)
+	}
+}

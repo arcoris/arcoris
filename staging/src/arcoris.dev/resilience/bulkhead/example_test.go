@@ -22,30 +22,21 @@ import (
 	"arcoris.dev/resilience/bulkhead"
 )
 
-func ExampleLimiter_TryAcquire() {
-	limiter, _ := bulkhead.New(2)
+func ExampleBulkhead_TryAcquire() {
+	b := bulkhead.New(1)
 
-	first, firstDecision := limiter.TryAcquire()
-	second, secondDecision := limiter.TryAcquire()
-	third, thirdDecision := limiter.TryAcquire()
+	lease, _, ok := b.TryAcquire()
+	fmt.Println(ok)
 
-	fmt.Println(firstDecision.Allowed)
-	fmt.Println(secondDecision.Allowed)
-	fmt.Println(third == nil)
-	fmt.Println(thirdDecision.Reason)
+	denied, snap, ok := b.TryAcquire()
+	fmt.Println(denied == nil, ok, snap.Value.Available)
 
-	first.Release()
-
-	fourth, fourthDecision := limiter.TryAcquire()
-	fmt.Println(fourthDecision.Allowed)
-
-	second.Release()
-	fourth.Release()
+	lease.Release()
+	_, snap, ok = b.TryAcquire()
+	fmt.Println(ok, snap.Value.Available)
 
 	// Output:
 	// true
-	// true
-	// true
-	// full
-	// true
+	// true false 0
+	// true 0
 }
