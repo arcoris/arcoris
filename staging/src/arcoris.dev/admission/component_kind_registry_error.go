@@ -34,7 +34,9 @@ var ErrComponentKindAlreadyRegistered = errors.New("admission: component kind al
 // InvalidComponentKindDescriptorError reports the descriptor rejected by a kind
 // registry.
 type InvalidComponentKindDescriptorError struct {
-	// Descriptor is the invalid descriptor passed by the caller.
+	// Descriptor is the invalid descriptor passed by the caller. It is stored by
+	// value so inspecting the error cannot mutate caller-owned input or registry
+	// state.
 	Descriptor ComponentKindDescriptor
 }
 
@@ -50,7 +52,8 @@ func (e InvalidComponentKindDescriptorError) Unwrap() error {
 
 // DuplicateComponentKindError reports the kind that was already registered.
 type DuplicateComponentKindError struct {
-	// Kind is the duplicate kind rejected by the registry.
+	// Kind is the duplicate kind rejected by the registry. The value is
+	// syntactically valid, but catalog-level uniqueness failed.
 	Kind ComponentKind
 }
 

@@ -19,6 +19,12 @@ import (
 	"sync"
 )
 
+// nilComponentRegistryPanic is the stable panic string for nil
+// *ComponentRegistry method receivers.
+//
+// A nil component registry is a wiring/configuration bug. Missing components
+// are represented by Lookup returning false; a nil receiver is intentionally a
+// panic so the failure is caught close to initialization.
 const nilComponentRegistryPanic = "admission.ComponentRegistry: nil registry"
 
 // ComponentRegistry is an owner-created catalog of stable component
@@ -29,9 +35,22 @@ const nilComponentRegistryPanic = "admission.ComponentRegistry: nil registry"
 // instance registry, not a global registry, and not a service-discovery
 // mechanism. All methods are safe for concurrent use, and reads return copies.
 type ComponentRegistry struct {
-	mu    sync.RWMutex
+	// mu protects byID. Register takes the write lock; all read methods take the
+	// read lock. KindRegistry owns its own lock, so component and kind catalog
+	// reads remain independently safe.
+	mu sync.RWMutex
+
+	// kinds is the owner-provided kind catalog used for registry-level
+	// validation. It is intentionally a reference to the owner's registry rather
+	// than a copied snapshot, allowing owners to decide whether kind catalogs are
+	// immutable after construction or extended before component registration.
 	kinds *KindRegistry
-	byID  map[ComponentID]ComponentDescriptor
+
+	// byID stores descriptors by stable component ID.
+	//
+	// Descriptors are values rather than pointers, so read methods can return
+	// copies and preserve internal registry ownership.
+	byID map[ComponentID]ComponentDescriptor
 }
 
 // NewComponentRegistry creates a component catalog backed by kinds.
@@ -85,6 +104,8 @@ func (r *ComponentRegistry) Register(descriptor ComponentDescriptor) error {
 	if !descriptor.IsValid() {
 		return InvalidComponentDescriptorError{Descriptor: descriptor}
 	}
+	// This guard primarily protects manually allocated zero-value registries.
+	// NewComponentRegistry rejects nil kind catalogs before returning.
 	if r.kinds == nil {
 		return ErrNilKindRegistry
 	}
@@ -95,6 +116,9 @@ func (r *ComponentRegistry) Register(descriptor ComponentDescriptor) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	// A registry normally initializes byID in NewComponentRegistry. The lazy path
+	// keeps a manually allocated zero-value ComponentRegistry from panicking on
+	// map assignment after it has passed the explicit kind-registry check.
 	if r.byID == nil {
 		r.byID = make(map[ComponentID]ComponentDescriptor, 1)
 	}
@@ -120,6 +144,8 @@ func (r *ComponentRegistry) Lookup(id ComponentID) (ComponentDescriptor, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	// A nil map behaves like an empty registry. Lookup still returns a copy-safe
+	// zero descriptor and false for the absence case.
 	descriptor, ok := r.byID[id]
 	return descriptor, ok
 }
@@ -140,6 +166,9 @@ func (r *ComponentRegistry) List() []ComponentDescriptor {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	// Build and sort a fresh slice so callers can freely mutate the returned
+	// descriptors without affecting registry state or future deterministic list
+	// ordering.
 	descriptors := make([]ComponentDescriptor, 0, len(r.byID))
 	for _, descriptor := range r.byID {
 		descriptors = append(descriptors, descriptor)
@@ -158,6 +187,8 @@ func (r *ComponentRegistry) Len() int {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	// len(nil) is zero, so Len is safe for a manually allocated zero-value
+	// registry as long as the receiver itself is non-nil.
 	return len(r.byID)
 }
 

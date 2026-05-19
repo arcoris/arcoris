@@ -19,6 +19,13 @@ import (
 	"sync"
 )
 
+// nilKindRegistryPanic is the stable panic string for nil *KindRegistry method
+// receivers.
+//
+// Registry methods panic on nil receivers because nil registry use is a
+// programming/configuration error, not an ordinary catalog miss. The exact
+// string is tested so downstream packages can rely on a predictable failure
+// mode during initialization.
 const nilKindRegistryPanic = "admission.KindRegistry: nil registry"
 
 // KindRegistry is an owner-created catalog of known ComponentKind descriptors.
@@ -29,7 +36,15 @@ const nilKindRegistryPanic = "admission.KindRegistry: nil registry"
 // values are copies, so callers cannot mutate internal registry storage through
 // Lookup or List.
 type KindRegistry struct {
-	mu     sync.RWMutex
+	// mu protects byKind. Register takes the write lock; all read methods take
+	// the read lock. Keeping the mutex inside the registry lets owners share a
+	// catalog safely across validators, docs builders, and tests.
+	mu sync.RWMutex
+
+	// byKind stores descriptors by their stable open-world kind value.
+	//
+	// Descriptors are values rather than pointers, so Lookup and List can return
+	// copies without exposing mutable internal registry state.
 	byKind map[ComponentKind]ComponentKindDescriptor
 }
 
@@ -76,6 +91,9 @@ func (r *KindRegistry) Register(descriptor ComponentKindDescriptor) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	// A registry normally initializes byKind in NewKindRegistry. The lazy path
+	// keeps a manually allocated zero-value KindRegistry usable after the nil
+	// receiver check without changing the documented owner-created model.
 	if r.byKind == nil {
 		r.byKind = make(map[ComponentKind]ComponentKindDescriptor, 1)
 	}
@@ -101,6 +119,8 @@ func (r *KindRegistry) Lookup(kind ComponentKind) (ComponentKindDescriptor, bool
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	// A nil map behaves like an empty registry. That is useful for defensive
+	// zero-value reads and still returns copy-safe zero values.
 	descriptor, ok := r.byKind[kind]
 	return descriptor, ok
 }
@@ -121,6 +141,9 @@ func (r *KindRegistry) List() []ComponentKindDescriptor {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	// Build a fresh slice before sorting. Sorting map-derived data in place is
+	// impossible, and returning internal storage would make later registry reads
+	// dependent on caller mutation.
 	descriptors := make([]ComponentKindDescriptor, 0, len(r.byKind))
 	for _, descriptor := range r.byKind {
 		descriptors = append(descriptors, descriptor)
@@ -139,6 +162,8 @@ func (r *KindRegistry) Len() int {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	// len(nil) is zero, so Len is safe even for a manually allocated zero-value
+	// registry that has not registered anything yet.
 	return len(r.byKind)
 }
 

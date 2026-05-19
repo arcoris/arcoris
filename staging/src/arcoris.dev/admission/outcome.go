@@ -49,16 +49,26 @@ func (o Outcome) IsValid() bool {
 }
 
 // IsAdmitted reports whether o admits work immediately.
+//
+// This is the success state for admission. It says nothing about whether the
+// decision also committed a side effect or returned a grant; use Effect helpers
+// or Result helpers for that ownership shape.
 func (o Outcome) IsAdmitted() bool {
 	return o == OutcomeAdmitted
 }
 
 // IsDenied reports whether o rejects the current admission attempt.
+//
+// Denial is terminal for the current attempt and does not transfer waiting
+// ownership to the system.
 func (o Outcome) IsDenied() bool {
 	return o == OutcomeDenied
 }
 
 // IsQueued reports whether o accepted system-owned waiting.
+//
+// Queued outcomes are intentionally not terminal: the system now owns some
+// waiting state and may expose a queue handle through Result.
 func (o Outcome) IsQueued() bool {
 	return o == OutcomeQueued
 }
@@ -75,6 +85,9 @@ func (o Outcome) IsTerminal() bool {
 }
 
 // String returns the stable machine-readable outcome name.
+//
+// Undefined values format as "unknown" so diagnostics remain safe even when a
+// caller constructs an invalid Outcome manually.
 func (o Outcome) String() string {
 	switch o {
 	case OutcomeAdmitted:

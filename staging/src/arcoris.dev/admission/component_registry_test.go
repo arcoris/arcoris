@@ -218,6 +218,12 @@ func TestComponentRegistryConcurrentAccess(t *testing.T) {
 	wg.Wait()
 }
 
+// testComponentDescriptor builds a syntactically valid component descriptor for
+// registry tests.
+//
+// The helper intentionally does not register the kind. Individual tests decide
+// whether the descriptor should pass catalog-level kind validation or fail with
+// UnknownComponentKindError.
 func testComponentDescriptor(
 	id ComponentID,
 	kind ComponentKind,

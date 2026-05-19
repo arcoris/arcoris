@@ -35,16 +35,26 @@ type Result[G any, M any] struct {
 }
 
 // IsAdmitted reports whether r allows work to proceed immediately.
+//
+// The helper delegates to the embedded Decision and ignores grant/metadata
+// presence. Use IsValid when the full Result shape must be checked.
 func (r Result[G, M]) IsAdmitted() bool {
 	return r.decision.IsAdmitted()
 }
 
 // IsDenied reports whether r rejects the current admission attempt.
+//
+// Denied results must not contain grants when valid, but this helper reports
+// only the outcome state.
 func (r Result[G, M]) IsDenied() bool {
 	return r.decision.IsDenied()
 }
 
 // IsQueued reports whether r accepted system-owned waiting work.
+//
+// A queued Result may or may not carry a queue handle depending on the domain
+// package. The outcome itself only says that waiting ownership moved to the
+// system.
 func (r Result[G, M]) IsQueued() bool {
 	return r.decision.IsQueued()
 }
@@ -60,11 +70,17 @@ func (r Result[G, M]) HasSideEffect() bool {
 }
 
 // HasGrant reports whether r contains a typed grant value.
+//
+// Presence alone does not prove the Result is valid. For example, a denied
+// result with a grant is invalid even though HasGrant reports true.
 func (r Result[G, M]) HasGrant() bool {
 	return r.grant.IsSome()
 }
 
 // HasMetadata reports whether r contains typed metadata.
+//
+// Metadata is always optional from the core admission perspective. Domain
+// packages may impose stronger expectations on their own Result aliases.
 func (r Result[G, M]) HasMetadata() bool {
 	return r.metadata.IsSome()
 }

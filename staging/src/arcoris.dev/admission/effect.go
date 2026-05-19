@@ -55,16 +55,27 @@ func (e Effect) HasSideEffect() bool {
 }
 
 // RequiresGrant reports whether e requires a Result grant value.
+//
+// Only owned effects require a typed grant because the caller receives lifecycle
+// responsibility that must later be released, committed, or rolled back by the
+// domain package.
 func (e Effect) RequiresGrant() bool {
 	return e == EffectOwned
 }
 
 // AllowsGrant reports whether e may carry a Result grant value.
+//
+// Owned effects require a grant. Queued effects may optionally carry a queue
+// handle, ticket, or cancellation token. Other effects must not carry caller
+// ownership.
 func (e Effect) AllowsGrant() bool {
 	return e == EffectOwned || e == EffectQueued
 }
 
 // String returns the stable machine-readable effect name.
+//
+// Undefined values format as "unknown" so diagnostics remain safe even when a
+// caller constructs an invalid Effect manually.
 func (e Effect) String() string {
 	switch e {
 	case EffectNone:

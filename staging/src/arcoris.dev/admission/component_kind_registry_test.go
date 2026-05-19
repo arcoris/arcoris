@@ -177,6 +177,11 @@ func TestKindRegistryConcurrentAccess(t *testing.T) {
 	wg.Wait()
 }
 
+// testKindDescriptor builds a valid descriptor with a common minimal capability
+// surface.
+//
+// Tests use this helper to keep registry scenarios focused on the behavior
+// under test instead of repeating capability setup in every case.
 func testKindDescriptor(kind ComponentKind) ComponentKindDescriptor {
 	return ComponentKindDescriptor{
 		Kind: kind,

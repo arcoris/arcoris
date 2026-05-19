@@ -34,6 +34,9 @@ func (id ComponentID) IsValid() bool {
 }
 
 // String returns id as a string.
+//
+// The method intentionally performs no validation. It is safe for diagnostics
+// and deterministic ordering even when the caller is holding an invalid value.
 func (id ComponentID) String() string {
 	return string(id)
 }

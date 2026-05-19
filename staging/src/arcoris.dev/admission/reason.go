@@ -89,6 +89,9 @@ func (r Reason) IsValid() bool {
 }
 
 // String returns r as a string.
+//
+// The method intentionally performs no validation. It is a stable formatting
+// helper for diagnostics and tests, not a gate for using a reason in a Result.
 func (r Reason) String() string {
 	return string(r)
 }

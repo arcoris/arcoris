@@ -67,6 +67,10 @@ func (k ComponentKind) IsValid() bool {
 }
 
 // String returns k as a string.
+//
+// The method intentionally performs no validation. Registry sorting and
+// diagnostics can call it on both valid and invalid values without changing
+// control flow.
 func (k ComponentKind) String() string {
 	return string(k)
 }

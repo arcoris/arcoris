@@ -24,11 +24,19 @@ import "arcoris.dev/value/maybe"
 type Maybe[T any] = maybe.Maybe[T]
 
 // some returns an admission-local optional value containing value.
+//
+// Keeping this tiny wrapper private avoids scattering direct maybe.Some calls
+// through constructors and tests. That keeps admission's local Maybe vocabulary
+// consistent while preserving the underlying value/maybe implementation.
 func some[T any](value T) Maybe[T] {
 	return maybe.Some(value)
 }
 
 // none returns an empty admission-local optional value.
+//
+// Constructors use none when a Result shape intentionally omits grant or
+// metadata. It also prevents absent values from retaining references through a
+// stored zero value supplied by the caller.
 func none[T any]() Maybe[T] {
 	return maybe.None[T]()
 }

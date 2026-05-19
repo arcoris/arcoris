@@ -21,22 +21,37 @@ import (
 
 // ErrNilKindRegistry identifies ComponentRegistry construction without a kind
 // catalog.
+//
+// Component registries need a KindRegistry to distinguish syntactically valid
+// but unknown kinds from registered catalog kinds. Use errors.Is to check for
+// this configuration failure.
 var ErrNilKindRegistry = errors.New("admission: nil kind registry")
 
 // ErrInvalidComponentDescriptor identifies invalid component descriptor values.
+//
+// Invalid descriptor errors wrap this sentinel and include the rejected
+// descriptor in InvalidComponentDescriptorError for callers that need detail.
 var ErrInvalidComponentDescriptor = errors.New("admission: invalid component descriptor")
 
 // ErrUnknownComponentKind identifies component descriptors that reference a kind
 // absent from the registry's KindRegistry.
+//
+// Unknown kind errors wrap this sentinel and expose the missing kind through
+// UnknownComponentKindError.
 var ErrUnknownComponentKind = errors.New("admission: unknown component kind")
 
 // ErrComponentAlreadyRegistered identifies duplicate component registration.
+//
+// Duplicate component errors wrap this sentinel and expose the conflicting
+// component ID through DuplicateComponentError.
 var ErrComponentAlreadyRegistered = errors.New("admission: component already registered")
 
 // InvalidComponentDescriptorError reports the descriptor rejected by a component
 // registry.
 type InvalidComponentDescriptorError struct {
-	// Descriptor is the invalid descriptor passed by the caller.
+	// Descriptor is the invalid descriptor passed by the caller. It is stored by
+	// value so inspecting the error cannot mutate caller-owned input or registry
+	// state.
 	Descriptor ComponentDescriptor
 }
 
@@ -53,7 +68,9 @@ func (e InvalidComponentDescriptorError) Unwrap() error {
 // UnknownComponentKindError reports a descriptor kind missing from the registry
 // kind catalog.
 type UnknownComponentKindError struct {
-	// Kind is the valid but unregistered kind referenced by a component.
+	// Kind is the valid but unregistered kind referenced by a component. The
+	// syntax is acceptable; the owner-created kind catalog simply does not know
+	// it.
 	Kind ComponentKind
 }
 
@@ -69,7 +86,8 @@ func (e UnknownComponentKindError) Unwrap() error {
 
 // DuplicateComponentError reports the component ID that was already registered.
 type DuplicateComponentError struct {
-	// ID is the duplicate component ID rejected by the registry.
+	// ID is the duplicate component ID rejected by the registry. The ID is
+	// syntactically valid, but catalog-level uniqueness failed.
 	ID ComponentID
 }
 
