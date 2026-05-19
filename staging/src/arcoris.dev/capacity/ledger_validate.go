@@ -16,6 +16,20 @@
 
 package capacity
 
+const (
+	// errNilLedger is the panic value used when a method is called on a nil
+	// Ledger.
+	errNilLedger = "capacity.Ledger: nil ledger"
+
+	// errUninitializedLedger is the panic value used when a method is called on a
+	// zero Ledger value instead of a value created by NewLedger.
+	errUninitializedLedger = "capacity.Ledger: uninitialized ledger"
+
+	// errZeroReservationAmount is the panic value used when a caller attempts to
+	// reserve zero capacity units.
+	errZeroReservationAmount = "capacity: reservation amount must be positive"
+)
+
 // requirePositiveAmount panics when amount cannot represent a reservation
 // request.
 func requirePositiveAmount(amount Amount) {

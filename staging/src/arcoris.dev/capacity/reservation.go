@@ -18,6 +18,16 @@ package capacity
 
 import "arcoris.dev/snapshot"
 
+const (
+	// errReservationAlreadyReleased is the panic value used when Release is
+	// called more than once for the same Reservation.
+	errReservationAlreadyReleased = "capacity.Reservation: already released"
+
+	// errLedgerReservedUnderflow is the panic value used when internal ledger
+	// accounting would subtract more reserved capacity than exists.
+	errLedgerReservedUnderflow = "capacity.Ledger: reserved capacity underflow"
+)
+
 // Reservation owns capacity reserved from a Ledger.
 //
 // A Reservation is returned only by Ledger.TryReserve. It holds its amount until
