@@ -14,24 +14,34 @@
 
 package admission
 
-// ComponentDescriptor describes an open-world admission component.
+// ComponentDescriptor describes stable catalog metadata for an open-world
+// admission component.
 //
-// Descriptors are stable component metadata. They are not global registrations
-// and they do not identify runtime instances.
+// A descriptor identifies a component role or catalog entry, not a runtime
+// instance. It does not register itself globally and it does not imply that an
+// instance is currently running. ComponentDescriptor.IsValid performs only local
+// syntax checks. ComponentRegistry performs catalog-level checks such as known
+// kind membership and duplicate component IDs.
 type ComponentDescriptor struct {
 	// ID is the stable component identifier or ownership path.
 	ID ComponentID
 
-	// Kind is the coarse stable role of the component.
+	// Kind is the stable role of the component. Registry-level validation checks
+	// that this kind is present in the owner's KindRegistry.
 	Kind ComponentKind
 
 	// Capabilities records the outcome and effect classes the component may
-	// produce. A zero value is valid and means unspecified.
+	// produce. A zero value is valid and means unspecified. Capabilities are
+	// declared behavior surface for catalogs and docs, not enforcement of Result
+	// validity.
 	Capabilities CapabilitySet
 }
 
-// IsValid reports whether d has valid component identity, kind, and capability
-// metadata. A zero CapabilitySet is valid and means unspecified.
+// IsValid reports whether d has syntactically valid component metadata.
+//
+// The method does not require d.Kind to be registered anywhere and it does not
+// check duplicate IDs. Those owner-created catalog checks belong to
+// ComponentRegistry.
 func (d ComponentDescriptor) IsValid() bool {
 	return d.ID.IsValid() && d.Kind.IsValid() && d.Capabilities.IsValid()
 }

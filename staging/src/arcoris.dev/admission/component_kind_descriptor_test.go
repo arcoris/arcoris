@@ -16,67 +16,40 @@ package admission
 
 import "testing"
 
-func TestComponentDescriptorIsValid(t *testing.T) {
+func TestComponentKindDescriptorIsValid(t *testing.T) {
 	t.Parallel()
-
-	validID := MustComponentID("resilience.bulkhead")
-	validCapabilities := NewCapabilitySet(
-		CapabilityAdmit,
-		CapabilityDeny,
-		CapabilityEffectOwned,
-		CapabilityEffectNone,
-	)
 
 	tests := []struct {
 		name       string
-		descriptor ComponentDescriptor
+		descriptor ComponentKindDescriptor
 		want       bool
 	}{
 		{
 			name: "valid descriptor",
-			descriptor: ComponentDescriptor{
-				ID:           validID,
-				Kind:         KindBulkhead,
-				Capabilities: validCapabilities,
+			descriptor: ComponentKindDescriptor{
+				Kind:         "custom_guard",
+				Capabilities: NewCapabilitySet(CapabilityAdmit, CapabilityDeny),
 			},
 			want: true,
 		},
 		{
-			name: "valid descriptor with unspecified capabilities",
-			descriptor: ComponentDescriptor{
-				ID:   validID,
-				Kind: KindBulkhead,
+			name: "valid zero capabilities",
+			descriptor: ComponentKindDescriptor{
+				Kind: "custom_guard",
 			},
 			want: true,
-		},
-		{
-			name: "valid descriptor with syntactically valid unknown kind",
-			descriptor: ComponentDescriptor{
-				ID:           "custom.component",
-				Kind:         "custom_kind",
-				Capabilities: validCapabilities,
-			},
-			want: true,
-		},
-		{
-			name: "invalid id",
-			descriptor: ComponentDescriptor{
-				ID:   "bad/id",
-				Kind: KindBulkhead,
-			},
 		},
 		{
 			name: "invalid kind",
-			descriptor: ComponentDescriptor{
-				ID:   validID,
-				Kind: "bad-kind",
+			descriptor: ComponentKindDescriptor{
+				Kind:         "bad-kind",
+				Capabilities: NewCapabilitySet(CapabilityAdmit),
 			},
 		},
 		{
 			name: "invalid capabilities",
-			descriptor: ComponentDescriptor{
-				ID:           validID,
-				Kind:         KindBulkhead,
+			descriptor: ComponentKindDescriptor{
+				Kind:         "custom_guard",
 				Capabilities: CapabilitySet(1 << 15),
 			},
 		},

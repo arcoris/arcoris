@@ -14,6 +14,8 @@
 
 package admission
 
+import "testing"
+
 // someString builds a present string Maybe through the admission-local helper.
 //
 // Tests use this instead of importing arcoris.dev/value/maybe directly so the
@@ -31,4 +33,26 @@ func noneString() Maybe[string] {
 // noneMetadata builds an absent NoMetadata Maybe for invalid-shape tests.
 func noneMetadata() Maybe[NoMetadata] {
 	return none[NoMetadata]()
+}
+
+// assertPanicString verifies the exact panic string used for stable nil
+// receiver contracts.
+func assertPanicString(
+	t *testing.T,
+	want string,
+	call func(),
+) {
+	t.Helper()
+
+	defer func() {
+		got := recover()
+		if got == nil {
+			t.Fatalf("expected panic %q", want)
+		}
+		if got != want {
+			t.Fatalf("panic = %q, want %q", got, want)
+		}
+	}()
+
+	call()
 }

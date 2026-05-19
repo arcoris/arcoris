@@ -21,11 +21,12 @@
 // reason and component identifiers, typed generic results, and generic admitter
 // contracts.
 //
-// The package owns the common language of admission results. It does not own
-// capacity accounting, leases, retry budgets, token buckets, queues, workers,
-// schedulers, health state, metrics, logging, tracing, distributed coordination,
-// or rollback chains. Domain packages compose Result with their own request,
-// grant, and metadata types.
+// The package owns the common language of admission results and owner-created
+// catalogs for stable admission metadata. It does not own capacity accounting,
+// leases, retry budgets, token buckets, queues, workers, schedulers, health
+// state, metrics, logging, tracing, distributed coordination, dynamic service
+// discovery, or rollback chains. Domain packages compose Result with their own
+// request, grant, and metadata types.
 //
 // # Open-world model
 //
@@ -39,7 +40,22 @@
 // ComponentID identifies a component kind or role, not a runtime instance. For
 // example, resilience.bulkhead and resilience.retrybudget are valid component
 // IDs; resilience.bulkhead.tenant_123 is not. Instance naming, metrics labels,
-// tracing attributes, and runtime registries belong to higher-level owners.
+// tracing attributes, health state, config ownership, and dynamic discovery
+// belong to higher-level owners.
+//
+// # Catalog registries
+//
+// KindRegistry catalogs stable ComponentKindDescriptor values. ComponentRegistry
+// catalogs stable ComponentDescriptor values and validates them against a
+// KindRegistry. Both registries are explicitly owner-created; admission does not
+// provide package-level registration, init-time registration, global mutable
+// registries, or process-wide singleton catalogs.
+//
+// These registries are for known metadata catalogs, deterministic listing,
+// docs/tests/config validation, and future chain validation foundations. They
+// are not runtime instance registries and they do not perform admission,
+// capacity ownership, health checks, metrics, logging, tracing, scheduling, or
+// service discovery.
 //
 // # Side effects
 //
