@@ -3,6 +3,7 @@ go 1.25.0
 toolchain go1.25.9
 
 use (
+	./staging/src/arcoris.dev/admission
 	./staging/src/arcoris.dev/apimachinery
 	./staging/src/arcoris.dev/atomicx
 	./staging/src/arcoris.dev/capacity
