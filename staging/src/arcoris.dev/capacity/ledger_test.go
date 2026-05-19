@@ -63,6 +63,7 @@ func TestZeroLedgerPanics(t *testing.T) {
 	requirePanic(t, "capacity.Ledger: uninitialized ledger", func() { _ = ledger.Revision() })
 	requirePanic(t, "capacity.Ledger: uninitialized ledger", func() { _ = ledger.SetLimit(1) })
 	requirePanic(t, "capacity.Ledger: uninitialized ledger", func() { _, _, _ = ledger.TryReserve(1) })
+	requirePanic(t, "capacity.Ledger: uninitialized ledger", func() { _, _, _ = ledger.TryReserve(0) })
 }
 
 func TestNilLedgerPanics(t *testing.T) {
@@ -73,4 +74,5 @@ func TestNilLedgerPanics(t *testing.T) {
 	requirePanic(t, "capacity.Ledger: nil ledger", func() { _ = ledger.Revision() })
 	requirePanic(t, "capacity.Ledger: nil ledger", func() { _ = ledger.SetLimit(1) })
 	requirePanic(t, "capacity.Ledger: nil ledger", func() { _, _, _ = ledger.TryReserve(1) })
+	requirePanic(t, "capacity.Ledger: nil ledger", func() { _, _, _ = ledger.TryReserve(0) })
 }

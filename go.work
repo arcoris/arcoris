@@ -5,6 +5,7 @@ toolchain go1.25.9
 use (
 	./staging/src/arcoris.dev/apimachinery
 	./staging/src/arcoris.dev/atomicx
+	./staging/src/arcoris.dev/capacity
 	./staging/src/arcoris.dev/chrono
 	./staging/src/arcoris.dev/health
 	./staging/src/arcoris.dev/liveconfig

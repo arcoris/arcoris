@@ -65,5 +65,5 @@ func (s Snapshot) Overcommitted() bool {
 // CanReserve is a read-model helper only. It does not reserve capacity and must
 // not be used as a substitute for Ledger.TryReserve in concurrent code.
 func (s Snapshot) CanReserve(amount Amount) bool {
-	return amount > 0 && s.Debt == 0 && s.Available >= amount
+	return s.IsValid() && amount > 0 && s.Debt == 0 && s.Available >= amount
 }

@@ -49,6 +49,9 @@ func TestReservationAmountRemainsStableAfterRelease(t *testing.T) {
 	if !ok {
 		t.Fatal("reservation failed")
 	}
+	if got := reservation.Amount(); got != 4 {
+		t.Fatalf("Amount() before release = %d, want 4", got)
+	}
 
 	reservation.Release()
 	if got := reservation.Amount(); got != 4 {

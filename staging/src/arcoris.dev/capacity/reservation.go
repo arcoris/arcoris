@@ -46,11 +46,6 @@ type Reservation struct {
 // observable after release so callers can log or audit what was owned.
 func (r *Reservation) Amount() Amount {
 	r.requireNonNil()
-
-	r.ledger.mu.Lock()
-	defer r.ledger.mu.Unlock()
-
-	r.ledger.requireInitializedLocked()
 	return r.amount
 }
 

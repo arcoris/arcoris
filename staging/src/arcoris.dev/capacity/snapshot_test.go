@@ -61,11 +61,12 @@ func TestSnapshotCanReserve(t *testing.T) {
 		amount capacity.Amount
 		want   bool
 	}{
+		{name: "valid snapshot", snap: capacity.Snapshot{Limit: 10, Reserved: 4, Available: 6}, amount: 5, want: true},
 		{name: "zero amount", snap: capacity.Snapshot{Limit: 10, Reserved: 4, Available: 6}, amount: 0, want: false},
-		{name: "available greater than amount", snap: capacity.Snapshot{Limit: 10, Reserved: 4, Available: 6}, amount: 5, want: true},
 		{name: "available equal to amount", snap: capacity.Snapshot{Limit: 10, Reserved: 4, Available: 6}, amount: 6, want: true},
 		{name: "insufficient available", snap: capacity.Snapshot{Limit: 10, Reserved: 4, Available: 6}, amount: 7, want: false},
 		{name: "debt refuses reservation", snap: capacity.Snapshot{Limit: 5, Reserved: 8, Available: 0, Debt: 3}, amount: 1, want: false},
+		{name: "invalid snapshot", snap: capacity.Snapshot{Limit: 10, Reserved: 4, Available: 100, Debt: 0}, amount: 1, want: false},
 	}
 
 	for _, tt := range tests {

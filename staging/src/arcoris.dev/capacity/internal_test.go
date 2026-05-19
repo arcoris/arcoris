@@ -18,13 +18,15 @@ package capacity
 
 import "testing"
 
-func TestReservationTryReleasePanicsOnReservedUnderflow(t *testing.T) {
+func TestReservationTryReleaseDetectsCorruptedReservedAccounting(t *testing.T) {
 	ledger := NewLedger(10)
 	reservation, _, ok := ledger.TryReserve(4)
 	if !ok {
 		t.Fatal("reservation failed")
 	}
 
+	// Intentionally corrupt private ledger state to verify the defensive
+	// underflow invariant panic. Public API calls do not expose this state.
 	ledger.mu.Lock()
 	ledger.reserved = 3
 	ledger.mu.Unlock()

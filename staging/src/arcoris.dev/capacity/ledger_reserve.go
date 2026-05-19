@@ -30,13 +30,13 @@ import "arcoris.dev/snapshot"
 // holding the ledger lock, and false. Failed reservation attempts do not
 // advance the ledger revision.
 func (l *Ledger) TryReserve(amount Amount) (*Reservation, snapshot.Snapshot[Snapshot], bool) {
-	requirePositiveAmount(amount)
 	l.requireNonNil()
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	l.requireInitializedLocked()
+	requirePositiveAmount(amount)
 	current := l.snapshotLocked()
 	if !current.Value.CanReserve(amount) {
 		return nil, current, false
