@@ -49,6 +49,10 @@
 // stable ComponentKindDescriptor values. ComponentRegistry catalogs stable
 // ComponentDescriptor values and validates them against a KindRegistry. Catalog
 // aggregates those owner-created registries behind one metadata boundary.
+// Catalog construction rejects a ComponentRegistry backed by a different
+// KindRegistry than the one passed to NewCatalog. That reference check
+// guarantees RegisterKind and RegisterComponent operate over one consistent
+// kind catalog.
 //
 // Built-in catalog constructors return ordinary owner-created registries. They
 // do not create global mutable state. Admission does not provide package-level

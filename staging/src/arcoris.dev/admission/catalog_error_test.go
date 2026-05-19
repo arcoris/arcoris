@@ -72,6 +72,23 @@ func TestNewCatalogRejectsNilRegistries(t *testing.T) {
 	}
 }
 
+func TestNewCatalogRejectsMismatchedKindRegistry(t *testing.T) {
+	t.Parallel()
+
+	reasons := NewBuiltinReasonRegistry()
+	kindsA := NewBuiltinKindRegistry()
+	kindsB := NewBuiltinKindRegistry()
+	components := NewBuiltinComponentRegistry(kindsA)
+
+	catalog, err := NewCatalog(reasons, kindsB, components)
+	if catalog != nil {
+		t.Fatal("catalog should be nil on mismatched kind registry")
+	}
+	if !errors.Is(err, ErrMismatchedKindRegistry) {
+		t.Fatalf("error = %v, want ErrMismatchedKindRegistry", err)
+	}
+}
+
 func TestCatalogErrorsSupportIs(t *testing.T) {
 	t.Parallel()
 
@@ -80,5 +97,8 @@ func TestCatalogErrorsSupportIs(t *testing.T) {
 	}
 	if !errors.Is(ErrNilComponentRegistry, ErrNilComponentRegistry) {
 		t.Fatal("nil component registry sentinel should match itself")
+	}
+	if !errors.Is(ErrMismatchedKindRegistry, ErrMismatchedKindRegistry) {
+		t.Fatal("mismatched kind registry sentinel should match itself")
 	}
 }

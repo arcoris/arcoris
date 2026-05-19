@@ -14,7 +14,11 @@
 
 package admission
 
-import "testing"
+import (
+	"errors"
+	"sync"
+	"testing"
+)
 
 func TestNewCatalog(t *testing.T) {
 	t.Parallel()
@@ -123,6 +127,87 @@ func TestCatalogRegisterMethodsDelegateToRegistries(t *testing.T) {
 	if got, ok := catalog.Component("custom.component"); !ok || got != component {
 		t.Fatalf("Component lookup = (%+v, %v), want registered descriptor", got, ok)
 	}
+}
+
+func TestCatalogRegisterKindThenRegisterComponent(t *testing.T) {
+	t.Parallel()
+
+	reasons := MustReasonRegistry()
+	kinds := MustKindRegistry()
+	components := MustComponentRegistry(kinds)
+	catalog, err := NewCatalog(reasons, kinds, components)
+	if err != nil {
+		t.Fatalf("NewCatalog returned error: %v", err)
+	}
+
+	kind := testKindDescriptor("custom_gate")
+	component := testComponentDescriptor("custom.gate", "custom_gate")
+
+	if err := catalog.RegisterKind(kind); err != nil {
+		t.Fatalf("RegisterKind returned error: %v", err)
+	}
+	if err := catalog.RegisterComponent(component); err != nil {
+		t.Fatalf("RegisterComponent returned error: %v", err)
+	}
+	if got, ok := catalog.Component("custom.gate"); !ok || got != component {
+		t.Fatalf("Component lookup = (%+v, %v), want registered descriptor", got, ok)
+	}
+}
+
+func TestCatalogRegisterComponentRejectsUnknownKind(t *testing.T) {
+	t.Parallel()
+
+	kinds := MustKindRegistry()
+	components := MustComponentRegistry(kinds)
+	catalog, err := NewCatalog(MustReasonRegistry(), kinds, components)
+	if err != nil {
+		t.Fatalf("NewCatalog returned error: %v", err)
+	}
+
+	err = catalog.RegisterComponent(testComponentDescriptor("custom.gate", "custom_gate"))
+	if !errors.Is(err, ErrUnknownComponentKind) {
+		t.Fatalf("error = %v, want ErrUnknownComponentKind", err)
+	}
+
+	var unknown UnknownComponentKindError
+	if !errors.As(err, &unknown) {
+		t.Fatal("error should expose UnknownComponentKindError")
+	}
+	if unknown.Kind != "custom_gate" {
+		t.Fatalf("unknown kind = %q, want custom_gate", unknown.Kind)
+	}
+}
+
+func TestCatalogConcurrentAccess(t *testing.T) {
+	catalog := testCatalog()
+
+	var wg sync.WaitGroup
+	for i := 0; i < 32; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+
+			suffix := string(rune('a'+i/26)) + string(rune('a'+i%26))
+			reason := Reason("custom_reason_" + suffix)
+			kind := ComponentKind("custom_kind_" + suffix)
+			componentID := ComponentID("custom.component_" + suffix)
+
+			_ = catalog.RegisterReason(testReasonDescriptor(reason))
+			_ = catalog.RegisterKind(testKindDescriptor(kind))
+			_ = catalog.RegisterComponent(testComponentDescriptor(componentID, kind))
+
+			_, _ = catalog.Reason(reason)
+			_, _ = catalog.Kind(kind)
+			_, _ = catalog.Component(componentID)
+			_ = catalog.Reasons()
+			_ = catalog.Kinds()
+			_ = catalog.Components()
+			_ = catalog.LenReasons()
+			_ = catalog.LenKinds()
+			_ = catalog.LenComponents()
+		}(i)
+	}
+	wg.Wait()
 }
 
 func TestCatalogNilReceiverPanics(t *testing.T) {

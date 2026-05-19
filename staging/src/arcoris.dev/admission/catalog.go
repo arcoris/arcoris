@@ -34,14 +34,22 @@ type Catalog struct {
 	// kinds stores stable component kind descriptors.
 	kinds *KindRegistry
 
-	// components stores stable component descriptors validated against kinds.
+	// components stores stable component descriptors validated against the same
+	// kind registry held by Catalog.
+	//
+	// RegisterKind and RegisterComponent must observe one kind catalog. Passing
+	// mismatched registries would split that invariant, so NewCatalog rejects a
+	// ComponentRegistry backed by any other KindRegistry reference.
 	components *ComponentRegistry
 }
 
 // NewCatalog creates an aggregate catalog from owner-provided registries.
 //
 // All registries are required. Passing nil would create ambiguous partial
-// catalog behavior, so construction rejects nil registries explicitly.
+// catalog behavior, so construction rejects nil registries explicitly. NewCatalog
+// also rejects component registries backed by a different KindRegistry. The
+// aggregate catalog assumes a single kind catalog for both kind lookup and
+// component validation.
 func NewCatalog(
 	reasons *ReasonRegistry,
 	kinds *KindRegistry,
@@ -55,6 +63,9 @@ func NewCatalog(
 	}
 	if components == nil {
 		return nil, ErrNilComponentRegistry
+	}
+	if components.kinds != kinds {
+		return nil, ErrMismatchedKindRegistry
 	}
 
 	return &Catalog{
@@ -106,7 +117,12 @@ func (c *Catalog) RegisterReason(descriptor ReasonDescriptor) error {
 	return c.reasons.Register(descriptor)
 }
 
-// RegisterKind adds descriptor to the catalog's KindRegistry.
+// RegisterKind adds descriptor to the kind catalog used by later component
+// registration.
+//
+// NewCatalog guarantees that the ComponentRegistry delegates validation to this
+// same KindRegistry reference, so a newly registered kind can be used by a
+// later RegisterComponent call.
 func (c *Catalog) RegisterKind(descriptor ComponentKindDescriptor) error {
 	c.requireNonNil()
 	return c.kinds.Register(descriptor)

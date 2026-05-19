@@ -29,3 +29,12 @@ var ErrNilReasonRegistry = errors.New("admission: nil reason registry")
 // Catalog requires a ComponentRegistry so component metadata remains part of the
 // aggregate owner-created catalog, not an implicit global registry.
 var ErrNilComponentRegistry = errors.New("admission: nil component registry")
+
+// ErrMismatchedKindRegistry identifies Catalog construction with a component
+// registry backed by a different kind catalog.
+//
+// Catalog requires one shared KindRegistry reference so RegisterKind and
+// RegisterComponent observe the same open-world kind catalog. Pointer identity
+// is intentional here: two registries with equal descriptors still represent
+// different owner-created catalogs and can diverge after construction.
+var ErrMismatchedKindRegistry = errors.New("admission: mismatched kind registry")

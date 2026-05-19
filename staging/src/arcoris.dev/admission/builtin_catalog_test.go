@@ -47,3 +47,38 @@ func TestNewBuiltinCatalog(t *testing.T) {
 		t.Fatalf("LenComponents = %d, want %d", catalog.LenComponents(), len(BuiltinComponentDescriptors()))
 	}
 }
+
+func TestNewBuiltinCatalogRegisterKindThenRegisterComponent(t *testing.T) {
+	t.Parallel()
+
+	catalog := NewBuiltinCatalog()
+	kind := ComponentKind("custom_gate")
+	componentID := ComponentID("custom.gate")
+
+	if err := catalog.RegisterKind(ComponentKindDescriptor{
+		Kind: kind,
+		Capabilities: NewCapabilitySet(
+			CapabilityAdmit,
+			CapabilityDeny,
+			CapabilityEffectNone,
+		),
+	}); err != nil {
+		t.Fatalf("RegisterKind returned error: %v", err)
+	}
+
+	component := ComponentDescriptor{
+		ID:   componentID,
+		Kind: kind,
+		Capabilities: NewCapabilitySet(
+			CapabilityAdmit,
+			CapabilityDeny,
+			CapabilityEffectNone,
+		),
+	}
+	if err := catalog.RegisterComponent(component); err != nil {
+		t.Fatalf("RegisterComponent returned error: %v", err)
+	}
+	if got, ok := catalog.Component(componentID); !ok || got != component {
+		t.Fatalf("Component lookup = (%+v, %v), want registered descriptor", got, ok)
+	}
+}
