@@ -60,6 +60,65 @@ func TestBuiltinComponentDescriptorsReturnsCopy(t *testing.T) {
 	}
 }
 
+func TestBuiltinComponentDescriptorCapabilities(t *testing.T) {
+	t.Parallel()
+
+	descriptors := BuiltinComponentDescriptors()
+	tests := []struct {
+		id           ComponentID
+		kind         ComponentKind
+		capabilities []Capability
+	}{
+		{
+			id:   "resilience.bulkhead",
+			kind: KindBulkhead,
+			capabilities: []Capability{
+				CapabilityAdmit,
+				CapabilityDeny,
+				CapabilityEffectOwned,
+				CapabilityEffectNone,
+			},
+		},
+		{
+			id:   "resilience.retrybudget",
+			kind: KindRetryBudget,
+			capabilities: []Capability{
+				CapabilityAdmit,
+				CapabilityDeny,
+				CapabilityEffectCommitted,
+				CapabilityEffectNone,
+			},
+		},
+		{
+			id:   "resilience.deadline",
+			kind: KindDeadline,
+			capabilities: []Capability{
+				CapabilityAdmit,
+				CapabilityDeny,
+				CapabilityEffectNone,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.id.String(), func(t *testing.T) {
+			t.Parallel()
+
+			descriptor := requireBuiltinComponentDescriptor(
+				t,
+				descriptors,
+				test.id,
+			)
+			if descriptor.Kind != test.kind {
+				t.Fatalf("kind = %q, want %q", descriptor.Kind, test.kind)
+			}
+			for _, capability := range test.capabilities {
+				requireCapability(t, descriptor.Capabilities, capability)
+			}
+		})
+	}
+}
+
 func TestNewBuiltinComponentRegistry(t *testing.T) {
 	t.Parallel()
 
@@ -69,4 +128,20 @@ func TestNewBuiltinComponentRegistry(t *testing.T) {
 			t.Fatalf("Lookup(%q) = (%+v, %v), want built-in descriptor", descriptor.ID, got, ok)
 		}
 	}
+}
+
+func requireBuiltinComponentDescriptor(
+	t *testing.T,
+	descriptors []ComponentDescriptor,
+	id ComponentID,
+) ComponentDescriptor {
+	t.Helper()
+
+	for _, descriptor := range descriptors {
+		if descriptor.ID == id {
+			return descriptor
+		}
+	}
+	t.Fatalf("missing built-in component descriptor %q", id)
+	return ComponentDescriptor{}
 }

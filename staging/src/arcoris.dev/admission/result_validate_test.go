@@ -47,6 +47,22 @@ func TestResultIsValidRejectsInvalidGrantShape(t *testing.T) {
 				noneMetadata(),
 			),
 		},
+		{
+			name: "deferred with grant",
+			result: resultWith(
+				Defer(ReasonDeferred),
+				someString("retry-token"),
+				noneMetadata(),
+			),
+		},
+		{
+			name: "invalid decision",
+			result: resultWith[string, NoMetadata](
+				Decision{},
+				noneString(),
+				noneMetadata(),
+			),
+		},
 	}
 
 	for _, tt := range tests {
@@ -57,5 +73,27 @@ func TestResultIsValidRejectsInvalidGrantShape(t *testing.T) {
 				t.Fatalf("%s result should be invalid", tt.name)
 			}
 		})
+	}
+}
+
+func TestResultStateHelpersDoNotReplaceValidation(t *testing.T) {
+	t.Parallel()
+
+	result := resultWith[string, NoMetadata](
+		Grant(ReasonAdmitted),
+		noneString(),
+		noneMetadata(),
+	)
+	if !result.IsAdmitted() {
+		t.Fatal("invalid owned result should still report admitted outcome")
+	}
+	if !result.HasSideEffect() {
+		t.Fatal("invalid owned result should still report side-effect state")
+	}
+	if result.HasGrant() {
+		t.Fatal("test setup should not include a grant")
+	}
+	if result.IsValid() {
+		t.Fatal("owned result without grant should be invalid")
 	}
 }

@@ -41,8 +41,20 @@ func TestCommittedResult(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("committed result should be valid: %+v", result.Decision())
 	}
+	if got := result.Decision(); got != Commit(ReasonAdmitted) {
+		t.Fatalf("decision = %+v, want admitted committed decision", got)
+	}
+	if !result.IsAdmitted() {
+		t.Fatal("committed result should admit work")
+	}
+	if !result.HasSideEffect() {
+		t.Fatal("committed result should record a side effect")
+	}
 	if result.HasGrant() {
 		t.Fatal("committed result should not carry a grant")
+	}
+	if !result.HasMetadata() {
+		t.Fatal("committed result should carry metadata")
 	}
 	if metadata, ok := result.Metadata(); !ok || metadata != "budget-snapshot" {
 		t.Fatalf("metadata = (%q, %v), want (budget-snapshot, true)", metadata, ok)
@@ -55,6 +67,9 @@ func TestCommittedNoMetadataResult(t *testing.T) {
 	result := CommittedNoMetadata(ReasonAdmitted)
 	if !result.IsValid() {
 		t.Fatalf("committed result should be valid: %+v", result.Decision())
+	}
+	if result.HasGrant() {
+		t.Fatal("committed no-metadata result should not carry a grant")
 	}
 	if result.HasMetadata() {
 		t.Fatal("committed no-metadata result should not carry metadata")

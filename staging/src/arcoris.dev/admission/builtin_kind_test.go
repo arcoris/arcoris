@@ -63,6 +63,74 @@ func TestBuiltinKindDescriptorsReturnsCopy(t *testing.T) {
 	}
 }
 
+func TestBuiltinKindDescriptorCapabilities(t *testing.T) {
+	t.Parallel()
+
+	descriptors := BuiltinKindDescriptors()
+	tests := []struct {
+		kind         ComponentKind
+		capabilities []Capability
+	}{
+		{
+			kind: KindBulkhead,
+			capabilities: []Capability{
+				CapabilityAdmit,
+				CapabilityDeny,
+				CapabilityEffectOwned,
+				CapabilityEffectNone,
+			},
+		},
+		{
+			kind: KindRetryBudget,
+			capabilities: []Capability{
+				CapabilityAdmit,
+				CapabilityDeny,
+				CapabilityEffectCommitted,
+				CapabilityEffectNone,
+			},
+		},
+		{
+			kind: KindDeadline,
+			capabilities: []Capability{
+				CapabilityAdmit,
+				CapabilityDeny,
+				CapabilityEffectNone,
+			},
+		},
+		{
+			kind: KindQueue,
+			capabilities: []Capability{
+				CapabilityQueue,
+				CapabilityEffectQueued,
+			},
+		},
+		{
+			kind: KindWorkerPool,
+			capabilities: []Capability{
+				CapabilityAdmit,
+				CapabilityQueue,
+				CapabilityEffectOwned,
+				CapabilityEffectQueued,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.kind.String(), func(t *testing.T) {
+			t.Parallel()
+
+			descriptor := requireBuiltinKindDescriptor(
+				t,
+				descriptors,
+				test.kind,
+			)
+			for _, capability := range test.capabilities {
+				requireCapability(t, descriptor.Capabilities, capability)
+			}
+		})
+	}
+}
+
 func TestNewBuiltinKindRegistry(t *testing.T) {
 	t.Parallel()
 
@@ -72,4 +140,20 @@ func TestNewBuiltinKindRegistry(t *testing.T) {
 			t.Fatalf("Lookup(%q) = (%+v, %v), want built-in descriptor", descriptor.Kind, got, ok)
 		}
 	}
+}
+
+func requireBuiltinKindDescriptor(
+	t *testing.T,
+	descriptors []ComponentKindDescriptor,
+	kind ComponentKind,
+) ComponentKindDescriptor {
+	t.Helper()
+
+	for _, descriptor := range descriptors {
+		if descriptor.Kind == kind {
+			return descriptor
+		}
+	}
+	t.Fatalf("missing built-in kind descriptor %q", kind)
+	return ComponentKindDescriptor{}
 }

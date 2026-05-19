@@ -42,11 +42,29 @@ func TestGrantedResult(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("granted result should be valid: %+v", result.Decision())
 	}
+	if got := result.Decision(); got != Grant(ReasonAdmitted) {
+		t.Fatalf("decision = %+v, want admitted owned decision", got)
+	}
 	if grant, ok := result.Grant(); !ok || grant != "lease" {
 		t.Fatalf("grant = (%q, %v), want (lease, true)", grant, ok)
 	}
+	if !result.HasMetadata() {
+		t.Fatal("granted result should carry metadata")
+	}
 	if metadata, ok := result.Metadata(); !ok || metadata != "snapshot" {
 		t.Fatalf("metadata = (%q, %v), want (snapshot, true)", metadata, ok)
+	}
+}
+
+func TestGrantedResultAllowsZeroGrantValue(t *testing.T) {
+	t.Parallel()
+
+	result := Granted(ReasonAdmitted, 0, "snapshot")
+	if !result.IsValid() {
+		t.Fatalf("granted zero-value result should be valid: %+v", result.Decision())
+	}
+	if grant, ok := result.Grant(); !ok || grant != 0 {
+		t.Fatalf("grant = (%d, %v), want (0, true)", grant, ok)
 	}
 }
 
@@ -56,6 +74,9 @@ func TestGrantedNoMetadataResult(t *testing.T) {
 	result := GrantedNoMetadata(ReasonAdmitted, "lease")
 	if !result.IsValid() {
 		t.Fatalf("granted result should be valid: %+v", result.Decision())
+	}
+	if !result.HasGrant() {
+		t.Fatal("granted no-metadata result should carry a grant")
 	}
 	if result.HasMetadata() {
 		t.Fatal("granted no-metadata result should not carry metadata")

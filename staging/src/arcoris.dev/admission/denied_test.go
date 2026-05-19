@@ -38,8 +38,14 @@ func TestDeniedResult(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("denied result should be valid: %+v", result.Decision())
 	}
+	if got := result.Decision(); got != Deny(ReasonCapacityExhausted) {
+		t.Fatalf("decision = %+v, want denied no-effect decision", got)
+	}
 	if result.HasGrant() {
 		t.Fatal("denied result should not carry a grant")
+	}
+	if !result.HasMetadata() {
+		t.Fatal("denied result should carry metadata")
 	}
 	if metadata, ok := result.Metadata(); !ok || metadata != "snapshot" {
 		t.Fatalf("metadata = (%q, %v), want (snapshot, true)", metadata, ok)
@@ -53,6 +59,9 @@ func TestDeniedForResult(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("denied result should be valid: %+v", result.Decision())
 	}
+	if !result.HasMetadata() {
+		t.Fatal("denied typed result should carry metadata")
+	}
 	if grant, ok := result.Grant(); ok || grant != "" {
 		t.Fatalf("grant = (%q, %v), want zero value and false", grant, ok)
 	}
@@ -64,6 +73,9 @@ func TestDeniedNoMetadataResult(t *testing.T) {
 	result := DeniedNoMetadata(ReasonCapacityExhausted)
 	if !result.IsValid() {
 		t.Fatalf("denied result should be valid: %+v", result.Decision())
+	}
+	if result.HasGrant() {
+		t.Fatal("denied no-metadata result should not carry a grant")
 	}
 	if result.HasMetadata() {
 		t.Fatal("denied no-metadata result should not carry metadata")

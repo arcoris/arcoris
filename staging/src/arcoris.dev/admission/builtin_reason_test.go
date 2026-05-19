@@ -70,6 +70,97 @@ func TestBuiltinReasonDescriptorsReturnsCopy(t *testing.T) {
 	}
 }
 
+func TestBuiltinReasonDescriptorCapabilities(t *testing.T) {
+	t.Parallel()
+
+	descriptors := BuiltinReasonDescriptors()
+	tests := []struct {
+		reason       Reason
+		capabilities []Capability
+	}{
+		{
+			reason: ReasonAdmitted,
+			capabilities: []Capability{
+				CapabilityAdmit,
+				CapabilityEffectNone,
+				CapabilityEffectCommitted,
+				CapabilityEffectOwned,
+			},
+		},
+		{
+			reason: ReasonDenied,
+			capabilities: []Capability{
+				CapabilityDeny,
+				CapabilityEffectNone,
+			},
+		},
+		{
+			reason: ReasonQueued,
+			capabilities: []Capability{
+				CapabilityQueue,
+				CapabilityEffectQueued,
+			},
+		},
+		{
+			reason: ReasonDeferred,
+			capabilities: []Capability{
+				CapabilityDefer,
+				CapabilityEffectNone,
+			},
+		},
+		{
+			reason: ReasonCapacityExhausted,
+			capabilities: []Capability{
+				CapabilityDeny,
+				CapabilityEffectNone,
+			},
+		},
+		{
+			reason: ReasonBudgetExhausted,
+			capabilities: []Capability{
+				CapabilityDeny,
+				CapabilityEffectNone,
+			},
+		},
+		{
+			reason: ReasonRateLimited,
+			capabilities: []Capability{
+				CapabilityDeny,
+				CapabilityEffectNone,
+			},
+		},
+		{
+			reason: ReasonDeadlineExceeded,
+			capabilities: []Capability{
+				CapabilityDeny,
+				CapabilityEffectNone,
+			},
+		},
+		{
+			reason: ReasonPolicyDenied,
+			capabilities: []Capability{
+				CapabilityDeny,
+				CapabilityEffectNone,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.reason.String(), func(t *testing.T) {
+			t.Parallel()
+
+			descriptor := requireBuiltinReasonDescriptor(
+				t,
+				descriptors,
+				test.reason,
+			)
+			for _, capability := range test.capabilities {
+				requireCapability(t, descriptor.Capabilities, capability)
+			}
+		})
+	}
+}
+
 func TestNewBuiltinReasonRegistry(t *testing.T) {
 	t.Parallel()
 
@@ -79,4 +170,20 @@ func TestNewBuiltinReasonRegistry(t *testing.T) {
 			t.Fatalf("Lookup(%q) = (%+v, %v), want built-in descriptor", descriptor.Reason, got, ok)
 		}
 	}
+}
+
+func requireBuiltinReasonDescriptor(
+	t *testing.T,
+	descriptors []ReasonDescriptor,
+	reason Reason,
+) ReasonDescriptor {
+	t.Helper()
+
+	for _, descriptor := range descriptors {
+		if descriptor.Reason == reason {
+			return descriptor
+		}
+	}
+	t.Fatalf("missing built-in reason descriptor %q", reason)
+	return ReasonDescriptor{}
 }

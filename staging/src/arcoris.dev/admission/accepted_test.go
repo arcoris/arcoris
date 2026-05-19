@@ -46,11 +46,17 @@ func TestAcceptedResult(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("accepted result should be valid: %+v", result.Decision())
 	}
+	if got := result.Decision(); got != Admit(ReasonAdmitted) {
+		t.Fatalf("decision = %+v, want admitted no-effect decision", got)
+	}
 	if !result.IsAdmitted() {
 		t.Fatal("accepted result should be admitted")
 	}
 	if result.HasGrant() {
 		t.Fatal("accepted result should not carry a grant")
+	}
+	if !result.HasMetadata() {
+		t.Fatal("accepted result should carry metadata")
 	}
 	if metadata, ok := result.Metadata(); !ok || metadata != "snapshot" {
 		t.Fatalf("metadata = (%q, %v), want (snapshot, true)", metadata, ok)
@@ -63,6 +69,9 @@ func TestAcceptedNoMetadataResult(t *testing.T) {
 	result := AcceptedNoMetadata(ReasonAdmitted)
 	if !result.IsValid() {
 		t.Fatalf("accepted result should be valid: %+v", result.Decision())
+	}
+	if result.HasGrant() {
+		t.Fatal("accepted no-metadata result should not carry a grant")
 	}
 	if result.HasMetadata() {
 		t.Fatal("accepted no-metadata result should not carry metadata")

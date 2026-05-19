@@ -66,9 +66,16 @@ const knownCapabilityMask = CapabilityAdmit |
 	CapabilityEffectOwned |
 	CapabilityEffectQueued
 
-// CapabilitySet is a compact set of component capabilities.
+// CapabilitySet is compact catalog metadata for outcome and effect capabilities.
 //
-// The zero set is valid and means that capabilities are unspecified.
+// The set intentionally keeps outcome-like bits, such as admit or deny, and
+// effect-like bits, such as owned or queued, in one small value. It is
+// descriptive metadata for catalogs, docs, and config validation; it is not
+// enforcement. Result validity is still governed by Decision, Effect, and
+// grant-shape invariants. If registry users later need stronger dimensional
+// validation, the outcome and effect dimensions can be split without changing
+// Result semantics. The zero set is valid and means that capabilities are
+// unspecified.
 type CapabilitySet uint16
 
 // NewCapabilitySet returns a set containing capabilities.

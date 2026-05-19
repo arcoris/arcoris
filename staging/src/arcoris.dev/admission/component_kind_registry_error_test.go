@@ -28,6 +28,13 @@ func TestKindRegistryErrorsSupportIsAndAs(t *testing.T) {
 	if !errors.Is(invalid, ErrInvalidComponentKindDescriptor) {
 		t.Fatal("invalid descriptor error should match sentinel")
 	}
+	var invalidKind InvalidComponentKindDescriptorError
+	if !errors.As(invalid, &invalidKind) {
+		t.Fatal("invalid descriptor error should support errors.As")
+	}
+	if invalidKind.Descriptor.Kind != "bad-kind" {
+		t.Fatalf("invalid kind = %q, want bad-kind", invalidKind.Descriptor.Kind)
+	}
 
 	duplicate := DuplicateComponentKindError{Kind: KindBulkhead}
 	if !errors.Is(duplicate, ErrComponentKindAlreadyRegistered) {

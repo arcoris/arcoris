@@ -57,3 +57,13 @@ func ExampleAdmitterFunc() {
 	// Output:
 	// true capacity_exhausted
 }
+
+func ExampleNewBuiltinCatalog() {
+	catalog := admission.NewBuiltinCatalog()
+	component, ok := catalog.Component("resilience.bulkhead")
+
+	fmt.Println(ok, component.Kind)
+
+	// Output:
+	// true bulkhead
+}

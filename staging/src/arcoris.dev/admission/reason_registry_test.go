@@ -158,6 +158,29 @@ func TestReasonRegistryLookupAndContains(t *testing.T) {
 	}
 }
 
+func TestReasonRegistryZeroValue(t *testing.T) {
+	t.Parallel()
+
+	var registry ReasonRegistry
+	if got := registry.Len(); got != 0 {
+		t.Fatalf("Len = %d, want 0", got)
+	}
+	if got, ok := registry.Lookup(ReasonDenied); ok || got != (ReasonDescriptor{}) {
+		t.Fatalf("Lookup = (%+v, %v), want zero,false", got, ok)
+	}
+	if list := registry.List(); len(list) != 0 {
+		t.Fatalf("List length = %d, want 0", len(list))
+	}
+
+	descriptor := testReasonDescriptor("custom_reason")
+	if err := registry.Register(descriptor); err != nil {
+		t.Fatalf("Register returned error: %v", err)
+	}
+	if got, ok := registry.Lookup("custom_reason"); !ok || got != descriptor {
+		t.Fatalf("Lookup registered = (%+v, %v), want descriptor,true", got, ok)
+	}
+}
+
 func TestReasonRegistryListIsSortedCopy(t *testing.T) {
 	t.Parallel()
 

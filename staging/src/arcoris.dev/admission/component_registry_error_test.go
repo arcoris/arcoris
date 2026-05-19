@@ -32,6 +32,13 @@ func TestComponentRegistryErrorsSupportIsAndAs(t *testing.T) {
 	if !errors.Is(invalid, ErrInvalidComponentDescriptor) {
 		t.Fatal("invalid descriptor error should match sentinel")
 	}
+	var invalidDescriptor InvalidComponentDescriptorError
+	if !errors.As(invalid, &invalidDescriptor) {
+		t.Fatal("invalid descriptor error should support errors.As")
+	}
+	if invalidDescriptor.Descriptor.ID != "bad/id" {
+		t.Fatalf("invalid id = %q, want bad/id", invalidDescriptor.Descriptor.ID)
+	}
 
 	unknown := UnknownComponentKindError{Kind: "custom_kind"}
 	if !errors.Is(unknown, ErrUnknownComponentKind) {

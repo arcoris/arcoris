@@ -56,3 +56,19 @@ func assertPanicString(
 
 	call()
 }
+
+// requireCapability verifies that set advertises capability.
+//
+// Built-in descriptor tests use this helper to make semantic capability
+// expectations read as catalog requirements instead of low-level bit checks.
+func requireCapability(
+	t *testing.T,
+	set CapabilitySet,
+	capability Capability,
+) {
+	t.Helper()
+
+	if !set.Has(capability) {
+		t.Fatalf("capabilities %08b should contain %08b", set, capability)
+	}
+}

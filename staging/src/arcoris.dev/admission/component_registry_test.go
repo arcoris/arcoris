@@ -145,6 +145,31 @@ func TestComponentRegistryLookupAndContains(t *testing.T) {
 	}
 }
 
+func TestComponentRegistryZeroValueReadsAsEmpty(t *testing.T) {
+	t.Parallel()
+
+	var registry ComponentRegistry
+	if got := registry.Len(); got != 0 {
+		t.Fatalf("Len = %d, want 0", got)
+	}
+	if got, ok := registry.Lookup("resilience.bulkhead"); ok || got != (ComponentDescriptor{}) {
+		t.Fatalf("Lookup = (%+v, %v), want zero,false", got, ok)
+	}
+	if list := registry.List(); len(list) != 0 {
+		t.Fatalf("List length = %d, want 0", len(list))
+	}
+}
+
+func TestComponentRegistryZeroValueRegisterRejectsNilKindRegistry(t *testing.T) {
+	t.Parallel()
+
+	var registry ComponentRegistry
+	err := registry.Register(testComponentDescriptor("resilience.bulkhead", KindBulkhead))
+	if !errors.Is(err, ErrNilKindRegistry) {
+		t.Fatalf("error = %v, want ErrNilKindRegistry", err)
+	}
+}
+
 func TestComponentRegistryListIsSortedCopy(t *testing.T) {
 	t.Parallel()
 
@@ -200,9 +225,8 @@ func TestComponentRegistryConcurrentAccess(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for i := 0; i < 32; i++ {
-		i := i
 		wg.Add(1)
-		go func() {
+		go func(i int) {
 			defer wg.Done()
 
 			id := ComponentID("resilience.bulkhead_" +
@@ -213,7 +237,7 @@ func TestComponentRegistryConcurrentAccess(t *testing.T) {
 			_ = registry.Contains(id)
 			_ = registry.List()
 			_ = registry.Len()
-		}()
+		}(i)
 	}
 	wg.Wait()
 }

@@ -38,8 +38,14 @@ func TestDeferredResult(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("deferred result should be valid: %+v", result.Decision())
 	}
+	if got := result.Decision(); got != Defer(ReasonDeferred) {
+		t.Fatalf("decision = %+v, want deferred no-effect decision", got)
+	}
 	if result.HasGrant() {
 		t.Fatal("deferred result should not carry a grant")
+	}
+	if !result.HasMetadata() {
+		t.Fatal("deferred result should carry metadata")
 	}
 	if metadata, ok := result.Metadata(); !ok || metadata != "snapshot" {
 		t.Fatalf("metadata = (%q, %v), want (snapshot, true)", metadata, ok)
@@ -53,6 +59,9 @@ func TestDeferredForResult(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("deferred result should be valid: %+v", result.Decision())
 	}
+	if !result.HasMetadata() {
+		t.Fatal("deferred typed result should carry metadata")
+	}
 	if grant, ok := result.Grant(); ok || grant != "" {
 		t.Fatalf("grant = (%q, %v), want zero value and false", grant, ok)
 	}
@@ -64,6 +73,9 @@ func TestDeferredNoMetadataResult(t *testing.T) {
 	result := DeferredNoMetadata(ReasonDeferred)
 	if !result.IsValid() {
 		t.Fatalf("deferred result should be valid: %+v", result.Decision())
+	}
+	if result.HasGrant() {
+		t.Fatal("deferred no-metadata result should not carry a grant")
 	}
 	if result.HasMetadata() {
 		t.Fatal("deferred no-metadata result should not carry metadata")

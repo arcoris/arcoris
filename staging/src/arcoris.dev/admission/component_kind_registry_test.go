@@ -109,6 +109,29 @@ func TestKindRegistryLookupAndContains(t *testing.T) {
 	}
 }
 
+func TestKindRegistryZeroValue(t *testing.T) {
+	t.Parallel()
+
+	var registry KindRegistry
+	if got := registry.Len(); got != 0 {
+		t.Fatalf("Len = %d, want 0", got)
+	}
+	if got, ok := registry.Lookup(KindBulkhead); ok || got != (ComponentKindDescriptor{}) {
+		t.Fatalf("Lookup = (%+v, %v), want zero,false", got, ok)
+	}
+	if list := registry.List(); len(list) != 0 {
+		t.Fatalf("List length = %d, want 0", len(list))
+	}
+
+	descriptor := testKindDescriptor("custom_kind")
+	if err := registry.Register(descriptor); err != nil {
+		t.Fatalf("Register returned error: %v", err)
+	}
+	if got, ok := registry.Lookup("custom_kind"); !ok || got != descriptor {
+		t.Fatalf("Lookup registered = (%+v, %v), want descriptor,true", got, ok)
+	}
+}
+
 func TestKindRegistryListIsSortedCopy(t *testing.T) {
 	t.Parallel()
 
@@ -159,9 +182,8 @@ func TestKindRegistryConcurrentAccess(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for i := 0; i < 32; i++ {
-		i := i
 		wg.Add(1)
-		go func() {
+		go func(i int) {
 			defer wg.Done()
 
 			kind := ComponentKind("custom_kind_" +
@@ -172,7 +194,7 @@ func TestKindRegistryConcurrentAccess(t *testing.T) {
 			_ = registry.Contains(kind)
 			_ = registry.List()
 			_ = registry.Len()
-		}()
+		}(i)
 	}
 	wg.Wait()
 }

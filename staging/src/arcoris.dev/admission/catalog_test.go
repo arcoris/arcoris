@@ -16,6 +16,7 @@ package admission
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 	"testing"
 )
@@ -68,6 +69,16 @@ func TestCatalogListMethodsReturnSortedCopies(t *testing.T) {
 	if len(reasons) == 0 {
 		t.Fatal("Reasons should not be empty")
 	}
+	for i := 1; i < len(reasons); i++ {
+		if reasons[i-1].Reason.String() > reasons[i].Reason.String() {
+			t.Fatalf("Reasons order[%d:%d] = %q,%q, want sorted",
+				i-1,
+				i,
+				reasons[i-1].Reason,
+				reasons[i].Reason,
+			)
+		}
+	}
 	reasons[0].Reason = "mutated_reason"
 	if catalog.LenReasons() == 0 || catalog.Reasons()[0].Reason == "mutated_reason" {
 		t.Fatal("mutating Reasons result should not mutate catalog")
@@ -77,6 +88,16 @@ func TestCatalogListMethodsReturnSortedCopies(t *testing.T) {
 	if len(kinds) == 0 {
 		t.Fatal("Kinds should not be empty")
 	}
+	for i := 1; i < len(kinds); i++ {
+		if kinds[i-1].Kind.String() > kinds[i].Kind.String() {
+			t.Fatalf("Kinds order[%d:%d] = %q,%q, want sorted",
+				i-1,
+				i,
+				kinds[i-1].Kind,
+				kinds[i].Kind,
+			)
+		}
+	}
 	kinds[0].Kind = "mutated_kind"
 	if catalog.LenKinds() == 0 || catalog.Kinds()[0].Kind == "mutated_kind" {
 		t.Fatal("mutating Kinds result should not mutate catalog")
@@ -85,6 +106,16 @@ func TestCatalogListMethodsReturnSortedCopies(t *testing.T) {
 	components := catalog.Components()
 	if len(components) == 0 {
 		t.Fatal("Components should not be empty")
+	}
+	for i := 1; i < len(components); i++ {
+		if components[i-1].ID.String() > components[i].ID.String() {
+			t.Fatalf("Components order[%d:%d] = %q,%q, want sorted",
+				i-1,
+				i,
+				components[i-1].ID,
+				components[i].ID,
+			)
+		}
 	}
 	components[0].ID = "resilience.mutated"
 	if catalog.LenComponents() == 0 || catalog.Components()[0].ID == "resilience.mutated" {
@@ -182,6 +213,7 @@ func TestCatalogConcurrentAccess(t *testing.T) {
 	catalog := testCatalog()
 
 	var wg sync.WaitGroup
+	errCh := make(chan error, 32*3)
 	for i := 0; i < 32; i++ {
 		wg.Add(1)
 		go func(i int) {
@@ -192,9 +224,15 @@ func TestCatalogConcurrentAccess(t *testing.T) {
 			kind := ComponentKind("custom_kind_" + suffix)
 			componentID := ComponentID("custom.component_" + suffix)
 
-			_ = catalog.RegisterReason(testReasonDescriptor(reason))
-			_ = catalog.RegisterKind(testKindDescriptor(kind))
-			_ = catalog.RegisterComponent(testComponentDescriptor(componentID, kind))
+			if err := catalog.RegisterReason(testReasonDescriptor(reason)); err != nil {
+				errCh <- fmt.Errorf("register reason %q: %w", reason, err)
+			}
+			if err := catalog.RegisterKind(testKindDescriptor(kind)); err != nil {
+				errCh <- fmt.Errorf("register kind %q: %w", kind, err)
+			}
+			if err := catalog.RegisterComponent(testComponentDescriptor(componentID, kind)); err != nil {
+				errCh <- fmt.Errorf("register component %q: %w", componentID, err)
+			}
 
 			_, _ = catalog.Reason(reason)
 			_, _ = catalog.Kind(kind)
@@ -208,6 +246,13 @@ func TestCatalogConcurrentAccess(t *testing.T) {
 		}(i)
 	}
 	wg.Wait()
+	close(errCh)
+
+	for err := range errCh {
+		if err != nil {
+			t.Fatalf("unexpected concurrent catalog error: %v", err)
+		}
+	}
 }
 
 func TestCatalogNilReceiverPanics(t *testing.T) {

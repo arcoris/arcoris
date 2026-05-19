@@ -45,8 +45,14 @@ func TestQueuedResult(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("queued result should be valid: %+v", result.Decision())
 	}
+	if got := result.Decision(); got != Queue(ReasonQueued) {
+		t.Fatalf("decision = %+v, want queued decision", got)
+	}
 	if grant, ok := result.Grant(); !ok || grant != "ticket" {
 		t.Fatalf("grant = (%q, %v), want (ticket, true)", grant, ok)
+	}
+	if !result.HasMetadata() {
+		t.Fatal("queued result should carry metadata")
 	}
 	if metadata, ok := result.Metadata(); !ok || metadata != "snapshot" {
 		t.Fatalf("metadata = (%q, %v), want (snapshot, true)", metadata, ok)
@@ -65,5 +71,8 @@ func TestQueuedNoGrantResult(t *testing.T) {
 	}
 	if !result.HasMetadata() {
 		t.Fatal("queued no-grant result should carry metadata")
+	}
+	if metadata, ok := result.Metadata(); !ok || metadata != "snapshot" {
+		t.Fatalf("metadata = (%q, %v), want (snapshot, true)", metadata, ok)
 	}
 }
