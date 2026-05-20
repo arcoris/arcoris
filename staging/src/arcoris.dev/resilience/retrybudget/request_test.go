@@ -14,20 +14,18 @@
   limitations under the License.
 */
 
-package fixedwindow
+package retrybudget
 
 import (
-	"arcoris.dev/admission"
-	"arcoris.dev/resilience/retrybudget"
-	"arcoris.dev/snapshot"
+	"reflect"
+	"testing"
 )
 
-var _ retrybudget.Budget = (*Limiter)(nil)
-var _ retrybudget.AdmissionAdmitter = (*Limiter)(nil)
-var _ admission.Admitter[
-	retrybudget.Request,
-	admission.NoGrant,
-	snapshot.Snapshot[retrybudget.Snapshot],
-] = (*Limiter)(nil)
-var _ snapshot.Source[retrybudget.Snapshot] = (*Limiter)(nil)
-var _ snapshot.RevisionSource = (*Limiter)(nil)
+func TestRequestIsEmptyDomainRequest(t *testing.T) {
+	t.Parallel()
+
+	var req Request
+	if fields := reflect.TypeOf(req).NumField(); fields != 0 {
+		t.Fatalf("Request field count = %d, want 0", fields)
+	}
+}

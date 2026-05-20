@@ -19,6 +19,7 @@ package noop
 import (
 	"math"
 
+	"arcoris.dev/admission"
 	"arcoris.dev/resilience/retrybudget"
 	"arcoris.dev/snapshot"
 )
@@ -102,5 +103,11 @@ func staticSnapshotValue() retrybudget.Snapshot {
 }
 
 var _ retrybudget.Budget = Budget{}
+var _ retrybudget.AdmissionAdmitter = Budget{}
+var _ admission.Admitter[
+	retrybudget.Request,
+	admission.NoGrant,
+	snapshot.Snapshot[retrybudget.Snapshot],
+] = Budget{}
 var _ snapshot.Source[retrybudget.Snapshot] = Budget{}
 var _ snapshot.RevisionSource = Budget{}

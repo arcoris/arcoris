@@ -20,6 +20,8 @@
 // traffic. It is useful when retry-budget enforcement is intentionally disabled
 // but callers still want to depend on the retrybudget.Budget contract without
 // nil checks or special cases.
+// Budget also implements retrybudget.AdmissionAdmitter; TryAdmit always returns
+// a committed no-grant admission result with the stable unlimited snapshot.
 //
 // The implementation is stateless, concurrency-safe, zero-value usable, and
 // allocation-free on the read path. Snapshot returns a stable revisioned snapshot

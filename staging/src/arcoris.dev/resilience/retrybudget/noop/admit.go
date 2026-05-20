@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-package fixedwindow
+package noop
 
 import (
 	"arcoris.dev/admission"
@@ -22,12 +22,16 @@ import (
 	"arcoris.dev/snapshot"
 )
 
-var _ retrybudget.Budget = (*Limiter)(nil)
-var _ retrybudget.AdmissionAdmitter = (*Limiter)(nil)
-var _ admission.Admitter[
+// TryAdmit exposes Budget through admission's generic result contract.
+//
+// Budget is unlimited, so TryAdmit always returns a valid admitted committed
+// result with no grant. The method delegates through TryAdmitRetry so direct and
+// admission-compatible callers observe the same stable snapshot semantics.
+func (b Budget) TryAdmit(
 	retrybudget.Request,
+) admission.Result[
 	admission.NoGrant,
 	snapshot.Snapshot[retrybudget.Snapshot],
-] = (*Limiter)(nil)
-var _ snapshot.Source[retrybudget.Snapshot] = (*Limiter)(nil)
-var _ snapshot.RevisionSource = (*Limiter)(nil)
+] {
+	return b.TryAdmitRetry().AdmissionResult()
+}

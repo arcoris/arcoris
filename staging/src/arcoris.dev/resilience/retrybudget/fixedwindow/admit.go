@@ -22,12 +22,21 @@ import (
 	"arcoris.dev/snapshot"
 )
 
-var _ retrybudget.Budget = (*Limiter)(nil)
-var _ retrybudget.AdmissionAdmitter = (*Limiter)(nil)
-var _ admission.Admitter[
+// TryAdmit exposes Limiter through admission's generic result contract.
+//
+// TryAdmit delegates to the same atomic check-and-spend path as TryAdmitRetry.
+// An admitted result means the retry attempt has already been recorded. A denied
+// result means no retry was spent. No grant is returned because retry-budget
+// admission is committed spend-only and has no release path.
+//
+// The request is intentionally empty. Limiter does not perform catalog lookup,
+// queueing, waiting, context observation, policy orchestration, or retry
+// execution in this adapter.
+func (l *Limiter) TryAdmit(
 	retrybudget.Request,
+) admission.Result[
 	admission.NoGrant,
 	snapshot.Snapshot[retrybudget.Snapshot],
-] = (*Limiter)(nil)
-var _ snapshot.Source[retrybudget.Snapshot] = (*Limiter)(nil)
-var _ snapshot.RevisionSource = (*Limiter)(nil)
+] {
+	return l.TryAdmitRetry().AdmissionResult()
+}

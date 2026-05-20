@@ -24,6 +24,9 @@
 // Original attempts are recorded with RecordOriginal. Retry attempts are admitted
 // with TryAdmitRetry, which is an atomic check-and-spend operation. A successful
 // admission records the retry attempt before returning to the caller.
+// Limiter also implements retrybudget.AdmissionAdmitter: TryAdmit delegates to
+// the same atomic check-and-spend path and returns an admission.Result with a
+// committed no-grant effect for admitted retries.
 //
 // Fixed windows are local and observation-aligned. The first window starts when
 // the limiter is created, and subsequent windows start when a write path observes

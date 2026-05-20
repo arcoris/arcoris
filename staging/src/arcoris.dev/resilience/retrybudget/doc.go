@@ -21,6 +21,17 @@
 // original traffic, active work, or adaptive runtime capacity. This root package
 // defines common recording, admission, decision, reason, kind, and snapshot
 // contracts. Concrete accounting strategies live in implementation subpackages.
+// Implementations expose retry admission through two compatible surfaces:
+// TryAdmitRetry returns the retry-budget Decision for direct callers, while
+// TryAdmit(Request) may return an admission.Result for generic
+// admission-compatible callers.
+//
+// Allowed retry-budget decisions are spend-only committed effects: the retry has
+// already been accounted for, no grant is returned, and there is no release path.
+// Denied retry-budget admission is ordinary budget back-pressure. retrybudget
+// does not use arcoris.dev/capacity because retry attempts are spent into a
+// budget and remain accounted until the implementation's own policy window or
+// accounting state changes.
 //
 // Snapshots in this package are domain values. Revisioned publication and
 // read-only access use arcoris.dev/snapshot. Implementations should expose
