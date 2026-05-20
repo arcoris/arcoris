@@ -32,6 +32,12 @@ func TestTryAdmit(t *testing.T) {
 	canceled, cancel := context.WithCancel(context.Background())
 	cancel()
 
+	canceledDeadline, cancelDeadline := context.WithDeadline(
+		context.Background(),
+		now.Add(10*time.Second),
+	)
+	cancelDeadline()
+
 	tests := []struct {
 		name     string
 		request  Request
@@ -96,7 +102,7 @@ func TestTryAdmit(t *testing.T) {
 			},
 		},
 		{
-			name: "context done",
+			name: "context done without deadline budget",
 			request: Request{
 				Context: canceled,
 				Now:     now,
@@ -105,6 +111,20 @@ func TestTryAdmit(t *testing.T) {
 			denied: true,
 			metadata: Decision{
 				Reason: ReasonContextDone,
+			},
+		},
+		{
+			name: "context done with future deadline budget",
+			request: Request{
+				Context: canceledDeadline,
+				Now:     now,
+				Min:     time.Second,
+			},
+			want:   admission.Deny(admission.ReasonCanceled),
+			denied: true,
+			metadata: Decision{
+				Remaining: 10 * time.Second,
+				Reason:    ReasonContextDone,
 			},
 		},
 	}
@@ -140,6 +160,8 @@ func TestTryAdmit(t *testing.T) {
 			}
 			if metadata, ok := result.Metadata(); !ok || metadata != test.metadata {
 				t.Fatalf("metadata = (%+v, %t), want (%+v, true)", metadata, ok, test.metadata)
+			} else if !metadata.IsValid() {
+				t.Fatalf("metadata IsValid() = false: %+v", metadata)
 			}
 		})
 	}

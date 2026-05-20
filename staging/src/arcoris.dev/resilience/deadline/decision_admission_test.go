@@ -87,7 +87,7 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 			},
 		},
 		{
-			name: "context done",
+			name: "context done without deadline budget",
 			decision: Decision{
 				Reason: ReasonContextDone,
 			},
@@ -95,6 +95,19 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 			denied: true,
 			metadata: Decision{
 				Reason: ReasonContextDone,
+			},
+		},
+		{
+			name: "context done with future deadline budget",
+			decision: Decision{
+				Remaining: time.Second,
+				Reason:    ReasonContextDone,
+			},
+			want:   admission.Deny(admission.ReasonCanceled),
+			denied: true,
+			metadata: Decision{
+				Remaining: time.Second,
+				Reason:    ReasonContextDone,
 			},
 		},
 	}
@@ -161,6 +174,26 @@ func TestDecisionAdmissionResultInvalidDecisionStaysInvalid(t *testing.T) {
 			},
 		},
 		{
+			name: "expired with remaining budget",
+			decision: Decision{
+				Remaining: time.Second,
+				Reason:    ReasonExpired,
+			},
+		},
+		{
+			name: "insufficient budget without remaining budget",
+			decision: Decision{
+				Reason: ReasonInsufficientBudget,
+			},
+		},
+		{
+			name: "insufficient budget with negative remaining",
+			decision: Decision{
+				Remaining: -time.Nanosecond,
+				Reason:    ReasonInsufficientBudget,
+			},
+		},
+		{
 			name: "unknown reason",
 			decision: Decision{
 				Reason: Reason(255),
@@ -175,6 +208,12 @@ func TestDecisionAdmissionResultInvalidDecisionStaysInvalid(t *testing.T) {
 			result := test.decision.AdmissionResult()
 			if result.IsValid() {
 				t.Fatalf("AdmissionResult().IsValid() = true, want false: %+v", result.Decision())
+			}
+			if result.HasGrant() {
+				t.Fatal("invalid AdmissionResult has grant, want none")
+			}
+			if _, ok := result.Grant(); ok {
+				t.Fatal("invalid AdmissionResult Grant() ok=true, want false")
 			}
 			if !result.HasMetadata() {
 				t.Fatal("invalid AdmissionResult should still preserve metadata")

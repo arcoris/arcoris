@@ -18,11 +18,16 @@ package deadline
 
 // IsValid reports whether d satisfies deadline decision invariants.
 //
-// The method validates only the value shape. It does not re-read a context,
-// re-run deadline math, or decide whether the original caller should have used
-// a different minimum budget. Zero Decision is invalid: ReasonAllowed is the
-// zero reason, but it is valid only for an allowed decision with positive
-// remaining budget.
+// The method validates only the value shape produced by deadline decision
+// boundaries. It does not re-read a context, re-run deadline math, or decide
+// whether the original caller should have used a different minimum budget.
+//
+// Zero Decision is invalid: ReasonAllowed is the zero reason, but it is valid
+// only for an allowed decision with positive remaining budget. Expired denials
+// have no positive remaining budget, insufficient-budget denials preserve the
+// positive budget that was too small for the caller, and context-done denials
+// may preserve positive remaining budget when cancellation happens before a
+// future deadline.
 func (d Decision) IsValid() bool {
 	if d.Remaining < 0 {
 		return false
@@ -50,8 +55,12 @@ func (d Decision) isValidAllowed() bool {
 // isValidDenied validates the reason/budget shape for denied decisions.
 func (d Decision) isValidDenied() bool {
 	switch d.Reason {
-	case ReasonContextDone, ReasonExpired, ReasonInsufficientBudget:
+	case ReasonContextDone:
 		return true
+	case ReasonExpired:
+		return d.Remaining == 0
+	case ReasonInsufficientBudget:
+		return d.Remaining > 0
 	default:
 		return false
 	}

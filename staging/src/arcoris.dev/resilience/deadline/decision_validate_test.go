@@ -47,14 +47,22 @@ func TestDecisionIsValid(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "context done denial",
+			name: "context done denial without deadline budget",
 			decision: Decision{
 				Reason: ReasonContextDone,
 			},
 			want: true,
 		},
 		{
-			name: "expired denial",
+			name: "context done denial with future deadline budget",
+			decision: Decision{
+				Remaining: time.Second,
+				Reason:    ReasonContextDone,
+			},
+			want: true,
+		},
+		{
+			name: "expired denial without remaining budget",
 			decision: Decision{
 				Reason: ReasonExpired,
 			},
@@ -87,6 +95,12 @@ func TestDecisionIsValid(t *testing.T) {
 			},
 		},
 		{
+			name: "denied with no-deadline reason",
+			decision: Decision{
+				Reason: ReasonNoDeadline,
+			},
+		},
+		{
 			name: "allowed without positive budget",
 			decision: Decision{
 				Allowed: true,
@@ -102,10 +116,30 @@ func TestDecisionIsValid(t *testing.T) {
 			},
 		},
 		{
+			name: "expired denial with remaining budget",
+			decision: Decision{
+				Remaining: time.Second,
+				Reason:    ReasonExpired,
+			},
+		},
+		{
+			name: "insufficient budget denial without remaining budget",
+			decision: Decision{
+				Reason: ReasonInsufficientBudget,
+			},
+		},
+		{
 			name: "negative remaining",
 			decision: Decision{
 				Remaining: -time.Nanosecond,
 				Reason:    ReasonExpired,
+			},
+		},
+		{
+			name: "insufficient budget denial with negative remaining",
+			decision: Decision{
+				Remaining: -time.Nanosecond,
+				Reason:    ReasonInsufficientBudget,
 			},
 		},
 		{

@@ -118,3 +118,92 @@ func TestCanStartBuildsDecision(t *testing.T) {
 		})
 	}
 }
+
+func TestCanStartReturnsValidDecision(t *testing.T) {
+	t.Parallel()
+
+	now := testNow()
+
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	canceledDeadline, cancelDeadline := context.WithDeadline(
+		context.Background(),
+		now.Add(10*time.Second),
+	)
+	cancelDeadline()
+
+	tests := []struct {
+		name string
+		ctx  context.Context
+		min  time.Duration
+		want Decision
+	}{
+		{
+			name: "no deadline",
+			ctx:  context.Background(),
+			min:  time.Second,
+			want: Decision{
+				Allowed: true,
+				Reason:  ReasonNoDeadline,
+			},
+		},
+		{
+			name: "enough budget",
+			ctx:  contextWithDeadline(t, now.Add(10*time.Second)),
+			min:  time.Second,
+			want: Decision{
+				Allowed:   true,
+				Remaining: 10 * time.Second,
+				Reason:    ReasonAllowed,
+			},
+		},
+		{
+			name: "expired",
+			ctx:  contextWithDeadline(t, now),
+			min:  time.Second,
+			want: Decision{
+				Reason: ReasonExpired,
+			},
+		},
+		{
+			name: "insufficient budget",
+			ctx:  contextWithDeadline(t, now.Add(time.Second)),
+			min:  2 * time.Second,
+			want: Decision{
+				Remaining: time.Second,
+				Reason:    ReasonInsufficientBudget,
+			},
+		},
+		{
+			name: "canceled context without deadline",
+			ctx:  canceled,
+			want: Decision{
+				Reason: ReasonContextDone,
+			},
+		},
+		{
+			name: "canceled context with future deadline",
+			ctx:  canceledDeadline,
+			min:  time.Second,
+			want: Decision{
+				Remaining: 10 * time.Second,
+				Reason:    ReasonContextDone,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := CanStart(test.ctx, now, test.min)
+			if !got.IsValid() {
+				t.Fatalf("CanStart().IsValid() = false: %#v", got)
+			}
+			if got != test.want {
+				t.Fatalf("CanStart() = %#v, want %#v", got, test.want)
+			}
+		})
+	}
+}
