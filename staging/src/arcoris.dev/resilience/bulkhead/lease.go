@@ -18,7 +18,7 @@ package bulkhead
 
 import "arcoris.dev/capacity"
 
-// Lease owns one in-flight bulkhead slot until it is released.
+// Lease owns in-flight bulkhead capacity until it is released.
 //
 // Lease is the bulkhead-domain name for a capacity.Reservation. The underlying
 // reservation enforces release ownership and updates the owning ledger. Lease
@@ -30,6 +30,26 @@ type Lease struct {
 	// noCopy lets go vet report accidental Lease copies after first use.
 	noCopy noCopy
 
-	// reservation owns the low-level capacity unit.
+	// reservation owns the low-level capacity units.
 	reservation *capacity.Reservation
+}
+
+// Amount returns the number of in-flight capacity units owned by l.
+//
+// TryAcquire creates one-unit leases, while TryAcquireAmount and TryAdmit may
+// create weighted leases. The amount is immutable after acquisition and remains
+// observable before and after release.
+func (l *Lease) Amount() Amount {
+	l.requireReady()
+	return Amount(l.reservation.Amount())
+}
+
+// Released reports whether l has already returned its capacity to the Bulkhead.
+//
+// Released is an ownership-state query. It does not release capacity and does
+// not make Release idempotent; callers that need idempotent cleanup should use
+// TryRelease.
+func (l *Lease) Released() bool {
+	l.requireReady()
+	return l.reservation.Released()
 }

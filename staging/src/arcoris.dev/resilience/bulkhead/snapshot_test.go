@@ -16,18 +16,23 @@
 
 package bulkhead
 
-// Amount returns the amount owned by l.
-//
-// Current Bulkhead acquisition always reserves one unit, but this method keeps
-// the ownership observable through the same shape as capacity.Reservation. It is
-// valid before and after release.
-func (l *Lease) Amount() Amount {
-	l.requireReady()
-	return Amount(l.reservation.Amount())
-}
+import (
+	"testing"
 
-// Released reports whether l has already been released.
-func (l *Lease) Released() bool {
-	l.requireReady()
-	return l.reservation.Released()
+	"arcoris.dev/capacity"
+)
+
+func TestSnapshotMatchesCapacitySnapshot(t *testing.T) {
+	t.Parallel()
+
+	fromCapacity := capacity.Snapshot{
+		Limit:     2,
+		Reserved:  1,
+		Available: 1,
+	}
+	var snap Snapshot = fromCapacity
+
+	if snap != fromCapacity {
+		t.Fatalf("Snapshot alias = %+v, want %+v", snap, fromCapacity)
+	}
 }

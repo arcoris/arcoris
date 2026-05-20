@@ -18,14 +18,7 @@ package bulkhead
 
 import "arcoris.dev/capacity"
 
-// Amount is the number of local in-flight capacity units managed by a Bulkhead.
-//
-// The alias is intentionally the same scalar type used by capacity.Ledger. The
-// bulkhead layer gives the units execution-protection meaning but does not
-// redefine the accounting model.
-type Amount = capacity.Amount
-
-// Snapshot is the copyable read model of one Bulkhead's local capacity state.
+// Snapshot is the copyable state model of one Bulkhead's local capacity.
 //
 // Snapshot is an alias of capacity.Snapshot because bulkhead does not maintain
 // parallel diagnostic counters. Limit, Reserved, Available, and Debt are exactly

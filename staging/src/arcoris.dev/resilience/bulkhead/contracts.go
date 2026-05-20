@@ -16,10 +16,20 @@
 
 package bulkhead
 
-import "arcoris.dev/snapshot"
+import (
+	"arcoris.dev/admission"
+	"arcoris.dev/snapshot"
+)
 
 var (
-	// Compile-time contract checks for Bulkhead's read-facing snapshot APIs.
+	// Compile-time contract checks for Bulkhead's state snapshot APIs.
 	_ snapshot.Source[Snapshot] = (*Bulkhead)(nil)
 	_ snapshot.RevisionSource   = (*Bulkhead)(nil)
+
+	// Compile-time contract check for the admission-compatible non-blocking API.
+	//
+	// This does not make Bulkhead a general admission controller. It only states
+	// that the local bounded in-flight primitive can expose its existing
+	// check-and-reserve operation through admission's generic Result contract.
+	_ admission.Admitter[Request, *Lease, snapshot.Snapshot[Snapshot]] = (*Bulkhead)(nil)
 )

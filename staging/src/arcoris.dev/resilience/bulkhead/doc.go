@@ -18,18 +18,28 @@
 // internals.
 //
 // A Bulkhead is a small resilience-domain wrapper around capacity.Ledger. It
-// reserves one local capacity unit before protected work starts and returns that
-// unit when the Lease is released. When no capacity is available, TryAcquire
-// rejects immediately.
+// reserves local capacity before protected work starts and returns that capacity
+// when the Lease is released. When no capacity is available, acquisition rejects
+// immediately.
+//
+// The package exposes two equivalent API surfaces. TryAcquire and
+// TryAcquireAmount are the direct bulkhead APIs for callers that want a Lease and
+// an observed capacity snapshot. TryAdmit accepts a typed Request and returns an
+// admission.Result so generic admission-compatible code can consume the same
+// non-blocking operation. TryAdmit maps success to admission.Granted with
+// admission.ReasonAdmitted, and capacity exhaustion to admission.DeniedFor with
+// admission.ReasonCapacityExhausted. Successful admission still transfers Lease
+// ownership to the caller; the caller must release the Lease.
 //
 // The package is local and non-blocking. It does not wait, queue callers,
 // observe contexts, implement fairness, rate-limit throughput, retry work,
 // classify operation failures, integrate with health, export metrics, log, trace,
-// schedule work, or manage worker pools. Those policies belong above this
-// primitive.
+// schedule work, use admission.Catalog in the hot path, or manage worker pools.
+// Those policies belong above this primitive.
 //
 // capacity owns scalar accounting and lease/release semantics. bulkhead owns the
 // resilience meaning: bounded in-flight isolation around protected execution.
-// The public read model is intentionally the capacity snapshot itself so callers
-// see the same Limit, Reserved, Available, and Debt semantics at both layers.
+// admission owns the generic result contract used by TryAdmit. The public state
+// model is intentionally the capacity snapshot itself so callers see the same
+// Limit, Reserved, Available, and Debt semantics at both layers.
 package bulkhead

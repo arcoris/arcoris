@@ -40,3 +40,17 @@ func ExampleBulkhead_TryAcquire() {
 	// true false 0
 	// true 0
 }
+
+func ExampleBulkhead_TryAdmit() {
+	b := bulkhead.New(1)
+
+	result := b.TryAdmit(bulkhead.Request{Amount: 1})
+	fmt.Println(result.IsAdmitted(), result.HasGrant())
+
+	if lease, ok := result.Grant(); ok {
+		lease.Release()
+	}
+
+	// Output:
+	// true true
+}

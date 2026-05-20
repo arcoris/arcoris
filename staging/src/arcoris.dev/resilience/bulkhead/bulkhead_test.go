@@ -18,7 +18,7 @@ package bulkhead
 
 import "testing"
 
-func TestSnapshotRemainsValid(t *testing.T) {
+func TestBulkheadSnapshotReturnsValidCapacityState(t *testing.T) {
 	t.Parallel()
 
 	b := New(2)
@@ -29,7 +29,7 @@ func TestSnapshotRemainsValid(t *testing.T) {
 	requireSnapshotValue(t, snap, 2, 0, 2, 0)
 }
 
-func TestRevisionMatchesSnapshotRevision(t *testing.T) {
+func TestBulkheadRevisionMatchesSnapshotRevision(t *testing.T) {
 	t.Parallel()
 
 	b := New(1)

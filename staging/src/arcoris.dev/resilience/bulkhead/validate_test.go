@@ -26,12 +26,16 @@ func TestBulkheadPanicsOnNilOrUninitializedReceiver(t *testing.T) {
 	requirePanic(t, errNilBulkhead, func() { _ = nilBulkhead.Revision() })
 	requirePanic(t, errNilBulkhead, func() { _ = nilBulkhead.SetLimit(1) })
 	requirePanic(t, errNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquire() })
+	requirePanic(t, errNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquireAmount(1) })
+	requirePanic(t, errNilBulkhead, func() { _ = nilBulkhead.TryAdmit(Request{Amount: 1}) })
 
 	var zero Bulkhead
 	requirePanic(t, errUninitializedBulkhead, func() { _ = zero.Snapshot() })
 	requirePanic(t, errUninitializedBulkhead, func() { _ = zero.Revision() })
 	requirePanic(t, errUninitializedBulkhead, func() { _ = zero.SetLimit(1) })
 	requirePanic(t, errUninitializedBulkhead, func() { _, _, _ = zero.TryAcquire() })
+	requirePanic(t, errUninitializedBulkhead, func() { _, _, _ = zero.TryAcquireAmount(1) })
+	requirePanic(t, errUninitializedBulkhead, func() { _ = zero.TryAdmit(Request{Amount: 1}) })
 }
 
 func TestLeasePanicsOnNilOrUninitializedReceiver(t *testing.T) {

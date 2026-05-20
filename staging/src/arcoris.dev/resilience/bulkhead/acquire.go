@@ -20,23 +20,15 @@ import "arcoris.dev/snapshot"
 
 // TryAcquire attempts to reserve one in-flight slot without waiting.
 //
-// TryAcquire is the only admission operation in this package. It does not block,
-// create waiters, observe context cancellation, retry, classify operation
-// errors, or schedule work. If capacity is available, the returned Lease owns one
-// capacity unit until Release or TryRelease returns it. If capacity is not
-// available, TryAcquire returns nil, the current snapshot, and false.
+// TryAcquire is the ergonomic one-slot API. It delegates to TryAcquireAmount(1),
+// so direct callers and admission-compatible callers share the same
+// check-and-reserve path. It does not block, create waiters, observe context
+// cancellation, retry, classify operation errors, or schedule work.
 //
 // Rejected acquisition is not an error in this layer. It is ordinary bulkhead
 // back-pressure and is represented by ok=false plus the observed snapshot. The
 // rejected branch does not create a Lease because there is no capacity ownership
 // to release.
 func (b *Bulkhead) TryAcquire() (*Lease, snapshot.Snapshot[Snapshot], bool) {
-	b.requireReady()
-
-	reservation, snap, ok := b.ledger.TryReserve(1)
-	if !ok {
-		return nil, snap, false
-	}
-
-	return &Lease{reservation: reservation}, snap, true
+	return b.TryAcquireAmount(1)
 }

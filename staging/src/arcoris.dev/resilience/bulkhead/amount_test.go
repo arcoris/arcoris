@@ -16,28 +16,19 @@
 
 package bulkhead
 
-import "testing"
+import (
+	"testing"
 
-func TestLeaseAmountAndReleasedReflectReservation(t *testing.T) {
+	"arcoris.dev/capacity"
+)
+
+func TestAmountMatchesCapacityAmount(t *testing.T) {
 	t.Parallel()
 
-	b := New(1)
-	lease, _, ok := b.TryAcquire()
-	if !ok {
-		t.Fatal("TryAcquire failed")
-	}
-	if lease.Amount() != 1 {
-		t.Fatalf("Amount() = %d, want 1", lease.Amount())
-	}
-	if lease.Released() {
-		t.Fatal("Released() before release = true, want false")
-	}
+	var fromCapacity capacity.Amount = 2
+	var amount Amount = fromCapacity
 
-	lease.Release()
-	if !lease.Released() {
-		t.Fatal("Released() after release = false, want true")
-	}
-	if lease.Amount() != 1 {
-		t.Fatalf("Amount() after release = %d, want 1", lease.Amount())
+	if got := capacity.Amount(amount); got != fromCapacity {
+		t.Fatalf("capacity.Amount(Amount) = %d, want %d", got, fromCapacity)
 	}
 }

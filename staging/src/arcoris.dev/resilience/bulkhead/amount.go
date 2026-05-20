@@ -16,20 +16,11 @@
 
 package bulkhead
 
-const (
-	// errInvalidLease is the panic value used when a Lease method is called on a
-	// nil or zero Lease instead of a value returned by a Bulkhead acquisition
-	// method.
-	errInvalidLease = "bulkhead: invalid lease"
-)
+import "arcoris.dev/capacity"
 
-// requireReady panics when l is nil or was not returned by a Bulkhead acquisition
-// method.
+// Amount is the number of local in-flight capacity units managed by a Bulkhead.
 //
-// The check intentionally happens before delegating to capacity.Reservation so
-// bulkhead reports misuse of the resilience-domain lease boundary.
-func (l *Lease) requireReady() {
-	if l == nil || l.reservation == nil {
-		panic(errInvalidLease)
-	}
-}
+// The alias is intentionally the same scalar type used by capacity.Ledger.
+// Bulkhead gives the units execution-protection meaning but does not redefine
+// scalar accounting, validation, ordering, or overflow behavior.
+type Amount = capacity.Amount

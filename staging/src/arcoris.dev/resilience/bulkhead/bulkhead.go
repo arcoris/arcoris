@@ -16,7 +16,10 @@
 
 package bulkhead
 
-import "arcoris.dev/capacity"
+import (
+	"arcoris.dev/capacity"
+	"arcoris.dev/snapshot"
+)
 
 // Bulkhead bounds the number of operations concurrently executing inside one
 // protected section.
@@ -24,8 +27,8 @@ import "arcoris.dev/capacity"
 // Bulkhead intentionally owns no admission queue, waiter lifecycle, fairness
 // policy, retry behavior, health integration, metrics hooks, logging hooks,
 // tracing hooks, or worker pool. It is a small resilience-domain wrapper around
-// capacity.Ledger: acquiring a Lease reserves one scalar capacity unit, and
-// releasing that Lease returns the unit.
+// capacity.Ledger: acquiring a Lease reserves local scalar capacity, and
+// releasing that Lease returns the same amount.
 //
 // The wrapped capacity.Ledger owns all low-level scalar accounting, including
 // revisioned snapshots, limit changes, release ownership, and debt semantics
@@ -49,4 +52,24 @@ type Bulkhead struct {
 	// parallel counters; duplicating that state here would make the accounting
 	// easier to skew.
 	ledger *capacity.Ledger
+}
+
+// Snapshot returns the current revisioned capacity state.
+//
+// The returned value is the underlying capacity.Ledger snapshot. It is safe to
+// store or compare as a value. It describes local in-flight capacity only; it
+// does not include health, routing, scheduling, metrics, or distributed state.
+func (b *Bulkhead) Snapshot() snapshot.Snapshot[Snapshot] {
+	b.requireReady()
+	return b.ledger.Snapshot()
+}
+
+// Revision returns the latest committed bulkhead capacity revision.
+//
+// Revisions are source-local to this Bulkhead. They are useful for cheap change
+// detection by consumers observing the same Bulkhead, but they are not a global
+// ordering across components.
+func (b *Bulkhead) Revision() snapshot.Revision {
+	b.requireReady()
+	return b.ledger.Revision()
 }
