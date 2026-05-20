@@ -22,6 +22,8 @@ package fixedwindow
 // If the configured clock has reached the next window, the limiter rotates before
 // recording the original attempt.
 func (l *Limiter) RecordOriginal() {
+	l.requireReady()
+
 	l.mu.Lock()
 	defer l.mu.Unlock()
 

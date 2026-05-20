@@ -34,6 +34,9 @@ func TestLimiterTryAdmitAllowedMapsToCommittedAdmissionResult(t *testing.T) {
 	if !result.IsAdmitted() {
 		t.Fatal("TryAdmit result is not admitted")
 	}
+	if result.IsDenied() {
+		t.Fatal("TryAdmit result is denied, want admitted")
+	}
 	if !result.HasSideEffect() {
 		t.Fatal("TryAdmit result has no committed side effect")
 	}
@@ -78,6 +81,9 @@ func TestLimiterTryAdmitDeniedMapsToBudgetExhaustedAdmissionResult(t *testing.T)
 	}
 	if !result.IsDenied() {
 		t.Fatal("TryAdmit result is not denied")
+	}
+	if result.IsAdmitted() {
+		t.Fatal("TryAdmit result is admitted, want denied")
 	}
 	if result.HasSideEffect() {
 		t.Fatal("TryAdmit denied result has side effect")

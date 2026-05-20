@@ -127,6 +127,28 @@ func TestDecisionAdmissionResultInvalidDecisionStaysInvalid(t *testing.T) {
 				Snapshot: validGenericSnapshot(),
 			},
 		},
+		{
+			name: "denied with allowed reason",
+			decision: Decision{
+				Allowed:  false,
+				Reason:   ReasonAllowed,
+				Snapshot: validGenericSnapshot(),
+			},
+		},
+		{
+			name: "allowed with zero snapshot",
+			decision: Decision{
+				Allowed: true,
+				Reason:  ReasonAllowed,
+			},
+		},
+		{
+			name: "denied with zero snapshot",
+			decision: Decision{
+				Allowed: false,
+				Reason:  ReasonExhausted,
+			},
+		},
 	}
 
 	for _, tt := range tests {

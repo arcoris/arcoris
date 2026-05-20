@@ -27,11 +27,13 @@ import (
 // read paths, so a quiet limiter may keep publishing the last window until the
 // next RecordOriginal or TryAdmitRetry call observes time advancement.
 func (l *Limiter) Snapshot() snapshot.Snapshot[retrybudget.Snapshot] {
+	l.requireReady()
 	return l.published.Snapshot()
 }
 
 // Revision returns the latest published source-local revision.
 func (l *Limiter) Revision() snapshot.Revision {
+	l.requireReady()
 	return l.published.Revision()
 }
 

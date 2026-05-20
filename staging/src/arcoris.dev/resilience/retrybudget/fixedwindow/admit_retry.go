@@ -25,6 +25,8 @@ import "arcoris.dev/resilience/retrybudget"
 // is unchanged and the returned decision carries the latest already-published
 // snapshot.
 func (l *Limiter) TryAdmitRetry() retrybudget.Decision {
+	l.requireReady()
+
 	l.mu.Lock()
 	defer l.mu.Unlock()
 

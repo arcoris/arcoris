@@ -27,6 +27,8 @@
 // Limiter also implements retrybudget.AdmissionAdmitter: TryAdmit delegates to
 // the same atomic check-and-spend path and returns an admission.Result with a
 // committed no-grant effect for admitted retries.
+// A Limiter must be created with New. Nil or uninitialized Limiter receivers
+// panic with stable receiver-validation messages.
 //
 // Fixed windows are local and observation-aligned. The first window starts when
 // the limiter is created, and subsequent windows start when a write path observes

@@ -63,6 +63,15 @@ func TestBudgetTryAdmit(t *testing.T) {
 	if metadata.Value.Kind != retrybudget.KindNoop {
 		t.Fatalf("metadata kind = %s, want %s", metadata.Value.Kind, retrybudget.KindNoop)
 	}
+	if metadata.Value.Capacity.Exhausted {
+		t.Fatal("metadata capacity is exhausted, want unlimited")
+	}
+	if metadata.Revision != budget.Snapshot().Revision {
+		t.Fatalf("metadata revision = %d, want Snapshot().Revision %d", metadata.Revision, budget.Snapshot().Revision)
+	}
+	if metadata != budget.TryAdmitRetry().Snapshot {
+		t.Fatalf("TryAdmit metadata = %+v, want TryAdmitRetry snapshot %+v", metadata, budget.TryAdmitRetry().Snapshot)
+	}
 }
 
 func TestBudgetTryAdmitThroughAdmissionAdmitter(t *testing.T) {

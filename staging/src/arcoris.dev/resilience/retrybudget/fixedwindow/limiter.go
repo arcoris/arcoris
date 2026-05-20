@@ -27,8 +27,13 @@ import (
 // Limiter is a local fixed-window retry budget.
 //
 // Limiter records original attempts and admits retry attempts according to the
-// configured ratio/minimum policy for the current fixed window. It is safe for
-// concurrent use. Limiter must not be copied after first use.
+// configured ratio/minimum policy for the current fixed window. It must be
+// created with New; the zero value is not ready for use. Nil and uninitialized
+// receivers panic with stable validation messages instead of relying on natural
+// nil pointer panics.
+//
+// After successful construction, Limiter is safe for concurrent use. Limiter
+// must not be copied after first use.
 type Limiter struct {
 	// noCopy prevents accidental copies after first use.
 	noCopy noCopy
