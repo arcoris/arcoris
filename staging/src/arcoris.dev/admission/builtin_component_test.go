@@ -115,6 +115,10 @@ func TestBuiltinComponentDescriptorCapabilities(t *testing.T) {
 			for _, capability := range test.capabilities {
 				requireCapability(t, descriptor.Capabilities, capability)
 			}
+			if test.id == "resilience.deadline" &&
+				descriptor.Capabilities.Has(CapabilityDefer) {
+				t.Fatal("resilience.deadline should not advertise defer")
+			}
 		})
 	}
 }

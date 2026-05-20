@@ -38,6 +38,12 @@
 // checks can use this package to avoid starting work that cannot complete inside
 // the caller's remaining execution budget.
 //
+// CanStart is the direct deadline decision API. TryAdmit(Request) is the
+// admission-compatible surface for generic callers and delegates to CanStart.
+// Deadline admission is no-side-effect: admitted and denied results carry no
+// grant and require no release. The admission metadata is the deadline Decision
+// itself, and no admission catalog lookup is performed in the hot path.
+//
 // The package does not execute operations, retry failed work, sleep, create
 // timers, randomize delays, classify errors, propagate deadlines across HTTP or
 // gRPC boundaries, export metrics, log, trace, or make health, lifecycle,

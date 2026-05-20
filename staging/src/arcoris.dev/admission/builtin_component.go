@@ -48,7 +48,6 @@ func builtinComponentDescriptorLiterals() []ComponentDescriptor {
 			Capabilities: NewCapabilitySet(
 				CapabilityAdmit,
 				CapabilityDeny,
-				CapabilityDefer,
 				CapabilityEffectNone,
 			),
 		},

@@ -26,6 +26,13 @@
 //   - retrybudget owns retry amplification limits.
 //   - bulkhead owns bounded in-flight isolation.
 //
+// Some resilience packages also expose admission-compatible result surfaces for
+// local primitives: bulkhead returns owned lease grants, retrybudget returns
+// committed no-grant retry-spend decisions, and deadline returns no-side-effect
+// start decisions. Those surfaces use admission contracts without moving global
+// policy, catalog lookup, runtime chains, scheduling, health, metrics, logging,
+// or tracing into the resilience root.
+//
 // chrono owns clocks, delays, jitter, and time primitives. runtime owns task,
 // wait, and lifecycle mechanics. capacity owns local scalar capacity accounting.
 // resilience composes those lower-level primitives into failure-control and

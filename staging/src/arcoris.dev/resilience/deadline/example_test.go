@@ -52,6 +52,22 @@ func ExampleCanStart() {
 	// insufficient_budget
 }
 
+func ExampleTryAdmit() {
+	now := time.Now().Add(time.Hour)
+	result := deadline.TryAdmit(deadline.Request{
+		Context: context.Background(),
+		Now:     now,
+		Min:     time.Second,
+	})
+
+	fmt.Println(result.IsAdmitted())
+	fmt.Println(result.HasGrant())
+
+	// Output:
+	// true
+	// false
+}
+
 func ExampleClamp() {
 	now := time.Now().Add(time.Hour)
 	ctx, cancel := context.WithDeadline(context.Background(), now.Add(75*time.Millisecond))
