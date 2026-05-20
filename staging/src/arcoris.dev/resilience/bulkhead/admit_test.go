@@ -17,11 +17,12 @@
 package bulkhead
 
 import (
+	"fmt"
 	"sync"
-	"sync/atomic"
 	"testing"
 
 	"arcoris.dev/admission"
+	"arcoris.dev/snapshot"
 )
 
 func TestBulkheadTryAdmitGrantsLease(t *testing.T) {
@@ -55,13 +56,18 @@ func TestBulkheadTryAdmitGrantsLease(t *testing.T) {
 	if lease == nil {
 		t.Fatal("grant lease is nil")
 	}
-	defer lease.Release()
+	if lease.Amount() != 1 {
+		t.Fatalf("lease amount = %d, want 1", lease.Amount())
+	}
 
 	metadata, ok := result.Metadata()
 	if !ok {
 		t.Fatal("Metadata returned ok=false, want true")
 	}
 	requireSnapshotValue(t, metadata, 2, 1, 1, 0)
+
+	lease.Release()
+	requireSnapshotValue(t, b.Snapshot(), 2, 0, 2, 0)
 }
 
 func TestBulkheadTryAdmitDeniesWhenCapacityExhausted(t *testing.T) {
@@ -69,9 +75,15 @@ func TestBulkheadTryAdmitDeniesWhenCapacityExhausted(t *testing.T) {
 
 	b := New(1)
 	held := b.TryAdmit(Request{Amount: 1})
+	if !held.IsValid() {
+		t.Fatalf("first TryAdmit result is invalid: %+v", held.Decision())
+	}
 	lease, ok := held.Grant()
 	if !ok {
 		t.Fatal("first TryAdmit returned no lease")
+	}
+	if lease == nil {
+		t.Fatal("first TryAdmit returned nil lease")
 	}
 	defer lease.Release()
 
@@ -82,6 +94,9 @@ func TestBulkheadTryAdmitDeniesWhenCapacityExhausted(t *testing.T) {
 	if !result.IsDenied() {
 		t.Fatal("result is not denied")
 	}
+	if result.IsAdmitted() {
+		t.Fatal("result is admitted, want denied")
+	}
 	if result.HasGrant() {
 		t.Fatal("denied result has grant")
 	}
@@ -90,6 +105,9 @@ func TestBulkheadTryAdmitDeniesWhenCapacityExhausted(t *testing.T) {
 	}
 	if got, want := result.Decision(), admission.Deny(admission.ReasonCapacityExhausted); got != want {
 		t.Fatalf("decision = %+v, want %+v", got, want)
+	}
+	if grant, ok := result.Grant(); ok || grant != nil {
+		t.Fatalf("denied grant = (%#v, %t), want (nil, false)", grant, ok)
 	}
 
 	metadata, ok := result.Metadata()
@@ -104,18 +122,39 @@ func TestBulkheadTryAdmitWeighted(t *testing.T) {
 
 	b := New(3)
 	first := b.TryAdmit(Request{Amount: 2})
+	if !first.IsValid() {
+		t.Fatalf("first result is invalid: %+v", first.Decision())
+	}
+	if !first.IsAdmitted() {
+		t.Fatal("first result is not admitted")
+	}
 	lease, ok := first.Grant()
 	if !ok {
 		t.Fatal("first TryAdmit returned no lease")
 	}
+	if lease == nil {
+		t.Fatal("first TryAdmit returned nil lease")
+	}
+	if lease.Amount() != 2 {
+		t.Fatalf("first lease amount = %d, want 2", lease.Amount())
+	}
 
 	denied := b.TryAdmit(Request{Amount: 2})
+	if !denied.IsValid() {
+		t.Fatalf("denied weighted result is invalid: %+v", denied.Decision())
+	}
 	if !denied.IsDenied() {
 		t.Fatal("second TryAdmit was not denied")
 	}
 
 	lease.Release()
 	third := b.TryAdmit(Request{Amount: 3})
+	if !third.IsValid() {
+		t.Fatalf("third result is invalid: %+v", third.Decision())
+	}
+	if !third.IsAdmitted() {
+		t.Fatal("third result is not admitted")
+	}
 	next, ok := third.Grant()
 	if !ok {
 		t.Fatal("third TryAdmit returned no lease")
@@ -135,13 +174,33 @@ func TestBulkheadTryAdmitInvalidAmountPanics(t *testing.T) {
 	})
 }
 
+func TestBulkheadTryAdmitThroughAdmitterInterface(t *testing.T) {
+	t.Parallel()
+
+	b := New(1)
+	var admitter admission.Admitter[Request, *Lease, snapshot.Snapshot[Snapshot]] = b
+
+	result := admitter.TryAdmit(Request{Amount: 1})
+	if !result.IsValid() {
+		t.Fatalf("interface result is invalid: %+v", result.Decision())
+	}
+	lease, ok := result.Grant()
+	if !ok {
+		t.Fatal("interface result returned no lease")
+	}
+	if lease == nil {
+		t.Fatal("interface result returned nil lease")
+	}
+	defer lease.Release()
+}
+
 func TestBulkheadTryAdmitConcurrentDoesNotOverspend(t *testing.T) {
 	b := New(8)
 
 	const workers = 64
-	var admitted atomic.Uint64
 	var wg sync.WaitGroup
 	start := make(chan struct{})
+	errCh := make(chan error, workers)
 	leases := make(chan *Lease, workers)
 
 	for range workers {
@@ -151,23 +210,61 @@ func TestBulkheadTryAdmitConcurrentDoesNotOverspend(t *testing.T) {
 			<-start
 
 			result := b.TryAdmit(Request{Amount: 1})
-			if lease, ok := result.Grant(); ok {
-				admitted.Add(1)
+			if !result.IsValid() {
+				errCh <- fmt.Errorf("invalid result: %+v", result.Decision())
+				return
+			}
+
+			switch {
+			case result.IsAdmitted():
+				lease, ok := result.Grant()
+				if !ok {
+					errCh <- fmt.Errorf("admitted result has no grant: %+v", result.Decision())
+					return
+				}
+				if lease == nil {
+					errCh <- fmt.Errorf("admitted result has nil grant: %+v", result.Decision())
+					return
+				}
 				leases <- lease
+
+			case result.IsDenied():
+				if result.HasGrant() {
+					errCh <- fmt.Errorf("denied result has grant: %+v", result.Decision())
+					return
+				}
+				if grant, ok := result.Grant(); ok || grant != nil {
+					errCh <- fmt.Errorf("denied Grant() = (%#v, %t), want (nil, false)", grant, ok)
+					return
+				}
+
+			default:
+				errCh <- fmt.Errorf("unexpected result outcome: %+v", result.Decision())
 			}
 		}()
 	}
 
 	close(start)
 	wg.Wait()
+	close(errCh)
 	close(leases)
 
-	if got := admitted.Load(); got != 8 {
+	for err := range errCh {
+		if err != nil {
+			t.Fatalf("unexpected concurrent TryAdmit error: %v", err)
+		}
+	}
+
+	admittedLeases := make([]*Lease, 0, 8)
+	for lease := range leases {
+		admittedLeases = append(admittedLeases, lease)
+	}
+	if got := len(admittedLeases); got != 8 {
 		t.Fatalf("admitted = %d, want 8", got)
 	}
 	requireSnapshotValue(t, b.Snapshot(), 8, 8, 0, 0)
 
-	for lease := range leases {
+	for _, lease := range admittedLeases {
 		lease.Release()
 	}
 	requireSnapshotValue(t, b.Snapshot(), 8, 0, 8, 0)

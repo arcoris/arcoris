@@ -103,3 +103,17 @@ func TestTryAcquireAmountInvalidAmountPanics(t *testing.T) {
 		_, _, _ = b.TryAcquireAmount(0)
 	})
 }
+
+func TestTryAcquireAmountValidatesReceiverBeforeAmount(t *testing.T) {
+	t.Parallel()
+
+	var nilBulkhead *Bulkhead
+	requirePanic(t, errNilBulkhead, func() {
+		_, _, _ = nilBulkhead.TryAcquireAmount(0)
+	})
+
+	var zero Bulkhead
+	requirePanic(t, errUninitializedBulkhead, func() {
+		_, _, _ = zero.TryAcquireAmount(0)
+	})
+}
