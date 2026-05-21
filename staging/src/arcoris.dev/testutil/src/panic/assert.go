@@ -68,8 +68,8 @@ func RequireMessage(t testing.TB, want string, call func()) {
 func RequireValue[T any](t testing.TB, want T, call func()) T {
 	t.Helper()
 
-	got := RequireAs[T](t, call)
-	if !reflect.DeepEqual(got, want) {
+	got, equal := valueMatches(Require(t, call), want)
+	if !equal {
 		t.Fatalf("panic value = %#v, want %#v", got, want)
 	}
 
@@ -82,7 +82,7 @@ func RequireAs[T any](t testing.TB, call func()) T {
 	t.Helper()
 
 	value := Require(t, call)
-	typed, ok := value.(T)
+	typed, ok := asValue[T](value)
 	if !ok {
 		var want T
 		t.Fatalf("panic type = %T, want %T", value, want)
@@ -103,4 +103,19 @@ func capture(call func()) (value any, ok bool) {
 
 func message(value any) string {
 	return fmt.Sprint(value)
+}
+
+func asValue[T any](value any) (T, bool) {
+	typed, ok := value.(T)
+	return typed, ok
+}
+
+func valueMatches[T any](value any, want T) (T, bool) {
+	got, ok := asValue[T](value)
+	if !ok {
+		var zero T
+		return zero, false
+	}
+
+	return got, reflect.DeepEqual(got, want)
 }
