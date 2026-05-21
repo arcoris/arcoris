@@ -21,6 +21,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 // TestDelayReturnsNilAfterPositiveDuration verifies successful one-shot delay
@@ -173,7 +175,7 @@ func TestDelayReturnsInterruptedWhenContextCancelledDuringDelay(t *testing.T) {
 func TestDelayPanicsOnNilContext(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilContext, func() {
+	panicassert.RequireValue(t, errNilContext, func() {
 		_ = Delay(nil, time.Second)
 	})
 }

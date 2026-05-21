@@ -20,6 +20,8 @@ import (
 	"runtime"
 	"sync"
 	"testing"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestPublisherConcurrentPublishesReachExpectedRevision(t *testing.T) {
@@ -153,7 +155,7 @@ func TestPublisherPublishStampedPanicsOnRevisionOverflowBeforeStore(t *testing.T
 	before := publisher.Snapshot()
 	publisher.nextRevision = ^Revision(0)
 
-	requirePanicWith(t, "snapshot: revision overflow", func() {
+	panicassert.RequireMessage(t, "snapshot: revision overflow", func() {
 		_ = publisher.PublishStamped("new")
 	})
 

@@ -19,6 +19,8 @@ package clock
 import (
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 var _ Ticker = (*fakeTicker)(nil)
@@ -70,7 +72,7 @@ func TestFakeTickerPanicsForNonPositiveInterval(t *testing.T) {
 
 			clk := NewFakeClock(fakeClockTestTime())
 
-			mustPanicWithValue(t, errFakeTickerNonPositiveInterval, func() {
+			panicassert.RequireValue(t, errFakeTickerNonPositiveInterval, func() {
 				_ = clk.NewTicker(tc.d)
 			})
 		})
@@ -249,7 +251,7 @@ func TestFakeTickerResetPanicsForNonPositiveInterval(t *testing.T) {
 			ticker := clk.NewTicker(time.Hour)
 			defer ticker.Stop()
 
-			mustPanicWithValue(t, errFakeTickerNonPositiveInterval, func() {
+			panicassert.RequireValue(t, errFakeTickerNonPositiveInterval, func() {
 				ticker.Reset(tc.d)
 			})
 		})

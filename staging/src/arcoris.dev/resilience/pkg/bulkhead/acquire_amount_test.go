@@ -16,7 +16,11 @@
 
 package bulkhead
 
-import "testing"
+import (
+	"testing"
+
+	panicassert "arcoris.dev/testutil/panic"
+)
 
 func TestTryAcquireAmountReservesWeightedCapacity(t *testing.T) {
 	t.Parallel()
@@ -99,7 +103,7 @@ func TestTryAcquireAmountInvalidAmountPanics(t *testing.T) {
 	t.Parallel()
 
 	b := New(1)
-	requirePanic(t, "capacity: reservation amount must be positive", func() {
+	panicassert.RequireMessage(t, "capacity: reservation amount must be positive", func() {
 		_, _, _ = b.TryAcquireAmount(0)
 	})
 }
@@ -108,12 +112,12 @@ func TestTryAcquireAmountValidatesReceiverBeforeAmount(t *testing.T) {
 	t.Parallel()
 
 	var nilBulkhead *Bulkhead
-	requirePanic(t, errNilBulkhead, func() {
+	panicassert.RequireMessage(t, errNilBulkhead, func() {
 		_, _, _ = nilBulkhead.TryAcquireAmount(0)
 	})
 
 	var zero Bulkhead
-	requirePanic(t, errUninitializedBulkhead, func() {
+	panicassert.RequireMessage(t, errUninitializedBulkhead, func() {
 		_, _, _ = zero.TryAcquireAmount(0)
 	})
 }

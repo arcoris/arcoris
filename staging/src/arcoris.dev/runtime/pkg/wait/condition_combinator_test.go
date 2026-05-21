@@ -21,6 +21,8 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestSatisfiedReturnsDone(t *testing.T) {
@@ -84,7 +86,7 @@ func TestUnsatisfiedIgnoresStoppedContext(t *testing.T) {
 func TestPredicatePanicsOnNilPredicate(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilPredicate, func() {
+	panicassert.RequireValue(t, errNilPredicate, func() {
 		_ = Predicate(nil)
 	})
 }
@@ -159,7 +161,7 @@ func TestPredicateDoesNotRecoverPanic(t *testing.T) {
 		panic(panicValue)
 	})
 
-	mustPanicWith(t, panicValue, func() {
+	panicassert.RequireValue(t, panicValue, func() {
 		_, _ = condition(context.Background())
 	})
 }
@@ -167,7 +169,7 @@ func TestPredicateDoesNotRecoverPanic(t *testing.T) {
 func TestNotPanicsOnNilCondition(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilCondition, func() {
+	panicassert.RequireValue(t, errNilCondition, func() {
 		_ = Not(nil)
 	})
 }
@@ -270,7 +272,7 @@ func TestAllPanicsOnNilCondition(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNilCondition, tc.call)
+			panicassert.RequireValue(t, errNilCondition, tc.call)
 		})
 	}
 }
@@ -394,7 +396,7 @@ func TestAnyPanicsOnNilCondition(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNilCondition, tc.call)
+			panicassert.RequireValue(t, errNilCondition, tc.call)
 		})
 	}
 }

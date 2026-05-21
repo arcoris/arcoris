@@ -20,15 +20,17 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestWithBoundedTimeoutPanicsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	requirePanic(t, panicNilContext, func() {
+	panicassert.RequireMessage(t, panicNilContext, func() {
 		_, _ = WithBoundedTimeout(nil, time.Now(), time.Second)
 	})
-	requirePanic(t, panicNegativeDuration("timeout"), func() {
+	panicassert.RequireMessage(t, panicNegativeDuration("timeout"), func() {
 		_, _ = WithBoundedTimeout(context.Background(), time.Now(), -time.Nanosecond)
 	})
 }

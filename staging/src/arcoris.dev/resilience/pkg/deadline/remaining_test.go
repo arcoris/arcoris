@@ -20,12 +20,14 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestRemainingPanicsOnNilContext(t *testing.T) {
 	t.Parallel()
 
-	requirePanic(t, panicNilContext, func() {
+	panicassert.RequireMessage(t, panicNilContext, func() {
 		_, _ = Remaining(nil, time.Now())
 	})
 }

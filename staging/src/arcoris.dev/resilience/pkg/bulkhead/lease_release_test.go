@@ -16,7 +16,11 @@
 
 package bulkhead
 
-import "testing"
+import (
+	"testing"
+
+	panicassert "arcoris.dev/testutil/panic"
+)
 
 func TestLeaseReleaseRestoresAvailableCapacity(t *testing.T) {
 	t.Parallel()
@@ -70,7 +74,7 @@ func TestLeaseReleasePanicsAfterTryRelease(t *testing.T) {
 	}
 	_, _ = lease.TryRelease()
 
-	requirePanic(t, "capacity.Reservation: already released", func() {
+	panicassert.RequireMessage(t, "capacity.Reservation: already released", func() {
 		_ = lease.Release()
 	})
 }

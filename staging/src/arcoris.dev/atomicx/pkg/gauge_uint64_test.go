@@ -16,7 +16,11 @@
 
 package atomicx
 
-import "testing"
+import (
+	"testing"
+
+	panicassert "arcoris.dev/testutil/panic"
+)
 
 // TestUint64GaugeZeroValueIsUsable verifies a gauge can be used without explicit initialization.
 func TestUint64GaugeZeroValueIsUsable(t *testing.T) {
@@ -227,7 +231,7 @@ func TestUint64GaugePanicsOnOverflow(t *testing.T) {
 	var gauge Uint64Gauge
 	gauge.Store(maxUint64)
 
-	mustPanicWithValue(t, errUint64GaugeOverflow, func() {
+	panicassert.RequireValue(t, errUint64GaugeOverflow, func() {
 		_ = gauge.Add(1)
 	})
 }
@@ -240,7 +244,7 @@ func TestUint64GaugePanicsOnUnderflow(t *testing.T) {
 	var gauge Uint64Gauge
 	gauge.Store(10)
 
-	mustPanicWithValue(t, errUint64GaugeUnderflow, func() {
+	panicassert.RequireValue(t, errUint64GaugeUnderflow, func() {
 		_ = gauge.Sub(11)
 	})
 }
@@ -253,7 +257,7 @@ func TestUint64GaugeIncPanicsOnOverflow(t *testing.T) {
 	var gauge Uint64Gauge
 	gauge.Store(maxUint64)
 
-	mustPanicWithValue(t, errUint64GaugeOverflow, func() {
+	panicassert.RequireValue(t, errUint64GaugeOverflow, func() {
 		_ = gauge.Inc()
 	})
 }
@@ -265,7 +269,7 @@ func TestUint64GaugeDecPanicsOnUnderflow(t *testing.T) {
 
 	var gauge Uint64Gauge
 
-	mustPanicWithValue(t, errUint64GaugeUnderflow, func() {
+	panicassert.RequireValue(t, errUint64GaugeUnderflow, func() {
 		_ = gauge.Dec()
 	})
 }

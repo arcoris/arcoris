@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"arcoris.dev/admission"
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestTryAdmit(t *testing.T) {
@@ -170,16 +171,16 @@ func TestTryAdmit(t *testing.T) {
 func TestTryAdmitPanicsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	requirePanic(t, panicNilContext, func() {
+	panicassert.RequireMessage(t, panicNilContext, func() {
 		_ = TryAdmit(Request{})
 	})
-	requirePanic(t, panicNegativeDuration("min"), func() {
+	panicassert.RequireMessage(t, panicNegativeDuration("min"), func() {
 		_ = TryAdmit(Request{
 			Context: context.Background(),
 			Min:     -time.Nanosecond,
 		})
 	})
-	requirePanic(t, panicNilContext, func() {
+	panicassert.RequireMessage(t, panicNilContext, func() {
 		_ = TryAdmit(Request{
 			Min: -time.Nanosecond,
 		})

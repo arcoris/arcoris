@@ -36,23 +36,6 @@ func fakeClockTestTime() time.Time {
 	return time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)
 }
 
-func mustPanicWithValue(t *testing.T, want any, fn func()) {
-	t.Helper()
-
-	defer func() {
-		got := recover()
-		if got == nil {
-			t.Fatalf("function did not panic, want panic value %v", want)
-		}
-
-		if got != want {
-			t.Fatalf("panic value = %v, want %v", got, want)
-		}
-	}()
-
-	fn()
-}
-
 func mustReceiveTime(t *testing.T, ch <-chan time.Time) time.Time {
 	t.Helper()
 

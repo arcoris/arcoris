@@ -20,6 +20,8 @@ import (
 	"slices"
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestNewStoreClonesInitialValue(t *testing.T) {
@@ -113,7 +115,7 @@ func TestStoreReplacePanicsOnRevisionOverflowWithoutCommit(t *testing.T) {
 	store.revision = ^Revision(0)
 	store.mu.Unlock()
 
-	requirePanicWith(t, "snapshot: revision overflow", func() {
+	panicassert.RequireMessage(t, "snapshot: revision overflow", func() {
 		_ = store.Replace("next")
 	})
 
@@ -177,7 +179,7 @@ func TestStoreUpdateIncrementsOnce(t *testing.T) {
 func TestStoreUpdatePanicsOnNilFunction(t *testing.T) {
 	store := NewStore("value", Identity[string])
 
-	requirePanicWith(t, "snapshot: nil update function", func() {
+	panicassert.RequireMessage(t, "snapshot: nil update function", func() {
 		_ = store.Update(nil)
 	})
 }
@@ -185,7 +187,7 @@ func TestStoreUpdatePanicsOnNilFunction(t *testing.T) {
 func TestStoreUpdatePanicLeavesValueUnchanged(t *testing.T) {
 	store := NewStore([]string{"initial"}, cloneStrings)
 
-	requirePanicWith(t, "boom", func() {
+	panicassert.RequireMessage(t, "boom", func() {
 		_ = store.Update(func(v []string) []string {
 			v[0] = "mutated-working-copy"
 			panic("boom")
@@ -207,7 +209,7 @@ func TestStoreUpdatePanicsOnRevisionOverflowWithoutCommit(t *testing.T) {
 	store.revision = ^Revision(0)
 	store.mu.Unlock()
 
-	requirePanicWith(t, "snapshot: revision overflow", func() {
+	panicassert.RequireMessage(t, "snapshot: revision overflow", func() {
 		_ = store.Update(func(string) string {
 			return "next"
 		})
@@ -223,13 +225,13 @@ func TestStoreUpdatePanicsOnRevisionOverflowWithoutCommit(t *testing.T) {
 }
 
 func TestNewStorePanicsOnNilClone(t *testing.T) {
-	requirePanicWith(t, "snapshot: nil clone function", func() {
+	panicassert.RequireMessage(t, "snapshot: nil clone function", func() {
 		_ = NewStore("value", nil)
 	})
 }
 
 func TestNewStorePanicsOnNilOption(t *testing.T) {
-	requirePanicWith(t, "snapshot: nil option", func() {
+	panicassert.RequireMessage(t, "snapshot: nil option", func() {
 		_ = NewStore("value", Identity[string], nil)
 	})
 }

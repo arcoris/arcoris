@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"arcoris.dev/capacity"
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestLedgerTryReserveSucceedsWhenCapacityIsAvailable(t *testing.T) {
@@ -103,7 +104,7 @@ func TestLedgerTryReserveZeroAmountPanics(t *testing.T) {
 	t.Parallel()
 
 	ledger := capacity.NewLedger(10)
-	requirePanic(t, "capacity: reservation amount must be positive", func() { _, _, _ = ledger.TryReserve(0) })
+	panicassert.RequireMessage(t, "capacity: reservation amount must be positive", func() { _, _, _ = ledger.TryReserve(0) })
 }
 
 func TestLedgerTryReserveFailsWhileOvercommitted(t *testing.T) {

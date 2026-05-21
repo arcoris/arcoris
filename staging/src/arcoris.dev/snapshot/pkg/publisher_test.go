@@ -19,6 +19,8 @@ package snapshot
 import (
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestPublisherZeroValueSnapshot(t *testing.T) {
@@ -54,7 +56,7 @@ func TestPublisherPublishPanicsOnRevisionOverflowWithoutPublication(t *testing.T
 	publisher := NewPublisher[string]()
 	publisher.nextRevision = ^Revision(0)
 
-	requirePanicWith(t, "snapshot: revision overflow", func() {
+	panicassert.RequireMessage(t, "snapshot: revision overflow", func() {
 		_ = publisher.Publish("value")
 	})
 
@@ -108,7 +110,7 @@ func TestPublisherDoesNotClonePublishedValue(t *testing.T) {
 }
 
 func TestNewPublisherPanicsOnNilOption(t *testing.T) {
-	requirePanicWith(t, "snapshot: nil option", func() {
+	panicassert.RequireMessage(t, "snapshot: nil option", func() {
 		_ = NewPublisher[string](nil)
 	})
 }

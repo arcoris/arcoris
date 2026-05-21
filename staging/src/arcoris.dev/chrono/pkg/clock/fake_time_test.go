@@ -19,6 +19,8 @@ package clock
 import (
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 // TestFakeClockSinceUsesFakeTime verifies that elapsed duration is computed from
@@ -73,7 +75,7 @@ func TestFakeClockSetBackwardsPanics(t *testing.T) {
 	start := fakeClockTestTime()
 	clk := NewFakeClock(start)
 
-	mustPanicWithValue(t, errFakeClockBackwardSet, func() {
+	panicassert.RequireValue(t, errFakeClockBackwardSet, func() {
 		clk.Set(start.Add(-time.Nanosecond))
 	})
 
@@ -114,7 +116,7 @@ func TestFakeClockStepNegativePanics(t *testing.T) {
 	start := fakeClockTestTime()
 	clk := NewFakeClock(start)
 
-	mustPanicWithValue(t, errFakeClockNegativeStep, func() {
+	panicassert.RequireValue(t, errFakeClockNegativeStep, func() {
 		clk.Step(-time.Nanosecond)
 	})
 
@@ -129,7 +131,7 @@ func TestFakeClockPrivateStepNegativePanics(t *testing.T) {
 	start := fakeClockTestTime()
 	clk := NewFakeClock(start)
 
-	mustPanicWithValue(t, errFakeClockNegativeStep, func() {
+	panicassert.RequireValue(t, errFakeClockNegativeStep, func() {
 		clk.step(-time.Nanosecond)
 	})
 

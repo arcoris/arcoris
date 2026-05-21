@@ -16,7 +16,11 @@
 
 package snapshot
 
-import "testing"
+import (
+	"testing"
+
+	panicassert "arcoris.dev/testutil/panic"
+)
 
 func TestIdentity(t *testing.T) {
 	if got, want := Identity("value"), "value"; got != want {
@@ -25,7 +29,7 @@ func TestIdentity(t *testing.T) {
 }
 
 func TestRequireClonePanicsOnNil(t *testing.T) {
-	requirePanicWith(t, "snapshot: nil clone function", func() {
+	panicassert.RequireMessage(t, "snapshot: nil clone function", func() {
 		_ = requireClone[string](nil)
 	})
 }

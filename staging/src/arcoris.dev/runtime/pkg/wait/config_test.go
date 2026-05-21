@@ -19,6 +19,8 @@ package wait
 import (
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 // TestDefaultOptionsPreserveBaseInterval verifies that the zero wait
@@ -92,7 +94,7 @@ func TestOptionsIntervalAppliesJitterWithinBounds(t *testing.T) {
 func TestOptionsOfPanicsOnNilOption(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilOption, func() {
+	panicassert.RequireValue(t, errNilOption, func() {
 		_ = optionsOf(nil)
 	})
 }

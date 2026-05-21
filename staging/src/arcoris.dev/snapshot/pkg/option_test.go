@@ -16,7 +16,11 @@
 
 package snapshot
 
-import "testing"
+import (
+	"testing"
+
+	panicassert "arcoris.dev/testutil/panic"
+)
 
 func TestWithClock(t *testing.T) {
 	clk := newTestClock()
@@ -30,7 +34,7 @@ func TestWithClock(t *testing.T) {
 }
 
 func TestWithClockPanicsOnNil(t *testing.T) {
-	requirePanicWith(t, "snapshot: nil clock", func() {
+	panicassert.RequireMessage(t, "snapshot: nil clock", func() {
 		_ = WithClock(nil)
 	})
 }

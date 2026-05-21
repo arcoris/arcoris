@@ -112,22 +112,6 @@ func mustErrorIs(t *testing.T, err error, target error) {
 	}
 }
 
-func mustPanicWith(t *testing.T, want any, fn func()) {
-	t.Helper()
-
-	defer func() {
-		got := recover()
-		if got == nil {
-			t.Fatalf("panic = nil, want %v", want)
-		}
-		if got != want {
-			t.Fatalf("panic = %v, want %v", got, want)
-		}
-	}()
-
-	fn()
-}
-
 func mustClose(t *testing.T, ch <-chan struct{}) {
 	t.Helper()
 

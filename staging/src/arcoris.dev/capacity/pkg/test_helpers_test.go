@@ -17,7 +17,6 @@
 package capacity_test
 
 import (
-	"fmt"
 	"testing"
 
 	"arcoris.dev/capacity"
@@ -46,20 +45,4 @@ func requireSnapshotValue(t *testing.T, snap snapshot.Snapshot[capacity.Snapshot
 			debt,
 		)
 	}
-}
-
-func requirePanic(t *testing.T, want string, fn func()) {
-	t.Helper()
-
-	defer func() {
-		recovered := recover()
-		if recovered == nil {
-			t.Fatalf("panic = nil, want %q", want)
-		}
-		if got := fmt.Sprint(recovered); got != want {
-			t.Fatalf("panic = %q, want %q", got, want)
-		}
-	}()
-
-	fn()
 }

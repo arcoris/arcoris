@@ -20,15 +20,17 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestReservePanicsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	requirePanic(t, panicNilContext, func() {
+	panicassert.RequireMessage(t, panicNilContext, func() {
 		_, _, _ = Reserve(nil, time.Now(), 0)
 	})
-	requirePanic(t, panicNegativeDuration("reserve"), func() {
+	panicassert.RequireMessage(t, panicNegativeDuration("reserve"), func() {
 		_, _, _ = Reserve(context.Background(), time.Now(), -time.Nanosecond)
 	})
 }

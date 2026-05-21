@@ -4,6 +4,10 @@ go 1.25.0
 
 toolchain go1.25.9
 
-require arcoris.dev/snapshot v0.0.0
+require (
+	arcoris.dev/snapshot v0.0.0
+	arcoris.dev/testutil v0.0.0
+)
 
 replace arcoris.dev/snapshot => ../../snapshot/pkg
+replace arcoris.dev/testutil => ../../testutil/pkg

@@ -18,7 +18,6 @@ package snapshot
 
 import (
 	"sync"
-	"testing"
 	"time"
 )
 
@@ -56,29 +55,4 @@ func (c *testClock) set(now time.Time) {
 	defer c.mu.Unlock()
 
 	c.now = now
-}
-
-// requirePanicWith runs fn and requires it to panic with want.
-//
-// Snapshot uses stable package-local diagnostic strings for programmer errors,
-// so tests should assert the exact panic value instead of only checking that a
-// panic happened.
-func requirePanicWith(t *testing.T, want string, fn func()) {
-	t.Helper()
-
-	defer func() {
-		recovered := recover()
-		if recovered == nil {
-			t.Fatalf("panic = nil, want %v", want)
-		}
-		got, ok := recovered.(string)
-		if !ok {
-			t.Fatalf("panic = %T(%v), want string %q", recovered, recovered, want)
-		}
-		if got != want {
-			t.Fatalf("panic = %q, want %q", got, want)
-		}
-	}()
-
-	fn()
 }

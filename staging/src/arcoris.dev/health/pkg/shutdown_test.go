@@ -20,6 +20,8 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestSourceChannelChecks(t *testing.T) {
@@ -119,16 +121,16 @@ func TestSourceChecksRejectInvalidInputs(t *testing.T) {
 func TestMustSourceChecksPanic(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, ErrNilSourceChannel, func() {
+	panicassert.RequireValue(t, ErrNilSourceChannel, func() {
 		MustShutdownCheck("shutdown", nil)
 	})
-	mustPanicWith(t, ErrNilSourceChannel, func() {
+	panicassert.RequireValue(t, ErrNilSourceChannel, func() {
 		MustDrainCheck("drain", nil)
 	})
-	mustPanicWith(t, ErrNilSourceContext, func() {
+	panicassert.RequireValue(t, ErrNilSourceContext, func() {
 		MustContextShutdownCheck("shutdown", nil)
 	})
-	mustPanicWith(t, ErrNilSourceContext, func() {
+	panicassert.RequireValue(t, ErrNilSourceContext, func() {
 		MustContextDrainCheck("drain", nil)
 	})
 }

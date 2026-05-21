@@ -21,6 +21,8 @@ import (
 	"math"
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 // TestRequireContextAcceptsNonNilContext verifies the valid context path.
@@ -34,7 +36,7 @@ func TestRequireContextAcceptsNonNilContext(t *testing.T) {
 func TestRequireContextPanicsOnNilContext(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilContext, func() {
+	panicassert.RequireValue(t, errNilContext, func() {
 		requireContext(nil)
 	})
 }
@@ -71,7 +73,7 @@ func TestRequirePositiveIntervalPanicsOnNonPositiveDuration(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNonPositiveInterval, func() {
+			panicassert.RequireValue(t, errNonPositiveInterval, func() {
 				requirePositiveInterval(tc.interval)
 			})
 		})
@@ -148,7 +150,7 @@ func TestRequireJitterFactorPanicsOnInvalidFactors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, tc.panic, func() {
+			panicassert.RequireValue(t, tc.panic, func() {
 				requireJitterFactor(tc.factor)
 			})
 		})
@@ -166,7 +168,7 @@ func TestRequireOptionAcceptsNonNilOption(t *testing.T) {
 func TestRequireOptionPanicsOnNilOption(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilOption, func() {
+	panicassert.RequireValue(t, errNilOption, func() {
 		requireOption(nil)
 	})
 }
@@ -206,7 +208,7 @@ func TestTimerRequireUsablePanicsOnInvalidTimer(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNilTimer, func() {
+			panicassert.RequireValue(t, errNilTimer, func() {
 				tc.timer.requireUsable()
 			})
 		})

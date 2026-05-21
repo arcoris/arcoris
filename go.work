@@ -14,5 +14,6 @@ use (
 	./staging/src/arcoris.dev/resilience/pkg
 	./staging/src/arcoris.dev/runtime/pkg
 	./staging/src/arcoris.dev/snapshot/pkg
+	./staging/src/arcoris.dev/testutil/pkg
 	./staging/src/arcoris.dev/value/pkg
 )

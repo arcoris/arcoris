@@ -20,6 +20,8 @@ import (
 	"math"
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 // TestWithJitterStoresFactor verifies that WithJitter updates only the jitter
@@ -80,7 +82,7 @@ func TestWithJitterPanicsOnInvalidFactor(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, tc.panic, func() {
+			panicassert.RequireValue(t, tc.panic, func() {
 				_ = WithJitter(tc.factor)
 			})
 		})

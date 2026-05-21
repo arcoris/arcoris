@@ -16,7 +16,11 @@
 
 package snapshot
 
-import "testing"
+import (
+	"testing"
+
+	panicassert "arcoris.dev/testutil/panic"
+)
 
 func TestRevisionIsZero(t *testing.T) {
 	if !ZeroRevision.IsZero() {
@@ -35,7 +39,7 @@ func TestRevisionNext(t *testing.T) {
 }
 
 func TestRevisionNextPanicsOnOverflow(t *testing.T) {
-	requirePanicWith(t, "snapshot: revision overflow", func() {
+	panicassert.RequireMessage(t, "snapshot: revision overflow", func() {
 		_ = Revision(^uint64(0)).Next()
 	})
 }

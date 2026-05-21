@@ -18,7 +18,6 @@ package wait
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 )
@@ -168,23 +167,6 @@ func mustEqualDuration(t *testing.T, label string, got time.Duration, want time.
 	if got != want {
 		t.Fatalf("%s = %s, want %s", label, got, want)
 	}
-}
-
-// mustPanicWith fails the test unless fn panics with want.
-func mustPanicWith(t *testing.T, want any, fn func()) {
-	t.Helper()
-
-	defer func() {
-		got := recover()
-		if got == nil {
-			t.Fatalf("panic = nil, want %v", want)
-		}
-		if got != want {
-			t.Fatalf("panic = %s, want %s", fmt.Sprint(got), fmt.Sprint(want))
-		}
-	}()
-
-	fn()
 }
 
 func mustReceiveError(t *testing.T, ch <-chan error) error {

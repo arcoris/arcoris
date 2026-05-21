@@ -21,6 +21,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 // TestNewTimerReturnsUsableTimer verifies that NewTimer initializes the runtime
@@ -261,7 +263,7 @@ func TestTimerWaitPanicsOnNilContext(t *testing.T) {
 	timer := NewTimer(time.Hour)
 	defer timer.StopAndDrain()
 
-	mustPanicWith(t, errNilContext, func() {
+	panicassert.RequireValue(t, errNilContext, func() {
 		_ = timer.Wait(nil)
 	})
 }
@@ -301,7 +303,7 @@ func TestTimerMethodsPanicOnNilReceiver(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNilTimer, func() {
+			panicassert.RequireValue(t, errNilTimer, func() {
 				tc.call(nil)
 			})
 		})
@@ -344,7 +346,7 @@ func TestTimerMethodsPanicOnZeroValue(t *testing.T) {
 			t.Parallel()
 
 			var timer Timer
-			mustPanicWith(t, errNilTimer, func() {
+			panicassert.RequireValue(t, errNilTimer, func() {
 				tc.call(&timer)
 			})
 		})

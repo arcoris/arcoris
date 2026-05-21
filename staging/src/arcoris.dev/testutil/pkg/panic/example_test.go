@@ -14,34 +14,17 @@
   limitations under the License.
 */
 
-package deadline
+package panicassert
 
-import (
-	"context"
-	"testing"
-	"time"
-)
-
-func testNow() time.Time {
-	return time.Now().UTC().Add(24 * time.Hour)
+func ExampleRequireMessage() {
+	// panicassert.RequireMessage(t, "boom", func() {
+	// 	panic("boom")
+	// })
 }
 
-func contextWithDeadline(t *testing.T, dl time.Time) context.Context {
-	t.Helper()
-
-	ctx, cancel := context.WithDeadline(context.Background(), dl)
-	t.Cleanup(cancel)
-	return ctx
-}
-
-func assertContextDeadline(t *testing.T, ctx context.Context, want time.Time) {
-	t.Helper()
-
-	got, ok := ctx.Deadline()
-	if !ok {
-		t.Fatalf("context has no deadline, want %v", want)
-	}
-	if !got.Equal(want) {
-		t.Fatalf("deadline = %v, want %v", got, want)
-	}
+func ExampleRequireValue() {
+	// value := panicassert.RequireValue(t, 42, func() {
+	// 	panic(42)
+	// })
+	// _ = value
 }

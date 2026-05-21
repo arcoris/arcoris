@@ -16,44 +16,48 @@
 
 package bulkhead
 
-import "testing"
+import (
+	"testing"
+
+	panicassert "arcoris.dev/testutil/panic"
+)
 
 func TestBulkheadPanicsOnNilOrUninitializedReceiver(t *testing.T) {
 	t.Parallel()
 
 	var nilBulkhead *Bulkhead
-	requirePanic(t, errNilBulkhead, func() { _ = nilBulkhead.Snapshot() })
-	requirePanic(t, errNilBulkhead, func() { _ = nilBulkhead.Revision() })
-	requirePanic(t, errNilBulkhead, func() { _ = nilBulkhead.SetLimit(1) })
-	requirePanic(t, errNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquire() })
-	requirePanic(t, errNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquireAmount(1) })
-	requirePanic(t, errNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquireAmount(0) })
-	requirePanic(t, errNilBulkhead, func() { _ = nilBulkhead.TryAdmit(Request{Amount: 1}) })
-	requirePanic(t, errNilBulkhead, func() { _ = nilBulkhead.TryAdmit(Request{Amount: 0}) })
+	panicassert.RequireMessage(t, errNilBulkhead, func() { _ = nilBulkhead.Snapshot() })
+	panicassert.RequireMessage(t, errNilBulkhead, func() { _ = nilBulkhead.Revision() })
+	panicassert.RequireMessage(t, errNilBulkhead, func() { _ = nilBulkhead.SetLimit(1) })
+	panicassert.RequireMessage(t, errNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquire() })
+	panicassert.RequireMessage(t, errNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquireAmount(1) })
+	panicassert.RequireMessage(t, errNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquireAmount(0) })
+	panicassert.RequireMessage(t, errNilBulkhead, func() { _ = nilBulkhead.TryAdmit(Request{Amount: 1}) })
+	panicassert.RequireMessage(t, errNilBulkhead, func() { _ = nilBulkhead.TryAdmit(Request{Amount: 0}) })
 
 	var zero Bulkhead
-	requirePanic(t, errUninitializedBulkhead, func() { _ = zero.Snapshot() })
-	requirePanic(t, errUninitializedBulkhead, func() { _ = zero.Revision() })
-	requirePanic(t, errUninitializedBulkhead, func() { _ = zero.SetLimit(1) })
-	requirePanic(t, errUninitializedBulkhead, func() { _, _, _ = zero.TryAcquire() })
-	requirePanic(t, errUninitializedBulkhead, func() { _, _, _ = zero.TryAcquireAmount(1) })
-	requirePanic(t, errUninitializedBulkhead, func() { _, _, _ = zero.TryAcquireAmount(0) })
-	requirePanic(t, errUninitializedBulkhead, func() { _ = zero.TryAdmit(Request{Amount: 1}) })
-	requirePanic(t, errUninitializedBulkhead, func() { _ = zero.TryAdmit(Request{Amount: 0}) })
+	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _ = zero.Snapshot() })
+	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _ = zero.Revision() })
+	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _ = zero.SetLimit(1) })
+	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _, _, _ = zero.TryAcquire() })
+	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _, _, _ = zero.TryAcquireAmount(1) })
+	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _, _, _ = zero.TryAcquireAmount(0) })
+	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _ = zero.TryAdmit(Request{Amount: 1}) })
+	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _ = zero.TryAdmit(Request{Amount: 0}) })
 }
 
 func TestLeasePanicsOnNilOrUninitializedReceiver(t *testing.T) {
 	t.Parallel()
 
 	var nilLease *Lease
-	requirePanic(t, errInvalidLease, func() { _ = nilLease.Amount() })
-	requirePanic(t, errInvalidLease, func() { _ = nilLease.Released() })
-	requirePanic(t, errInvalidLease, func() { _ = nilLease.Release() })
-	requirePanic(t, errInvalidLease, func() { _, _ = nilLease.TryRelease() })
+	panicassert.RequireMessage(t, errInvalidLease, func() { _ = nilLease.Amount() })
+	panicassert.RequireMessage(t, errInvalidLease, func() { _ = nilLease.Released() })
+	panicassert.RequireMessage(t, errInvalidLease, func() { _ = nilLease.Release() })
+	panicassert.RequireMessage(t, errInvalidLease, func() { _, _ = nilLease.TryRelease() })
 
 	var zero Lease
-	requirePanic(t, errInvalidLease, func() { _ = zero.Amount() })
-	requirePanic(t, errInvalidLease, func() { _ = zero.Released() })
-	requirePanic(t, errInvalidLease, func() { _ = zero.Release() })
-	requirePanic(t, errInvalidLease, func() { _, _ = zero.TryRelease() })
+	panicassert.RequireMessage(t, errInvalidLease, func() { _ = zero.Amount() })
+	panicassert.RequireMessage(t, errInvalidLease, func() { _ = zero.Released() })
+	panicassert.RequireMessage(t, errInvalidLease, func() { _ = zero.Release() })
+	panicassert.RequireMessage(t, errInvalidLease, func() { _, _ = zero.TryRelease() })
 }

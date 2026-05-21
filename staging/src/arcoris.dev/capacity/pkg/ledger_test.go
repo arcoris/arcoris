@@ -21,6 +21,7 @@ import (
 
 	"arcoris.dev/capacity"
 	"arcoris.dev/snapshot"
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestLedgerImplementsSnapshotSources(t *testing.T) {
@@ -59,20 +60,20 @@ func TestZeroLedgerPanics(t *testing.T) {
 	t.Parallel()
 
 	var ledger capacity.Ledger
-	requirePanic(t, "capacity.Ledger: uninitialized ledger", func() { _ = ledger.Snapshot() })
-	requirePanic(t, "capacity.Ledger: uninitialized ledger", func() { _ = ledger.Revision() })
-	requirePanic(t, "capacity.Ledger: uninitialized ledger", func() { _ = ledger.SetLimit(1) })
-	requirePanic(t, "capacity.Ledger: uninitialized ledger", func() { _, _, _ = ledger.TryReserve(1) })
-	requirePanic(t, "capacity.Ledger: uninitialized ledger", func() { _, _, _ = ledger.TryReserve(0) })
+	panicassert.RequireMessage(t, "capacity.Ledger: uninitialized ledger", func() { _ = ledger.Snapshot() })
+	panicassert.RequireMessage(t, "capacity.Ledger: uninitialized ledger", func() { _ = ledger.Revision() })
+	panicassert.RequireMessage(t, "capacity.Ledger: uninitialized ledger", func() { _ = ledger.SetLimit(1) })
+	panicassert.RequireMessage(t, "capacity.Ledger: uninitialized ledger", func() { _, _, _ = ledger.TryReserve(1) })
+	panicassert.RequireMessage(t, "capacity.Ledger: uninitialized ledger", func() { _, _, _ = ledger.TryReserve(0) })
 }
 
 func TestNilLedgerPanics(t *testing.T) {
 	t.Parallel()
 
 	var ledger *capacity.Ledger
-	requirePanic(t, "capacity.Ledger: nil ledger", func() { _ = ledger.Snapshot() })
-	requirePanic(t, "capacity.Ledger: nil ledger", func() { _ = ledger.Revision() })
-	requirePanic(t, "capacity.Ledger: nil ledger", func() { _ = ledger.SetLimit(1) })
-	requirePanic(t, "capacity.Ledger: nil ledger", func() { _, _, _ = ledger.TryReserve(1) })
-	requirePanic(t, "capacity.Ledger: nil ledger", func() { _, _, _ = ledger.TryReserve(0) })
+	panicassert.RequireMessage(t, "capacity.Ledger: nil ledger", func() { _ = ledger.Snapshot() })
+	panicassert.RequireMessage(t, "capacity.Ledger: nil ledger", func() { _ = ledger.Revision() })
+	panicassert.RequireMessage(t, "capacity.Ledger: nil ledger", func() { _ = ledger.SetLimit(1) })
+	panicassert.RequireMessage(t, "capacity.Ledger: nil ledger", func() { _, _, _ = ledger.TryReserve(1) })
+	panicassert.RequireMessage(t, "capacity.Ledger: nil ledger", func() { _, _, _ = ledger.TryReserve(0) })
 }

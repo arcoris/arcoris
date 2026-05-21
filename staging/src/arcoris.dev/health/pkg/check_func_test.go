@@ -20,6 +20,8 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestNewCheckValidatesInputs(t *testing.T) {
@@ -104,7 +106,7 @@ func TestNewErrorCheckMapsNilErrorToHealthy(t *testing.T) {
 func TestMustCheckPanicsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, ErrNilCheckFunc, func() {
+	panicassert.RequireValue(t, ErrNilCheckFunc, func() {
 		MustCheck("storage", nil)
 	})
 }
@@ -123,7 +125,7 @@ func TestMustCheckReturnsCheckerOnValidInput(t *testing.T) {
 func TestMustErrorCheckPanicsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, ErrNilCheckFunc, func() {
+	panicassert.RequireValue(t, ErrNilCheckFunc, func() {
 		MustErrorCheck("storage", nil)
 	})
 }

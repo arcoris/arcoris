@@ -23,6 +23,7 @@ import (
 
 	"arcoris.dev/admission"
 	"arcoris.dev/snapshot"
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestBulkheadTryAdmitGrantsLease(t *testing.T) {
@@ -169,7 +170,7 @@ func TestBulkheadTryAdmitInvalidAmountPanics(t *testing.T) {
 	t.Parallel()
 
 	b := New(1)
-	requirePanic(t, "capacity: reservation amount must be positive", func() {
+	panicassert.RequireMessage(t, "capacity: reservation amount must be positive", func() {
 		_ = b.TryAdmit(Request{Amount: 0})
 	})
 }

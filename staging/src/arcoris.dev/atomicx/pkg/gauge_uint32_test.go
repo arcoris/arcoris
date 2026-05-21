@@ -16,7 +16,11 @@
 
 package atomicx
 
-import "testing"
+import (
+	"testing"
+
+	panicassert "arcoris.dev/testutil/panic"
+)
 
 // TestUint32GaugeZeroValueIsUsable verifies a bounded gauge works without initialization.
 func TestUint32GaugeZeroValueIsUsable(t *testing.T) {
@@ -225,7 +229,7 @@ func TestUint32GaugePanicsOnOverflow(t *testing.T) {
 	var gauge Uint32Gauge
 	gauge.Store(maxUint32)
 
-	mustPanicWithValue(t, errUint32GaugeOverflow, func() {
+	panicassert.RequireValue(t, errUint32GaugeOverflow, func() {
 		_ = gauge.Add(1)
 	})
 }
@@ -238,7 +242,7 @@ func TestUint32GaugePanicsOnUnderflow(t *testing.T) {
 	var gauge Uint32Gauge
 	gauge.Store(10)
 
-	mustPanicWithValue(t, errUint32GaugeUnderflow, func() {
+	panicassert.RequireValue(t, errUint32GaugeUnderflow, func() {
 		_ = gauge.Sub(11)
 	})
 }
@@ -251,7 +255,7 @@ func TestUint32GaugeIncPanicsOnOverflow(t *testing.T) {
 	var gauge Uint32Gauge
 	gauge.Store(maxUint32)
 
-	mustPanicWithValue(t, errUint32GaugeOverflow, func() {
+	panicassert.RequireValue(t, errUint32GaugeOverflow, func() {
 		_ = gauge.Inc()
 	})
 }
@@ -263,7 +267,7 @@ func TestUint32GaugeDecPanicsOnUnderflow(t *testing.T) {
 
 	var gauge Uint32Gauge
 
-	mustPanicWithValue(t, errUint32GaugeUnderflow, func() {
+	panicassert.RequireValue(t, errUint32GaugeUnderflow, func() {
 		_ = gauge.Dec()
 	})
 }

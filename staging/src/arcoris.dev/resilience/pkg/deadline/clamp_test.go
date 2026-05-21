@@ -20,15 +20,17 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestClampPanicsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	requirePanic(t, panicNilContext, func() {
+	panicassert.RequireMessage(t, panicNilContext, func() {
 		_, _ = Clamp(nil, time.Now(), 0)
 	})
-	requirePanic(t, panicNegativeDuration("requested"), func() {
+	panicassert.RequireMessage(t, panicNegativeDuration("requested"), func() {
 		_, _ = Clamp(context.Background(), time.Now(), -time.Nanosecond)
 	})
 }

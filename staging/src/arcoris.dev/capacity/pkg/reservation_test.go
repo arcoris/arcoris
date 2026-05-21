@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"arcoris.dev/capacity"
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestReservationReleaseReturnsCapacity(t *testing.T) {
@@ -84,7 +85,7 @@ func TestReservationReleaseTwicePanics(t *testing.T) {
 	}
 	reservation.Release()
 
-	requirePanic(t, "capacity.Reservation: already released", func() { reservation.Release() })
+	panicassert.RequireMessage(t, "capacity.Reservation: already released", func() { reservation.Release() })
 }
 
 func TestReservationTryReleaseIsIdempotent(t *testing.T) {
@@ -116,18 +117,18 @@ func TestNilReservationPanics(t *testing.T) {
 	t.Parallel()
 
 	var reservation *capacity.Reservation
-	requirePanic(t, "capacity.Reservation: nil reservation", func() { _ = reservation.Amount() })
-	requirePanic(t, "capacity.Reservation: nil reservation", func() { _ = reservation.Released() })
-	requirePanic(t, "capacity.Reservation: nil reservation", func() { _ = reservation.Release() })
-	requirePanic(t, "capacity.Reservation: nil reservation", func() { _, _ = reservation.TryRelease() })
+	panicassert.RequireMessage(t, "capacity.Reservation: nil reservation", func() { _ = reservation.Amount() })
+	panicassert.RequireMessage(t, "capacity.Reservation: nil reservation", func() { _ = reservation.Released() })
+	panicassert.RequireMessage(t, "capacity.Reservation: nil reservation", func() { _ = reservation.Release() })
+	panicassert.RequireMessage(t, "capacity.Reservation: nil reservation", func() { _, _ = reservation.TryRelease() })
 }
 
 func TestZeroReservationPanics(t *testing.T) {
 	t.Parallel()
 
 	var reservation capacity.Reservation
-	requirePanic(t, "capacity.Reservation: invalid reservation", func() { _ = reservation.Amount() })
-	requirePanic(t, "capacity.Reservation: invalid reservation", func() { _ = reservation.Released() })
-	requirePanic(t, "capacity.Reservation: invalid reservation", func() { _ = reservation.Release() })
-	requirePanic(t, "capacity.Reservation: invalid reservation", func() { _, _ = reservation.TryRelease() })
+	panicassert.RequireMessage(t, "capacity.Reservation: invalid reservation", func() { _ = reservation.Amount() })
+	panicassert.RequireMessage(t, "capacity.Reservation: invalid reservation", func() { _ = reservation.Released() })
+	panicassert.RequireMessage(t, "capacity.Reservation: invalid reservation", func() { _ = reservation.Release() })
+	panicassert.RequireMessage(t, "capacity.Reservation: invalid reservation", func() { _, _ = reservation.TryRelease() })
 }

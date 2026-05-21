@@ -44,26 +44,6 @@ const (
 	testMinInt32 = -testMaxInt32 - 1
 )
 
-// mustPanicWithValue verifies that fn panics with exactly the expected value.
-//
-// Gauge tests use exact panic values because those values are part of the
-// package's debugging contract for invariant violations.
-func mustPanicWithValue(t *testing.T, want any, fn func()) {
-	t.Helper()
-
-	defer func() {
-		got := recover()
-		if got == nil {
-			t.Fatalf("function did not panic, want panic value %#v", want)
-		}
-		if got != want {
-			t.Fatalf("panic value = %#v, want %#v", got, want)
-		}
-	}()
-
-	fn()
-}
-
 // runConcurrent runs the same deterministic test body in several goroutines.
 //
 // It centralizes WaitGroup setup while keeping the actual accounting operations

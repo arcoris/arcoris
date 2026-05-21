@@ -21,6 +21,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 // TestUntilReturnsNilWhenConditionIsImmediatelySatisfied verifies immediate
@@ -214,7 +216,7 @@ func TestUntilReturnsTimeoutWhenContextDeadlineExpiresDuringWait(t *testing.T) {
 func TestUntilPanicsOnNilContext(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilContext, func() {
+	panicassert.RequireValue(t, errNilContext, func() {
 		_ = Until(nil, time.Second, Satisfied)
 	})
 }
@@ -242,7 +244,7 @@ func TestUntilPanicsOnNonPositiveInterval(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNonPositiveInterval, func() {
+			panicassert.RequireValue(t, errNonPositiveInterval, func() {
 				_ = Until(context.Background(), tc.interval, Satisfied)
 			})
 		})
@@ -254,7 +256,7 @@ func TestUntilPanicsOnNonPositiveInterval(t *testing.T) {
 func TestUntilPanicsOnNilCondition(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilCondition, func() {
+	panicassert.RequireValue(t, errNilCondition, func() {
 		_ = Until(context.Background(), time.Second, nil)
 	})
 }
@@ -269,7 +271,7 @@ func TestUntilDoesNotRecoverConditionPanics(t *testing.T) {
 		panic(panicValue)
 	}
 
-	mustPanicWith(t, panicValue, func() {
+	panicassert.RequireValue(t, panicValue, func() {
 		_ = Until(context.Background(), time.Second, condition)
 	})
 }

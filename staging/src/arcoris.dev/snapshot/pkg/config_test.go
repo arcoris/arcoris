@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"arcoris.dev/chrono/clock"
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestDefaultConfigHasClock(t *testing.T) {
@@ -44,7 +45,7 @@ func TestNewConfigAppliesOptionsInOrder(t *testing.T) {
 }
 
 func TestNewConfigPanicsOnNilOption(t *testing.T) {
-	requirePanicWith(t, "snapshot: nil option", func() {
+	panicassert.RequireMessage(t, "snapshot: nil option", func() {
 		_ = newConfig(nil)
 	})
 }
