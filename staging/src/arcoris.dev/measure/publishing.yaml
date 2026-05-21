@@ -1,0 +1,16 @@
+module: arcoris.dev/measure
+repository: arcoris/measure
+source_root: pkg
+publish:
+  promote:
+    pkg: .
+  include:
+    - README.md
+    - SECURITY.md
+    - LICENSE
+    - docs/**
+    - pkg/**
+  exclude:
+    - publishing.yaml
+    - .staging/**
+    - tmp/**

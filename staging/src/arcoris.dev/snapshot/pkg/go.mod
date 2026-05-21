@@ -9,5 +9,5 @@ require (
 	arcoris.dev/chrono v0.0.0
 )
 
-replace arcoris.dev/atomicx => ../atomicx
-replace arcoris.dev/chrono => ../chrono
+replace arcoris.dev/atomicx => ../../atomicx/pkg
+replace arcoris.dev/chrono => ../../chrono/pkg

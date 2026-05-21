@@ -18,6 +18,6 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 )
 
-replace arcoris.dev/chrono => ../chrono
+replace arcoris.dev/chrono => ../../chrono/pkg
 
-replace arcoris.dev/snapshot => ../snapshot
+replace arcoris.dev/snapshot => ../../snapshot/pkg

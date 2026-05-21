@@ -1,0 +1,16 @@
+module: arcoris.dev/apimachinery
+repository: arcoris/apimachinery
+source_root: pkg
+publish:
+  promote:
+    pkg: .
+  include:
+    - README.md
+    - SECURITY.md
+    - LICENSE
+    - docs/**
+    - pkg/**
+  exclude:
+    - publishing.yaml
+    - .staging/**
+    - tmp/**

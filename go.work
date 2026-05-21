@@ -3,16 +3,16 @@ go 1.25.0
 toolchain go1.25.9
 
 use (
-	./staging/src/arcoris.dev/admission
-	./staging/src/arcoris.dev/apimachinery
-	./staging/src/arcoris.dev/atomicx
-	./staging/src/arcoris.dev/capacity
-	./staging/src/arcoris.dev/chrono
-	./staging/src/arcoris.dev/health
-	./staging/src/arcoris.dev/liveconfig
-	./staging/src/arcoris.dev/resilience
-	./staging/src/arcoris.dev/runtime
-	./staging/src/arcoris.dev/snapshot
-	./staging/src/arcoris.dev/value
-	./staging/src/arcoris.dev/measure
+	./staging/src/arcoris.dev/admission/pkg
+	./staging/src/arcoris.dev/apimachinery/pkg
+	./staging/src/arcoris.dev/atomicx/pkg
+	./staging/src/arcoris.dev/capacity/pkg
+	./staging/src/arcoris.dev/chrono/pkg
+	./staging/src/arcoris.dev/health/pkg
+	./staging/src/arcoris.dev/liveconfig/pkg
+	./staging/src/arcoris.dev/measure/pkg
+	./staging/src/arcoris.dev/resilience/pkg
+	./staging/src/arcoris.dev/runtime/pkg
+	./staging/src/arcoris.dev/snapshot/pkg
+	./staging/src/arcoris.dev/value/pkg
 )

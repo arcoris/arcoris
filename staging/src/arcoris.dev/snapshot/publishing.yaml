@@ -1,0 +1,16 @@
+module: arcoris.dev/snapshot
+repository: arcoris/snapshot
+source_root: pkg
+publish:
+  promote:
+    pkg: .
+  include:
+    - README.md
+    - SECURITY.md
+    - LICENSE
+    - docs/**
+    - pkg/**
+  exclude:
+    - publishing.yaml
+    - .staging/**
+    - tmp/**
