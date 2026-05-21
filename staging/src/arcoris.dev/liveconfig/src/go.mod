@@ -9,5 +9,5 @@ require (
 	arcoris.dev/snapshot v0.0.0
 )
 
-replace arcoris.dev/chrono => ../../chrono/pkg
-replace arcoris.dev/snapshot => ../../snapshot/pkg
+replace arcoris.dev/chrono => ../../chrono/src
+replace arcoris.dev/snapshot => ../../snapshot/src

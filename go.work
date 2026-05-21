@@ -3,17 +3,17 @@ go 1.25.0
 toolchain go1.25.9
 
 use (
-	./staging/src/arcoris.dev/admission/pkg
-	./staging/src/arcoris.dev/apimachinery/pkg
-	./staging/src/arcoris.dev/atomicx/pkg
-	./staging/src/arcoris.dev/capacity/pkg
-	./staging/src/arcoris.dev/chrono/pkg
-	./staging/src/arcoris.dev/health/pkg
-	./staging/src/arcoris.dev/liveconfig/pkg
-	./staging/src/arcoris.dev/measure/pkg
-	./staging/src/arcoris.dev/resilience/pkg
-	./staging/src/arcoris.dev/runtime/pkg
-	./staging/src/arcoris.dev/snapshot/pkg
-	./staging/src/arcoris.dev/testutil/pkg
-	./staging/src/arcoris.dev/value/pkg
+	./staging/src/arcoris.dev/admission/src
+	./staging/src/arcoris.dev/apimachinery/src
+	./staging/src/arcoris.dev/atomicx/src
+	./staging/src/arcoris.dev/capacity/src
+	./staging/src/arcoris.dev/chrono/src
+	./staging/src/arcoris.dev/health/src
+	./staging/src/arcoris.dev/liveconfig/src
+	./staging/src/arcoris.dev/measure/src
+	./staging/src/arcoris.dev/resilience/src
+	./staging/src/arcoris.dev/runtime/src
+	./staging/src/arcoris.dev/snapshot/src
+	./staging/src/arcoris.dev/testutil/src
+	./staging/src/arcoris.dev/value/src
 )

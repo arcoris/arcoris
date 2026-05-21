@@ -10,6 +10,6 @@ require (
 	arcoris.dev/testutil v0.0.0
 )
 
-replace arcoris.dev/atomicx => ../../atomicx/pkg
-replace arcoris.dev/chrono => ../../chrono/pkg
-replace arcoris.dev/testutil => ../../testutil/pkg
+replace arcoris.dev/atomicx => ../../atomicx/src
+replace arcoris.dev/chrono => ../../chrono/src
+replace arcoris.dev/testutil => ../../testutil/src

@@ -6,4 +6,4 @@ toolchain go1.25.9
 
 require arcoris.dev/value v0.0.0
 
-replace arcoris.dev/value => ../../value/pkg
+replace arcoris.dev/value => ../../value/src

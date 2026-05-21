@@ -9,5 +9,5 @@ require (
 	arcoris.dev/testutil v0.0.0
 )
 
-replace arcoris.dev/snapshot => ../../snapshot/pkg
-replace arcoris.dev/testutil => ../../testutil/pkg
+replace arcoris.dev/snapshot => ../../snapshot/src
+replace arcoris.dev/testutil => ../../testutil/src
