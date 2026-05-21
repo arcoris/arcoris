@@ -17,6 +17,8 @@
 package run
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"errors"
 	"testing"
@@ -26,7 +28,7 @@ import (
 func TestNewGroupRejectsNilParent(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilGroupParent, func() {
+	panicassert.RequireMessage(t, errNilGroupParent, func() {
 		NewGroup(nil)
 	})
 }
@@ -60,7 +62,7 @@ func TestNewGroupCreatesChildContext(t *testing.T) {
 
 	want := errors.New("parent stop")
 	cancel(want)
-	mustClose(t, group.Done())
+	channelassert.RequireClosed(t, group.Done(), testTimeout)
 
 	if !errors.Is(context.Cause(group.Context()), want) {
 		t.Fatalf("context cause = %v, want %v", context.Cause(group.Context()), want)
@@ -81,7 +83,7 @@ func TestGroupGoStartsTaskAndWaitReturnsNil(t *testing.T) {
 	if err := group.Wait(); err != nil {
 		t.Fatalf("Wait error = %v", err)
 	}
-	mustClose(t, called)
+	channelassert.RequireClosed(t, called, testTimeout)
 }
 
 func TestGroupTaskReceivesGroupContext(t *testing.T) {
@@ -139,7 +141,7 @@ func TestGroupWithCancelOnErrorDisabledDoesNotCancelOnTaskError(t *testing.T) {
 	})
 
 	waitGroupTaskErrorCount(t, group, 1)
-	mustNotCloseNow(t, group.Done())
+	channelassert.RequireNoReceive(t, group.Done())
 
 	if err := group.Wait(); !errors.Is(err, want) {
 		t.Fatalf("Wait error = %v, want %v", err, want)
@@ -224,7 +226,7 @@ func TestGroupTaskErrorCausePrecedesLaterCancel(t *testing.T) {
 			// The task error claims fail-fast cancellation before the owner calls
 			// Cancel. Later owner cancellation, including Cancel(nil), must not
 			// replace the TaskError cause.
-			mustClose(t, group.Done())
+			channelassert.RequireClosed(t, group.Done(), testTimeout)
 			group.Cancel(tc.cause)
 
 			var cause TaskError
@@ -256,7 +258,7 @@ func TestGroupOwnerCancelCausePrecedesLaterTaskError(t *testing.T) {
 	})
 
 	group.Cancel(ownerErr)
-	mustClose(t, group.Done())
+	channelassert.RequireClosed(t, group.Done(), testTimeout)
 	close(release)
 
 	err := group.Wait()
@@ -283,7 +285,7 @@ func TestGroupParentCancelCausePrecedesLaterTaskError(t *testing.T) {
 	})
 
 	cancelParent(parentErr)
-	mustClose(t, group.Done())
+	channelassert.RequireClosed(t, group.Done(), testTimeout)
 	close(release)
 
 	err := group.Wait()
@@ -303,7 +305,7 @@ func TestGroupParentCancelBeforeTasksDoesNotCreateTaskError(t *testing.T) {
 	parentErr := errors.New("parent stop")
 
 	cancelParent(parentErr)
-	mustClose(t, group.Done())
+	channelassert.RequireClosed(t, group.Done(), testTimeout)
 
 	err := group.Wait()
 	if err != nil {
@@ -331,7 +333,7 @@ func TestGroupParentCancelWhileTaskReturnsNilDoesNotCreateTaskError(t *testing.T
 	})
 
 	cancelParent(parentErr)
-	mustClose(t, group.Done())
+	channelassert.RequireClosed(t, group.Done(), testTimeout)
 	close(release)
 
 	err := group.Wait()
@@ -392,11 +394,11 @@ func TestGroupWaitWaitsForAllTasksAfterFirstError(t *testing.T) {
 	}()
 
 	close(fail)
-	mustClose(t, group.Done())
-	mustNotCloseNow(t, waitDone)
+	channelassert.RequireClosed(t, group.Done(), testTimeout)
+	channelassert.RequireNoReceive(t, waitDone)
 
 	close(release)
-	mustClose(t, secondDone)
+	channelassert.RequireClosed(t, secondDone, testTimeout)
 
 	select {
 	case err := <-waitDone:
@@ -413,13 +415,13 @@ func TestGroupRejectsInvalidGoInputs(t *testing.T) {
 
 	group := NewGroup(context.Background())
 
-	mustPanicWith(t, errEmptyTaskName, func() {
+	panicassert.RequireMessage(t, errEmptyTaskName, func() {
 		group.Go("", func(ctx context.Context) error { return nil })
 	})
-	mustPanicWith(t, errUntrimmedTaskName, func() {
+	panicassert.RequireMessage(t, errUntrimmedTaskName, func() {
 		group.Go(" worker", func(ctx context.Context) error { return nil })
 	})
-	mustPanicWith(t, errNilTask, func() {
+	panicassert.RequireMessage(t, errNilTask, func() {
 		group.Go("worker", nil)
 	})
 }
@@ -435,7 +437,7 @@ func TestGroupRejectsDuplicateTaskName(t *testing.T) {
 		return nil
 	})
 
-	mustPanicWith(t, errDuplicateTaskName, func() {
+	panicassert.RequireMessage(t, errDuplicateTaskName, func() {
 		group.Go("worker", func(ctx context.Context) error { return nil })
 	})
 
@@ -453,7 +455,7 @@ func TestGroupRejectsGoAfterWait(t *testing.T) {
 		t.Fatalf("Wait error = %v", err)
 	}
 
-	mustPanicWith(t, errGroupClosed, func() {
+	panicassert.RequireMessage(t, errGroupClosed, func() {
 		group.Go("worker", func(ctx context.Context) error { return nil })
 	})
 }
@@ -464,7 +466,7 @@ func TestGroupRejectsGoAfterCancel(t *testing.T) {
 	group := NewGroup(context.Background())
 	group.Cancel(nil)
 
-	mustPanicWith(t, errGroupClosed, func() {
+	panicassert.RequireMessage(t, errGroupClosed, func() {
 		group.Go("worker", func(ctx context.Context) error { return nil })
 	})
 }
@@ -487,14 +489,14 @@ func TestGroupRejectsNilAndUninitializedReceiver(t *testing.T) {
 		t.Run("nil "+tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNilGroup, func() {
+			panicassert.RequireMessage(t, errNilGroup, func() {
 				tc.fn(nil)
 			})
 		})
 		t.Run("zero "+tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errUninitializedGroup, func() {
+			panicassert.RequireMessage(t, errUninitializedGroup, func() {
 				var group Group
 				tc.fn(&group)
 			})

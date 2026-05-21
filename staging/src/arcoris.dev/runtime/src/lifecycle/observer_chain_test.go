@@ -16,7 +16,12 @@
 
 package lifecycle
 
-import "testing"
+import (
+	channelassert "arcoris.dev/testutil/channel"
+	"time"
+
+	"testing"
+)
 
 func TestObserverChainNilAndEmptyAreNoop(t *testing.T) {
 	t.Parallel()
@@ -66,5 +71,5 @@ func TestNotifyObserversDelegatesToObserverChain(t *testing.T) {
 		ObserverFunc(func(transition Transition) { observed <- transition }),
 	}, transition)
 
-	assertTransitionEqual(t, mustReceiveTransition(t, observed), transition)
+	assertTransitionEqual(t, channelassert.RequireReceive(t, observed, time.Second), transition)
 }

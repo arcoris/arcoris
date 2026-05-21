@@ -17,6 +17,7 @@
 package signals
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"errors"
 	"strings"
@@ -72,7 +73,7 @@ func TestSignalErrorStringHandlesZeroValue(t *testing.T) {
 func TestNewSignalErrorRejectsNilSignal(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilSignalErrorSignal, func() {
+	panicassert.RequireMessage(t, errNilSignalErrorSignal, func() {
 		NewSignalError(nil)
 	})
 }
@@ -125,7 +126,7 @@ func TestCauseReturnsFalseForZeroSignalError(t *testing.T) {
 func TestCauseRejectsNilContext(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilCauseContext, func() {
+	panicassert.RequireMessage(t, errNilCauseContext, func() {
 		Cause(nil)
 	})
 }

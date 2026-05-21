@@ -17,6 +17,7 @@
 package retry
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"testing"
 	"time"
 
@@ -54,7 +55,7 @@ func TestWithDelayScheduleLastWins(t *testing.T) {
 }
 
 func TestWithDelaySchedulePanicsOnNilSchedule(t *testing.T) {
-	expectPanic(t, panicNilDelaySchedule, func() {
+	panicassert.RequireValue(t, panicNilDelaySchedule, func() {
 		_ = WithDelaySchedule(nil)
 	})
 }

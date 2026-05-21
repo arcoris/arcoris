@@ -17,6 +17,7 @@
 package signals
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"os"
 	"strings"
 	"testing"
@@ -124,7 +125,7 @@ func TestSignalSetHelpersRejectNilSignals(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNilSignalSetSignal, tc.fn)
+			panicassert.RequireMessage(t, errNilSignalSetSignal, tc.fn)
 		})
 	}
 }

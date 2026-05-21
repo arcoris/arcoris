@@ -17,8 +17,11 @@
 package lifecycle
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
+	errorassert "arcoris.dev/testutil/errors"
 	"context"
 	"testing"
+	"time"
 )
 
 func TestWaitStateImmediateSuccess(t *testing.T) {
@@ -40,7 +43,7 @@ func TestWaitStateRejectsInvalidTarget(t *testing.T) {
 	if err == nil {
 		t.Fatal("WaitState invalid target err = nil, want error")
 	}
-	mustMatch(t, err, ErrInvalidWaitTarget)
+	errorassert.RequireIs(t, err, ErrInvalidWaitTarget)
 	if snap.State != StateNew {
 		t.Fatalf("snapshot.State = %s, want latest new", snap.State)
 	}
@@ -57,7 +60,7 @@ func TestWaitStateRejectsUnreachableTargetBeforeBlocking(t *testing.T) {
 	if err == nil {
 		t.Fatal("WaitState backward err = nil, want unreachable")
 	}
-	mustMatch(t, err, ErrWaitTargetUnreachable)
+	errorassert.RequireIs(t, err, ErrWaitTargetUnreachable)
 	if snap.State != StateStarting {
 		t.Fatalf("snapshot.State = %s, want starting", snap.State)
 	}
@@ -85,7 +88,7 @@ func TestWaitStateWaitsUntilReachableTargetCommits(t *testing.T) {
 		t.Fatalf("WaitState err = %v, want nil", err)
 	default:
 	}
-	if got := mustReceiveSnapshot(t, results); got.State != StateRunning {
+	if got := channelassert.RequireReceive(t, results, time.Second); got.State != StateRunning {
 		t.Fatalf("snapshot.State = %s, want running", got.State)
 	}
 }
@@ -99,7 +102,7 @@ func TestWaitStateTerminalBeforeTarget(t *testing.T) {
 	if err == nil {
 		t.Fatal("WaitState err = nil, want unreachable")
 	}
-	mustMatch(t, err, ErrWaitTargetUnreachable)
+	errorassert.RequireIs(t, err, ErrWaitTargetUnreachable)
 	if snap.State != StateStopped {
 		t.Fatalf("snapshot.State = %s, want stopped", snap.State)
 	}
@@ -116,7 +119,7 @@ func TestWaitStateDoneBranchReturnsUnreachableForOtherTarget(t *testing.T) {
 	close(done)
 
 	_, err := controller.WaitState(context.Background(), StateFailed)
-	mustMatch(t, err, ErrWaitTargetUnreachable)
+	errorassert.RequireIs(t, err, ErrWaitTargetUnreachable)
 }
 
 func TestWaitStateContextCancellationAndDeadline(t *testing.T) {
@@ -128,7 +131,7 @@ func TestWaitStateContextCancellationAndDeadline(t *testing.T) {
 	if err == nil {
 		t.Fatal("WaitState cancel err = nil, want canceled")
 	}
-	mustMatch(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, context.Canceled)
 	if snap.State != StateNew {
 		t.Fatalf("snapshot.State = %s, want new", snap.State)
 	}
@@ -139,7 +142,7 @@ func TestWaitStateContextCancellationAndDeadline(t *testing.T) {
 	if deadlineErr == nil {
 		t.Fatal("WaitState deadline err = nil, want deadline exceeded")
 	}
-	mustMatch(t, deadlineErr, context.DeadlineExceeded)
+	errorassert.RequireIs(t, deadlineErr, context.DeadlineExceeded)
 }
 
 func TestWaitStateNilContextBehavesAsBackground(t *testing.T) {

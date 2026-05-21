@@ -17,6 +17,7 @@
 package panicassert
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
@@ -58,6 +59,37 @@ func RequireMessage(t testing.TB, want string, call func()) {
 	if got != want {
 		t.Fatalf("panic message = %q, want %q", got, want)
 	}
+}
+
+// RequireError runs call and requires the recovered panic to implement error.
+// It returns the recovered error for follow-up assertions.
+func RequireError(t testing.TB, call func()) error {
+	t.Helper()
+
+	value := Require(t, call)
+	err, ok := asValue[error](value)
+	if !ok {
+		t.Fatalf("panic type = %T, want error", value)
+	}
+
+	return err
+}
+
+// RequireErrorIs runs call and requires the recovered panic to be an error that
+// matches target through errors.Is.
+func RequireErrorIs(t testing.TB, target error, call func()) error {
+	t.Helper()
+
+	if target == nil {
+		t.Fatal("target error = nil, want non-nil")
+	}
+
+	err := RequireError(t, call)
+	if !errors.Is(err, target) {
+		t.Fatalf("errors.Is(panic, target) = false, want true; panic = %v, target = %v", err, target)
+	}
+
+	return err
 }
 
 // RequireValue runs call and requires the recovered panic to be assignable to T

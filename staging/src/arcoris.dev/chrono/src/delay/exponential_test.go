@@ -17,25 +17,26 @@
 package delay
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"math"
 	"testing"
 	"time"
 )
 
 func TestExponentialRejectsInvalidInput(t *testing.T) {
-	mustPanicWith(t, errNonPositiveExponentialInitialDelay, func() {
+	panicassert.RequireValue(t, errNonPositiveExponentialInitialDelay, func() {
 		Exponential(0, 2)
 	})
-	mustPanicWith(t, errNonPositiveExponentialInitialDelay, func() {
+	panicassert.RequireValue(t, errNonPositiveExponentialInitialDelay, func() {
 		Exponential(-time.Nanosecond, 2)
 	})
-	mustPanicWith(t, errInvalidExponentialMultiplier, func() {
+	panicassert.RequireValue(t, errInvalidExponentialMultiplier, func() {
 		Exponential(time.Second, 1)
 	})
-	mustPanicWith(t, errInvalidExponentialMultiplier, func() {
+	panicassert.RequireValue(t, errInvalidExponentialMultiplier, func() {
 		Exponential(time.Second, math.NaN())
 	})
-	mustPanicWith(t, errInvalidExponentialMultiplier, func() {
+	panicassert.RequireValue(t, errInvalidExponentialMultiplier, func() {
 		Exponential(time.Second, math.Inf(1))
 	})
 }

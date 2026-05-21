@@ -17,6 +17,7 @@
 package health
 
 import (
+	errorassert "arcoris.dev/testutil/errors"
 	"context"
 	"errors"
 	"sync"
@@ -158,8 +159,8 @@ func TestGateErrors(t *testing.T) {
 	invalid := InvalidGateResultError{GateName: "gate", Result: Result{Status: Status(99)}}
 	mismatch := MismatchedGateResultError{GateName: "gate", ResultName: "other"}
 
-	mustErrorIs(t, invalid, ErrInvalidGateResult)
-	mustErrorIs(t, mismatch, ErrMismatchedGateResult)
+	errorassert.RequireIs(t, invalid, ErrInvalidGateResult)
+	errorassert.RequireIs(t, mismatch, ErrMismatchedGateResult)
 	if invalid.Error() == "" || mismatch.Error() == "" {
 		t.Fatal("gate error messages must be non-empty")
 	}

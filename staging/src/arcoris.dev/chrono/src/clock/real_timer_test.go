@@ -17,6 +17,7 @@
 package clock
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
 	"testing"
 	"time"
 )
@@ -56,7 +57,7 @@ func TestRealTimerDelivers(t *testing.T) {
 	}
 	defer timer.Stop()
 
-	if got := mustReceiveTime(t, timer.C()); got.IsZero() {
+	if got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout); got.IsZero() {
 		t.Fatal("realTimer delivered zero time")
 	}
 }
@@ -91,7 +92,7 @@ func TestRealTimerStopAfterDeliveryReportsInactive(t *testing.T) {
 		timer: time.NewTimer(realClockTestDelay),
 	}
 
-	_ = mustReceiveTime(t, timer.C())
+	_ = channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
 
 	if stopped := timer.Stop(); stopped {
 		t.Fatal("realTimer.Stop() after delivered timer = true, want false")
@@ -113,7 +114,7 @@ func TestRealTimerResetActiveTimer(t *testing.T) {
 		t.Fatal("realTimer.Reset() for active timer = false, want true")
 	}
 
-	if got := mustReceiveTime(t, timer.C()); got.IsZero() {
+	if got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout); got.IsZero() {
 		t.Fatal("realTimer delivered zero time after Reset")
 	}
 }
@@ -137,7 +138,7 @@ func TestRealTimerResetStoppedTimerReactivates(t *testing.T) {
 	}
 	defer timer.Stop()
 
-	if got := mustReceiveTime(t, timer.C()); got.IsZero() {
+	if got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout); got.IsZero() {
 		t.Fatal("realTimer delivered zero time after Reset from stopped state")
 	}
 }
@@ -154,7 +155,7 @@ func TestRealTimerResetNonPositiveDurationDelivers(t *testing.T) {
 
 	_ = timer.Reset(0)
 
-	if got := mustReceiveTime(t, timer.C()); got.IsZero() {
+	if got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout); got.IsZero() {
 		t.Fatal("realTimer delivered zero time after Reset(0)")
 	}
 }

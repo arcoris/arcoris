@@ -17,6 +17,7 @@
 package clock
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
 	"testing"
 	"time"
 
@@ -153,17 +154,17 @@ func TestFakeClockStepDeliversDueWaitersTimersAndTickers(t *testing.T) {
 
 	clk.Step(9 * time.Second)
 
-	mustNotReceiveTime(t, waiter)
-	mustNotReceiveTime(t, timer.C())
-	mustNotReceiveTime(t, ticker.C())
+	channelassert.RequireNoReceive(t, waiter)
+	channelassert.RequireNoReceive(t, timer.C())
+	channelassert.RequireNoReceive(t, ticker.C())
 
 	clk.Step(time.Second)
 
 	want := start.Add(10 * time.Second)
 
-	mustEqualTime(t, "waiter delivery", mustReceiveTime(t, waiter), want)
-	mustEqualTime(t, "timer delivery", mustReceiveTime(t, timer.C()), want)
-	mustEqualTime(t, "ticker delivery", mustReceiveTime(t, ticker.C()), want)
+	mustEqualTime(t, "waiter delivery", channelassert.RequireReceive(t, waiter, clockTestTimeout), want)
+	mustEqualTime(t, "timer delivery", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), want)
+	mustEqualTime(t, "ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), want)
 }
 
 // TestFakeClockCollectsDueDeliveriesInStableOrder verifies the documented fake

@@ -17,6 +17,7 @@
 package jitter
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"testing"
 	"time"
 
@@ -24,16 +25,16 @@ import (
 )
 
 func TestNewJitterScheduleRejectsInvalidInput(t *testing.T) {
-	mustPanicWith(t, errNilJitterSchedule, func() {
+	panicassert.RequireValue(t, errNilJitterSchedule, func() {
 		newJitterSchedule(nil, fullJitterTransform)
 	})
-	mustPanicWith(t, errNilJitterTransform, func() {
+	panicassert.RequireValue(t, errNilJitterTransform, func() {
 		newJitterSchedule(delay.Fixed(time.Second), nil)
 	})
-	mustPanicWith(t, errNilRandomOption, func() {
+	panicassert.RequireValue(t, errNilRandomOption, func() {
 		newJitterSchedule(delay.Fixed(time.Second), fullJitterTransform, nil)
 	})
-	mustPanicWith(t, errNilRandomSource, func() {
+	panicassert.RequireValue(t, errNilRandomSource, func() {
 		newJitterScheduleWithSource(delay.Fixed(time.Second), fullJitterTransform, nil)
 	})
 }
@@ -45,7 +46,7 @@ func TestJitterPreservesChildExhaustion(t *testing.T) {
 }
 
 func TestJitterRejectsNilChildSequence(t *testing.T) {
-	mustPanicWith(t, errJitterScheduleReturnedNilSequence, func() {
+	panicassert.RequireValue(t, errJitterScheduleReturnedNilSequence, func() {
 		newJitterSchedule(nilSequenceSchedule{}, fullJitterTransform).NewSequence()
 	})
 }
@@ -53,7 +54,7 @@ func TestJitterRejectsNilChildSequence(t *testing.T) {
 func TestJitterRejectsNegativeChildDelay(t *testing.T) {
 	seq := newJitterSchedule(delay.ScheduleFunc(func() delay.Sequence { return negativeDelaySequence{} }), fullJitterTransform).NewSequence()
 
-	mustPanicWith(t, errJitterScheduleReturnedNegativeDelay, func() {
+	panicassert.RequireValue(t, errJitterScheduleReturnedNegativeDelay, func() {
 		seq.Next()
 	})
 }
@@ -63,7 +64,7 @@ func TestJitterRejectsNegativeTransformOutput(t *testing.T) {
 		return -time.Nanosecond
 	}).NewSequence()
 
-	mustPanicWith(t, errJitterTransformReturnedNegativeDelay, func() {
+	panicassert.RequireValue(t, errJitterTransformReturnedNegativeDelay, func() {
 		seq.Next()
 	})
 }

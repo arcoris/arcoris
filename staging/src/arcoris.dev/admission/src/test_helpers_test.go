@@ -35,28 +35,6 @@ func noneMetadata() Maybe[NoMetadata] {
 	return none[NoMetadata]()
 }
 
-// assertPanicString verifies the exact panic string used for stable nil
-// receiver contracts.
-func assertPanicString(
-	t *testing.T,
-	want string,
-	call func(),
-) {
-	t.Helper()
-
-	defer func() {
-		got := recover()
-		if got == nil {
-			t.Fatalf("expected panic %q", want)
-		}
-		if got != want {
-			t.Fatalf("panic = %q, want %q", got, want)
-		}
-	}()
-
-	call()
-}
-
 // requireCapability verifies that set advertises capability.
 //
 // Built-in descriptor tests use this helper to make semantic capability

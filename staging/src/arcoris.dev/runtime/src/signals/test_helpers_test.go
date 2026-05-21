@@ -239,24 +239,6 @@ func (n *fakeNotifier) broadcastLocked() {
 	n.changes = make(chan struct{})
 }
 
-func mustPanicWith(t *testing.T, want string, fn func()) {
-	t.Helper()
-
-	defer func() {
-		recovered := recover()
-		if recovered == nil {
-			t.Fatalf("expected panic %q", want)
-		}
-
-		got := fmt.Sprint(recovered)
-		if got != want {
-			t.Fatalf("panic = %q, want %q", got, want)
-		}
-	}()
-
-	fn()
-}
-
 func mustReceiveSignal(t *testing.T, ch <-chan Event, want os.Signal) {
 	t.Helper()
 
@@ -283,19 +265,6 @@ func mustReceiveOSSignal(t *testing.T, ch <-chan os.Signal, want os.Signal) {
 		}
 	case <-time.After(testTimeout):
 		t.Fatal("timed out waiting for signal")
-	}
-}
-
-func mustClose[T any](t *testing.T, ch <-chan T) {
-	t.Helper()
-
-	select {
-	case _, ok := <-ch:
-		if ok {
-			t.Fatal("received value before channel close")
-		}
-	case <-time.After(testTimeout):
-		t.Fatal("timed out waiting for channel close")
 	}
 }
 

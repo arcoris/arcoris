@@ -17,6 +17,7 @@
 package retry
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"errors"
 	"testing"
@@ -33,7 +34,7 @@ func TestWaitDelayReturnsImmediatelyForZeroDelay(t *testing.T) {
 }
 
 func TestWaitDelayPanicsOnNegativeDelay(t *testing.T) {
-	expectPanic(t, panicNegativeDelay, func() {
+	panicassert.RequireValue(t, panicNegativeDelay, func() {
 		_ = waitDelay(context.Background(), clock.RealClock{}, -time.Nanosecond)
 	})
 }

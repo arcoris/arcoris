@@ -17,13 +17,14 @@
 package delay
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"testing"
 )
 
 func TestScheduleFuncRejectsNilFunction(t *testing.T) {
 	var sched ScheduleFunc
 
-	mustPanicWith(t, errNilScheduleFunc, func() {
+	panicassert.RequireValue(t, errNilScheduleFunc, func() {
 		_ = sched.NewSequence()
 	})
 }
@@ -31,7 +32,7 @@ func TestScheduleFuncRejectsNilFunction(t *testing.T) {
 func TestScheduleFuncRejectsNilSequence(t *testing.T) {
 	sched := ScheduleFunc(func() Sequence { return nil })
 
-	mustPanicWith(t, errScheduleFuncReturnedNilSequence, func() {
+	panicassert.RequireValue(t, errScheduleFuncReturnedNilSequence, func() {
 		_ = sched.NewSequence()
 	})
 }

@@ -17,6 +17,7 @@
 package retry
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"testing"
 	"time"
 
@@ -34,7 +35,7 @@ func TestWithClock(t *testing.T) {
 }
 
 func TestWithClockPanicsOnNilClock(t *testing.T) {
-	expectPanic(t, panicNilClock, func() {
+	panicassert.RequireValue(t, panicNilClock, func() {
 		_ = WithClock(nil)
 	})
 }

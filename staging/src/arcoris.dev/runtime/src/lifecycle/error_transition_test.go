@@ -17,6 +17,7 @@
 package lifecycle
 
 import (
+	errorassert "arcoris.dev/testutil/errors"
 	"errors"
 	"testing"
 )
@@ -55,8 +56,8 @@ func TestTransitionErrorIs(t *testing.T) {
 	t.Parallel()
 
 	err := &TransitionError{Err: ErrFailureCauseRequired}
-	mustMatch(t, err, ErrFailureCauseRequired)
-	mustNotMatch(t, err, ErrInvalidTransition)
+	errorassert.RequireIs(t, err, ErrFailureCauseRequired)
+	errorassert.RequireIsNot(t, err, ErrInvalidTransition)
 }
 
 func TestTransitionErrorTerminalMatchesInvalidTransition(t *testing.T) {
@@ -65,8 +66,8 @@ func TestTransitionErrorTerminalMatchesInvalidTransition(t *testing.T) {
 	// Terminal state is a specific invalid transition: callers can match either
 	// the precise terminal condition or the broader invalid-transition class.
 	err := &TransitionError{Err: ErrTerminalState}
-	mustMatch(t, err, ErrTerminalState)
-	mustMatch(t, err, ErrInvalidTransition)
+	errorassert.RequireIs(t, err, ErrTerminalState)
+	errorassert.RequireIs(t, err, ErrInvalidTransition)
 }
 
 func TestTransitionErrorNilErrDefaultsInvalidTransition(t *testing.T) {
@@ -76,7 +77,7 @@ func TestTransitionErrorNilErrDefaultsInvalidTransition(t *testing.T) {
 	if got := err.Unwrap(); got != ErrInvalidTransition {
 		t.Fatalf("Unwrap = %v, want invalid transition", got)
 	}
-	mustMatch(t, err, ErrInvalidTransition)
+	errorassert.RequireIs(t, err, ErrInvalidTransition)
 }
 
 func TestNewTransitionErrorDefaultsNilCause(t *testing.T) {

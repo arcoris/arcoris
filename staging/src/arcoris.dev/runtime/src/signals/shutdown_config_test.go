@@ -17,6 +17,7 @@
 package signals
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"os"
 	"testing"
 )
@@ -153,7 +154,7 @@ func TestShutdownConfigRejectsInvalidOptions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, tc.message, func() {
+			panicassert.RequireMessage(t, tc.message, func() {
 				newShutdownConfig(tc.opts...)
 			})
 		})

@@ -17,6 +17,7 @@
 package wait
 
 import (
+	errorassert "arcoris.dev/testutil/errors"
 	"context"
 	"errors"
 	"testing"
@@ -100,9 +101,9 @@ func TestNewInterruptedErrorWithCause(t *testing.T) {
 
 	mustBeInterrupted(t, err)
 	mustNotBeTimedOut(t, err)
-	mustMatch(t, err, cause)
-	mustUnwrapTo(t, err, cause)
-	mustHaveMessage(t, err, "wait: interrupted: context canceled")
+	errorassert.RequireIs(t, err, cause)
+	errorassert.RequireUnwrapsTo(t, err, cause)
+	errorassert.RequireMessage(t, err, "wait: interrupted: context canceled")
 }
 
 // TestNewInterruptedErrorWithNilCause verifies that a nil cause still produces a
@@ -114,8 +115,8 @@ func TestNewInterruptedErrorWithNilCause(t *testing.T) {
 
 	mustBeInterrupted(t, err)
 	mustNotBeTimedOut(t, err)
-	mustUnwrapTo(t, err, nil)
-	mustHaveMessage(t, err, "wait: interrupted")
+	errorassert.RequireUnwrapsTo(t, err, nil)
+	errorassert.RequireMessage(t, err, "wait: interrupted")
 }
 
 // TestNewInterruptedErrorPreservesAlreadyInterruptedErrors verifies idempotent

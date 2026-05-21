@@ -17,8 +17,11 @@
 package lifecycle
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
+	errorassert "arcoris.dev/testutil/errors"
 	"context"
 	"testing"
+	"time"
 )
 
 func TestWaitImmediateSuccess(t *testing.T) {
@@ -56,7 +59,7 @@ func TestWaitNilPredicate(t *testing.T) {
 	if err == nil {
 		t.Fatal("Wait nil predicate err = nil, want error")
 	}
-	mustMatch(t, err, ErrInvalidWaitPredicate)
+	errorassert.RequireIs(t, err, ErrInvalidWaitPredicate)
 	if snap.State != StateNew {
 		t.Fatalf("snapshot.State = %s, want latest new", snap.State)
 	}
@@ -88,14 +91,14 @@ func TestWaitAcrossChangedSignal(t *testing.T) {
 		results <- snap
 	}()
 
-	mustSignalClosed(t, firstEval)
+	channelassert.RequireSignal(t, firstEval, time.Second)
 	_, _ = controller.BeginStart()
 	select {
 	case err := <-errs:
 		t.Fatalf("Wait err = %v, want nil", err)
 	default:
 	}
-	if got := mustReceiveSnapshot(t, results); got.State != StateStarting {
+	if got := channelassert.RequireReceive(t, results, time.Second); got.State != StateStarting {
 		t.Fatalf("snapshot.State = %s, want starting", got.State)
 	}
 }
@@ -111,7 +114,7 @@ func TestWaitReturnsUnreachableAtTerminalBoundary(t *testing.T) {
 	if err == nil {
 		t.Fatal("Wait err = nil, want unreachable")
 	}
-	mustMatch(t, err, ErrWaitTargetUnreachable)
+	errorassert.RequireIs(t, err, ErrWaitTargetUnreachable)
 	if snap.State != StateStopped {
 		t.Fatalf("snapshot.State = %s, want stopped", snap.State)
 	}
@@ -126,7 +129,7 @@ func TestWaitContextCanceled(t *testing.T) {
 	if err == nil {
 		t.Fatal("Wait err = nil, want canceled")
 	}
-	mustMatch(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, context.Canceled)
 	if snap.State != StateNew {
 		t.Fatalf("snapshot.State = %s, want latest new", snap.State)
 	}
@@ -141,7 +144,7 @@ func TestWaitContextDeadlineExceeded(t *testing.T) {
 	if deadlineErr == nil {
 		t.Fatal("Wait deadline err = nil, want deadline exceeded")
 	}
-	mustMatch(t, deadlineErr, context.DeadlineExceeded)
+	errorassert.RequireIs(t, deadlineErr, context.DeadlineExceeded)
 	if deadlineSnapshot.State != StateNew {
 		t.Fatalf("deadline snapshot.State = %s, want latest new", deadlineSnapshot.State)
 	}
@@ -159,7 +162,7 @@ func TestWaitReturnsLatestSnapshotOnCancellation(t *testing.T) {
 	if err == nil {
 		t.Fatal("Wait err = nil, want canceled")
 	}
-	mustMatch(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, context.Canceled)
 	if snap.State != StateStarting {
 		t.Fatalf("snapshot.State = %s, want starting", snap.State)
 	}
@@ -192,7 +195,7 @@ func TestWaitDoneBranchReturnsUnreachableWhenPredicateStillFalse(t *testing.T) {
 		errs <- err
 	}()
 
-	mustSignalClosed(t, firstEval)
+	channelassert.RequireSignal(t, firstEval, time.Second)
 	controller.mu.Lock()
 	controller.state = StateStopped
 	controller.revision = 1
@@ -200,8 +203,8 @@ func TestWaitDoneBranchReturnsUnreachableWhenPredicateStillFalse(t *testing.T) {
 	close(done)
 	controller.mu.Unlock()
 
-	err := mustReceiveError(t, errs)
-	mustMatch(t, err, ErrWaitTargetUnreachable)
+	err := channelassert.RequireReceive(t, errs, time.Second)
+	errorassert.RequireIs(t, err, ErrWaitTargetUnreachable)
 }
 
 func TestWaitDoneBranchCanSucceedForTerminalSnapshot(t *testing.T) {
@@ -236,7 +239,7 @@ func TestWaitDoneBranchCanSucceedForTerminalSnapshot(t *testing.T) {
 		results <- snap
 	}()
 
-	mustSignalClosed(t, firstEval)
+	channelassert.RequireSignal(t, firstEval, time.Second)
 	controller.mu.Lock()
 	controller.state = StateStopped
 	controller.revision = 1
@@ -249,7 +252,7 @@ func TestWaitDoneBranchCanSucceedForTerminalSnapshot(t *testing.T) {
 		t.Fatalf("Wait err = %v, want nil", err)
 	default:
 	}
-	if got := mustReceiveSnapshot(t, results); got.State != StateStopped {
+	if got := channelassert.RequireReceive(t, results, time.Second); got.State != StateStopped {
 		t.Fatalf("snapshot.State = %s, want stopped", got.State)
 	}
 }

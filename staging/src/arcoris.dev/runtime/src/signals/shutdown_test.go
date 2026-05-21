@@ -17,6 +17,8 @@
 package signals
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"errors"
 	"os"
@@ -56,7 +58,7 @@ func TestShutdownControllerRegistersEscalationSignalsAfterFirstShutdownSignal(t 
 	defer controller.Stop()
 
 	n.emit(testSIGTERM)
-	mustClose(t, controller.Done())
+	channelassert.RequireClosed(t, controller.Done(), testTimeout)
 	n.waitNotifyCount(t, 2)
 
 	assertSignalSlice(t, n.registeredSignals(), []os.Signal{testSIGTERM, testSIGHUP})
@@ -100,7 +102,7 @@ func TestShutdownControllerCancelsOnFirstShutdownSignal(t *testing.T) {
 	defer controller.Stop()
 
 	n.emit(testSIGTERM)
-	mustClose(t, controller.Done())
+	channelassert.RequireClosed(t, controller.Done(), testTimeout)
 
 	event, ok := controller.First()
 	if !ok {
@@ -126,7 +128,7 @@ func TestShutdownControllerDeliversRepeatedShutdownAsEscalationByDefault(t *test
 	defer controller.Stop()
 
 	n.emit(testSIGTERM)
-	mustClose(t, controller.Done())
+	channelassert.RequireClosed(t, controller.Done(), testTimeout)
 	n.waitNotifyCount(t, 2)
 
 	n.emit(testSIGTERM)
@@ -147,7 +149,7 @@ func TestShutdownControllerDeliversConfiguredEscalationAfterFirstSignal(t *testi
 	defer controller.Stop()
 
 	n.emit(testSIGTERM)
-	mustClose(t, controller.Done())
+	channelassert.RequireClosed(t, controller.Done(), testTimeout)
 	n.waitNotifyCount(t, 2)
 
 	n.emit(testSIGHUP)
@@ -168,7 +170,7 @@ func TestShutdownControllerEscalationIsBestEffort(t *testing.T) {
 		close(done)
 	}()
 
-	mustClose(t, done)
+	channelassert.RequireClosed(t, done, testTimeout)
 	mustReceiveSignal(t, controller.Escalation(), testSIGINT)
 }
 
@@ -189,7 +191,7 @@ func TestShutdownControllerCanDisableEscalation(t *testing.T) {
 	}
 
 	n.emit(testSIGTERM)
-	mustClose(t, controller.Done())
+	channelassert.RequireClosed(t, controller.Done(), testTimeout)
 	n.waitStopCount(t, 1)
 
 	if n.notifyCount() != 1 {
@@ -206,7 +208,7 @@ func TestShutdownControllerPreservesParentCause(t *testing.T) {
 	defer controller.Stop()
 
 	cancel(context.DeadlineExceeded)
-	mustClose(t, controller.Done())
+	channelassert.RequireClosed(t, controller.Done(), testTimeout)
 	n.waitStopCount(t, 1)
 
 	if !errors.Is(context.Cause(controller.Context()), context.DeadlineExceeded) {
@@ -225,7 +227,7 @@ func TestShutdownControllerStopDoesNotOverwriteSignalCause(t *testing.T) {
 	)
 
 	n.emit(testSIGTERM)
-	mustClose(t, controller.Done())
+	channelassert.RequireClosed(t, controller.Done(), testTimeout)
 
 	// Stop is cleanup. Once a signal owns the cancellation cause, Stop must not
 	// replace it with context.Canceled.
@@ -248,7 +250,7 @@ func TestShutdownControllerStopDoesNotOverwriteParentCause(t *testing.T) {
 	controller := NewShutdownController(parent, withShutdownSubscriptionOptions(withNotifier(n)))
 
 	cancel(context.DeadlineExceeded)
-	mustClose(t, controller.Done())
+	channelassert.RequireClosed(t, controller.Done(), testTimeout)
 
 	// Parent cancellation is externally owned. Stop must release registration
 	// without changing the already-observed parent cause.
@@ -267,7 +269,7 @@ func TestShutdownControllerEscalationChannelClosesOnStop(t *testing.T) {
 
 	controller.Stop()
 
-	mustClose(t, controller.Escalation())
+	channelassert.RequireClosed(t, controller.Escalation(), testTimeout)
 }
 
 func TestShutdownControllerEscalationChannelClosesOnParentCancel(t *testing.T) {
@@ -280,7 +282,7 @@ func TestShutdownControllerEscalationChannelClosesOnParentCancel(t *testing.T) {
 
 	cancel(context.Canceled)
 
-	mustClose(t, controller.Escalation())
+	channelassert.RequireClosed(t, controller.Escalation(), testTimeout)
 }
 
 func TestShutdownControllerStopIsIdempotent(t *testing.T) {
@@ -291,7 +293,7 @@ func TestShutdownControllerStopIsIdempotent(t *testing.T) {
 
 	controller.Stop()
 	controller.Stop()
-	mustClose(t, controller.Done())
+	channelassert.RequireClosed(t, controller.Done(), testTimeout)
 
 	if n.stopCount() != 1 {
 		t.Fatalf("stop count = %d, want 1", n.stopCount())
@@ -301,7 +303,7 @@ func TestShutdownControllerStopIsIdempotent(t *testing.T) {
 func TestShutdownControllerRejectsNilParent(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilShutdownParent, func() {
+	panicassert.RequireMessage(t, errNilShutdownParent, func() {
 		NewShutdownController(nil)
 	})
 }
@@ -324,7 +326,7 @@ func TestShutdownControllerRejectsNilReceiver(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNilShutdownController, func() {
+			panicassert.RequireMessage(t, errNilShutdownController, func() {
 				tc.fn(nil)
 			})
 		})
@@ -344,7 +346,7 @@ func TestShutdownControllerFirstEventIsImmutable(t *testing.T) {
 	defer controller.Stop()
 
 	n.emit(testSIGINT)
-	mustClose(t, controller.Done())
+	channelassert.RequireClosed(t, controller.Done(), testTimeout)
 	n.waitNotifyCount(t, 2)
 
 	n.emit(testSIGTERM)

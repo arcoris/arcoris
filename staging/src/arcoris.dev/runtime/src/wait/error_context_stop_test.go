@@ -17,6 +17,7 @@
 package wait
 
 import (
+	errorassert "arcoris.dev/testutil/errors"
 	"context"
 	"errors"
 	"testing"
@@ -44,7 +45,7 @@ func TestContextStopErrorClassifiesCancellation(t *testing.T) {
 
 	mustBeInterrupted(t, err)
 	mustNotBeTimedOut(t, err)
-	mustMatch(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, context.Canceled)
 }
 
 // TestContextStopErrorPreservesCancellationCause verifies that cancellation
@@ -60,8 +61,8 @@ func TestContextStopErrorPreservesCancellationCause(t *testing.T) {
 
 	mustBeInterrupted(t, err)
 	mustNotBeTimedOut(t, err)
-	mustMatch(t, err, context.Canceled)
-	mustMatch(t, err, cause)
+	errorassert.RequireIs(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, cause)
 }
 
 // TestContextStopErrorClassifiesDeadline verifies wait-owned timeout
@@ -76,7 +77,7 @@ func TestContextStopErrorClassifiesDeadline(t *testing.T) {
 
 	mustBeTimedOut(t, err)
 	mustBeInterrupted(t, err)
-	mustMatch(t, err, context.DeadlineExceeded)
+	errorassert.RequireIs(t, err, context.DeadlineExceeded)
 }
 
 // TestContextStopErrorPreservesDeadlineCause verifies that custom deadline
@@ -92,6 +93,6 @@ func TestContextStopErrorPreservesDeadlineCause(t *testing.T) {
 
 	mustBeTimedOut(t, err)
 	mustBeInterrupted(t, err)
-	mustMatch(t, err, cause)
-	mustMatch(t, err, context.DeadlineExceeded)
+	errorassert.RequireIs(t, err, cause)
+	errorassert.RequireIs(t, err, context.DeadlineExceeded)
 }

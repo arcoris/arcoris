@@ -17,6 +17,7 @@
 package delay
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"math"
 	"testing"
 	"time"
@@ -25,54 +26,54 @@ import (
 const testValidationMessage = "delay: test validation failure"
 
 func TestRequireValidationMessageRejectsEmptyMessage(t *testing.T) {
-	mustPanicWith(t, errNilValidationMessage, func() {
+	panicassert.RequireValue(t, errNilValidationMessage, func() {
 		requireValidationMessage("")
 	})
 }
 
 func TestRequireScheduleRejectsNilSchedule(t *testing.T) {
-	mustPanicWith(t, testValidationMessage, func() {
+	panicassert.RequireValue(t, testValidationMessage, func() {
 		requireSchedule(nil, testValidationMessage)
 	})
 }
 
 func TestRequireSequenceRejectsNilSequence(t *testing.T) {
-	mustPanicWith(t, testValidationMessage, func() {
+	panicassert.RequireValue(t, testValidationMessage, func() {
 		requireSequence(nil, testValidationMessage)
 	})
 }
 
 func TestRequireNonNegativeDurationRejectsNegativeDuration(t *testing.T) {
-	mustPanicWith(t, testValidationMessage, func() {
+	panicassert.RequireValue(t, testValidationMessage, func() {
 		requireNonNegativeDuration(-time.Nanosecond, testValidationMessage)
 	})
 }
 
 func TestRequirePositiveDurationRejectsNonPositiveDuration(t *testing.T) {
-	mustPanicWith(t, testValidationMessage, func() {
+	panicassert.RequireValue(t, testValidationMessage, func() {
 		requirePositiveDuration(0, testValidationMessage)
 	})
-	mustPanicWith(t, testValidationMessage, func() {
+	panicassert.RequireValue(t, testValidationMessage, func() {
 		requirePositiveDuration(-time.Nanosecond, testValidationMessage)
 	})
 }
 
 func TestRequireNonNegativeCountRejectsNegativeCount(t *testing.T) {
-	mustPanicWith(t, testValidationMessage, func() {
+	panicassert.RequireValue(t, testValidationMessage, func() {
 		requireNonNegativeCount(-1, testValidationMessage)
 	})
 }
 
 func TestRequireFloatGreaterThanOneRejectsInvalidValue(t *testing.T) {
 	for _, v := range []float64{1, 0.5, math.NaN(), math.Inf(1), math.Inf(-1)} {
-		mustPanicWith(t, testValidationMessage, func() {
+		panicassert.RequireValue(t, testValidationMessage, func() {
 			requireFloatGreaterThanOne(v, testValidationMessage)
 		})
 	}
 }
 
 func TestRequireNonNegativeSequenceDelayRejectsNegativeAvailableDelay(t *testing.T) {
-	mustPanicWith(t, testValidationMessage, func() {
+	panicassert.RequireValue(t, testValidationMessage, func() {
 		requireNonNegativeSequenceDelay(-time.Nanosecond, true, testValidationMessage)
 	})
 }

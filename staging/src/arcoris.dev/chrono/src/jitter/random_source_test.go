@@ -17,6 +17,7 @@
 package jitter
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"testing"
 	"time"
 )
@@ -24,13 +25,13 @@ import (
 func TestRandomSourceFuncRejectsNilFunction(t *testing.T) {
 	var source RandomSourceFunc
 
-	mustPanicWith(t, errNilRandomSourceFunc, func() {
+	panicassert.RequireValue(t, errNilRandomSourceFunc, func() {
 		_ = source.NewRandom()
 	})
 }
 
 func TestRandomSourceFuncRejectsNilRandom(t *testing.T) {
-	mustPanicWith(t, errNilRandom, func() {
+	panicassert.RequireValue(t, errNilRandom, func() {
 		_ = RandomSourceFunc(func() RandomGenerator { return nil }).NewRandom()
 	})
 }
@@ -46,7 +47,7 @@ func TestRandomSourceFuncReturnsGenerator(t *testing.T) {
 func TestRandomFuncRejectsNilFunction(t *testing.T) {
 	var random RandomFunc
 
-	mustPanicWith(t, errNilRandomFunc, func() {
+	panicassert.RequireValue(t, errNilRandomFunc, func() {
 		_ = random.Int63()
 	})
 }
@@ -67,7 +68,7 @@ func TestDefaultRandomSourceReturnsGenerator(t *testing.T) {
 }
 
 func TestRandomDurationInclusiveRejectsNilRandom(t *testing.T) {
-	mustPanicWith(t, errNilRandom, func() {
+	panicassert.RequireValue(t, errNilRandom, func() {
 		_ = randomDurationInclusive(nil, time.Second)
 	})
 }

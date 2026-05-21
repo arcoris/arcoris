@@ -17,6 +17,8 @@
 package signals
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"errors"
 	"os"
@@ -50,7 +52,7 @@ func TestSubscribeWithOptionsRejectsNilSignal(t *testing.T) {
 
 	n := &fakeNotifier{}
 
-	mustPanicWith(t, errNilSignalSetSignal, func() {
+	panicassert.RequireMessage(t, errNilSignalSetSignal, func() {
 		SubscribeWithOptions([]os.Signal{nil}, withNotifier(n))
 	})
 }
@@ -118,7 +120,7 @@ func TestSubscriptionStopIsIdempotentAndClosesDone(t *testing.T) {
 	if !n.stopped() {
 		t.Fatal("notifier was not marked stopped")
 	}
-	mustClose(t, sub.Done())
+	channelassert.RequireClosed(t, sub.Done(), testTimeout)
 }
 
 func TestSubscriptionChannelAccessor(t *testing.T) {
@@ -204,7 +206,7 @@ func TestSubscriptionRejectsNilReceiver(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNilSubscription, func() {
+			panicassert.RequireMessage(t, errNilSubscription, func() {
 				tc.fn(nil)
 			})
 		})
@@ -218,7 +220,7 @@ func TestSubscriptionWaitRejectsNilContext(t *testing.T) {
 	sub := SubscribeWithOptions([]os.Signal{testSIGINT}, withNotifier(n))
 	defer sub.Stop()
 
-	mustPanicWith(t, errNilSubscriptionContext, func() {
+	panicassert.RequireMessage(t, errNilSubscriptionContext, func() {
 		sub.Wait(nil)
 	})
 }

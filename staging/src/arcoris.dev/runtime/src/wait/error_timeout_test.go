@@ -17,6 +17,7 @@
 package wait
 
 import (
+	errorassert "arcoris.dev/testutil/errors"
 	"context"
 	"errors"
 	"testing"
@@ -95,9 +96,9 @@ func TestNewTimeoutErrorWithCause(t *testing.T) {
 
 	mustBeTimedOut(t, err)
 	mustBeInterrupted(t, err)
-	mustMatch(t, err, cause)
-	mustUnwrapTo(t, err, cause)
-	mustHaveMessage(t, err, "wait: timeout: context deadline exceeded")
+	errorassert.RequireIs(t, err, cause)
+	errorassert.RequireUnwrapsTo(t, err, cause)
+	errorassert.RequireMessage(t, err, "wait: timeout: context deadline exceeded")
 }
 
 // TestNewTimeoutErrorWithNilCause verifies that a nil cause still produces a
@@ -109,8 +110,8 @@ func TestNewTimeoutErrorWithNilCause(t *testing.T) {
 
 	mustBeTimedOut(t, err)
 	mustBeInterrupted(t, err)
-	mustUnwrapTo(t, err, nil)
-	mustHaveMessage(t, err, "wait: timeout")
+	errorassert.RequireUnwrapsTo(t, err, nil)
+	errorassert.RequireMessage(t, err, "wait: timeout")
 }
 
 // TestNewTimeoutErrorPreservesAlreadyTimedOutErrors verifies idempotent wrapping
@@ -153,9 +154,9 @@ func TestNewTimeoutErrorCanWrapInterruptedCause(t *testing.T) {
 
 	mustBeTimedOut(t, err)
 	mustBeInterrupted(t, err)
-	mustMatch(t, err, context.Canceled)
-	mustUnwrapTo(t, err, cause)
-	mustHaveMessage(t, err, "wait: timeout: wait: interrupted: context canceled")
+	errorassert.RequireIs(t, err, context.Canceled)
+	errorassert.RequireUnwrapsTo(t, err, cause)
+	errorassert.RequireMessage(t, err, "wait: timeout: wait: interrupted: context canceled")
 }
 
 // TestWrappedTimeoutErrorRemainsClassified verifies timeout classification

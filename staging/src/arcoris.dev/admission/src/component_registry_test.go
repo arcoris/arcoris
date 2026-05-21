@@ -15,6 +15,7 @@
 package admission
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"errors"
 	"sync"
 	"testing"
@@ -203,19 +204,19 @@ func TestComponentRegistryNilReceiverPanics(t *testing.T) {
 	t.Parallel()
 
 	var registry *ComponentRegistry
-	assertPanicString(t, nilComponentRegistryPanic, func() {
+	panicassert.RequireMessage(t, nilComponentRegistryPanic, func() {
 		_ = registry.Register(testComponentDescriptor("resilience.bulkhead", KindBulkhead))
 	})
-	assertPanicString(t, nilComponentRegistryPanic, func() {
+	panicassert.RequireMessage(t, nilComponentRegistryPanic, func() {
 		_, _ = registry.Lookup("resilience.bulkhead")
 	})
-	assertPanicString(t, nilComponentRegistryPanic, func() {
+	panicassert.RequireMessage(t, nilComponentRegistryPanic, func() {
 		_ = registry.Contains("resilience.bulkhead")
 	})
-	assertPanicString(t, nilComponentRegistryPanic, func() {
+	panicassert.RequireMessage(t, nilComponentRegistryPanic, func() {
 		_ = registry.List()
 	})
-	assertPanicString(t, nilComponentRegistryPanic, func() {
+	panicassert.RequireMessage(t, nilComponentRegistryPanic, func() {
 		_ = registry.Len()
 	})
 }

@@ -17,51 +17,12 @@
 package run
 
 import (
-	"fmt"
 	"runtime"
 	"testing"
 	"time"
 )
 
 const testTimeout = time.Second
-
-func mustPanicWith(t *testing.T, want string, fn func()) {
-	t.Helper()
-
-	defer func() {
-		recovered := recover()
-		if recovered == nil {
-			t.Fatalf("expected panic %q", want)
-		}
-
-		got := fmt.Sprint(recovered)
-		if got != want {
-			t.Fatalf("panic = %q, want %q", got, want)
-		}
-	}()
-
-	fn()
-}
-
-func mustClose[T any](t *testing.T, ch <-chan T) {
-	t.Helper()
-
-	select {
-	case <-ch:
-	case <-time.After(testTimeout):
-		t.Fatal("timed out waiting for channel close")
-	}
-}
-
-func mustNotCloseNow[T any](t *testing.T, ch <-chan T) {
-	t.Helper()
-
-	select {
-	case <-ch:
-		t.Fatal("channel closed unexpectedly")
-	default:
-	}
-}
 
 func waitGroupTaskErrorCount(t *testing.T, group *Group, want int) {
 	t.Helper()

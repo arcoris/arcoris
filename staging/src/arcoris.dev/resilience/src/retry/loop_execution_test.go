@@ -17,6 +17,7 @@
 package retry
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"errors"
 	"testing"
@@ -53,7 +54,7 @@ func TestNewRetryExecutionPanicsWhenDelayScheduleReturnsNilSequence(t *testing.T
 	cfg := configOf()
 	cfg.delay = retryTestSchedule{}
 
-	expectPanic(t, panicNilDelaySequence, func() {
+	panicassert.RequireValue(t, panicNilDelaySequence, func() {
 		_ = newRetryExecution(cfg)
 	})
 }
@@ -126,7 +127,7 @@ func TestRetryExecutionNextDelayPanicsOnNegativeDelay(t *testing.T) {
 		sequence: &retryTestSequence{delays: []time.Duration{-time.Nanosecond}},
 	}
 
-	expectPanic(t, panicNegativeDelay, func() {
+	panicassert.RequireValue(t, panicNegativeDelay, func() {
 		_, _ = execution.nextDelay()
 	})
 }

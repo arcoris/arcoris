@@ -17,15 +17,16 @@
 package delay
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"testing"
 	"time"
 )
 
 func TestLinearRejectsNegativeInput(t *testing.T) {
-	mustPanicWith(t, errNegativeLinearInitialDelay, func() {
+	panicassert.RequireValue(t, errNegativeLinearInitialDelay, func() {
 		Linear(-time.Nanosecond, time.Second)
 	})
-	mustPanicWith(t, errNegativeLinearStep, func() {
+	panicassert.RequireValue(t, errNegativeLinearStep, func() {
 		Linear(0, -time.Nanosecond)
 	})
 }

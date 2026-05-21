@@ -17,34 +17,35 @@
 package jitter
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"math"
 	"testing"
 	"time"
 )
 
 func TestDecorrelatedRejectsInvalidInput(t *testing.T) {
-	mustPanicWith(t, errNonPositiveDecorrelatedInitialDelay, func() {
+	panicassert.RequireValue(t, errNonPositiveDecorrelatedInitialDelay, func() {
 		Decorrelated(0, time.Second, 2)
 	})
-	mustPanicWith(t, errNonPositiveDecorrelatedInitialDelay, func() {
+	panicassert.RequireValue(t, errNonPositiveDecorrelatedInitialDelay, func() {
 		Decorrelated(-time.Nanosecond, time.Second, 2)
 	})
-	mustPanicWith(t, errDecorrelatedMaxDelayBeforeInitialDelay, func() {
+	panicassert.RequireValue(t, errDecorrelatedMaxDelayBeforeInitialDelay, func() {
 		Decorrelated(time.Second, time.Millisecond, 2)
 	})
-	mustPanicWith(t, errInvalidDecorrelatedMultiplier, func() {
+	panicassert.RequireValue(t, errInvalidDecorrelatedMultiplier, func() {
 		Decorrelated(time.Second, 2*time.Second, 1)
 	})
-	mustPanicWith(t, errInvalidDecorrelatedMultiplier, func() {
+	panicassert.RequireValue(t, errInvalidDecorrelatedMultiplier, func() {
 		Decorrelated(time.Second, 2*time.Second, math.NaN())
 	})
-	mustPanicWith(t, errInvalidDecorrelatedMultiplier, func() {
+	panicassert.RequireValue(t, errInvalidDecorrelatedMultiplier, func() {
 		Decorrelated(time.Second, 2*time.Second, math.Inf(1))
 	})
-	mustPanicWith(t, errNilRandomOption, func() {
+	panicassert.RequireValue(t, errNilRandomOption, func() {
 		Decorrelated(time.Second, 2*time.Second, 2, nil)
 	})
-	mustPanicWith(t, errNilDecorrelatedSource, func() {
+	panicassert.RequireValue(t, errNilDecorrelatedSource, func() {
 		decorrelatedJitterWithSource(time.Second, 2*time.Second, 2, nil)
 	})
 }

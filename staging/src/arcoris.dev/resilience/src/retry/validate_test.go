@@ -17,6 +17,7 @@
 package retry
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"testing"
 	"time"
@@ -28,7 +29,7 @@ import (
 func TestRequireContext(t *testing.T) {
 	requireContext(context.Background())
 
-	expectPanic(t, panicNilContext, func() {
+	panicassert.RequireValue(t, panicNilContext, func() {
 		requireContext(nil)
 	})
 }
@@ -38,7 +39,7 @@ func TestRequireOperation(t *testing.T) {
 		return nil
 	})
 
-	expectPanic(t, panicNilOperation, func() {
+	panicassert.RequireValue(t, panicNilOperation, func() {
 		requireOperation(nil)
 	})
 }
@@ -48,7 +49,7 @@ func TestRequireValueOperation(t *testing.T) {
 		return 0, nil
 	})
 
-	expectPanic(t, panicNilValueOperation, func() {
+	panicassert.RequireValue(t, panicNilValueOperation, func() {
 		requireValueOperation[int](nil)
 	})
 }
@@ -56,7 +57,7 @@ func TestRequireValueOperation(t *testing.T) {
 func TestRequireClock(t *testing.T) {
 	requireClock(clock.RealClock{})
 
-	expectPanic(t, panicNilClock, func() {
+	panicassert.RequireValue(t, panicNilClock, func() {
 		requireClock(nil)
 	})
 }
@@ -64,7 +65,7 @@ func TestRequireClock(t *testing.T) {
 func TestRequireDelaySchedule(t *testing.T) {
 	requireDelaySchedule(delay.Immediate())
 
-	expectPanic(t, panicNilDelaySchedule, func() {
+	panicassert.RequireValue(t, panicNilDelaySchedule, func() {
 		requireDelaySchedule(nil)
 	})
 }
@@ -72,7 +73,7 @@ func TestRequireDelaySchedule(t *testing.T) {
 func TestRequireDelayScheduleSequence(t *testing.T) {
 	requireDelaySequence(delay.Immediate().NewSequence())
 
-	expectPanic(t, panicNilDelaySequence, func() {
+	panicassert.RequireValue(t, panicNilDelaySequence, func() {
 		requireDelaySequence(nil)
 	})
 }
@@ -82,7 +83,7 @@ func TestRequireDelayScheduleDelay(t *testing.T) {
 	requireDelay(time.Nanosecond, true)
 	requireDelay(-time.Nanosecond, false)
 
-	expectPanic(t, panicNegativeDelay, func() {
+	panicassert.RequireValue(t, panicNegativeDelay, func() {
 		requireDelay(-time.Nanosecond, true)
 	})
 }
@@ -90,7 +91,7 @@ func TestRequireDelayScheduleDelay(t *testing.T) {
 func TestRequireClassifier(t *testing.T) {
 	requireClassifier(NeverRetry())
 
-	expectPanic(t, panicNilClassifier, func() {
+	panicassert.RequireValue(t, panicNilClassifier, func() {
 		requireClassifier(nil)
 	})
 }
@@ -100,7 +101,7 @@ func TestRequireRetryableFunc(t *testing.T) {
 		return false
 	})
 
-	expectPanic(t, panicNilClassifierFunc, func() {
+	panicassert.RequireValue(t, panicNilClassifierFunc, func() {
 		requireRetryableFunc(nil)
 	})
 }
@@ -109,7 +110,7 @@ func TestRequireMaxAttempts(t *testing.T) {
 	requireMaxAttempts(1)
 	requireMaxAttempts(10)
 
-	expectPanic(t, panicZeroMaxAttempts, func() {
+	panicassert.RequireValue(t, panicZeroMaxAttempts, func() {
 		requireMaxAttempts(0)
 	})
 }
@@ -118,7 +119,7 @@ func TestRequireMaxElapsed(t *testing.T) {
 	requireMaxElapsed(0)
 	requireMaxElapsed(time.Nanosecond)
 
-	expectPanic(t, panicNegativeMaxElapsed, func() {
+	panicassert.RequireValue(t, panicNegativeMaxElapsed, func() {
 		requireMaxElapsed(-time.Nanosecond)
 	})
 }
@@ -126,7 +127,7 @@ func TestRequireMaxElapsed(t *testing.T) {
 func TestRequireObserver(t *testing.T) {
 	requireObserver(ObserverFunc(func(context.Context, Event) {}))
 
-	expectPanic(t, panicNilObserver, func() {
+	panicassert.RequireValue(t, panicNilObserver, func() {
 		requireObserver(nil)
 	})
 }
@@ -134,7 +135,7 @@ func TestRequireObserver(t *testing.T) {
 func TestRequireObserverFunc(t *testing.T) {
 	requireObserverFunc(func(context.Context, Event) {})
 
-	expectPanic(t, panicNilObserverFunc, func() {
+	panicassert.RequireValue(t, panicNilObserverFunc, func() {
 		requireObserverFunc(nil)
 	})
 }
@@ -142,7 +143,7 @@ func TestRequireObserverFunc(t *testing.T) {
 func TestRequireOption(t *testing.T) {
 	requireOption(func(*config) {})
 
-	expectPanic(t, panicNilOption, func() {
+	panicassert.RequireValue(t, panicNilOption, func() {
 		requireOption(nil)
 	})
 }

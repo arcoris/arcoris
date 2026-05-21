@@ -17,15 +17,16 @@
 package delay
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"testing"
 	"time"
 )
 
 func TestFibonacciRejectsNonPositiveBaseDelay(t *testing.T) {
-	mustPanicWith(t, errNonPositiveFibonacciBaseDelay, func() {
+	panicassert.RequireValue(t, errNonPositiveFibonacciBaseDelay, func() {
 		Fibonacci(0)
 	})
-	mustPanicWith(t, errNonPositiveFibonacciBaseDelay, func() {
+	panicassert.RequireValue(t, errNonPositiveFibonacciBaseDelay, func() {
 		Fibonacci(-time.Nanosecond)
 	})
 }

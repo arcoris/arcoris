@@ -17,6 +17,7 @@
 package retry
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"errors"
 	"testing"
@@ -152,7 +153,7 @@ func TestDoReturnsInterruptedWhenContextAlreadyStopped(t *testing.T) {
 }
 
 func TestDoPanicsOnNilContext(t *testing.T) {
-	expectPanic(t, panicNilContext, func() {
+	panicassert.RequireValue(t, panicNilContext, func() {
 		_ = Do(nil, func(context.Context) error {
 			return nil
 		})
@@ -160,13 +161,13 @@ func TestDoPanicsOnNilContext(t *testing.T) {
 }
 
 func TestDoPanicsOnNilOperation(t *testing.T) {
-	expectPanic(t, panicNilOperation, func() {
+	panicassert.RequireValue(t, panicNilOperation, func() {
 		_ = Do(context.Background(), nil)
 	})
 }
 
 func TestDoPanicsOnNilOption(t *testing.T) {
-	expectPanic(t, panicNilOption, func() {
+	panicassert.RequireValue(t, panicNilOption, func() {
 		_ = Do(
 			context.Background(),
 			func(context.Context) error {

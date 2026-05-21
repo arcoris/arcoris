@@ -17,6 +17,7 @@
 package jitter
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"math"
 	"testing"
 	"time"
@@ -27,7 +28,7 @@ import (
 const testValidationMessage = "jitter: test validation failure"
 
 func TestRequireValidationMessageRejectsEmptyMessage(t *testing.T) {
-	mustPanicWith(t, errNilValidationMessage, func() {
+	panicassert.RequireValue(t, errNilValidationMessage, func() {
 		requireValidationMessage("")
 	})
 }
@@ -52,7 +53,7 @@ func TestRequireValidationHelpersRejectInvalidInput(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			mustPanicWith(t, testValidationMessage, tc.fn)
+			panicassert.RequireValue(t, testValidationMessage, tc.fn)
 		})
 	}
 }
@@ -60,7 +61,7 @@ func TestRequireValidationHelpersRejectInvalidInput(t *testing.T) {
 func TestRequireJitterFactorRejectsInvalidValues(t *testing.T) {
 	for _, val := range []float64{-1, math.NaN(), math.Inf(1)} {
 		t.Run("invalid", func(t *testing.T) {
-			mustPanicWith(t, errInvalidJitterFactor, func() {
+			panicassert.RequireValue(t, errInvalidJitterFactor, func() {
 				requireJitterFactor(val)
 			})
 		})
@@ -70,7 +71,7 @@ func TestRequireJitterFactorRejectsInvalidValues(t *testing.T) {
 func TestRequireJitterRatioRejectsInvalidValues(t *testing.T) {
 	for _, val := range []float64{-1, 1.1, math.NaN(), math.Inf(1)} {
 		t.Run("invalid", func(t *testing.T) {
-			mustPanicWith(t, errInvalidJitterRatio, func() {
+			panicassert.RequireValue(t, errInvalidJitterRatio, func() {
 				requireJitterRatio(val)
 			})
 		})

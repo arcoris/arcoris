@@ -17,12 +17,13 @@
 package delay
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"testing"
 	"time"
 )
 
 func TestDelaysRejectsNegativeDelay(t *testing.T) {
-	mustPanicWith(t, errNegativeExplicitDelay, func() {
+	panicassert.RequireValue(t, errNegativeExplicitDelay, func() {
 		Delays(time.Second, -time.Nanosecond)
 	})
 }

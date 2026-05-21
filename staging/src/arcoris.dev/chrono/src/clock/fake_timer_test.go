@@ -17,6 +17,7 @@
 package clock
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
 	"testing"
 	"time"
 )
@@ -53,7 +54,7 @@ func TestFakeTimerDoesNotFireBeforeDeadline(t *testing.T) {
 
 	clk.Step(9 * time.Second)
 
-	mustNotReceiveTime(t, timer.C())
+	channelassert.RequireNoReceive(t, timer.C())
 }
 
 // TestFakeTimerFiresWhenDeadlineIsReached verifies that a fake timer delivers
@@ -67,8 +68,8 @@ func TestFakeTimerFiresWhenDeadlineIsReached(t *testing.T) {
 
 	clk.Step(10 * time.Second)
 
-	mustEqualTime(t, "timer delivery", mustReceiveTime(t, timer.C()), start.Add(10*time.Second))
-	mustNotReceiveTime(t, timer.C())
+	mustEqualTime(t, "timer delivery", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start.Add(10*time.Second))
+	channelassert.RequireNoReceive(t, timer.C())
 }
 
 // TestFakeTimerFiresWhenDeadlineIsPassed verifies that fake timers fire when
@@ -82,8 +83,8 @@ func TestFakeTimerFiresWhenDeadlineIsPassed(t *testing.T) {
 
 	clk.Step(30 * time.Second)
 
-	mustEqualTime(t, "timer delivery", mustReceiveTime(t, timer.C()), start.Add(30*time.Second))
-	mustNotReceiveTime(t, timer.C())
+	mustEqualTime(t, "timer delivery", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start.Add(30*time.Second))
+	channelassert.RequireNoReceive(t, timer.C())
 }
 
 // TestFakeTimerNonPositiveDurationIsImmediatelyReady verifies that fake timers
@@ -115,8 +116,8 @@ func TestFakeTimerNonPositiveDurationIsImmediatelyReady(t *testing.T) {
 			clk := NewFakeClock(start)
 			timer := clk.NewTimer(tc.d)
 
-			mustEqualTime(t, "timer immediate delivery", mustReceiveTime(t, timer.C()), start)
-			mustNotReceiveTime(t, timer.C())
+			mustEqualTime(t, "timer immediate delivery", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start)
+			channelassert.RequireNoReceive(t, timer.C())
 		})
 	}
 }
@@ -135,7 +136,7 @@ func TestFakeTimerStopPreventsDelivery(t *testing.T) {
 
 	clk.Step(10 * time.Second)
 
-	mustNotReceiveTime(t, timer.C())
+	channelassert.RequireNoReceive(t, timer.C())
 
 	if stopped := timer.Stop(); stopped {
 		t.Fatal("second fakeTimer.Stop() = true, want false")
@@ -151,7 +152,7 @@ func TestFakeTimerStopAfterFireReportsInactive(t *testing.T) {
 	timer := clk.NewTimer(5 * time.Second)
 
 	clk.Step(5 * time.Second)
-	_ = mustReceiveTime(t, timer.C())
+	_ = channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
 
 	if stopped := timer.Stop(); stopped {
 		t.Fatal("fakeTimer.Stop() after fired timer = true, want false")
@@ -172,10 +173,10 @@ func TestFakeTimerResetActiveTimerMovesDeadline(t *testing.T) {
 	}
 
 	clk.Step(19 * time.Second)
-	mustNotReceiveTime(t, timer.C())
+	channelassert.RequireNoReceive(t, timer.C())
 
 	clk.Step(time.Second)
-	mustEqualTime(t, "timer delivery after Reset", mustReceiveTime(t, timer.C()), start.Add(20*time.Second))
+	mustEqualTime(t, "timer delivery after Reset", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start.Add(20*time.Second))
 }
 
 // TestFakeTimerResetStoppedTimerReactivates verifies that Reset can reuse a
@@ -197,7 +198,7 @@ func TestFakeTimerResetStoppedTimerReactivates(t *testing.T) {
 
 	clk.Step(5 * time.Second)
 
-	mustEqualTime(t, "timer delivery after Reset from stopped state", mustReceiveTime(t, timer.C()), start.Add(5*time.Second))
+	mustEqualTime(t, "timer delivery after Reset from stopped state", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start.Add(5*time.Second))
 }
 
 // TestFakeTimerResetFiredTimerReactivates verifies timer reuse after an earlier
@@ -210,7 +211,7 @@ func TestFakeTimerResetFiredTimerReactivates(t *testing.T) {
 	timer := clk.NewTimer(5 * time.Second)
 
 	clk.Step(5 * time.Second)
-	_ = mustReceiveTime(t, timer.C())
+	_ = channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
 
 	if wasActive := timer.Reset(3 * time.Second); wasActive {
 		t.Fatal("fakeTimer.Reset() after fire = true, want false")
@@ -218,7 +219,7 @@ func TestFakeTimerResetFiredTimerReactivates(t *testing.T) {
 
 	clk.Step(3 * time.Second)
 
-	mustEqualTime(t, "timer delivery after Reset from fired state", mustReceiveTime(t, timer.C()), start.Add(8*time.Second))
+	mustEqualTime(t, "timer delivery after Reset from fired state", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start.Add(8*time.Second))
 }
 
 // TestFakeTimerResetNonPositiveDurationDeliversImmediately verifies immediate
@@ -254,8 +255,8 @@ func TestFakeTimerResetNonPositiveDurationDeliversImmediately(t *testing.T) {
 				t.Fatal("fakeTimer.Reset(non-positive) for active timer = false, want true")
 			}
 
-			mustEqualTime(t, "timer immediate delivery after Reset", mustReceiveTime(t, timer.C()), start)
-			mustNotReceiveTime(t, timer.C())
+			mustEqualTime(t, "timer immediate delivery after Reset", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start)
+			channelassert.RequireNoReceive(t, timer.C())
 		})
 	}
 }
@@ -278,8 +279,8 @@ func TestFakeTimerResetDropsImmediateDeliveryWhenChannelIsFull(t *testing.T) {
 		timer.Reset(0)
 		close(done)
 	}()
-	mustReceiveSignal(t, done)
+	channelassert.RequireSignal(t, done, clockTestTimeout)
 
-	mustEqualTime(t, "stale timer delivery", mustReceiveTime(t, timer.C()), start.Add(5*time.Second))
-	mustNotReceiveTime(t, timer.C())
+	mustEqualTime(t, "stale timer delivery", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start.Add(5*time.Second))
+	channelassert.RequireNoReceive(t, timer.C())
 }

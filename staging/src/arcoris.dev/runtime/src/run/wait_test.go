@@ -17,6 +17,7 @@
 package run
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"errors"
 	"testing"
@@ -48,7 +49,7 @@ func TestWaitFallsBackToContextErr(t *testing.T) {
 func TestWaitRejectsNilContext(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilWaitContext, func() {
+	panicassert.RequireMessage(t, errNilWaitContext, func() {
 		Wait(nil)
 	})
 }

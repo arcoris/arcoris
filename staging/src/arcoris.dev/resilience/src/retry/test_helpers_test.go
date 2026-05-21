@@ -18,44 +18,12 @@ package retry
 
 import (
 	"context"
-	"errors"
 	"sync"
-	"testing"
 	"time"
 
 	"arcoris.dev/chrono/clock"
 	"arcoris.dev/chrono/delay"
 )
-
-// expectPanic asserts that fn panics with want or an error matching want.
-//
-// Retry exposes both stable string diagnostics and sentinel-wrapping errors.
-// This helper supports exact panic values and errors.Is matching without
-// weakening tests that expect a non-error panic payload.
-func expectPanic(t *testing.T, want any, fn func()) {
-	t.Helper()
-
-	defer func() {
-		recovered := recover()
-		if recovered == nil {
-			t.Fatalf("function did not panic")
-		}
-		if !errors.Is(asError(recovered), asError(want)) && recovered != want {
-			t.Fatalf("panic = %v, want %v", recovered, want)
-		}
-	}()
-
-	fn()
-}
-
-// asError returns v when it is an error and nil otherwise.
-func asError(v any) error {
-	err, ok := v.(error)
-	if !ok {
-		return nil
-	}
-	return err
-}
 
 // retryTestAttempt returns deterministic attempt metadata for n.
 func retryTestAttempt(n uint) Attempt {

@@ -17,6 +17,7 @@
 package clock
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
 	"testing"
 	"time"
 
@@ -90,7 +91,7 @@ func TestFakeTickerDoesNotTickBeforeInterval(t *testing.T) {
 
 	clk.Step(9 * time.Second)
 
-	mustNotReceiveTime(t, ticker.C())
+	channelassert.RequireNoReceive(t, ticker.C())
 }
 
 // TestFakeTickerTicksWhenIntervalIsReached verifies the first periodic tick.
@@ -104,8 +105,8 @@ func TestFakeTickerTicksWhenIntervalIsReached(t *testing.T) {
 
 	clk.Step(10 * time.Second)
 
-	mustEqualTime(t, "ticker delivery", mustReceiveTime(t, ticker.C()), start.Add(10*time.Second))
-	mustNotReceiveTime(t, ticker.C())
+	mustEqualTime(t, "ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(10*time.Second))
+	channelassert.RequireNoReceive(t, ticker.C())
 }
 
 // TestFakeTickerTicksRepeatedlyAcrossAdvanceCalls verifies repeated periodic
@@ -119,13 +120,13 @@ func TestFakeTickerTicksRepeatedlyAcrossAdvanceCalls(t *testing.T) {
 	defer ticker.Stop()
 
 	clk.Step(5 * time.Second)
-	mustEqualTime(t, "first ticker delivery", mustReceiveTime(t, ticker.C()), start.Add(5*time.Second))
+	mustEqualTime(t, "first ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(5*time.Second))
 
 	clk.Step(5 * time.Second)
-	mustEqualTime(t, "second ticker delivery", mustReceiveTime(t, ticker.C()), start.Add(10*time.Second))
+	mustEqualTime(t, "second ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(10*time.Second))
 
 	clk.Step(5 * time.Second)
-	mustEqualTime(t, "third ticker delivery", mustReceiveTime(t, ticker.C()), start.Add(15*time.Second))
+	mustEqualTime(t, "third ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(15*time.Second))
 }
 
 // TestFakeTickerDeliversAtMostOneTickPerAdvance verifies the documented fake
@@ -141,11 +142,11 @@ func TestFakeTickerDeliversAtMostOneTickPerAdvance(t *testing.T) {
 
 	clk.Step(30 * time.Second)
 
-	mustEqualTime(t, "ticker delivery after large Step", mustReceiveTime(t, ticker.C()), start.Add(30*time.Second))
-	mustNotReceiveTime(t, ticker.C())
+	mustEqualTime(t, "ticker delivery after large Step", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(30*time.Second))
+	channelassert.RequireNoReceive(t, ticker.C())
 
 	clk.Step(5 * time.Second)
-	mustEqualTime(t, "ticker delivery after next Step", mustReceiveTime(t, ticker.C()), start.Add(35*time.Second))
+	mustEqualTime(t, "ticker delivery after next Step", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(35*time.Second))
 }
 
 // TestFakeTickerStopPreventsFutureTicks verifies that Stop removes the ticker
@@ -159,7 +160,7 @@ func TestFakeTickerStopPreventsFutureTicks(t *testing.T) {
 	ticker.Stop()
 
 	clk.Step(5 * time.Second)
-	mustNotReceiveTime(t, ticker.C())
+	channelassert.RequireNoReceive(t, ticker.C())
 
 	ticker.Stop()
 }
@@ -179,10 +180,10 @@ func TestFakeTickerResetChangesInterval(t *testing.T) {
 	ticker.Reset(3 * time.Second)
 
 	clk.Step(2 * time.Second)
-	mustNotReceiveTime(t, ticker.C())
+	channelassert.RequireNoReceive(t, ticker.C())
 
 	clk.Step(time.Second)
-	mustEqualTime(t, "ticker delivery after Reset", mustReceiveTime(t, ticker.C()), start.Add(7*time.Second))
+	mustEqualTime(t, "ticker delivery after Reset", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(7*time.Second))
 }
 
 // TestFakeTickerResetStoppedTickerReactivates verifies that Reset can reactivate
@@ -200,7 +201,7 @@ func TestFakeTickerResetStoppedTickerReactivates(t *testing.T) {
 
 	clk.Step(3 * time.Second)
 
-	mustEqualTime(t, "ticker delivery after Reset from stopped state", mustReceiveTime(t, ticker.C()), start.Add(3*time.Second))
+	mustEqualTime(t, "ticker delivery after Reset from stopped state", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(3*time.Second))
 }
 
 // TestFakeTickerResetDropsDeliveryWhenChannelIsFull documents that Reset does
@@ -219,8 +220,8 @@ func TestFakeTickerResetDropsDeliveryWhenChannelIsFull(t *testing.T) {
 	ticker.Reset(3 * time.Second)
 	clk.Step(3 * time.Second)
 
-	mustEqualTime(t, "stale ticker delivery", mustReceiveTime(t, ticker.C()), start.Add(5*time.Second))
-	mustNotReceiveTime(t, ticker.C())
+	mustEqualTime(t, "stale ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(5*time.Second))
+	channelassert.RequireNoReceive(t, ticker.C())
 }
 
 // TestFakeTickerResetPanicsForNonPositiveInterval verifies Reset uses the same
@@ -269,7 +270,7 @@ func TestFakeTickerDropsDeliveryWhenChannelIsFull(t *testing.T) {
 	defer ticker.Stop()
 
 	clk.Step(5 * time.Second)
-	mustEqualTime(t, "first ticker delivery", mustReceiveTime(t, ticker.C()), start.Add(5*time.Second))
+	mustEqualTime(t, "first ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(5*time.Second))
 
 	clk.Step(5 * time.Second)
 
@@ -278,8 +279,8 @@ func TestFakeTickerDropsDeliveryWhenChannelIsFull(t *testing.T) {
 		clk.Step(5 * time.Second)
 		close(done)
 	}()
-	mustReceiveSignal(t, done)
+	channelassert.RequireSignal(t, done, clockTestTimeout)
 
-	mustEqualTime(t, "second ticker delivery", mustReceiveTime(t, ticker.C()), start.Add(10*time.Second))
-	mustNotReceiveTime(t, ticker.C())
+	mustEqualTime(t, "second ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(10*time.Second))
+	channelassert.RequireNoReceive(t, ticker.C())
 }

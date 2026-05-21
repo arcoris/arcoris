@@ -17,6 +17,7 @@
 package lifecycle
 
 import (
+	errorassert "arcoris.dev/testutil/errors"
 	"context"
 	"errors"
 	"strings"
@@ -50,7 +51,7 @@ func TestWaitErrorNilReceiver(t *testing.T) {
 	if got := err.Error(); got != ErrWaitTargetUnreachable.Error() {
 		t.Fatalf("nil Error() = %q, want %q", got, ErrWaitTargetUnreachable.Error())
 	}
-	mustMatch(t, err, ErrWaitTargetUnreachable)
+	errorassert.RequireIs(t, err, ErrWaitTargetUnreachable)
 }
 
 func TestWaitErrorUnwrap(t *testing.T) {

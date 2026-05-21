@@ -16,7 +16,11 @@
 
 package clock
 
-import "testing"
+import (
+	channelassert "arcoris.dev/testutil/channel"
+
+	"testing"
+)
 
 // TestNewFakeClockInitializesCurrentTime verifies that the constructor stores
 // the exact initial fake time chosen by the test.
@@ -95,9 +99,9 @@ func TestFakeClockRegistriesBecomeEmptyAfterDueDelivery(t *testing.T) {
 
 	clk.Step(5)
 
-	_ = mustReceiveTime(t, waiter)
-	_ = mustReceiveTime(t, timer.C())
-	_ = mustReceiveTime(t, ticker.C())
+	_ = channelassert.RequireReceive(t, waiter, clockTestTimeout)
+	_ = channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	_ = channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
 
 	ticker.Stop()
 

@@ -17,6 +17,7 @@
 package jitter
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"testing"
 	"time"
 
@@ -24,7 +25,7 @@ import (
 )
 
 func TestFullRejectsNilSchedule(t *testing.T) {
-	mustPanicWith(t, errNilJitterSchedule, func() {
+	panicassert.RequireValue(t, errNilJitterSchedule, func() {
 		Full(nil)
 	})
 }

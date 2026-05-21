@@ -17,6 +17,7 @@
 package jitter
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"math"
 	"testing"
 	"time"
@@ -25,16 +26,16 @@ import (
 )
 
 func TestPositiveRejectsInvalidInput(t *testing.T) {
-	mustPanicWith(t, errNilJitterSchedule, func() {
+	panicassert.RequireValue(t, errNilJitterSchedule, func() {
 		Positive(nil, 0.1)
 	})
-	mustPanicWith(t, errInvalidJitterFactor, func() {
+	panicassert.RequireValue(t, errInvalidJitterFactor, func() {
 		Positive(delay.Fixed(time.Second), -0.1)
 	})
-	mustPanicWith(t, errInvalidJitterFactor, func() {
+	panicassert.RequireValue(t, errInvalidJitterFactor, func() {
 		Positive(delay.Fixed(time.Second), math.NaN())
 	})
-	mustPanicWith(t, errInvalidJitterFactor, func() {
+	panicassert.RequireValue(t, errInvalidJitterFactor, func() {
 		Positive(delay.Fixed(time.Second), math.Inf(1))
 	})
 }

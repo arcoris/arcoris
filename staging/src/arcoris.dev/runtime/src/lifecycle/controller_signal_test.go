@@ -17,8 +17,10 @@
 package lifecycle
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
 	"context"
 	"testing"
+	"time"
 )
 
 func TestControllerSignalZeroValueInitializesThroughPublicOperations(t *testing.T) {
@@ -32,7 +34,7 @@ func TestControllerSignalZeroValueInitializesThroughPublicOperations(t *testing.
 		t.Fatal("Done returned nil for zero-value Controller")
 	}
 	_, _ = controller.BeginStop()
-	mustSignalClosed(t, done)
+	channelassert.RequireSignal(t, done, time.Second)
 }
 
 func TestControllerSignalDoneChannelStable(t *testing.T) {
@@ -52,8 +54,8 @@ func TestControllerSignalDoneClosesExactlyOnceOnTerminalTransition(t *testing.T)
 	controller := NewController()
 	done := controller.Done()
 	_, _ = controller.BeginStop()
-	mustSignalClosed(t, done)
-	mustSignalClosed(t, controller.Done())
+	channelassert.RequireSignal(t, done, time.Second)
+	channelassert.RequireSignal(t, controller.Done(), time.Second)
 }
 
 func TestControllerSignalChangedWakesWaitersAfterNonTerminalTransition(t *testing.T) {
@@ -67,7 +69,7 @@ func TestControllerSignalChangedWakesWaitersAfterNonTerminalTransition(t *testin
 	}()
 
 	_, _ = controller.BeginStart()
-	if got := mustReceiveSnapshot(t, results); got.State != StateStarting {
+	if got := channelassert.RequireReceive(t, results, time.Second); got.State != StateStarting {
 		t.Fatalf("waited snapshot state = %s, want starting", got.State)
 	}
 }
@@ -87,8 +89,8 @@ func TestControllerSignalChangedRotatesForNonTerminalTransition(t *testing.T) {
 	if firstDone != secondDone {
 		t.Fatal("done channel rotated before terminal transition")
 	}
-	mustSignalClosed(t, firstChanged)
-	mustNotSignalClosed(t, secondChanged)
+	channelassert.RequireSignal(t, firstChanged, time.Second)
+	channelassert.RequireNoSignal(t, secondChanged)
 }
 
 func TestControllerSignalTerminalClosesChangedAndDoneWithoutRotation(t *testing.T) {
@@ -104,8 +106,8 @@ func TestControllerSignalTerminalClosesChangedAndDoneWithoutRotation(t *testing.
 	if done != afterDone {
 		t.Fatal("done channel rotated after terminal transition")
 	}
-	mustSignalClosed(t, changed)
-	mustSignalClosed(t, done)
+	channelassert.RequireSignal(t, changed, time.Second)
+	channelassert.RequireSignal(t, done, time.Second)
 }
 
 func TestControllerSignalCommitTimeFallsBackFromZeroClock(t *testing.T) {
@@ -185,8 +187,8 @@ func TestControllerSignalClosedTerminalZeroValueWaitSnapshot(t *testing.T) {
 	var controller Controller
 	_, _ = controller.BeginStop()
 	_, changed, done := controller.waitSnapshot()
-	mustSignalClosed(t, changed)
-	mustSignalClosed(t, done)
+	channelassert.RequireSignal(t, changed, time.Second)
+	channelassert.RequireSignal(t, done, time.Second)
 }
 
 func TestControllerSignalEnsureInitializedClosesSignalsForTerminalState(t *testing.T) {
@@ -196,6 +198,6 @@ func TestControllerSignalEnsureInitializedClosesSignalsForTerminalState(t *testi
 	// derived controllers cannot expose open signals after terminal state is set.
 	controller := &Controller{state: StateStopped}
 	_, changed, done := controller.waitSnapshot()
-	mustSignalClosed(t, changed)
-	mustSignalClosed(t, done)
+	channelassert.RequireSignal(t, changed, time.Second)
+	channelassert.RequireSignal(t, done, time.Second)
 }

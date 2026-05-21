@@ -17,8 +17,10 @@
 package lifecycle
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
 	"errors"
 	"testing"
+	"time"
 )
 
 func TestNewControllerInitialState(t *testing.T) {
@@ -70,7 +72,7 @@ func TestNewControllerCopiesGuardAndObserverSlices(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BeginStart = %v, want nil", err)
 	}
-	assertTransitionEqual(t, mustReceiveTransition(t, observed), transition)
+	assertTransitionEqual(t, channelassert.RequireReceive(t, observed, time.Second), transition)
 }
 
 func TestNewControllerFallsBackWhenOptionClearsClock(t *testing.T) {

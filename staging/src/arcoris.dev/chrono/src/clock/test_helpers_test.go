@@ -36,56 +36,6 @@ func fakeClockTestTime() time.Time {
 	return time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)
 }
 
-func mustReceiveTime(t *testing.T, ch <-chan time.Time) time.Time {
-	t.Helper()
-
-	select {
-	case got, ok := <-ch:
-		if !ok {
-			t.Fatal("time channel was closed before a value was received")
-		}
-
-		return got
-	case <-time.After(clockTestTimeout):
-		t.Fatalf("did not receive time before safety timeout %s", clockTestTimeout)
-		return time.Time{}
-	}
-}
-
-func mustNotReceiveTime(t *testing.T, ch <-chan time.Time) {
-	t.Helper()
-
-	select {
-	case got, ok := <-ch:
-		if !ok {
-			t.Fatal("time channel was closed, want it open and empty")
-		}
-
-		t.Fatalf("received unexpected time %v", got)
-	default:
-	}
-}
-
-func mustReceiveSignal(t *testing.T, ch <-chan struct{}) {
-	t.Helper()
-
-	select {
-	case <-ch:
-	case <-time.After(clockTestTimeout):
-		t.Fatalf("did not receive signal before safety timeout %s", clockTestTimeout)
-	}
-}
-
-func mustNotReceiveSignal(t *testing.T, ch <-chan struct{}) {
-	t.Helper()
-
-	select {
-	case <-ch:
-		t.Fatal("received unexpected signal")
-	default:
-	}
-}
-
 func waitUntil(t *testing.T, description string, condition func() bool) {
 	t.Helper()
 

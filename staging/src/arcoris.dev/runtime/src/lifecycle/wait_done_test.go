@@ -17,8 +17,10 @@
 package lifecycle
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
 	"errors"
 	"testing"
+	"time"
 )
 
 func TestDoneReturnsStableChannel(t *testing.T) {
@@ -38,9 +40,9 @@ func TestDoneOpenBeforeTerminalState(t *testing.T) {
 	// Done is signal-only: it remains open through active non-terminal states and
 	// carries no state payload of its own.
 	controller := NewController()
-	mustNotSignalClosed(t, controller.Done())
+	channelassert.RequireNoSignal(t, controller.Done())
 	_, _ = controller.BeginStart()
-	mustNotSignalClosed(t, controller.Done())
+	channelassert.RequireNoSignal(t, controller.Done())
 }
 
 func TestDoneClosesAfterStopped(t *testing.T) {
@@ -49,7 +51,7 @@ func TestDoneClosesAfterStopped(t *testing.T) {
 	controller := NewController()
 	done := controller.Done()
 	_, _ = controller.BeginStop()
-	mustSignalClosed(t, done)
+	channelassert.RequireSignal(t, done, time.Second)
 }
 
 func TestDoneClosesAfterFailed(t *testing.T) {
@@ -59,7 +61,7 @@ func TestDoneClosesAfterFailed(t *testing.T) {
 	_, _ = controller.BeginStart()
 	done := controller.Done()
 	_, _ = controller.MarkFailed(errors.New("failed"))
-	mustSignalClosed(t, done)
+	channelassert.RequireSignal(t, done, time.Second)
 }
 
 func TestDoneWorksOnZeroValueController(t *testing.T) {
@@ -70,7 +72,7 @@ func TestDoneWorksOnZeroValueController(t *testing.T) {
 	if done == nil {
 		t.Fatal("Done returned nil for zero-value Controller")
 	}
-	mustNotSignalClosed(t, done)
+	channelassert.RequireNoSignal(t, done)
 	_, _ = controller.BeginStop()
-	mustSignalClosed(t, done)
+	channelassert.RequireSignal(t, done, time.Second)
 }

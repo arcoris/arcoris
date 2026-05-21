@@ -80,22 +80,6 @@ func (e nonComparableError) Error() string {
 	return e.values[0]
 }
 
-func mustMatch(t *testing.T, err error, target error) {
-	t.Helper()
-
-	if !errors.Is(err, target) {
-		t.Fatalf("errors.Is(%v, %v) = false, want true", err, target)
-	}
-}
-
-func mustNotMatch(t *testing.T, err error, target error) {
-	t.Helper()
-
-	if errors.Is(err, target) {
-		t.Fatalf("errors.Is(%v, %v) = true, want false", err, target)
-	}
-}
-
 func assertDeepEqual(t *testing.T, got, want any) {
 	t.Helper()
 
@@ -160,65 +144,5 @@ func assertSnapshotEqual(t *testing.T, got, want Snapshot) {
 	}
 	if !errors.Is(got.FailureCause, want.FailureCause) {
 		t.Fatalf("errors.Is(snapshot.FailureCause, %v) = false, want true", want.FailureCause)
-	}
-}
-
-func mustReceiveSnapshot(t *testing.T, ch <-chan Snapshot) Snapshot {
-	t.Helper()
-
-	select {
-	case snap := <-ch:
-		return snap
-	case <-time.After(time.Second):
-		// The timeout is only a deadlock guard; tests synchronize through channels.
-		t.Fatal("snapshot was not received before safety timeout")
-		return Snapshot{}
-	}
-}
-
-func mustReceiveError(t *testing.T, ch <-chan error) error {
-	t.Helper()
-
-	select {
-	case err := <-ch:
-		return err
-	case <-time.After(time.Second):
-		// The timeout is only a deadlock guard; tests synchronize through channels.
-		t.Fatal("error was not received before safety timeout")
-		return nil
-	}
-}
-
-func mustReceiveTransition(t *testing.T, ch <-chan Transition) Transition {
-	t.Helper()
-
-	select {
-	case transition := <-ch:
-		return transition
-	case <-time.After(time.Second):
-		// The timeout is only a deadlock guard; tests synchronize through channels.
-		t.Fatal("transition was not received before safety timeout")
-		return Transition{}
-	}
-}
-
-func mustSignalClosed(t *testing.T, ch <-chan struct{}) {
-	t.Helper()
-
-	select {
-	case <-ch:
-	case <-time.After(time.Second):
-		// The timeout is only a deadlock guard; tests synchronize through channels.
-		t.Fatal("signal was not closed before safety timeout")
-	}
-}
-
-func mustNotSignalClosed(t *testing.T, ch <-chan struct{}) {
-	t.Helper()
-
-	select {
-	case <-ch:
-		t.Fatal("signal is closed, want open")
-	default:
 	}
 }

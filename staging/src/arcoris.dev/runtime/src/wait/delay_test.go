@@ -17,6 +17,8 @@
 package wait
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
+	errorassert "arcoris.dev/testutil/errors"
 	"context"
 	"errors"
 	"testing"
@@ -77,7 +79,7 @@ func TestDelayChecksContextBeforeImmediateDuration(t *testing.T) {
 
 	mustBeInterrupted(t, err)
 	mustNotBeTimedOut(t, err)
-	mustMatch(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, context.Canceled)
 }
 
 // TestDelayReturnsInterruptedWhenContextCancelledBeforeDelay verifies
@@ -92,7 +94,7 @@ func TestDelayReturnsInterruptedWhenContextCancelledBeforeDelay(t *testing.T) {
 
 	mustBeInterrupted(t, err)
 	mustNotBeTimedOut(t, err)
-	mustMatch(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, context.Canceled)
 }
 
 // TestDelayPreservesCancellationCause verifies that context cancellation causes
@@ -108,8 +110,8 @@ func TestDelayPreservesCancellationCause(t *testing.T) {
 
 	mustBeInterrupted(t, err)
 	mustNotBeTimedOut(t, err)
-	mustMatch(t, err, context.Canceled)
-	mustMatch(t, err, cause)
+	errorassert.RequireIs(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, cause)
 }
 
 // TestDelayReturnsTimeoutWhenContextDeadlineExceededBeforeDelay verifies
@@ -124,7 +126,7 @@ func TestDelayReturnsTimeoutWhenContextDeadlineExceededBeforeDelay(t *testing.T)
 
 	mustBeTimedOut(t, err)
 	mustBeInterrupted(t, err)
-	mustMatch(t, err, context.DeadlineExceeded)
+	errorassert.RequireIs(t, err, context.DeadlineExceeded)
 }
 
 // TestDelayPreservesDeadlineCause verifies that timeout causes remain visible
@@ -141,8 +143,8 @@ func TestDelayPreservesDeadlineCause(t *testing.T) {
 
 	mustBeTimedOut(t, err)
 	mustBeInterrupted(t, err)
-	mustMatch(t, err, context.DeadlineExceeded)
-	mustMatch(t, err, cause)
+	errorassert.RequireIs(t, err, context.DeadlineExceeded)
+	errorassert.RequireIs(t, err, cause)
 }
 
 // TestDelayReturnsInterruptedWhenContextCancelledDuringDelay verifies that
@@ -163,11 +165,11 @@ func TestDelayReturnsInterruptedWhenContextCancelledDuringDelay(t *testing.T) {
 	<-started
 	cancel(cause)
 
-	err := mustReceiveError(t, errCh)
+	err := channelassert.RequireReceive(t, errCh, time.Second)
 	mustBeInterrupted(t, err)
 	mustNotBeTimedOut(t, err)
-	mustMatch(t, err, context.Canceled)
-	mustMatch(t, err, cause)
+	errorassert.RequireIs(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, cause)
 }
 
 // TestDelayPanicsOnNilContext verifies invalid context validation at the public

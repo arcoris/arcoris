@@ -17,6 +17,7 @@
 package wait
 
 import (
+	errorassert "arcoris.dev/testutil/errors"
 	"errors"
 	"testing"
 )
@@ -45,8 +46,8 @@ func TestWaitErrorSentinelHierarchy(t *testing.T) {
 func TestWaitErrorKindMessages(t *testing.T) {
 	t.Parallel()
 
-	mustHaveMessage(t, ErrInterrupted, "wait: interrupted")
-	mustHaveMessage(t, ErrTimeout, "wait: timeout")
+	errorassert.RequireMessage(t, ErrInterrupted, "wait: interrupted")
+	errorassert.RequireMessage(t, ErrTimeout, "wait: timeout")
 }
 
 // TestUnknownWaitErrorKindMessage verifies that an invalid private sentinel kind
@@ -55,7 +56,7 @@ func TestUnknownWaitErrorKindMessage(t *testing.T) {
 	t.Parallel()
 
 	kind := waitErrorKind(0)
-	mustHaveMessage(t, kind, "wait: unknown error")
+	errorassert.RequireMessage(t, kind, "wait: unknown error")
 }
 
 // TestWaitErrorMessage verifies shared wait error message formatting.

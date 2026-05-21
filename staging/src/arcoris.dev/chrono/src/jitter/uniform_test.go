@@ -17,24 +17,25 @@
 package jitter
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"testing"
 	"time"
 )
 
 func TestUniformRejectsInvalidBounds(t *testing.T) {
-	mustPanicWith(t, errNegativeUniformMinDelay, func() {
+	panicassert.RequireValue(t, errNegativeUniformMinDelay, func() {
 		Uniform(-time.Nanosecond, time.Second)
 	})
-	mustPanicWith(t, errUniformMaxDelayBeforeMinDelay, func() {
+	panicassert.RequireValue(t, errUniformMaxDelayBeforeMinDelay, func() {
 		Uniform(time.Second, time.Millisecond)
 	})
 }
 
 func TestUniformRejectsInvalidOptionsAndSource(t *testing.T) {
-	mustPanicWith(t, errNilRandomOption, func() {
+	panicassert.RequireValue(t, errNilRandomOption, func() {
 		Uniform(0, time.Second, nil)
 	})
-	mustPanicWith(t, errNilUniformSource, func() {
+	panicassert.RequireValue(t, errNilUniformSource, func() {
 		randomWithSource(0, time.Second, nil)
 	})
 }

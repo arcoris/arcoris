@@ -17,6 +17,7 @@
 package signals
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"os"
 	"testing"
@@ -54,7 +55,7 @@ func TestValidationHelpersRejectMissingDiagnosticText(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNilValidationMessage, tc.fn)
+			panicassert.RequireMessage(t, errNilValidationMessage, tc.fn)
 		})
 	}
 }
@@ -83,7 +84,7 @@ func TestValidationHelpersRejectInvalidInputs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, tc.message, tc.fn)
+			panicassert.RequireMessage(t, tc.message, tc.fn)
 		})
 	}
 }

@@ -17,6 +17,7 @@
 package wait
 
 import (
+	errorassert "arcoris.dev/testutil/errors"
 	"context"
 	"errors"
 	"testing"
@@ -118,7 +119,7 @@ func TestUntilDoesNotEvaluateWhenContextIsCancelledBeforeStart(t *testing.T) {
 
 	mustBeInterrupted(t, err)
 	mustNotBeTimedOut(t, err)
-	mustMatch(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, context.Canceled)
 	if calls != 0 {
 		t.Fatalf("condition calls = %d, want 0", calls)
 	}
@@ -142,7 +143,7 @@ func TestUntilReturnsTimeoutWhenContextDeadlineExceededBeforeStart(t *testing.T)
 
 	mustBeTimedOut(t, err)
 	mustBeInterrupted(t, err)
-	mustMatch(t, err, context.DeadlineExceeded)
+	errorassert.RequireIs(t, err, context.DeadlineExceeded)
 	if calls != 0 {
 		t.Fatalf("condition calls = %d, want 0", calls)
 	}
@@ -167,8 +168,8 @@ func TestUntilReturnsInterruptedWhenContextIsCancelledDuringCondition(t *testing
 
 	mustBeInterrupted(t, err)
 	mustNotBeTimedOut(t, err)
-	mustMatch(t, err, context.Canceled)
-	mustMatch(t, err, cause)
+	errorassert.RequireIs(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, cause)
 	if calls != 1 {
 		t.Fatalf("condition calls = %d, want 1", calls)
 	}
@@ -207,8 +208,8 @@ func TestUntilReturnsTimeoutWhenContextDeadlineExpiresDuringWait(t *testing.T) {
 
 	mustBeTimedOut(t, err)
 	mustBeInterrupted(t, err)
-	mustMatch(t, err, context.DeadlineExceeded)
-	mustMatch(t, err, cause)
+	errorassert.RequireIs(t, err, context.DeadlineExceeded)
+	errorassert.RequireIs(t, err, cause)
 }
 
 // TestUntilPanicsOnNilContext verifies invalid context validation at the public

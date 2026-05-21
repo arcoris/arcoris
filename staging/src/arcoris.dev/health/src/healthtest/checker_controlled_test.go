@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"arcoris.dev/health"
+	channelassert "arcoris.dev/testutil/channel"
 )
 
 func TestBlockingCheckerRelease(t *testing.T) {
@@ -34,7 +35,7 @@ func TestBlockingCheckerRelease(t *testing.T) {
 		done <- checker.Check(context.Background())
 	}()
 
-	mustClose(t, checker.Started())
+	channelassert.RequireClosed(t, checker.Started(), time.Second)
 	checker.Release(HealthyResult("storage"))
 
 	select {
@@ -58,7 +59,7 @@ func TestBlockingCheckerCancellation(t *testing.T) {
 		done <- checker.Check(ctx)
 	}()
 
-	mustClose(t, checker.Started())
+	channelassert.RequireClosed(t, checker.Started(), time.Second)
 	cancel()
 
 	select {
@@ -83,7 +84,7 @@ func TestBlockingCheckerConcurrentCalls(t *testing.T) {
 		}()
 	}
 
-	mustClose(t, checker.Started())
+	channelassert.RequireClosed(t, checker.Started(), time.Second)
 	checker.Release(HealthyResult("storage"))
 	wg.Wait()
 	if checker.Calls() != 8 {
@@ -115,15 +116,5 @@ func TestSequenceCheckerFillsEmptyResultName(t *testing.T) {
 	res := checker.Check(context.Background())
 	if res.Name != "storage" {
 		t.Fatalf("result name = %q, want storage", res.Name)
-	}
-}
-
-func mustClose(t *testing.T, ch <-chan struct{}) {
-	t.Helper()
-
-	select {
-	case <-ch:
-	case <-time.After(time.Second):
-		t.Fatal("channel did not close")
 	}
 }

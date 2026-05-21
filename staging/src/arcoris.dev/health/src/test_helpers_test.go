@@ -18,7 +18,6 @@ package health
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 )
@@ -102,25 +101,4 @@ func mustRegistry(t *testing.T, target Target, checks ...Checker) *Registry {
 	}
 
 	return registry
-}
-
-func mustErrorIs(t *testing.T, err error, target error) {
-	t.Helper()
-
-	if !errors.Is(err, target) {
-		t.Fatalf("errors.Is(%v, %v) = false, want true", err, target)
-	}
-}
-
-func mustClose(t *testing.T, ch <-chan struct{}) {
-	t.Helper()
-
-	timer := time.NewTimer(testTimeout)
-	defer timer.Stop()
-
-	select {
-	case <-ch:
-	case <-timer.C:
-		t.Fatal("channel did not close before timeout")
-	}
 }

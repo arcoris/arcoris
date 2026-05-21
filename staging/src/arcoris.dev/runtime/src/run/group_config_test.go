@@ -16,7 +16,11 @@
 
 package run
 
-import "testing"
+import (
+	panicassert "arcoris.dev/testutil/panic"
+
+	"testing"
+)
 
 func TestGroupConfigDefaults(t *testing.T) {
 	t.Parallel()
@@ -34,7 +38,7 @@ func TestGroupConfigDefaults(t *testing.T) {
 func TestGroupConfigRejectsNilOption(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilGroupOption, func() {
+	panicassert.RequireMessage(t, errNilGroupOption, func() {
 		newGroupConfig(nil)
 	})
 }
@@ -42,7 +46,7 @@ func TestGroupConfigRejectsNilOption(t *testing.T) {
 func TestNewGroupRejectsNilOption(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilGroupOption, func() {
+	panicassert.RequireMessage(t, errNilGroupOption, func() {
 		NewGroup(t.Context(), nil)
 	})
 }
@@ -68,7 +72,7 @@ func TestGroupConfigAppliesOptionsInOrder(t *testing.T) {
 func TestGroupConfigRejectsInvalidErrorMode(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errInvalidErrorMode, func() {
+	panicassert.RequireMessage(t, errInvalidErrorMode, func() {
 		newGroupConfig(func(cfg *groupConfig) {
 			cfg.errorMode = ErrorMode(99)
 		})

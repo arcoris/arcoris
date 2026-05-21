@@ -17,6 +17,7 @@
 package run
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"errors"
 	"fmt"
@@ -159,7 +160,7 @@ func TestIgnoreContextStopPreservesUnrelatedErrors(t *testing.T) {
 func TestIgnoreContextStopRejectsNilContext(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilIgnoreContext, func() {
+	panicassert.RequireMessage(t, errNilIgnoreContext, func() {
 		IgnoreContextStop(nil, context.Canceled)
 	})
 }

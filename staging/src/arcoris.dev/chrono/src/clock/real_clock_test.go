@@ -17,6 +17,7 @@
 package clock
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
 	"testing"
 	"time"
 )
@@ -62,7 +63,7 @@ func TestRealClockAfterDelivers(t *testing.T) {
 
 	var clk RealClock
 
-	if got := mustReceiveTime(t, clk.After(realClockTestDelay)); got.IsZero() {
+	if got := channelassert.RequireReceive(t, clk.After(realClockTestDelay), clockTestTimeout); got.IsZero() {
 		t.Fatal("RealClock.After delivered zero time")
 	}
 }
@@ -81,7 +82,7 @@ func TestRealClockSleepAcceptsNonPositiveDurations(t *testing.T) {
 		close(done)
 	}()
 
-	mustReceiveSignal(t, done)
+	channelassert.RequireSignal(t, done, clockTestTimeout)
 }
 
 // TestRealClockNewTimerReturnsUsableTimer verifies that RealClock creates a
@@ -101,7 +102,7 @@ func TestRealClockNewTimerReturnsUsableTimer(t *testing.T) {
 		t.Fatal("RealClock.NewTimer returned timer with nil channel")
 	}
 
-	if got := mustReceiveTime(t, timer.C()); got.IsZero() {
+	if got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout); got.IsZero() {
 		t.Fatal("RealClock.NewTimer timer delivered zero time")
 	}
 }
@@ -123,7 +124,7 @@ func TestRealClockNewTickerReturnsUsableTicker(t *testing.T) {
 		t.Fatal("RealClock.NewTicker returned ticker with nil channel")
 	}
 
-	if got := mustReceiveTime(t, ticker.C()); got.IsZero() {
+	if got := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout); got.IsZero() {
 		t.Fatal("RealClock.NewTicker ticker delivered zero time")
 	}
 }

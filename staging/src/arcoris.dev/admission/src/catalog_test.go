@@ -15,6 +15,7 @@
 package admission
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"errors"
 	"fmt"
 	"sync"
@@ -259,40 +260,40 @@ func TestCatalogNilReceiverPanics(t *testing.T) {
 	t.Parallel()
 
 	var catalog *Catalog
-	assertPanicString(t, nilCatalogPanic, func() {
+	panicassert.RequireMessage(t, nilCatalogPanic, func() {
 		_, _ = catalog.Reason(ReasonDenied)
 	})
-	assertPanicString(t, nilCatalogPanic, func() {
+	panicassert.RequireMessage(t, nilCatalogPanic, func() {
 		_, _ = catalog.Kind(KindBulkhead)
 	})
-	assertPanicString(t, nilCatalogPanic, func() {
+	panicassert.RequireMessage(t, nilCatalogPanic, func() {
 		_, _ = catalog.Component("resilience.bulkhead")
 	})
-	assertPanicString(t, nilCatalogPanic, func() {
+	panicassert.RequireMessage(t, nilCatalogPanic, func() {
 		_ = catalog.Reasons()
 	})
-	assertPanicString(t, nilCatalogPanic, func() {
+	panicassert.RequireMessage(t, nilCatalogPanic, func() {
 		_ = catalog.Kinds()
 	})
-	assertPanicString(t, nilCatalogPanic, func() {
+	panicassert.RequireMessage(t, nilCatalogPanic, func() {
 		_ = catalog.Components()
 	})
-	assertPanicString(t, nilCatalogPanic, func() {
+	panicassert.RequireMessage(t, nilCatalogPanic, func() {
 		_ = catalog.RegisterReason(testReasonDescriptor("custom_reason"))
 	})
-	assertPanicString(t, nilCatalogPanic, func() {
+	panicassert.RequireMessage(t, nilCatalogPanic, func() {
 		_ = catalog.RegisterKind(testKindDescriptor("custom_kind"))
 	})
-	assertPanicString(t, nilCatalogPanic, func() {
+	panicassert.RequireMessage(t, nilCatalogPanic, func() {
 		_ = catalog.RegisterComponent(testComponentDescriptor("custom.component", KindBulkhead))
 	})
-	assertPanicString(t, nilCatalogPanic, func() {
+	panicassert.RequireMessage(t, nilCatalogPanic, func() {
 		_ = catalog.LenReasons()
 	})
-	assertPanicString(t, nilCatalogPanic, func() {
+	panicassert.RequireMessage(t, nilCatalogPanic, func() {
 		_ = catalog.LenKinds()
 	})
-	assertPanicString(t, nilCatalogPanic, func() {
+	panicassert.RequireMessage(t, nilCatalogPanic, func() {
 		_ = catalog.LenComponents()
 	})
 }

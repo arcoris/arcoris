@@ -17,6 +17,7 @@
 package retry
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"errors"
 	"testing"
 )
@@ -43,7 +44,7 @@ func TestWithClassifierLastWins(t *testing.T) {
 }
 
 func TestWithClassifierPanicsOnNilClassifier(t *testing.T) {
-	expectPanic(t, panicNilClassifier, func() {
+	panicassert.RequireValue(t, panicNilClassifier, func() {
 		_ = WithClassifier(nil)
 	})
 }
@@ -64,7 +65,7 @@ func TestWithRetryable(t *testing.T) {
 }
 
 func TestWithRetryablePanicsOnNilFunction(t *testing.T) {
-	expectPanic(t, panicNilClassifierFunc, func() {
+	panicassert.RequireValue(t, panicNilClassifierFunc, func() {
 		_ = WithRetryable(nil)
 	})
 }

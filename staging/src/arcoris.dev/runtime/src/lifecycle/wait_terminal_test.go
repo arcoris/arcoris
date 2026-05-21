@@ -17,9 +17,12 @@
 package lifecycle
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
+	errorassert "arcoris.dev/testutil/errors"
 	"context"
 	"errors"
 	"testing"
+	"time"
 )
 
 func TestWaitTerminalReturnsStoppedSnapshot(t *testing.T) {
@@ -77,7 +80,7 @@ func TestWaitTerminalWaitsUntilTerminalCommitted(t *testing.T) {
 		t.Fatalf("WaitTerminal err = %v, want nil", err)
 	default:
 	}
-	if got := mustReceiveSnapshot(t, results); got.State != StateStopped {
+	if got := channelassert.RequireReceive(t, results, time.Second); got.State != StateStopped {
 		t.Fatalf("snapshot.State = %s, want stopped", got.State)
 	}
 }
@@ -91,7 +94,7 @@ func TestWaitTerminalContextCancellationAndDeadline(t *testing.T) {
 	if err == nil {
 		t.Fatal("WaitTerminal cancel err = nil, want canceled")
 	}
-	mustMatch(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, context.Canceled)
 
 	deadlineCtx, deadlineCancel := context.WithDeadline(context.Background(), testTime)
 	defer deadlineCancel()
@@ -99,5 +102,5 @@ func TestWaitTerminalContextCancellationAndDeadline(t *testing.T) {
 	if deadlineErr == nil {
 		t.Fatal("WaitTerminal deadline err = nil, want deadline exceeded")
 	}
-	mustMatch(t, deadlineErr, context.DeadlineExceeded)
+	errorassert.RequireIs(t, deadlineErr, context.DeadlineExceeded)
 }

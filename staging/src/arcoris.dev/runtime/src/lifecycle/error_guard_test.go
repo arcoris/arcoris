@@ -17,6 +17,7 @@
 package lifecycle
 
 import (
+	errorassert "arcoris.dev/testutil/errors"
 	"errors"
 	"fmt"
 	"strings"
@@ -45,7 +46,7 @@ func TestGuardErrorNilReceiver(t *testing.T) {
 	if got := err.Error(); got != ErrGuardRejected.Error() {
 		t.Fatalf("nil Error() = %q, want %q", got, ErrGuardRejected.Error())
 	}
-	mustMatch(t, err, ErrGuardRejected)
+	errorassert.RequireIs(t, err, ErrGuardRejected)
 }
 
 func TestGuardErrorNilUnderlyingError(t *testing.T) {
@@ -86,8 +87,8 @@ func TestGuardErrorUnwrapAndIs(t *testing.T) {
 	if got := err.Unwrap(); got != domainErr {
 		t.Fatalf("Unwrap = %v, want %v", got, domainErr)
 	}
-	mustMatch(t, err, ErrGuardRejected)
-	mustMatch(t, err, domainErr)
+	errorassert.RequireIs(t, err, ErrGuardRejected)
+	errorassert.RequireIs(t, err, domainErr)
 }
 
 func TestNewGuardErrorPreservesTransitionAndError(t *testing.T) {

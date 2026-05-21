@@ -17,6 +17,8 @@
 package signals
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"errors"
 	"os"
@@ -31,7 +33,7 @@ func TestNotifyContextCancelsWithSignalCause(t *testing.T) {
 	defer stop()
 
 	n.emit(testSIGTERM)
-	mustClose(t, ctx.Done())
+	channelassert.RequireClosed(t, ctx.Done(), testTimeout)
 	n.waitStopCount(t, 1)
 
 	event, ok := Cause(ctx)
@@ -52,7 +54,7 @@ func TestNotifyContextPreservesParentCause(t *testing.T) {
 	defer stop()
 
 	cancel(context.DeadlineExceeded)
-	mustClose(t, ctx.Done())
+	channelassert.RequireClosed(t, ctx.Done(), testTimeout)
 	n.waitStopCount(t, 1)
 
 	if !errors.Is(context.Cause(ctx), context.DeadlineExceeded) {
@@ -68,7 +70,7 @@ func TestNotifyContextStopFuncCancelsAndUnregisters(t *testing.T) {
 
 	stop()
 	stop()
-	mustClose(t, ctx.Done())
+	channelassert.RequireClosed(t, ctx.Done(), testTimeout)
 
 	if !errors.Is(context.Cause(ctx), context.Canceled) {
 		t.Fatalf("cause = %v, want context.Canceled", context.Cause(ctx))
@@ -93,7 +95,7 @@ func TestNotifyContextUsesShutdownSignalsWhenSignalsEmpty(t *testing.T) {
 func TestNotifyContextRejectsNilParent(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errNilNotifyContextParent, func() {
+	panicassert.RequireMessage(t, errNilNotifyContextParent, func() {
 		NotifyContext(nil)
 	})
 }
@@ -105,7 +107,7 @@ func TestNotifyContextStopDoesNotOverwriteSignalCause(t *testing.T) {
 	ctx, stop := notifyContextWithOptions(context.Background(), []os.Signal{testSIGINT}, []SubscriptionOption{withNotifier(n)})
 
 	n.emit(testSIGINT)
-	mustClose(t, ctx.Done())
+	channelassert.RequireClosed(t, ctx.Done(), testTimeout)
 	n.waitStopCount(t, 1)
 
 	// StopFunc is owner cleanup. Once a signal owns the cancellation cause,
@@ -129,7 +131,7 @@ func TestNotifyContextStopDoesNotOverwriteParentCause(t *testing.T) {
 	ctx, stop := notifyContextWithOptions(parent, []os.Signal{testSIGTERM}, []SubscriptionOption{withNotifier(n)})
 
 	cancel(context.DeadlineExceeded)
-	mustClose(t, ctx.Done())
+	channelassert.RequireClosed(t, ctx.Done(), testTimeout)
 	n.waitStopCount(t, 1)
 
 	// Parent cancellation is externally owned. StopFunc must only release signal

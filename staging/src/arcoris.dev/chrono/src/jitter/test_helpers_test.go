@@ -23,27 +23,6 @@ import (
 	"arcoris.dev/chrono/delay"
 )
 
-// mustPanicWith asserts that fn panics with exactly want.
-//
-// Jitter constructor failures are programming errors and use stable
-// package-local diagnostic strings. Tests must compare exact panic payloads so
-// accidental diagnostic drift is caught by the package test suite.
-func mustPanicWith(t *testing.T, want any, fn func()) {
-	t.Helper()
-
-	defer func() {
-		got := recover()
-		if got == nil {
-			t.Fatalf("expected panic %v, got no panic", want)
-		}
-		if got != want {
-			t.Fatalf("panic value = %v, want %v", got, want)
-		}
-	}()
-
-	fn()
-}
-
 // mustNext asserts that seq returns want with ok=true.
 func mustNext(t *testing.T, seq delay.Sequence, want time.Duration) {
 	t.Helper()

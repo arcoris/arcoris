@@ -16,7 +16,11 @@
 
 package signals
 
-import "testing"
+import (
+	panicassert "arcoris.dev/testutil/panic"
+
+	"testing"
+)
 
 func TestSubscriptionConfigDefaults(t *testing.T) {
 	t.Parallel()
@@ -73,7 +77,7 @@ func TestSubscriptionConfigRejectsInvalidBuffer(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mustPanicWith(t, errNonPositiveSubscriptionBuffer, func() {
+			panicassert.RequireMessage(t, errNonPositiveSubscriptionBuffer, func() {
 				newSubscribeConfig(WithSubscriptionBuffer(tc.size))
 			})
 		})

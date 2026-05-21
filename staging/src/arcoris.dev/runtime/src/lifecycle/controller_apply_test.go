@@ -17,9 +17,12 @@
 package lifecycle
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
+	errorassert "arcoris.dev/testutil/errors"
 	"errors"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestControllerApplyAllowedTransitions(t *testing.T) {
@@ -95,10 +98,10 @@ func TestControllerApplyDoesNotMutateOnInvalidTransition(t *testing.T) {
 	if err == nil {
 		t.Fatal("MarkRunning err = nil, want invalid transition")
 	}
-	mustMatch(t, err, ErrInvalidTransition)
+	errorassert.RequireIs(t, err, ErrInvalidTransition)
 	assertSnapshotEqual(t, controller.Snapshot(), snap)
-	mustNotSignalClosed(t, changed)
-	mustNotSignalClosed(t, done)
+	channelassert.RequireNoSignal(t, changed)
+	channelassert.RequireNoSignal(t, done)
 }
 
 func TestControllerApplyTerminalTransitionError(t *testing.T) {
@@ -112,11 +115,11 @@ func TestControllerApplyTerminalTransitionError(t *testing.T) {
 	if err == nil {
 		t.Fatal("BeginStart from terminal err = nil, want terminal")
 	}
-	mustMatch(t, err, ErrTerminalState)
-	mustMatch(t, err, ErrInvalidTransition)
+	errorassert.RequireIs(t, err, ErrTerminalState)
+	errorassert.RequireIs(t, err, ErrInvalidTransition)
 	assertSnapshotEqual(t, controller.Snapshot(), snap)
-	mustSignalClosed(t, changed)
-	mustSignalClosed(t, done)
+	channelassert.RequireSignal(t, changed, time.Second)
+	channelassert.RequireSignal(t, done, time.Second)
 }
 
 func TestControllerApplyMarkFailedRequiresCause(t *testing.T) {
@@ -130,10 +133,10 @@ func TestControllerApplyMarkFailedRequiresCause(t *testing.T) {
 	if err == nil {
 		t.Fatal("MarkFailed(nil) err = nil, want failure cause required")
 	}
-	mustMatch(t, err, ErrFailureCauseRequired)
+	errorassert.RequireIs(t, err, ErrFailureCauseRequired)
 	assertSnapshotEqual(t, controller.Snapshot(), before)
-	mustNotSignalClosed(t, changed)
-	mustNotSignalClosed(t, done)
+	channelassert.RequireNoSignal(t, changed)
+	channelassert.RequireNoSignal(t, done)
 }
 
 func TestControllerApplyGuardRejectionDoesNotCommit(t *testing.T) {
@@ -153,11 +156,11 @@ func TestControllerApplyGuardRejectionDoesNotCommit(t *testing.T) {
 	if err == nil {
 		t.Fatal("BeginStart err = nil, want guard error")
 	}
-	mustMatch(t, err, ErrGuardRejected)
-	mustMatch(t, err, rejection)
+	errorassert.RequireIs(t, err, ErrGuardRejected)
+	errorassert.RequireIs(t, err, rejection)
 	assertSnapshotEqual(t, controller.Snapshot(), before)
-	mustNotSignalClosed(t, changed)
-	mustNotSignalClosed(t, done)
+	channelassert.RequireNoSignal(t, changed)
+	channelassert.RequireNoSignal(t, done)
 	if observerCalled {
 		t.Fatal("observer called after failed apply")
 	}
@@ -175,7 +178,7 @@ func TestControllerApplyGuardsObserveCandidateBeforeCommit(t *testing.T) {
 	if _, err := controller.BeginStart(); err != nil {
 		t.Fatalf("BeginStart = %v", err)
 	}
-	transition := mustReceiveTransition(t, seen)
+	transition := channelassert.RequireReceive(t, seen, time.Second)
 	if transition.Revision != 0 || !transition.At.IsZero() {
 		t.Fatalf("guard saw committed metadata: %+v", transition)
 	}
@@ -193,7 +196,7 @@ func TestControllerApplyObserversObserveCommittedTransition(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BeginStart = %v", err)
 	}
-	observed := mustReceiveTransition(t, seen)
+	observed := channelassert.RequireReceive(t, seen, time.Second)
 	assertTransitionEqual(t, observed, transition)
 	if !observed.IsCommitted() {
 		t.Fatalf("observer saw uncommitted transition: %+v", observed)
@@ -252,7 +255,7 @@ func TestControllerApplyConcurrentBeginStartOnlyOneSucceeds(t *testing.T) {
 			successes++
 			continue
 		}
-		mustMatch(t, err, ErrInvalidTransition)
+		errorassert.RequireIs(t, err, ErrInvalidTransition)
 		failures++
 	}
 	if successes != 1 || failures != 1 {

@@ -17,6 +17,7 @@
 package clock
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
 	"testing"
 	"time"
 )
@@ -31,7 +32,7 @@ func TestFakeClockAfterDoesNotDeliverBeforeDeadline(t *testing.T) {
 	ch := clk.After(10 * time.Second)
 
 	clk.Step(9 * time.Second)
-	mustNotReceiveTime(t, ch)
+	channelassert.RequireNoReceive(t, ch)
 }
 
 // TestFakeClockAfterDeliversWhenDeadlineIsReached verifies that After releases
@@ -46,8 +47,8 @@ func TestFakeClockAfterDeliversWhenDeadlineIsReached(t *testing.T) {
 
 	clk.Step(10 * time.Second)
 
-	mustEqualTime(t, "After delivery", mustReceiveTime(t, ch), start.Add(10*time.Second))
-	mustNotReceiveTime(t, ch)
+	mustEqualTime(t, "After delivery", channelassert.RequireReceive(t, ch, clockTestTimeout), start.Add(10*time.Second))
+	channelassert.RequireNoReceive(t, ch)
 }
 
 // TestFakeClockAfterDeliversWhenDeadlineIsPassed verifies that waiters are
@@ -62,8 +63,8 @@ func TestFakeClockAfterDeliversWhenDeadlineIsPassed(t *testing.T) {
 
 	clk.Step(30 * time.Second)
 
-	mustEqualTime(t, "After delivery", mustReceiveTime(t, ch), start.Add(30*time.Second))
-	mustNotReceiveTime(t, ch)
+	mustEqualTime(t, "After delivery", channelassert.RequireReceive(t, ch, clockTestTimeout), start.Add(30*time.Second))
+	channelassert.RequireNoReceive(t, ch)
 }
 
 // TestFakeClockAfterNonPositiveDurationIsImmediatelyReady verifies immediate
@@ -96,8 +97,8 @@ func TestFakeClockAfterNonPositiveDurationIsImmediatelyReady(t *testing.T) {
 
 			ch := clk.After(tc.d)
 
-			mustEqualTime(t, "After immediate delivery", mustReceiveTime(t, ch), start)
-			mustNotReceiveTime(t, ch)
+			mustEqualTime(t, "After immediate delivery", channelassert.RequireReceive(t, ch, clockTestTimeout), start)
+			channelassert.RequireNoReceive(t, ch)
 		})
 	}
 }
@@ -117,13 +118,13 @@ func TestFakeClockSleepBlocksUntilStep(t *testing.T) {
 
 	waitUntil(t, "Sleep waiter is registered", clk.HasWaiters)
 
-	mustNotReceiveSignal(t, done)
+	channelassert.RequireNoSignal(t, done)
 
 	clk.Step(9 * time.Second)
-	mustNotReceiveSignal(t, done)
+	channelassert.RequireNoSignal(t, done)
 
 	clk.Step(time.Second)
-	mustReceiveSignal(t, done)
+	channelassert.RequireSignal(t, done, clockTestTimeout)
 }
 
 // TestFakeClockSleepNonPositiveDurationReturns verifies immediate Sleep
@@ -158,7 +159,7 @@ func TestFakeClockSleepNonPositiveDurationReturns(t *testing.T) {
 				close(done)
 			}()
 
-			mustReceiveSignal(t, done)
+			channelassert.RequireSignal(t, done, clockTestTimeout)
 		})
 	}
 }
@@ -181,7 +182,7 @@ func TestFakeClockHasWaitersReportsPendingAfterAndSleep(t *testing.T) {
 	}
 
 	clk.Step(5 * time.Second)
-	_ = mustReceiveTime(t, ch)
+	_ = channelassert.RequireReceive(t, ch, clockTestTimeout)
 
 	if clk.HasWaiters() {
 		t.Fatal("FakeClock.HasWaiters() = true after waiter delivery, want false")

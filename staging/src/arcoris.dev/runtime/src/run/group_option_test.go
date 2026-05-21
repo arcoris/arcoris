@@ -16,12 +16,16 @@
 
 package run
 
-import "testing"
+import (
+	panicassert "arcoris.dev/testutil/panic"
+
+	"testing"
+)
 
 func TestWithErrorModeRejectsInvalidMode(t *testing.T) {
 	t.Parallel()
 
-	mustPanicWith(t, errInvalidErrorMode, func() {
+	panicassert.RequireMessage(t, errInvalidErrorMode, func() {
 		WithErrorMode(ErrorMode(99))
 	})
 }

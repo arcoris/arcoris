@@ -111,42 +111,6 @@ func mustNotBeTimedOut(t *testing.T, err error) {
 	}
 }
 
-// mustMatch fails the test unless err matches target through errors.Is.
-func mustMatch(t *testing.T, err error, target error) {
-	t.Helper()
-
-	if !errors.Is(err, target) {
-		t.Fatalf("errors.Is(err, %v) = false, want true", target)
-	}
-}
-
-// mustNotMatch fails the test if err matches target through errors.Is.
-func mustNotMatch(t *testing.T, err error, target error) {
-	t.Helper()
-
-	if errors.Is(err, target) {
-		t.Fatalf("errors.Is(err, %v) = true, want false", target)
-	}
-}
-
-// mustUnwrapTo fails the test unless errors.Unwrap(err) returns want.
-func mustUnwrapTo(t *testing.T, err error, want error) {
-	t.Helper()
-
-	if got := errors.Unwrap(err); got != want {
-		t.Fatalf("errors.Unwrap(err) = %v, want %v", got, want)
-	}
-}
-
-// mustHaveMessage fails the test unless err.Error returns want.
-func mustHaveMessage(t *testing.T, err error, want string) {
-	t.Helper()
-
-	if got := err.Error(); got != want {
-		t.Fatalf("err.Error() = %q, want %q", got, want)
-	}
-}
-
 // mustAsTypedCause fails the test unless err exposes want through errors.As.
 func mustAsTypedCause(t *testing.T, err error, want typedCause) {
 	t.Helper()
@@ -166,18 +130,6 @@ func mustEqualDuration(t *testing.T, label string, got time.Duration, want time.
 
 	if got != want {
 		t.Fatalf("%s = %s, want %s", label, got, want)
-	}
-}
-
-func mustReceiveError(t *testing.T, ch <-chan error) error {
-	t.Helper()
-
-	select {
-	case err := <-ch:
-		return err
-	case <-time.After(time.Second):
-		t.Fatal("operation did not return before safety timeout")
-		return nil
 	}
 }
 

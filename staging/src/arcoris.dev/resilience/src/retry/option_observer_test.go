@@ -17,6 +17,7 @@
 package retry
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"testing"
 )
@@ -42,7 +43,7 @@ func TestWithObserverAppendsObservers(t *testing.T) {
 }
 
 func TestWithObserverPanicsOnNilObserver(t *testing.T) {
-	expectPanic(t, panicNilObserver, func() {
+	panicassert.RequireValue(t, panicNilObserver, func() {
 		_ = WithObserver(nil)
 	})
 }
@@ -66,7 +67,7 @@ func TestWithObserverFunc(t *testing.T) {
 }
 
 func TestWithObserverFuncPanicsOnNilFunction(t *testing.T) {
-	expectPanic(t, panicNilObserverFunc, func() {
+	panicassert.RequireValue(t, panicNilObserverFunc, func() {
 		_ = WithObserverFunc(nil)
 	})
 }

@@ -16,10 +16,14 @@
 
 package retry
 
-import "testing"
+import (
+	panicassert "arcoris.dev/testutil/panic"
+
+	"testing"
+)
 
 func TestConfigApplyPanicsOnNilOption(t *testing.T) {
-	expectPanic(t, panicNilOption, func() {
+	panicassert.RequireValue(t, panicNilOption, func() {
 		_ = configOf(nil)
 	})
 }

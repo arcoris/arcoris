@@ -17,6 +17,8 @@
 package wait
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
+	errorassert "arcoris.dev/testutil/errors"
 	"context"
 	"errors"
 	"testing"
@@ -100,7 +102,7 @@ func TestTimerWaitReturnsInterruptedWhenContextCancelledBeforeWait(t *testing.T)
 
 	mustBeInterrupted(t, err)
 	mustNotBeTimedOut(t, err)
-	mustMatch(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, context.Canceled)
 }
 
 // TestTimerWaitPreservesCancellationCause verifies that cancellation causes are
@@ -117,8 +119,8 @@ func TestTimerWaitPreservesCancellationCause(t *testing.T) {
 
 	mustBeInterrupted(t, err)
 	mustNotBeTimedOut(t, err)
-	mustMatch(t, err, context.Canceled)
-	mustMatch(t, err, cause)
+	errorassert.RequireIs(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, cause)
 }
 
 // TestTimerWaitReturnsTimeoutWhenContextDeadlineExceededBeforeWait verifies
@@ -134,7 +136,7 @@ func TestTimerWaitReturnsTimeoutWhenContextDeadlineExceededBeforeWait(t *testing
 
 	mustBeTimedOut(t, err)
 	mustBeInterrupted(t, err)
-	mustMatch(t, err, context.DeadlineExceeded)
+	errorassert.RequireIs(t, err, context.DeadlineExceeded)
 }
 
 // TestTimerWaitPreservesDeadlineCause verifies that timeout causes remain
@@ -152,8 +154,8 @@ func TestTimerWaitPreservesDeadlineCause(t *testing.T) {
 
 	mustBeTimedOut(t, err)
 	mustBeInterrupted(t, err)
-	mustMatch(t, err, context.DeadlineExceeded)
-	mustMatch(t, err, cause)
+	errorassert.RequireIs(t, err, context.DeadlineExceeded)
+	errorassert.RequireIs(t, err, cause)
 }
 
 // TestTimerWaitReturnsInterruptedWhenContextCancelledDuringWait verifies that
@@ -175,11 +177,11 @@ func TestTimerWaitReturnsInterruptedWhenContextCancelledDuringWait(t *testing.T)
 	<-started
 	cancel(cause)
 
-	err := mustReceiveError(t, errCh)
+	err := channelassert.RequireReceive(t, errCh, time.Second)
 	mustBeInterrupted(t, err)
 	mustNotBeTimedOut(t, err)
-	mustMatch(t, err, context.Canceled)
-	mustMatch(t, err, cause)
+	errorassert.RequireIs(t, err, context.Canceled)
+	errorassert.RequireIs(t, err, cause)
 }
 
 // TestTimerStopPreventsDelivery verifies that Stop prevents an active long timer

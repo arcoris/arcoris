@@ -15,6 +15,7 @@
 package admission
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"errors"
 	"sync"
 	"testing"
@@ -160,19 +161,19 @@ func TestKindRegistryNilReceiverPanics(t *testing.T) {
 	t.Parallel()
 
 	var registry *KindRegistry
-	assertPanicString(t, nilKindRegistryPanic, func() {
+	panicassert.RequireMessage(t, nilKindRegistryPanic, func() {
 		_ = registry.Register(testKindDescriptor("custom_kind"))
 	})
-	assertPanicString(t, nilKindRegistryPanic, func() {
+	panicassert.RequireMessage(t, nilKindRegistryPanic, func() {
 		_, _ = registry.Lookup("custom_kind")
 	})
-	assertPanicString(t, nilKindRegistryPanic, func() {
+	panicassert.RequireMessage(t, nilKindRegistryPanic, func() {
 		_ = registry.Contains("custom_kind")
 	})
-	assertPanicString(t, nilKindRegistryPanic, func() {
+	panicassert.RequireMessage(t, nilKindRegistryPanic, func() {
 		_ = registry.List()
 	})
-	assertPanicString(t, nilKindRegistryPanic, func() {
+	panicassert.RequireMessage(t, nilKindRegistryPanic, func() {
 		_ = registry.Len()
 	})
 }

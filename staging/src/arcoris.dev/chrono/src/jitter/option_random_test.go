@@ -16,7 +16,11 @@
 
 package jitter
 
-import "testing"
+import (
+	panicassert "arcoris.dev/testutil/panic"
+
+	"testing"
+)
 
 func TestDefaultRandomConfigUsesDefaultSource(t *testing.T) {
 	cfg := defaultRandomConfig()
@@ -26,13 +30,13 @@ func TestDefaultRandomConfigUsesDefaultSource(t *testing.T) {
 }
 
 func TestRandomOptionsOfRejectsNilOption(t *testing.T) {
-	mustPanicWith(t, errNilRandomOption, func() {
+	panicassert.RequireValue(t, errNilRandomOption, func() {
 		_ = randomOptionsOf(nil)
 	})
 }
 
 func TestRandomOptionsOfRejectsNilConfiguredSource(t *testing.T) {
-	mustPanicWith(t, errNilRandomSource, func() {
+	panicassert.RequireValue(t, errNilRandomSource, func() {
 		_ = randomOptionsOf(func(cfg *randomConfig) {
 			cfg.source = nil
 		})
@@ -40,7 +44,7 @@ func TestRandomOptionsOfRejectsNilConfiguredSource(t *testing.T) {
 }
 
 func TestWithRandomSourceRejectsNilSource(t *testing.T) {
-	mustPanicWith(t, errNilRandomSource, func() {
+	panicassert.RequireValue(t, errNilRandomSource, func() {
 		_ = WithRandomSource(nil)
 	})
 }
@@ -55,7 +59,7 @@ func TestWithRandomSourceStoresSource(t *testing.T) {
 }
 
 func TestWithRandomRejectsNilRandom(t *testing.T) {
-	mustPanicWith(t, errNilRandom, func() {
+	panicassert.RequireValue(t, errNilRandom, func() {
 		_ = WithRandom(nil)
 	})
 }
@@ -70,7 +74,7 @@ func TestWithRandomUsesSameGeneratorAdapter(t *testing.T) {
 }
 
 func TestWithRandomFuncRejectsNilFunction(t *testing.T) {
-	mustPanicWith(t, errNilRandomFunc, func() {
+	panicassert.RequireValue(t, errNilRandomFunc, func() {
 		_ = WithRandomFunc(nil)
 	})
 }

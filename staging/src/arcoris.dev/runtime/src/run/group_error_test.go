@@ -17,6 +17,7 @@
 package run
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
 	"context"
 	"errors"
 	"testing"
@@ -41,7 +42,7 @@ func TestGroupJoinErrorsAreOrderedBySubmission(t *testing.T) {
 		return secondErr
 	})
 
-	mustClose(t, secondReturned)
+	channelassert.RequireClosed(t, secondReturned, testTimeout)
 	close(releaseFirst)
 
 	err := group.Wait()
@@ -113,7 +114,7 @@ func TestGroupErrorModeFirstReturnsFirstObservedError(t *testing.T) {
 		return secondErr
 	})
 
-	mustClose(t, secondReturned)
+	channelassert.RequireClosed(t, secondReturned, testTimeout)
 	close(releaseFirst)
 
 	err := group.Wait()
@@ -159,7 +160,7 @@ func TestGroupTaskErrorCancellationUsesTaskErrorCause(t *testing.T) {
 		return want
 	})
 
-	mustClose(t, group.Done())
+	channelassert.RequireClosed(t, group.Done(), testTimeout)
 
 	var taskErr TaskError
 	if !errors.As(context.Cause(group.Context()), &taskErr) {

@@ -17,6 +17,8 @@
 package run
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"errors"
 	"fmt"
@@ -37,7 +39,7 @@ func TestGroupClosesForSubmissionsAfterWaitBegins(t *testing.T) {
 		<-release
 		return nil
 	})
-	mustClose(t, started)
+	channelassert.RequireClosed(t, started, testTimeout)
 
 	waitDone := make(chan error, 1)
 	go func() {
@@ -48,7 +50,7 @@ func TestGroupClosesForSubmissionsAfterWaitBegins(t *testing.T) {
 	// waits for tasks. This is the invariant that prevents WaitGroup.Add from
 	// racing with Wait.
 	waitGroupClosed(t, group)
-	mustPanicWith(t, errGroupClosed, func() {
+	panicassert.RequireMessage(t, errGroupClosed, func() {
 		group.Go("late", func(ctx context.Context) error { return nil })
 	})
 
@@ -72,7 +74,7 @@ func TestGroupClosesForSubmissionsAfterCancel(t *testing.T) {
 	if !groupClosed(group) {
 		t.Fatal("Cancel did not close group")
 	}
-	mustPanicWith(t, errGroupClosed, func() {
+	panicassert.RequireMessage(t, errGroupClosed, func() {
 		group.Go("late", func(ctx context.Context) error { return nil })
 	})
 }
@@ -87,8 +89,8 @@ func TestGroupClosesForSubmissionsAfterFailFastTaskError(t *testing.T) {
 		return want
 	})
 
-	mustClose(t, group.Done())
-	mustPanicWith(t, errGroupClosed, func() {
+	channelassert.RequireClosed(t, group.Done(), testTimeout)
+	panicassert.RequireMessage(t, errGroupClosed, func() {
 		group.Go("late", func(ctx context.Context) error { return nil })
 	})
 

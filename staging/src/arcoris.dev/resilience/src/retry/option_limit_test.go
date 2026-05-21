@@ -17,6 +17,7 @@
 package retry
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"testing"
 	"time"
 )
@@ -41,7 +42,7 @@ func TestWithMaxAttemptsLastWins(t *testing.T) {
 }
 
 func TestWithMaxAttemptsPanicsOnZero(t *testing.T) {
-	expectPanic(t, panicZeroMaxAttempts, func() {
+	panicassert.RequireValue(t, panicZeroMaxAttempts, func() {
 		_ = WithMaxAttempts(0)
 	})
 }
@@ -74,7 +75,7 @@ func TestWithMaxElapsedLastWins(t *testing.T) {
 }
 
 func TestWithMaxElapsedPanicsOnNegative(t *testing.T) {
-	expectPanic(t, panicNegativeMaxElapsed, func() {
+	panicassert.RequireValue(t, panicNegativeMaxElapsed, func() {
 		_ = WithMaxElapsed(-time.Nanosecond)
 	})
 }

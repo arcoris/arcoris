@@ -17,6 +17,7 @@
 package delay
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"testing"
 	"time"
 )
@@ -24,7 +25,7 @@ import (
 func TestSequenceFuncRejectsNilFunction(t *testing.T) {
 	var seq SequenceFunc
 
-	mustPanicWith(t, errNilSequenceFunc, func() {
+	panicassert.RequireValue(t, errNilSequenceFunc, func() {
 		seq.Next()
 	})
 }
@@ -34,7 +35,7 @@ func TestSequenceFuncRejectsNegativeAvailableDelay(t *testing.T) {
 		return -time.Nanosecond, true
 	})
 
-	mustPanicWith(t, errSequenceFuncReturnedNegativeDelay, func() {
+	panicassert.RequireValue(t, errSequenceFuncReturnedNegativeDelay, func() {
 		seq.Next()
 	})
 }

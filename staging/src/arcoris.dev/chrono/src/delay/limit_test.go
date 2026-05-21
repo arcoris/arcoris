@@ -17,15 +17,16 @@
 package delay
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"testing"
 	"time"
 )
 
 func TestLimitRejectsInvalidInput(t *testing.T) {
-	mustPanicWith(t, errNilLimitSchedule, func() {
+	panicassert.RequireValue(t, errNilLimitSchedule, func() {
 		Limit(nil, 1)
 	})
-	mustPanicWith(t, errNegativeLimitMaxDelays, func() {
+	panicassert.RequireValue(t, errNegativeLimitMaxDelays, func() {
 		Limit(Fixed(time.Second), -1)
 	})
 }
@@ -79,7 +80,7 @@ func TestLimitDoesNotCallChildAfterExhaustion(t *testing.T) {
 }
 
 func TestLimitRejectsNilChildSequence(t *testing.T) {
-	mustPanicWith(t, errLimitScheduleReturnedNilSequence, func() {
+	panicassert.RequireValue(t, errLimitScheduleReturnedNilSequence, func() {
 		Limit(nilSequenceSchedule{}, 1).NewSequence()
 	})
 }
@@ -87,7 +88,7 @@ func TestLimitRejectsNilChildSequence(t *testing.T) {
 func TestLimitRejectsNegativeChildDelay(t *testing.T) {
 	seq := Limit(ScheduleFunc(func() Sequence { return negativeDelaySequence{} }), 1).NewSequence()
 
-	mustPanicWith(t, errLimitScheduleReturnedNegativeDelay, func() {
+	panicassert.RequireValue(t, errLimitScheduleReturnedNegativeDelay, func() {
 		seq.Next()
 	})
 }

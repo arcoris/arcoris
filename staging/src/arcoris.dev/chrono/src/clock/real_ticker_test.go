@@ -17,6 +17,7 @@
 package clock
 
 import (
+	channelassert "arcoris.dev/testutil/channel"
 	"testing"
 	"time"
 )
@@ -56,7 +57,7 @@ func TestRealTickerDelivers(t *testing.T) {
 	}
 	defer ticker.Stop()
 
-	if got := mustReceiveTime(t, ticker.C()); got.IsZero() {
+	if got := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout); got.IsZero() {
 		t.Fatal("realTicker delivered zero time")
 	}
 }
@@ -105,7 +106,7 @@ func TestRealTickerResetChangesPeriod(t *testing.T) {
 
 	ticker.Reset(realClockTestDelay)
 
-	if got := mustReceiveTime(t, ticker.C()); got.IsZero() {
+	if got := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout); got.IsZero() {
 		t.Fatal("realTicker delivered zero time after Reset")
 	}
 }

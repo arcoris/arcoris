@@ -110,6 +110,50 @@ func TestRequireMessageMatchesFormattedValue(t *testing.T) {
 	}
 }
 
+func TestRequireErrorReturnsRecoveredError(t *testing.T) {
+	t.Parallel()
+
+	want := errors.New("boom")
+	got := RequireError(t, func() {
+		panic(want)
+	})
+
+	if got != want {
+		t.Fatalf("RequireError() = %v, want %v", got, want)
+	}
+}
+
+func TestRequireErrorIs(t *testing.T) {
+	t.Parallel()
+
+	t.Run("sentinel", func(t *testing.T) {
+		t.Parallel()
+
+		want := errors.New("sentinel")
+		got := RequireErrorIs(t, want, func() {
+			panic(want)
+		})
+
+		if got != want {
+			t.Fatalf("RequireErrorIs() = %v, want %v", got, want)
+		}
+	})
+
+	t.Run("wrapped", func(t *testing.T) {
+		t.Parallel()
+
+		want := errors.New("sentinel")
+		wrapped := fmt.Errorf("wrapped: %w", want)
+		got := RequireErrorIs(t, want, func() {
+			panic(wrapped)
+		})
+
+		if got != wrapped {
+			t.Fatalf("RequireErrorIs() = %v, want %v", got, wrapped)
+		}
+	})
+}
+
 func TestRequireValueMatches(t *testing.T) {
 	t.Parallel()
 
