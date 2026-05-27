@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package fixedwindow
 
 import (
@@ -64,6 +63,35 @@ func TestLimiterTryAdmitRetryDenied(t *testing.T) {
 	}
 }
 
+func TestFixedWindowTryAdmitRetryDeniedDoesNotSpendRetry(t *testing.T) {
+	l, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(1))
+
+	allowed := l.TryAdmitRetry()
+	requireDecision(t, allowed, true, retrybudget.ReasonAllowed)
+
+	denied := l.TryAdmitRetry()
+	requireDecision(t, denied, false, retrybudget.ReasonExhausted)
+	if got, want := denied.Snapshot.Value.Attempts.Retry, allowed.Snapshot.Value.Attempts.Retry; got != want {
+		t.Fatalf("denied retry attempts = %d, want unchanged %d", got, want)
+	}
+	if got, want := l.Snapshot().Value.Attempts.Retry, allowed.Snapshot.Value.Attempts.Retry; got != want {
+		t.Fatalf("published retry attempts = %d, want unchanged %d", got, want)
+	}
+}
+
+func TestFixedWindowTryAdmitRetryAllowedSpendsBeforeReturning(t *testing.T) {
+	l, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(1))
+
+	decision := l.TryAdmitRetry()
+	requireDecision(t, decision, true, retrybudget.ReasonAllowed)
+	if got := decision.Snapshot.Value.Attempts.Retry; got != 1 {
+		t.Fatalf("decision retry attempts = %d, want 1", got)
+	}
+	if got := l.Snapshot().Value.Attempts.Retry; got != 1 {
+		t.Fatalf("published retry attempts = %d, want 1", got)
+	}
+}
+
 func TestLimiterTryAdmitRetryDeniedAfterRotationPublishesRotatedSnapshot(t *testing.T) {
 	l, clk := newTestLimiter(t, WithWindow(time.Second), WithRatio(0), WithMinRetries(1))
 
@@ -101,5 +129,8 @@ func TestLimiterTryAdmitRetryDeniedAfterRotationWithZeroMinimum(t *testing.T) {
 	}
 	if !denied.Snapshot.Value.Window.StartedAt.Equal(fixedWindowTestNow.Add(time.Second)) {
 		t.Fatalf("Window.StartedAt = %s, want rotated start", denied.Snapshot.Value.Window.StartedAt)
+	}
+	if got := denied.Snapshot.Value.Attempts.Retry; got != 0 {
+		t.Fatalf("denied rotated retry attempts = %d, want 0", got)
 	}
 }

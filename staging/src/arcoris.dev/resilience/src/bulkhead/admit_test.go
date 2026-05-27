@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package bulkhead
 
 import (
@@ -115,6 +114,32 @@ func TestBulkheadTryAdmitDeniesWhenCapacityExhausted(t *testing.T) {
 		t.Fatal("Metadata returned ok=false, want true")
 	}
 	requireSnapshotValue(t, metadata, 1, 1, 0, 0)
+}
+
+func TestBulkheadTryAdmitDeniedCreatesNoLease(t *testing.T) {
+	t.Parallel()
+
+	b := New(0)
+	before := b.Snapshot()
+
+	result := b.TryAdmit(Request{Amount: 1})
+	if !result.IsValid() {
+		t.Fatalf("denied result is invalid: %+v", result.Decision())
+	}
+	if !result.IsDenied() {
+		t.Fatalf("result = %+v, want denied", result.Decision())
+	}
+	if result.HasGrant() {
+		t.Fatal("denied result has grant")
+	}
+	if grant, ok := result.Grant(); ok || grant != nil {
+		t.Fatalf("Grant() = (%#v,%t), want nil,false", grant, ok)
+	}
+
+	after := b.Snapshot()
+	if after != before {
+		t.Fatalf("snapshot changed after denied TryAdmit: got %+v, want %+v", after, before)
+	}
 }
 
 func TestBulkheadTryAdmitWeighted(t *testing.T) {

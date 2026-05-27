@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package fixedwindow
 
 import (
@@ -110,6 +109,43 @@ func TestLimiterTryAdmitDeniedMapsToBudgetExhaustedAdmissionResult(t *testing.T)
 	}
 	if metadata.Value.Attempts.Retry != 1 {
 		t.Fatalf("Retry attempts = %d, want 1", metadata.Value.Attempts.Retry)
+	}
+}
+
+func TestFixedWindowTryAdmitAdmissionAllowedMapsToCommittedNoGrant(t *testing.T) {
+	t.Parallel()
+
+	limiter, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(1))
+
+	result := limiter.TryAdmit(retrybudget.Request{})
+	if !result.IsValid() {
+		t.Fatalf("result is invalid: %+v", result.Decision())
+	}
+	if got, want := result.Decision(), admission.Commit(admission.ReasonAdmitted); got != want {
+		t.Fatalf("decision = %+v, want %+v", got, want)
+	}
+	if result.HasGrant() {
+		t.Fatal("committed retrybudget admission carried a grant")
+	}
+}
+
+func TestFixedWindowTryAdmitAdmissionDeniedMapsToDeniedNoGrant(t *testing.T) {
+	t.Parallel()
+
+	limiter, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(0))
+
+	result := limiter.TryAdmit(retrybudget.Request{})
+	if !result.IsValid() {
+		t.Fatalf("result is invalid: %+v", result.Decision())
+	}
+	if got, want := result.Decision(), admission.Deny(admission.ReasonBudgetExhausted); got != want {
+		t.Fatalf("decision = %+v, want %+v", got, want)
+	}
+	if result.HasGrant() {
+		t.Fatal("denied retrybudget admission carried a grant")
+	}
+	if metadata, ok := result.Metadata(); !ok || metadata.Value.Attempts.Retry != 0 {
+		t.Fatalf("metadata = (%+v,%t), want no retry spent", metadata, ok)
 	}
 }
 

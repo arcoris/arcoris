@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package bulkhead
 
 import "testing"
@@ -103,4 +102,64 @@ func TestSetLimitToZeroKeepsActiveLeases(t *testing.T) {
 	if lease.Released() {
 		t.Fatal("active lease was revoked by SetLimit(0)")
 	}
+}
+
+func TestBulkheadLeaseReleaseAfterLimitIncrease(t *testing.T) {
+	t.Parallel()
+
+	b := New(1)
+	lease, _, ok := b.TryAcquire()
+	if !ok {
+		t.Fatal("TryAcquire failed")
+	}
+
+	b.SetLimit(2)
+	if lease.Released() {
+		t.Fatal("lease was released by limit increase")
+	}
+
+	snap := lease.Release()
+	requireSnapshotValue(t, snap, 2, 0, 2, 0)
+}
+
+func TestBulkheadLeaseReleaseAfterLimitDecrease(t *testing.T) {
+	t.Parallel()
+
+	b := New(3)
+	lease, _, ok := b.TryAcquireAmount(2)
+	if !ok {
+		t.Fatal("TryAcquireAmount failed")
+	}
+
+	b.SetLimit(1)
+	if lease.Released() {
+		t.Fatal("lease was released by limit decrease")
+	}
+
+	snap := lease.Release()
+	requireSnapshotValue(t, snap, 1, 0, 1, 0)
+}
+
+func TestBulkheadLeaseReleaseAfterLimitSetToZero(t *testing.T) {
+	t.Parallel()
+
+	b := New(2)
+	first, _, ok := b.TryAcquire()
+	if !ok {
+		t.Fatal("first TryAcquire failed")
+	}
+	second, _, ok := b.TryAcquire()
+	if !ok {
+		t.Fatal("second TryAcquire failed")
+	}
+
+	b.SetLimit(0)
+	if first.Released() || second.Released() {
+		t.Fatal("lease was released by SetLimit(0)")
+	}
+
+	snap := first.Release()
+	requireSnapshotValue(t, snap, 0, 1, 0, 1)
+	snap = second.Release()
+	requireSnapshotValue(t, snap, 0, 0, 0, 0)
 }

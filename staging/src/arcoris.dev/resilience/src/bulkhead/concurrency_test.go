@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package bulkhead
 
 import (
@@ -81,4 +80,36 @@ func TestConcurrentReleaseIsRaceSafe(t *testing.T) {
 	wg.Wait()
 
 	requireSnapshotValue(t, b.Snapshot(), 32, 0, 32, 0)
+}
+
+func TestBulkheadLeaseTryReleaseConcurrentWithReleasedIsRaceFree(t *testing.T) {
+	b := New(1)
+	lease, _, ok := b.TryAcquire()
+	if !ok {
+		t.Fatal("TryAcquire failed")
+	}
+
+	var released atomic.Uint64
+	var wg sync.WaitGroup
+	for range 64 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for range 100 {
+				_ = lease.Released()
+				if _, ok := lease.TryRelease(); ok {
+					released.Add(1)
+				}
+			}
+		}()
+	}
+	wg.Wait()
+
+	if got := released.Load(); got != 1 {
+		t.Fatalf("successful releases = %d, want 1", got)
+	}
+	if !lease.Released() {
+		t.Fatal("lease is not released")
+	}
+	requireSnapshotValue(t, b.Snapshot(), 1, 0, 1, 0)
 }
