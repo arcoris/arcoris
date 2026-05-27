@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package liveconfig
 
 import (
@@ -36,8 +35,9 @@ import (
 // remote control-plane clients, and subscriber notification loops should call
 // Apply from outside the package after they have built a candidate value.
 //
-// Holder is safe for concurrent use. Holder must be constructed with New and
-// must not be copied after first use.
+// Holder is safe for concurrent use. Holder must be constructed with New; the
+// zero value is invalid because it has no publisher or initial last-good value.
+// Holder must not be copied after first use.
 type Holder[T any] struct {
 	// noCopy lets go vet report accidental Holder copies after first use.
 	noCopy noCopy
@@ -64,12 +64,12 @@ type Holder[T any] struct {
 	lastErr error
 }
 
-// ErrNilHolder reports a method call on a nil Holder receiver.
+// ErrNilHolder reports a method call on a nil or unconstructed Holder receiver.
 //
 // Holder methods panic with this value instead of returning zero snapshots from
-// a nil receiver. A nil Holder has no publisher, no last-good value, and no
-// meaningful revision, so treating it as a programming error keeps failures
-// explicit.
+// a nil or zero-value receiver. Such a Holder has no publisher, no last-good
+// value, and no meaningful revision, so treating it as a programming error
+// keeps failures explicit.
 var ErrNilHolder = errors.New("liveconfig: nil holder")
 
 // New creates a Holder containing initial as its first last-good value.
@@ -139,9 +139,9 @@ func (h *Holder[T]) LastError() error {
 	return h.lastErr
 }
 
-// requireHolder panics when h is nil.
+// requireHolder panics when h is nil or was not constructed with New.
 func requireHolder[T any](h *Holder[T]) {
-	if h == nil {
+	if h == nil || h.pub == nil {
 		panic(ErrNilHolder)
 	}
 }

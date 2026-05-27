@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package liveconfig
 
 // Normalizer converts a candidate configuration into its canonical form.
@@ -24,6 +23,10 @@ package liveconfig
 // Normalization is part of the candidate transaction. If it returns an error,
 // Holder keeps the previous last-good value, records the error as LastError for
 // Apply, and does not advance the revision.
+//
+// Normalizers run while Apply holds the holder write mutex. They should not
+// perform external I/O, block indefinitely, start goroutines, or call back into
+// the same holder.
 type Normalizer[T any] func(T) (T, error)
 
 // normalizeValue applies cfg's normalizer when one is configured.

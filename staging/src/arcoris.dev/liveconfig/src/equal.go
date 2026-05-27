@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package liveconfig
 
 // EqualFunc reports whether two canonical configuration values are logically
@@ -25,7 +24,10 @@ package liveconfig
 //
 // EqualFunc is evaluated after clone, normalization, and validation. It should
 // compare the logical configuration state, not incidental representation details
-// that the normalizer has already canonicalized.
+// that the normalizer has already canonicalized. Equal functions run while
+// Apply holds the holder write mutex and should be pure: they must not mutate
+// inputs, perform external I/O, block indefinitely, start goroutines, or call
+// back into the same holder.
 type EqualFunc[T any] func(a, b T) bool
 
 // equalValue reports whether cfg's equality function considers a and b equal.
