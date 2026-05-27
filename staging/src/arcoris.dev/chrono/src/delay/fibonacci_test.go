@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package delay
 
 import (
@@ -55,6 +54,24 @@ func TestFibonacciSequenceSaturates(t *testing.T) {
 	seq := &fibonacciSequence{previous: maxDuration, current: time.Nanosecond}
 
 	mustNext(t, seq, time.Nanosecond)
+	mustNext(t, seq, maxDuration)
+	mustNext(t, seq, maxDuration)
+}
+
+func TestFibonacciPublicConstructorSaturatesAtMaxDuration(t *testing.T) {
+	seq := Fibonacci(maxDuration).NewSequence()
+
+	mustNext(t, seq, maxDuration)
+	mustNext(t, seq, maxDuration)
+	mustNext(t, seq, maxDuration)
+}
+
+func TestFibonacciPublicConstructorSaturatesNearMaxDuration(t *testing.T) {
+	base := maxDuration/2 + time.Nanosecond
+	seq := Fibonacci(base).NewSequence()
+
+	mustNext(t, seq, base)
+	mustNext(t, seq, base)
 	mustNext(t, seq, maxDuration)
 	mustNext(t, seq, maxDuration)
 }

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package delay provides reusable delay sequence contracts and deterministic
 // delay schedules for ARCORIS component internals.
 //
@@ -44,6 +43,7 @@
 // non-negative duration values.
 //
 // Randomized delay transforms and randomized schedules belong to package jitter.
-// Runtime waiting belongs to package wait. Retry orchestration belongs to
-// package retry. Clock and fake-time behavior belong to package clock.
+// Context-aware runtime waiting belongs to arcoris.dev/runtime/wait. Retry
+// orchestration belongs to higher resilience layers. Clock and fake-time
+// behavior belong to package clock.
 package delay

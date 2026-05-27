@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import "time"
@@ -65,10 +64,10 @@ type PassiveClock interface {
 
 // Clock provides runtime time reads and waiting primitives.
 //
-// Clock extends PassiveClock with the operations required by components that own
-// time-based runtime behavior. Use Clock for code that creates timers, tickers,
-// sleeps, retry waits, dispatch timeouts, controller loops, heartbeat loops, or
-// lease-monitoring loops.
+// Clock extends PassiveClock with raw clock-owned waiting primitives. Use Clock
+// for code that creates timers, tickers, or simple sleeps as part of a
+// higher-level owner such as a retry executor, controller, heartbeat loop, or
+// lease monitor.
 //
 // Typical Clock users include:
 //
@@ -84,10 +83,11 @@ type PassiveClock interface {
 // of Clock. Keeping the narrower interface makes ownership clearer and prevents
 // read-only code from depending on blocking or loop-driving primitives.
 //
-// Clock is intentionally limited to physical/runtime time. It must not grow into
-// a general timeutils package. Retry policy, rate limiting, EWMA windows,
-// deadline semantics, lease ownership, resource versions, logical revisions, and
-// distributed clocks belong to higher-level packages.
+// Clock is intentionally limited to physical/runtime time and raw clock-driven
+// primitives. Context-aware waiting, condition loops, wait-owned error
+// classification, retry policy, rate limiting, EWMA windows, deadline semantics,
+// lease ownership, resource versions, logical revisions, and distributed clocks
+// belong to higher-level packages.
 type Clock interface {
 	PassiveClock
 
@@ -122,9 +122,10 @@ type Clock interface {
 
 	// Sleep blocks until the duration has elapsed according to this clock.
 	//
-	// Sleep is convenient for simple blocking waits, but long-running components
-	// should prefer timers or tickers when they need cancellation, reset behavior,
-	// shutdown coordination, or explicit lifecycle ownership.
+	// Sleep is convenient for simple clock-owned blocking waits, but long-running
+	// components should prefer timers, tickers, or arcoris.dev/runtime/wait when
+	// they need cancellation, reset behavior, shutdown coordination, condition
+	// loops, or explicit lifecycle ownership.
 	//
 	// For FakeClock, Sleep blocks until another goroutine advances fake time far
 	// enough to release the sleeper.

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import (
@@ -43,6 +42,27 @@ func TestFakeTickerChannelIsStable(t *testing.T) {
 
 	if first != second {
 		t.Fatal("fakeTicker.C() returned different channels across calls")
+	}
+}
+
+// TestFakeTickerChannelIsStableAcrossLifecycle verifies that Stop and Reset do
+// not replace the ticker channel.
+func TestFakeTickerChannelIsStableAcrossLifecycle(t *testing.T) {
+	t.Parallel()
+
+	clk := NewFakeClock(fakeClockTestTime())
+	ticker := clk.NewTicker(time.Hour)
+	ch := ticker.C()
+
+	ticker.Stop()
+	ticker.Reset(time.Hour)
+	defer ticker.Stop()
+
+	clk.Step(time.Hour)
+	_ = channelassert.RequireReceive(t, ch, clockTestTimeout)
+
+	if ticker.C() != ch {
+		t.Fatal("fakeTicker.C() changed after Stop/Reset lifecycle")
 	}
 }
 
@@ -162,6 +182,25 @@ func TestFakeTickerStopPreventsFutureTicks(t *testing.T) {
 	channelassert.RequireNoReceive(t, ticker.C())
 
 	ticker.Stop()
+}
+
+// TestFakeTickerStopDoesNotCloseChannel verifies that Stop is not a channel
+// lifecycle signal.
+func TestFakeTickerStopDoesNotCloseChannel(t *testing.T) {
+	t.Parallel()
+
+	clk := NewFakeClock(fakeClockTestTime())
+	ticker := clk.NewTicker(time.Hour)
+
+	ticker.Stop()
+
+	select {
+	case _, ok := <-ticker.C():
+		if !ok {
+			t.Fatal("fakeTicker.Stop closed the ticker channel")
+		}
+	default:
+	}
 }
 
 // TestFakeTickerResetChangesInterval verifies that Reset schedules the next tick

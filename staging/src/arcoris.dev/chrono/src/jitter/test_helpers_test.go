@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package jitter
 
 import (
@@ -120,10 +119,26 @@ func (negativeDelaySequence) Next() (time.Duration, bool) {
 	return -time.Nanosecond, true
 }
 
+// exhaustedNegativeSequence returns a negative delay with ok=false.
+type exhaustedNegativeSequence struct{}
+
+// Next returns an ignored negative delay with ok=false.
+func (exhaustedNegativeSequence) Next() (time.Duration, bool) {
+	return -time.Nanosecond, false
+}
+
 // nilSequenceSchedule violates the Schedule contract for wrapper tests.
 type nilSequenceSchedule struct{}
 
 // NewSequence returns nil.
 func (nilSequenceSchedule) NewSequence() delay.Sequence {
+	return nil
+}
+
+// nilRandomSource violates the RandomSource contract for boundary tests.
+type nilRandomSource struct{}
+
+// NewRandom returns nil.
+func (nilRandomSource) NewRandom() RandomGenerator {
 	return nil
 }

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import (
@@ -66,10 +65,13 @@ import (
 // test. It must not be copied after first use. Copying a live FakeClock would
 // copy its mutex and split ownership of registered timers, tickers, and waiters.
 //
-// Use NewFakeClock to create a clock with an explicit initial time. The zero
-// value is intentionally not the preferred construction path because tests
-// should choose their initial time deliberately.
+// The zero value is usable as a fake clock at the zero time, but tests should
+// prefer NewFakeClock with an explicit initial time so expected timestamps are
+// deliberate and readable.
 type FakeClock struct {
+	// noCopy lets go vet report accidental FakeClock copies after first use.
+	noCopy noCopy
+
 	// mu protects all mutable fake-clock state.
 	//
 	// Code that holds mu may inspect and update now, waiters, timers, and

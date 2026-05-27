@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package delay
 
 import (
@@ -47,10 +46,15 @@ func TestLimitExposesOnlyConfiguredNumberOfValues(t *testing.T) {
 }
 
 func TestLimitPreservesEarlyChildExhaustion(t *testing.T) {
-	seq := Limit(Delays(time.Second), 3).NewSequence()
+	child := &countingSequence{values: []time.Duration{time.Second}}
+	seq := Limit(ScheduleFunc(func() Sequence { return child }), 3).NewSequence()
 
 	mustNext(t, seq, time.Second)
 	mustExhausted(t, seq)
+	mustExhausted(t, seq)
+	if child.calls != 2 {
+		t.Fatalf("child calls = %d, want 2", child.calls)
+	}
 }
 
 func TestLimitZeroDoesNotCreateChildSequence(t *testing.T) {
@@ -90,4 +94,10 @@ func TestLimitRejectsNegativeChildDelay(t *testing.T) {
 	panicassert.RequireValue(t, errLimitScheduleReturnedNegativeDelay, func() {
 		seq.Next()
 	})
+}
+
+func TestLimitIgnoresNegativeDelayAfterChildExhaustion(t *testing.T) {
+	seq := Limit(ScheduleFunc(func() Sequence { return exhaustedNegativeSequence{} }), 1).NewSequence()
+
+	mustExhausted(t, seq)
 }

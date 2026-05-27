@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package jitter
 
 import (
@@ -75,6 +74,9 @@ func TestRandomDurationInclusiveRejectsNilRandom(t *testing.T) {
 func TestRandomDurationInclusiveUsesClosedRange(t *testing.T) {
 	if got := randomDurationInclusive(fixedRandom(0), time.Second); got != 0 {
 		t.Fatalf("randomDurationInclusive(0) = %s, want 0", got)
+	}
+	if got := randomDurationInclusive(fixedRandom(1), time.Second); got != time.Nanosecond {
+		t.Fatalf("randomDurationInclusive(1) = %s, want 1ns", got)
 	}
 	if got := randomDurationInclusive(fixedRandom(int64(time.Second)), time.Second); got != time.Second {
 		t.Fatalf("randomDurationInclusive(max) = %s, want %s", got, time.Second)

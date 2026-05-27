@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package jitter
 
 import (
@@ -49,6 +48,12 @@ func TestDecorrelatedRejectsInvalidInput(t *testing.T) {
 	})
 }
 
+func TestDecorrelatedRejectsNilRandomGenerator(t *testing.T) {
+	panicassert.RequireValue(t, errNilRandom, func() {
+		decorrelatedJitterWithSource(time.Second, 2*time.Second, 2, nilRandomSource{}).NewSequence()
+	})
+}
+
 func TestDecorrelatedReturnsValuesInsideExpectedRanges(t *testing.T) {
 	source := RandomSourceFunc(func() RandomGenerator {
 		return &sequenceRandom{values: []int64{
@@ -66,6 +71,16 @@ func TestDecorrelatedReturnsValuesInsideExpectedRanges(t *testing.T) {
 	if first != 2*time.Second || second != 3*time.Second || third != 4*time.Second {
 		t.Fatalf("delays = %s, %s, %s; want 2s, 3s, 4s", first, second, third)
 	}
+}
+
+func TestDecorrelatedCanReturnRangeBounds(t *testing.T) {
+	source := RandomSourceFunc(func() RandomGenerator {
+		return &sequenceRandom{values: []int64{0, int64(time.Second)}}
+	})
+	seq := Decorrelated(time.Second, 5*time.Second, 2, WithRandomSource(source)).NewSequence()
+
+	mustNext(t, seq, time.Second)
+	mustNext(t, seq, 2*time.Second)
 }
 
 func TestDecorrelatedSequencesHaveIndependentPreviousState(t *testing.T) {

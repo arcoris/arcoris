@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package jitter
 
 import (
@@ -50,12 +49,26 @@ func TestJitterRejectsNilChildSequence(t *testing.T) {
 	})
 }
 
+func TestJitterRejectsNilRandomGenerator(t *testing.T) {
+	panicassert.RequireValue(t, errNilRandom, func() {
+		newJitterScheduleWithSource(delay.Fixed(time.Second), fullJitterTransform, nilRandomSource{}).NewSequence()
+	})
+}
+
 func TestJitterRejectsNegativeChildDelay(t *testing.T) {
 	seq := newJitterSchedule(delay.ScheduleFunc(func() delay.Sequence { return negativeDelaySequence{} }), fullJitterTransform).NewSequence()
 
 	panicassert.RequireValue(t, errJitterScheduleReturnedNegativeDelay, func() {
 		seq.Next()
 	})
+}
+
+func TestJitterIgnoresNegativeDelayAfterChildExhaustion(t *testing.T) {
+	seq := newJitterSchedule(delay.ScheduleFunc(func() delay.Sequence {
+		return exhaustedNegativeSequence{}
+	}), fullJitterTransform).NewSequence()
+
+	mustExhausted(t, seq)
 }
 
 func TestJitterRejectsNegativeTransformOutput(t *testing.T) {
@@ -80,4 +93,35 @@ func TestJitterRequestsRandomGeneratorPerSequence(t *testing.T) {
 	}
 	mustNext(t, l, 0)
 	mustNext(t, r, time.Nanosecond)
+}
+
+func TestJitterSchedulesNeverReturnNegativeDelaysForValidInputs(t *testing.T) {
+	const maxInt63 = int64(1<<63 - 1)
+
+	tests := []struct {
+		name  string
+		sched delay.Schedule
+	}{
+		{name: "full", sched: Full(delay.Fixed(time.Second), WithRandom(fixedRandom(maxInt63)))},
+		{name: "equal", sched: Equal(delay.Fixed(time.Second), WithRandom(fixedRandom(maxInt63)))},
+		{name: "positive", sched: Positive(delay.Fixed(time.Second), 0.5, WithRandom(fixedRandom(maxInt63)))},
+		{name: "proportional", sched: Proportional(delay.Fixed(time.Second), 0.5, WithRandom(fixedRandom(maxInt63)))},
+		{name: "uniform", sched: Uniform(0, time.Second, WithRandom(fixedRandom(maxInt63)))},
+		{name: "decorrelated", sched: Decorrelated(time.Second, 5*time.Second, 2, WithRandom(fixedRandom(maxInt63)))},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			seq := tc.sched.NewSequence()
+			for i := 0; i < 3; i++ {
+				got, ok := seq.Next()
+				if !ok {
+					t.Fatal("Next() exhausted, want available delay")
+				}
+				if got < 0 {
+					t.Fatalf("Next() delay = %s, want non-negative", got)
+				}
+			}
+		})
+	}
 }

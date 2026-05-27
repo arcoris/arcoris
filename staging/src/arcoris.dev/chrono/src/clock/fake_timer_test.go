@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import (
@@ -40,6 +39,25 @@ func TestFakeTimerChannelIsStable(t *testing.T) {
 
 	if first != second {
 		t.Fatal("fakeTimer.C() returned different channels across calls")
+	}
+}
+
+// TestFakeTimerChannelIsStableAcrossLifecycle verifies that Stop and Reset do
+// not replace the timer channel.
+func TestFakeTimerChannelIsStableAcrossLifecycle(t *testing.T) {
+	t.Parallel()
+
+	clk := NewFakeClock(fakeClockTestTime())
+	timer := clk.NewTimer(time.Hour)
+	ch := timer.C()
+
+	_ = timer.Stop()
+	_ = timer.Reset(time.Hour)
+	clk.Step(time.Hour)
+	_ = channelassert.RequireReceive(t, ch, clockTestTimeout)
+
+	if timer.C() != ch {
+		t.Fatal("fakeTimer.C() changed after Stop/Reset/fire lifecycle")
 	}
 }
 
@@ -139,6 +157,25 @@ func TestFakeTimerStopPreventsDelivery(t *testing.T) {
 
 	if stopped := timer.Stop(); stopped {
 		t.Fatal("second fakeTimer.Stop() = true, want false")
+	}
+}
+
+// TestFakeTimerStopDoesNotCloseChannel verifies that Stop is not a channel
+// lifecycle signal.
+func TestFakeTimerStopDoesNotCloseChannel(t *testing.T) {
+	t.Parallel()
+
+	clk := NewFakeClock(fakeClockTestTime())
+	timer := clk.NewTimer(time.Hour)
+
+	_ = timer.Stop()
+
+	select {
+	case _, ok := <-timer.C():
+		if !ok {
+			t.Fatal("fakeTimer.Stop closed the timer channel")
+		}
+	default:
 	}
 }
 
@@ -276,6 +313,32 @@ func TestFakeTimerResetDropsImmediateDeliveryWhenChannelIsFull(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		timer.Reset(0)
+		close(done)
+	}()
+	channelassert.RequireSignal(t, done, clockTestTimeout)
+
+	mustEqualTime(t, "stale timer delivery", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start.Add(5*time.Second))
+	channelassert.RequireNoReceive(t, timer.C())
+}
+
+// TestFakeTimerStepDropsDeliveryWhenChannelIsFull verifies that fake-time
+// advancement never blocks on an unread timer value.
+func TestFakeTimerStepDropsDeliveryWhenChannelIsFull(t *testing.T) {
+	t.Parallel()
+
+	start := fakeClockTestTime()
+	clk := NewFakeClock(start)
+	timer := clk.NewTimer(5 * time.Second)
+
+	clk.Step(5 * time.Second)
+
+	if wasActive := timer.Reset(5 * time.Second); wasActive {
+		t.Fatal("fakeTimer.Reset() after fire = true, want false")
+	}
+
+	done := make(chan struct{})
+	go func() {
+		clk.Step(5 * time.Second)
 		close(done)
 	}()
 	channelassert.RequireSignal(t, done, clockTestTimeout)

@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import (
 	channelassert "arcoris.dev/testutil/channel"
 
+	"sync"
 	"testing"
+	"time"
 )
 
 // TestNewFakeClockInitializesCurrentTime verifies that the constructor stores
@@ -83,6 +84,84 @@ func TestFakeClockDoesNotAdvanceWithRealTime(t *testing.T) {
 
 	mustEqualTime(t, "first FakeClock.Now()", first, start)
 	mustEqualTime(t, "second FakeClock.Now()", second, start)
+}
+
+// TestFakeClockZeroValueReportsZeroTime verifies the documented zero-value
+// contract for tests that intentionally use a zero-time fake clock.
+func TestFakeClockZeroValueReportsZeroTime(t *testing.T) {
+	t.Parallel()
+
+	var clk FakeClock
+
+	mustEqualTime(t, "zero FakeClock.Now()", clk.Now(), time.Time{})
+	if got := clk.Since(time.Time{}); got != 0 {
+		t.Fatalf("zero FakeClock.Since(zero) = %s, want 0", got)
+	}
+}
+
+// TestFakeClockZeroValueCanRegisterWaitersTimersAndTickers verifies that lazy
+// registry initialization makes the zero value usable for all fake primitives.
+func TestFakeClockZeroValueCanRegisterWaitersTimersAndTickers(t *testing.T) {
+	t.Parallel()
+
+	var clk FakeClock
+
+	waiter := clk.After(time.Second)
+	timer := clk.NewTimer(time.Second)
+	ticker := clk.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	clk.Step(time.Second)
+
+	want := time.Time{}.Add(time.Second)
+	mustEqualTime(t, "zero FakeClock After delivery", channelassert.RequireReceive(t, waiter, clockTestTimeout), want)
+	mustEqualTime(t, "zero FakeClock timer delivery", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), want)
+	mustEqualTime(t, "zero FakeClock ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), want)
+}
+
+// TestFakeClockConcurrentOperationsAreRaceSafe exercises the fake clock's core
+// operations together. Its main value is under go test -race.
+func TestFakeClockConcurrentOperationsAreRaceSafe(t *testing.T) {
+	t.Parallel()
+
+	start := fakeClockTestTime()
+	clk := NewFakeClock(start)
+
+	var wg sync.WaitGroup
+	for worker := 0; worker < 8; worker++ {
+		wg.Add(1)
+		go func(worker int) {
+			defer wg.Done()
+
+			for i := 0; i < 25; i++ {
+				d := time.Duration(worker+i+1) * time.Nanosecond
+
+				_ = clk.Now()
+				_ = clk.Since(start)
+				_ = clk.After(d)
+
+				timer := clk.NewTimer(d)
+				_ = timer.C()
+				_ = timer.Reset(d + time.Nanosecond)
+				_ = timer.Stop()
+
+				ticker := clk.NewTicker(d + time.Nanosecond)
+				_ = ticker.C()
+				ticker.Reset(d + 2*time.Nanosecond)
+				ticker.Stop()
+
+				clk.Step(time.Nanosecond)
+			}
+		}(worker)
+	}
+
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	channelassert.RequireSignal(t, done, clockTestTimeout)
 }
 
 // TestFakeClockRegistriesBecomeEmptyAfterDueDelivery verifies that due waiters,

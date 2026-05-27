@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package chrono groups time abstraction and duration-sequence construction
 // modules for ARCORIS internals.
 //
@@ -21,11 +20,12 @@
 // schedules and wrappers. Package jitter provides non-cryptographic randomized
 // delay schedules and randomized wrappers over delay.Schedule.
 //
-// chrono intentionally does not own runtime waiting mechanics. Blocking waits,
-// condition loops, wait-owned context errors, and owner-controlled real-runtime
-// timers belong to arcoris.dev/runtime/wait. Retry execution and other
-// failure-control primitives belong to arcoris.dev/resilience. Health checks,
-// probes, and transport adapters belong to arcoris.dev/health.
+// chrono intentionally does not own context-aware waiting, condition loops,
+// wait-owned error classification, retry execution, scheduler policy, runtime
+// lifecycle coordination, or health policy. Context-aware waits and condition
+// loops belong to arcoris.dev/runtime/wait. Retry execution belongs to higher
+// resilience layers. Health checks, probes, and transport adapters belong above
+// chrono.
 //
 // Production code in clock and delay depends only on the Go standard library.
 // jitter may depend on chrono/delay. The module must not depend on runtime,

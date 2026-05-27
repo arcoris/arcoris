@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package jitter
 
 import (
@@ -36,6 +35,12 @@ func TestUniformRejectsInvalidOptionsAndSource(t *testing.T) {
 	})
 	panicassert.RequireValue(t, errNilUniformSource, func() {
 		randomWithSource(0, time.Second, nil)
+	})
+}
+
+func TestUniformRejectsNilRandomGenerator(t *testing.T) {
+	panicassert.RequireValue(t, errNilRandom, func() {
+		randomWithSource(0, time.Second, nilRandomSource{}).NewSequence()
 	})
 }
 

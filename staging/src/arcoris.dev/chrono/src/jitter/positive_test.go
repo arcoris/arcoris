@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package jitter
 
 import (
@@ -45,6 +44,12 @@ func TestPositiveReturnsValueInsidePositiveRange(t *testing.T) {
 	mustNext(t, seq, 15*time.Second)
 }
 
+func TestPositiveCanReturnLowerBound(t *testing.T) {
+	seq := Positive(delay.Fixed(10*time.Second), 0.5, WithRandom(fixedRandom(0))).NewSequence()
+
+	mustNext(t, seq, 10*time.Second)
+}
+
 func TestPositiveFactorZeroReturnsBaseDelay(t *testing.T) {
 	seq := Positive(delay.Fixed(10*time.Second), 0, WithRandom(fixedRandom(5*time.Second))).NewSequence()
 
@@ -69,4 +74,13 @@ func TestPositiveTransformSaturates(t *testing.T) {
 	if got := transform(maxDuration, fixedRandom(1)); got != maxDuration {
 		t.Fatalf("positiveJitterTransform() = %s, want %s", got, maxDuration)
 	}
+}
+
+func TestCapProvidesHardBoundAroundPositiveJitter(t *testing.T) {
+	seq := delay.Cap(
+		Positive(delay.Fixed(10*time.Second), 1, WithRandom(fixedRandom(10*time.Second))),
+		12*time.Second,
+	).NewSequence()
+
+	mustNext(t, seq, 12*time.Second)
 }

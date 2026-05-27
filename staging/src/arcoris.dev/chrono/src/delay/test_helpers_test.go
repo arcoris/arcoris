@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package delay
 
 import (
@@ -69,6 +68,14 @@ type negativeDelaySequence struct{}
 // Next returns a negative delay with ok=true.
 func (negativeDelaySequence) Next() (time.Duration, bool) {
 	return -time.Nanosecond, true
+}
+
+// exhaustedNegativeSequence returns a negative delay with ok=false.
+type exhaustedNegativeSequence struct{}
+
+// Next returns an ignored negative delay with ok=false.
+func (exhaustedNegativeSequence) Next() (time.Duration, bool) {
+	return -time.Nanosecond, false
 }
 
 // nilSequenceSchedule violates the Schedule contract for wrapper tests.

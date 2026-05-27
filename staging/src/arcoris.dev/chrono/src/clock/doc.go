@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package clock provides runtime time abstractions for ARCORIS component
 // internals.
 //
@@ -23,7 +22,8 @@
 // and deterministic tests.
 //
 // clock belongs to arcoris.dev/chrono. It is a low-level time abstraction, not
-// API machinery and not a scheduling policy package.
+// API machinery, not a context-aware waiting package, and not a scheduling
+// policy package.
 //
 // # Scope
 //
@@ -36,8 +36,12 @@
 //   - RealClock for production code backed by the Go standard library;
 //   - FakeClock for deterministic tests.
 //
-// The package owns only the mechanics of reading time and waiting for time to
-// pass. Higher-level packages own the meaning of time in their own domains.
+// The package owns only low-level clock-driven mechanics: reading time, raw
+// clock-owned waits, timers, and tickers. Higher-level packages own the meaning
+// of time in their own domains. Context-aware waiting, condition loops,
+// wait-owned error classification, owner-controlled real-runtime wait mechanics,
+// and lifecycle-aware waiting belong to arcoris.dev/runtime/wait and higher
+// layers.
 //
 // For example:
 //

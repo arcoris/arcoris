@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package jitter provides non-cryptographic delay randomization primitives.
 //
 // The package owns randomized wrappers over delay.Schedule, randomized delay
@@ -37,6 +36,7 @@
 // decisions. It also does not own deterministic growth schedules or generic
 // Schedule and Sequence contracts.
 //
-// Generic and deterministic delay schedules belong to package delay. Runtime
-// waiting belongs to package wait. Retry orchestration belongs to package retry.
+// Generic and deterministic delay schedules belong to package delay.
+// Context-aware runtime waiting belongs to arcoris.dev/runtime/wait. Retry
+// orchestration belongs to higher resilience layers.
 package jitter

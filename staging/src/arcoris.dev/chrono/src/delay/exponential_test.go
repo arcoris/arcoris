@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package delay
 
 import (
@@ -71,6 +70,23 @@ func TestExponentialSequencesHaveIndependentState(t *testing.T) {
 func TestExponentialSequenceSaturates(t *testing.T) {
 	seq := &exponentialSequence{next: maxDurationFloat, multiplier: 2}
 
+	mustNext(t, seq, maxDuration)
+	mustNext(t, seq, maxDuration)
+}
+
+func TestExponentialPublicConstructorSaturatesAtMaxDuration(t *testing.T) {
+	seq := Exponential(maxDuration, 2).NewSequence()
+
+	mustNext(t, seq, maxDuration)
+	mustNext(t, seq, maxDuration)
+	mustNext(t, seq, maxDuration)
+}
+
+func TestExponentialPublicConstructorSaturatesNearMaxDuration(t *testing.T) {
+	initial := time.Duration(1 << 62)
+	seq := Exponential(initial, 2).NewSequence()
+
+	mustNext(t, seq, initial)
 	mustNext(t, seq, maxDuration)
 	mustNext(t, seq, maxDuration)
 }

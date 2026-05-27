@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package delay
 
 import (
@@ -38,8 +37,9 @@ func TestCapCapsAvailableChildDelays(t *testing.T) {
 }
 
 func TestCapAllowsZeroMaximumDelay(t *testing.T) {
-	seq := Cap(Delays(time.Second), 0).NewSequence()
+	seq := Cap(Delays(time.Second, 2*time.Second), 0).NewSequence()
 
+	mustNext(t, seq, 0)
 	mustNext(t, seq, 0)
 	mustExhausted(t, seq)
 }
@@ -63,4 +63,10 @@ func TestCapRejectsNegativeChildDelay(t *testing.T) {
 	panicassert.RequireValue(t, errCapScheduleReturnedNegativeDelay, func() {
 		seq.Next()
 	})
+}
+
+func TestCapIgnoresNegativeDelayAfterChildExhaustion(t *testing.T) {
+	seq := Cap(ScheduleFunc(func() Sequence { return exhaustedNegativeSequence{} }), time.Second).NewSequence()
+
+	mustExhausted(t, seq)
 }
