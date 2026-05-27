@@ -21,8 +21,8 @@ manifests=$(find staging/src/arcoris.dev -mindepth 2 -maxdepth 2 -name publishin
 for manifest in $manifests; do
 	module_root=$(dirname "$manifest")
 	module=$(sed -n 's/^module: //p' "$manifest")
-	pkg_root="$module_root/pkg"
-	go_mod="$pkg_root/go.mod"
+	src_root="$module_root/src"
+	go_mod="$src_root/go.mod"
 
 	if [ ! -f "$go_mod" ]; then
 		fail "missing $go_mod"
@@ -38,12 +38,12 @@ for manifest in $manifests; do
 		fail "unexpected parent-level go.mod: $module_root/go.mod"
 	fi
 
-	if ! grep -Fq "./$module_root/pkg" go.work; then
-		fail "go.work is missing ./$module_root/pkg"
+	if ! grep -Fq "./$module_root/src" go.work; then
+		fail "go.work is missing ./$module_root/src"
 	fi
 
-	if rg -n "\"$module/pkg" "$pkg_root" >/dev/null 2>&1; then
-		fail "forbidden import path contains /pkg under $pkg_root"
+	if rg -n "\"$module/src" "$src_root" >/dev/null 2>&1; then
+		fail "forbidden import path contains /src under $src_root"
 	fi
 done
 
