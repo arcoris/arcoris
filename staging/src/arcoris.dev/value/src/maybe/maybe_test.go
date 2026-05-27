@@ -58,6 +58,84 @@ func TestSome(t *testing.T) {
 	}
 }
 
+func TestSomeZeroValueIsDistinctFromNone(t *testing.T) {
+	t.Run("zero int", func(t *testing.T) {
+		m := maybe.Some(0)
+
+		if !m.IsSome() {
+			t.Fatal("Some(0) must report IsSome")
+		}
+		if m.IsNone() {
+			t.Fatal("Some(0) must not report IsNone")
+		}
+
+		got, ok := m.Load()
+		if !ok {
+			t.Fatal("Load returned ok=false for Some(0)")
+		}
+		if got != 0 {
+			t.Fatalf("Load() = %d, want zero", got)
+		}
+	})
+
+	t.Run("empty string", func(t *testing.T) {
+		m := maybe.Some("")
+
+		if !m.IsSome() {
+			t.Fatal(`Some("") must report IsSome`)
+		}
+		if m.IsNone() {
+			t.Fatal(`Some("") must not report IsNone`)
+		}
+
+		got, ok := m.Load()
+		if !ok {
+			t.Fatal(`Load returned ok=false for Some("")`)
+		}
+		if got != "" {
+			t.Fatalf("Load() = %q, want empty string", got)
+		}
+	})
+
+	t.Run("nil slice", func(t *testing.T) {
+		m := maybe.Some([]string(nil))
+
+		if !m.IsSome() {
+			t.Fatal("Some(nil slice) must report IsSome")
+		}
+		if m.IsNone() {
+			t.Fatal("Some(nil slice) must not report IsNone")
+		}
+
+		got, ok := m.Load()
+		if !ok {
+			t.Fatal("Load returned ok=false for Some(nil slice)")
+		}
+		if got != nil {
+			t.Fatalf("Load() = %#v, want nil", got)
+		}
+	})
+
+	t.Run("nil pointer", func(t *testing.T) {
+		m := maybe.Some((*int)(nil))
+
+		if !m.IsSome() {
+			t.Fatal("Some(nil pointer) must report IsSome")
+		}
+		if m.IsNone() {
+			t.Fatal("Some(nil pointer) must not report IsNone")
+		}
+
+		got, ok := m.Load()
+		if !ok {
+			t.Fatal("Load returned ok=false for Some(nil pointer)")
+		}
+		if got != nil {
+			t.Fatalf("Load() = %#v, want nil", got)
+		}
+	})
+}
+
 func TestNone(t *testing.T) {
 	m := maybe.None[int]()
 

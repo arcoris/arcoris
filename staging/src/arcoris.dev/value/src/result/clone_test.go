@@ -45,6 +45,37 @@ func TestCloneOK(t *testing.T) {
 	}
 }
 
+func TestCloneOKZeroValuePreservesSuccess(t *testing.T) {
+	called := false
+	r := result.OK([]string(nil))
+
+	cloned := r.Clone(func(val []string) []string {
+		called = true
+		if val != nil {
+			t.Fatalf("clone input = %#v, want nil", val)
+		}
+		return []string{}
+	})
+
+	if !called {
+		t.Fatal("Clone did not call clone function for OK(nil)")
+	}
+	if !cloned.IsOK() {
+		t.Fatal("Clone returned Err for OK(nil)")
+	}
+
+	got, err := cloned.Load()
+	if err != nil {
+		t.Fatalf("Load returned error for cloned OK(nil): %v", err)
+	}
+	if got == nil {
+		t.Fatal("clone result was not stored")
+	}
+	if len(got) != 0 {
+		t.Fatalf("len(got) = %d, want 0", len(got))
+	}
+}
+
 func TestCloneErr(t *testing.T) {
 	want := errors.New("failed")
 	cloned := result.Err[[]string](want).Clone(cloneStrings)

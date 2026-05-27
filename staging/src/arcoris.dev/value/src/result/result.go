@@ -41,6 +41,9 @@ func Err[T any](err error) Result[T] {
 }
 
 // From returns OK(value) when err is nil and Err(err) otherwise.
+//
+// When err is non-nil, value is discarded so the returned Result does not
+// retain references owned by the caller.
 func From[T any](val T, err error) Result[T] {
 	if err != nil {
 		return Err[T](err)

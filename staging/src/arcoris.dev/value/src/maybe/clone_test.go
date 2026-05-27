@@ -44,6 +44,37 @@ func TestCloneSome(t *testing.T) {
 	}
 }
 
+func TestCloneSomeZeroValuePreservesPresence(t *testing.T) {
+	called := false
+	m := maybe.Some([]string(nil))
+
+	cloned := m.Clone(func(val []string) []string {
+		called = true
+		if val != nil {
+			t.Fatalf("clone input = %#v, want nil", val)
+		}
+		return []string{}
+	})
+
+	if !called {
+		t.Fatal("Clone did not call clone function for Some(nil)")
+	}
+	if !cloned.IsSome() {
+		t.Fatal("Clone returned None for Some(nil)")
+	}
+
+	got, ok := cloned.Load()
+	if !ok {
+		t.Fatal("Load returned ok=false for cloned Some(nil)")
+	}
+	if got == nil {
+		t.Fatal("clone result was not stored")
+	}
+	if len(got) != 0 {
+		t.Fatalf("len(got) = %d, want 0", len(got))
+	}
+}
+
 func TestCloneNone(t *testing.T) {
 	cloned := maybe.None[[]string]().Clone(cloneStrings)
 	if !cloned.IsNone() {

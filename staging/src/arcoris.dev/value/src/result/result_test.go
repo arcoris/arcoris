@@ -59,6 +59,84 @@ func TestOK(t *testing.T) {
 	}
 }
 
+func TestOKZeroValueIsDistinctFromErr(t *testing.T) {
+	t.Run("zero int", func(t *testing.T) {
+		r := result.OK(0)
+
+		if !r.IsOK() {
+			t.Fatal("OK(0) must report IsOK")
+		}
+		if r.IsErr() {
+			t.Fatal("OK(0) must not report IsErr")
+		}
+
+		got, err := r.Load()
+		if err != nil {
+			t.Fatalf("Load returned error for OK(0): %v", err)
+		}
+		if got != 0 {
+			t.Fatalf("Load() = %d, want zero", got)
+		}
+	})
+
+	t.Run("empty string", func(t *testing.T) {
+		r := result.OK("")
+
+		if !r.IsOK() {
+			t.Fatal(`OK("") must report IsOK`)
+		}
+		if r.IsErr() {
+			t.Fatal(`OK("") must not report IsErr`)
+		}
+
+		got, err := r.Load()
+		if err != nil {
+			t.Fatalf(`Load returned error for OK(""): %v`, err)
+		}
+		if got != "" {
+			t.Fatalf("Load() = %q, want empty string", got)
+		}
+	})
+
+	t.Run("nil slice", func(t *testing.T) {
+		r := result.OK([]string(nil))
+
+		if !r.IsOK() {
+			t.Fatal("OK(nil slice) must report IsOK")
+		}
+		if r.IsErr() {
+			t.Fatal("OK(nil slice) must not report IsErr")
+		}
+
+		got, err := r.Load()
+		if err != nil {
+			t.Fatalf("Load returned error for OK(nil slice): %v", err)
+		}
+		if got != nil {
+			t.Fatalf("Load() = %#v, want nil", got)
+		}
+	})
+
+	t.Run("nil pointer", func(t *testing.T) {
+		r := result.OK((*int)(nil))
+
+		if !r.IsOK() {
+			t.Fatal("OK(nil pointer) must report IsOK")
+		}
+		if r.IsErr() {
+			t.Fatal("OK(nil pointer) must not report IsErr")
+		}
+
+		got, err := r.Load()
+		if err != nil {
+			t.Fatalf("Load returned error for OK(nil pointer): %v", err)
+		}
+		if got != nil {
+			t.Fatalf("Load() = %#v, want nil", got)
+		}
+	})
+}
+
 func TestErr(t *testing.T) {
 	want := errors.New("failed")
 	r := result.Err[string](want)
@@ -110,6 +188,22 @@ func TestFrom(t *testing.T) {
 				t.Fatalf("IsErr() = %v, want %v", got, tc.isErr)
 			}
 		})
+	}
+}
+
+func TestFromDiscardsValueWhenErr(t *testing.T) {
+	original := []string{"a", "b"}
+	want := errors.New("failed")
+
+	r := result.From(original, want)
+	original[0] = "changed"
+
+	got, err := r.Load()
+	if !errors.Is(err, want) {
+		t.Fatalf("Load error = %v, want %v", err, want)
+	}
+	if got != nil {
+		t.Fatalf("Load returned non-zero slice for Err: %#v", got)
 	}
 }
 
