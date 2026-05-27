@@ -17,7 +17,7 @@ package healthgrpc
 
 import (
 	"arcoris.dev/health"
-	"arcoris.dev/health/eval"
+	"arcoris.dev/healtheval"
 )
 
 var _ health.Evaluator = (*eval.Evaluator)(nil)

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package health provides transport-neutral health contracts for ARCORIS
 // component internals.
 //
@@ -31,20 +30,20 @@
 // service discovery, drive lifecycle transitions, or make restart, admission,
 // routing, scheduling, logging, tracing, or alerting decisions.
 //
-// # Subpackages
+// # Optional modules
 //
-// Optional behavior is provided by subpackages:
+// Optional behavior is provided by separate modules:
 //
-//   - eval synchronously evaluates registered checks into reports;
-//   - probe periodically evaluates targets and caches latest snapshots;
-//   - http adapts reports and evaluators to HTTP health endpoints;
-//   - grpc adapts reports and evaluators to the standard gRPC health service;
-//   - healthtest provides test helpers for health-domain packages.
+//   - arcoris.dev/healtheval synchronously evaluates registered checks;
+//   - arcoris.dev/healthprobe periodically evaluates and caches observations;
+//   - arcoris.dev/healthhttp adapts reports and evaluators to HTTP endpoints;
+//   - arcoris.dev/healthgrpc adapts reports to the standard gRPC health service;
+//   - arcoris.dev/healthtest provides health-domain test helpers.
 //
-// Root package health must remain independent from those subpackages. Adapters
-// and runtime helpers depend inward on health, while health does not import
-// eval, HTTP, gRPC, probe, runtime lifecycle, metrics, logging, or tracing
-// packages.
+// Root package health must remain independent from those modules. Adapters and
+// runtime helpers depend inward on health, while health does not import
+// evaluation, HTTP, gRPC, probe, test-helper, runtime lifecycle, metrics,
+// logging, or tracing packages.
 //
 // # File ownership
 //

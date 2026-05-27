@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-// Package eval provides synchronous health evaluation over package health
+// Package eval provides synchronous health evaluation over arcoris.dev/health
 // contracts.
 //
 // The package owns evaluator execution mechanics: reading registered checks,
@@ -21,8 +20,8 @@
 // timeouts, and invalid results, applying sequential or bounded-parallel
 // execution policy, and returning a health.Report.
 //
-// The package does not define health statuses, targets, reasons, results,
-// reports, registries, gates, transport adapters, periodic probes, metrics,
-// logging, tracing, lifecycle transitions, restart policy, routing policy,
-// admission policy, or scheduling decisions.
+// The package depends inward on arcoris.dev/health. It does not define health
+// statuses, targets, reasons, results, reports, registries, gates, transport
+// adapters, periodic probes, metrics, logging, tracing, lifecycle transitions,
+// restart policy, routing policy, admission policy, or scheduling decisions.
 package eval

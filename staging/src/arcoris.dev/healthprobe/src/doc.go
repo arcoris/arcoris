@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package probe periodically evaluates explicitly configured health targets and
 // exposes the latest cached observations to concurrent readers.
 //
@@ -39,16 +38,16 @@
 // Package health owns the transport-neutral health contracts: Target, Result,
 // Report, Registry, Gate, TargetPolicy, and Evaluator. Package probe depends on
 // health.Evaluator instead of reading registries or executing checks itself.
-// Package health/eval provides the default synchronous evaluator.
+// Module arcoris.dev/healtheval provides the default synchronous evaluator.
 //
 // # Transport adapters
 //
-// Package probe does not expose transport behavior. Package health/http adapts
-// package health reports to HTTP endpoints and stays independent from package
-// probe by default. Future HTTP, gRPC, CLI, or metrics adapters may choose to
-// consume Snapshot values, but those adapters own their wire contracts,
-// rendering rules, status mappings, diagnostics, authentication, and exposure
-// safety.
+// Package probe does not expose transport behavior. Module arcoris.dev/healthhttp
+// adapts package health reports to HTTP endpoints and stays independent from
+// package probe by default. Future HTTP, gRPC, CLI, or metrics adapters may
+// choose to consume Snapshot values, but those adapters own their wire
+// contracts, rendering rules, status mappings, diagnostics, authentication, and
+// exposure safety.
 //
 // # Runtime ownership
 //

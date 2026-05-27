@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"arcoris.dev/health"
-	"arcoris.dev/health/healthtest"
+	"arcoris.dev/healthtest"
 	"arcoris.dev/snapshot"
 )
 

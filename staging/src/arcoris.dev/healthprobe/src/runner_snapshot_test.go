@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"arcoris.dev/health"
-	"arcoris.dev/health/healthtest"
+	"arcoris.dev/healthtest"
 )
 
 func TestRunnerSnapshotNilRunner(t *testing.T) {

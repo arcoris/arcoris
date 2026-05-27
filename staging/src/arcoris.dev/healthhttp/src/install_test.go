@@ -22,7 +22,7 @@ import (
 	"testing"
 
 	"arcoris.dev/health"
-	"arcoris.dev/health/healthtest"
+	"arcoris.dev/healthtest"
 )
 
 func TestInstall(t *testing.T) {

@@ -22,7 +22,7 @@ import (
 	"arcoris.dev/chrono/clock"
 	"arcoris.dev/chrono/delay"
 	"arcoris.dev/health"
-	"arcoris.dev/health/healthtest"
+	"arcoris.dev/healthtest"
 	"arcoris.dev/snapshot"
 )
 

@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"arcoris.dev/health"
-	"arcoris.dev/health/eval"
+	"arcoris.dev/healtheval"
 )
 
 // NewEvaluator returns an evaluator with test-safe timeout defaults.

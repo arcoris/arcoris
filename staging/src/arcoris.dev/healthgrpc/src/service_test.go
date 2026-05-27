@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"arcoris.dev/health"
-	"arcoris.dev/health/healthtest"
+	"arcoris.dev/healthtest"
 )
 
 func TestDefaultServiceMapping(t *testing.T) {

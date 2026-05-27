@@ -24,8 +24,8 @@ import (
 	"testing"
 
 	"arcoris.dev/health"
-	"arcoris.dev/health/eval"
-	"arcoris.dev/health/healthtest"
+	"arcoris.dev/healtheval"
+	"arcoris.dev/healthtest"
 )
 
 func TestNewHandler(t *testing.T) {

@@ -24,7 +24,7 @@ import (
 
 	"arcoris.dev/chrono/delay"
 	"arcoris.dev/health"
-	"arcoris.dev/health/healthtest"
+	"arcoris.dev/healthtest"
 )
 
 func TestRunnerRunPerformsInitialProbe(t *testing.T) {

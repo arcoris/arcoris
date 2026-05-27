@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package healthgrpc adapts package health reports to the standard gRPC health
 // checking service.
 //
@@ -34,10 +33,10 @@
 //
 // Package health owns the transport-neutral health model: Target, Status,
 // TargetPolicy, Report, Registry, and Evaluator. healthgrpc depends only on
-// health.Evaluator, which is satisfied by *eval.Evaluator from package
-// health/eval. The evaluator remains the owner of synchronous evaluation
-// behavior, check execution policy, panic normalization, status aggregation, and
-// report construction.
+// health.Evaluator, which is satisfied by *eval.Evaluator from module
+// arcoris.dev/healtheval. The evaluator remains the owner of synchronous
+// evaluation behavior, check execution policy, panic normalization, status
+// aggregation, and report construction.
 //
 // # Service names
 //
@@ -66,7 +65,7 @@
 // Each stream owns its ticker and sends an initial status followed by changes
 // only. The package does not create a global background runner, does not retain
 // stream references after Watch returns, and does not depend on
-// arcoris.dev/health/probe.
+// arcoris.dev/healthprobe.
 //
 // # Concurrency
 //
@@ -107,6 +106,6 @@
 //
 // Production code depends on the Go standard library, arcoris.dev/health,
 // arcoris.dev/chrono/clock, and the standard gRPC health packages. It must not
-// import arcoris.dev/apimachinery, arcoris.dev/health/probe, custom protobufs,
+// import arcoris.dev/apimachinery, arcoris.dev/healthprobe, custom protobufs,
 // logging, metrics, or tracing dependencies.
 package healthgrpc
