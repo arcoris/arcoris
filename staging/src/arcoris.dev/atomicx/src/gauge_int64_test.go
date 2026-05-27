@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
 import (
@@ -131,6 +130,45 @@ func TestInt64GaugeTryAddUnderflowLeavesStateUnchanged(t *testing.T) {
 	}
 }
 
+func TestInt64GaugeTryAddHandlesMinInt64Delta(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success from zero to min", func(t *testing.T) {
+		t.Parallel()
+
+		var gauge Int64Gauge
+
+		got, ok := gauge.TryAdd(minInt64)
+		if !ok {
+			t.Fatal("Int64Gauge.TryAdd(minInt64) from 0 ok = false, want true")
+		}
+		if got != minInt64 {
+			t.Fatalf("Int64Gauge.TryAdd(minInt64) from 0 = %d, want %d", got, minInt64)
+		}
+		if loaded := gauge.Load(); loaded != minInt64 {
+			t.Fatalf("Int64Gauge.Load() = %d, want %d", loaded, minInt64)
+		}
+	})
+
+	t.Run("underflow from negative one", func(t *testing.T) {
+		t.Parallel()
+
+		var gauge Int64Gauge
+		gauge.Store(-1)
+
+		got, ok := gauge.TryAdd(minInt64)
+		if ok {
+			t.Fatal("Int64Gauge.TryAdd(minInt64) from -1 ok = true, want false")
+		}
+		if got != -1 {
+			t.Fatalf("Int64Gauge.TryAdd(minInt64) failure value = %d, want -1", got)
+		}
+		if loaded := gauge.Load(); loaded != -1 {
+			t.Fatalf("Int64Gauge.Load() after failed TryAdd(minInt64) = %d, want -1", loaded)
+		}
+	})
+}
+
 // TestInt64GaugeTrySubSuccess verifies checked signed subtraction updates state.
 func TestInt64GaugeTrySubSuccess(t *testing.T) {
 	t.Parallel()
@@ -190,24 +228,46 @@ func TestInt64GaugeTrySubUnderflowLeavesStateUnchanged(t *testing.T) {
 	}
 }
 
-// TestInt64GaugeTrySubHandlesMinInt64Delta verifies TrySub never computes
-// -minInt64. That negation is not representable and would turn an invariant
-// check into undefined-looking signed wrap behavior.
-func TestInt64GaugeTrySubHandlesMinInt64Delta(t *testing.T) {
+// TestInt64GaugeTrySubHandlesMinInt64DeltaBoundaries verifies TrySub never
+// computes -minInt64. That negation is not representable and would turn an
+// invariant check into undefined-looking signed wrap behavior.
+func TestInt64GaugeTrySubHandlesMinInt64DeltaBoundaries(t *testing.T) {
 	t.Parallel()
 
-	var gauge Int64Gauge
+	t.Run("success from negative one to max", func(t *testing.T) {
+		t.Parallel()
 
-	got, ok := gauge.TrySub(minInt64)
-	if ok {
-		t.Fatal("Int64Gauge.TrySub(minInt64) from 0 ok = true, want false")
-	}
-	if got != 0 {
-		t.Fatalf("Int64Gauge.TrySub(minInt64) failure value = %d, want 0", got)
-	}
-	if loaded := gauge.Load(); loaded != 0 {
-		t.Fatalf("Int64Gauge.Load() after failed TrySub(minInt64) = %d, want 0", loaded)
-	}
+		var gauge Int64Gauge
+		gauge.Store(-1)
+
+		got, ok := gauge.TrySub(minInt64)
+		if !ok {
+			t.Fatal("Int64Gauge.TrySub(minInt64) from -1 ok = false, want true")
+		}
+		if got != maxInt64 {
+			t.Fatalf("Int64Gauge.TrySub(minInt64) from -1 = %d, want %d", got, maxInt64)
+		}
+		if loaded := gauge.Load(); loaded != maxInt64 {
+			t.Fatalf("Int64Gauge.Load() = %d, want %d", loaded, maxInt64)
+		}
+	})
+
+	t.Run("overflow from zero", func(t *testing.T) {
+		t.Parallel()
+
+		var gauge Int64Gauge
+
+		got, ok := gauge.TrySub(minInt64)
+		if ok {
+			t.Fatal("Int64Gauge.TrySub(minInt64) from 0 ok = true, want false")
+		}
+		if got != 0 {
+			t.Fatalf("Int64Gauge.TrySub(minInt64) failure value = %d, want 0", got)
+		}
+		if loaded := gauge.Load(); loaded != 0 {
+			t.Fatalf("Int64Gauge.Load() after failed TrySub(minInt64) = %d, want 0", loaded)
+		}
+	})
 }
 
 // TestInt64GaugeIncAndDec verifies single-unit signed gauge arithmetic.

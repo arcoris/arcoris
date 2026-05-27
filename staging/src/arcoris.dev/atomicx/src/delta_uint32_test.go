@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
 import "testing"
@@ -93,6 +92,25 @@ func TestNewUint32CounterDeltaSameValue(t *testing.T) {
 		t.Fatal("delta.Wrapped = true, want false")
 	}
 
+	if !delta.IsZero() {
+		t.Fatal("delta.IsZero() = false, want true")
+	}
+}
+
+// TestUint32CounterDeltaCannotDetectFullCycleWraps documents the two-sample
+// ambiguity: equal samples mean zero visible progress, not proof that no full
+// uint32 cycles occurred between samples.
+func TestUint32CounterDeltaCannotDetectFullCycleWraps(t *testing.T) {
+	t.Parallel()
+
+	delta := NewUint32CounterDelta(42, 42)
+
+	if delta.Value != 0 {
+		t.Fatalf("delta.Value = %d, want 0", delta.Value)
+	}
+	if delta.Wrapped {
+		t.Fatal("delta.Wrapped = true, want false")
+	}
 	if !delta.IsZero() {
 		t.Fatal("delta.IsZero() = false, want true")
 	}

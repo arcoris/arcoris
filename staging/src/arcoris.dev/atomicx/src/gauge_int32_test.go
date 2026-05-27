@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
 import (
@@ -131,6 +130,45 @@ func TestInt32GaugeTryAddUnderflowLeavesStateUnchanged(t *testing.T) {
 	}
 }
 
+func TestInt32GaugeTryAddHandlesMinInt32Delta(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success from zero to min", func(t *testing.T) {
+		t.Parallel()
+
+		var gauge Int32Gauge
+
+		got, ok := gauge.TryAdd(minInt32)
+		if !ok {
+			t.Fatal("Int32Gauge.TryAdd(minInt32) from 0 ok = false, want true")
+		}
+		if got != minInt32 {
+			t.Fatalf("Int32Gauge.TryAdd(minInt32) from 0 = %d, want %d", got, minInt32)
+		}
+		if loaded := gauge.Load(); loaded != minInt32 {
+			t.Fatalf("Int32Gauge.Load() = %d, want %d", loaded, minInt32)
+		}
+	})
+
+	t.Run("underflow from negative one", func(t *testing.T) {
+		t.Parallel()
+
+		var gauge Int32Gauge
+		gauge.Store(-1)
+
+		got, ok := gauge.TryAdd(minInt32)
+		if ok {
+			t.Fatal("Int32Gauge.TryAdd(minInt32) from -1 ok = true, want false")
+		}
+		if got != -1 {
+			t.Fatalf("Int32Gauge.TryAdd(minInt32) failure value = %d, want -1", got)
+		}
+		if loaded := gauge.Load(); loaded != -1 {
+			t.Fatalf("Int32Gauge.Load() after failed TryAdd(minInt32) = %d, want -1", loaded)
+		}
+	})
+}
+
 // TestInt32GaugeTrySubSuccess verifies checked signed subtraction updates state.
 func TestInt32GaugeTrySubSuccess(t *testing.T) {
 	t.Parallel()
@@ -190,24 +228,46 @@ func TestInt32GaugeTrySubUnderflowLeavesStateUnchanged(t *testing.T) {
 	}
 }
 
-// TestInt32GaugeTrySubHandlesMinInt32Delta verifies TrySub never computes
-// -minInt32. That negation is not representable and would turn an invariant
-// check into undefined-looking signed wrap behavior.
-func TestInt32GaugeTrySubHandlesMinInt32Delta(t *testing.T) {
+// TestInt32GaugeTrySubHandlesMinInt32DeltaBoundaries verifies TrySub never
+// computes -minInt32. That negation is not representable and would turn an
+// invariant check into undefined-looking signed wrap behavior.
+func TestInt32GaugeTrySubHandlesMinInt32DeltaBoundaries(t *testing.T) {
 	t.Parallel()
 
-	var gauge Int32Gauge
+	t.Run("success from negative one to max", func(t *testing.T) {
+		t.Parallel()
 
-	got, ok := gauge.TrySub(minInt32)
-	if ok {
-		t.Fatal("Int32Gauge.TrySub(minInt32) from 0 ok = true, want false")
-	}
-	if got != 0 {
-		t.Fatalf("Int32Gauge.TrySub(minInt32) failure value = %d, want 0", got)
-	}
-	if loaded := gauge.Load(); loaded != 0 {
-		t.Fatalf("Int32Gauge.Load() after failed TrySub(minInt32) = %d, want 0", loaded)
-	}
+		var gauge Int32Gauge
+		gauge.Store(-1)
+
+		got, ok := gauge.TrySub(minInt32)
+		if !ok {
+			t.Fatal("Int32Gauge.TrySub(minInt32) from -1 ok = false, want true")
+		}
+		if got != maxInt32 {
+			t.Fatalf("Int32Gauge.TrySub(minInt32) from -1 = %d, want %d", got, maxInt32)
+		}
+		if loaded := gauge.Load(); loaded != maxInt32 {
+			t.Fatalf("Int32Gauge.Load() = %d, want %d", loaded, maxInt32)
+		}
+	})
+
+	t.Run("overflow from zero", func(t *testing.T) {
+		t.Parallel()
+
+		var gauge Int32Gauge
+
+		got, ok := gauge.TrySub(minInt32)
+		if ok {
+			t.Fatal("Int32Gauge.TrySub(minInt32) from 0 ok = true, want false")
+		}
+		if got != 0 {
+			t.Fatalf("Int32Gauge.TrySub(minInt32) failure value = %d, want 0", got)
+		}
+		if loaded := gauge.Load(); loaded != 0 {
+			t.Fatalf("Int32Gauge.Load() after failed TrySub(minInt32) = %d, want 0", loaded)
+		}
+	})
 }
 
 // TestInt32GaugeIncAndDec verifies single-unit signed gauge arithmetic.

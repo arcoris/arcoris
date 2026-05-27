@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
 import "sync/atomic"
@@ -76,6 +75,10 @@ func (p *PaddedPointer[T]) Swap(new *T) *T {
 //
 // CompareAndSwap is intended for advanced internal protocols where the caller
 // owns the expected-pointer transition rules.
+//
+// CompareAndSwap compares only pointer values. ABA prevention, object lifetime,
+// reclamation, versioning, and immutability belong to the caller's ownership
+// protocol.
 func (p *PaddedPointer[T]) CompareAndSwap(old, new *T) bool {
 	return p.value.CompareAndSwap(old, new)
 }

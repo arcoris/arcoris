@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
 import (
@@ -145,6 +144,34 @@ func TestPaddedPrimitiveSizesIncludeLeadingPadAndValueSlot(t *testing.T) {
 
 			if tc.size < tc.min {
 				t.Fatalf("unsafe.Sizeof(%s{}) = %d, want at least %d", tc.name, tc.size, tc.min)
+			}
+		})
+	}
+}
+
+// TestPaddedPrimitiveSizesAreCacheLineMultiples verifies padded primitive
+// stride stays aligned to the package's fixed 64-byte slot policy.
+func TestPaddedPrimitiveSizesAreCacheLineMultiples(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		size uintptr
+	}{
+		{name: "PaddedUint64", size: unsafe.Sizeof(PaddedUint64{})},
+		{name: "PaddedUint32", size: unsafe.Sizeof(PaddedUint32{})},
+		{name: "PaddedInt64", size: unsafe.Sizeof(PaddedInt64{})},
+		{name: "PaddedInt32", size: unsafe.Sizeof(PaddedInt32{})},
+		{name: "PaddedPointer", size: unsafe.Sizeof(PaddedPointer[padTestValue]{})},
+	}
+
+	for _, tc := range tests {
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			if tc.size%uintptr(CacheLinePadSize) != 0 {
+				t.Fatalf("unsafe.Sizeof(%s{}) = %d, want multiple of %d", tc.name, tc.size, CacheLinePadSize)
 			}
 		})
 	}

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
 import (
@@ -119,6 +118,14 @@ func TestPaddedPointerNilTransitions(t *testing.T) {
 	}
 	if got := p.Load(); got != nil {
 		t.Fatalf("Load() after Swap(nil) = %p, want nil", got)
+	}
+
+	p.Store(value)
+	if !p.CompareAndSwap(value, nil) {
+		t.Fatal("CompareAndSwap(value, nil) = false, want true")
+	}
+	if got := p.Load(); got != nil {
+		t.Fatalf("Load() after CompareAndSwap(value, nil) = %p, want nil", got)
 	}
 }
 
