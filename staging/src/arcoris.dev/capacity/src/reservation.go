@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package capacity
 
 import "arcoris.dev/snapshot"
@@ -32,8 +31,9 @@ const (
 // A Reservation is returned only by Ledger.TryReserve. It holds its amount until
 // Release or TryRelease returns that amount to the ledger.
 //
-// Reservation must not be copied after creation. Copying a live reservation can
-// split release ownership and corrupt accounting.
+// Reservation must not be copied after creation. Copying a live reservation
+// splits release ownership: each copy has its own released flag but points to
+// the same ledger and amount. Use the original pointer returned by TryReserve.
 type Reservation struct {
 	// noCopy prevents accidental copies after first use.
 	noCopy noCopy

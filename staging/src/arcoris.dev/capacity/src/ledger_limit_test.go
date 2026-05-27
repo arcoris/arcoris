@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package capacity_test
 
 import (
@@ -111,4 +110,56 @@ func TestLedgerReleaseReducesDebtAndRestoresAvailability(t *testing.T) {
 
 	availableAfterLargeRelease := large.Release()
 	requireSnapshotValue(t, availableAfterLargeRelease, 5, 0, 5, 0)
+}
+
+func TestLedgerDebtTransitionsThroughPartialExactAndAvailableRelease(t *testing.T) {
+	t.Parallel()
+
+	ledger := capacity.NewLedger(10)
+	five, _, ok := ledger.TryReserve(5)
+	if !ok {
+		t.Fatal("five-unit reservation failed")
+	}
+	two, _, ok := ledger.TryReserve(2)
+	if !ok {
+		t.Fatal("two-unit reservation failed")
+	}
+	one, _, ok := ledger.TryReserve(1)
+	if !ok {
+		t.Fatal("one-unit reservation failed")
+	}
+
+	snap := ledger.SetLimit(5)
+	requireSnapshotValue(t, snap, 5, 8, 0, 3)
+
+	snap = two.Release()
+	requireSnapshotValue(t, snap, 5, 6, 0, 1)
+	if reservation, denied, ok := ledger.TryReserve(1); ok {
+		t.Fatalf("reservation = %#v, want debt to deny new capacity", reservation)
+	} else {
+		requireSnapshotValue(t, denied, 5, 6, 0, 1)
+	}
+
+	snap = one.Release()
+	requireSnapshotValue(t, snap, 5, 5, 0, 0)
+	if reservation, denied, ok := ledger.TryReserve(1); ok {
+		t.Fatalf("reservation = %#v, want exact limit to deny new capacity", reservation)
+	} else {
+		requireSnapshotValue(t, denied, 5, 5, 0, 0)
+	}
+
+	snap = ledger.SetLimit(6)
+	requireSnapshotValue(t, snap, 6, 5, 1, 0)
+
+	reservation, snap, ok := ledger.TryReserve(1)
+	if !ok {
+		t.Fatal("TryReserve(1) failed after availability was restored")
+	}
+	if reservation == nil {
+		t.Fatal("reservation is nil")
+	}
+	requireSnapshotValue(t, snap, 6, 6, 0, 0)
+
+	five.Release()
+	reservation.Release()
 }

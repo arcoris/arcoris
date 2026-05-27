@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package capacity_test
 
 import (
 	"testing"
 
 	"arcoris.dev/capacity"
+	"arcoris.dev/snapshot"
 )
 
 func TestLedgerRevisionAdvancesOncePerCommittedMutation(t *testing.T) {
@@ -43,5 +43,111 @@ func TestLedgerRevisionAdvancesOncePerCommittedMutation(t *testing.T) {
 	snap3 := reservation.Release()
 	if want := snap2.Revision.Next(); snap3.Revision != want {
 		t.Fatalf("release revision = %d, want %d", snap3.Revision, want)
+	}
+}
+
+func TestLedgerNewLedgerStartsAtRevisionOne(t *testing.T) {
+	t.Parallel()
+
+	ledger := capacity.NewLedger(10)
+
+	if got, want := ledger.Revision(), snapshot.Revision(1); got != want {
+		t.Fatalf("Revision() = %d, want %d", got, want)
+	}
+}
+
+func TestLedgerNewLedgerZeroLimitStartsAtRevisionOne(t *testing.T) {
+	t.Parallel()
+
+	ledger := capacity.NewLedger(0)
+
+	if got, want := ledger.Revision(), snapshot.Revision(1); got != want {
+		t.Fatalf("Revision() = %d, want %d", got, want)
+	}
+}
+
+func TestLedgerTryReserveFailureOnZeroLimitDoesNotAdvanceRevision(t *testing.T) {
+	t.Parallel()
+
+	ledger := capacity.NewLedger(0)
+	before := ledger.Revision()
+
+	_, snap, ok := ledger.TryReserve(1)
+	if ok {
+		t.Fatal("TryReserve returned ok=true, want false")
+	}
+	if snap.Revision != before {
+		t.Fatalf("revision = %d, want unchanged %d", snap.Revision, before)
+	}
+}
+
+func TestLedgerTryReserveFailureWhileOvercommittedDoesNotAdvanceRevision(t *testing.T) {
+	t.Parallel()
+
+	ledger := capacity.NewLedger(10)
+	_, _, ok := ledger.TryReserve(8)
+	if !ok {
+		t.Fatal("reservation failed")
+	}
+	overcommitted := ledger.SetLimit(5)
+
+	_, denied, ok := ledger.TryReserve(1)
+	if ok {
+		t.Fatal("TryReserve returned ok=true, want false")
+	}
+	if denied.Revision != overcommitted.Revision {
+		t.Fatalf("revision = %d, want unchanged %d", denied.Revision, overcommitted.Revision)
+	}
+}
+
+func TestLedgerSetLimitSameZeroLimitDoesNotAdvanceRevision(t *testing.T) {
+	t.Parallel()
+
+	ledger := capacity.NewLedger(0)
+	before := ledger.Revision()
+	snap := ledger.SetLimit(0)
+
+	if snap.Revision != before {
+		t.Fatalf("revision = %d, want unchanged %d", snap.Revision, before)
+	}
+	requireSnapshotValue(t, snap, 0, 0, 0, 0)
+}
+
+func TestLedgerReleaseWhileOvercommittedAdvancesRevision(t *testing.T) {
+	t.Parallel()
+
+	ledger := capacity.NewLedger(10)
+	reservation, _, ok := ledger.TryReserve(8)
+	if !ok {
+		t.Fatal("reservation failed")
+	}
+	overcommitted := ledger.SetLimit(5)
+
+	snap := reservation.Release()
+	if want := overcommitted.Revision.Next(); snap.Revision != want {
+		t.Fatalf("release revision = %d, want %d", snap.Revision, want)
+	}
+	requireSnapshotValue(t, snap, 5, 0, 5, 0)
+}
+
+func TestReservationSecondTryReleaseDoesNotAdvanceRevision(t *testing.T) {
+	t.Parallel()
+
+	ledger := capacity.NewLedger(10)
+	reservation, _, ok := ledger.TryReserve(4)
+	if !ok {
+		t.Fatal("reservation failed")
+	}
+	first, ok := reservation.TryRelease()
+	if !ok {
+		t.Fatal("first TryRelease returned ok=false, want true")
+	}
+
+	second, ok := reservation.TryRelease()
+	if ok {
+		t.Fatal("second TryRelease returned ok=true, want false")
+	}
+	if second.Revision != first.Revision {
+		t.Fatalf("revision = %d, want unchanged %d", second.Revision, first.Revision)
 	}
 }

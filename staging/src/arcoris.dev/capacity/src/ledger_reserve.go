@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package capacity
 
 import "arcoris.dev/snapshot"
@@ -40,8 +39,12 @@ func (l *Ledger) TryReserve(amount Amount) (*Reservation, snapshot.Snapshot[Snap
 	if !current.Value.CanReserve(amount) {
 		return nil, current, false
 	}
+	nextReserved, ok := checkedReserveAmount(l.reserved, amount, l.limit)
+	if !ok {
+		return nil, current, false
+	}
 
-	l.reserved += amount
+	l.reserved = nextReserved
 	l.revision = l.revision.Next()
 
 	res := &Reservation{
@@ -50,4 +53,17 @@ func (l *Ledger) TryReserve(amount Amount) (*Reservation, snapshot.Snapshot[Snap
 	}
 
 	return res, l.snapshotLocked(), true
+}
+
+func checkedReserveAmount(reserved, amount, limit Amount) (Amount, bool) {
+	if amount == 0 {
+		return reserved, false
+	}
+	if reserved > limit {
+		return reserved, false
+	}
+	if amount > limit-reserved {
+		return reserved, false
+	}
+	return reserved + amount, true
 }

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package capacity_test
 
 import (
@@ -24,6 +23,7 @@ import (
 func TestSnapshotIsValid(t *testing.T) {
 	t.Parallel()
 
+	max := capacity.Amount(^uint64(0))
 	tests := []struct {
 		name  string
 		snap  capacity.Snapshot
@@ -34,10 +34,17 @@ func TestSnapshotIsValid(t *testing.T) {
 		{name: "partially reserved", snap: capacity.Snapshot{Limit: 10, Reserved: 4, Available: 6, Debt: 0}, valid: true},
 		{name: "fully reserved", snap: capacity.Snapshot{Limit: 10, Reserved: 10, Available: 0, Debt: 0}, valid: true},
 		{name: "overcommitted", snap: capacity.Snapshot{Limit: 10, Reserved: 12, Available: 0, Debt: 2}, valid: true},
+		{name: "max empty limit", snap: capacity.Snapshot{Limit: max, Reserved: 0, Available: max, Debt: 0}, valid: true},
+		{name: "max partially reserved", snap: capacity.Snapshot{Limit: max, Reserved: max - 1, Available: 1, Debt: 0}, valid: true},
+		{name: "max fully reserved", snap: capacity.Snapshot{Limit: max, Reserved: max, Available: 0, Debt: 0}, valid: true},
+		{name: "max debt from zero limit", snap: capacity.Snapshot{Limit: 0, Reserved: max, Available: 0, Debt: max}, valid: true},
 		{name: "wrong available", snap: capacity.Snapshot{Limit: 10, Reserved: 4, Available: 5, Debt: 0}, valid: false},
 		{name: "unexpected debt", snap: capacity.Snapshot{Limit: 10, Reserved: 4, Available: 6, Debt: 1}, valid: false},
 		{name: "available while overcommitted", snap: capacity.Snapshot{Limit: 10, Reserved: 12, Available: 1, Debt: 2}, valid: false},
 		{name: "wrong debt", snap: capacity.Snapshot{Limit: 10, Reserved: 12, Available: 0, Debt: 1}, valid: false},
+		{name: "max wrong debt", snap: capacity.Snapshot{Limit: 0, Reserved: max, Available: 0, Debt: max - 1}, valid: false},
+		{name: "max reserved below limit with debt", snap: capacity.Snapshot{Limit: max, Reserved: max - 1, Available: 1, Debt: 1}, valid: false},
+		{name: "max wrong available", snap: capacity.Snapshot{Limit: max, Reserved: max - 1, Available: 2, Debt: 0}, valid: false},
 	}
 
 	for _, tt := range tests {
@@ -54,6 +61,7 @@ func TestSnapshotIsValid(t *testing.T) {
 func TestSnapshotCanReserve(t *testing.T) {
 	t.Parallel()
 
+	max := capacity.Amount(^uint64(0))
 	tests := []struct {
 		name   string
 		snap   capacity.Snapshot
@@ -66,6 +74,10 @@ func TestSnapshotCanReserve(t *testing.T) {
 		{name: "insufficient available", snap: capacity.Snapshot{Limit: 10, Reserved: 4, Available: 6}, amount: 7, want: false},
 		{name: "debt refuses reservation", snap: capacity.Snapshot{Limit: 5, Reserved: 8, Available: 0, Debt: 3}, amount: 1, want: false},
 		{name: "invalid snapshot", snap: capacity.Snapshot{Limit: 10, Reserved: 4, Available: 100, Debt: 0}, amount: 1, want: false},
+		{name: "max available can reserve one", snap: capacity.Snapshot{Limit: max, Reserved: max - 1, Available: 1, Debt: 0}, amount: 1, want: true},
+		{name: "max available cannot reserve two", snap: capacity.Snapshot{Limit: max, Reserved: max - 1, Available: 1, Debt: 0}, amount: 2, want: false},
+		{name: "max debt refuses positive amount", snap: capacity.Snapshot{Limit: 0, Reserved: max, Available: 0, Debt: max}, amount: 1, want: false},
+		{name: "max available refuses zero amount", snap: capacity.Snapshot{Limit: max, Reserved: 0, Available: max, Debt: 0}, amount: 0, want: false},
 	}
 
 	for _, tt := range tests {

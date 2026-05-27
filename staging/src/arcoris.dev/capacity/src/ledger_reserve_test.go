@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package capacity_test
 
 import (
@@ -56,6 +55,63 @@ func TestLedgerTryReserveSucceedsAtExactLimit(t *testing.T) {
 		t.Fatal("reservation is nil")
 	}
 	requireSnapshotValue(t, snap, 10, 10, 0, 0)
+}
+
+func TestLedgerTryReserveSucceedsAtMaxAmountLimit(t *testing.T) {
+	t.Parallel()
+
+	max := capacity.Amount(^uint64(0))
+	ledger := capacity.NewLedger(max)
+
+	reservation, snap, ok := ledger.TryReserve(max)
+	if !ok {
+		t.Fatal("TryReserve(max) returned ok=false, want true")
+	}
+	if reservation == nil {
+		t.Fatal("reservation is nil")
+	}
+	requireSnapshotValue(t, snap, max, max, 0, 0)
+}
+
+func TestLedgerTryReserveReachesMaxAmountWithoutWrap(t *testing.T) {
+	t.Parallel()
+
+	max := capacity.Amount(^uint64(0))
+	ledger := capacity.NewLedger(max)
+
+	_, _, ok := ledger.TryReserve(max - 1)
+	if !ok {
+		t.Fatal("TryReserve(max-1) returned ok=false, want true")
+	}
+	_, snap, ok := ledger.TryReserve(1)
+	if !ok {
+		t.Fatal("TryReserve(1) returned ok=false at remaining boundary")
+	}
+	requireSnapshotValue(t, snap, max, max, 0, 0)
+}
+
+func TestLedgerTryReserveFailsAfterMaxAmountIsReserved(t *testing.T) {
+	t.Parallel()
+
+	max := capacity.Amount(^uint64(0))
+	ledger := capacity.NewLedger(max)
+	_, snap, ok := ledger.TryReserve(max)
+	if !ok {
+		t.Fatal("TryReserve(max) returned ok=false, want true")
+	}
+	before := snap.Revision
+
+	reservation, denied, ok := ledger.TryReserve(1)
+	if ok {
+		t.Fatal("TryReserve(1) returned ok=true after max was reserved")
+	}
+	if reservation != nil {
+		t.Fatalf("reservation = %#v, want nil", reservation)
+	}
+	if denied.Revision != before {
+		t.Fatalf("denied revision = %d, want unchanged %d", denied.Revision, before)
+	}
+	requireSnapshotValue(t, denied, max, max, 0, 0)
 }
 
 func TestLedgerTryReserveFailsWhenCapacityIsInsufficient(t *testing.T) {

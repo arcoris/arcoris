@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package capacity_test
 
 import (
@@ -110,6 +109,88 @@ func TestReservationTryReleaseIsIdempotent(t *testing.T) {
 		t.Fatalf("second revision = %d, want unchanged %d", second.Revision, first.Revision)
 	}
 	requireSnapshotValue(t, second, 10, 0, 10, 0)
+}
+
+func TestReservationReleaseAfterLimitIncrease(t *testing.T) {
+	t.Parallel()
+
+	ledger := capacity.NewLedger(10)
+	reservation, _, ok := ledger.TryReserve(4)
+	if !ok {
+		t.Fatal("reservation failed")
+	}
+	ledger.SetLimit(15)
+
+	if reservation.Released() {
+		t.Fatal("reservation was released by limit increase")
+	}
+	snap := reservation.Release()
+	requireSnapshotValue(t, snap, 15, 0, 15, 0)
+}
+
+func TestReservationReleaseAfterLimitDecrease(t *testing.T) {
+	t.Parallel()
+
+	ledger := capacity.NewLedger(10)
+	reservation, _, ok := ledger.TryReserve(4)
+	if !ok {
+		t.Fatal("reservation failed")
+	}
+	ledger.SetLimit(7)
+
+	if reservation.Released() {
+		t.Fatal("reservation was released by limit decrease")
+	}
+	snap := reservation.Release()
+	requireSnapshotValue(t, snap, 7, 0, 7, 0)
+}
+
+func TestReservationReleaseAfterLimitSetToZero(t *testing.T) {
+	t.Parallel()
+
+	ledger := capacity.NewLedger(10)
+	first, _, ok := ledger.TryReserve(4)
+	if !ok {
+		t.Fatal("first reservation failed")
+	}
+	second, _, ok := ledger.TryReserve(3)
+	if !ok {
+		t.Fatal("second reservation failed")
+	}
+	ledger.SetLimit(0)
+
+	if first.Released() || second.Released() {
+		t.Fatal("reservation was released by SetLimit(0)")
+	}
+	snap := first.Release()
+	requireSnapshotValue(t, snap, 0, 3, 0, 3)
+
+	snap = second.Release()
+	requireSnapshotValue(t, snap, 0, 0, 0, 0)
+}
+
+func TestReservationReleaseAfterLimitRestoredAboveReserved(t *testing.T) {
+	t.Parallel()
+
+	ledger := capacity.NewLedger(10)
+	first, _, ok := ledger.TryReserve(6)
+	if !ok {
+		t.Fatal("first reservation failed")
+	}
+	second, _, ok := ledger.TryReserve(2)
+	if !ok {
+		t.Fatal("second reservation failed")
+	}
+	ledger.SetLimit(5)
+	ledger.SetLimit(9)
+
+	if second.Released() {
+		t.Fatal("reservation was released by limit changes")
+	}
+	snap := second.Release()
+	requireSnapshotValue(t, snap, 9, 6, 3, 0)
+
+	first.Release()
 }
 
 func TestNilReservationPanics(t *testing.T) {
