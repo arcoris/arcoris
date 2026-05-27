@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package snapshot
 
 import "testing"
@@ -26,6 +25,19 @@ func BenchmarkStoreSnapshotSmallValue(b *testing.B) {
 	}
 }
 
+func BenchmarkStoreSnapshotParallel(b *testing.B) {
+	store := NewStore(42, Identity[int])
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = store.Snapshot()
+		}
+	})
+}
+
 func BenchmarkStoreReplaceSmallValue(b *testing.B) {
 	store := NewStore(0, Identity[int])
 
@@ -33,6 +45,19 @@ func BenchmarkStoreReplaceSmallValue(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = store.Replace(i)
 	}
+}
+
+func BenchmarkStoreReplaceParallel(b *testing.B) {
+	store := NewStore(0, Identity[int])
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = store.Replace(1)
+		}
+	})
 }
 
 func BenchmarkStoreSnapshotSlice100(b *testing.B) {
@@ -43,6 +68,21 @@ func BenchmarkStoreSnapshotSlice100(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = store.Snapshot()
 	}
+}
+
+func BenchmarkStoreUpdateParallel(b *testing.B) {
+	store := NewStore(0, Identity[int])
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = store.Update(func(v int) int {
+				return v + 1
+			})
+		}
+	})
 }
 
 func BenchmarkStoreUpdateSlice100(b *testing.B) {

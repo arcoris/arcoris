@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package snapshot
 
 import (
@@ -33,6 +32,9 @@ import (
 // Store starts at revision 1 because NewStore commits the initial value. Use a
 // value-level container such as maybe.Maybe[T] when the logical state can be
 // absent.
+//
+// Store must be created with NewStore. The zero value is invalid because Store
+// requires a CloneFunc and an initial committed value.
 //
 // Store is safe for concurrent use. Store must not be copied after first use.
 type Store[T any] struct {
@@ -121,9 +123,11 @@ func (s *Store[T]) Replace(next T) Snapshot[T] {
 //
 // ReplaceStamped clones next before storing it, advances the revision exactly
 // once, and records the local commit time using the configured PassiveClock. If
-// revision overflow is detected, ReplaceStamped panics before exposing next.
+// cloning before commit panics or revision overflow is detected, the current
+// Store value is left unchanged.
 func (s *Store[T]) ReplaceStamped(next T) Stamped[T] {
 	stored := s.clone(next)
+	returned := s.clone(stored)
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -138,7 +142,7 @@ func (s *Store[T]) ReplaceStamped(next T) Stamped[T] {
 	return Stamped[T]{
 		Revision: rev,
 		Updated:  updated,
-		Value:    s.clone(s.value),
+		Value:    returned,
 	}
 }
 
@@ -163,8 +167,8 @@ func (s *Store[T]) Update(update func(T) T) Snapshot[T] {
 //
 // UpdateStamped has the same ownership and locking semantics as Update and also
 // records the local commit time using the configured PassiveClock. If update
-// panics or revision overflow is detected, the current Store value is left
-// unchanged.
+// panics, cloning before commit panics, or revision overflow is detected, the
+// current Store value is left unchanged.
 func (s *Store[T]) UpdateStamped(update func(T) T) Stamped[T] {
 	if update == nil {
 		panic("snapshot: nil update function")
@@ -176,6 +180,7 @@ func (s *Store[T]) UpdateStamped(update func(T) T) Stamped[T] {
 	working := s.clone(s.value)
 	next := update(working)
 	stored := s.clone(next)
+	returned := s.clone(stored)
 	rev := s.revision.Next()
 	updated := s.clock.Now()
 
@@ -186,6 +191,6 @@ func (s *Store[T]) UpdateStamped(update func(T) T) Stamped[T] {
 	return Stamped[T]{
 		Revision: rev,
 		Updated:  updated,
-		Value:    s.clone(s.value),
+		Value:    returned,
 	}
 }

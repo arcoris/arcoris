@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package snapshot
 
 import (
@@ -79,6 +78,18 @@ func TestPublisherPublishStampedUsesClock(t *testing.T) {
 	}
 }
 
+func TestPublisherStampedReturnsLatestPublishedStampedValue(t *testing.T) {
+	clk := newTestClock()
+	clk.set(time.Unix(10, 0))
+	publisher := NewPublisher[string](WithClock(clk))
+
+	published := publisher.PublishStamped("value")
+	loaded := publisher.Stamped()
+	if loaded != published {
+		t.Fatalf("Stamped() = %#v, want %#v", loaded, published)
+	}
+}
+
 func TestPublisherRevision(t *testing.T) {
 	publisher := NewPublisher[string]()
 
@@ -92,6 +103,35 @@ func TestPublisherRevision(t *testing.T) {
 	if got, want := publisher.Revision(), Revision(2); got != want {
 		t.Fatalf("Revision() = %d, want %d", got, want)
 	}
+}
+
+func TestPublisherDoesNotClonePublishedMap(t *testing.T) {
+	publisher := NewPublisher[map[string]string]()
+	val := map[string]string{
+		"key": "value",
+	}
+
+	publisher.Publish(val)
+	val["key"] = "changed"
+
+	// This test documents Publisher's immutable-publication contract. Publisher
+	// does not clone values; callers must publish values they will not mutate.
+	if got, want := publisher.Snapshot().Value["key"], "changed"; got != want {
+		t.Fatalf("published map value = %q, want %q", got, want)
+	}
+}
+
+func TestPublisherDoesNotClonePublishedNestedMutableValue(t *testing.T) {
+	publisher := NewPublisher[mutableReadModel]()
+	val := mutableReadModelValue("name", "attr", "tag")
+
+	publisher.Publish(val)
+	mutateMutableReadModel(&val, "changed-name", "changed-attr", "changed-tag")
+
+	// This test documents Publisher's immutable-publication contract. Publisher
+	// does not clone values; callers must publish values they will not mutate.
+	got := publisher.Snapshot().Value
+	assertMutableReadModel(t, got, mutableReadModelValue("changed-name", "changed-attr", "changed-tag"))
 }
 
 func TestPublisherDoesNotClonePublishedValue(t *testing.T) {
