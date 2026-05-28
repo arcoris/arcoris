@@ -38,7 +38,7 @@
 // Package health owns the transport-neutral health contracts: Target, Result,
 // Report, Registry, Gate, TargetPolicy, and Evaluator. Package probe depends on
 // health.Evaluator instead of reading registries or executing checks itself.
-// Module arcoris.dev/healtheval provides the default synchronous evaluator.
+// Callers may provide any evaluator implementation that satisfies that contract.
 //
 // # Transport adapters
 //

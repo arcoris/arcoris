@@ -7,7 +7,6 @@ toolchain go1.25.9
 require (
 	arcoris.dev/chrono v0.0.0
 	arcoris.dev/health v0.0.0
-	arcoris.dev/healtheval v0.0.0
 	arcoris.dev/healthtest v0.0.0
 	google.golang.org/grpc v1.81.0
 )
@@ -23,8 +22,6 @@ require (
 replace arcoris.dev/chrono => ../../chrono/src
 
 replace arcoris.dev/health => ../../health/src
-
-replace arcoris.dev/healtheval => ../../healtheval/src
 
 replace arcoris.dev/healthtest => ../../healthtest/src
 

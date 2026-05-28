@@ -11,18 +11,13 @@ require (
 	arcoris.dev/snapshot v0.0.0
 )
 
-require (
-	arcoris.dev/atomicx v0.0.0 // indirect
-	arcoris.dev/healtheval v0.0.0 // indirect
-)
+require arcoris.dev/atomicx v0.0.0 // indirect
 
 replace arcoris.dev/atomicx => ../../atomicx/src
 
 replace arcoris.dev/chrono => ../../chrono/src
 
 replace arcoris.dev/health => ../../health/src
-
-replace arcoris.dev/healtheval => ../../healtheval/src
 
 replace arcoris.dev/healthtest => ../../healthtest/src
 

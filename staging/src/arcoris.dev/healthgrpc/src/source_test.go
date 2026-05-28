@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthgrpc
 
 import (
-	"arcoris.dev/health"
-	"arcoris.dev/healtheval"
+	"arcoris.dev/healthtest"
 )
 
-var _ health.Evaluator = (*eval.Evaluator)(nil)
+var _ Source = healthtest.SourceFunc(nil)

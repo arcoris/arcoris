@@ -33,10 +33,9 @@
 //
 // Package health owns the transport-neutral health model: Target, Status,
 // TargetPolicy, Report, Registry, and Evaluator. healthgrpc depends only on
-// health.Evaluator, which is satisfied by *eval.Evaluator from module
-// arcoris.dev/healtheval. The evaluator remains the owner of synchronous
-// evaluation behavior, check execution policy, panic normalization, status
-// aggregation, and report construction.
+// health.Evaluator. Applications may provide synchronous evaluators, cached
+// evaluators, fakes, or application-owned sources without coupling this adapter
+// to a concrete evaluator implementation.
 //
 // # Service names
 //

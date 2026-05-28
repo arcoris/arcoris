@@ -12,17 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthtest
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"arcoris.dev/health"
 )
 
-func TestEvaluatorHelpers(t *testing.T) {
+func TestHealthtestEvaluatorFunc(t *testing.T) {
+	t.Parallel()
+
+	evaluator := EvaluatorFunc(func(_ context.Context, target health.Target) (health.Report, error) {
+		return HealthyReport(target), nil
+	})
+
+	report, err := evaluator.Evaluate(context.Background(), health.TargetReady)
+	if err != nil {
+		t.Fatalf("Evaluate() = %v, want nil", err)
+	}
+	AssertReportStatus(t, report, health.StatusHealthy)
+}
+
+func TestHealthtestStaticEvaluator(t *testing.T) {
 	t.Parallel()
 
 	evaluator := NewEvaluatorForTarget(
@@ -41,6 +55,27 @@ func TestEvaluatorHelpers(t *testing.T) {
 	AssertCheckOrder(t, report, "storage", "queue")
 }
 
+func TestHealthtestEvaluatorWithReports(t *testing.T) {
+	t.Parallel()
+
+	evaluator := NewEvaluatorWithReports(
+		HealthyReport(health.TargetReady),
+		UnhealthyReport(health.TargetLive),
+	)
+
+	ready, err := evaluator.Evaluate(context.Background(), health.TargetReady)
+	if err != nil {
+		t.Fatalf("Evaluate(ready) = %v, want nil", err)
+	}
+	AssertReportStatus(t, ready, health.StatusHealthy)
+
+	live, err := evaluator.Evaluate(context.Background(), health.TargetLive)
+	if err != nil {
+		t.Fatalf("Evaluate(live) = %v, want nil", err)
+	}
+	AssertReportStatus(t, live, health.StatusUnhealthy)
+}
+
 func TestNewEvaluatorWithResults(t *testing.T) {
 	t.Parallel()
 
@@ -57,6 +92,24 @@ func TestNewEvaluatorWithResults(t *testing.T) {
 
 	AssertReportStatus(t, report, health.StatusUnhealthy)
 	AssertCheckOrder(t, report, "storage", "database")
+}
+
+func TestHealthtestErrorEvaluator(t *testing.T) {
+	t.Parallel()
+
+	wantErr := errors.New("private evaluator failure")
+	evaluator := NewErrorEvaluator(wantErr)
+
+	report, err := evaluator.Evaluate(context.Background(), health.TargetReady)
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("Evaluate() = %v, want %v", err, wantErr)
+	}
+	if report.Target != health.TargetUnknown ||
+		report.Status != health.StatusUnknown ||
+		report.IsObserved() ||
+		len(report.Checks) != 0 {
+		t.Fatalf("report = %#v, want zero", report)
+	}
 }
 
 func TestNewDefaultTargetsEvaluator(t *testing.T) {

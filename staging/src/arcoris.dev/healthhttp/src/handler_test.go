@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthhttp
 
 import (
@@ -24,7 +23,6 @@ import (
 	"testing"
 
 	"arcoris.dev/health"
-	"arcoris.dev/healtheval"
 	"arcoris.dev/healthtest"
 )
 
@@ -334,12 +332,7 @@ func TestHandlerServeHTTPRejectsUnsupportedMethod(t *testing.T) {
 func TestHandlerServeHTTPNoChecksFails(t *testing.T) {
 	t.Parallel()
 
-	registry := health.NewRegistry()
-	evaluator, err := eval.NewEvaluator(registry)
-	if err != nil {
-		t.Fatalf("eval.NewEvaluator() = %v, want nil", err)
-	}
-
+	evaluator := healthtest.NewEvaluator(t, health.NewRegistry())
 	handler := mustNewHandler(t, evaluator, health.TargetReady)
 
 	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
@@ -363,31 +356,17 @@ func TestHandlerServeHTTPPassesRequestContext(t *testing.T) {
 	key := contextKey{}
 	val := "request-value"
 
-	checker, err := health.NewCheck("context_check", func(ctx context.Context) health.Result {
+	evaluator := healthtest.EvaluatorFunc(func(ctx context.Context, target health.Target) (health.Report, error) {
 		if ctx.Value(key) != val {
-			return health.Unhealthy(
+			return healthtest.Report(target, health.StatusUnhealthy, health.Unhealthy(
 				"context_check",
 				health.ReasonMisconfigured,
 				"request context value missing",
-			)
+			)), nil
 		}
 
-		return health.Healthy("context_check")
+		return healthtest.Report(target, health.StatusHealthy, health.Healthy("context_check")), nil
 	})
-	if err != nil {
-		t.Fatalf("health.NewCheck() = %v, want nil", err)
-	}
-
-	registry := health.NewRegistry()
-	if err := registry.Register(health.TargetReady, checker); err != nil {
-		t.Fatalf("registry.Register() = %v, want nil", err)
-	}
-
-	evaluator, err := eval.NewEvaluator(registry, eval.WithDefaultTimeout(0))
-	if err != nil {
-		t.Fatalf("eval.NewEvaluator() = %v, want nil", err)
-	}
-
 	handler := mustNewHandler(t, evaluator, health.TargetReady)
 
 	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)

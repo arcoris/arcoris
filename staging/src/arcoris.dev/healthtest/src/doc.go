@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package healthtest provides reusable health-domain test fixtures for packages
 // built on top of package health.
 //
@@ -20,7 +19,7 @@
 //
 // healthtest owns deterministic test helpers that speak the package-health
 // model directly: simple checkers, controlled checkers, panic checkers, report
-// fixtures, registry builders, evaluator builders, fake report sources, and
+// fixtures, registry builders, fake evaluators, fake report sources, and
 // health-specific assertions.
 //
 // The package is intended for adapter, integration, and external health tests.
@@ -38,9 +37,10 @@
 //
 // # Relationship to health
 //
-// Package health remains the owner of health contracts, validation, evaluator
-// behavior, status aggregation, and target policy semantics. healthtest imports
-// health and builds test fixtures around its public API.
+// Package health remains the owner of health contracts, validation, the
+// health.Evaluator interface, and target policy semantics. Concrete evaluator
+// behavior belongs to evaluator implementations. healthtest imports health and
+// builds deterministic fixtures around its public API.
 //
 // Internal tests inside package health that need unexported implementation
 // details should keep package-local helpers. Importing healthtest from those

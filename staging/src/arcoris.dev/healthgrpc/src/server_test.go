@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthgrpc
 
 import (
@@ -20,7 +19,6 @@ import (
 	"testing"
 
 	"arcoris.dev/health"
-	"arcoris.dev/healtheval"
 	"arcoris.dev/healthtest"
 )
 
@@ -36,7 +34,7 @@ func TestNewServerRejectsNilSource(t *testing.T) {
 func TestNewServerRejectsTypedNilSource(t *testing.T) {
 	t.Parallel()
 
-	var source *eval.Evaluator
+	var source *healthtest.StaticSource
 	_, err := NewServer(source)
 	if !errors.Is(err, ErrNilSource) {
 		t.Fatalf("NewServer(typed nil) = %v, want ErrNilSource", err)
