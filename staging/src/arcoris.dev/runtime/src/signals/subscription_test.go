@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package signals
 
 import (
@@ -120,6 +119,23 @@ func TestSubscriptionStopIsIdempotentAndClosesDone(t *testing.T) {
 		t.Fatal("notifier was not marked stopped")
 	}
 	channelassert.RequireClosed(t, sub.Done(), testTimeout)
+}
+
+func TestSubscriptionStopDoesNotCloseSignalChannel(t *testing.T) {
+	t.Parallel()
+
+	n := &fakeNotifier{}
+	sub := SubscribeWithOptions([]os.Signal{testSIGINT}, withNotifier(n))
+
+	sub.Stop()
+
+	select {
+	case _, ok := <-sub.C():
+		if !ok {
+			t.Fatal("Stop closed signal channel")
+		}
+	default:
+	}
 }
 
 func TestSubscriptionChannelAccessor(t *testing.T) {

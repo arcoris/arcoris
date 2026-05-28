@@ -132,6 +132,28 @@ func TestGroupConcurrentTaskErrorsAreAllRecorded(t *testing.T) {
 	}
 }
 
+func TestTaskErrorsWalksJoinedErrorTree(t *testing.T) {
+	t.Parallel()
+
+	first := TaskError{Name: "first", Err: errors.New("first")}
+	second := TaskError{Name: "second", Err: errors.New("second")}
+	third := TaskError{Name: "third", Err: errors.New("third")}
+	err := errors.Join(
+		first,
+		fmt.Errorf("wrapped branch: %w", errors.Join(second, third)),
+	)
+
+	got := TaskErrors(err)
+	if len(got) != 3 {
+		t.Fatalf("TaskErrors len = %d, want 3", len(got))
+	}
+	for i, want := range []TaskError{first, second, third} {
+		if got[i].Name != want.Name || !errors.Is(got[i], want.Err) {
+			t.Fatalf("TaskErrors()[%d] = %+v, want %+v", i, got[i], want)
+		}
+	}
+}
+
 func TestTaskErrorsWalksWrappedTaskErrors(t *testing.T) {
 	t.Parallel()
 
