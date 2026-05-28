@@ -55,6 +55,54 @@ func TestHealthtestStaticEvaluator(t *testing.T) {
 	AssertCheckOrder(t, report, "storage", "queue")
 }
 
+func TestHealthtestRegistryEvaluatorPreservesRegistryOrder(t *testing.T) {
+	t.Parallel()
+
+	evaluator := NewEvaluatorForTarget(
+		t,
+		health.TargetReady,
+		HealthyChecker("first"),
+		HealthyChecker("second"),
+		HealthyChecker("third"),
+	)
+	report, err := evaluator.Evaluate(context.Background(), health.TargetReady)
+	if err != nil {
+		t.Fatalf("Evaluate() = %v, want nil", err)
+	}
+	AssertCheckOrder(t, report, "first", "second", "third")
+}
+
+func TestHealthtestRegistryEvaluatorDoesNotOwnEvalPolicy(t *testing.T) {
+	t.Parallel()
+
+	evaluator := NewEvaluatorForTarget(t, health.TargetReady, NewPanicChecker("panic_check", "boom"))
+	defer func() {
+		if recover() == nil {
+			t.Fatal("RegistryEvaluator recovered panic, want panic to remain test-visible")
+		}
+	}()
+
+	_, _ = evaluator.Evaluate(context.Background(), health.TargetReady)
+}
+
+func TestHealthtestNewEvaluatorWithResultsAggregatesStatus(t *testing.T) {
+	t.Parallel()
+
+	evaluator := NewEvaluatorWithResults(
+		t,
+		health.TargetReady,
+		HealthyResult("storage"),
+		DegradedResult("queue", health.ReasonOverloaded),
+		UnhealthyResult("database", health.ReasonFatal),
+	)
+	report, err := evaluator.Evaluate(context.Background(), health.TargetReady)
+	if err != nil {
+		t.Fatalf("Evaluate() = %v, want nil", err)
+	}
+	AssertReportStatus(t, report, health.StatusUnhealthy)
+	AssertCheckOrder(t, report, "storage", "queue", "database")
+}
+
 func TestHealthtestEvaluatorWithReports(t *testing.T) {
 	t.Parallel()
 
@@ -112,6 +160,34 @@ func TestHealthtestErrorEvaluator(t *testing.T) {
 	}
 }
 
+func TestHealthtestNewSequenceEvaluatorReturnsSequence(t *testing.T) {
+	t.Parallel()
+
+	evaluator := NewSequenceEvaluator(
+		health.TargetReady,
+		StartingReport(health.TargetReady),
+		HealthyReport(health.TargetReady),
+	)
+
+	first, err := evaluator.Evaluate(context.Background(), health.TargetReady)
+	if err != nil {
+		t.Fatalf("first Evaluate() = %v, want nil", err)
+	}
+	AssertReportStatus(t, first, health.StatusStarting)
+
+	second, err := evaluator.Evaluate(context.Background(), health.TargetReady)
+	if err != nil {
+		t.Fatalf("second Evaluate() = %v, want nil", err)
+	}
+	AssertReportStatus(t, second, health.StatusHealthy)
+
+	third, err := evaluator.Evaluate(context.Background(), health.TargetReady)
+	if err != nil {
+		t.Fatalf("third Evaluate() = %v, want nil", err)
+	}
+	AssertReportStatus(t, third, health.StatusHealthy)
+}
+
 func TestNewDefaultTargetsEvaluator(t *testing.T) {
 	t.Parallel()
 
@@ -126,5 +202,22 @@ func TestNewDefaultTargetsEvaluator(t *testing.T) {
 			t.Fatalf("Evaluate(%s) = %v, want nil", target, err)
 		}
 		AssertReportStatus(t, report, health.StatusHealthy)
+	}
+}
+
+func TestHealthtestFixturesAreValid(t *testing.T) {
+	t.Parallel()
+
+	for _, report := range []health.Report{
+		HealthyReport(health.TargetReady),
+		StartingReport(health.TargetStartup),
+		DegradedReport(health.TargetLive),
+		UnhealthyReport(health.TargetReady),
+		UnknownReport(health.TargetReady),
+		MixedReport(health.TargetReady),
+	} {
+		if !report.IsValid() {
+			t.Fatalf("fixture report invalid: %+v", report)
+		}
 	}
 }
