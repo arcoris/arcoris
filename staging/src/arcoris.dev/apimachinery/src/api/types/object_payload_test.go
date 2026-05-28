@@ -21,3 +21,13 @@ func TestObjectPayloadStoresFieldsInOrder(t *testing.T) {
 	requireEqual(t, payload.fields[0].Name(), FieldName("a"))
 	requireEqual(t, payload.fields[1].Name(), FieldName("b"))
 }
+
+func TestObjectPayloadCloneAndEmpty(t *testing.T) {
+	payload := objectPayload{fields: []FieldDescriptor{Field("name").String().Required().Field()}}
+	cloned := cloneObjectPayload(payload)
+	cloned.fields[0] = Field("changed").String().Required().Field()
+
+	requireEqual(t, payload.fields[0].Name(), FieldName("name"))
+	requireEqual(t, emptyObjectPayload(objectPayload{}), true)
+	requireEqual(t, emptyObjectPayload(payload), false)
+}

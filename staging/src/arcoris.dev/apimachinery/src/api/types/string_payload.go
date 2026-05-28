@@ -21,9 +21,9 @@ package types
 // pattern, but the descriptor itself does not own runtime regex state.
 type stringPayload struct {
 	// minLen is the inclusive minimum string length.
-	minLen intLimit
+	minLen limit[int]
 	// maxLen is the inclusive maximum string length.
-	maxLen intLimit
+	maxLen limit[int]
 
 	// pattern stores the textual regular expression for string descriptors.
 	pattern string
@@ -36,6 +36,11 @@ type stringPayload struct {
 
 // cloneStringPayload detaches string enum values.
 func cloneStringPayload(p stringPayload) stringPayload {
-	p.enum = cloneStrings(p.enum)
+	p.enum = cloneSlice(p.enum)
 	return p
+}
+
+// emptyStringPayload reports whether p has no configured TypeString state.
+func emptyStringPayload(p stringPayload) bool {
+	return !p.minLen.set && !p.maxLen.set && !p.hasPattern && p.pattern == "" && len(p.enum) == 0
 }

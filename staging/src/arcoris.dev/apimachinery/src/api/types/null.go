@@ -23,7 +23,7 @@ package types
 // NullType deliberately has no Nullable method. TypeNull already describes the
 // null literal itself and must not also carry nullable semantics.
 type NullType struct {
-	// header stores the descriptor family under construction.
+	// header stores the descriptor kind under construction.
 	header typeHeader
 }
 

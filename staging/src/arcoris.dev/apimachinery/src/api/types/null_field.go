@@ -19,7 +19,7 @@ package types
 // The wrapper carries field metadata separately from the null type descriptor
 // so presence, description, and value shape remain distinct.
 type NullField struct {
-	// field stores name, presence, and description shared by all field families.
+	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
 	// typ stores the typed descriptor builder for this field value.
 	typ NullType

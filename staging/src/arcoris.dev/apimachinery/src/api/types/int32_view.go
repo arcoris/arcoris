@@ -22,7 +22,10 @@ type Int32View struct {
 
 // Int32 returns a read-only TypeInt32 view when t is an int32 descriptor.
 func (t Type) Int32() (Int32View, bool) {
-	return Int32View{payload: cloneInt32Payload(t.int32)}, t.code == TypeInt32
+	if t.code != TypeInt32 {
+		return Int32View{}, false
+	}
+	return Int32View{payload: cloneInt32Payload(t.int32)}, true
 }
 
 // Min returns the inclusive lower bound when one is set.
@@ -37,5 +40,5 @@ func (v Int32View) Max() (int32, bool) {
 
 // Enum returns accepted int32 literals detached from descriptor storage.
 func (v Int32View) Enum() []int32 {
-	return cloneInt32s(v.payload.enum)
+	return cloneSlice(v.payload.enum)
 }

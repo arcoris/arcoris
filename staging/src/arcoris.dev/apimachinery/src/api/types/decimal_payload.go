@@ -17,12 +17,17 @@ package types
 // decimalPayload stores TypeDecimal precision and scale constraints.
 type decimalPayload struct {
 	// precision stores decimal precision when explicitly configured.
-	precision intLimit
+	precision limit[int]
 	// scale stores decimal scale when explicitly configured.
-	scale intLimit
+	scale limit[int]
 }
 
 // cloneDecimalPayload copies decimal precision and scale.
 func cloneDecimalPayload(p decimalPayload) decimalPayload {
 	return p
+}
+
+// emptyDecimalPayload reports whether p has no configured TypeDecimal state.
+func emptyDecimalPayload(p decimalPayload) bool {
+	return !p.precision.set && !p.scale.set
 }

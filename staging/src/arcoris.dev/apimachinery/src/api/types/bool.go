@@ -20,7 +20,7 @@ package types
 // value constraints in this design pass and exists as a closed descriptor
 // builder rather than a Go bool wrapper.
 type BoolType struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 }
 

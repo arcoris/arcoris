@@ -22,7 +22,10 @@ type ListView struct {
 
 // List returns a list view when t is TypeList.
 func (t Type) List() (ListView, bool) {
-	return ListView{payload: cloneType(t).list}, t.code == TypeList
+	if t.code != TypeList {
+		return ListView{}, false
+	}
+	return ListView{payload: cloneListPayload(t.list)}, true
 }
 
 // Element returns a detached list element descriptor.
@@ -50,5 +53,5 @@ func (v ListView) Semantics() ListSemantics {
 
 // MapKeys returns detached list map keys.
 func (v ListView) MapKeys() []FieldName {
-	return cloneFieldNames(v.payload.mapKeys)
+	return cloneSlice(v.payload.mapKeys)
 }

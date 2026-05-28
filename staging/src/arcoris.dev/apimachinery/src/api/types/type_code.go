@@ -246,7 +246,7 @@ func (c TypeCode) IsPrimitive() bool {
 		c.IsTemporal()
 }
 
-// IsNumber reports whether c belongs to the numeric descriptor family.
+// IsNumber reports whether c belongs to the numeric descriptor category.
 //
 // Decimal is included because it is a number even though it is not an integer or
 // binary floating-point type. Decimal exact values intentionally do not have
@@ -275,7 +275,7 @@ func (c TypeCode) IsFloat() bool {
 	return c == TypeFloat32 || c == TypeFloat64
 }
 
-// IsTemporal reports whether c belongs to the semantic temporal family.
+// IsTemporal reports whether c belongs to the semantic temporal kind.
 //
 // Temporal TypeCode values do not prescribe a codec representation. RFC 3339,
 // ISO-8601 durations, Unix timestamps, and Go-style duration text are encoding

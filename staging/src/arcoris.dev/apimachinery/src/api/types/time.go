@@ -19,7 +19,7 @@ package types
 // TimeType records a time-of-day descriptor without a calendar date. It does
 // not choose an external textual or numeric encoding.
 type TimeType struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores the exact time-of-day constraints under construction.
 	payload timePayload

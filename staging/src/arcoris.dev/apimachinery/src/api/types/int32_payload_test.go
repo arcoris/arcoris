@@ -14,10 +14,17 @@
 
 package types
 
-// int16Limit stores an optional int16 rule without pointer allocation.
-type int16Limit struct {
-	// value stores the explicit int16 limit when set is true.
-	value int16
-	// set distinguishes an explicit zero limit from an unset limit.
-	set bool
+import "testing"
+
+func TestInt32PayloadCloneAndEmpty(t *testing.T) {
+	payload := int32Payload{min: limit[int32]{value: 1, set: true}, enum: []int32{1}}
+	requireEnumPayloadCloneAndEmpty(t, enumPayloadCloneCase[int32, int32Payload]{
+		payload:     payload,
+		clone:       cloneInt32Payload,
+		empty:       emptyInt32Payload,
+		enum:        func(p int32Payload) []int32 { return p.enum },
+		setEnum:     func(p *int32Payload, values []int32) { p.enum = values },
+		wantFirst:   1,
+		replaceWith: 2,
+	})
 }

@@ -59,6 +59,18 @@ func validateInactivePayloads(t Type, path string) error {
 	if t.code != TypeDecimal && !emptyDecimalPayload(t.decimal) {
 		return typeError(path+".payload", ErrInvalidType)
 	}
+	if t.code != TypeTimestamp && !emptyTimestampPayload(t.timestamp) {
+		return typeError(path+".payload", ErrInvalidType)
+	}
+	if t.code != TypeDate && !emptyDatePayload(t.date) {
+		return typeError(path+".payload", ErrInvalidType)
+	}
+	if t.code != TypeTime && !emptyTimePayload(t.timeOfDay) {
+		return typeError(path+".payload", ErrInvalidType)
+	}
+	if t.code != TypeDuration && !emptyDurationPayload(t.duration) {
+		return typeError(path+".payload", ErrInvalidType)
+	}
 	if t.code != TypeObject && !emptyObjectPayload(t.object) {
 		return typeError(path+".payload", ErrInvalidType)
 	}
@@ -72,89 +84,4 @@ func validateInactivePayloads(t Type, path string) error {
 		return typeError(path+".payload", ErrInvalidType)
 	}
 	return nil
-}
-
-// emptyStringPayload reports whether p has no configured TypeString state.
-func emptyStringPayload(p stringPayload) bool {
-	return !p.minLen.set && !p.maxLen.set && !p.hasPattern && p.pattern == "" && len(p.enum) == 0
-}
-
-// emptyBytesPayload reports whether p has no configured TypeBytes state.
-func emptyBytesPayload(p bytesPayload) bool {
-	return !p.minLen.set && !p.maxLen.set
-}
-
-// emptyInt8Payload reports whether p has no configured TypeInt8 state.
-func emptyInt8Payload(p int8Payload) bool {
-	return !p.min.set && !p.max.set && len(p.enum) == 0
-}
-
-// emptyInt16Payload reports whether p has no configured TypeInt16 state.
-func emptyInt16Payload(p int16Payload) bool {
-	return !p.min.set && !p.max.set && len(p.enum) == 0
-}
-
-// emptyInt32Payload reports whether p has no configured TypeInt32 state.
-func emptyInt32Payload(p int32Payload) bool {
-	return !p.min.set && !p.max.set && len(p.enum) == 0
-}
-
-// emptyInt64Payload reports whether p has no configured TypeInt64 state.
-func emptyInt64Payload(p int64Payload) bool {
-	return !p.min.set && !p.max.set && len(p.enum) == 0
-}
-
-// emptyUint8Payload reports whether p has no configured TypeUint8 state.
-func emptyUint8Payload(p uint8Payload) bool {
-	return !p.min.set && !p.max.set && len(p.enum) == 0
-}
-
-// emptyUint16Payload reports whether p has no configured TypeUint16 state.
-func emptyUint16Payload(p uint16Payload) bool {
-	return !p.min.set && !p.max.set && len(p.enum) == 0
-}
-
-// emptyUint32Payload reports whether p has no configured TypeUint32 state.
-func emptyUint32Payload(p uint32Payload) bool {
-	return !p.min.set && !p.max.set && len(p.enum) == 0
-}
-
-// emptyUint64Payload reports whether p has no configured TypeUint64 state.
-func emptyUint64Payload(p uint64Payload) bool {
-	return !p.min.set && !p.max.set && len(p.enum) == 0
-}
-
-// emptyFloat32Payload reports whether p has no configured TypeFloat32 state.
-func emptyFloat32Payload(p float32Payload) bool {
-	return !p.min.set && !p.max.set && len(p.enum) == 0
-}
-
-// emptyFloat64Payload reports whether p has no configured TypeFloat64 state.
-func emptyFloat64Payload(p float64Payload) bool {
-	return !p.min.set && !p.max.set && len(p.enum) == 0
-}
-
-// emptyDecimalPayload reports whether p has no configured TypeDecimal state.
-func emptyDecimalPayload(p decimalPayload) bool {
-	return !p.precision.set && !p.scale.set
-}
-
-// emptyObjectPayload reports whether p has no configured TypeObject state.
-func emptyObjectPayload(p objectPayload) bool {
-	return len(p.fields) == 0 && p.unknown == UnknownReject
-}
-
-// emptyListPayload reports whether p has no configured TypeList state.
-func emptyListPayload(p listPayload) bool {
-	return p.elem == nil && !p.minLen.set && !p.maxLen.set && p.semantics == ListAtomic && len(p.mapKeys) == 0
-}
-
-// emptyMapPayload reports whether p has no configured TypeMap state.
-func emptyMapPayload(p mapPayload) bool {
-	return p.key == MapKeyString && p.value == nil && !p.minLen.set && !p.maxLen.set
-}
-
-// emptyRefPayload reports whether p has no configured TypeRef state.
-func emptyRefPayload(p refPayload) bool {
-	return p.name == ""
 }

@@ -19,7 +19,7 @@ package types
 // DurationType records an elapsed-interval descriptor. It does not choose
 // ISO-8601, nanoseconds, Go duration text, or another encoding.
 type DurationType struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores the exact duration constraints under construction.
 	payload durationPayload

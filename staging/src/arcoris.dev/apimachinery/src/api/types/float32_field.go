@@ -20,7 +20,7 @@ package types
 // allowing fluent field declarations without making fields reusable unnamed
 // types.
 type Float32Field struct {
-	// field stores name, presence, and description shared by all field families.
+	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
 	// typ stores the typed descriptor builder for this field value.
 	typ Float32Type

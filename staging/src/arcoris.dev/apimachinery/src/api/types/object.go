@@ -21,7 +21,7 @@ package types
 // preserved exactly as declared so diagnostics, generated output, and future
 // schema exports can remain deterministic.
 type ObjectType struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores the exact object shape under construction.
 	payload objectPayload

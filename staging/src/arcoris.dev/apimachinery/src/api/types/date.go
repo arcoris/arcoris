@@ -19,7 +19,7 @@ package types
 // DateType records a calendar-date descriptor without time-of-day semantics.
 // It does not choose an external textual or numeric encoding.
 type DateType struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores the exact date constraints under construction.
 	payload datePayload

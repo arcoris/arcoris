@@ -20,7 +20,7 @@ package types
 // generators may need special handling for targets that cannot precisely
 // represent the full uint64 range.
 type Uint64Type struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores TypeUint64 constraints under construction.
 	payload uint64Payload
@@ -43,13 +43,13 @@ func (t Uint64Type) Nullable() Uint64Type {
 
 // Min sets the inclusive uint64 lower bound.
 func (t Uint64Type) Min(n uint64) Uint64Type {
-	t.payload.min = uint64Limit{value: n, set: true}
+	t.payload.min = limit[uint64]{value: n, set: true}
 	return t
 }
 
 // Max sets the inclusive uint64 upper bound.
 func (t Uint64Type) Max(n uint64) Uint64Type {
-	t.payload.max = uint64Limit{value: n, set: true}
+	t.payload.max = limit[uint64]{value: n, set: true}
 	return t
 }
 
@@ -60,7 +60,7 @@ func (t Uint64Type) Range(min, max uint64) Uint64Type {
 
 // Enum stores accepted uint64 literals in declaration order.
 func (t Uint64Type) Enum(values ...uint64) Uint64Type {
-	t.payload.enum = cloneUint64s(values)
+	t.payload.enum = cloneSlice(values)
 	return t
 }
 

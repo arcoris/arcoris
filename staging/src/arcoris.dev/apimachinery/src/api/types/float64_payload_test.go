@@ -14,10 +14,17 @@
 
 package types
 
-// int8Limit stores an optional int8 rule without pointer allocation.
-type int8Limit struct {
-	// value stores the explicit int8 limit when set is true.
-	value int8
-	// set distinguishes an explicit zero limit from an unset limit.
-	set bool
+import "testing"
+
+func TestFloat64PayloadCloneAndEmpty(t *testing.T) {
+	payload := float64Payload{min: limit[float64]{value: 1, set: true}, enum: []float64{1}}
+	requireEnumPayloadCloneAndEmpty(t, enumPayloadCloneCase[float64, float64Payload]{
+		payload:     payload,
+		clone:       cloneFloat64Payload,
+		empty:       emptyFloat64Payload,
+		enum:        func(p float64Payload) []float64 { return p.enum },
+		setEnum:     func(p *float64Payload, values []float64) { p.enum = values },
+		wantFirst:   1,
+		replaceWith: 2,
+	})
 }

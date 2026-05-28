@@ -37,3 +37,8 @@ func cloneObjectPayload(p objectPayload) objectPayload {
 	p.fields = cloneFields(p.fields)
 	return p
 }
+
+// emptyObjectPayload reports whether p has no configured TypeObject state.
+func emptyObjectPayload(p objectPayload) bool {
+	return len(p.fields) == 0 && p.unknown == UnknownReject
+}

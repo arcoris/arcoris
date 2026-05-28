@@ -21,3 +21,15 @@ func TestListPayloadStoresElementAndMapKeys(t *testing.T) {
 	requireEqual(t, payload.elem.Code(), TypeObject)
 	requireEqual(t, payload.mapKeys[0], FieldName("type"))
 }
+
+func TestListPayloadCloneAndEmpty(t *testing.T) {
+	payload := ListOf(String().Enum("a")).Map("key").Type().list
+	cloned := cloneListPayload(payload)
+	cloned.mapKeys[0] = "changed"
+	cloned.elem.string.enum[0] = "b"
+
+	requireEqual(t, payload.mapKeys[0], FieldName("key"))
+	requireEqual(t, payload.elem.string.enum[0], "a")
+	requireEqual(t, emptyListPayload(listPayload{}), true)
+	requireEqual(t, emptyListPayload(payload), false)
+}

@@ -22,5 +22,8 @@ type TimeView struct {
 
 // Time returns a time-of-day view when t is TypeTime.
 func (t Type) Time() (TimeView, bool) {
-	return TimeView{payload: cloneTimePayload(t.timeOfDay)}, t.code == TypeTime
+	if t.code != TypeTime {
+		return TimeView{}, false
+	}
+	return TimeView{payload: cloneTimePayload(t.timeOfDay)}, true
 }

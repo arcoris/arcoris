@@ -24,24 +24,16 @@ func validateFloat32(t Type, path string) error {
 	if t.float32.max.set && invalidFloat32(t.float32.max.value) {
 		return typeError(path+".range", ErrInvalidType)
 	}
-	if t.float32.min.set && t.float32.max.set && t.float32.min.value > t.float32.max.value {
+	if invalidRange(t.float32.min, t.float32.max) {
 		return typeError(path+".range", ErrInvalidType)
 	}
-	seen := make(map[float32]struct{}, len(t.float32.enum))
 	for _, value := range t.float32.enum {
 		if invalidFloat32(value) {
 			return typeError(path+".enum", ErrInvalidType)
 		}
-		if t.float32.min.set && value < t.float32.min.value {
-			return typeError(path+".enum", ErrInvalidType)
-		}
-		if t.float32.max.set && value > t.float32.max.value {
-			return typeError(path+".enum", ErrInvalidType)
-		}
-		if _, ok := seen[value]; ok {
-			return typeError(path+".enum", ErrInvalidType)
-		}
-		seen[value] = struct{}{}
+	}
+	if hasDuplicates(t.float32.enum) || enumBelowMin(t.float32.enum, t.float32.min) || enumAboveMax(t.float32.enum, t.float32.max) {
+		return typeError(path+".enum", ErrInvalidType)
 	}
 	return nil
 }

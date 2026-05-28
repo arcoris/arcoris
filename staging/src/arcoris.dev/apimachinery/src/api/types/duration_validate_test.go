@@ -14,10 +14,8 @@
 
 package types
 
-// int32Limit stores an optional int32 rule without pointer allocation.
-type int32Limit struct {
-	// value stores the explicit int32 limit when set is true.
-	value int32
-	// set distinguishes an explicit zero limit from an unset limit.
-	set bool
+import "testing"
+
+func TestValidateDurationAcceptsDescriptor(t *testing.T) {
+	requireNoError(t, validateDuration(Duration().Type(), "type"))
 }

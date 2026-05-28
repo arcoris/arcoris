@@ -19,7 +19,7 @@ package types
 // The wrapper keeps object-field metadata beside the int16 builder, allowing
 // fluent field declarations without making fields reusable unnamed types.
 type Int16Field struct {
-	// field stores name, presence, and description shared by all field families.
+	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
 	// typ stores the typed descriptor builder for this field value.
 	typ Int16Type

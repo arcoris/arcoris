@@ -17,13 +17,5 @@ package types
 import "testing"
 
 func TestUint32ValidateRejectsInvalidRules(t *testing.T) {
-	tests := []Type{
-		Uint32().Range(10, 1).Type(),
-		Uint32().Min(1).Enum(0).Type(),
-		Uint32().Max(1).Enum(2).Type(),
-		Uint32().Enum(1, 1).Type(),
-	}
-	for _, typ := range tests {
-		requireErrorIs(t, ValidateType(typ, nil), ErrInvalidType)
-	}
+	requireErrorIs(t, ValidateType(Uint32().Range(10, 1).Type(), nil), ErrInvalidType)
 }

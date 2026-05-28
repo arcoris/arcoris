@@ -22,7 +22,7 @@ package types
 type typeFlags uint8
 
 const (
-	// typeFlagNullable records value nullability for every non-null type family.
+	// typeFlagNullable records value nullability for every non-null descriptor.
 	//
 	// This flag does not describe field presence and does not turn TypeNull into
 	// a nullable type. TypeNull is already the null literal.
@@ -33,7 +33,7 @@ const (
 //
 // Builders use this helper instead of mutating shared state. The helper does
 // not reject TypeNull so it can remain tiny and allocation-free; ValidateType
-// enforces the cross-family invariant that TypeNull cannot be nullable.
+// enforces the exact TypeNull invariant that TypeNull cannot be nullable.
 func (t Type) withNullable() Type {
 	t.flags |= typeFlagNullable
 	return t

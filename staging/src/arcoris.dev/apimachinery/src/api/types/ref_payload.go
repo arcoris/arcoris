@@ -30,3 +30,8 @@ type refPayload struct {
 func cloneRefPayload(p refPayload) refPayload {
 	return p
 }
+
+// emptyRefPayload reports whether p has no configured TypeRef state.
+func emptyRefPayload(p refPayload) bool {
+	return p.name == ""
+}

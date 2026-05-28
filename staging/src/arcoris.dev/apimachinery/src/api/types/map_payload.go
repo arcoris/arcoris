@@ -32,11 +32,11 @@ type mapPayload struct {
 	// minLen is the inclusive minimum map size.
 	//
 	// The limit wrapper distinguishes an explicit zero from an unset rule.
-	minLen intLimit
+	minLen limit[int]
 	// maxLen is the inclusive maximum map size.
 	//
 	// The limit wrapper distinguishes an explicit zero from an unset rule.
-	maxLen intLimit
+	maxLen limit[int]
 }
 
 // cloneMapPayload detaches the map value descriptor.
@@ -46,4 +46,9 @@ func cloneMapPayload(p mapPayload) mapPayload {
 		p.value = &value
 	}
 	return p
+}
+
+// emptyMapPayload reports whether p has no configured TypeMap state.
+func emptyMapPayload(p mapPayload) bool {
+	return p.key == MapKeyString && p.value == nil && !p.minLen.set && !p.maxLen.set
 }

@@ -22,7 +22,10 @@ type Int64View struct {
 
 // Int64 returns a read-only TypeInt64 view when t is an int64 descriptor.
 func (t Type) Int64() (Int64View, bool) {
-	return Int64View{payload: cloneInt64Payload(t.int64)}, t.code == TypeInt64
+	if t.code != TypeInt64 {
+		return Int64View{}, false
+	}
+	return Int64View{payload: cloneInt64Payload(t.int64)}, true
 }
 
 // Min returns the inclusive lower bound when one is set.
@@ -37,5 +40,5 @@ func (v Int64View) Max() (int64, bool) {
 
 // Enum returns accepted int64 literals detached from descriptor storage.
 func (v Int64View) Enum() []int64 {
-	return cloneInt64s(v.payload.enum)
+	return cloneSlice(v.payload.enum)
 }

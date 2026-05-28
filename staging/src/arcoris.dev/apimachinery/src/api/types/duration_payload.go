@@ -23,3 +23,8 @@ type durationPayload struct {
 func cloneDurationPayload(p durationPayload) durationPayload {
 	return p
 }
+
+// emptyDurationPayload reports whether p has no configured TypeDuration state.
+func emptyDurationPayload(p durationPayload) bool {
+	return true
+}

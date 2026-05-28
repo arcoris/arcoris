@@ -16,7 +16,7 @@ package types
 
 // Time starts a field descriptor for a time-of-day value.
 //
-// The descriptor records the temporal family only. Clock precision, timezone
+// The descriptor records the temporal kind only. Clock precision, timezone
 // interpretation, and text/binary wire formats are codec concerns.
 //
 // Field builder flow:

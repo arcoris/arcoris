@@ -16,9 +16,15 @@ package types
 
 import "testing"
 
-func TestUint64LimitStoresUnsetAndZero(t *testing.T) {
-	var unset uint64Limit
-	set := uint64Limit{value: 0, set: true}
-	requireEqual(t, unset.set, false)
-	requireEqual(t, set.set, true)
+func TestUint8PayloadCloneAndEmpty(t *testing.T) {
+	payload := uint8Payload{min: limit[uint8]{value: 1, set: true}, enum: []uint8{1}}
+	requireEnumPayloadCloneAndEmpty(t, enumPayloadCloneCase[uint8, uint8Payload]{
+		payload:     payload,
+		clone:       cloneUint8Payload,
+		empty:       emptyUint8Payload,
+		enum:        func(p uint8Payload) []uint8 { return p.enum },
+		setEnum:     func(p *uint8Payload, values []uint8) { p.enum = values },
+		wantFirst:   1,
+		replaceWith: 2,
+	})
 }

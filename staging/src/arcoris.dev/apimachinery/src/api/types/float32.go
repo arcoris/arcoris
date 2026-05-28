@@ -25,7 +25,7 @@ package types
 // implement value parsing, coercion, defaulting, validation, codec mapping, or
 // OpenAPI/JSON Schema export.
 type Float32Type struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores TypeFloat32 constraints under construction.
 	payload float32Payload
@@ -48,13 +48,13 @@ func (t Float32Type) Nullable() Float32Type {
 
 // Min sets the inclusive float32 lower bound.
 func (t Float32Type) Min(n float32) Float32Type {
-	t.payload.min = float32Limit{value: n, set: true}
+	t.payload.min = limit[float32]{value: n, set: true}
 	return t
 }
 
 // Max sets the inclusive float32 upper bound.
 func (t Float32Type) Max(n float32) Float32Type {
-	t.payload.max = float32Limit{value: n, set: true}
+	t.payload.max = limit[float32]{value: n, set: true}
 	return t
 }
 
@@ -65,7 +65,7 @@ func (t Float32Type) Range(min, max float32) Float32Type {
 
 // Enum stores accepted float32 literals in declaration order.
 func (t Float32Type) Enum(values ...float32) Float32Type {
-	t.payload.enum = cloneFloat32s(values)
+	t.payload.enum = cloneSlice(values)
 	return t
 }
 

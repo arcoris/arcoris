@@ -29,11 +29,11 @@ type listPayload struct {
 	// minLen is the inclusive minimum list length.
 	//
 	// The limit wrapper distinguishes an explicit zero from an unset rule.
-	minLen intLimit
+	minLen limit[int]
 	// maxLen is the inclusive maximum list length.
 	//
 	// The limit wrapper distinguishes an explicit zero from an unset rule.
-	maxLen intLimit
+	maxLen limit[int]
 	// semantics records future merge/apply intent.
 	//
 	// This package validates that the semantic value is known, but does not
@@ -52,6 +52,11 @@ func cloneListPayload(p listPayload) listPayload {
 		elem := cloneType(*p.elem)
 		p.elem = &elem
 	}
-	p.mapKeys = cloneFieldNames(p.mapKeys)
+	p.mapKeys = cloneSlice(p.mapKeys)
 	return p
+}
+
+// emptyListPayload reports whether p has no configured TypeList state.
+func emptyListPayload(p listPayload) bool {
+	return p.elem == nil && !p.minLen.set && !p.maxLen.set && p.semantics == ListAtomic && len(p.mapKeys) == 0
 }

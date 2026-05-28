@@ -22,7 +22,10 @@ type Int8View struct {
 
 // Int8 returns a read-only TypeInt8 view when t is an int8 descriptor.
 func (t Type) Int8() (Int8View, bool) {
-	return Int8View{payload: cloneInt8Payload(t.int8)}, t.code == TypeInt8
+	if t.code != TypeInt8 {
+		return Int8View{}, false
+	}
+	return Int8View{payload: cloneInt8Payload(t.int8)}, true
 }
 
 // Min returns the inclusive lower bound when one is set.
@@ -37,5 +40,5 @@ func (v Int8View) Max() (int8, bool) {
 
 // Enum returns accepted int8 literals detached from descriptor storage.
 func (v Int8View) Enum() []int8 {
-	return cloneInt8s(v.payload.enum)
+	return cloneSlice(v.payload.enum)
 }

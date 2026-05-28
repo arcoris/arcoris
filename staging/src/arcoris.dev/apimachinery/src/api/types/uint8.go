@@ -20,7 +20,7 @@ package types
 // avoids Go platform-sized uint semantics, so descriptors remain stable
 // across architectures and code generators.
 type Uint8Type struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores TypeUint8 constraints under construction.
 	payload uint8Payload
@@ -43,13 +43,13 @@ func (t Uint8Type) Nullable() Uint8Type {
 
 // Min sets the inclusive uint8 lower bound.
 func (t Uint8Type) Min(n uint8) Uint8Type {
-	t.payload.min = uint8Limit{value: n, set: true}
+	t.payload.min = limit[uint8]{value: n, set: true}
 	return t
 }
 
 // Max sets the inclusive uint8 upper bound.
 func (t Uint8Type) Max(n uint8) Uint8Type {
-	t.payload.max = uint8Limit{value: n, set: true}
+	t.payload.max = limit[uint8]{value: n, set: true}
 	return t
 }
 
@@ -60,7 +60,7 @@ func (t Uint8Type) Range(min, max uint8) Uint8Type {
 
 // Enum stores accepted uint8 literals in declaration order.
 func (t Uint8Type) Enum(values ...uint8) Uint8Type {
-	t.payload.enum = cloneUint8s(values)
+	t.payload.enum = cloneSlice(values)
 	return t
 }
 

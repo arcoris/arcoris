@@ -17,15 +17,20 @@ package types
 // int16Payload stores TypeInt16 constraints in their exact native width.
 type int16Payload struct {
 	// min stores the inclusive lower bound for TypeInt16.
-	min int16Limit
+	min limit[int16]
 	// max stores the inclusive upper bound for TypeInt16.
-	max int16Limit
+	max limit[int16]
 	// enum stores accepted int16 literals in declaration order.
 	enum []int16
 }
 
 // cloneInt16Payload detaches int16 enum values.
 func cloneInt16Payload(p int16Payload) int16Payload {
-	p.enum = cloneInt16s(p.enum)
+	p.enum = cloneSlice(p.enum)
 	return p
+}
+
+// emptyInt16Payload reports whether p has no configured TypeInt16 state.
+func emptyInt16Payload(p int16Payload) bool {
+	return !p.min.set && !p.max.set && len(p.enum) == 0
 }

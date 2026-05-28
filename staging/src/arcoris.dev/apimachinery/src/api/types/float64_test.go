@@ -18,23 +18,18 @@ import "testing"
 
 func TestFloat64TypeDescriptor(t *testing.T) {
 	typ := Float64().Range(0.5, 2.5).Enum(1.5, 2.5).Nullable().Type()
-
-	requireEqual(t, typ.Code(), TypeFloat64)
-	requireEqual(t, typ.Nullable(), true)
-	view, ok := typ.Float64()
-	requireEqual(t, ok, true)
-	min, ok := view.Min()
-	requireEqual(t, ok, true)
-	requireEqual(t, min, 0.5)
-	max, ok := view.Max()
-	requireEqual(t, ok, true)
-	requireEqual(t, max, 2.5)
-	enum := view.Enum()
-	enum[0] = 9
-	requireEqual(t, view.Enum()[0], 1.5)
-	_, ok = typ.Float32()
-	requireEqual(t, ok, false)
-	requireNoError(t, ValidateType(typ, nil))
+	requireExactNumericDescriptor(t, exactNumericDescriptorCase[float64]{
+		typ:         typ,
+		code:        TypeFloat64,
+		min:         func(typ Type) (float64, bool) { return requireFloat64View(t, typ).Min() },
+		max:         func(typ Type) (float64, bool) { return requireFloat64View(t, typ).Max() },
+		enum:        func(typ Type) []float64 { return requireFloat64View(t, typ).Enum() },
+		wrong:       func(typ Type) bool { _, ok := typ.Float32(); return ok },
+		wantMin:     0.5,
+		wantMax:     2.5,
+		wantFirst:   1.5,
+		replaceWith: 9,
+	})
 }
 
 func TestFloat64TypeExprMarker(t *testing.T) {

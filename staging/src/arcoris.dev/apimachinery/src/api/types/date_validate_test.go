@@ -16,9 +16,6 @@ package types
 
 import "testing"
 
-func TestFloat64LimitStoresUnsetAndZero(t *testing.T) {
-	var unset float64Limit
-	set := float64Limit{value: 0, set: true}
-	requireEqual(t, unset.set, false)
-	requireEqual(t, set.set, true)
+func TestValidateDateAcceptsDescriptor(t *testing.T) {
+	requireNoError(t, validateDate(Date().Type(), "type"))
 }

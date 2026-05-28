@@ -22,7 +22,10 @@ type DecimalView struct {
 
 // Decimal returns a decimal view when t is TypeDecimal.
 func (t Type) Decimal() (DecimalView, bool) {
-	return DecimalView{payload: cloneDecimalPayload(t.decimal)}, t.code == TypeDecimal
+	if t.code != TypeDecimal {
+		return DecimalView{}, false
+	}
+	return DecimalView{payload: cloneDecimalPayload(t.decimal)}, true
 }
 
 // Precision returns the decimal precision rule.

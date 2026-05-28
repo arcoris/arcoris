@@ -20,7 +20,7 @@ package types
 // is intentionally separate from ObjectType, which models fixed schema fields.
 // Only string keys are supported in this design pass.
 type MapType struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores the exact map shape under construction.
 	payload mapPayload
@@ -59,13 +59,13 @@ func (t MapType) Nullable() MapType { t.header = t.header.withNullable(); return
 //
 // The limit is structural metadata only. Concrete map entry counts are checked
 // by future value-validation layers.
-func (t MapType) MinLen(n int) MapType { t.payload.minLen = intLimit{n, true}; return t }
+func (t MapType) MinLen(n int) MapType { t.payload.minLen = limit[int]{n, true}; return t }
 
 // MaxLen sets the inclusive maximum number of map entries.
 //
-// The limit uses intLimit so an explicit zero maximum can be represented
+// The limit uses limit[int] so an explicit zero maximum can be represented
 // without a pointer allocation.
-func (t MapType) MaxLen(n int) MapType { t.payload.maxLen = intLimit{n, true}; return t }
+func (t MapType) MaxLen(n int) MapType { t.payload.maxLen = limit[int]{n, true}; return t }
 
 // Type returns a detached Type descriptor.
 func (t MapType) Type() Type {

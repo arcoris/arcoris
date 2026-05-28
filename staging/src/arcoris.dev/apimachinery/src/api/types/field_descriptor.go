@@ -73,3 +73,21 @@ func (f FieldDescriptor) IsZero() bool {
 		f.typ.IsZero() &&
 		f.description == ""
 }
+
+// cloneField detaches the Type payload stored inside f.
+func cloneField(f FieldDescriptor) FieldDescriptor {
+	f.typ = cloneType(f.typ)
+	return f
+}
+
+// cloneFields detaches an ordered field list.
+func cloneFields(fields []FieldDescriptor) []FieldDescriptor {
+	if fields == nil {
+		return nil
+	}
+	out := make([]FieldDescriptor, len(fields))
+	for i := range fields {
+		out[i] = cloneField(fields[i])
+	}
+	return out
+}

@@ -17,12 +17,17 @@ package types
 // bytesPayload stores TypeBytes constraints.
 type bytesPayload struct {
 	// minLen is the inclusive minimum byte length.
-	minLen intLimit
+	minLen limit[int]
 	// maxLen is the inclusive maximum byte length.
-	maxLen intLimit
+	maxLen limit[int]
 }
 
 // cloneBytesPayload copies byte-sequence limits.
 func cloneBytesPayload(p bytesPayload) bytesPayload {
 	return p
+}
+
+// emptyBytesPayload reports whether p has no configured TypeBytes state.
+func emptyBytesPayload(p bytesPayload) bool {
+	return !p.minLen.set && !p.maxLen.set
 }

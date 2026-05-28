@@ -24,7 +24,7 @@ package types
 // validation rejects NaN and infinities in bounds and enums because those
 // values are not stable common API literals across formats.
 type Float64Type struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores TypeFloat64 constraints under construction.
 	payload float64Payload
@@ -47,13 +47,13 @@ func (t Float64Type) Nullable() Float64Type {
 
 // Min sets the inclusive float64 lower bound.
 func (t Float64Type) Min(n float64) Float64Type {
-	t.payload.min = float64Limit{value: n, set: true}
+	t.payload.min = limit[float64]{value: n, set: true}
 	return t
 }
 
 // Max sets the inclusive float64 upper bound.
 func (t Float64Type) Max(n float64) Float64Type {
-	t.payload.max = float64Limit{value: n, set: true}
+	t.payload.max = limit[float64]{value: n, set: true}
 	return t
 }
 
@@ -64,7 +64,7 @@ func (t Float64Type) Range(min, max float64) Float64Type {
 
 // Enum stores accepted float64 literals in declaration order.
 func (t Float64Type) Enum(values ...float64) Float64Type {
-	t.payload.enum = cloneFloat64s(values)
+	t.payload.enum = cloneSlice(values)
 	return t
 }
 

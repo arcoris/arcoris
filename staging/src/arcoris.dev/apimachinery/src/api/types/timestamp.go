@@ -20,7 +20,7 @@ package types
 // choose RFC3339, Unix time, or another encoding; codecs own concrete
 // representations.
 type TimestampType struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores the exact timestamp constraints under construction.
 	payload timestampPayload

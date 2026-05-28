@@ -20,7 +20,7 @@ package types
 // deliberately does not choose a wire encoding such as base64 or raw bytes;
 // codecs own that mapping.
 type BytesType struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores the exact byte-sequence constraints under construction.
 	payload bytesPayload
@@ -45,13 +45,13 @@ func (t BytesType) Nullable() BytesType {
 
 // MinLen sets the inclusive minimum byte length.
 func (t BytesType) MinLen(n int) BytesType {
-	t.payload.minLen = intLimit{value: n, set: true}
+	t.payload.minLen = limit[int]{value: n, set: true}
 	return t
 }
 
 // MaxLen sets the inclusive maximum byte length.
 func (t BytesType) MaxLen(n int) BytesType {
-	t.payload.maxLen = intLimit{value: n, set: true}
+	t.payload.maxLen = limit[int]{value: n, set: true}
 	return t
 }
 

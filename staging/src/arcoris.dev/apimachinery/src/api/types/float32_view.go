@@ -22,7 +22,10 @@ type Float32View struct {
 
 // Float32 returns a read-only TypeFloat32 view when t is a float32 descriptor.
 func (t Type) Float32() (Float32View, bool) {
-	return Float32View{payload: cloneFloat32Payload(t.float32)}, t.code == TypeFloat32
+	if t.code != TypeFloat32 {
+		return Float32View{}, false
+	}
+	return Float32View{payload: cloneFloat32Payload(t.float32)}, true
 }
 
 // Min returns the inclusive lower bound when one is set.
@@ -37,5 +40,5 @@ func (v Float32View) Max() (float32, bool) {
 
 // Enum returns accepted float32 literals detached from descriptor storage.
 func (v Float32View) Enum() []float32 {
-	return cloneFloat32s(v.payload.enum)
+	return cloneSlice(v.payload.enum)
 }

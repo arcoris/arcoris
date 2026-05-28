@@ -22,7 +22,10 @@ type Int16View struct {
 
 // Int16 returns a read-only TypeInt16 view when t is an int16 descriptor.
 func (t Type) Int16() (Int16View, bool) {
-	return Int16View{payload: cloneInt16Payload(t.int16)}, t.code == TypeInt16
+	if t.code != TypeInt16 {
+		return Int16View{}, false
+	}
+	return Int16View{payload: cloneInt16Payload(t.int16)}, true
 }
 
 // Min returns the inclusive lower bound when one is set.
@@ -37,5 +40,5 @@ func (v Int16View) Max() (int16, bool) {
 
 // Enum returns accepted int16 literals detached from descriptor storage.
 func (v Int16View) Enum() []int16 {
-	return cloneInt16s(v.payload.enum)
+	return cloneSlice(v.payload.enum)
 }

@@ -22,7 +22,7 @@ import "regexp"
 // the original pattern string so future codecs and schema exporters can choose
 // their own representation without depending on Go regexp internals.
 func validateString(t Type, path string) error {
-	if err := validateIntLimits(t.string.minLen, t.string.maxLen, path+".len"); err != nil {
+	if err := validateLengthLimits(t.string.minLen, t.string.maxLen, path+".len"); err != nil {
 		return err
 	}
 	if t.string.hasPattern {
@@ -36,7 +36,9 @@ func validateString(t Type, path string) error {
 			}
 		}
 	}
-	seen := make(map[string]struct{}, len(t.string.enum))
+	if hasDuplicates(t.string.enum) {
+		return typeError(path+".enum", ErrInvalidType)
+	}
 	for _, value := range t.string.enum {
 		if t.string.minLen.set && len(value) < t.string.minLen.value {
 			return typeError(path+".enum", ErrInvalidType)
@@ -44,10 +46,6 @@ func validateString(t Type, path string) error {
 		if t.string.maxLen.set && len(value) > t.string.maxLen.value {
 			return typeError(path+".enum", ErrInvalidType)
 		}
-		if _, ok := seen[value]; ok {
-			return typeError(path+".enum", ErrInvalidType)
-		}
-		seen[value] = struct{}{}
 	}
 	return nil
 }

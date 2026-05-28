@@ -16,21 +16,11 @@ package types
 
 // validateUint16 checks TypeUint16 bounds, enum uniqueness, and enum membership.
 func validateUint16(t Type, path string) error {
-	if t.uint16.min.set && t.uint16.max.set && t.uint16.min.value > t.uint16.max.value {
+	if invalidRange(t.uint16.min, t.uint16.max) {
 		return typeError(path+".range", ErrInvalidType)
 	}
-	seen := make(map[uint16]struct{}, len(t.uint16.enum))
-	for _, value := range t.uint16.enum {
-		if t.uint16.min.set && value < t.uint16.min.value {
-			return typeError(path+".enum", ErrInvalidType)
-		}
-		if t.uint16.max.set && value > t.uint16.max.value {
-			return typeError(path+".enum", ErrInvalidType)
-		}
-		if _, ok := seen[value]; ok {
-			return typeError(path+".enum", ErrInvalidType)
-		}
-		seen[value] = struct{}{}
+	if hasDuplicates(t.uint16.enum) || enumBelowMin(t.uint16.enum, t.uint16.min) || enumAboveMax(t.uint16.enum, t.uint16.max) {
+		return typeError(path+".enum", ErrInvalidType)
 	}
 	return nil
 }

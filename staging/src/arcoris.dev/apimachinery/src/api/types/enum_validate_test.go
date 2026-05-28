@@ -16,9 +16,11 @@ package types
 
 import "testing"
 
-func TestInt64LimitStoresUnsetAndZero(t *testing.T) {
-	var unset int64Limit
-	set := int64Limit{value: 0, set: true}
-	requireEqual(t, unset.set, false)
-	requireEqual(t, set.set, true)
+func TestHasDuplicates(t *testing.T) {
+	requireEqual(t, hasDuplicates([]int8{}), false)
+	requireEqual(t, hasDuplicates([]int8{1}), false)
+	requireEqual(t, hasDuplicates([]int8{1, 2}), false)
+	requireEqual(t, hasDuplicates([]int8{1, 1}), true)
+	requireEqual(t, hasDuplicates([]string{"a", "b"}), false)
+	requireEqual(t, hasDuplicates([]string{"a", "a"}), true)
 }

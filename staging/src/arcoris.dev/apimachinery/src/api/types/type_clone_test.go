@@ -16,20 +16,22 @@ package types
 
 import "testing"
 
-func TestCloneHelpersDetachSlices(t *testing.T) {
-	strings := cloneStrings([]string{"a"})
-	strings[0] = "b"
-	requireEqual(t, cloneStrings([]string{"a"})[0], "a")
-	requireEqual(t, cloneInt8s([]int8{1})[0], int8(1))
-	requireEqual(t, cloneInt16s([]int16{1})[0], int16(1))
-	requireEqual(t, cloneInt32s([]int32{1})[0], int32(1))
-	requireEqual(t, cloneInt64s([]int64{1})[0], int64(1))
-	requireEqual(t, cloneUint8s([]uint8{1})[0], uint8(1))
-	requireEqual(t, cloneUint16s([]uint16{1})[0], uint16(1))
-	requireEqual(t, cloneUint32s([]uint32{1})[0], uint32(1))
-	requireEqual(t, cloneUint64s([]uint64{1})[0], uint64(1))
-	requireEqual(t, cloneFloat32s([]float32{1})[0], float32(1))
-	requireEqual(t, cloneFloat64s([]float64{1})[0], float64(1))
-	requireEqual(t, cloneFieldNames([]FieldName{"name"})[0], FieldName("name"))
-	requireEqual(t, cloneFields([]FieldDescriptor{Field("name").String().Required().Field()})[0].Name(), FieldName("name"))
+func TestCloneTypeDetachesExactPayloadSlots(t *testing.T) {
+	typ := Object(
+		Field("name").String().Required().Enum("alpha", "beta"),
+		Field("items").ListOf(
+			Object(Field("key").String().Required()),
+		).Required().Map("key"),
+		Field("lookup").MapOf(String().Enum("one", "two")).Optional(),
+	).Type()
+
+	cloned := cloneType(typ)
+	cloned.object.fields[0] = Field("changed").String().Required().Field()
+	cloned.object.fields[1].typ.list.mapKeys[0] = "changed"
+	cloned.object.fields[2].typ.mapType.value.string.enum[0] = "changed"
+
+	fields := typ.object.fields
+	requireEqual(t, fields[0].Name(), FieldName("name"))
+	requireEqual(t, fields[1].typ.list.mapKeys[0], FieldName("key"))
+	requireEqual(t, fields[2].typ.mapType.value.string.enum[0], "one")
 }

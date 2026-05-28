@@ -23,3 +23,8 @@ type datePayload struct {
 func cloneDatePayload(p datePayload) datePayload {
 	return p
 }
+
+// emptyDatePayload reports whether p has no configured TypeDate state.
+func emptyDatePayload(p datePayload) bool {
+	return true
+}

@@ -20,7 +20,7 @@ package types
 // platform-sized int semantics, so descriptors remain stable across
 // architectures and code generators.
 type Int8Type struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores TypeInt8 constraints under construction.
 	payload int8Payload
@@ -43,13 +43,13 @@ func (t Int8Type) Nullable() Int8Type {
 
 // Min sets the inclusive int8 lower bound.
 func (t Int8Type) Min(n int8) Int8Type {
-	t.payload.min = int8Limit{value: n, set: true}
+	t.payload.min = limit[int8]{value: n, set: true}
 	return t
 }
 
 // Max sets the inclusive int8 upper bound.
 func (t Int8Type) Max(n int8) Int8Type {
-	t.payload.max = int8Limit{value: n, set: true}
+	t.payload.max = limit[int8]{value: n, set: true}
 	return t
 }
 
@@ -60,7 +60,7 @@ func (t Int8Type) Range(min, max int8) Int8Type {
 
 // Enum stores accepted int8 literals in declaration order.
 func (t Int8Type) Enum(values ...int8) Int8Type {
-	t.payload.enum = cloneInt8s(values)
+	t.payload.enum = cloneSlice(values)
 	return t
 }
 

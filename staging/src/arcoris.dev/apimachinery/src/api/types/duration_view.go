@@ -22,5 +22,8 @@ type DurationView struct {
 
 // Duration returns a duration view when t is TypeDuration.
 func (t Type) Duration() (DurationView, bool) {
-	return DurationView{payload: cloneDurationPayload(t.duration)}, t.code == TypeDuration
+	if t.code != TypeDuration {
+		return DurationView{}, false
+	}
+	return DurationView{payload: cloneDurationPayload(t.duration)}, true
 }

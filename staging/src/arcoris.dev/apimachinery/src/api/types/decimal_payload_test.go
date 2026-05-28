@@ -14,10 +14,13 @@
 
 package types
 
-// uint16Limit stores an optional uint16 rule without pointer allocation.
-type uint16Limit struct {
-	// value stores the explicit uint16 limit when set is true.
-	value uint16
-	// set distinguishes an explicit zero limit from an unset limit.
-	set bool
+import "testing"
+
+func TestDecimalPayloadCloneAndEmpty(t *testing.T) {
+	payload := decimalPayload{precision: limit[int]{value: 10, set: true}}
+	cloned := cloneDecimalPayload(payload)
+
+	requireEqual(t, cloned.precision.value, 10)
+	requireEqual(t, emptyDecimalPayload(decimalPayload{}), true)
+	requireEqual(t, emptyDecimalPayload(payload), false)
 }

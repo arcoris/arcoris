@@ -23,3 +23,8 @@ type timePayload struct {
 func cloneTimePayload(p timePayload) timePayload {
 	return p
 }
+
+// emptyTimePayload reports whether p has no configured TypeTime state.
+func emptyTimePayload(p timePayload) bool {
+	return true
+}

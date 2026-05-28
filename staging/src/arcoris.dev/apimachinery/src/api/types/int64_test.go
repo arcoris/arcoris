@@ -18,23 +18,17 @@ import "testing"
 
 func TestInt64TypeDescriptor(t *testing.T) {
 	typ := Int64().Range(-1, 1).Enum(-1, 0, 1).Nullable().Type()
-
-	requireEqual(t, typ.Code(), TypeInt64)
-	requireEqual(t, typ.Nullable(), true)
-	view, ok := typ.Int64()
-	requireEqual(t, ok, true)
-	min, ok := view.Min()
-	requireEqual(t, ok, true)
-	requireEqual(t, min, int64(-1))
-	max, ok := view.Max()
-	requireEqual(t, ok, true)
-	requireEqual(t, max, int64(1))
-	enum := view.Enum()
-	enum[0] = 9
-	requireEqual(t, view.Enum()[0], int64(-1))
-	_, ok = typ.Int8()
-	requireEqual(t, ok, false)
-	requireNoError(t, ValidateType(typ, nil))
+	requireExactNumericDescriptor(t, exactNumericDescriptorCase[int64]{
+		typ:       typ,
+		code:      TypeInt64,
+		min:       func(typ Type) (int64, bool) { return requireInt64View(t, typ).Min() },
+		max:       func(typ Type) (int64, bool) { return requireInt64View(t, typ).Max() },
+		enum:      func(typ Type) []int64 { return requireInt64View(t, typ).Enum() },
+		wrong:     func(typ Type) bool { _, ok := typ.Int8(); return ok },
+		wantMin:   -1,
+		wantMax:   1,
+		wantFirst: -1,
+	})
 }
 
 func TestInt64TypeExprMarker(t *testing.T) {

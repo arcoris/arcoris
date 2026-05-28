@@ -20,7 +20,7 @@ package types
 // avoids Go platform-sized uint semantics, so descriptors remain stable
 // across architectures and code generators.
 type Uint16Type struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores TypeUint16 constraints under construction.
 	payload uint16Payload
@@ -43,13 +43,13 @@ func (t Uint16Type) Nullable() Uint16Type {
 
 // Min sets the inclusive uint16 lower bound.
 func (t Uint16Type) Min(n uint16) Uint16Type {
-	t.payload.min = uint16Limit{value: n, set: true}
+	t.payload.min = limit[uint16]{value: n, set: true}
 	return t
 }
 
 // Max sets the inclusive uint16 upper bound.
 func (t Uint16Type) Max(n uint16) Uint16Type {
-	t.payload.max = uint16Limit{value: n, set: true}
+	t.payload.max = limit[uint16]{value: n, set: true}
 	return t
 }
 
@@ -60,7 +60,7 @@ func (t Uint16Type) Range(min, max uint16) Uint16Type {
 
 // Enum stores accepted uint16 literals in declaration order.
 func (t Uint16Type) Enum(values ...uint16) Uint16Type {
-	t.payload.enum = cloneUint16s(values)
+	t.payload.enum = cloneSlice(values)
 	return t
 }
 

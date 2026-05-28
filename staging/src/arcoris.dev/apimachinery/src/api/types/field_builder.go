@@ -17,7 +17,7 @@ package types
 // Field creates a name-first object field builder.
 //
 // Field is used only inside Object declarations. It captures the intended API
-// field name and then lets the next typed method choose the value family, for
+// field name and then lets the next typed method choose the value descriptor, for
 // example Field("replicas").Int64() or Field("labels").MapOf(String()). The
 // typed field wrapper then owns presence, nullability, description, and
 // type-specific constraints.

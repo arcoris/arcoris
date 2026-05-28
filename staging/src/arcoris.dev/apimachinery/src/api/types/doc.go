@@ -14,17 +14,18 @@
 
 // Package types defines closed structural descriptors for ARCORIS API values.
 //
-// The package owns the descriptor algebra only. A Type can describe primitive
-// families, numeric widths, temporal families, object fields, list semantics,
-// map values, and references to named structural definitions. A Field can
-// describe object member name, presence, description, and value type. A
-// TypeDefinition can bind a TypeName to a reusable descriptor. These concepts
-// are intentionally structural: they describe shape and descriptor constraints,
-// not concrete object storage or runtime behavior.
+// The package owns the descriptor algebra only. A Type is the normalized
+// descriptor / IR returned by builders. It can describe primitive values,
+// exact numeric widths, exact temporal kinds, object fields, list semantics,
+// map values, and references to named structural definitions. A Field describes
+// object member name, presence, description, and value type. A TypeDefinition
+// binds a TypeName to a reusable descriptor. These concepts are intentionally
+// structural: they describe shape and descriptor constraints, not concrete
+// object storage or runtime behavior.
 //
 // The field-first builder DSL is the primary construction surface. Field starts
 // an object-field declaration, and the following typed method chooses the field
-// value family. Unnamed reusable type builders use the same closed TypeExpr
+// value descriptor. Unnamed reusable type builders use the same closed TypeExpr
 // path without field state.
 //
 // A typical descriptor declaration keeps object shape, field presence,
@@ -95,14 +96,15 @@
 // values, apply defaults, prune unknown data, export schemas, run codecs, or
 // execute arbitrary Go validators.
 //
-// Type values are immutable-by-convention value objects. Callers build them
-// through package-owned constructors and field-first builders instead of filling
-// public structs. The private payload layout keeps the type system closed:
+// Type values are immutable-by-convention value objects and normalized
+// descriptors. Callers build them through package-owned constructors and
+// field-first builders instead of filling public structs. The private exact
+// payload-slot layout keeps the type system closed:
 // external packages cannot inject arbitrary Go implementations, reflection
 // types, runtime objects, callbacks, validators, or transport-specific schema
-// fragments. Accessor methods return detached copies of slice-bearing payloads
-// so callers cannot mutate descriptors through views, resolved definitions, or
-// field accessors.
+// fragments. View methods are the read-only inspection API and return detached
+// copies of slice-bearing payloads so callers cannot mutate descriptors through
+// views, resolved definitions, or field accessors.
 //
 // Field presence and nullability are separate axes. Required and Optional
 // describe whether an object field key must be present. Nullable describes

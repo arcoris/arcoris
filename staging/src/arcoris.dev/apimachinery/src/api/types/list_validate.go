@@ -22,7 +22,7 @@ func validateList(t Type, resolver Resolver, path string, resolving map[TypeName
 	if err := validateType(*t.list.elem, resolver, path+".elem", resolving); err != nil {
 		return err
 	}
-	if err := validateIntLimits(t.list.minLen, t.list.maxLen, path+".len"); err != nil {
+	if err := validateLengthLimits(t.list.minLen, t.list.maxLen, path+".len"); err != nil {
 		return err
 	}
 	if !t.list.semantics.IsValid() {

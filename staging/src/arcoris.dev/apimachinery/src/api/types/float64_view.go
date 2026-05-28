@@ -22,7 +22,10 @@ type Float64View struct {
 
 // Float64 returns a read-only TypeFloat64 view when t is a float64 descriptor.
 func (t Type) Float64() (Float64View, bool) {
-	return Float64View{payload: cloneFloat64Payload(t.float64)}, t.code == TypeFloat64
+	if t.code != TypeFloat64 {
+		return Float64View{}, false
+	}
+	return Float64View{payload: cloneFloat64Payload(t.float64)}, true
 }
 
 // Min returns the inclusive lower bound when one is set.
@@ -37,5 +40,5 @@ func (v Float64View) Max() (float64, bool) {
 
 // Enum returns accepted float64 literals detached from descriptor storage.
 func (v Float64View) Enum() []float64 {
-	return cloneFloat64s(v.payload.enum)
+	return cloneSlice(v.payload.enum)
 }

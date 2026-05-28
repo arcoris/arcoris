@@ -18,7 +18,7 @@ import "testing"
 
 func TestStringValidateRejectsInvalidRules(t *testing.T) {
 	negativeMin := String().Type()
-	negativeMin.string.minLen = intLimit{value: -1, set: true}
+	negativeMin.string.minLen = limit[int]{value: -1, set: true}
 
 	tests := []Type{
 		negativeMin,

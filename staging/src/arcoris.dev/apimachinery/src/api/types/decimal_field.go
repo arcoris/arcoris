@@ -20,7 +20,7 @@ package types
 // allowing fluent field declarations without making fields reusable unnamed
 // types.
 type DecimalField struct {
-	// field stores the name, presence, and description shared by field families.
+	// field stores the name, presence, and description shared by field wrappers.
 	field fieldState
 	// typ stores the decimal descriptor builder for this field value.
 	typ DecimalType

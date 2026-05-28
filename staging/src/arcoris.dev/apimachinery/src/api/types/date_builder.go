@@ -16,7 +16,7 @@ package types
 
 // Date starts a field descriptor for a calendar date.
 //
-// The descriptor records the temporal family only. Calendar text formats,
+// The descriptor records the temporal kind only. Calendar text formats,
 // timezone interpretation, and codec-specific wire forms are outside this
 // package.
 //

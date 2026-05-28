@@ -25,7 +25,7 @@ package types
 // consistency. The builder is immutable-by-value: each method returns a copy so
 // fluent declarations can be reused without sharing mutable slices or maps.
 type Int64Type struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores TypeInt64 constraints under construction.
 	payload int64Payload
@@ -51,16 +51,16 @@ func (t Int64Type) Nullable() Int64Type {
 // The bound is structural metadata. This package does not compare concrete API
 // values against it; that belongs to future value-validation layers.
 func (t Int64Type) Min(n int64) Int64Type {
-	t.payload.min = int64Limit{n, true}
+	t.payload.min = limit[int64]{n, true}
 	return t
 }
 
 // Max sets the inclusive int64 upper bound.
 //
-// The bound is retained as an int64Limit so an explicit zero can be
+// The bound is retained as a limit[int64] so an explicit zero can be
 // distinguished from an unset maximum without allocating a pointer.
 func (t Int64Type) Max(n int64) Int64Type {
-	t.payload.max = int64Limit{n, true}
+	t.payload.max = limit[int64]{n, true}
 	return t
 }
 
@@ -74,7 +74,7 @@ func (t Int64Type) Range(min, max int64) Int64Type {
 // The input slice is cloned. Later caller mutation of the variadic backing
 // array cannot rewrite the descriptor returned by Type.
 func (t Int64Type) Enum(values ...int64) Int64Type {
-	t.payload.enum = cloneInt64s(values)
+	t.payload.enum = cloneSlice(values)
 	return t
 }
 

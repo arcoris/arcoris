@@ -17,15 +17,20 @@ package types
 // int32Payload stores TypeInt32 constraints in their exact native width.
 type int32Payload struct {
 	// min stores the inclusive lower bound for TypeInt32.
-	min int32Limit
+	min limit[int32]
 	// max stores the inclusive upper bound for TypeInt32.
-	max int32Limit
+	max limit[int32]
 	// enum stores accepted int32 literals in declaration order.
 	enum []int32
 }
 
 // cloneInt32Payload detaches int32 enum values.
 func cloneInt32Payload(p int32Payload) int32Payload {
-	p.enum = cloneInt32s(p.enum)
+	p.enum = cloneSlice(p.enum)
 	return p
+}
+
+// emptyInt32Payload reports whether p has no configured TypeInt32 state.
+func emptyInt32Payload(p int32Payload) bool {
+	return !p.min.set && !p.max.set && len(p.enum) == 0
 }

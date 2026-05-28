@@ -19,7 +19,7 @@ package types
 // The wrapper keeps object-field metadata beside the time builder, allowing
 // fluent field declarations without making fields reusable unnamed types.
 type TimeField struct {
-	// field stores name, presence, and description shared by all field families.
+	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
 	// typ stores the typed descriptor builder for this field value.
 	typ TimeType

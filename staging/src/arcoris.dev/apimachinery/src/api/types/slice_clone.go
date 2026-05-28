@@ -14,19 +14,14 @@
 
 package types
 
-// int64Limit stores optional int64 constraints without pointers.
+// cloneSlice returns a detached copy of values.
 //
-// Numeric descriptors must distinguish "unset" from "set to zero" for min and
-// max rules. The explicit set bit provides that state without pointer fields or
-// hidden allocations in fluent builders.
-type int64Limit struct {
-	// value is meaningful only when set is true.
-	//
-	// Validation code must check set before treating value as an active rule.
-	value int64
-	// set reports whether value was explicitly configured.
-	//
-	// value=0 with set=false means no configured rule; value=0 with set=true
-	// means the rule is explicitly zero.
-	set bool
+// Empty slices normalize to nil because descriptors do not distinguish an
+// absent ordered rule from an explicitly empty ordered rule. Exact payload clone
+// helpers call this function while preserving their domain-specific names.
+func cloneSlice[T any](values []T) []T {
+	if len(values) == 0 {
+		return nil
+	}
+	return append([]T(nil), values...)
 }

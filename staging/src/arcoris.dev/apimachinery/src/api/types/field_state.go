@@ -14,7 +14,7 @@
 
 package types
 
-// fieldState stores builder metadata shared by all field families.
+// fieldState stores builder metadata shared by all field wrappers.
 //
 // It remains private so only package-owned field builders can construct
 // FieldDescriptor values. The final FieldDescriptor is created by pairing this

@@ -22,7 +22,10 @@ type MapView struct {
 
 // Map returns a map view when t is TypeMap.
 func (t Type) Map() (MapView, bool) {
-	return MapView{payload: cloneType(t).mapType}, t.code == TypeMap
+	if t.code != TypeMap {
+		return MapView{}, false
+	}
+	return MapView{payload: cloneMapPayload(t.mapType)}, true
 }
 
 // Key returns the map key type.

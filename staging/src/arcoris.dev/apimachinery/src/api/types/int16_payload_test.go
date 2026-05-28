@@ -14,10 +14,17 @@
 
 package types
 
-// uint32Limit stores an optional uint32 rule without pointer allocation.
-type uint32Limit struct {
-	// value stores the explicit uint32 limit when set is true.
-	value uint32
-	// set distinguishes an explicit zero limit from an unset limit.
-	set bool
+import "testing"
+
+func TestInt16PayloadCloneAndEmpty(t *testing.T) {
+	payload := int16Payload{min: limit[int16]{value: 1, set: true}, enum: []int16{1}}
+	requireEnumPayloadCloneAndEmpty(t, enumPayloadCloneCase[int16, int16Payload]{
+		payload:     payload,
+		clone:       cloneInt16Payload,
+		empty:       emptyInt16Payload,
+		enum:        func(p int16Payload) []int16 { return p.enum },
+		setEnum:     func(p *int16Payload, values []int16) { p.enum = values },
+		wantFirst:   1,
+		replaceWith: 2,
+	})
 }

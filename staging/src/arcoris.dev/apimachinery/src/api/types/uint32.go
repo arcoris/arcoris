@@ -20,7 +20,7 @@ package types
 // avoids Go platform-sized uint semantics, so descriptors remain stable
 // across architectures and code generators.
 type Uint32Type struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores TypeUint32 constraints under construction.
 	payload uint32Payload
@@ -43,13 +43,13 @@ func (t Uint32Type) Nullable() Uint32Type {
 
 // Min sets the inclusive uint32 lower bound.
 func (t Uint32Type) Min(n uint32) Uint32Type {
-	t.payload.min = uint32Limit{value: n, set: true}
+	t.payload.min = limit[uint32]{value: n, set: true}
 	return t
 }
 
 // Max sets the inclusive uint32 upper bound.
 func (t Uint32Type) Max(n uint32) Uint32Type {
-	t.payload.max = uint32Limit{value: n, set: true}
+	t.payload.max = limit[uint32]{value: n, set: true}
 	return t
 }
 
@@ -60,7 +60,7 @@ func (t Uint32Type) Range(min, max uint32) Uint32Type {
 
 // Enum stores accepted uint32 literals in declaration order.
 func (t Uint32Type) Enum(values ...uint32) Uint32Type {
-	t.payload.enum = cloneUint32s(values)
+	t.payload.enum = cloneSlice(values)
 	return t
 }
 

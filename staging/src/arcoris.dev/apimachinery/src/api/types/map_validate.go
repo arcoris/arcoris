@@ -25,5 +25,5 @@ func validateMap(t Type, resolver Resolver, path string, resolving map[TypeName]
 	if err := validateType(*t.mapType.value, resolver, path+".value", resolving); err != nil {
 		return err
 	}
-	return validateIntLimits(t.mapType.minLen, t.mapType.maxLen, path+".len")
+	return validateLengthLimits(t.mapType.minLen, t.mapType.maxLen, path+".len")
 }

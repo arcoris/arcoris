@@ -19,5 +19,5 @@ package types
 // TypeBytes intentionally has no pattern or enum rules. Encoding choices such
 // as base64, hex, or binary framing belong to codecs and exporters.
 func validateBytes(t Type, path string) error {
-	return validateIntLimits(t.bytes.minLen, t.bytes.maxLen, path+".len")
+	return validateLengthLimits(t.bytes.minLen, t.bytes.maxLen, path+".len")
 }

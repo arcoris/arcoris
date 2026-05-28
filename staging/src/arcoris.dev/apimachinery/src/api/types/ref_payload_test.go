@@ -20,3 +20,12 @@ func TestRefPayloadStoresTypeName(t *testing.T) {
 	payload := Ref("example.Name").Type().ref
 	requireEqual(t, payload.name, TypeName("example.Name"))
 }
+
+func TestRefPayloadCloneAndEmpty(t *testing.T) {
+	payload := refPayload{name: "example.Name"}
+	cloned := cloneRefPayload(payload)
+
+	requireEqual(t, cloned.name, TypeName("example.Name"))
+	requireEqual(t, emptyRefPayload(refPayload{}), true)
+	requireEqual(t, emptyRefPayload(payload), false)
+}

@@ -22,5 +22,8 @@ type TimestampView struct {
 
 // Timestamp returns a timestamp view when t is TypeTimestamp.
 func (t Type) Timestamp() (TimestampView, bool) {
-	return TimestampView{payload: cloneTimestampPayload(t.timestamp)}, t.code == TypeTimestamp
+	if t.code != TypeTimestamp {
+		return TimestampView{}, false
+	}
+	return TimestampView{payload: cloneTimestampPayload(t.timestamp)}, true
 }

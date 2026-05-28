@@ -32,3 +32,10 @@ func TestFloat64ValidateRejectsInvalidRules(t *testing.T) {
 		requireErrorIs(t, ValidateType(typ, nil), ErrInvalidType)
 	}
 }
+
+func TestInvalidFloat64(t *testing.T) {
+	requireEqual(t, invalidFloat64(math.NaN()), true)
+	requireEqual(t, invalidFloat64(math.Inf(1)), true)
+	requireEqual(t, invalidFloat64(math.Inf(-1)), true)
+	requireEqual(t, invalidFloat64(1), false)
+}

@@ -21,3 +21,13 @@ func TestMapPayloadStoresStringKeyAndValue(t *testing.T) {
 	requireEqual(t, payload.key, MapKeyString)
 	requireEqual(t, payload.value.Code(), TypeString)
 }
+
+func TestMapPayloadCloneAndEmpty(t *testing.T) {
+	payload := MapOf(String().Enum("a")).Type().mapType
+	cloned := cloneMapPayload(payload)
+	cloned.value.string.enum[0] = "b"
+
+	requireEqual(t, payload.value.string.enum[0], "a")
+	requireEqual(t, emptyMapPayload(mapPayload{}), true)
+	requireEqual(t, emptyMapPayload(payload), false)
+}

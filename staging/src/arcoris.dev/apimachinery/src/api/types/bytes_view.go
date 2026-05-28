@@ -22,7 +22,10 @@ type BytesView struct {
 
 // Bytes returns a bytes view when t is TypeBytes.
 func (t Type) Bytes() (BytesView, bool) {
-	return BytesView{payload: cloneBytesPayload(t.bytes)}, t.code == TypeBytes
+	if t.code != TypeBytes {
+		return BytesView{}, false
+	}
+	return BytesView{payload: cloneBytesPayload(t.bytes)}, true
 }
 
 // MinLen returns the bytes minimum length rule.

@@ -21,7 +21,7 @@ package types
 // not implement scheduling, queues, patch/apply, field ownership, or concrete
 // value validation.
 type ListType struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores the exact list shape under construction.
 	payload listPayload
@@ -54,10 +54,10 @@ func ListOf(elem TypeExpr) ListType {
 func (t ListType) Nullable() ListType { t.header = t.header.withNullable(); return t }
 
 // MinLen sets the inclusive minimum list length.
-func (t ListType) MinLen(n int) ListType { t.payload.minLen = intLimit{n, true}; return t }
+func (t ListType) MinLen(n int) ListType { t.payload.minLen = limit[int]{n, true}; return t }
 
 // MaxLen sets the inclusive maximum list length.
-func (t ListType) MaxLen(n int) ListType { t.payload.maxLen = intLimit{n, true}; return t }
+func (t ListType) MaxLen(n int) ListType { t.payload.maxLen = limit[int]{n, true}; return t }
 
 // Atomic records atomic list semantics.
 //

@@ -17,15 +17,20 @@ package types
 // float64Payload stores TypeFloat64 constraints in their exact native width.
 type float64Payload struct {
 	// min stores the inclusive finite lower bound for TypeFloat64.
-	min float64Limit
+	min limit[float64]
 	// max stores the inclusive finite upper bound for TypeFloat64.
-	max float64Limit
+	max limit[float64]
 	// enum stores accepted finite float64 literals in declaration order.
 	enum []float64
 }
 
 // cloneFloat64Payload detaches float64 enum values.
 func cloneFloat64Payload(p float64Payload) float64Payload {
-	p.enum = cloneFloat64s(p.enum)
+	p.enum = cloneSlice(p.enum)
 	return p
+}
+
+// emptyFloat64Payload reports whether p has no configured TypeFloat64 state.
+func emptyFloat64Payload(p float64Payload) bool {
+	return !p.min.set && !p.max.set && len(p.enum) == 0
 }

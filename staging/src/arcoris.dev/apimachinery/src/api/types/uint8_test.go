@@ -18,23 +18,18 @@ import "testing"
 
 func TestUint8TypeDescriptor(t *testing.T) {
 	typ := Uint8().Range(0, 2).Enum(0, 1, 2).Nullable().Type()
-
-	requireEqual(t, typ.Code(), TypeUint8)
-	requireEqual(t, typ.Nullable(), true)
-	view, ok := typ.Uint8()
-	requireEqual(t, ok, true)
-	min, ok := view.Min()
-	requireEqual(t, ok, true)
-	requireEqual(t, min, uint8(0))
-	max, ok := view.Max()
-	requireEqual(t, ok, true)
-	requireEqual(t, max, uint8(2))
-	enum := view.Enum()
-	enum[0] = 9
-	requireEqual(t, view.Enum()[0], uint8(0))
-	_, ok = typ.Uint16()
-	requireEqual(t, ok, false)
-	requireNoError(t, ValidateType(typ, nil))
+	requireExactNumericDescriptor(t, exactNumericDescriptorCase[uint8]{
+		typ:         typ,
+		code:        TypeUint8,
+		min:         func(typ Type) (uint8, bool) { return requireUint8View(t, typ).Min() },
+		max:         func(typ Type) (uint8, bool) { return requireUint8View(t, typ).Max() },
+		enum:        func(typ Type) []uint8 { return requireUint8View(t, typ).Enum() },
+		wrong:       func(typ Type) bool { _, ok := typ.Uint16(); return ok },
+		wantMin:     0,
+		wantMax:     2,
+		wantFirst:   0,
+		replaceWith: 9,
+	})
 }
 
 func TestUint8TypeExprMarker(t *testing.T) {

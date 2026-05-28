@@ -24,7 +24,7 @@ package types
 // decimal values need a dedicated value representation design before structural
 // comparison rules can be portable.
 type DecimalType struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores the exact decimal constraints under construction.
 	payload decimalPayload
@@ -44,12 +44,12 @@ func (t DecimalType) Nullable() DecimalType { t.header = t.header.withNullable()
 
 // Precision sets the maximum number of significant decimal digits.
 func (t DecimalType) Precision(n int) DecimalType {
-	t.payload.precision = intLimit{n, true}
+	t.payload.precision = limit[int]{n, true}
 	return t
 }
 
 // Scale sets the number of fractional decimal digits.
-func (t DecimalType) Scale(n int) DecimalType { t.payload.scale = intLimit{n, true}; return t }
+func (t DecimalType) Scale(n int) DecimalType { t.payload.scale = limit[int]{n, true}; return t }
 
 // Type returns a detached Type descriptor.
 func (t DecimalType) Type() Type {

@@ -20,7 +20,7 @@ package types
 // and enum literals. Patterns are stored as strings so future exporters and
 // codecs can choose their own compiled representation.
 type StringType struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores the exact string constraints under construction.
 	payload stringPayload
@@ -46,13 +46,13 @@ func (t StringType) Nullable() StringType {
 
 // MinLen sets the inclusive minimum string length.
 func (t StringType) MinLen(n int) StringType {
-	t.payload.minLen = intLimit{value: n, set: true}
+	t.payload.minLen = limit[int]{value: n, set: true}
 	return t
 }
 
 // MaxLen sets the inclusive maximum string length.
 func (t StringType) MaxLen(n int) StringType {
-	t.payload.maxLen = intLimit{value: n, set: true}
+	t.payload.maxLen = limit[int]{value: n, set: true}
 	return t
 }
 
@@ -65,7 +65,7 @@ func (t StringType) Pattern(pattern string) StringType {
 
 // Enum stores accepted string literals in declaration order.
 func (t StringType) Enum(values ...string) StringType {
-	t.payload.enum = cloneStrings(values)
+	t.payload.enum = cloneSlice(values)
 	return t
 }
 

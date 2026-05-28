@@ -22,7 +22,10 @@ type RefView struct {
 
 // Ref returns a reference view when t is TypeRef.
 func (t Type) Ref() (RefView, bool) {
-	return RefView{payload: cloneType(t).ref}, t.code == TypeRef
+	if t.code != TypeRef {
+		return RefView{}, false
+	}
+	return RefView{payload: cloneRefPayload(t.ref)}, true
 }
 
 // Name returns the referenced type name.

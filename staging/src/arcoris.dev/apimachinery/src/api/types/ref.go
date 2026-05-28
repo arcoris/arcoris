@@ -19,7 +19,7 @@ package types
 // TypeRef is the descriptor reuse mechanism. It never represents arbitrary Go
 // implementations, package globals, reflection types, or runtime object types.
 type RefType struct {
-	// header stores the descriptor family and cross-family flags under construction.
+	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
 	// payload stores the exact reference target under construction.
 	payload refPayload

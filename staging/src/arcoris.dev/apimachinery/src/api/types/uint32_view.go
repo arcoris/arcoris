@@ -22,7 +22,10 @@ type Uint32View struct {
 
 // Uint32 returns a read-only TypeUint32 view when t is a uint32 descriptor.
 func (t Type) Uint32() (Uint32View, bool) {
-	return Uint32View{payload: cloneUint32Payload(t.uint32)}, t.code == TypeUint32
+	if t.code != TypeUint32 {
+		return Uint32View{}, false
+	}
+	return Uint32View{payload: cloneUint32Payload(t.uint32)}, true
 }
 
 // Min returns the inclusive lower bound when one is set.
@@ -37,5 +40,5 @@ func (v Uint32View) Max() (uint32, bool) {
 
 // Enum returns accepted uint32 literals detached from descriptor storage.
 func (v Uint32View) Enum() []uint32 {
-	return cloneUint32s(v.payload.enum)
+	return cloneSlice(v.payload.enum)
 }

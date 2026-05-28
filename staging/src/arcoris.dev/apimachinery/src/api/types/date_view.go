@@ -22,5 +22,8 @@ type DateView struct {
 
 // Date returns a date view when t is TypeDate.
 func (t Type) Date() (DateView, bool) {
-	return DateView{payload: cloneDatePayload(t.date)}, t.code == TypeDate
+	if t.code != TypeDate {
+		return DateView{}, false
+	}
+	return DateView{payload: cloneDatePayload(t.date)}, true
 }

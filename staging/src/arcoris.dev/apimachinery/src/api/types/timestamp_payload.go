@@ -23,3 +23,8 @@ type timestampPayload struct {
 func cloneTimestampPayload(p timestampPayload) timestampPayload {
 	return p
 }
+
+// emptyTimestampPayload reports whether p has no configured TypeTimestamp state.
+func emptyTimestampPayload(p timestampPayload) bool {
+	return true
+}

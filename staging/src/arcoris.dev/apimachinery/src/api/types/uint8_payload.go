@@ -17,15 +17,20 @@ package types
 // uint8Payload stores TypeUint8 constraints in their exact native width.
 type uint8Payload struct {
 	// min stores the inclusive lower bound for TypeUint8.
-	min uint8Limit
+	min limit[uint8]
 	// max stores the inclusive upper bound for TypeUint8.
-	max uint8Limit
+	max limit[uint8]
 	// enum stores accepted uint8 literals in declaration order.
 	enum []uint8
 }
 
 // cloneUint8Payload detaches uint8 enum values.
 func cloneUint8Payload(p uint8Payload) uint8Payload {
-	p.enum = cloneUint8s(p.enum)
+	p.enum = cloneSlice(p.enum)
 	return p
+}
+
+// emptyUint8Payload reports whether p has no configured TypeUint8 state.
+func emptyUint8Payload(p uint8Payload) bool {
+	return !p.min.set && !p.max.set && len(p.enum) == 0
 }

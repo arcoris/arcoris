@@ -22,7 +22,10 @@ type StringView struct {
 
 // String returns a string view when t is TypeString.
 func (t Type) String() (StringView, bool) {
-	return StringView{payload: cloneStringPayload(t.string)}, t.code == TypeString
+	if t.code != TypeString {
+		return StringView{}, false
+	}
+	return StringView{payload: cloneStringPayload(t.string)}, true
 }
 
 // MinLen returns the string minimum length rule.
@@ -42,5 +45,5 @@ func (v StringView) Pattern() (string, bool) {
 
 // Enum returns detached string enum values.
 func (v StringView) Enum() []string {
-	return cloneStrings(v.payload.enum)
+	return cloneSlice(v.payload.enum)
 }

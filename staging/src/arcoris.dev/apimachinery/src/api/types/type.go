@@ -14,22 +14,23 @@
 
 package types
 
-// Type describes the structural API type of a value.
+// Type is the normalized structural descriptor / IR for an API value.
 //
-// Type is a closed descriptor. Its public shape is intentionally small: callers
-// can read it through methods and read-only views, but cannot fill payloads or
-// attach arbitrary Go behavior. This keeps future validators, codecs, schema
-// exporters, and resource-definition systems working from the same portable
-// descriptor model rather than from process-local implementation details.
+// Builders are the construction API; Type is the normalized descriptor they
+// return. Its public shape is intentionally small: callers can read it through
+// methods and exact read-only views, but cannot fill payload slots or attach
+// arbitrary Go behavior. This keeps future validators, codecs, schema
+// exporters, and resource-definition systems working from the same portable IR
+// rather than from process-local implementation details.
 //
 // The zero value is invalid. Valid descriptors must be created through package
 // constructors such as String, Int64, Object, ListOf, MapOf, and Ref, or through
 // field builders that eventually produce object fields.
 type Type struct {
-	// code selects the active payload family.
+	// code selects the active exact payload slot.
 	code TypeCode
 
-	// flags stores cross-family descriptor flags such as nullability.
+	// flags stores descriptor-wide flags such as nullability.
 	flags typeFlags
 
 	// string stores TypeString length, pattern, and enum rules.
@@ -88,8 +89,8 @@ func (t Type) IsZero() bool {
 
 // IsValid reports whether t has a valid structural category.
 //
-// IsValid only checks the TypeCode. Full descriptor validation, including
-// payload-family consistency, scalar limits, object fields, list/map payloads,
+// IsValid only checks the TypeCode. Full descriptor validation, including exact
+// payload-slot consistency, scalar limits, object fields, list/map payloads,
 // and reference resolution, belongs to ValidateType.
 func (t Type) IsValid() bool {
 	return t.code.IsValid()

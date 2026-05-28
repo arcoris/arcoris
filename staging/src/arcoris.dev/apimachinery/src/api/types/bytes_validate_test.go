@@ -18,7 +18,7 @@ import "testing"
 
 func TestBytesValidateRejectsInvalidLengthRules(t *testing.T) {
 	negativeMin := Bytes().Type()
-	negativeMin.bytes.minLen = intLimit{value: -1, set: true}
+	negativeMin.bytes.minLen = limit[int]{value: -1, set: true}
 
 	tests := []Type{
 		negativeMin,

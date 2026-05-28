@@ -22,7 +22,10 @@ type ObjectView struct {
 
 // Object returns an object view when t is TypeObject.
 func (t Type) Object() (ObjectView, bool) {
-	return ObjectView{payload: cloneType(t).object}, t.code == TypeObject
+	if t.code != TypeObject {
+		return ObjectView{}, false
+	}
+	return ObjectView{payload: cloneObjectPayload(t.object)}, true
 }
 
 // Fields returns detached object fields in declaration order.

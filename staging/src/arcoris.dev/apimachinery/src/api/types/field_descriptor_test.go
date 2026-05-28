@@ -19,7 +19,7 @@ import "testing"
 func TestFieldDescriptorAccessorsDetachType(t *testing.T) {
 	field := Field("name").String().Required().MinLen(1).Description("name field").Field()
 	typ := field.Type()
-	typ.string.minLen = intLimit{value: 99, set: true}
+	typ.string.minLen = limit[int]{value: 99, set: true}
 
 	requireEqual(t, field.Name(), FieldName("name"))
 	requireEqual(t, field.Presence(), PresenceRequired)
@@ -87,4 +87,19 @@ func TestFieldDescriptorObjectViewDetachAndOrder(t *testing.T) {
 
 	fields = requireObjectView(t, typ).Fields()
 	requireEqual(t, fields[0].Name(), FieldName("first"))
+}
+
+func TestFieldDescriptorCloneHelpersDetachTypeAndSlices(t *testing.T) {
+	field := Field("name").String().Required().Enum("a").Field()
+	cloned := cloneField(field)
+	cloned.typ.string.enum[0] = "b"
+
+	view := requireStringView(t, field.Type())
+	requireEqual(t, view.Enum()[0], "a")
+
+	fields := []FieldDescriptor{field}
+	clonedFields := cloneFields(fields)
+	clonedFields[0] = Field("changed").String().Required().Field()
+	requireEqual(t, fields[0].Name(), FieldName("name"))
+	requireEqual(t, cloneFields(nil) == nil, true)
 }

@@ -14,10 +14,24 @@
 
 package types
 
-// uint8Limit stores an optional uint8 rule without pointer allocation.
-type uint8Limit struct {
-	// value stores the explicit uint8 limit when set is true.
-	value uint8
-	// set distinguishes an explicit zero limit from an unset limit.
-	set bool
+import "testing"
+
+func TestCloneSlice(t *testing.T) {
+	requireEqual(t, cloneSlice[int8](nil) == nil, true)
+	requireEqual(t, cloneSlice[string]([]string{}) == nil, true)
+
+	ints := []int8{1}
+	clonedInts := cloneSlice(ints)
+	clonedInts[0] = 2
+	requireEqual(t, ints[0], int8(1))
+
+	strings := []string{"a"}
+	clonedStrings := cloneSlice(strings)
+	clonedStrings[0] = "b"
+	requireEqual(t, strings[0], "a")
+
+	names := []FieldName{"name"}
+	clonedNames := cloneSlice(names)
+	clonedNames[0] = "changed"
+	requireEqual(t, names[0], FieldName("name"))
 }

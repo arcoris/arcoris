@@ -1,0 +1,30 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package types
+
+import "testing"
+
+func TestUint16PayloadCloneAndEmpty(t *testing.T) {
+	payload := uint16Payload{min: limit[uint16]{value: 1, set: true}, enum: []uint16{1}}
+	requireEnumPayloadCloneAndEmpty(t, enumPayloadCloneCase[uint16, uint16Payload]{
+		payload:     payload,
+		clone:       cloneUint16Payload,
+		empty:       emptyUint16Payload,
+		enum:        func(p uint16Payload) []uint16 { return p.enum },
+		setEnum:     func(p *uint16Payload, values []uint16) { p.enum = values },
+		wantFirst:   1,
+		replaceWith: 2,
+	})
+}

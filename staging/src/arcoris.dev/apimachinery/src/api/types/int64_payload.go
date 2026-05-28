@@ -17,15 +17,20 @@ package types
 // int64Payload stores TypeInt64 constraints in their exact native width.
 type int64Payload struct {
 	// min stores the inclusive lower bound for TypeInt64.
-	min int64Limit
+	min limit[int64]
 	// max stores the inclusive upper bound for TypeInt64.
-	max int64Limit
+	max limit[int64]
 	// enum stores accepted int64 literals in declaration order.
 	enum []int64
 }
 
 // cloneInt64Payload detaches int64 enum values.
 func cloneInt64Payload(p int64Payload) int64Payload {
-	p.enum = cloneInt64s(p.enum)
+	p.enum = cloneSlice(p.enum)
 	return p
+}
+
+// emptyInt64Payload reports whether p has no configured TypeInt64 state.
+func emptyInt64Payload(p int64Payload) bool {
+	return !p.min.set && !p.max.set && len(p.enum) == 0
 }

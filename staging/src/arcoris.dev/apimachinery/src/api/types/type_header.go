@@ -20,9 +20,9 @@ package types
 // They do not keep a full Type while building. Type remains the normalized
 // descriptor/IR assembled at Type() boundaries.
 type typeHeader struct {
-	// code selects the descriptor family being built.
+	// code selects the descriptor kind being built.
 	code TypeCode
-	// flags records cross-family builder flags such as nullability.
+	// flags records descriptor-wide builder flags such as nullability.
 	flags typeFlags
 }
 

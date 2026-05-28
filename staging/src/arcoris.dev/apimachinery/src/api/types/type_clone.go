@@ -16,10 +16,10 @@ package types
 
 // cloneType detaches all slice-bearing payloads from caller-owned state.
 //
-// Type is a value object, but several payload families contain slices to
+// Type is a value object, but several exact payload slots contain slices to
 // preserve declaration order. Every public boundary that returns or stores a
 // Type calls cloneType so later caller mutation cannot rewrite descriptors held
-// by registries, fields, or views.
+// by catalogs, fields, or views.
 func cloneType(t Type) Type {
 	t.string = cloneStringPayload(t.string)
 	t.bytes = cloneBytesPayload(t.bytes)
@@ -43,118 +43,4 @@ func cloneType(t Type) Type {
 	t.mapType = cloneMapPayload(t.mapType)
 	t.ref = cloneRefPayload(t.ref)
 	return t
-}
-
-// cloneField detaches the Type payload stored inside f.
-func cloneField(f FieldDescriptor) FieldDescriptor {
-	f.typ = cloneType(f.typ)
-	return f
-}
-
-// cloneFields detaches an ordered field list.
-func cloneFields(fields []FieldDescriptor) []FieldDescriptor {
-	if fields == nil {
-		return nil
-	}
-	out := make([]FieldDescriptor, len(fields))
-	for i := range fields {
-		out[i] = cloneField(fields[i])
-	}
-	return out
-}
-
-// cloneFieldNames detaches an ordered field-name list.
-func cloneFieldNames(names []FieldName) []FieldName {
-	if names == nil {
-		return nil
-	}
-	return append([]FieldName(nil), names...)
-}
-
-// cloneStrings detaches a string slice while preserving nil.
-func cloneStrings(values []string) []string {
-	if values == nil {
-		return nil
-	}
-	return append([]string(nil), values...)
-}
-
-// cloneInt8s detaches an int8 slice while preserving nil.
-func cloneInt8s(values []int8) []int8 {
-	if values == nil {
-		return nil
-	}
-	return append([]int8(nil), values...)
-}
-
-// cloneInt16s detaches an int16 slice while preserving nil.
-func cloneInt16s(values []int16) []int16 {
-	if values == nil {
-		return nil
-	}
-	return append([]int16(nil), values...)
-}
-
-// cloneInt32s detaches an int32 slice while preserving nil.
-func cloneInt32s(values []int32) []int32 {
-	if values == nil {
-		return nil
-	}
-	return append([]int32(nil), values...)
-}
-
-// cloneInt64s detaches an int64 slice while preserving nil.
-func cloneInt64s(values []int64) []int64 {
-	if values == nil {
-		return nil
-	}
-	return append([]int64(nil), values...)
-}
-
-// cloneUint8s detaches a uint8 slice while preserving nil.
-func cloneUint8s(values []uint8) []uint8 {
-	if values == nil {
-		return nil
-	}
-	return append([]uint8(nil), values...)
-}
-
-// cloneUint16s detaches a uint16 slice while preserving nil.
-func cloneUint16s(values []uint16) []uint16 {
-	if values == nil {
-		return nil
-	}
-	return append([]uint16(nil), values...)
-}
-
-// cloneUint32s detaches a uint32 slice while preserving nil.
-func cloneUint32s(values []uint32) []uint32 {
-	if values == nil {
-		return nil
-	}
-	return append([]uint32(nil), values...)
-}
-
-// cloneUint64s detaches a uint64 slice while preserving nil.
-func cloneUint64s(values []uint64) []uint64 {
-	if values == nil {
-		return nil
-	}
-	return append([]uint64(nil), values...)
-}
-
-// cloneFloat32s detaches a float32 slice while preserving nil.
-func cloneFloat32s(values []float32) []float32 {
-	if values == nil {
-		return nil
-	}
-	return append([]float32(nil), values...)
-}
-
-// cloneFloat64s detaches a float64 slice while preserving nil.
-func cloneFloat64s(values []float64) []float64 {
-	if values == nil {
-		return nil
-	}
-	return append([]float64(nil), values...)
 }
