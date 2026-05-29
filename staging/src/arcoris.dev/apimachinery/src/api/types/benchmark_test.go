@@ -16,45 +16,70 @@ package types
 
 import "testing"
 
+var benchmarkTypeSink Type
+
 func BenchmarkStringTypeBuild(b *testing.B) {
 	b.ReportAllocs()
+
 	for i := 0; i < b.N; i++ {
-		_ = String().MinLen(1).MaxLen(253).Pattern("^[a-z]+$").Enum("alpha", "beta").Type()
+		benchmarkTypeSink = String().
+			MinLen(1).
+			MaxLen(253).
+			Pattern("^[a-z]+$").
+			Enum("alpha", "beta").
+			Type()
 	}
 }
 
 func BenchmarkInt8TypeBuild(b *testing.B) {
 	b.ReportAllocs()
+
 	for i := 0; i < b.N; i++ {
-		_ = Int8().Range(0, 10).Enum(1, 2, 3).Type()
+		benchmarkTypeSink = Int8().
+			Range(0, 10).
+			Enum(1, 2, 3).
+			Type()
 	}
 }
 
 func BenchmarkInt64TypeBuild(b *testing.B) {
 	b.ReportAllocs()
+
 	for i := 0; i < b.N; i++ {
-		_ = Int64().Range(1, 1000).Enum(1, 10, 100).Type()
+		benchmarkTypeSink = Int64().
+			Range(1, 1000).
+			Enum(1, 10, 100).
+			Type()
 	}
 }
 
 func BenchmarkUint64TypeBuild(b *testing.B) {
 	b.ReportAllocs()
+
 	for i := 0; i < b.N; i++ {
-		_ = Uint64().Range(0, 1000).Enum(1, 10, 100).Type()
+		benchmarkTypeSink = Uint64().
+			Range(0, 1000).
+			Enum(1, 10, 100).
+			Type()
 	}
 }
 
 func BenchmarkFloat64TypeBuild(b *testing.B) {
 	b.ReportAllocs()
+
 	for i := 0; i < b.N; i++ {
-		_ = Float64().Range(0, 1).Enum(0.25, 0.5, 0.75).Type()
+		benchmarkTypeSink = Float64().
+			Range(0, 1).
+			Enum(0.25, 0.5, 0.75).
+			Type()
 	}
 }
 
 func BenchmarkObjectTypeBuild(b *testing.B) {
 	b.ReportAllocs()
+
 	for i := 0; i < b.N; i++ {
-		_ = Object(
+		benchmarkTypeSink = Object(
 			Field("name").String().Required().MinLen(1),
 			Field("replicas").Int64().Optional().Min(1),
 			Field("labels").MapOf(String()).Optional(),
@@ -64,8 +89,9 @@ func BenchmarkObjectTypeBuild(b *testing.B) {
 
 func BenchmarkListTypeBuild(b *testing.B) {
 	b.ReportAllocs()
+
 	for i := 0; i < b.N; i++ {
-		_ = ListOf(Object(
+		benchmarkTypeSink = ListOf(Object(
 			Field("name").String().Required().MinLen(1),
 			Field("value").Int64().Required().Min(0),
 		)).Map("name").Type()
@@ -79,6 +105,8 @@ func BenchmarkValidateSmallObject(b *testing.B) {
 	).Type()
 
 	b.ReportAllocs()
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		if err := ValidateType(tp, nil); err != nil {
 			b.Fatal(err)
@@ -98,6 +126,8 @@ func BenchmarkValidateNestedObject(b *testing.B) {
 	).Type()
 
 	b.ReportAllocs()
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		if err := ValidateType(tp, nil); err != nil {
 			b.Fatal(err)
@@ -115,6 +145,8 @@ func BenchmarkValidateRefWithResolver(b *testing.B) {
 	tp := Ref("example.Name").Type()
 
 	b.ReportAllocs()
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		if err := ValidateType(tp, resolver); err != nil {
 			b.Fatal(err)

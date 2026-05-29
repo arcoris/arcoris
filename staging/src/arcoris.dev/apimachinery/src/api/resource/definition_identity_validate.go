@@ -1,0 +1,61 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package resource
+
+import "fmt"
+
+// validateDefinitionIdentity checks the version-independent resource family
+// identity.
+//
+// The resource package delegates lexical identity rules to api/identity. This
+// helper only maps those lower-level diagnostics into resource-definition paths.
+func validateDefinitionIdentity(def Definition) error {
+	if err := def.group.Validate(); err != nil {
+		return nestedDefinitionError(
+			pathDefinitionGroup,
+			ErrorReasonInvalidGroup,
+			fmt.Sprintf("group %q is invalid", def.group),
+			err,
+		)
+	}
+
+	if err := def.kind.Validate(); err != nil {
+		return nestedDefinitionError(
+			pathDefinitionKind,
+			ErrorReasonInvalidKind,
+			fmt.Sprintf("kind %q is invalid", def.kind),
+			err,
+		)
+	}
+
+	if err := def.resource.Validate(); err != nil {
+		return nestedDefinitionError(
+			pathDefinitionResource,
+			ErrorReasonInvalidResource,
+			fmt.Sprintf("resource %q is invalid", def.resource),
+			err,
+		)
+	}
+
+	if !def.scope.IsValid() {
+		return definitionError(
+			pathDefinitionScope,
+			ErrorReasonInvalidScope,
+			detailScopeSupported,
+		)
+	}
+
+	return nil
+}
