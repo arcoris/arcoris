@@ -17,11 +17,11 @@
 // The package owns the descriptor algebra only. A Type is the normalized
 // descriptor / IR returned by builders. It can describe primitive values,
 // exact numeric widths, exact temporal kinds, object fields, list semantics,
-// map values, and references to named structural definitions. A Field describes
-// object member name, presence, description, and value type. A TypeDefinition
-// binds a TypeName to a reusable descriptor. These concepts are intentionally
-// structural: they describe shape and descriptor constraints, not concrete
-// object storage or runtime behavior.
+// map values, and references to named structural definitions. FieldDescriptor
+// describes object member name, presence, description, and value type. A
+// TypeDefinition binds a TypeName to a reusable descriptor. These concepts are
+// intentionally structural: they describe shape and descriptor constraints, not
+// concrete object storage or runtime behavior.
 //
 // The field-first builder DSL is the primary construction surface. Field starts
 // an object-field declaration, and the following typed method chooses the field
@@ -118,6 +118,10 @@
 // This separation keeps structural descriptors independent from catalog
 // storage, resource registries, runtime schemes, codecs, converters, and global
 // registration state.
+//
+// Recursive TypeDefinition graphs are not supported by api/types. Recursive
+// schemas require a future explicit design pass because recursion affects
+// validation, export, code generation, and value traversal semantics.
 //
 // This package deliberately does not implement a value model, casts, coercion,
 // defaults, examples as descriptor data, resource definitions, metadata, object

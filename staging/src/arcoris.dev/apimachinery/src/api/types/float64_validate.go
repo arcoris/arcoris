@@ -14,31 +14,65 @@
 
 package types
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 // validateFloat64 checks TypeFloat64 finite bounds, enum uniqueness, and enum membership.
 func validateFloat64(t Type, path string) error {
 	if t.float64.min.set && invalidFloat64(t.float64.min.value) {
-		return typeError(path+".range", ErrInvalidType)
+		return typeErrorf(
+			path+".min",
+			ErrInvalidType,
+			TypeErrorReasonNonFiniteValue,
+			"float64 minimum must be finite, got %s",
+			float64Diagnostic(t.float64.min.value),
+		)
 	}
 	if t.float64.max.set && invalidFloat64(t.float64.max.value) {
-		return typeError(path+".range", ErrInvalidType)
+		return typeErrorf(
+			path+".max",
+			ErrInvalidType,
+			TypeErrorReasonNonFiniteValue,
+			"float64 maximum must be finite, got %s",
+			float64Diagnostic(t.float64.max.value),
+		)
 	}
-	if invalidRange(t.float64.min, t.float64.max) {
-		return typeError(path+".range", ErrInvalidType)
+	if err := validateRangeRule(path, "float64", t.float64.min, t.float64.max); err != nil {
+		return err
 	}
-	for _, value := range t.float64.enum {
+	for i, value := range t.float64.enum {
 		if invalidFloat64(value) {
-			return typeError(path+".enum", ErrInvalidType)
+			return typeErrorf(
+				fmt.Sprintf("%s.enum[%d]", path, i),
+				ErrInvalidType,
+				TypeErrorReasonNonFiniteValue,
+				"float64 enum value must be finite, got %s",
+				float64Diagnostic(value),
+			)
 		}
 	}
-	if hasDuplicates(t.float64.enum) || enumBelowMin(t.float64.enum, t.float64.min) || enumAboveMax(t.float64.enum, t.float64.max) {
-		return typeError(path+".enum", ErrInvalidType)
-	}
-	return nil
+	// NaN and infinities are rejected before duplicate checks. Descriptor enum
+	// identity then follows Go numeric equality, not float bit-pattern identity.
+	return validateEnumRules(path, "float64", t.float64.enum, t.float64.min, t.float64.max)
 }
 
 // invalidFloat64 reports whether value is not a finite portable float64 rule.
 func invalidFloat64(value float64) bool {
 	return math.IsNaN(value) || math.IsInf(value, 0)
+}
+
+// float64Diagnostic names non-finite values for validation details.
+func float64Diagnostic(value float64) string {
+	switch {
+	case math.IsNaN(value):
+		return "NaN"
+	case math.IsInf(value, 1):
+		return "+Inf"
+	case math.IsInf(value, -1):
+		return "-Inf"
+	default:
+		return fmt.Sprintf("%v", value)
+	}
 }

@@ -18,6 +18,8 @@ package types
 //
 // TypeRef is the descriptor reuse mechanism. It never represents arbitrary Go
 // implementations, package globals, reflection types, or runtime object types.
+// Recursive TypeDefinition graphs are not supported; recursive schemas need a
+// future explicit design pass before TypeRef can carry those semantics.
 type RefType struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader

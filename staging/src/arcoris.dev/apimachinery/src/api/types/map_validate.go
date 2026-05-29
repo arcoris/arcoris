@@ -17,10 +17,21 @@ package types
 // validateMap checks dynamic-map key, value, and length rules.
 func validateMap(t Type, resolver Resolver, path string, resolving map[TypeName]bool) error {
 	if !t.mapType.key.IsValid() {
-		return typeError(path+".key", ErrInvalidType)
+		return typeErrorf(
+			path+".key",
+			ErrInvalidType,
+			TypeErrorReasonInvalidMapKey,
+			"map key type %d is not supported",
+			t.mapType.key,
+		)
 	}
 	if t.mapType.value == nil {
-		return typeError(path+".value", ErrInvalidType)
+		return typeErrorf(
+			path+".value",
+			ErrInvalidType,
+			TypeErrorReasonMissingValue,
+			"map descriptor must have a value type",
+		)
 	}
 	if err := validateType(*t.mapType.value, resolver, path+".value", resolving); err != nil {
 		return err

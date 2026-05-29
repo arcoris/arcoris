@@ -16,11 +16,8 @@ package types
 
 // validateUint64 checks TypeUint64 bounds, enum uniqueness, and enum membership.
 func validateUint64(t Type, path string) error {
-	if invalidRange(t.uint64.min, t.uint64.max) {
-		return typeError(path+".range", ErrInvalidType)
+	if err := validateRangeRule(path, "uint64", t.uint64.min, t.uint64.max); err != nil {
+		return err
 	}
-	if hasDuplicates(t.uint64.enum) || enumBelowMin(t.uint64.enum, t.uint64.min) || enumAboveMax(t.uint64.enum, t.uint64.max) {
-		return typeError(path+".enum", ErrInvalidType)
-	}
-	return nil
+	return validateEnumRules(path, "uint64", t.uint64.enum, t.uint64.min, t.uint64.max)
 }

@@ -33,6 +33,12 @@ func TestFloat32ValidateRejectsInvalidRules(t *testing.T) {
 	}
 }
 
+func TestFloat32ValidateEnumDuplicatesUseNumericEquality(t *testing.T) {
+	negativeZero := float32(math.Copysign(0, -1))
+
+	requireErrorIs(t, ValidateType(Float32().Enum(0, negativeZero).Type(), nil), ErrInvalidType)
+}
+
 func TestInvalidFloat32(t *testing.T) {
 	requireEqual(t, invalidFloat32(float32(math.NaN())), true)
 	requireEqual(t, invalidFloat32(float32(math.Inf(1))), true)

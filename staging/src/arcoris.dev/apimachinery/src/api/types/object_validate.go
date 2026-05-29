@@ -19,20 +19,45 @@ import "fmt"
 // validateObject checks fields, duplicate names, and unknown-field policy.
 func validateObject(t Type, resolver Resolver, path string, resolving map[TypeName]bool) error {
 	if !t.object.unknown.IsValid() {
-		return typeError(path+".unknown", ErrInvalidType)
+		return typeErrorf(
+			path+".unknown",
+			ErrInvalidType,
+			TypeErrorReasonInvalidUnknownPolicy,
+			"unknown-field policy %d is not supported",
+			t.object.unknown,
+		)
 	}
 	seen := make(map[FieldName]struct{}, len(t.object.fields))
 	for _, field := range t.object.fields {
 		fieldPath := fmt.Sprintf("%s.fields[%s]", path, field.name)
 		if !field.name.IsValid() {
-			return typeError(fieldPath+".name", ErrInvalidField)
+			return typeErrorf(
+				fieldPath+".name",
+				ErrInvalidField,
+				TypeErrorReasonInvalidFieldName,
+				"field name %q is not lowerCamelCase",
+				field.name,
+			)
 		}
 		if _, ok := seen[field.name]; ok {
-			return typeError(fieldPath+".name", ErrDuplicateField)
+			return typeErrorf(
+				fieldPath+".name",
+				ErrDuplicateField,
+				TypeErrorReasonDuplicateFieldName,
+				"field name %q is declared more than once",
+				field.name,
+			)
 		}
 		seen[field.name] = struct{}{}
 		if !field.presence.IsValid() {
-			return typeError(fieldPath+".presence", ErrInvalidField)
+			return typeErrorf(
+				fieldPath+".presence",
+				ErrInvalidField,
+				TypeErrorReasonInvalidPresence,
+				"field %q must be required or optional, got %s",
+				field.name,
+				field.presence,
+			)
 		}
 		if err := validateType(field.typ, resolver, fieldPath+".type", resolving); err != nil {
 			return err

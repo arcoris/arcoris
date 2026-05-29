@@ -211,6 +211,33 @@ func TestTypeExactViewWrongCodeMatrix(t *testing.T) {
 	}
 }
 
+func TestTypeViewWrongCodeReturnsZeroView(t *testing.T) {
+	typ := String().Type()
+	typ.int8.enum = []int8{1}
+	int8View, ok := typ.Int8()
+	requireEqual(t, ok, false)
+	requireEqual(t, len(int8View.Enum()), 0)
+
+	elem := String().Enum("nested").Type()
+	typ.list.elem = &elem
+	typ.list.mapKeys = []FieldName{"name"}
+	listView, ok := typ.List()
+	requireEqual(t, ok, false)
+	requireEqual(t, listView.Element().IsZero(), true)
+	requireEqual(t, len(listView.MapKeys()), 0)
+
+	value := String().Enum("map").Type()
+	typ.mapType.value = &value
+	mapView, ok := typ.Map()
+	requireEqual(t, ok, false)
+	requireEqual(t, mapView.Value().IsZero(), true)
+
+	typ.ref.name = "example.Name"
+	refView, ok := typ.Ref()
+	requireEqual(t, ok, false)
+	requireEqual(t, refView.Name(), TypeName(""))
+}
+
 func TestTypeViewDetachedNestedDescriptors(t *testing.T) {
 	list := ListOf(String().Enum("a")).Map("name").Type()
 	elem := requireListView(t, list).Element()

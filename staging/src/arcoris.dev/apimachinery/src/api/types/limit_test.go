@@ -26,15 +26,6 @@ func TestInvalidRange(t *testing.T) {
 	requireEqual(t, invalidRange(limit[string]{value: "b", set: true}, limit[string]{value: "a", set: true}), true)
 }
 
-func TestEnumBounds(t *testing.T) {
-	requireEqual(t, enumBelowMin([]int8{0}, limit[int8]{}), false)
-	requireEqual(t, enumAboveMax([]uint64{10}, limit[uint64]{}), false)
-	requireEqual(t, enumBelowMin([]int8{-1, 0}, limit[int8]{value: 0, set: true}), true)
-	requireEqual(t, enumAboveMax([]uint64{1, 2}, limit[uint64]{value: 1, set: true}), true)
-	requireEqual(t, enumBelowMin([]int8{0, 1}, limit[int8]{value: 0, set: true}), false)
-	requireEqual(t, enumAboveMax([]uint64{0, 1}, limit[uint64]{value: 1, set: true}), false)
-}
-
 func TestValidateLengthLimits(t *testing.T) {
 	requireNoError(t, validateLengthLimits(limit[int]{value: 0, set: true}, limit[int]{value: 1, set: true}, "len"))
 	requireErrorIs(t, validateLengthLimits(limit[int]{value: -1, set: true}, limit[int]{}, "len"), ErrInvalidType)

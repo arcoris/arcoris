@@ -16,11 +16,8 @@ package types
 
 // validateInt16 checks TypeInt16 bounds, enum uniqueness, and enum membership.
 func validateInt16(t Type, path string) error {
-	if invalidRange(t.int16.min, t.int16.max) {
-		return typeError(path+".range", ErrInvalidType)
+	if err := validateRangeRule(path, "int16", t.int16.min, t.int16.max); err != nil {
+		return err
 	}
-	if hasDuplicates(t.int16.enum) || enumBelowMin(t.int16.enum, t.int16.min) || enumAboveMax(t.int16.enum, t.int16.max) {
-		return typeError(path+".enum", ErrInvalidType)
-	}
-	return nil
+	return validateEnumRules(path, "int16", t.int16.enum, t.int16.min, t.int16.max)
 }

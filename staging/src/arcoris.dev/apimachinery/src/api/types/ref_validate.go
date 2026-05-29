@@ -14,23 +14,57 @@
 
 package types
 
+import "errors"
+
 // validateRef checks TypeRef syntax, optional resolver lookup, and cycles.
 func validateRef(t Type, resolver Resolver, path string, resolving map[TypeName]bool) error {
 	name := t.ref.name
 	if !name.IsValid() {
-		return typeError(path, ErrInvalidTypeReference)
+		return typeErrorf(
+			path,
+			ErrInvalidTypeReference,
+			TypeErrorReasonInvalidReferenceName,
+			"reference name %q is not a valid TypeName",
+			name,
+		)
 	}
 	if resolver == nil {
 		return nil
 	}
 	if resolving[name] {
-		return typeError("ref("+name.String()+")", ErrInvalidTypeReference)
+		return typeErrorf(
+			path,
+			ErrInvalidTypeReference,
+			TypeErrorReasonReferenceCycle,
+			"reference %q creates a recursive TypeDefinition graph",
+			name,
+		)
 	}
 	def, ok := resolver.ResolveType(name)
 	if !ok {
-		return typeError("ref("+name.String()+")", ErrUnknownTypeReference)
+		return typeErrorf(
+			path,
+			ErrUnknownTypeReference,
+			TypeErrorReasonUnknownReference,
+			"reference %q was not found in resolver",
+			name,
+		)
 	}
 	next := copyResolving(resolving)
 	next[name] = true
-	return validateType(def.Type(), resolver, "ref("+name.String()+")", next)
+	if err := validateType(def.Type(), resolver, path, next); err != nil {
+		var typeErr *TypeError
+		if errors.As(err, &typeErr) && typeErr.Reason == TypeErrorReasonReferenceCycle {
+			return err
+		}
+		return typeErrorf(
+			path,
+			err,
+			TypeErrorReasonInvalidResolvedDefinition,
+			"resolved reference %q is structurally invalid: %v",
+			name,
+			err,
+		)
+	}
+	return nil
 }

@@ -16,11 +16,8 @@ package types
 
 // validateUint32 checks TypeUint32 bounds, enum uniqueness, and enum membership.
 func validateUint32(t Type, path string) error {
-	if invalidRange(t.uint32.min, t.uint32.max) {
-		return typeError(path+".range", ErrInvalidType)
+	if err := validateRangeRule(path, "uint32", t.uint32.min, t.uint32.max); err != nil {
+		return err
 	}
-	if hasDuplicates(t.uint32.enum) || enumBelowMin(t.uint32.enum, t.uint32.min) || enumAboveMax(t.uint32.enum, t.uint32.max) {
-		return typeError(path+".enum", ErrInvalidType)
-	}
-	return nil
+	return validateEnumRules(path, "uint32", t.uint32.enum, t.uint32.min, t.uint32.max)
 }

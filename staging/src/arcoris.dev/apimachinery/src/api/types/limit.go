@@ -42,42 +42,51 @@ func invalidRange[T ordered](min, max limit[T]) bool {
 	return min.set && max.set && min.value > max.value
 }
 
-// enumBelowMin reports whether any enum value is below a configured minimum.
-func enumBelowMin[T ordered](values []T, min limit[T]) bool {
-	if !min.set {
-		return false
+// validateRangeRule checks descriptor minimum/maximum ordering.
+func validateRangeRule[T ordered](path, descriptor string, min, max limit[T]) error {
+	if invalidRange(min, max) {
+		return typeErrorf(
+			path+".range",
+			ErrInvalidType,
+			TypeErrorReasonInvalidRange,
+			"%s minimum must be <= maximum, got min=%v max=%v",
+			descriptor,
+			min.value,
+			max.value,
+		)
 	}
-	for _, value := range values {
-		if value < min.value {
-			return true
-		}
-	}
-	return false
-}
-
-// enumAboveMax reports whether any enum value is above a configured maximum.
-func enumAboveMax[T ordered](values []T, max limit[T]) bool {
-	if !max.set {
-		return false
-	}
-	for _, value := range values {
-		if value > max.value {
-			return true
-		}
-	}
-	return false
+	return nil
 }
 
 // validateLengthLimits checks non-negative size limits and ordering.
 func validateLengthLimits(min, max limit[int], path string) error {
 	if min.set && min.value < 0 {
-		return typeError(path+".min", ErrInvalidType)
+		return typeErrorf(
+			path+".min",
+			ErrInvalidType,
+			TypeErrorReasonNegativeLimit,
+			"minimum length must be non-negative, got %d",
+			min.value,
+		)
 	}
 	if max.set && max.value < 0 {
-		return typeError(path+".max", ErrInvalidType)
+		return typeErrorf(
+			path+".max",
+			ErrInvalidType,
+			TypeErrorReasonNegativeLimit,
+			"maximum length must be non-negative, got %d",
+			max.value,
+		)
 	}
 	if invalidRange(min, max) {
-		return typeError(path, ErrInvalidType)
+		return typeErrorf(
+			path,
+			ErrInvalidType,
+			TypeErrorReasonInvalidRange,
+			"minimum length must be <= maximum length, got min=%d max=%d",
+			min.value,
+			max.value,
+		)
 	}
 	return nil
 }

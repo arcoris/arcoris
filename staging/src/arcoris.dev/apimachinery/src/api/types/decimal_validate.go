@@ -19,15 +19,37 @@ package types
 // Decimal deliberately has no min/max or enum rules in this package. Exact
 // decimal values need a future value representation design before those rules
 // can be added without encoding policy leaking into descriptors.
+//
+// Scale without precision is allowed. It constrains fractional shape while
+// leaving total significant digits unconstrained.
 func validateDecimal(t Type, path string) error {
 	if t.decimal.precision.set && t.decimal.precision.value <= 0 {
-		return typeError(path+".precision", ErrInvalidType)
+		return typeErrorf(
+			path+".precision",
+			ErrInvalidType,
+			TypeErrorReasonInvalidPrecision,
+			"decimal precision must be greater than zero, got %d",
+			t.decimal.precision.value,
+		)
 	}
 	if t.decimal.scale.set && t.decimal.scale.value < 0 {
-		return typeError(path+".scale", ErrInvalidType)
+		return typeErrorf(
+			path+".scale",
+			ErrInvalidType,
+			TypeErrorReasonInvalidScale,
+			"decimal scale must be non-negative, got %d",
+			t.decimal.scale.value,
+		)
 	}
 	if t.decimal.precision.set && t.decimal.scale.set && t.decimal.scale.value > t.decimal.precision.value {
-		return typeError(path+".scale", ErrInvalidType)
+		return typeErrorf(
+			path+".scale",
+			ErrInvalidType,
+			TypeErrorReasonInvalidScale,
+			"decimal scale must be <= precision, got scale=%d precision=%d",
+			t.decimal.scale.value,
+			t.decimal.precision.value,
+		)
 	}
 	return nil
 }

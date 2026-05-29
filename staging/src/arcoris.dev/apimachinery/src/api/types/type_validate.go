@@ -31,10 +31,18 @@ func ValidateType(t Type, resolver Resolver) error {
 //
 // A provided resolver is used to resolve TypeRef descriptors. The definition
 // name itself is treated as part of the active reference stack so direct and
-// indirect reference cycles are rejected.
+// indirect reference cycles are rejected. Recursive TypeDefinition graphs are
+// not supported by api/types; recursive schemas require a future explicit
+// design pass.
 func ValidateDefinition(def TypeDefinition, resolver Resolver) error {
 	if !def.name.IsValid() {
-		return typeError("definition.name", ErrInvalidTypeReference)
+		return typeErrorf(
+			"definition.name",
+			ErrInvalidTypeReference,
+			TypeErrorReasonInvalidReferenceName,
+			"definition name %q is not a valid TypeName",
+			def.name,
+		)
 	}
 	resolving := map[TypeName]bool{def.name: true}
 	if err := validateType(def.typ, resolver, "definition.type", resolving); err != nil {
@@ -50,13 +58,24 @@ func ValidateDefinition(def TypeDefinition, resolver Resolver) error {
 // errors such as type.fields[spec].type or ref(example.Name).
 func validateType(t Type, resolver Resolver, path string, resolving map[TypeName]bool) error {
 	if !t.code.IsValid() {
-		return typeError(path, errors.Join(ErrInvalidType, ErrInvalidTypeCode))
+		return typeErrorf(
+			path,
+			errors.Join(ErrInvalidType, ErrInvalidTypeCode),
+			TypeErrorReasonInvalidTypeCode,
+			"type code %d is not supported",
+			t.code,
+		)
 	}
 	if err := validateInactivePayloads(t, path); err != nil {
 		return err
 	}
 	if t.code == TypeNull && t.Nullable() {
-		return typeError(path, ErrInvalidType)
+		return typeErrorf(
+			path,
+			ErrInvalidType,
+			TypeErrorReasonInvalidNullability,
+			"TypeNull is the null literal and cannot be nullable",
+		)
 	}
 	switch t.code {
 	case TypeNull:
@@ -106,7 +125,13 @@ func validateType(t Type, resolver Resolver, path string, resolving map[TypeName
 	case TypeRef:
 		return validateRef(t, resolver, path, resolving)
 	default:
-		return typeError(path, ErrInvalidType)
+		return typeErrorf(
+			path,
+			ErrInvalidType,
+			TypeErrorReasonInvalidTypeCode,
+			"type code %d has no validator",
+			t.code,
+		)
 	}
 }
 

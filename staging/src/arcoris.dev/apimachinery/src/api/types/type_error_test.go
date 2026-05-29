@@ -28,6 +28,18 @@ func TestTypeErrorWrapsClassifiedError(t *testing.T) {
 	requireEqual(t, withoutPath.Error(), "types: invalid type")
 }
 
+func TestTypeErrorFormatsReasonAndDetail(t *testing.T) {
+	err := typeErrorf(
+		"type.range",
+		ErrInvalidType,
+		TypeErrorReasonInvalidRange,
+		"minimum must be <= maximum",
+	)
+
+	requireEqual(t, errors.Is(err, ErrInvalidType), true)
+	requireEqual(t, err.Error(), "types: type.range: invalid type: invalid_range: minimum must be <= maximum")
+}
+
 func TestNilTypeErrorMethods(t *testing.T) {
 	var err *TypeError
 	requireEqual(t, err.Error(), "<nil>")

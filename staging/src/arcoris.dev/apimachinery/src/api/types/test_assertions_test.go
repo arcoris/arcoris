@@ -16,6 +16,7 @@ package types
 
 import (
 	"errors"
+	"strings"
 	"testing"
 )
 
@@ -65,6 +66,22 @@ func requireValidType(t *testing.T, typ Type, resolver Resolver) {
 func requireInvalidType(t *testing.T, typ Type, resolver Resolver, target error) {
 	t.Helper()
 	requireErrorIs(t, ValidateType(typ, resolver), target)
+}
+
+// requireTypeError returns the structured TypeError diagnostics or fails t.
+func requireTypeError(t *testing.T, err error, target error, path string, reason TypeErrorReason, detailContains string) *TypeError {
+	t.Helper()
+	requireErrorIs(t, err, target)
+	var typeErr *TypeError
+	if !errors.As(err, &typeErr) {
+		t.Fatalf("expected TypeError, got %T", err)
+	}
+	requireEqual(t, typeErr.Path, path)
+	requireEqual(t, typeErr.Reason, reason)
+	if detailContains != "" && !strings.Contains(typeErr.Detail, detailContains) {
+		t.Fatalf("expected detail containing %q, got %q", detailContains, typeErr.Detail)
+	}
+	return typeErr
 }
 
 // requireStringView returns the exact TypeString view or fails t.

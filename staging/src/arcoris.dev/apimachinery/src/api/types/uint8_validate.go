@@ -16,11 +16,8 @@ package types
 
 // validateUint8 checks TypeUint8 bounds, enum uniqueness, and enum membership.
 func validateUint8(t Type, path string) error {
-	if invalidRange(t.uint8.min, t.uint8.max) {
-		return typeError(path+".range", ErrInvalidType)
+	if err := validateRangeRule(path, "uint8", t.uint8.min, t.uint8.max); err != nil {
+		return err
 	}
-	if hasDuplicates(t.uint8.enum) || enumBelowMin(t.uint8.enum, t.uint8.min) || enumAboveMax(t.uint8.enum, t.uint8.max) {
-		return typeError(path+".enum", ErrInvalidType)
-	}
-	return nil
+	return validateEnumRules(path, "uint8", t.uint8.enum, t.uint8.min, t.uint8.max)
 }

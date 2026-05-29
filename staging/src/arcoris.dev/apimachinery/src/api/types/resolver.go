@@ -20,6 +20,10 @@ package types
 // Concrete catalogs belong to higher layers. This keeps structural type
 // descriptors independent from catalog storage, resource registries, runtime
 // schemes, codecs, converters, and global registration state.
+//
+// Resolver is not a recursion escape hatch. ValidateDefinition rejects
+// recursive TypeDefinition graphs; recursive schemas require a future explicit
+// design pass before they become part of the descriptor contract.
 type Resolver interface {
 	ResolveType(name TypeName) (TypeDefinition, bool)
 }

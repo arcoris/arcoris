@@ -14,14 +14,103 @@
 
 package types
 
+import "fmt"
+
 // hasDuplicates reports whether values contains any repeated comparable value.
 func hasDuplicates[T comparable](values []T) bool {
+	_, _, ok := firstDuplicate(values)
+	return ok
+}
+
+// firstDuplicate returns the first repeated enum value and its duplicate index.
+func firstDuplicate[T comparable](values []T) (int, T, bool) {
 	seen := make(map[T]struct{}, len(values))
-	for _, value := range values {
+	for i, value := range values {
 		if _, ok := seen[value]; ok {
-			return true
+			return i, value, true
 		}
 		seen[value] = struct{}{}
 	}
-	return false
+	var zero T
+	return 0, zero, false
+}
+
+// enumBelowMin reports whether any enum value is below a configured minimum.
+func enumBelowMin[T ordered](values []T, min limit[T]) bool {
+	_, _, ok := firstEnumBelowMin(values, min)
+	return ok
+}
+
+// firstEnumBelowMin returns the first enum value below a configured minimum.
+func firstEnumBelowMin[T ordered](values []T, min limit[T]) (int, T, bool) {
+	if !min.set {
+		var zero T
+		return 0, zero, false
+	}
+	for i, value := range values {
+		if value < min.value {
+			return i, value, true
+		}
+	}
+	var zero T
+	return 0, zero, false
+}
+
+// enumAboveMax reports whether any enum value is above a configured maximum.
+func enumAboveMax[T ordered](values []T, max limit[T]) bool {
+	_, _, ok := firstEnumAboveMax(values, max)
+	return ok
+}
+
+// firstEnumAboveMax returns the first enum value above a configured maximum.
+func firstEnumAboveMax[T ordered](values []T, max limit[T]) (int, T, bool) {
+	if !max.set {
+		var zero T
+		return 0, zero, false
+	}
+	for i, value := range values {
+		if value > max.value {
+			return i, value, true
+		}
+	}
+	var zero T
+	return 0, zero, false
+}
+
+// validateEnumRules checks enum uniqueness and min/max membership.
+func validateEnumRules[T ordered](path, descriptor string, values []T, min, max limit[T]) error {
+	if index, value, ok := firstDuplicate(values); ok {
+		return typeErrorf(
+			path+".enum",
+			ErrInvalidType,
+			TypeErrorReasonDuplicateEnum,
+			"%s enum values must be unique; duplicate value %v at index %d",
+			descriptor,
+			value,
+			index,
+		)
+	}
+	if index, value, ok := firstEnumBelowMin(values, min); ok {
+		return typeErrorf(
+			fmt.Sprintf("%s.enum[%d]", path, index),
+			ErrInvalidType,
+			TypeErrorReasonEnumBelowMinimum,
+			"%s enum value %v is below minimum %v",
+			descriptor,
+			value,
+			min.value,
+		)
+	}
+	if index, value, ok := firstEnumAboveMax(values, max); ok {
+		return typeErrorf(
+			fmt.Sprintf("%s.enum[%d]", path, index),
+			ErrInvalidType,
+			TypeErrorReasonEnumAboveMaximum,
+			"%s enum value %v is above maximum %v",
+			descriptor,
+			value,
+			max.value,
+		)
+	}
+	return nil
 }

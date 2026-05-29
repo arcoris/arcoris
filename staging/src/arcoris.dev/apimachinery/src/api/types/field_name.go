@@ -25,7 +25,13 @@ type FieldName string
 func ParseFieldName(s string) (FieldName, error) {
 	name := FieldName(s)
 	if !name.IsValid() {
-		return "", typeError("field.name", ErrInvalidField)
+		return "", typeErrorf(
+			"field.name",
+			ErrInvalidField,
+			TypeErrorReasonInvalidFieldName,
+			"field name %q is not lowerCamelCase",
+			s,
+		)
 	}
 	return name, nil
 }

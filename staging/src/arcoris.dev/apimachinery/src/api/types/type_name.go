@@ -28,7 +28,13 @@ type TypeName string
 func ParseTypeName(s string) (TypeName, error) {
 	name := TypeName(s)
 	if !name.IsValid() {
-		return "", typeError("type.name", ErrInvalidTypeReference)
+		return "", typeErrorf(
+			"type.name",
+			ErrInvalidTypeReference,
+			TypeErrorReasonInvalidReferenceName,
+			"type name %q does not match the dot-separated TypeName grammar",
+			s,
+		)
 	}
 	return name, nil
 }

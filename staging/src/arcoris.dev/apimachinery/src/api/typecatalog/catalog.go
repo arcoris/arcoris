@@ -15,7 +15,6 @@
 package typecatalog
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 
@@ -100,12 +99,15 @@ func (c *Catalog) RegisterMany(defs ...types.TypeDefinition) error {
 		if !name.IsValid() {
 			return catalogError(fmt.Sprintf("definitions[%d].name", i), types.ErrInvalidTypeReference)
 		}
+		// Duplicate names are catalog ownership conflicts. They are not TypeRef
+		// syntax or resolution failures, so they keep catalog-specific error
+		// identity instead of joining types.ErrInvalidTypeReference.
 		if _, ok := seen[name]; ok {
-			return catalogError(fmt.Sprintf("definitions[%d].name", i), errors.Join(types.ErrInvalidTypeReference, ErrDuplicateDefinition))
+			return catalogError(fmt.Sprintf("definitions[%d].name", i), ErrDuplicateDefinition)
 		}
 		seen[name] = struct{}{}
 		if _, ok := c.defs[name]; ok {
-			return catalogError(fmt.Sprintf("definitions[%s]", name), errors.Join(types.ErrInvalidTypeReference, ErrDefinitionExists))
+			return catalogError(fmt.Sprintf("definitions[%s]", name), ErrDefinitionExists)
 		}
 	}
 

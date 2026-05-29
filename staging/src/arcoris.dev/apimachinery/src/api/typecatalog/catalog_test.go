@@ -47,7 +47,7 @@ func TestCatalogRejectsDuplicateExistingName(t *testing.T) {
 
 	err := catalog.Register(types.Define("example.Name", types.Int64()))
 	requireErrorIs(t, err, ErrDefinitionExists)
-	requireErrorIs(t, err, types.ErrInvalidTypeReference)
+	requireErrorNotIs(t, err, types.ErrInvalidTypeReference)
 }
 
 func TestCatalogRejectsInvalidDefinition(t *testing.T) {
@@ -80,6 +80,7 @@ func TestCatalogRegisterManyAtomicOnExistingConflict(t *testing.T) {
 		types.Define("example.Existing", types.Int64()),
 	)
 	requireErrorIs(t, err, ErrDefinitionExists)
+	requireErrorNotIs(t, err, types.ErrInvalidTypeReference)
 
 	_, ok := catalog.ResolveType("example.Next")
 	requireEqual(t, ok, false)
@@ -94,6 +95,7 @@ func TestCatalogRegisterManyAtomicOnBatchDuplicate(t *testing.T) {
 	)
 	requireErrorIs(t, err, ErrDuplicateDefinition)
 	requireEqual(t, errors.Is(err, types.ErrDuplicateField), false)
+	requireErrorNotIs(t, err, types.ErrInvalidTypeReference)
 
 	_, ok := catalog.ResolveType("example.Name")
 	requireEqual(t, ok, false)
@@ -199,6 +201,13 @@ func requireErrorIs(t *testing.T, err, target error) {
 	t.Helper()
 	if !errors.Is(err, target) {
 		t.Fatalf("expected error matching %v, got %v", target, err)
+	}
+}
+
+func requireErrorNotIs(t *testing.T, err, target error) {
+	t.Helper()
+	if errors.Is(err, target) {
+		t.Fatalf("expected error not matching %v, got %v", target, err)
 	}
 }
 

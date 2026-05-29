@@ -17,6 +17,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 var (
@@ -34,15 +35,97 @@ var (
 	ErrUnknownTypeReference = errors.New("unknown type reference")
 )
 
-// TypeError attaches a descriptor path to a classified validation error.
+// TypeErrorReason identifies the precise descriptor invariant that failed.
+//
+// Reason is intentionally separate from Err. Err remains a broad sentinel for
+// errors.Is classification, while Reason gives callers stable diagnostic
+// detail without parsing human-facing Error text.
+type TypeErrorReason string
+
+const (
+	// TypeErrorReasonInvalidTypeCode reports an unsupported TypeCode value.
+	TypeErrorReasonInvalidTypeCode TypeErrorReason = "invalid_type_code"
+	// TypeErrorReasonInactivePayload reports a populated payload slot that does not match Type.Code.
+	TypeErrorReasonInactivePayload TypeErrorReason = "inactive_payload"
+	// TypeErrorReasonInvalidNullability reports a nullability flag that a descriptor kind cannot carry.
+	TypeErrorReasonInvalidNullability TypeErrorReason = "invalid_nullability"
+
+	// TypeErrorReasonInvalidRange reports an inverted minimum/maximum rule.
+	TypeErrorReasonInvalidRange TypeErrorReason = "invalid_range"
+	// TypeErrorReasonNegativeLimit reports a length or size limit below zero.
+	TypeErrorReasonNegativeLimit TypeErrorReason = "negative_limit"
+	// TypeErrorReasonNonFiniteValue reports NaN or infinity in a float rule.
+	TypeErrorReasonNonFiniteValue TypeErrorReason = "non_finite_value"
+
+	// TypeErrorReasonDuplicateEnum reports repeated enum values.
+	TypeErrorReasonDuplicateEnum TypeErrorReason = "duplicate_enum"
+	// TypeErrorReasonEnumBelowMinimum reports an enum value below a configured minimum.
+	TypeErrorReasonEnumBelowMinimum TypeErrorReason = "enum_below_minimum"
+	// TypeErrorReasonEnumAboveMaximum reports an enum value above a configured maximum.
+	TypeErrorReasonEnumAboveMaximum TypeErrorReason = "enum_above_maximum"
+	// TypeErrorReasonEnumPatternMismatch reports an enum value that does not match a string pattern.
+	TypeErrorReasonEnumPatternMismatch TypeErrorReason = "enum_pattern_mismatch"
+
+	// TypeErrorReasonInvalidPattern reports a string pattern that cannot be compiled.
+	TypeErrorReasonInvalidPattern TypeErrorReason = "invalid_pattern"
+	// TypeErrorReasonInvalidPrecision reports an invalid decimal precision rule.
+	TypeErrorReasonInvalidPrecision TypeErrorReason = "invalid_precision"
+	// TypeErrorReasonInvalidScale reports an invalid decimal scale rule.
+	TypeErrorReasonInvalidScale TypeErrorReason = "invalid_scale"
+
+	// TypeErrorReasonMissingElement reports a list descriptor without an element type.
+	TypeErrorReasonMissingElement TypeErrorReason = "missing_element"
+	// TypeErrorReasonMissingValue reports a map descriptor without a value type.
+	TypeErrorReasonMissingValue TypeErrorReason = "missing_value"
+	// TypeErrorReasonInvalidSemantics reports an unsupported list semantic policy.
+	TypeErrorReasonInvalidSemantics TypeErrorReason = "invalid_semantics"
+
+	// TypeErrorReasonInvalidFieldName reports a malformed object field name.
+	TypeErrorReasonInvalidFieldName TypeErrorReason = "invalid_field_name"
+	// TypeErrorReasonDuplicateFieldName reports a repeated field name in one object descriptor.
+	TypeErrorReasonDuplicateFieldName TypeErrorReason = "duplicate_field_name"
+	// TypeErrorReasonInvalidPresence reports a field without Required or Optional presence.
+	TypeErrorReasonInvalidPresence TypeErrorReason = "invalid_presence"
+	// TypeErrorReasonInvalidUnknownPolicy reports an unsupported object unknown-field policy.
+	TypeErrorReasonInvalidUnknownPolicy TypeErrorReason = "invalid_unknown_policy"
+
+	// TypeErrorReasonInvalidReferenceName reports a malformed TypeRef name.
+	TypeErrorReasonInvalidReferenceName TypeErrorReason = "invalid_reference_name"
+	// TypeErrorReasonUnknownReference reports a TypeRef that a Resolver cannot resolve.
+	TypeErrorReasonUnknownReference TypeErrorReason = "unknown_reference"
+	// TypeErrorReasonReferenceCycle reports a recursive TypeDefinition graph.
+	TypeErrorReasonReferenceCycle TypeErrorReason = "reference_cycle"
+	// TypeErrorReasonInvalidResolvedDefinition reports a TypeRef target that resolves but is structurally invalid.
+	TypeErrorReasonInvalidResolvedDefinition TypeErrorReason = "invalid_resolved_definition"
+
+	// TypeErrorReasonMissingListMapKey reports ListMap semantics without map keys.
+	TypeErrorReasonMissingListMapKey TypeErrorReason = "missing_list_map_key"
+	// TypeErrorReasonInvalidListMapKey reports a malformed ListMap key name.
+	TypeErrorReasonInvalidListMapKey TypeErrorReason = "invalid_list_map_key"
+	// TypeErrorReasonListMapKeyNotFound reports a ListMap key absent from the object element.
+	TypeErrorReasonListMapKeyNotFound TypeErrorReason = "list_map_key_not_found"
+	// TypeErrorReasonListMapKeyOptional reports a ListMap key field that is not required.
+	TypeErrorReasonListMapKeyOptional TypeErrorReason = "list_map_key_optional"
+	// TypeErrorReasonListMapElementNotObject reports ListMap semantics over a non-object element.
+	TypeErrorReasonListMapElementNotObject TypeErrorReason = "list_map_element_not_object"
+
+	// TypeErrorReasonInvalidMapKey reports an unsupported dynamic-map key type.
+	TypeErrorReasonInvalidMapKey TypeErrorReason = "invalid_map_key"
+)
+
+// TypeError attaches structured descriptor diagnostics to a classified error.
 //
 // Path is a descriptor path such as object.fields[spec].type, list.elem, or
 // ref(arcoris.meta.Name). It is not a path into a future concrete API object.
 type TypeError struct {
 	// Path identifies the descriptor location that failed validation.
 	Path string
-	// Err is the classified validation error.
+	// Err is the classified validation error or wrapped validation failure.
 	Err error
+	// Reason identifies the precise descriptor invariant that failed.
+	Reason TypeErrorReason
+	// Detail carries a human-facing explanation with relevant rule values.
+	Detail string
 }
 
 // Error returns a stable diagnostic message for e.
@@ -50,10 +133,24 @@ func (e *TypeError) Error() string {
 	if e == nil {
 		return "<nil>"
 	}
+	parts := []string{"types"}
 	if e.Path == "" {
-		return fmt.Sprintf("types: %v", e.Err)
+		if e.Err != nil {
+			parts = append(parts, e.Err.Error())
+		}
+	} else {
+		parts = append(parts, e.Path)
+		if e.Err != nil {
+			parts = append(parts, e.Err.Error())
+		}
 	}
-	return fmt.Sprintf("types: %s: %v", e.Path, e.Err)
+	if e.Reason != "" {
+		parts = append(parts, string(e.Reason))
+	}
+	if e.Detail != "" {
+		parts = append(parts, e.Detail)
+	}
+	return strings.Join(parts, ": ")
 }
 
 // Unwrap returns the classified validation error.
@@ -67,4 +164,13 @@ func (e *TypeError) Unwrap() error {
 // typeError creates a path-aware validation error.
 func typeError(path string, err error) error {
 	return &TypeError{Path: path, Err: err}
+}
+
+// typeErrorf creates a path-aware validation error with structured detail.
+func typeErrorf(path string, err error, reason TypeErrorReason, format string, args ...any) error {
+	detail := ""
+	if format != "" {
+		detail = fmt.Sprintf(format, args...)
+	}
+	return &TypeError{Path: path, Err: err, Reason: reason, Detail: detail}
 }

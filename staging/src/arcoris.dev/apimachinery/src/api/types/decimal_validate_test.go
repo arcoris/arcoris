@@ -26,3 +26,16 @@ func TestDecimalValidateRejectsInvalidRules(t *testing.T) {
 		requireErrorIs(t, ValidateType(typ, nil), ErrInvalidType)
 	}
 }
+
+func TestDecimalValidateAllowsScaleWithoutPrecision(t *testing.T) {
+	typ := Decimal().Scale(2).Type()
+
+	requireNoError(t, ValidateType(typ, nil))
+
+	view := requireDecimalView(t, typ)
+	scale, ok := view.Scale()
+	requireEqual(t, ok, true)
+	requireEqual(t, scale, 2)
+	_, ok = view.Precision()
+	requireEqual(t, ok, false)
+}

@@ -14,7 +14,10 @@
 
 package types
 
-import "regexp"
+import (
+	"fmt"
+	"regexp"
+)
 
 // validateString checks TypeString length, pattern, and enum descriptor rules.
 //
@@ -28,23 +31,60 @@ func validateString(t Type, path string) error {
 	if t.string.hasPattern {
 		compiled, err := regexp.Compile(t.string.pattern)
 		if err != nil {
-			return typeError(path+".pattern", ErrInvalidType)
+			return typeErrorf(
+				path+".pattern",
+				ErrInvalidType,
+				TypeErrorReasonInvalidPattern,
+				"string pattern %q is not a valid regexp: %v",
+				t.string.pattern,
+				err,
+			)
 		}
-		for _, value := range t.string.enum {
+		for i, value := range t.string.enum {
 			if !compiled.MatchString(value) {
-				return typeError(path+".enum", ErrInvalidType)
+				return typeErrorf(
+					fmt.Sprintf("%s.enum[%d]", path, i),
+					ErrInvalidType,
+					TypeErrorReasonEnumPatternMismatch,
+					"string enum value %q does not match pattern %q",
+					value,
+					t.string.pattern,
+				)
 			}
 		}
 	}
-	if hasDuplicates(t.string.enum) {
-		return typeError(path+".enum", ErrInvalidType)
+	if index, value, ok := firstDuplicate(t.string.enum); ok {
+		return typeErrorf(
+			path+".enum",
+			ErrInvalidType,
+			TypeErrorReasonDuplicateEnum,
+			"string enum values must be unique; duplicate value %q at index %d",
+			value,
+			index,
+		)
 	}
-	for _, value := range t.string.enum {
+	for i, value := range t.string.enum {
 		if t.string.minLen.set && len(value) < t.string.minLen.value {
-			return typeError(path+".enum", ErrInvalidType)
+			return typeErrorf(
+				fmt.Sprintf("%s.enum[%d]", path, i),
+				ErrInvalidType,
+				TypeErrorReasonEnumBelowMinimum,
+				"string enum value %q length %d is below minimum length %d",
+				value,
+				len(value),
+				t.string.minLen.value,
+			)
 		}
 		if t.string.maxLen.set && len(value) > t.string.maxLen.value {
-			return typeError(path+".enum", ErrInvalidType)
+			return typeErrorf(
+				fmt.Sprintf("%s.enum[%d]", path, i),
+				ErrInvalidType,
+				TypeErrorReasonEnumAboveMaximum,
+				"string enum value %q length %d is above maximum length %d",
+				value,
+				len(value),
+				t.string.maxLen.value,
+			)
 		}
 	}
 	return nil

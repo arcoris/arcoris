@@ -24,3 +24,12 @@ func TestHasDuplicates(t *testing.T) {
 	requireEqual(t, hasDuplicates([]string{"a", "b"}), false)
 	requireEqual(t, hasDuplicates([]string{"a", "a"}), true)
 }
+
+func TestEnumBounds(t *testing.T) {
+	requireEqual(t, enumBelowMin([]int8{0}, limit[int8]{}), false)
+	requireEqual(t, enumAboveMax([]uint64{10}, limit[uint64]{}), false)
+	requireEqual(t, enumBelowMin([]int8{-1, 0}, limit[int8]{value: 0, set: true}), true)
+	requireEqual(t, enumAboveMax([]uint64{1, 2}, limit[uint64]{value: 1, set: true}), true)
+	requireEqual(t, enumBelowMin([]int8{0, 1}, limit[int8]{value: 0, set: true}), false)
+	requireEqual(t, enumAboveMax([]uint64{0, 1}, limit[uint64]{value: 1, set: true}), false)
+}

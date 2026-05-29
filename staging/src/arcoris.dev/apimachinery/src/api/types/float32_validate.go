@@ -14,31 +14,65 @@
 
 package types
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 // validateFloat32 checks TypeFloat32 finite bounds, enum uniqueness, and enum membership.
 func validateFloat32(t Type, path string) error {
 	if t.float32.min.set && invalidFloat32(t.float32.min.value) {
-		return typeError(path+".range", ErrInvalidType)
+		return typeErrorf(
+			path+".min",
+			ErrInvalidType,
+			TypeErrorReasonNonFiniteValue,
+			"float32 minimum must be finite, got %s",
+			float32Diagnostic(t.float32.min.value),
+		)
 	}
 	if t.float32.max.set && invalidFloat32(t.float32.max.value) {
-		return typeError(path+".range", ErrInvalidType)
+		return typeErrorf(
+			path+".max",
+			ErrInvalidType,
+			TypeErrorReasonNonFiniteValue,
+			"float32 maximum must be finite, got %s",
+			float32Diagnostic(t.float32.max.value),
+		)
 	}
-	if invalidRange(t.float32.min, t.float32.max) {
-		return typeError(path+".range", ErrInvalidType)
+	if err := validateRangeRule(path, "float32", t.float32.min, t.float32.max); err != nil {
+		return err
 	}
-	for _, value := range t.float32.enum {
+	for i, value := range t.float32.enum {
 		if invalidFloat32(value) {
-			return typeError(path+".enum", ErrInvalidType)
+			return typeErrorf(
+				fmt.Sprintf("%s.enum[%d]", path, i),
+				ErrInvalidType,
+				TypeErrorReasonNonFiniteValue,
+				"float32 enum value must be finite, got %s",
+				float32Diagnostic(value),
+			)
 		}
 	}
-	if hasDuplicates(t.float32.enum) || enumBelowMin(t.float32.enum, t.float32.min) || enumAboveMax(t.float32.enum, t.float32.max) {
-		return typeError(path+".enum", ErrInvalidType)
-	}
-	return nil
+	// NaN and infinities are rejected before duplicate checks. Descriptor enum
+	// identity then follows Go numeric equality, not float bit-pattern identity.
+	return validateEnumRules(path, "float32", t.float32.enum, t.float32.min, t.float32.max)
 }
 
 // invalidFloat32 reports whether value is not a finite portable float32 rule.
 func invalidFloat32(value float32) bool {
 	return math.IsNaN(float64(value)) || math.IsInf(float64(value), 0)
+}
+
+// float32Diagnostic names non-finite values for validation details.
+func float32Diagnostic(value float32) string {
+	switch {
+	case math.IsNaN(float64(value)):
+		return "NaN"
+	case math.IsInf(float64(value), 1):
+		return "+Inf"
+	case math.IsInf(float64(value), -1):
+		return "-Inf"
+	default:
+		return fmt.Sprintf("%v", value)
+	}
 }

@@ -14,10 +14,17 @@
 
 package types
 
+import "fmt"
+
 // validateList checks element type, length limits, semantics, and map keys.
 func validateList(t Type, resolver Resolver, path string, resolving map[TypeName]bool) error {
 	if t.list.elem == nil {
-		return typeError(path+".elem", ErrInvalidType)
+		return typeErrorf(
+			path+".elem",
+			ErrInvalidType,
+			TypeErrorReasonMissingElement,
+			"list descriptor must have an element type",
+		)
 	}
 	if err := validateType(*t.list.elem, resolver, path+".elem", resolving); err != nil {
 		return err
@@ -26,29 +33,67 @@ func validateList(t Type, resolver Resolver, path string, resolving map[TypeName
 		return err
 	}
 	if !t.list.semantics.IsValid() {
-		return typeError(path+".semantics", ErrInvalidType)
+		return typeErrorf(
+			path+".semantics",
+			ErrInvalidType,
+			TypeErrorReasonInvalidSemantics,
+			"list semantics %d is not supported",
+			t.list.semantics,
+		)
 	}
 	if t.list.semantics != ListMap {
 		return nil
 	}
 	if len(t.list.mapKeys) == 0 {
-		return typeError(path+".mapKeys", ErrInvalidField)
+		return typeErrorf(
+			path+".mapKeys",
+			ErrInvalidField,
+			TypeErrorReasonMissingListMapKey,
+			"ListMap semantics requires at least one key field",
+		)
 	}
 	object, ok := listMapObject(*t.list.elem, resolver)
 	if !ok {
-		return typeError(path+".elem", ErrInvalidType)
+		return typeErrorf(
+			path+".elem",
+			ErrInvalidType,
+			TypeErrorReasonListMapElementNotObject,
+			"ListMap element must be an object descriptor or a TypeRef resolving to an object",
+		)
 	}
 	fields := make(map[FieldName]FieldDescriptor, len(object.fields))
 	for _, field := range object.fields {
 		fields[field.name] = field
 	}
-	for _, key := range t.list.mapKeys {
+	for i, key := range t.list.mapKeys {
+		keyPath := fmt.Sprintf("%s.mapKeys[%d]", path, i)
 		if !key.IsValid() {
-			return typeError(path+".mapKeys", ErrInvalidField)
+			return typeErrorf(
+				keyPath,
+				ErrInvalidField,
+				TypeErrorReasonInvalidListMapKey,
+				"ListMap key %q is not a valid field name",
+				key,
+			)
 		}
 		field, ok := fields[key]
-		if !ok || !field.IsRequired() {
-			return typeError(path+".mapKeys", ErrInvalidField)
+		if !ok {
+			return typeErrorf(
+				keyPath,
+				ErrInvalidField,
+				TypeErrorReasonListMapKeyNotFound,
+				"ListMap key %q is not present in the object element",
+				key,
+			)
+		}
+		if !field.IsRequired() {
+			return typeErrorf(
+				keyPath,
+				ErrInvalidField,
+				TypeErrorReasonListMapKeyOptional,
+				"ListMap key field %q must be required",
+				key,
+			)
 		}
 	}
 	return nil

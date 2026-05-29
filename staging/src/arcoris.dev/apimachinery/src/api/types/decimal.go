@@ -49,6 +49,10 @@ func (t DecimalType) Precision(n int) DecimalType {
 }
 
 // Scale sets the number of fractional decimal digits.
+//
+// Scale may be set without Precision. In that form it records fractional
+// shape without bounding total significant digits. When both rules are set,
+// validation requires Scale to be less than or equal to Precision.
 func (t DecimalType) Scale(n int) DecimalType { t.payload.scale = limit[int]{n, true}; return t }
 
 // Type returns a detached Type descriptor.

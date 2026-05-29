@@ -33,6 +33,12 @@ func TestFloat64ValidateRejectsInvalidRules(t *testing.T) {
 	}
 }
 
+func TestFloat64ValidateEnumDuplicatesUseNumericEquality(t *testing.T) {
+	negativeZero := math.Copysign(0, -1)
+
+	requireErrorIs(t, ValidateType(Float64().Enum(0, negativeZero).Type(), nil), ErrInvalidType)
+}
+
 func TestInvalidFloat64(t *testing.T) {
 	requireEqual(t, invalidFloat64(math.NaN()), true)
 	requireEqual(t, invalidFloat64(math.Inf(1)), true)
