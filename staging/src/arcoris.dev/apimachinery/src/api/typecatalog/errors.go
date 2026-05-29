@@ -14,7 +14,10 @@
 
 package typecatalog
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	// ErrDuplicateDefinition classifies duplicate names inside one registration batch.
@@ -23,3 +26,12 @@ var (
 	// ErrDefinitionExists classifies a registration that conflicts with stored catalog state.
 	ErrDefinitionExists = errors.New("type definition already exists")
 )
+
+// catalogError adds catalog location context while preserving error identity.
+//
+// The path names the catalog operation location, not a future object-value
+// path. Callers can still use errors.Is for broad catalog and descriptor
+// failures while humans get enough context to find the rejected definition.
+func catalogError(path string, err error) error {
+	return fmt.Errorf("typecatalog: %s: %w", path, err)
+}

@@ -15,46 +15,31 @@
 package typecatalog
 
 import (
-	"fmt"
-	"sync"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/types"
 )
 
-func TestCatalogZeroValueUsable(t *testing.T) {
+func TestNamesReturnsStableRegistrationOrder(t *testing.T) {
 	var catalog Catalog
+	requireNoError(t, catalog.Register(types.Define("example.Name", types.String())))
+	requireNoError(t, catalog.Register(types.Define("example.Count", types.Int64())))
 
-	requireNoError(t, catalog.Register(types.Define("example.Name", types.String().MinLen(1))))
-
-	requireDefinition(t, &catalog, "example.Name")
+	requireNames(t, &catalog, "example.Name", "example.Count")
 }
 
-func TestCatalogConcurrentAccessRaceFree(t *testing.T) {
+func TestNamesReturnsDetachedSlice(t *testing.T) {
 	var catalog Catalog
 	requireNoError(t, catalog.Register(types.Define("example.Name", types.String())))
 
-	var wg sync.WaitGroup
-	for i := 0; i < 8; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < 100; j++ {
-				catalog.ResolveType("example.Name")
-				catalog.Names()
-				catalog.Definitions()
-			}
-		}()
-	}
+	names := catalog.Names()
+	names[0] = "example.Changed"
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for j := 0; j < 100; j++ {
-			name := types.TypeName(fmt.Sprintf("example.Generated%d", j))
-			_ = catalog.Register(types.Define(name, types.String()))
-		}
-	}()
+	requireNames(t, &catalog, "example.Name")
+}
 
-	wg.Wait()
+func TestNamesNilCatalogReturnsEmptySlice(t *testing.T) {
+	var catalog *Catalog
+
+	requireEqual(t, len(catalog.Names()), 0)
 }
