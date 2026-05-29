@@ -26,7 +26,7 @@ import (
 //
 // Catalog is zero-value usable, concurrency-safe, and explicitly owner-created.
 // It deliberately has no package-level singleton or init-time registration
-// path. That keeps API descriptor composition separate from runtime schemes,
+// path. That keeps API descriptor composition separate from execution-layer
 // codecs, REST routing, storage, watches, controllers, and provider lifecycle
 // behavior.
 //

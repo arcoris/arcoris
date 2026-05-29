@@ -38,7 +38,10 @@ func TestRegisterValidInlineDefinition(t *testing.T) {
 func TestRegisterRejectsNilCatalog(t *testing.T) {
 	var catalog *Catalog
 
-	err := catalog.RegisterMany(validDefinition("Worker", "workers"))
+	err := catalog.Register(validDefinition("Worker", "workers"))
+	requireCatalogError(t, err, ErrNilCatalog, "catalog", ErrorReasonNilCatalog)
+
+	err = catalog.RegisterMany(validDefinition("Worker", "workers"))
 	requireCatalogError(t, err, ErrNilCatalog, "catalog", ErrorReasonNilCatalog)
 }
 
@@ -68,12 +71,77 @@ func TestRegisterManyIsAtomicOnInvalidDefinition(t *testing.T) {
 	}
 }
 
+func TestRegisterManyIsAtomicOnDuplicateDefinition(t *testing.T) {
+	var catalog Catalog
+	first := validDefinition("Worker", "workers", objectVersion("v1", resource.Canonical()))
+	second := validDefinition("WorkerCopy", "workers", objectVersion("v2", resource.Canonical()))
+
+	err := catalog.RegisterMany(first, second)
+	requireCatalogError(
+		t,
+		err,
+		ErrDuplicateDefinition,
+		"definitions[control.arcoris.dev:workers]",
+		ErrorReasonDuplicateResource,
+	)
+
+	if got := catalog.Definitions(); len(got) != 0 {
+		t.Fatalf("RegisterMany stored %d definitions after duplicate failure", len(got))
+	}
+}
+
+func TestRegisterManyIsAtomicOnExistingConflict(t *testing.T) {
+	var catalog Catalog
+	existing := validDefinition("Worker", "workers")
+	conflict := validDefinition("WorkerCopy", "workers")
+	other := validDefinition("Job", "jobs")
+
+	requireNoError(t, catalog.Register(existing))
+
+	err := catalog.RegisterMany(conflict, other)
+	requireCatalogError(
+		t,
+		err,
+		ErrDefinitionExists,
+		"definitions[control.arcoris.dev/v1:workers]",
+		ErrorReasonDefinitionExists,
+	)
+
+	defs := catalog.Definitions()
+	requireEqual(t, len(defs), 1)
+	requireEqual(t, defs[0].GroupResource(), existing.GroupResource())
+
+	if _, ok := catalog.ResolveResource(other.GroupResource()); ok {
+		t.Fatalf("RegisterMany stored non-conflicting sibling after conflict failure")
+	}
+}
+
 func TestRegisterManyRejectsInvalidDefinition(t *testing.T) {
 	var catalog Catalog
 
 	err := catalog.RegisterMany(invalidDefinition())
 	requireCatalogError(t, err, ErrInvalidCatalog, "definitions[0]", ErrorReasonInvalidDefinition)
 	requireErrorIs(t, err, resource.ErrInvalidDefinition)
+}
+
+func TestRegisterManyPathologicalInvalidDuplicateBatchReportsDuplicateFirst(t *testing.T) {
+	var catalog Catalog
+
+	// RegisterMany checks catalog ownership conflicts before deeper resource
+	// validation. A batch that is both invalid and duplicated therefore reports
+	// the duplicate catalog invariant first and still leaves no partial state.
+	err := catalog.RegisterMany(invalidDefinition(), invalidDefinition())
+	requireCatalogError(
+		t,
+		err,
+		ErrDuplicateDefinition,
+		"definitions[control.arcoris.dev:brokens]",
+		ErrorReasonDuplicateResource,
+	)
+
+	if got := catalog.Definitions(); len(got) != 0 {
+		t.Fatalf("RegisterMany stored %d definitions after pathological failure", len(got))
+	}
 }
 
 func TestRegisterManyRejectsTypeRefRootsWithoutResolver(t *testing.T) {
