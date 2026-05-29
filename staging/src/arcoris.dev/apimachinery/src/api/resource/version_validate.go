@@ -15,6 +15,7 @@
 package resource
 
 import (
+	"errors"
 	"fmt"
 
 	"arcoris.dev/apimachinery/api/types"
@@ -69,7 +70,38 @@ func validateVersionDefinition(version VersionDefinition, resolver types.Resolve
 	return nil
 }
 
-// invalidSurfaceDetail formats nested api/types failures for Desired/Observed.
+// invalidSurfaceDetail summarizes nested api/types failures for Desired/Observed.
+//
+// The nested error remains attached as Cause on the returned resource Error, so
+// callers can still use errors.As for the original *types.TypeError. The detail
+// string keeps only the most useful structured fields to avoid repeating the
+// entire nested Error text in CLI/editor diagnostics.
 func invalidSurfaceDetail(label string, err error) string {
+	var typeErr *types.TypeError
+	if errors.As(err, &typeErr) {
+		if typeErr.Detail != "" {
+			return fmt.Sprintf(
+				"%s descriptor is structurally invalid at %s: %s: %s",
+				label,
+				typeErr.Path,
+				typeErr.Reason,
+				typeErr.Detail,
+			)
+		}
+
+		if typeErr.Reason != "" {
+			return fmt.Sprintf(
+				"%s descriptor is structurally invalid at %s: %s",
+				label,
+				typeErr.Path,
+				typeErr.Reason,
+			)
+		}
+
+		if typeErr.Path != "" {
+			return fmt.Sprintf("%s descriptor is structurally invalid at %s", label, typeErr.Path)
+		}
+	}
+
 	return fmt.Sprintf("%s descriptor is structurally invalid: %v", label, err)
 }

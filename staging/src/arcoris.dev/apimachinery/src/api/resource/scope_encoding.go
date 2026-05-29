@@ -15,6 +15,10 @@
 package resource
 
 // MarshalText returns the canonical scope text.
+//
+// Scope scalar encoding mirrors api/identity scalar encoding. It is not a
+// manifest format for Definition and does not imply JSON tags, DTOs, or
+// resource-definition marshaling in this package.
 func (s Scope) MarshalText() ([]byte, error) {
 	if err := s.Validate(); err != nil {
 		return nil, err
@@ -36,6 +40,9 @@ func (s *Scope) UnmarshalText(text []byte) error {
 }
 
 // MarshalJSON returns the canonical scope as a JSON string.
+//
+// The JSON shape is scalar-only. Definition intentionally has no JSON encoding
+// here because manifest/codecs/exporters belong to higher API layers.
 func (s Scope) MarshalJSON() ([]byte, error) {
 	if err := s.Validate(); err != nil {
 		return nil, err

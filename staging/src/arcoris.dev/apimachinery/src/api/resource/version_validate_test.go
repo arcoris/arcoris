@@ -15,6 +15,7 @@
 package resource
 
 import (
+	"errors"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/identity"
@@ -74,13 +75,20 @@ func TestValidateVersionDefinitionRejectsStructurallyInvalidDesired(t *testing.T
 		nil,
 		versionPath(0, version.version),
 	)
-	requireResourceError(
+	resourceErr := requireResourceError(
 		t,
 		err,
 		ErrInvalidVersion,
 		"definition.versions[v1].desired",
 		ErrorReasonInvalidDesired,
 	)
+
+	var typeErr *types.TypeError
+	if !errors.As(resourceErr.Cause, &typeErr) {
+		t.Fatalf("expected nested *types.TypeError, got %T", resourceErr.Cause)
+	}
+
+	requireDetailContains(t, err, "desired descriptor is structurally invalid at")
 }
 
 func TestValidateVersionDefinitionRejectsInvalidObserved(t *testing.T) {
@@ -132,4 +140,46 @@ func TestValidateVersionDefinitionRejectsStructurallyInvalidObserved(t *testing.
 func TestInvalidSurfaceDetail(t *testing.T) {
 	err := invalidSurfaceDetail("desired", types.ErrInvalidType)
 	requireEqual(t, err, "desired descriptor is structurally invalid: invalid type")
+}
+
+func TestInvalidSurfaceDetailUsesStructuredTypeError(t *testing.T) {
+	cases := []struct {
+		name string
+		err  *types.TypeError
+		want string
+	}{
+		{
+			name: "path reason detail",
+			err: &types.TypeError{
+				Path:   "string.range",
+				Err:    types.ErrInvalidType,
+				Reason: types.TypeErrorReasonInvalidRange,
+				Detail: "minimum must be <= maximum",
+			},
+			want: "desired descriptor is structurally invalid at string.range: invalid_range: minimum must be <= maximum",
+		},
+		{
+			name: "path reason",
+			err: &types.TypeError{
+				Path:   "string.range",
+				Err:    types.ErrInvalidType,
+				Reason: types.TypeErrorReasonInvalidRange,
+			},
+			want: "desired descriptor is structurally invalid at string.range: invalid_range",
+		},
+		{
+			name: "path only",
+			err: &types.TypeError{
+				Path: "string.range",
+				Err:  types.ErrInvalidType,
+			},
+			want: "desired descriptor is structurally invalid at string.range",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			requireEqual(t, invalidSurfaceDetail("desired", tc.err), tc.want)
+		})
+	}
 }
