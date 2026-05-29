@@ -14,14 +14,10 @@
 
 package identity
 
-import "strings"
+import (
+	"strings"
 
-const (
-	// maxDNS1123LabelLength is the DNS single-label byte limit.
-	maxDNS1123LabelLength = 63
-
-	// maxDNS1123SubdomainLength is the DNS subdomain byte limit.
-	maxDNS1123SubdomainLength = 253
+	"arcoris.dev/apimachinery/api/internal/lexical"
 )
 
 // validateDNS1123SingleLabel checks resource-like one-label identities.
@@ -35,40 +31,33 @@ func validateDNS1123SingleLabel(name, value string, allowEmpty bool) error {
 	if strings.Contains(value, dnsLabelSeparator) || strings.Contains(value, subresourceSeparator) {
 		return invalid(name, value, ErrorReasonInvalidCharacter, name+" must be a DNS-1123 single label")
 	}
-	return validateDNS1123Label(name, value, value)
-}
-
-// validateDNS1123Label checks one DNS-1123 label.
-func validateDNS1123Label(name, fullValue, label string) error {
-	if len(label) > maxDNS1123LabelLength {
-		return invalidf(name, fullValue, ErrorReasonInvalidLength, "DNS label length must be <= %d bytes", maxDNS1123LabelLength)
-	}
-	if !isDNS1123Edge(label[0]) || !isDNS1123Edge(label[len(label)-1]) {
-		return invalid(name, fullValue, ErrorReasonInvalidEdge, "DNS label must start and end with a lowercase letter or digit")
-	}
-	for i := 0; i < len(label); i++ {
-		if !isDNS1123Char(label[i]) {
-			return invalidf(name, fullValue, ErrorReasonInvalidCharacter, "DNS label contains invalid byte %q", label[i])
-		}
+	if violation := lexical.ValidateDNS1123Label(value); violation != nil {
+		return invalid(name, value, errorReasonFromLexical(violation.Reason), violation.Detail)
 	}
 	return nil
 }
 
-// isDNS1123Edge reports whether b can start or end a DNS label.
-func isDNS1123Edge(b byte) bool {
-	return isLower(b) || isDigit(b)
-}
-
-// isDNS1123Char reports whether b can appear inside a DNS label.
-func isDNS1123Char(b byte) bool {
-	return isLower(b) || isDigit(b) || b == '-'
+// errorReasonFromLexical maps internal lexical reasons to identity reasons.
+func errorReasonFromLexical(reason lexical.Reason) ErrorReason {
+	switch reason {
+	case lexical.ReasonEmptyValue:
+		return ErrorReasonEmptyValue
+	case lexical.ReasonInvalidLength:
+		return ErrorReasonInvalidLength
+	case lexical.ReasonInvalidCharacter:
+		return ErrorReasonInvalidCharacter
+	case lexical.ReasonInvalidEdge:
+		return ErrorReasonInvalidEdge
+	default:
+		return ErrorReasonInvalidForm
+	}
 }
 
 // isLower reports whether b is an ASCII lowercase letter.
-func isLower(b byte) bool { return b >= 'a' && b <= 'z' }
+func isLower(b byte) bool { return lexical.IsASCIILower(b) }
 
 // isUpper reports whether b is an ASCII uppercase letter.
-func isUpper(b byte) bool { return b >= 'A' && b <= 'Z' }
+func isUpper(b byte) bool { return lexical.IsASCIIUpper(b) }
 
 // isDigit reports whether b is an ASCII digit.
-func isDigit(b byte) bool { return b >= '0' && b <= '9' }
+func isDigit(b byte) bool { return lexical.IsASCIIDigit(b) }

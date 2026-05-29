@@ -14,7 +14,12 @@
 
 package identity
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+
+	"arcoris.dev/apimachinery/api/internal/lexical"
+)
 
 // Validate checks the strict group grammar.
 //
@@ -33,40 +38,29 @@ func validateGroupValue(value string) error {
 	if value == "" {
 		return nil
 	}
-	if len(value) > maxDNS1123SubdomainLength {
-		return invalidf(
-			identityNameGroup,
-			value,
-			ErrorReasonInvalidLength,
-			"group length must be <= %d bytes",
-			maxDNS1123SubdomainLength,
-		)
-	}
 
-	if !strings.Contains(value, dnsLabelSeparator) {
+	if violation := lexical.ValidateQualifiedDNS1123Subdomain(value); violation != nil {
 		return invalid(
 			identityNameGroup,
 			value,
-			ErrorReasonInvalidForm,
-			"non-core group must be a qualified DNS subdomain",
+			errorReasonFromLexical(violation.Reason),
+			groupViolationDetail(value, violation),
 		)
 	}
 
-	labels := strings.Split(value, dnsLabelSeparator)
-	for _, label := range labels {
-		if label == "" {
-			return invalid(
-				identityNameGroup,
-				value,
-				ErrorReasonInvalidForm,
-				"group must not contain empty DNS labels",
-			)
-		}
-
-		if err := validateDNS1123Label(identityNameGroup, value, label); err != nil {
-			return err
-		}
-	}
-
 	return nil
+}
+
+// groupViolationDetail preserves group-owned wording around lexical failures.
+func groupViolationDetail(value string, violation *lexical.Violation) string {
+	if violation.Reason == lexical.ReasonInvalidForm {
+		if strings.Contains(value, "..") || strings.HasPrefix(value, ".") || strings.HasSuffix(value, ".") {
+			return "group must not contain empty DNS labels"
+		}
+		return "non-core group must be a qualified DNS subdomain"
+	}
+	if violation.Reason == lexical.ReasonInvalidLength {
+		return fmt.Sprintf("group length must be <= %d bytes", lexical.MaxDNS1123SubdomainLength)
+	}
+	return violation.Detail
 }

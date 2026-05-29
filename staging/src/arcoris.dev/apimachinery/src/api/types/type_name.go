@@ -14,7 +14,11 @@
 
 package types
 
-import "strings"
+import (
+	"strings"
+
+	"arcoris.dev/apimachinery/api/internal/lexical"
+)
 
 // TypeName is a dot-separated name for an owner-defined reusable structural type.
 //
@@ -92,10 +96,10 @@ func isASCII(s string) bool {
 }
 
 // isLower reports whether b is an ASCII lower-case letter.
-func isLower(b byte) bool { return b >= 'a' && b <= 'z' }
+func isLower(b byte) bool { return lexical.IsASCIILower(b) }
 
 // isUpper reports whether b is an ASCII upper-case letter.
-func isUpper(b byte) bool { return b >= 'A' && b <= 'Z' }
+func isUpper(b byte) bool { return lexical.IsASCIIUpper(b) }
 
 // isDigit reports whether b is an ASCII digit.
-func isDigit(b byte) bool { return b >= '0' && b <= '9' }
+func isDigit(b byte) bool { return lexical.IsASCIIDigit(b) }
