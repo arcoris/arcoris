@@ -24,10 +24,12 @@ func (u *UID) UnmarshalText(data []byte) error {
 	if u == nil {
 		return nilReceiver("uid")
 	}
+
 	value, err := ParseUID(string(data))
 	if err != nil {
 		return err
 	}
+
 	*u = value
 	return nil
 }
@@ -42,14 +44,17 @@ func (u *UID) UnmarshalJSON(data []byte) error {
 	if u == nil {
 		return nilReceiver("uid")
 	}
+
 	value, err := unmarshalJSONString("uid", data)
 	if err != nil {
 		return err
 	}
+
 	parsed, err := ParseUID(value)
 	if err != nil {
 		return err
 	}
+
 	*u = parsed
 	return nil
 }

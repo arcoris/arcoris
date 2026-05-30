@@ -31,33 +31,33 @@ import (
 // or managed fields.
 type ObjectMeta struct {
 	// Name is the concrete metadata name of the object.
-	Name metaidentity.Name
+	Name metaidentity.Name `json:"name,omitempty"`
 	// GenerateName is a server-side generation prefix, not a generated name.
-	GenerateName metaidentity.NamePrefix
+	GenerateName metaidentity.NamePrefix `json:"generateName,omitempty"`
 	// Namespace is absent when empty; this package does not default it.
-	Namespace metaidentity.Namespace
+	Namespace metaidentity.Namespace `json:"namespace,omitempty"`
 	// UID identifies one concrete object incarnation.
-	UID metaidentity.UID
+	UID metaidentity.UID `json:"uid,omitempty"`
 
 	// ResourceVersion is an opaque concurrency/change token.
-	ResourceVersion stamp.ResourceVersion
+	ResourceVersion stamp.ResourceVersion `json:"resourceVersion,omitempty"`
 	// Generation tracks desired-state changes for one object.
-	Generation stamp.Generation
+	Generation stamp.Generation `json:"generation,omitempty"`
 
 	// CreatedAt records metadata creation time when a higher layer assigned it.
-	CreatedAt stamp.Timestamp
+	CreatedAt stamp.Timestamp `json:"createdAt,omitempty,omitzero"`
 	// Deletion records a deletion request without executing deletion.
-	Deletion *stamp.Deletion
+	Deletion *stamp.Deletion `json:"deletion,omitempty"`
 
 	// Labels are classification metadata for future indexing/selection layers.
-	Labels labels.Set
+	Labels labels.Set `json:"labels,omitempty"`
 	// Annotations are non-indexed metadata for tools and integrations.
-	Annotations annotations.Set
+	Annotations annotations.Set `json:"annotations,omitempty"`
 
 	// OwnerReferences records ownership metadata without resolving owners.
-	OwnerReferences owner.List
+	OwnerReferences owner.List `json:"ownerReferences,omitempty"`
 	// Finalizers names cleanup blockers; this package never runs cleanup.
-	Finalizers finalizer.Set
+	Finalizers finalizer.Set `json:"finalizers,omitempty"`
 }
 
 // IsZero reports whether all object metadata fields are absent.
@@ -69,7 +69,7 @@ func (m ObjectMeta) IsZero() bool {
 		m.ResourceVersion.IsZero() &&
 		m.Generation.IsZero() &&
 		m.CreatedAt.IsZero() &&
-		(m.Deletion == nil || m.Deletion.IsZero()) &&
+		m.Deletion == nil &&
 		m.Labels.IsZero() &&
 		m.Annotations.IsZero() &&
 		m.OwnerReferences.IsZero() &&

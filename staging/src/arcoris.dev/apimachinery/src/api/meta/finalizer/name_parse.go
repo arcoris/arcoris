@@ -15,10 +15,11 @@
 package finalizer
 
 // ParseName validates and returns a finalizer name.
-func ParseName(s string) (Name, error) {
-	name := Name(s)
+func ParseName(value string) (Name, error) {
+	name := Name(value)
 	if err := name.Validate(); err != nil {
 		return "", err
 	}
+
 	return name, nil
 }

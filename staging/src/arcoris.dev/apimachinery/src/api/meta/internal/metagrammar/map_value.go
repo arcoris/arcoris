@@ -31,31 +31,56 @@ type MapValueOptions struct {
 }
 
 // ValidateMapValue validates a metadata map value.
-func ValidateMapValue(s string, opts MapValueOptions) *Violation {
-	if s == "" && !opts.AllowEmpty {
+func ValidateMapValue(value string, opts MapValueOptions) *Violation {
+	if value == "" && !opts.AllowEmpty {
 		return violation(ReasonEmptyValue, "map value must be non-empty")
 	}
-	if opts.MaxLength > 0 && len(s) > opts.MaxLength {
+
+	if opts.MaxLength > 0 && len(value) > opts.MaxLength {
 		return violation(
 			ReasonInvalidLength,
 			fmt.Sprintf("map value length must be <= %d bytes", opts.MaxLength),
 		)
 	}
-	if HasControl(s) {
+
+	if HasControl(value) {
 		return violation(ReasonInvalidCharacter, "map value must not contain control bytes")
 	}
+
 	if !opts.Strict {
 		return nil
 	}
-	for i := 0; i < len(s); i++ {
-		b := s[i]
-		if lexical.IsASCIIAlnum(b) || b == '-' || b == '_' || b == '.' {
-			continue
-		}
+
+	if value != "" && !lexical.IsASCIIAlnum(value[0]) {
 		return violation(
-			ReasonInvalidCharacter,
-			fmt.Sprintf("map value contains invalid byte %q at index %d", b, i),
+			ReasonInvalidEdge,
+			"map value must start with an ASCII letter or digit",
 		)
 	}
+
+	if value != "" && !lexical.IsASCIIAlnum(value[len(value)-1]) {
+		return violation(
+			ReasonInvalidEdge,
+			"map value must end with an ASCII letter or digit",
+		)
+	}
+
+	for index := 0; index < len(value); index++ {
+		b := value[index]
+		if isStrictMapValueByte(b) {
+			continue
+		}
+
+		return violation(
+			ReasonInvalidCharacter,
+			fmt.Sprintf("map value contains invalid byte %q at index %d", b, index),
+		)
+	}
+
 	return nil
+}
+
+// isStrictMapValueByte reports whether b is allowed inside strict label values.
+func isStrictMapValueByte(b byte) bool {
+	return lexical.IsASCIIAlnum(b) || b == '-' || b == '_' || b == '.'
 }

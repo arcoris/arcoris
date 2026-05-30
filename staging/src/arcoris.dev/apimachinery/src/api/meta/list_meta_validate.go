@@ -21,10 +21,12 @@ func (m ListMeta) Validate() error {
 			return nested("listMeta.resourceVersion", ErrInvalidListMeta, err)
 		}
 	}
+
 	if !m.ContinueToken.IsZero() {
 		if err := m.ContinueToken.Validate(); err != nil {
-			return nested("listMeta.continueToken", ErrInvalidListMeta, err)
+			return nested("listMeta.continue", ErrInvalidListMeta, err)
 		}
 	}
+
 	return nil
 }

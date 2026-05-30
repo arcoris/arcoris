@@ -16,6 +16,8 @@ package meta
 
 import (
 	"encoding/json"
+	"errors"
+	"strings"
 	"testing"
 )
 
@@ -29,6 +31,12 @@ func TestPageToken(t *testing.T) {
 	}
 
 	_, err = ParsePageToken("page 1")
+	requireErrorIs(t, err, ErrInvalidPageToken)
+	_, err = ParsePageToken("page/1")
+	requireErrorIs(t, err, ErrInvalidPageToken)
+	_, err = ParsePageToken("page\n1")
+	requireErrorIs(t, err, ErrInvalidPageToken)
+	_, err = ParsePageToken(strings.Repeat("x", maxPageTokenLength+1))
 	requireErrorIs(t, err, ErrInvalidPageToken)
 
 	var parsed PageToken
@@ -45,4 +53,29 @@ func TestPageToken(t *testing.T) {
 
 	err = json.Unmarshal([]byte(`null`), &parsed)
 	requireErrorIs(t, err, ErrInvalidJSON)
+
+	err = json.Unmarshal([]byte(`123`), &parsed)
+	requireErrorIs(t, err, ErrInvalidJSON)
+
+	err = json.Unmarshal([]byte(`"bad token"`), &parsed)
+	requireErrorIs(t, err, ErrInvalidPageToken)
+}
+
+func TestPageTokenValidateStructuredLengthError(t *testing.T) {
+	err := PageToken(strings.Repeat("x", maxPageTokenLength+1)).Validate()
+	requireErrorIs(t, err, ErrInvalidPageToken)
+
+	var metaErr *Error
+	if !errors.As(err, &metaErr) {
+		t.Fatalf("errors.As(%T) = false", metaErr)
+	}
+	if metaErr.Path != "pageToken" {
+		t.Fatalf("Path = %q", metaErr.Path)
+	}
+	if metaErr.Reason != ErrorReasonInvalidLength {
+		t.Fatalf("Reason = %q", metaErr.Reason)
+	}
+	if metaErr.Detail == "" {
+		t.Fatal("Detail is empty")
+	}
 }

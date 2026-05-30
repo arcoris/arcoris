@@ -15,10 +15,11 @@
 package identity
 
 // ParseNamespace parses and validates a namespace.
-func ParseNamespace(s string) (Namespace, error) {
-	namespace := Namespace(s)
+func ParseNamespace(value string) (Namespace, error) {
+	namespace := Namespace(value)
 	if err := namespace.Validate(); err != nil {
 		return "", err
 	}
+
 	return namespace, nil
 }

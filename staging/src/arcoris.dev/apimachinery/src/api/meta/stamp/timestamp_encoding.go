@@ -21,9 +21,11 @@ func (t Timestamp) MarshalText() ([]byte, error) {
 	if err := t.Validate(); err != nil {
 		return nil, err
 	}
+
 	if t.IsZero() {
 		return []byte(""), nil
 	}
+
 	return []byte(t.Time.UTC().Round(0).Format(time.RFC3339Nano)), nil
 }
 
@@ -32,10 +34,12 @@ func (t *Timestamp) UnmarshalText(data []byte) error {
 	if t == nil {
 		return nilReceiver("timestamp")
 	}
+
 	if len(data) == 0 {
 		*t = Timestamp{}
 		return nil
 	}
+
 	parsed, err := time.Parse(time.RFC3339Nano, string(data))
 	if err != nil {
 		return &Error{
@@ -46,6 +50,7 @@ func (t *Timestamp) UnmarshalText(data []byte) error {
 			Cause:  err,
 		}
 	}
+
 	*t = NewTimestamp(parsed)
 	return nil
 }
@@ -56,6 +61,7 @@ func (t Timestamp) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return marshalJSONString(string(text), t.Validate)
 }
 
@@ -64,9 +70,11 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 	if t == nil {
 		return nilReceiver("timestamp")
 	}
+
 	value, err := unmarshalJSONString("timestamp", data)
 	if err != nil {
 		return err
 	}
+
 	return t.UnmarshalText([]byte(value))
 }

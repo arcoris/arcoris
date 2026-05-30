@@ -29,10 +29,17 @@ func (g *Generation) UnmarshalText(data []byte) error {
 	if g == nil {
 		return nilReceiver("generation")
 	}
+
 	value, err := strconv.ParseUint(string(data), 10, 64)
 	if err != nil {
-		return invalid("generation", ErrInvalidGeneration, ErrorReasonInvalidForm, "expected unsigned decimal generation")
+		return invalid(
+			"generation",
+			ErrInvalidGeneration,
+			ErrorReasonInvalidForm,
+			"expected unsigned decimal generation",
+		)
 	}
+
 	*g = Generation(value)
 	return nil
 }
@@ -42,6 +49,7 @@ func (g Generation) MarshalJSON() ([]byte, error) {
 	if err := g.Validate(); err != nil {
 		return nil, err
 	}
+
 	return json.Marshal(uint64(g))
 }
 
@@ -50,6 +58,7 @@ func (g *Generation) UnmarshalJSON(data []byte) error {
 	if g == nil {
 		return nilReceiver("generation")
 	}
+
 	var value uint64
 	if err := json.Unmarshal(data, &value); err != nil {
 		return &Error{
@@ -60,6 +69,7 @@ func (g *Generation) UnmarshalJSON(data []byte) error {
 			Cause:  err,
 		}
 	}
+
 	*g = Generation(value)
 	return nil
 }

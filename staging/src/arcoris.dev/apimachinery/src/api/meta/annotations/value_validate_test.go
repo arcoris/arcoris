@@ -14,11 +14,33 @@
 
 package annotations
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestValueValidate(t *testing.T) {
 	requireNoError(t, Value("").Validate())
 	requireNoError(t, Value("human readable note").Validate())
 
 	requireErrorIs(t, Value("bad\nnote").Validate(), ErrInvalidValue)
+}
+
+func TestValueValidateStructuredError(t *testing.T) {
+	err := Value("bad\nnote").Validate()
+	requireErrorIs(t, err, ErrInvalidValue)
+
+	var annotationErr *Error
+	if !errors.As(err, &annotationErr) {
+		t.Fatalf("errors.As(%T) = false", annotationErr)
+	}
+	if annotationErr.Path != "annotation.value" {
+		t.Fatalf("Path = %q", annotationErr.Path)
+	}
+	if annotationErr.Reason != ErrorReasonInvalidCharacter {
+		t.Fatalf("Reason = %q", annotationErr.Reason)
+	}
+	if annotationErr.Detail == "" {
+		t.Fatal("Detail is empty")
+	}
 }

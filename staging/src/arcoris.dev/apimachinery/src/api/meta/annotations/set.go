@@ -18,10 +18,14 @@ package annotations
 type Set map[string]string
 
 // IsZero reports whether the set has no entries.
-func (s Set) IsZero() bool { return len(s) == 0 }
+func (s Set) IsZero() bool {
+	return len(s) == 0
+}
 
 // Len returns the number of annotation entries.
-func (s Set) Len() int { return len(s) }
+func (s Set) Len() int {
+	return len(s)
+}
 
 // Get returns the value for key.
 func (s Set) Get(key Key) (Value, bool) {

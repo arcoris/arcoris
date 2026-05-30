@@ -14,7 +14,10 @@
 
 package finalizer
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestNameValidate(t *testing.T) {
 	requireNoError(t, Name("cleanup").Validate())
@@ -22,4 +25,23 @@ func TestNameValidate(t *testing.T) {
 
 	requireErrorIs(t, Name("").Validate(), ErrInvalidName)
 	requireErrorIs(t, Name("cleanup_name").Validate(), ErrInvalidName)
+}
+
+func TestNameValidateStructuredError(t *testing.T) {
+	err := Name("cleanup_name").Validate()
+	requireErrorIs(t, err, ErrInvalidName)
+
+	var finalizerErr *Error
+	if !errors.As(err, &finalizerErr) {
+		t.Fatalf("errors.As(%T) = false", finalizerErr)
+	}
+	if finalizerErr.Path != "finalizer.name" {
+		t.Fatalf("Path = %q", finalizerErr.Path)
+	}
+	if finalizerErr.Reason != ErrorReasonInvalidCharacter {
+		t.Fatalf("Reason = %q", finalizerErr.Reason)
+	}
+	if finalizerErr.Detail == "" {
+		t.Fatal("Detail is empty")
+	}
 }

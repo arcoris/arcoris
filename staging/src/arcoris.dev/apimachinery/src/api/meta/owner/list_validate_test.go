@@ -24,3 +24,11 @@ func TestListValidate(t *testing.T) {
 	requireErrorIs(t, List{validReference(false), validReference(false)}.Validate(), ErrDuplicateReference)
 	requireErrorIs(t, List{{}}.Validate(), ErrInvalidList)
 }
+
+func TestListValidateRejectsDuplicateReferenceWithDifferentController(t *testing.T) {
+	ref := validReference(false)
+	controller := ref
+	controller.Controller = true
+
+	requireErrorIs(t, List{ref, controller}.Validate(), ErrDuplicateReference)
+}

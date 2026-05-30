@@ -20,9 +20,9 @@ package identity
 // route path, cache key, or resource identity.
 type ObjectName struct {
 	// Namespace is optional and means absent when empty.
-	Namespace Namespace
+	Namespace Namespace `json:"namespace,omitempty"`
 	// Name is the required object metadata name.
-	Name Name
+	Name Name `json:"name"`
 }
 
 // IsZero reports whether namespace and name are both absent.
@@ -31,6 +31,9 @@ func (n ObjectName) IsZero() bool {
 }
 
 // String returns "name" or "namespace/name" diagnostic text.
+//
+// The result is for logs and diagnostics. It is not a storage key, route path,
+// cache key, or authorization resource string.
 func (n ObjectName) String() string {
 	if n.Namespace.IsZero() {
 		return n.Name.String()

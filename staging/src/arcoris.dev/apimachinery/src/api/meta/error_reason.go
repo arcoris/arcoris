@@ -20,6 +20,7 @@ type ErrorReason string
 // Root metadata reasons refine broad sentinel errors with stable diagnostics.
 const (
 	ErrorReasonEmptyValue       ErrorReason = "empty_value"
+	ErrorReasonInvalidLength    ErrorReason = "invalid_length"
 	ErrorReasonInvalidCharacter ErrorReason = "invalid_character"
 	ErrorReasonInvalidForm      ErrorReason = "invalid_form"
 	ErrorReasonInvalidJSON      ErrorReason = "invalid_json"

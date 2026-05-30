@@ -15,37 +15,46 @@
 package annotations
 
 // MarshalText validates and encodes the value as text.
-func (v Value) MarshalText() ([]byte, error) { return marshalText(v.String(), v.Validate) }
+func (v Value) MarshalText() ([]byte, error) {
+	return marshalText(v.String(), v.Validate)
+}
 
 // UnmarshalText decodes and validates a text value.
 func (v *Value) UnmarshalText(data []byte) error {
 	if v == nil {
 		return nilReceiver("annotation.value")
 	}
+
 	value := Value(string(data))
 	if err := value.Validate(); err != nil {
 		return err
 	}
+
 	*v = value
 	return nil
 }
 
 // MarshalJSON validates and encodes the value as one JSON string.
-func (v Value) MarshalJSON() ([]byte, error) { return marshalJSONString(v.String(), v.Validate) }
+func (v Value) MarshalJSON() ([]byte, error) {
+	return marshalJSONString(v.String(), v.Validate)
+}
 
 // UnmarshalJSON decodes and validates a JSON string value.
 func (v *Value) UnmarshalJSON(data []byte) error {
 	if v == nil {
 		return nilReceiver("annotation.value")
 	}
+
 	value, err := unmarshalJSONString("annotation.value", data)
 	if err != nil {
 		return err
 	}
+
 	parsed := Value(value)
 	if err := parsed.Validate(); err != nil {
 		return err
 	}
+
 	*v = parsed
 	return nil
 }

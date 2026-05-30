@@ -23,9 +23,9 @@ import apiidentity "arcoris.dev/apimachinery/api/identity"
 // information.
 type TypeMeta struct {
 	// APIVersion is the canonical API group/version of the represented object.
-	APIVersion apiidentity.GroupVersion
+	APIVersion apiidentity.GroupVersion `json:"apiVersion,omitempty,omitzero"`
 	// Kind is the API kind name of the represented object.
-	Kind apiidentity.Kind
+	Kind apiidentity.Kind `json:"kind,omitempty"`
 }
 
 // FromGroupVersionKind constructs TypeMeta from a full API kind identity.
@@ -45,5 +45,8 @@ func (m TypeMeta) IsZero() bool {
 
 // String returns canonical diagnostic text for the represented kind identity.
 func (m TypeMeta) String() string {
+	if m.IsZero() {
+		return ""
+	}
 	return m.GroupVersionKind().String()
 }

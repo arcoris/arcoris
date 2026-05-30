@@ -19,9 +19,9 @@ package stamp
 // It does not execute deletion, finalization, or storage removal.
 type Deletion struct {
 	// DeletedAt records when deletion was requested.
-	DeletedAt Timestamp
+	DeletedAt Timestamp `json:"deletedAt"`
 	// GracePeriodSeconds is metadata only; this package does not enforce time.
-	GracePeriodSeconds uint64
+	GracePeriodSeconds uint64 `json:"gracePeriodSeconds,omitempty"`
 }
 
 // IsZero reports whether deletion metadata is absent.

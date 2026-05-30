@@ -17,11 +17,11 @@ package identity
 // ObjectIdentity identifies a concrete object incarnation by name and UID.
 type ObjectIdentity struct {
 	// Namespace is optional and means absent when empty.
-	Namespace Namespace
+	Namespace Namespace `json:"namespace,omitempty"`
 	// Name is the required object metadata name.
-	Name Name
+	Name Name `json:"name"`
 	// UID identifies one concrete object incarnation.
-	UID UID
+	UID UID `json:"uid"`
 }
 
 // IsZero reports whether all identity fields are absent.
@@ -35,6 +35,9 @@ func (i ObjectIdentity) ObjectName() ObjectName {
 }
 
 // String returns diagnostic text for the object identity.
+//
+// The result is intentionally diagnostic only. Storage keys, route keys, and
+// cache keys need their own explicit formats in higher layers.
 func (i ObjectIdentity) String() string {
 	name := i.ObjectName().String()
 	if i.UID.IsZero() {

@@ -19,6 +19,7 @@ func (m TypeMeta) Validate() error {
 	if m.IsZero() {
 		return nil
 	}
+
 	if m.APIVersion.IsZero() {
 		return invalid(
 			"typeMeta.apiVersion",
@@ -27,6 +28,7 @@ func (m TypeMeta) Validate() error {
 			"apiVersion is required when kind is set",
 		)
 	}
+
 	if m.Kind.IsZero() {
 		return invalid(
 			"typeMeta.kind",
@@ -35,11 +37,14 @@ func (m TypeMeta) Validate() error {
 			"kind is required when apiVersion is set",
 		)
 	}
+
 	if err := m.APIVersion.Validate(); err != nil {
 		return nested("typeMeta.apiVersion", ErrInvalidTypeMeta, err)
 	}
+
 	if err := m.Kind.Validate(); err != nil {
 		return nested("typeMeta.kind", ErrInvalidTypeMeta, err)
 	}
+
 	return nil
 }

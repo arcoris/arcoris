@@ -22,11 +22,11 @@ import "arcoris.dev/apimachinery/api/meta/stamp"
 // internals, watch state, or route information.
 type ListMeta struct {
 	// ResourceVersion is the opaque consistency/change token for the list response.
-	ResourceVersion stamp.ResourceVersion
-	// ContinueToken is an opaque pagination token supplied by a higher layer.
-	ContinueToken PageToken
+	ResourceVersion stamp.ResourceVersion `json:"resourceVersion,omitempty"`
+	// ContinueToken is the opaque pagination token encoded as "continue" on the wire.
+	ContinueToken PageToken `json:"continue,omitempty"`
 	// RemainingItemCount is an optional server-provided count hint.
-	RemainingItemCount *uint64
+	RemainingItemCount *uint64 `json:"remainingItemCount,omitempty"`
 }
 
 // IsZero reports whether all list metadata is absent.

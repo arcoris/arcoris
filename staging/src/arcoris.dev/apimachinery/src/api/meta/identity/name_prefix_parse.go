@@ -15,10 +15,11 @@
 package identity
 
 // ParseNamePrefix parses and validates a generated-name prefix.
-func ParseNamePrefix(s string) (NamePrefix, error) {
-	prefix := NamePrefix(s)
+func ParseNamePrefix(value string) (NamePrefix, error) {
+	prefix := NamePrefix(value)
 	if err := prefix.Validate(); err != nil {
 		return "", err
 	}
+
 	return prefix, nil
 }

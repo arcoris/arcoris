@@ -15,10 +15,11 @@
 package identity
 
 // ParseUID parses and validates an object UID.
-func ParseUID(s string) (UID, error) {
-	uid := UID(s)
+func ParseUID(value string) (UID, error) {
+	uid := UID(value)
 	if err := uid.Validate(); err != nil {
 		return "", err
 	}
+
 	return uid, nil
 }

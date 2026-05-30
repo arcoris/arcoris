@@ -14,7 +14,10 @@
 
 package owner
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestReference(t *testing.T) {
 	ref := validReference(true)
@@ -23,5 +26,23 @@ func TestReference(t *testing.T) {
 	}
 	if !(Reference{}).IsZero() {
 		t.Fatal("zero Reference IsZero() = false")
+	}
+}
+
+func TestReferenceJSONFields(t *testing.T) {
+	data, err := json.Marshal(validReference(true))
+	requireNoError(t, err)
+
+	var got map[string]any
+	requireNoError(t, json.Unmarshal(data, &got))
+
+	if _, ok := got["ref"].(map[string]any); !ok {
+		t.Fatalf("ref = %#v", got["ref"])
+	}
+	if got["controller"] != true {
+		t.Fatalf("controller = %#v", got["controller"])
+	}
+	if _, ok := got["Ref"]; ok {
+		t.Fatalf("unexpected Go field name in JSON: %s", data)
 	}
 }

@@ -14,7 +14,10 @@
 
 package identity
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestObjectName(t *testing.T) {
 	global := ObjectName{Name: "worker"}
@@ -34,5 +37,20 @@ func TestObjectName(t *testing.T) {
 	}
 	if !(ObjectName{}).IsZero() {
 		t.Fatal("zero ObjectName IsZero() = false")
+	}
+}
+
+func TestObjectNameJSONFields(t *testing.T) {
+	data, err := json.Marshal(ObjectName{Namespace: "system", Name: "worker"})
+	requireNoError(t, err)
+
+	var got map[string]any
+	requireNoError(t, json.Unmarshal(data, &got))
+
+	if got["namespace"] != "system" || got["name"] != "worker" {
+		t.Fatalf("object name JSON = %#v", got)
+	}
+	if _, ok := got["Namespace"]; ok {
+		t.Fatalf("unexpected Go field name in JSON: %s", data)
 	}
 }

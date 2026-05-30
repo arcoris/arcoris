@@ -15,6 +15,7 @@
 package stamp
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 )
@@ -32,5 +33,30 @@ func TestDeletion(t *testing.T) {
 	}
 	if deletion.IsZero() {
 		t.Fatal("non-zero deletion is zero")
+	}
+}
+
+func TestDeletionJSONFields(t *testing.T) {
+	deletion := Deletion{
+		DeletedAt: NewTimestamp(
+			time.Date(2026, 5, 30, 12, 0, 0, 0, time.UTC),
+		),
+		GracePeriodSeconds: 30,
+	}
+
+	data, err := json.Marshal(deletion)
+	requireNoError(t, err)
+
+	var got map[string]any
+	requireNoError(t, json.Unmarshal(data, &got))
+
+	if got["deletedAt"] != "2026-05-30T12:00:00Z" {
+		t.Fatalf("deletedAt = %#v", got["deletedAt"])
+	}
+	if got["gracePeriodSeconds"] != float64(30) {
+		t.Fatalf("gracePeriodSeconds = %#v", got["gracePeriodSeconds"])
+	}
+	if _, ok := got["DeletedAt"]; ok {
+		t.Fatalf("unexpected Go field name in JSON: %s", data)
 	}
 }

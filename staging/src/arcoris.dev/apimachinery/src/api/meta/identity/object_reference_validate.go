@@ -24,13 +24,20 @@ func (r ObjectReference) Validate() error {
 			"apiVersion is required",
 		)
 	}
+
 	if err := r.APIVersion.Validate(); err != nil {
 		return nested("objectReference.apiVersion", ErrInvalidObjectReference, err)
 	}
 
 	if r.Kind.IsZero() {
-		return invalid("objectReference.kind", ErrInvalidObjectReference, ErrorReasonEmptyValue, "kind is required")
+		return invalid(
+			"objectReference.kind",
+			ErrInvalidObjectReference,
+			ErrorReasonEmptyValue,
+			"kind is required",
+		)
 	}
+
 	if err := r.Kind.Validate(); err != nil {
 		return nested("objectReference.kind", ErrInvalidObjectReference, err)
 	}

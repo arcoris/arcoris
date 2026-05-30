@@ -17,10 +17,17 @@ package stamp
 // Validate checks deletion request metadata.
 func (d Deletion) Validate() error {
 	if d.DeletedAt.IsZero() {
-		return invalid("deletion.deletedAt", ErrInvalidDeletion, ErrorReasonEmptyValue, "deletedAt is required")
+		return invalid(
+			"deletion.deletedAt",
+			ErrInvalidDeletion,
+			ErrorReasonEmptyValue,
+			"deletedAt is required",
+		)
 	}
+
 	if err := d.DeletedAt.Validate(); err != nil {
 		return nested("deletion.deletedAt", ErrInvalidDeletion, err)
 	}
+
 	return nil
 }

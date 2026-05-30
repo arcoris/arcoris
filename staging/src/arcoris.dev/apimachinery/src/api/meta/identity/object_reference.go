@@ -19,19 +19,23 @@ import apiidentity "arcoris.dev/apimachinery/api/identity"
 // ObjectReference describes another API object by API identity and metadata
 // identity.
 //
+// ObjectReference is a complete, UID-pinned metadata reference. Name-only
+// references should use a separate type or validation path if they are
+// introduced later.
+//
 // It does not resolve the object, check existence, or encode a route/storage
 // key. It is reference metadata only.
 type ObjectReference struct {
 	// APIVersion identifies the referenced object's API group/version.
-	APIVersion apiidentity.GroupVersion
+	APIVersion apiidentity.GroupVersion `json:"apiVersion"`
 	// Kind identifies the referenced object's API kind.
-	Kind apiidentity.Kind
+	Kind apiidentity.Kind `json:"kind"`
 	// Namespace is optional reference metadata and is not defaulted here.
-	Namespace Namespace
+	Namespace Namespace `json:"namespace,omitempty"`
 	// Name identifies the referenced object within its resource scope.
-	Name Name
+	Name Name `json:"name"`
 	// UID pins the reference to one concrete object incarnation.
-	UID UID
+	UID UID `json:"uid"`
 }
 
 // IsZero reports whether all reference fields are absent.

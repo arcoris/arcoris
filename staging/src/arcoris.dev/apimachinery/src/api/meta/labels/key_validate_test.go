@@ -14,7 +14,10 @@
 
 package labels
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestKeyValidate(t *testing.T) {
 	requireNoError(t, Key("role").Validate())
@@ -22,4 +25,23 @@ func TestKeyValidate(t *testing.T) {
 
 	requireErrorIs(t, Key("").Validate(), ErrInvalidKey)
 	requireErrorIs(t, Key("role_name").Validate(), ErrInvalidKey)
+}
+
+func TestKeyValidateStructuredError(t *testing.T) {
+	err := Key("Role").Validate()
+	requireErrorIs(t, err, ErrInvalidKey)
+
+	var labelErr *Error
+	if !errors.As(err, &labelErr) {
+		t.Fatalf("errors.As(%T) = false", labelErr)
+	}
+	if labelErr.Path != "label.key" {
+		t.Fatalf("Path = %q", labelErr.Path)
+	}
+	if labelErr.Reason != ErrorReasonInvalidCharacter {
+		t.Fatalf("Reason = %q", labelErr.Reason)
+	}
+	if labelErr.Detail == "" {
+		t.Fatal("Detail is empty")
+	}
 }

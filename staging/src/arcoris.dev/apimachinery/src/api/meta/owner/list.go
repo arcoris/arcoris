@@ -18,7 +18,11 @@ package owner
 type List []Reference
 
 // IsZero reports whether no owner references are present.
-func (l List) IsZero() bool { return len(l) == 0 }
+func (l List) IsZero() bool {
+	return len(l) == 0
+}
 
 // Len returns the number of owner reference entries.
-func (l List) Len() int { return len(l) }
+func (l List) Len() int {
+	return len(l)
+}

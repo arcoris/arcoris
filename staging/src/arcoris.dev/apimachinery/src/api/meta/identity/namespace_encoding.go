@@ -24,10 +24,12 @@ func (n *Namespace) UnmarshalText(data []byte) error {
 	if n == nil {
 		return nilReceiver("namespace")
 	}
+
 	value, err := ParseNamespace(string(data))
 	if err != nil {
 		return err
 	}
+
 	*n = value
 	return nil
 }
@@ -42,14 +44,17 @@ func (n *Namespace) UnmarshalJSON(data []byte) error {
 	if n == nil {
 		return nilReceiver("namespace")
 	}
+
 	value, err := unmarshalJSONString("namespace", data)
 	if err != nil {
 		return err
 	}
+
 	parsed, err := ParseNamespace(value)
 	if err != nil {
 		return err
 	}
+
 	*n = parsed
 	return nil
 }

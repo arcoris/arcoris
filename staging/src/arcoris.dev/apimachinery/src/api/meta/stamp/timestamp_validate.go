@@ -14,7 +14,10 @@
 
 package stamp
 
-// Validate checks timestamp metadata.
+// Validate accepts every representable time.Time value.
+//
+// Zero is a valid absent timestamp at the metadata layer. Clock-source,
+// monotonicity, and persistence lifecycle checks belong to higher layers.
 func (t Timestamp) Validate() error {
 	return nil
 }

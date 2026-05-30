@@ -15,37 +15,46 @@
 package labels
 
 // MarshalText validates and encodes the key as text.
-func (k Key) MarshalText() ([]byte, error) { return marshalText(k.String(), k.Validate) }
+func (k Key) MarshalText() ([]byte, error) {
+	return marshalText(k.String(), k.Validate)
+}
 
 // UnmarshalText decodes and validates a text key.
 func (k *Key) UnmarshalText(data []byte) error {
 	if k == nil {
 		return nilReceiver("label.key")
 	}
+
 	value, err := ParseKey(string(data))
 	if err != nil {
 		return err
 	}
+
 	*k = value
 	return nil
 }
 
 // MarshalJSON validates and encodes the key as one JSON string.
-func (k Key) MarshalJSON() ([]byte, error) { return marshalJSONString(k.String(), k.Validate) }
+func (k Key) MarshalJSON() ([]byte, error) {
+	return marshalJSONString(k.String(), k.Validate)
+}
 
 // UnmarshalJSON decodes and validates a JSON string key.
 func (k *Key) UnmarshalJSON(data []byte) error {
 	if k == nil {
 		return nilReceiver("label.key")
 	}
+
 	value, err := unmarshalJSONString("label.key", data)
 	if err != nil {
 		return err
 	}
+
 	parsed, err := ParseKey(value)
 	if err != nil {
 		return err
 	}
+
 	*k = parsed
 	return nil
 }

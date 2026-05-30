@@ -18,7 +18,11 @@ package finalizer
 type Name string
 
 // String returns the raw finalizer name text.
-func (n Name) String() string { return string(n) }
+func (n Name) String() string {
+	return string(n)
+}
 
 // IsZero reports whether the finalizer name is absent.
-func (n Name) IsZero() bool { return n == "" }
+func (n Name) IsZero() bool {
+	return n == ""
+}

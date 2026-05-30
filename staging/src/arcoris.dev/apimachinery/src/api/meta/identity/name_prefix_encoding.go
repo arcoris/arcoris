@@ -24,10 +24,12 @@ func (p *NamePrefix) UnmarshalText(data []byte) error {
 	if p == nil {
 		return nilReceiver("namePrefix")
 	}
+
 	value, err := ParseNamePrefix(string(data))
 	if err != nil {
 		return err
 	}
+
 	*p = value
 	return nil
 }
@@ -42,14 +44,17 @@ func (p *NamePrefix) UnmarshalJSON(data []byte) error {
 	if p == nil {
 		return nilReceiver("namePrefix")
 	}
+
 	value, err := unmarshalJSONString("namePrefix", data)
 	if err != nil {
 		return err
 	}
+
 	parsed, err := ParseNamePrefix(value)
 	if err != nil {
 		return err
 	}
+
 	*p = parsed
 	return nil
 }

@@ -24,10 +24,12 @@ func (v *ResourceVersion) UnmarshalText(data []byte) error {
 	if v == nil {
 		return nilReceiver("resourceVersion")
 	}
+
 	value, err := ParseResourceVersion(string(data))
 	if err != nil {
 		return err
 	}
+
 	*v = value
 	return nil
 }
@@ -42,14 +44,17 @@ func (v *ResourceVersion) UnmarshalJSON(data []byte) error {
 	if v == nil {
 		return nilReceiver("resourceVersion")
 	}
+
 	value, err := unmarshalJSONString("resourceVersion", data)
 	if err != nil {
 		return err
 	}
+
 	parsed, err := ParseResourceVersion(value)
 	if err != nil {
 		return err
 	}
+
 	*v = parsed
 	return nil
 }

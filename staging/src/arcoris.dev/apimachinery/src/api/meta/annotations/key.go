@@ -18,7 +18,11 @@ package annotations
 type Key string
 
 // String returns the raw annotation key text.
-func (k Key) String() string { return string(k) }
+func (k Key) String() string {
+	return string(k)
+}
 
 // IsZero reports whether the key is absent.
-func (k Key) IsZero() bool { return k == "" }
+func (k Key) IsZero() bool {
+	return k == ""
+}

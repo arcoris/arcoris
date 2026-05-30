@@ -14,37 +14,47 @@
 
 package owner
 
-import "fmt"
+import (
+	"fmt"
+
+	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
+)
 
 // Validate checks owner references and enforces owner-list invariants.
 func (l List) Validate() error {
-	controllers := 0
-	seen := make(map[Reference]struct{}, len(l))
+	controllerCount := 0
+	seenRefs := make(map[metaidentity.ObjectReference]struct{}, len(l))
 
-	for i, ref := range l {
-		if err := ref.Validate(); err != nil {
-			return nested(fmt.Sprintf("ownerReferences[%d]", i), ErrInvalidList, err)
+	for index, reference := range l {
+		path := fmt.Sprintf("ownerReferences[%d]", index)
+
+		if err := reference.Validate(); err != nil {
+			return nested(path, ErrInvalidList, err)
 		}
-		if ref.Controller {
-			controllers++
-			if controllers > 1 {
+
+		if reference.Controller {
+			controllerCount++
+			if controllerCount > 1 {
 				return invalid(
-					fmt.Sprintf("ownerReferences[%d].controller", i),
+					path+".controller",
 					ErrMultipleControllers,
 					ErrorReasonMultipleControllers,
 					"at most one owner reference may be marked as controller",
 				)
 			}
 		}
-		if _, ok := seen[ref]; ok {
+
+		if _, ok := seenRefs[reference.Ref]; ok {
 			return invalid(
-				fmt.Sprintf("ownerReferences[%d]", i),
+				path,
 				ErrDuplicateReference,
 				ErrorReasonDuplicateReference,
 				"owner references must be unique",
 			)
 		}
-		seen[ref] = struct{}{}
+
+		seenRefs[reference.Ref] = struct{}{}
 	}
+
 	return nil
 }

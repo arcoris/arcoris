@@ -14,12 +14,55 @@
 
 package labels
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestValueValidate(t *testing.T) {
-	requireNoError(t, Value("").Validate())
-	requireNoError(t, Value("worker_1").Validate())
+	valid := []Value{"", "worker", "worker-1", "worker_1", "worker.1", "1"}
+	for _, value := range valid {
+		t.Run("valid/"+value.String(), func(t *testing.T) {
+			requireNoError(t, value.Validate())
+		})
+	}
 
-	requireErrorIs(t, Value("worker value").Validate(), ErrInvalidValue)
-	requireErrorIs(t, Value("worker\nvalue").Validate(), ErrInvalidValue)
+	invalid := []Value{
+		"worker value",
+		"worker\nvalue",
+		"-worker",
+		"worker-",
+		"_worker",
+		"worker_",
+		".worker",
+		"worker.",
+		".",
+		"---",
+		"___",
+	}
+
+	for _, value := range invalid {
+		t.Run("invalid/"+value.String(), func(t *testing.T) {
+			requireErrorIs(t, value.Validate(), ErrInvalidValue)
+		})
+	}
+}
+
+func TestValueValidateStructuredError(t *testing.T) {
+	err := Value("-worker").Validate()
+	requireErrorIs(t, err, ErrInvalidValue)
+
+	var labelErr *Error
+	if !errors.As(err, &labelErr) {
+		t.Fatalf("errors.As(%T) = false", labelErr)
+	}
+	if labelErr.Path != "label.value" {
+		t.Fatalf("Path = %q", labelErr.Path)
+	}
+	if labelErr.Reason != ErrorReasonInvalidEdge {
+		t.Fatalf("Reason = %q", labelErr.Reason)
+	}
+	if labelErr.Detail == "" {
+		t.Fatal("Detail is empty")
+	}
 }

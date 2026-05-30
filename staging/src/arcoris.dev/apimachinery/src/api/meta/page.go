@@ -16,6 +16,9 @@ package meta
 
 import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 
+// maxPageTokenLength bounds opaque page tokens before transport layers exist.
+const maxPageTokenLength = 2048
+
 // PageToken is an opaque pagination continuation token.
 //
 // api/meta validates only token safety. It does not parse storage cursor
@@ -23,26 +26,38 @@ import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 type PageToken string
 
 // ParsePageToken validates and returns an opaque pagination token.
-func ParsePageToken(s string) (PageToken, error) {
-	token := PageToken(s)
+func ParsePageToken(value string) (PageToken, error) {
+	token := PageToken(value)
 	if err := token.Validate(); err != nil {
 		return "", err
 	}
+
 	return token, nil
 }
 
 // String returns the raw opaque token text.
-func (t PageToken) String() string { return string(t) }
+func (t PageToken) String() string {
+	return string(t)
+}
 
 // IsZero reports whether the token is absent.
-func (t PageToken) IsZero() bool { return t == "" }
+func (t PageToken) IsZero() bool {
+	return t == ""
+}
 
 // Validate checks only scalar safety and deliberately ignores token internals.
 func (t PageToken) Validate() error {
 	return fromGrammar(
 		"pageToken",
 		ErrInvalidPageToken,
-		metagrammar.ValidateOpaqueToken("page token", t.String(), true),
+		metagrammar.ValidateOpaqueToken(
+			"page token",
+			t.String(),
+			metagrammar.OpaqueTokenOptions{
+				AllowEmpty: true,
+				MaxLength:  maxPageTokenLength,
+			},
+		),
 	)
 }
 
@@ -56,10 +71,12 @@ func (t *PageToken) UnmarshalText(data []byte) error {
 	if t == nil {
 		return nilReceiver("pageToken")
 	}
+
 	value, err := ParsePageToken(string(data))
 	if err != nil {
 		return err
 	}
+
 	*t = value
 	return nil
 }
@@ -74,14 +91,17 @@ func (t *PageToken) UnmarshalJSON(data []byte) error {
 	if t == nil {
 		return nilReceiver("pageToken")
 	}
+
 	value, err := unmarshalJSONString("pageToken", data)
 	if err != nil {
 		return err
 	}
+
 	parsed, err := ParsePageToken(value)
 	if err != nil {
 		return err
 	}
+
 	*t = parsed
 	return nil
 }

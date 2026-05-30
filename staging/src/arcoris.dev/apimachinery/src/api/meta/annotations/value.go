@@ -18,7 +18,11 @@ package annotations
 type Value string
 
 // String returns the raw annotation value text.
-func (v Value) String() string { return string(v) }
+func (v Value) String() string {
+	return string(v)
+}
 
 // IsZero reports whether the value is empty.
-func (v Value) IsZero() bool { return v == "" }
+func (v Value) IsZero() bool {
+	return v == ""
+}

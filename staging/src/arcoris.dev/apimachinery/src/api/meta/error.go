@@ -57,19 +57,25 @@ func (e *Error) Error() string {
 	if e == nil {
 		return "<nil>"
 	}
+
 	parts := []string{"meta"}
+
 	if e.Path != "" {
 		parts = append(parts, e.Path)
 	}
+
 	if e.Err != nil {
 		parts = append(parts, e.Err.Error())
 	}
+
 	if e.Reason != "" {
 		parts = append(parts, string(e.Reason))
 	}
+
 	if e.Detail != "" {
 		parts = append(parts, e.Detail)
 	}
+
 	return strings.Join(parts, ": ")
 }
 
@@ -78,12 +84,15 @@ func (e *Error) Unwrap() error {
 	if e == nil {
 		return nil
 	}
+
 	if e.Err != nil && e.Cause != nil {
 		return errors.Join(e.Err, e.Cause)
 	}
+
 	if e.Err != nil {
 		return e.Err
 	}
+
 	return e.Cause
 }
 
@@ -113,12 +122,20 @@ func fromGrammar(path string, err error, v *metagrammar.Violation) error {
 	if v == nil {
 		return nil
 	}
-	reason := ErrorReasonInvalidForm
-	if v.Reason == metagrammar.ReasonInvalidCharacter {
-		reason = ErrorReasonInvalidCharacter
+
+	return invalid(path, err, reasonFromGrammar(v.Reason), v.Detail)
+}
+
+// reasonFromGrammar maps internal grammar reasons to root metadata reasons.
+func reasonFromGrammar(reason metagrammar.Reason) ErrorReason {
+	switch reason {
+	case metagrammar.ReasonEmptyValue:
+		return ErrorReasonEmptyValue
+	case metagrammar.ReasonInvalidLength:
+		return ErrorReasonInvalidLength
+	case metagrammar.ReasonInvalidCharacter:
+		return ErrorReasonInvalidCharacter
+	default:
+		return ErrorReasonInvalidForm
 	}
-	if v.Reason == metagrammar.ReasonEmptyValue {
-		reason = ErrorReasonEmptyValue
-	}
-	return invalid(path, err, reason, v.Detail)
 }

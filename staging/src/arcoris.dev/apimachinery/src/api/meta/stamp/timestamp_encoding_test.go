@@ -36,3 +36,23 @@ func TestTimestampEncoding(t *testing.T) {
 	requireNoError(t, err)
 	requireNoError(t, json.Unmarshal(data, &parsed))
 }
+
+func TestTimestampEncodingZero(t *testing.T) {
+	text, err := (Timestamp{}).MarshalText()
+	requireNoError(t, err)
+	if string(text) != "" {
+		t.Fatalf("zero MarshalText() = %q", text)
+	}
+
+	data, err := json.Marshal(Timestamp{})
+	requireNoError(t, err)
+	if string(data) != `""` {
+		t.Fatalf("zero MarshalJSON() = %s", data)
+	}
+
+	var parsed Timestamp
+	requireNoError(t, json.Unmarshal(data, &parsed))
+	if !parsed.IsZero() {
+		t.Fatal("zero timestamp JSON roundtrip produced non-zero value")
+	}
+}

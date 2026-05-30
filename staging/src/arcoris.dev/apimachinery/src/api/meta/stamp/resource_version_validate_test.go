@@ -14,12 +14,41 @@
 
 package stamp
 
-import "testing"
+import (
+	"errors"
+	"strings"
+	"testing"
+)
 
 func TestResourceVersionValidate(t *testing.T) {
 	requireNoError(t, ResourceVersion("").Validate())
 	requireNoError(t, ResourceVersion("rv-1").Validate())
 
 	requireErrorIs(t, ResourceVersion("rv 1").Validate(), ErrInvalidResourceVersion)
+	requireErrorIs(t, ResourceVersion("rv/1").Validate(), ErrInvalidResourceVersion)
 	requireErrorIs(t, ResourceVersion("rv\n1").Validate(), ErrInvalidResourceVersion)
+	requireErrorIs(
+		t,
+		ResourceVersion(strings.Repeat("x", maxResourceVersionLength+1)).Validate(),
+		ErrInvalidResourceVersion,
+	)
+}
+
+func TestResourceVersionValidateStructuredLengthError(t *testing.T) {
+	err := ResourceVersion(strings.Repeat("x", maxResourceVersionLength+1)).Validate()
+	requireErrorIs(t, err, ErrInvalidResourceVersion)
+
+	var stampErr *Error
+	if !errors.As(err, &stampErr) {
+		t.Fatalf("errors.As(%T) = false", stampErr)
+	}
+	if stampErr.Path != "resourceVersion" {
+		t.Fatalf("Path = %q", stampErr.Path)
+	}
+	if stampErr.Reason != ErrorReasonInvalidLength {
+		t.Fatalf("Reason = %q", stampErr.Reason)
+	}
+	if stampErr.Detail == "" {
+		t.Fatal("Detail is empty")
+	}
 }

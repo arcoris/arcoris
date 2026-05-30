@@ -21,10 +21,14 @@ package finalizer
 type Set []Name
 
 // IsZero reports whether no finalizers are present.
-func (s Set) IsZero() bool { return len(s) == 0 }
+func (s Set) IsZero() bool {
+	return len(s) == 0
+}
 
 // Len returns the number of finalizer names.
-func (s Set) Len() int { return len(s) }
+func (s Set) Len() int {
+	return len(s)
+}
 
 // Has reports whether the set contains name.
 func (s Set) Has(name Name) bool {

@@ -16,11 +16,21 @@ package stamp
 
 import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 
+// maxResourceVersionLength bounds opaque resource versions at metadata edges.
+const maxResourceVersionLength = 512
+
 // Validate checks the resource version token without interpreting it.
 func (v ResourceVersion) Validate() error {
 	return fromGrammar(
 		"resourceVersion",
 		ErrInvalidResourceVersion,
-		metagrammar.ValidateOpaqueToken("resource version", v.String(), true),
+		metagrammar.ValidateOpaqueToken(
+			"resource version",
+			v.String(),
+			metagrammar.OpaqueTokenOptions{
+				AllowEmpty: true,
+				MaxLength:  maxResourceVersionLength,
+			},
+		),
 	)
 }

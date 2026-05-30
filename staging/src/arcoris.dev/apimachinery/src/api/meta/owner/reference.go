@@ -19,9 +19,9 @@ import metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 // Reference is one owner reference metadata entry.
 type Reference struct {
 	// Ref is the object reference stored as ownership metadata.
-	Ref metaidentity.ObjectReference
+	Ref metaidentity.ObjectReference `json:"ref"`
 	// Controller marks the single controlling owner when true.
-	Controller bool
+	Controller bool `json:"controller,omitempty"`
 }
 
 // IsZero reports whether the owner reference entry is absent.

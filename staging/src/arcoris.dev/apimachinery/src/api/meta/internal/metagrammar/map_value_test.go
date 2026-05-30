@@ -18,11 +18,35 @@ import "testing"
 
 func TestValidateMapValue(t *testing.T) {
 	strict := MapValueOptions{AllowEmpty: true, MaxLength: 63, Strict: true}
-	if err := ValidateMapValue("worker_1", strict); err != nil {
-		t.Fatalf("ValidateMapValue(strict) error = %v", err)
+	valid := []string{"", "worker", "worker-1", "worker_1", "worker.1", "1"}
+
+	for _, value := range valid {
+		t.Run("valid/"+value, func(t *testing.T) {
+			if err := ValidateMapValue(value, strict); err != nil {
+				t.Fatalf("ValidateMapValue(%q) error = %v", value, err)
+			}
+		})
 	}
-	if err := ValidateMapValue("worker 1", strict); err == nil {
-		t.Fatal("ValidateMapValue(strict) error = nil")
+
+	invalid := []string{
+		"worker 1",
+		"-worker",
+		"worker-",
+		"_worker",
+		"worker_",
+		".worker",
+		"worker.",
+		".",
+		"---",
+		"___",
+	}
+
+	for _, value := range invalid {
+		t.Run("invalid/"+value, func(t *testing.T) {
+			if err := ValidateMapValue(value, strict); err == nil {
+				t.Fatalf("ValidateMapValue(%q) error = nil", value)
+			}
+		})
 	}
 
 	loose := MapValueOptions{AllowEmpty: true}

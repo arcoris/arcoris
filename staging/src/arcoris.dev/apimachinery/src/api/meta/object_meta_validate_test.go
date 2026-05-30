@@ -15,6 +15,7 @@
 package meta
 
 import (
+	"errors"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/meta/annotations"
@@ -27,6 +28,33 @@ import (
 func TestObjectMetaValidate(t *testing.T) {
 	requireNoError(t, (ObjectMeta{}).Validate())
 	requireNoError(t, validObjectMeta().Validate())
+}
+
+func TestObjectMetaValidateRejectsNonNilZeroDeletion(t *testing.T) {
+	requireErrorIs(t, (ObjectMeta{Deletion: &stamp.Deletion{}}).Validate(), ErrInvalidObjectMeta)
+}
+
+func TestObjectMetaValidateNestedErrorShape(t *testing.T) {
+	err := (ObjectMeta{
+		Labels: labels.Set{"Role": "worker"},
+	}).Validate()
+
+	requireErrorIs(t, err, ErrInvalidObjectMeta)
+	requireErrorIs(t, err, labels.ErrInvalidSet)
+
+	var metaErr *Error
+	if !errors.As(err, &metaErr) {
+		t.Fatalf("errors.As(%T) = false", metaErr)
+	}
+	if metaErr.Path != "objectMeta.labels" {
+		t.Fatalf("Path = %q", metaErr.Path)
+	}
+	if metaErr.Reason != ErrorReasonInvalidForm {
+		t.Fatalf("Reason = %q", metaErr.Reason)
+	}
+	if metaErr.Cause == nil {
+		t.Fatal("Cause = nil")
+	}
 }
 
 func TestObjectMetaValidateRejectsInvalidNestedMetadata(t *testing.T) {

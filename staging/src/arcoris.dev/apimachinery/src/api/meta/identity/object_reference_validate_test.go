@@ -40,4 +40,9 @@ func TestObjectReferenceValidate(t *testing.T) {
 		ObjectReference{APIVersion: ref.APIVersion, Kind: "Worker", UID: "uid-1"}.Validate(),
 		ErrInvalidObjectReference,
 	)
+	requireErrorIs(
+		t,
+		ObjectReference{APIVersion: ref.APIVersion, Kind: "Worker", Name: "worker"}.Validate(),
+		ErrInvalidObjectReference,
+	)
 }

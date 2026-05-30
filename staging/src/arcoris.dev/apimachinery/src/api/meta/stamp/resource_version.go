@@ -16,7 +16,9 @@ package stamp
 
 // ResourceVersion is an opaque API/storage concurrency and change token.
 //
-// It is not globally comparable, not a number, and not snapshot.Revision.
+// It intentionally has no ordering helpers. Higher layers may attach storage
+// semantics, but api/meta treats it as an opaque scalar: not globally
+// comparable, not a number, and not snapshot.Revision.
 type ResourceVersion string
 
 // String returns the opaque resource version text.

@@ -17,13 +17,21 @@ package identity
 // Validate checks that an object name has a name and optional valid namespace.
 func (n ObjectName) Validate() error {
 	if n.Name.IsZero() {
-		return invalid("objectName.name", ErrInvalidObjectName, ErrorReasonEmptyValue, "name is required")
+		return invalid(
+			"objectName.name",
+			ErrInvalidObjectName,
+			ErrorReasonEmptyValue,
+			"name is required",
+		)
 	}
+
 	if err := n.Namespace.Validate(); err != nil {
 		return nested("objectName.namespace", ErrInvalidObjectName, err)
 	}
+
 	if err := n.Name.Validate(); err != nil {
 		return nested("objectName.name", ErrInvalidObjectName, err)
 	}
+
 	return nil
 }

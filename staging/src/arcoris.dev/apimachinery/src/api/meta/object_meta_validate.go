@@ -24,50 +24,62 @@ func (m ObjectMeta) Validate() error {
 			return nested("objectMeta.name", ErrInvalidObjectMeta, err)
 		}
 	}
+
 	if !m.GenerateName.IsZero() {
 		if err := m.GenerateName.Validate(); err != nil {
 			return nested("objectMeta.generateName", ErrInvalidObjectMeta, err)
 		}
 	}
+
 	if !m.Namespace.IsZero() {
 		if err := m.Namespace.Validate(); err != nil {
 			return nested("objectMeta.namespace", ErrInvalidObjectMeta, err)
 		}
 	}
+
 	if !m.UID.IsZero() {
 		if err := m.UID.Validate(); err != nil {
 			return nested("objectMeta.uid", ErrInvalidObjectMeta, err)
 		}
 	}
+
 	if !m.ResourceVersion.IsZero() {
 		if err := m.ResourceVersion.Validate(); err != nil {
 			return nested("objectMeta.resourceVersion", ErrInvalidObjectMeta, err)
 		}
 	}
+
 	if err := m.Generation.Validate(); err != nil {
 		return nested("objectMeta.generation", ErrInvalidObjectMeta, err)
 	}
+
 	if !m.CreatedAt.IsZero() {
 		if err := m.CreatedAt.Validate(); err != nil {
 			return nested("objectMeta.createdAt", ErrInvalidObjectMeta, err)
 		}
 	}
+
 	if m.Deletion != nil {
 		if err := m.Deletion.Validate(); err != nil {
 			return nested("objectMeta.deletion", ErrInvalidObjectMeta, err)
 		}
 	}
+
 	if err := m.Labels.Validate(); err != nil {
 		return nested("objectMeta.labels", ErrInvalidObjectMeta, err)
 	}
+
 	if err := m.Annotations.Validate(); err != nil {
 		return nested("objectMeta.annotations", ErrInvalidObjectMeta, err)
 	}
+
 	if err := m.OwnerReferences.Validate(); err != nil {
 		return nested("objectMeta.ownerReferences", ErrInvalidObjectMeta, err)
 	}
+
 	if err := m.Finalizers.Validate(); err != nil {
 		return nested("objectMeta.finalizers", ErrInvalidObjectMeta, err)
 	}
+
 	return nil
 }

@@ -64,19 +64,25 @@ func (e *Error) Error() string {
 	if e == nil {
 		return "<nil>"
 	}
+
 	parts := []string{"meta/owner"}
+
 	if e.Path != "" {
 		parts = append(parts, e.Path)
 	}
+
 	if e.Err != nil {
 		parts = append(parts, e.Err.Error())
 	}
+
 	if e.Reason != "" {
 		parts = append(parts, string(e.Reason))
 	}
+
 	if e.Detail != "" {
 		parts = append(parts, e.Detail)
 	}
+
 	return strings.Join(parts, ": ")
 }
 
@@ -85,12 +91,15 @@ func (e *Error) Unwrap() error {
 	if e == nil {
 		return nil
 	}
+
 	if e.Err != nil && e.Cause != nil {
 		return errors.Join(e.Err, e.Cause)
 	}
+
 	if e.Err != nil {
 		return e.Err
 	}
+
 	return e.Cause
 }
 

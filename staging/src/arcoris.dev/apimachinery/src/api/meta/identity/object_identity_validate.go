@@ -19,11 +19,19 @@ func (i ObjectIdentity) Validate() error {
 	if err := i.ObjectName().Validate(); err != nil {
 		return nested("objectIdentity.objectName", ErrInvalidObjectIdentity, err)
 	}
+
 	if i.UID.IsZero() {
-		return invalid("objectIdentity.uid", ErrInvalidObjectIdentity, ErrorReasonEmptyValue, "uid is required")
+		return invalid(
+			"objectIdentity.uid",
+			ErrInvalidObjectIdentity,
+			ErrorReasonEmptyValue,
+			"uid is required",
+		)
 	}
+
 	if err := i.UID.Validate(); err != nil {
 		return nested("objectIdentity.uid", ErrInvalidObjectIdentity, err)
 	}
+
 	return nil
 }

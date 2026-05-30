@@ -15,10 +15,11 @@
 package labels
 
 // ParseKey parses and validates a label key.
-func ParseKey(s string) (Key, error) {
-	key := Key(s)
+func ParseKey(value string) (Key, error) {
+	key := Key(value)
 	if err := key.Validate(); err != nil {
 		return "", err
 	}
+
 	return key, nil
 }
