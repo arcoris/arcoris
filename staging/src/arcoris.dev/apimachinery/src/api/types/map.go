@@ -39,8 +39,7 @@ type MapType struct {
 //
 //	labelsType := MapOf(
 //		labelValue,
-//	).
-//		MaxLen(64)
+//	).MaxLen(64)
 func MapOf(value TypeExpr) MapType {
 	valueType := typeFromExpr(value)
 	return MapType{

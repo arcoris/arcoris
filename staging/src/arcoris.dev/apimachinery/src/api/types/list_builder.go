@@ -24,8 +24,7 @@ package types
 //
 //	Field("conditions").ListOf(
 //		Ref("arcoris.meta.Condition"),
-//	).
-//		Optional().
+//	).Optional().
 //		Nullable().
 //		MinLen(1).
 //		MaxLen(32).

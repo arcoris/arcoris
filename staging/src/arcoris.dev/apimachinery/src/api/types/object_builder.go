@@ -26,8 +26,7 @@ package types
 //		Field("image").String().
 //			Required().
 //			MinLen(1),
-//	).
-//		Required().
+//	).Required().
 //		Nullable().
 //		UnknownFields(UnknownReject).
 //		Description("Desired object state.")

@@ -25,8 +25,7 @@ package types
 //	Field("labels").MapOf(
 //		String().
 //			MinLen(1),
-//	).
-//		Optional().
+//	).Optional().
 //		Nullable().
 //		MinLen(1).
 //		MaxLen(64).

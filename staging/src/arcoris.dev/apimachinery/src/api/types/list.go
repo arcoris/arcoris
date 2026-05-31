@@ -36,9 +36,8 @@ type ListType struct {
 // Typical reusable declaration:
 //
 //	conditionListType := ListOf(
-//			Ref("arcoris.meta.Condition"),
-//		).
-//		Map("type")
+//		Ref("arcoris.meta.Condition"),
+//	).Map("type")
 func ListOf(elem TypeExpr) ListType {
 	elemType := typeFromExpr(elem)
 	return ListType{
