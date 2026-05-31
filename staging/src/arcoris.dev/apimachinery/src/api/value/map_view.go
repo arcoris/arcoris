@@ -16,24 +16,24 @@ package value
 
 // MapView exposes read-only map payload data.
 //
-// A view owns a cloned payload snapshot. Methods that return values or slices
-// clone again, so callers cannot mutate the original Value or the view through
-// returned data.
+// A view references private immutable-by-convention payload data. Methods that
+// return values or slices clone those results, so callers cannot mutate the
+// original Value or the view through returned data.
 type MapView struct {
-	// payload is a detached map payload snapshot.
+	// payload is the private map payload the view reads from.
 	payload mapPayload
 }
 
-// Map returns a detached map view when v is KindMap.
+// Map returns a read-only map view when v is KindMap.
 //
-// For every other kind, Map returns ok=false. The returned view is detached from
-// v and preserves entry order.
+// For every other kind, Map returns ok=false. The returned view preserves entry
+// order without eagerly deep-cloning the whole map payload.
 func (v Value) Map() (MapView, bool) {
 	if v.kind != KindMap {
 		return MapView{}, false
 	}
 
-	return MapView{payload: cloneMapPayload(v.mapValue)}, true
+	return MapView{payload: v.mapValue}, true
 }
 
 // Len returns the number of map entries.
@@ -72,6 +72,10 @@ func (m MapView) Get(key string) (Value, bool) {
 // Both the slice and every nested Value are cloned. Mutating the result cannot
 // affect the view or source Value.
 func (m MapView) Entries() []Entry {
+	if len(m.payload.entries) == 0 {
+		return []Entry{}
+	}
+
 	return cloneEntries(m.payload.entries)
 }
 

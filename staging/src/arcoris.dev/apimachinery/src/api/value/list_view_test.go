@@ -38,6 +38,18 @@ func TestListViewAccessors(t *testing.T) {
 	requireEqual(t, ok, false)
 }
 
+func TestListViewEmptyItemsIsNonNil(t *testing.T) {
+	value := mustList(t)
+	view, ok := value.List()
+	requireEqual(t, ok, true)
+
+	items := view.Items()
+	if items == nil {
+		t.Fatal("Items() returned nil")
+	}
+	requireEqual(t, len(items), 0)
+}
+
 func TestListViewReturnsDetachedItems(t *testing.T) {
 	value := mustList(t, Bytes([]byte{1, 2}))
 	view, ok := value.List()

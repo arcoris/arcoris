@@ -21,7 +21,7 @@ import (
 
 func TestDateAccessor(t *testing.T) {
 	date := Date{year: 2024, month: time.February, day: 29}
-	got, ok := DateValue(date).Date()
+	got, ok := MustDateValue(date).Date()
 
 	requireEqual(t, ok, true)
 	requireEqual(t, got.Equal(date), true)

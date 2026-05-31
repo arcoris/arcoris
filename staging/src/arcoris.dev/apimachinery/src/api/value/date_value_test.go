@@ -21,8 +21,27 @@ import (
 
 func TestDateValue(t *testing.T) {
 	date := Date{year: 2024, month: time.February, day: 29}
-	value := DateValue(date)
+	value, err := DateValue(date)
+	requireNoError(t, err)
 
 	requireEqual(t, value.Kind(), KindDate)
 	requireEqual(t, value.dateValue.Equal(date), true)
+}
+
+func TestDateValueRejectsZeroDate(t *testing.T) {
+	_, err := DateValue(Date{})
+
+	requireValueError(
+		t,
+		err,
+		ErrInvalidDate,
+		pathDate,
+		ErrorReasonInvalidDate,
+	)
+}
+
+func TestMustDateValuePanicsOnInvalidDate(t *testing.T) {
+	requirePanic(t, func() {
+		MustDateValue(Date{})
+	})
 }

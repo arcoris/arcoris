@@ -31,6 +31,10 @@ func TestNewDecimalRejectsMalformedInput(t *testing.T) {
 		"1E-3",
 		"NaN",
 		"Inf",
+		" 1",
+		"1 ",
+		"1_000",
+		"١٢٣",
 	}
 
 	for _, input := range tests {
@@ -38,6 +42,30 @@ func TestNewDecimalRejectsMalformedInput(t *testing.T) {
 			_, err := NewDecimal(input)
 			requireValueError(t, err, ErrInvalidDecimal, pathDecimal, ErrorReasonInvalidDecimal)
 			requireErrorIs(t, err, ErrInvalidValue)
+		})
+	}
+}
+
+func TestNewDecimalRejectsTrailingDecimalPoint(t *testing.T) {
+	tests := []string{
+		"1.",
+		"0.",
+		"-1.",
+		"-0.",
+		"001.",
+	}
+
+	for _, input := range tests {
+		t.Run(input, func(t *testing.T) {
+			_, err := NewDecimal(input)
+
+			requireValueError(
+				t,
+				err,
+				ErrInvalidDecimal,
+				pathDecimal,
+				ErrorReasonInvalidDecimal,
+			)
 		})
 	}
 }

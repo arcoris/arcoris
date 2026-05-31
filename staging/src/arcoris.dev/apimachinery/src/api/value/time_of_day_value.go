@@ -14,10 +14,28 @@
 
 package value
 
-// TimeOfDayValue constructs a time-of-day Value from an already validated TimeOfDay.
+// TimeOfDayValue constructs a time-of-day Value after checking range invariants.
 //
 // TimeOfDay is immutable by convention and contains no mutable backing data, so
-// the payload can be copied directly.
-func TimeOfDayValue(v TimeOfDay) Value {
-	return Value{kind: KindTimeOfDay, timeOfDayValue: v}
+// the payload can be copied directly after validity is confirmed. The zero
+// TimeOfDay is valid and represents midnight.
+func TimeOfDayValue(v TimeOfDay) (Value, error) {
+	if !v.IsValid() {
+		return Value{}, invalidTimeOfDay("time-of-day value is invalid")
+	}
+
+	return Value{kind: KindTimeOfDay, timeOfDayValue: v}, nil
+}
+
+// MustTimeOfDayValue constructs a time-of-day Value or panics when v is invalid.
+//
+// It is intended for tests and static fixtures where an invalid TimeOfDay is a
+// programmer error. Runtime construction paths should use TimeOfDayValue.
+func MustTimeOfDayValue(v TimeOfDay) Value {
+	value, err := TimeOfDayValue(v)
+	if err != nil {
+		panic(err)
+	}
+
+	return value
 }

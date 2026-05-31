@@ -37,6 +37,20 @@ func TestNewMapAcceptsEmptyMap(t *testing.T) {
 	requireEqual(t, len(value.mapValue.entries), 0)
 }
 
+func TestNewMapRejectsEmptyKey(t *testing.T) {
+	_, err := NewMap(MapEntry("", Null()))
+
+	requireValueError(
+		t,
+		err,
+		ErrEmptyKey,
+		mapEntryKeyPath(0),
+		ErrorReasonEmptyKey,
+	)
+
+	requireErrorIs(t, err, ErrInvalidMap)
+}
+
 func TestMustMapPanicsOnMalformedEntries(t *testing.T) {
 	requirePanic(t, func() {
 		MustMap(Entry{Key: "", Value: Null()})

@@ -16,23 +16,24 @@ package value
 
 // ListView exposes read-only list payload data.
 //
-// A view owns a cloned payload snapshot. Methods that return items clone again
-// so callers cannot mutate the source Value or the view through returned data.
+// A view references private immutable-by-convention payload data. Methods that
+// return items clone those results, so callers cannot mutate the source Value or
+// the view through returned data.
 type ListView struct {
-	// payload is a detached list payload snapshot.
+	// payload is the private list payload the view reads from.
 	payload listPayload
 }
 
-// List returns a detached list view when v is KindList.
+// List returns a read-only list view when v is KindList.
 //
 // For every other kind, List returns ok=false. The returned view preserves item
-// order.
+// order without eagerly deep-cloning the whole list payload.
 func (v Value) List() (ListView, bool) {
 	if v.kind != KindList {
 		return ListView{}, false
 	}
 
-	return ListView{payload: cloneListPayload(v.listValue)}, true
+	return ListView{payload: v.listValue}, true
 }
 
 // Len returns the number of list items.
@@ -62,5 +63,9 @@ func (l ListView) At(index int) (Value, bool) {
 // The slice and every nested Value are cloned, preserving immutable-by-
 // convention behavior for list views.
 func (l ListView) Items() []Value {
+	if len(l.payload.items) == 0 {
+		return []Value{}
+	}
+
 	return cloneValues(l.payload.items)
 }

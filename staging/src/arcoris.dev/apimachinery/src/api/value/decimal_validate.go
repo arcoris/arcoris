@@ -21,9 +21,12 @@ import "strings"
 // Decimal text must have a non-empty integer part and may contain only ASCII
 // digits after dot splitting. Unicode digits and exponent notation are not part
 // of the first-pass portable value grammar.
-func validateDecimalDigits(integerPart string, fractionPart string) error {
+func validateDecimalDigits(integerPart string, fractionPart string, hasFraction bool) error {
 	if integerPart == "" {
 		return invalidDecimal("decimal text must include an integer part")
+	}
+	if hasFraction && fractionPart == "" {
+		return invalidDecimal("decimal text must include fractional digits after decimal point")
 	}
 	if !allASCIIDigits(integerPart) || !allASCIIDigits(fractionPart) {
 		return invalidDecimal("decimal text must contain only ASCII digits and one decimal point")

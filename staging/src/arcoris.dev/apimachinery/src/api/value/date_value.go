@@ -14,10 +14,33 @@
 
 package value
 
-// DateValue constructs a date Value from an already validated Date.
+// DateValue constructs a date Value after checking Date invariants.
 //
 // Date is immutable by convention and contains no mutable backing data, so the
-// payload can be copied directly.
-func DateValue(v Date) Value {
-	return Value{kind: KindDate, dateValue: v}
+// payload can be copied directly after validity is confirmed. The zero Date is
+// rejected because it cannot be produced by NewDate.
+func DateValue(v Date) (Value, error) {
+	if !v.IsValid() {
+		return Value{}, errorf(
+			pathDate,
+			ErrInvalidDate,
+			ErrorReasonInvalidDate,
+			"date value is invalid",
+		)
+	}
+
+	return Value{kind: KindDate, dateValue: v}, nil
+}
+
+// MustDateValue constructs a date Value or panics when v is invalid.
+//
+// It is intended for tests and static fixtures where an invalid Date is a
+// programmer error. Runtime construction paths should use DateValue.
+func MustDateValue(v Date) Value {
+	value, err := DateValue(v)
+	if err != nil {
+		panic(err)
+	}
+
+	return value
 }

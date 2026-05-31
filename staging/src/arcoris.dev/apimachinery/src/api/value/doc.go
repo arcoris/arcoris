@@ -21,15 +21,20 @@
 // descriptors. Descriptor-aware validation belongs to a future valuevalidation
 // package.
 //
-// Value is immutable by API convention. Constructors and accessors clone
-// mutable data such as byte slices and composite payloads, so callers cannot
-// mutate stored values through returned slices, maps, or views. The zero Value
-// is invalid and represents missing initialization; Null is an explicit API
-// value.
+// Value is immutable by API convention. Constructors clone mutable inputs, and
+// accessors clone mutable outputs such as byte slices and nested composite
+// values. The zero Value is invalid and represents missing initialization; Null
+// is an explicit API value.
 //
 // Object and map views use linear lookup rather than storing lookup indexes in
 // payloads. API values are expected to be small, and this keeps construction,
 // cloning, and view creation allocation-light with fewer invariants to maintain.
+// Empty object, list, and map views return non-nil empty slices from bulk
+// accessors even though internal empty payload storage may be nil.
+//
+// Map keys are concrete non-empty strings. Empty key rejection is a base value
+// grammar invariant; key regexes, prefixes, and semantic key constraints belong
+// to descriptor-aware validation outside this package.
 //
 // The package does not implement JSON or YAML codecs, Go-struct introspection,
 // object/resource validation, defaulting, pruning, conversion, admission,

@@ -16,24 +16,24 @@ package value
 
 // ObjectView exposes read-only object payload data.
 //
-// A view owns a cloned payload snapshot. Methods that return values or slices
-// clone again, so callers cannot mutate the original Value or the view through
-// returned data.
+// A view references private immutable-by-convention payload data. Methods that
+// return values or slices clone those results, so callers cannot mutate the
+// original Value or the view through returned data.
 type ObjectView struct {
-	// payload is a detached object payload snapshot.
+	// payload is the private object payload the view reads from.
 	payload objectPayload
 }
 
-// Object returns a detached object view when v is KindObject.
+// Object returns a read-only object view when v is KindObject.
 //
-// For every other kind, Object returns ok=false. The returned view is detached
-// from v and preserves object field order.
+// For every other kind, Object returns ok=false. The returned view preserves
+// object field order without eagerly deep-cloning the whole object payload.
 func (v Value) Object() (ObjectView, bool) {
 	if v.kind != KindObject {
 		return ObjectView{}, false
 	}
 
-	return ObjectView{payload: cloneObjectPayload(v.objectValue)}, true
+	return ObjectView{payload: v.objectValue}, true
 }
 
 // Len returns the number of object fields.
@@ -72,6 +72,10 @@ func (o ObjectView) Get(name string) (Value, bool) {
 // Both the slice and every nested Value are cloned. Mutating the result cannot
 // affect the view or source Value.
 func (o ObjectView) Fields() []Field {
+	if len(o.payload.fields) == 0 {
+		return []Field{}
+	}
+
 	return cloneFields(o.payload.fields)
 }
 

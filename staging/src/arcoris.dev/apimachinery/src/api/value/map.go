@@ -19,6 +19,8 @@ package value
 // Map values represent dynamic key/value payloads and are distinct from object
 // records. They do not store key descriptors, value descriptors, key regexes,
 // or entry-count constraints. Entries are cloned and kept in caller order.
+// Empty keys are rejected as a base value grammar invariant; descriptor-aware
+// validation can apply stronger semantic key rules later.
 func NewMap(entries ...Entry) (Value, error) {
 	payload, err := newMapPayload(entries)
 	if err != nil {

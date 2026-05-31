@@ -55,6 +55,17 @@ func (d Date) Day() int {
 	return d.day
 }
 
+// IsValid reports whether d could have been produced by NewDate.
+//
+// The zero Date is invalid because month zero is not a calendar month. This
+// lets DateValue reject uninitialized Date values instead of turning them into
+// concrete payloads.
+func (d Date) IsValid() bool {
+	return d.month >= time.January &&
+		d.month <= time.December &&
+		isExistingDate(d.year, d.month, d.day)
+}
+
 // String returns the canonical diagnostic date text.
 //
 // The YYYY-MM-DD text is for diagnostics and tests. JSON or other wire encoding

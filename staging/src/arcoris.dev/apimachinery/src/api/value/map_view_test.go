@@ -41,6 +41,24 @@ func TestMapViewAccessors(t *testing.T) {
 	requireEqual(t, ok, false)
 }
 
+func TestMapViewEmptySlicesAreNonNil(t *testing.T) {
+	value := mustMap(t)
+	view, ok := value.Map()
+	requireEqual(t, ok, true)
+
+	entries := view.Entries()
+	if entries == nil {
+		t.Fatal("Entries() returned nil")
+	}
+	requireEqual(t, len(entries), 0)
+
+	keys := view.Keys()
+	if keys == nil {
+		t.Fatal("Keys() returned nil")
+	}
+	requireEqual(t, len(keys), 0)
+}
+
 func TestMapViewReturnsDetachedEntriesAndValues(t *testing.T) {
 	value := mustMap(t, MapEntry("payload", Bytes([]byte{1, 2})))
 	view, ok := value.Map()

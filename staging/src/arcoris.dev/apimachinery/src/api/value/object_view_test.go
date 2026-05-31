@@ -40,6 +40,24 @@ func TestObjectViewAccessors(t *testing.T) {
 	requireEqual(t, ok, false)
 }
 
+func TestObjectViewEmptySlicesAreNonNil(t *testing.T) {
+	value := mustObject(t)
+	view, ok := value.Object()
+	requireEqual(t, ok, true)
+
+	fields := view.Fields()
+	if fields == nil {
+		t.Fatal("Fields() returned nil")
+	}
+	requireEqual(t, len(fields), 0)
+
+	names := view.Names()
+	if names == nil {
+		t.Fatal("Names() returned nil")
+	}
+	requireEqual(t, len(names), 0)
+}
+
 func TestObjectViewReturnsDetachedFieldsAndValues(t *testing.T) {
 	value := mustObject(t, ObjectField("payload", Bytes([]byte{1, 2})))
 	view, ok := value.Object()

@@ -29,3 +29,38 @@ func TestDateAccessorsAndString(t *testing.T) {
 	requireEqual(t, date.Equal(Date{year: 2024, month: time.February, day: 29}), true)
 	requireEqual(t, date.Equal(Date{year: 2023, month: time.February, day: 28}), false)
 }
+
+func TestDateIsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		date Date
+		want bool
+	}{
+		{
+			name: "zero",
+			date: Date{},
+			want: false,
+		},
+		{
+			name: "valid leap day",
+			date: Date{year: 2024, month: time.February, day: 29},
+			want: true,
+		},
+		{
+			name: "invalid month",
+			date: Date{year: 2024, month: 13, day: 1},
+			want: false,
+		},
+		{
+			name: "invalid day",
+			date: Date{year: 2023, month: time.February, day: 29},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			requireEqual(t, tt.date.IsValid(), tt.want)
+		})
+	}
+}

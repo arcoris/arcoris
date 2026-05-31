@@ -54,6 +54,20 @@ func (t TimeOfDay) Nanosecond() int {
 	return t.nanosecond
 }
 
+// IsValid reports whether t is inside the supported wall-clock range.
+//
+// Unlike Date, the zero TimeOfDay is valid: it represents midnight exactly.
+func (t TimeOfDay) IsValid() bool {
+	return t.hour >= 0 &&
+		t.hour <= 23 &&
+		t.minute >= 0 &&
+		t.minute <= 59 &&
+		t.second >= 0 &&
+		t.second <= 59 &&
+		t.nanosecond >= 0 &&
+		t.nanosecond <= 999999999
+}
+
 // String returns the canonical diagnostic time-of-day text.
 //
 // Fractional seconds are emitted only when non-zero. The returned text is not a

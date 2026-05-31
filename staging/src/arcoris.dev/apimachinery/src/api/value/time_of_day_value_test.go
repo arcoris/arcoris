@@ -18,8 +18,35 @@ import "testing"
 
 func TestTimeOfDayValue(t *testing.T) {
 	timeOfDay := TimeOfDay{hour: 1, minute: 2, second: 3, nanosecond: 4}
-	value := TimeOfDayValue(timeOfDay)
+	value, err := TimeOfDayValue(timeOfDay)
+	requireNoError(t, err)
 
 	requireEqual(t, value.Kind(), KindTimeOfDay)
 	requireEqual(t, value.timeOfDayValue.Equal(timeOfDay), true)
+}
+
+func TestTimeOfDayValueAcceptsMidnight(t *testing.T) {
+	value, err := TimeOfDayValue(TimeOfDay{})
+	requireNoError(t, err)
+
+	requireEqual(t, value.Kind(), KindTimeOfDay)
+	requireEqual(t, value.timeOfDayValue.Equal(TimeOfDay{}), true)
+}
+
+func TestTimeOfDayValueRejectsInvalidValue(t *testing.T) {
+	_, err := TimeOfDayValue(TimeOfDay{hour: 24})
+
+	requireValueError(
+		t,
+		err,
+		ErrInvalidTime,
+		pathTimeOfDay,
+		ErrorReasonInvalidTime,
+	)
+}
+
+func TestMustTimeOfDayValuePanicsOnInvalidTime(t *testing.T) {
+	requirePanic(t, func() {
+		MustTimeOfDayValue(TimeOfDay{hour: 24})
+	})
 }

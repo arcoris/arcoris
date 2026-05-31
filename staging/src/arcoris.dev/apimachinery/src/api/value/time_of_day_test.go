@@ -31,3 +31,38 @@ func TestTimeOfDayAccessorsAndString(t *testing.T) {
 func TestTimeOfDayStringWholeSecond(t *testing.T) {
 	requireEqual(t, (TimeOfDay{hour: 1, minute: 2, second: 3}).String(), "01:02:03")
 }
+
+func TestTimeOfDayIsValid(t *testing.T) {
+	tests := []struct {
+		name      string
+		timeOfDay TimeOfDay
+		want      bool
+	}{
+		{
+			name:      "midnight zero value",
+			timeOfDay: TimeOfDay{},
+			want:      true,
+		},
+		{
+			name:      "last nanosecond",
+			timeOfDay: TimeOfDay{hour: 23, minute: 59, second: 59, nanosecond: 999999999},
+			want:      true,
+		},
+		{
+			name:      "invalid hour",
+			timeOfDay: TimeOfDay{hour: 24},
+			want:      false,
+		},
+		{
+			name:      "invalid nanosecond",
+			timeOfDay: TimeOfDay{nanosecond: 1000000000},
+			want:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			requireEqual(t, tt.timeOfDay.IsValid(), tt.want)
+		})
+	}
+}
