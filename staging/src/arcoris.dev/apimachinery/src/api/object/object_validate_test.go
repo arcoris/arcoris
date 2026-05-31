@@ -87,12 +87,20 @@ func TestObjectValidateMetaRejectsInvalidMetadata(t *testing.T) {
 }
 
 func TestObjectValidateMetaDoesNotInspectPayloads(t *testing.T) {
+	desiredCalled := false
+	observedCalled := false
 	obj := NewObserved(
 		validTypeMeta(),
 		validObjectMeta(),
-		uninspectedPayload{Value: "desired"},
-		uninspectedPayload{Value: "observed"},
+		payloadWithValidate{Called: &desiredCalled},
+		payloadWithValidate{Called: &observedCalled},
 	)
 
 	requireNoError(t, obj.ValidateMeta())
+	if desiredCalled {
+		t.Fatal("ValidateMeta called desired payload Validate")
+	}
+	if observedCalled {
+		t.Fatal("ValidateMeta called observed payload Validate")
+	}
 }

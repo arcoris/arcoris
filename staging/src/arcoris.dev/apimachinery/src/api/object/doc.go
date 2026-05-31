@@ -23,8 +23,11 @@
 // desired or observed payloads because it does not know the resource contract or
 // structural descriptors for those surfaces. Resource contracts live in
 // arcoris.dev/apimachinery/api/resource. Structural descriptors live in
-// arcoris.dev/apimachinery/api/types. Resource-aware object validation belongs
-// in a future dedicated validation package.
+// arcoris.dev/apimachinery/api/types.
+//
+// A future validation package may bind Object[D, O] values to resource
+// definitions and type descriptors. That layer is intentionally outside
+// api/object so this package remains a small reusable envelope model.
 //
 // The package is not runtime machinery. It does not implement storage keys,
 // watches, admission, defaulting, conversion, selectors, status conventions,

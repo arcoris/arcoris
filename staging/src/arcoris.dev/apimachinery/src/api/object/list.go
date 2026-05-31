@@ -22,7 +22,7 @@ import "arcoris.dev/apimachinery/api/meta"
 // another API object representation. The list envelope validates only metadata.
 type List[T any] struct {
 	meta.TypeMeta `json:",inline"`
-	meta.ListMeta `json:"metadata,omitempty"`
+	meta.ListMeta `json:"metadata,omitempty,omitzero"`
 
 	// Items are the list payload values. api/object does not validate them.
 	Items []T `json:"items"`
@@ -31,7 +31,9 @@ type List[T any] struct {
 // NewList constructs a list envelope.
 //
 // Metadata is copied using metadata clone semantics. Items are shallow-copied
-// into a new slice, but item values themselves are not cloned.
+// into a new slice, but item values themselves are not cloned. The generic list
+// envelope preserves nil-vs-empty item slice shape; serving layers may normalize
+// API responses later if they require empty lists to encode as [].
 func NewList[T any](
 	typeMeta meta.TypeMeta,
 	listMeta meta.ListMeta,
@@ -44,12 +46,14 @@ func NewList[T any](
 	}
 }
 
-// Len returns the number of list items.
+// Len reports the number of list items without inspecting item values.
 func (l List[T]) Len() int {
 	return len(l.Items)
 }
 
 // IsZero reports whether the list envelope has no metadata and no items.
+//
+// It checks only slice length, not generic item contents.
 func (l List[T]) IsZero() bool {
 	return l.TypeMeta.IsZero() &&
 		l.ListMeta.IsZero() &&

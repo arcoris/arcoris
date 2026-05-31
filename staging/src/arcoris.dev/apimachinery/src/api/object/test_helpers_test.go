@@ -36,6 +36,17 @@ type uninspectedPayload struct {
 	Value string `json:"value"`
 }
 
+type payloadWithValidate struct {
+	Called *bool
+}
+
+func (p payloadWithValidate) Validate() error {
+	if p.Called != nil {
+		*p.Called = true
+	}
+	return errors.New("payload validation should not be called")
+}
+
 func requireNoError(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {

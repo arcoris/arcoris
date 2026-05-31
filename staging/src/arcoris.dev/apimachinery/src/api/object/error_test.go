@@ -44,6 +44,22 @@ func TestErrorFormatting(t *testing.T) {
 	}
 }
 
+func TestNestedErrorDetailDoesNotRepeatCause(t *testing.T) {
+	cause := meta.TypeMeta{Kind: "Worker"}.Validate()
+	err := nested("object.typeMeta", ErrInvalidObject, cause)
+
+	var objectErr *Error
+	if !errors.As(err, &objectErr) {
+		t.Fatalf("errors.As(%T) = false", objectErr)
+	}
+	if objectErr.Detail != "metadata is invalid" {
+		t.Fatalf("Detail = %q", objectErr.Detail)
+	}
+	if strings.Contains(objectErr.Detail, cause.Error()) {
+		t.Fatalf("Detail repeats nested cause: %q", objectErr.Detail)
+	}
+}
+
 func TestErrorUnwrapPreservesSentinelAndCause(t *testing.T) {
 	cause := meta.TypeMeta{Kind: "Worker"}.Validate()
 	err := nested("object.typeMeta", ErrInvalidObject, cause)

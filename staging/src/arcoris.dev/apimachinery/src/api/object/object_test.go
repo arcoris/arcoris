@@ -18,15 +18,16 @@ import "testing"
 
 func TestNew(t *testing.T) {
 	desired := testDesired{Replicas: 3}
+	typeMeta := validTypeMeta()
 	objectMeta := validObjectMeta()
 
 	obj := New[testDesired, testObserved](
-		validTypeMeta(),
+		typeMeta,
 		objectMeta,
 		desired,
 	)
 
-	if obj.TypeMeta != validTypeMeta() {
+	if obj.TypeMeta != typeMeta {
 		t.Fatalf("TypeMeta = %#v", obj.TypeMeta)
 	}
 	if obj.ObjectMeta.Name != objectMeta.Name || obj.ObjectMeta.Namespace != objectMeta.Namespace {
@@ -41,15 +42,20 @@ func TestNew(t *testing.T) {
 }
 
 func TestNewCopiesMetadata(t *testing.T) {
+	typeMeta := validTypeMeta()
 	objectMeta := validObjectMeta()
 	obj := New[testDesired, testObserved](
-		validTypeMeta(),
+		typeMeta,
 		objectMeta,
 		testDesired{Replicas: 3},
 	)
 
+	typeMeta.Kind = "Other"
 	objectMeta.Labels["role"] = "mutated"
 
+	if obj.TypeMeta.Kind != "Worker" {
+		t.Fatalf("stored kind = %q, want detached type metadata", obj.TypeMeta.Kind)
+	}
 	if got := obj.ObjectMeta.Labels["role"]; got != "worker" {
 		t.Fatalf("stored label = %q, want detached metadata", got)
 	}
@@ -69,5 +75,13 @@ func TestNewObserved(t *testing.T) {
 	}
 	if obj.Observed == nil || *obj.Observed != observed {
 		t.Fatalf("Observed = %#v", obj.Observed)
+	}
+
+	observed.ReadyReplicas = 9
+	if obj.Observed.ReadyReplicas != 2 {
+		t.Fatalf("Observed changed after caller mutation: %#v", obj.Observed)
+	}
+	if obj.Observed == &observed {
+		t.Fatal("NewObserved() reused caller variable address")
 	}
 }

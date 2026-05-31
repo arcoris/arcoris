@@ -17,6 +17,8 @@ package object
 import (
 	"encoding/json"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/meta"
 )
 
 func TestListJSONShape(t *testing.T) {
@@ -59,5 +61,51 @@ func TestListJSONShape(t *testing.T) {
 	items, ok := got["items"].([]any)
 	if !ok || len(items) != 1 {
 		t.Fatalf("items = %#v", got["items"])
+	}
+}
+
+func TestListJSONEncodesNilItems(t *testing.T) {
+	list := NewList[testDesired](
+		meta.TypeMeta{},
+		meta.ListMeta{},
+		nil,
+	)
+
+	data, err := json.Marshal(list)
+	requireNoError(t, err)
+
+	got := decodeObject(t, data)
+	for _, field := range []string{"apiVersion", "kind", "metadata"} {
+		if _, ok := got[field]; ok {
+			t.Fatalf("%q encoded for zero metadata list: %s", field, data)
+		}
+	}
+
+	items, ok := got["items"]
+	if !ok {
+		t.Fatalf("items missing from list JSON: %s", data)
+	}
+	if items != nil {
+		t.Fatalf("nil items encoded as %#v, want null", items)
+	}
+}
+
+func TestListJSONEncodesEmptyItems(t *testing.T) {
+	list := NewList(
+		meta.TypeMeta{},
+		meta.ListMeta{},
+		[]testDesired{},
+	)
+
+	data, err := json.Marshal(list)
+	requireNoError(t, err)
+
+	got := decodeObject(t, data)
+	items, ok := got["items"].([]any)
+	if !ok {
+		t.Fatalf("empty items encoded as %#v", got["items"])
+	}
+	if len(items) != 0 {
+		t.Fatalf("empty items length = %d", len(items))
 	}
 }

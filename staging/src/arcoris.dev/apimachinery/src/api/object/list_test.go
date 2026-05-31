@@ -40,6 +40,32 @@ func TestNewList(t *testing.T) {
 	}
 }
 
+func TestNewListPreservesNilAndEmptyItems(t *testing.T) {
+	nilList := NewList[int](validListTypeMeta(), validListMeta(), nil)
+	if nilList.Items != nil {
+		t.Fatalf("nil items became %#v", nilList.Items)
+	}
+
+	emptyList := NewList(validListTypeMeta(), validListMeta(), []int{})
+	if emptyList.Items == nil || len(emptyList.Items) != 0 {
+		t.Fatalf("empty items became %#v", emptyList.Items)
+	}
+}
+
+func TestNewListItemCopyIsShallow(t *testing.T) {
+	type item struct {
+		Values []int
+	}
+
+	items := []item{{Values: []int{1}}}
+	list := NewList(validListTypeMeta(), validListMeta(), items)
+	items[0].Values[0] = 9
+
+	if list.Items[0].Values[0] != 9 {
+		t.Fatal("NewList() unexpectedly deep-copied item values")
+	}
+}
+
 func TestListIsZero(t *testing.T) {
 	tests := []struct {
 		name string

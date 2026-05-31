@@ -85,11 +85,15 @@ func TestListValidateMetaRejectsInvalidMetadata(t *testing.T) {
 }
 
 func TestListValidateMetaDoesNotInspectItems(t *testing.T) {
+	called := false
 	list := NewList(
 		validListTypeMeta(),
 		validListMeta(),
-		[]uninspectedPayload{{Value: "item"}},
+		[]payloadWithValidate{{Called: &called}},
 	)
 
 	requireNoError(t, list.ValidateMeta())
+	if called {
+		t.Fatal("ValidateMeta called item Validate")
+	}
 }

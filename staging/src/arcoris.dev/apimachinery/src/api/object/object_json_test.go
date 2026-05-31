@@ -17,6 +17,9 @@ package object
 import (
 	"encoding/json"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/meta"
+	"arcoris.dev/apimachinery/api/meta/stamp"
 )
 
 func TestObjectJSONShape(t *testing.T) {
@@ -70,5 +73,49 @@ func TestObjectJSONOmitsNilObserved(t *testing.T) {
 	got := decodeObject(t, data)
 	if _, ok := got["observed"]; ok {
 		t.Fatalf("observed encoded for nil observed: %s", data)
+	}
+}
+
+func TestObjectJSONOmitsZeroMetadata(t *testing.T) {
+	obj := New[testDesired, testObserved](
+		meta.TypeMeta{},
+		meta.ObjectMeta{},
+		testDesired{},
+	)
+
+	data, err := json.Marshal(obj)
+	requireNoError(t, err)
+
+	got := decodeObject(t, data)
+	for _, field := range []string{"apiVersion", "kind", "metadata", "observed"} {
+		if _, ok := got[field]; ok {
+			t.Fatalf("%q encoded for zero metadata object: %s", field, data)
+		}
+	}
+	if _, ok := got["desired"]; !ok {
+		t.Fatalf("desired missing from object JSON: %s", data)
+	}
+}
+
+func TestObjectJSONOmitsZeroCreatedAt(t *testing.T) {
+	obj := New[testDesired, testObserved](
+		validTypeMeta(),
+		meta.ObjectMeta{
+			Name:      "main",
+			CreatedAt: stamp.Timestamp{},
+		},
+		testDesired{Replicas: 3},
+	)
+
+	data, err := json.Marshal(obj)
+	requireNoError(t, err)
+
+	got := decodeObject(t, data)
+	metadata, ok := got["metadata"].(map[string]any)
+	if !ok {
+		t.Fatalf("metadata = %#v", got["metadata"])
+	}
+	if _, ok := metadata["createdAt"]; ok {
+		t.Fatalf("zero CreatedAt encoded in JSON: %s", data)
 	}
 }

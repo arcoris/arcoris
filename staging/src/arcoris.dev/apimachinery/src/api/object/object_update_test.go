@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/meta"
+	"arcoris.dev/apimachinery/api/meta/labels"
 )
 
 func TestObjectUpdateMethods(t *testing.T) {
@@ -28,7 +29,10 @@ func TestObjectUpdateMethods(t *testing.T) {
 	)
 
 	otherType := meta.TypeMeta{Kind: "Other"}
-	otherMeta := meta.ObjectMeta{Name: "other"}
+	otherMeta := meta.ObjectMeta{
+		Name:   "other",
+		Labels: labels.Set{"role": "other"},
+	}
 
 	withType := original.WithTypeMeta(otherType)
 	if withType.TypeMeta != otherType {
@@ -46,6 +50,11 @@ func TestObjectUpdateMethods(t *testing.T) {
 		t.Fatal("WithObjectMeta() mutated original")
 	}
 
+	otherMeta.Labels["role"] = "mutated"
+	if withMeta.ObjectMeta.Labels["role"] != "other" {
+		t.Fatal("WithObjectMeta() did not detach replacement metadata")
+	}
+
 	withDesired := original.WithDesired(testDesired{Replicas: 5})
 	if withDesired.Desired.Replicas != 5 {
 		t.Fatalf("WithDesired() Desired = %#v", withDesired.Desired)
@@ -60,6 +69,13 @@ func TestObjectUpdateMethods(t *testing.T) {
 	}
 	if original.HasObserved() {
 		t.Fatal("WithObserved() mutated original")
+	}
+
+	observed := testObserved{ReadyReplicas: 7}
+	withObserved = original.WithObserved(observed)
+	observed.ReadyReplicas = 9
+	if withObserved.Observed.ReadyReplicas != 7 {
+		t.Fatal("WithObserved() reused caller variable address")
 	}
 
 	withoutObserved := withObserved.WithoutObserved()

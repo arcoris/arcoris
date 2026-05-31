@@ -14,15 +14,13 @@
 
 package object
 
-import "fmt"
-
 // nested wraps a metadata validation failure without hiding its identity.
 func nested(path string, err error, cause error) error {
 	return &Error{
 		Path:   path,
 		Err:    err,
 		Reason: ErrorReasonInvalidMetadata,
-		Detail: fmt.Sprintf("metadata is invalid: %v", cause),
+		Detail: "metadata is invalid",
 		Cause:  cause,
 	}
 }

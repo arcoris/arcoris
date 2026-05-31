@@ -23,7 +23,7 @@ import "arcoris.dev/apimachinery/api/meta"
 // validation requires a resource-aware validation layer.
 type Object[D any, O any] struct {
 	meta.TypeMeta   `json:",inline"`
-	meta.ObjectMeta `json:"metadata,omitempty"`
+	meta.ObjectMeta `json:"metadata,omitempty,omitzero"`
 
 	// Desired is the resource-specific requested state payload.
 	Desired D `json:"desired"`
@@ -50,7 +50,8 @@ func New[D any, O any](
 // NewObserved constructs an object envelope with observed payload.
 //
 // The observed value is stored behind a fresh pointer owned by the envelope.
-// The payload itself is not deep-copied.
+// Desired and observed payload values are assigned directly; api/object does
+// not deep-copy arbitrary payload values.
 func NewObserved[D any, O any](
 	typeMeta meta.TypeMeta,
 	objectMeta meta.ObjectMeta,
