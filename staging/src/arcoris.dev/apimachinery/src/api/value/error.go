@@ -30,20 +30,12 @@ var (
 	ErrInvalidObject = errors.New("invalid object value")
 	// ErrInvalidList classifies malformed list payload values.
 	ErrInvalidList = errors.New("invalid list value")
-	// ErrInvalidMap classifies malformed map payload values.
-	ErrInvalidMap = errors.New("invalid map value")
-	// ErrInvalidField classifies malformed object field inputs.
-	ErrInvalidField = errors.New("invalid object field")
-	// ErrInvalidEntry classifies malformed map entry inputs.
-	ErrInvalidEntry = errors.New("invalid map entry")
-	// ErrDuplicateName classifies repeated object field names.
-	ErrDuplicateName = errors.New("duplicate object field name")
-	// ErrDuplicateKey classifies repeated map entry keys.
-	ErrDuplicateKey = errors.New("duplicate map key")
-	// ErrEmptyName classifies empty object field names.
-	ErrEmptyName = errors.New("empty object field name")
-	// ErrEmptyKey classifies empty map keys.
-	ErrEmptyKey = errors.New("empty map key")
+	// ErrInvalidMember classifies malformed object member inputs.
+	ErrInvalidMember = errors.New("invalid object member")
+	// ErrDuplicateName classifies repeated object member names.
+	ErrDuplicateName = errors.New("duplicate object member name")
+	// ErrEmptyName classifies empty object member names.
+	ErrEmptyName = errors.New("empty object member name")
 	// ErrInvalidFloat classifies NaN and infinity float inputs.
 	ErrInvalidFloat = errors.New("invalid float value")
 	// ErrInvalidDecimal classifies malformed decimal text inputs.
@@ -56,7 +48,7 @@ var (
 
 // Error is the structured diagnostic returned by value constructors.
 //
-// Err and Reason are stable programmatic classification fields. Detail is for
+// Err and Reason are stable programmatic classification members. Detail is for
 // human diagnostics. Cause is reserved for nested construction failures when a
 // future constructor wraps another construction path.
 type Error struct {
@@ -104,7 +96,7 @@ func (e *Error) Error() string {
 
 // Unwrap preserves both broad value classification and nested causes.
 //
-// For example, a duplicate object field unwraps to ErrDuplicateName,
+// For example, a duplicate object member unwraps to ErrDuplicateName,
 // ErrInvalidObject, and ErrInvalidValue. This keeps callers free to handle
 // either specific failures or broad value-construction failures.
 func (e *Error) Unwrap() error {
@@ -118,9 +110,6 @@ func (e *Error) Unwrap() error {
 	}
 	if isInvalidObjectFailure(e.Err) {
 		base = errors.Join(base, ErrInvalidObject)
-	}
-	if isInvalidMapFailure(e.Err) {
-		base = errors.Join(base, ErrInvalidMap)
 	}
 
 	if base != nil && e.Cause != nil {
@@ -138,13 +127,9 @@ func isInvalidValueFailure(err error) bool {
 	switch err {
 	case ErrInvalidObject,
 		ErrInvalidList,
-		ErrInvalidMap,
-		ErrInvalidField,
-		ErrInvalidEntry,
+		ErrInvalidMember,
 		ErrDuplicateName,
-		ErrDuplicateKey,
 		ErrEmptyName,
-		ErrEmptyKey,
 		ErrInvalidFloat,
 		ErrInvalidDecimal,
 		ErrInvalidDate,
@@ -157,26 +142,12 @@ func isInvalidValueFailure(err error) bool {
 
 // isInvalidObjectFailure reports whether err belongs to object construction.
 //
-// Object field-specific failures also unwrap to ErrInvalidObject.
+// Object member-specific failures also unwrap to ErrInvalidObject.
 func isInvalidObjectFailure(err error) bool {
 	switch err {
-	case ErrInvalidField,
+	case ErrInvalidMember,
 		ErrDuplicateName,
 		ErrEmptyName:
-		return true
-	default:
-		return false
-	}
-}
-
-// isInvalidMapFailure reports whether err belongs to map construction.
-//
-// Map entry-specific failures also unwrap to ErrInvalidMap.
-func isInvalidMapFailure(err error) bool {
-	switch err {
-	case ErrInvalidEntry,
-		ErrDuplicateKey,
-		ErrEmptyKey:
 		return true
 	default:
 		return false

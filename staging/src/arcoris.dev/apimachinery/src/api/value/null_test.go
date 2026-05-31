@@ -27,7 +27,7 @@ func TestZeroValueIsInvalid(t *testing.T) {
 }
 
 func TestNullValue(t *testing.T) {
-	null := Null()
+	null := NullValue()
 
 	requireEqual(t, null.Kind(), KindNull)
 	requireEqual(t, null.IsZero(), false)

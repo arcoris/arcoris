@@ -14,51 +14,51 @@
 
 package value
 
-// validateObjectField checks one object field before payload insertion.
+// validateObjectMember checks one object member before payload insertion.
 //
-// The existing slice contains only already validated and cloned fields. Passing
+// The existing slice contains only already validated and cloned members. Passing
 // it in keeps duplicate-name detection local to object construction without
 // storing an index in the final payload.
-func validateObjectField(index int, field Field, existing []Field) error {
-	if field.Name == "" {
+func validateObjectMember(index int, member Member, existing []Member) error {
+	if member.Name == "" {
 		return errorf(
-			objectFieldNamePath(index),
+			objectMemberNamePath(index),
 			ErrEmptyName,
 			ErrorReasonEmptyName,
-			"object field name is empty",
+			"object member name is empty",
 		)
 	}
 
-	if field.Value.IsZero() {
+	if member.Value.IsZero() {
 		return errorf(
-			objectFieldValuePath(index),
-			ErrInvalidField,
+			objectMemberValuePath(index),
+			ErrInvalidMember,
 			ErrorReasonInvalidValue,
-			"object field %q has an invalid zero value",
-			field.Name,
+			"object member %q has an invalid zero value",
+			member.Name,
 		)
 	}
 
-	if hasObjectFieldName(existing, field.Name) {
+	if hasObjectMemberName(existing, member.Name) {
 		return errorf(
-			objectFieldNamePath(index),
+			objectMemberNamePath(index),
 			ErrDuplicateName,
 			ErrorReasonDuplicateName,
-			"object field name %q is duplicated",
-			field.Name,
+			"object member name %q is duplicated",
+			member.Name,
 		)
 	}
 
 	return nil
 }
 
-// hasObjectFieldName performs the intentionally small linear duplicate check.
+// hasObjectMemberName performs the intentionally small linear duplicate check.
 //
 // It trades O(n) lookup for lower allocation and simpler payload invariants,
 // which is the better default for short API objects.
-func hasObjectFieldName(fields []Field, name string) bool {
-	for _, field := range fields {
-		if field.Name == name {
+func hasObjectMemberName(members []Member, name string) bool {
+	for _, member := range members {
+		if member.Name == name {
 			return true
 		}
 	}

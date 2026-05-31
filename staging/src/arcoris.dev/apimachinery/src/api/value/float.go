@@ -16,13 +16,13 @@ package value
 
 import "math"
 
-// NewFloat constructs a finite binary floating-point value.
+// FloatValue constructs a finite KindFloat Value.
 //
 // NaN and infinities are rejected because they are not portable API payload
 // values unless a future descriptor rule explicitly admits them. The package
 // stores float64 only; float32 portability is a descriptor constraint, not a
 // separate value kind.
-func NewFloat(v float64) (Value, error) {
+func FloatValue(v float64) (Value, error) {
 	if math.IsNaN(v) {
 		return Value{}, errorf(
 			pathFloat,
@@ -44,13 +44,13 @@ func NewFloat(v float64) (Value, error) {
 	return Value{kind: KindFloat, floatValue: v}, nil
 }
 
-// MustFloat constructs a float Value or panics when v is not finite.
+// MustFloatValue constructs a float Value or panics when v is not finite.
 //
 // It is intended for package-level fixtures and tests where invalid input is a
-// programmer error. Runtime parsing paths should use NewFloat and handle the
+// programmer error. Runtime parsing paths should use FloatValue and handle the
 // structured error.
-func MustFloat(v float64) Value {
-	value, err := NewFloat(v)
+func MustFloatValue(v float64) Value {
+	value, err := FloatValue(v)
 	if err != nil {
 		panic(err)
 	}

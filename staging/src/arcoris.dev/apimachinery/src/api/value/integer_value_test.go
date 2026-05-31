@@ -18,8 +18,8 @@ import "testing"
 
 func TestIntegerValueConstructors(t *testing.T) {
 	tests := []Value{
-		Int64(-1),
-		Uint64(1),
+		Int64Value(-1),
+		Uint64Value(1),
 		IntegerValue(Integer{negative: true}),
 	}
 

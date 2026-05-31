@@ -76,7 +76,7 @@ func (d Date) String() string {
 
 // Equal reports whether d and other represent the same calendar date.
 //
-// Date equality ignores timezone by design because Date has no timezone field.
+// Date equality ignores timezone by design because Date has no timezone member.
 func (d Date) Equal(other Date) bool {
 	return d.year == other.year && d.month == other.month && d.day == other.day
 }

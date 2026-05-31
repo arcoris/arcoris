@@ -42,19 +42,19 @@ func TestErrorfBuildsStructuredError(t *testing.T) {
 func TestNestedBuildsStructuredErrorWithCause(t *testing.T) {
 	cause := errors.New("nested")
 	err := nested(
-		"object.fields[0].value",
-		ErrInvalidField,
-		ErrorReasonInvalidField,
-		"object field value is invalid",
+		"object.members[0].value",
+		ErrInvalidMember,
+		ErrorReasonInvalidMember,
+		"object member value is invalid",
 		cause,
 	)
 
 	valueErr := requireValueError(
 		t,
 		err,
-		ErrInvalidField,
-		"object.fields[0].value",
-		ErrorReasonInvalidField,
+		ErrInvalidMember,
+		"object.members[0].value",
+		ErrorReasonInvalidMember,
 	)
 
 	requireEqual(t, valueErr.Cause, cause)

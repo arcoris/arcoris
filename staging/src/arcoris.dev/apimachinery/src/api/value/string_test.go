@@ -17,7 +17,7 @@ package value
 import "testing"
 
 func TestStringValue(t *testing.T) {
-	value := String("worker")
+	value := StringValue("worker")
 
 	requireEqual(t, value.Kind(), KindString)
 	requireEqual(t, value.stringValue, "worker")

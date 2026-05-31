@@ -14,11 +14,11 @@
 
 package value
 
-// String constructs a string value.
+// StringValue constructs a KindString Value.
 //
 // It stores Go string data as supplied. UTF-8, length, and semantic-token rules
 // belong to codecs or future descriptor-aware validation. This keeps the value
 // model focused on storing payload data rather than enforcing schema rules.
-func String(v string) Value {
+func StringValue(v string) Value {
 	return Value{kind: KindString, stringValue: v}
 }

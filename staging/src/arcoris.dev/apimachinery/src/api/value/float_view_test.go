@@ -17,7 +17,7 @@ package value
 import "testing"
 
 func TestFloatAccessor(t *testing.T) {
-	got, ok := MustFloat(1.5).Float()
+	got, ok := MustFloatValue(1.5).Float()
 
 	requireEqual(t, ok, true)
 	requireEqual(t, got, 1.5)

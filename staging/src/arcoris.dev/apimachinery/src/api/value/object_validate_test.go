@@ -16,13 +16,13 @@ package value
 
 import "testing"
 
-func TestValidateObjectFieldRejectsEmptyName(t *testing.T) {
-	err := validateObjectField(0, Field{Name: "", Value: Null()}, nil)
+func TestValidateObjectMemberRejectsEmptyName(t *testing.T) {
+	err := validateObjectMember(0, Member{Name: "", Value: NullValue()}, nil)
 	valueErr := requireValueError(
 		t,
 		err,
 		ErrEmptyName,
-		objectFieldNamePath(0),
+		objectMemberNamePath(0),
 		ErrorReasonEmptyName,
 	)
 
@@ -30,31 +30,31 @@ func TestValidateObjectFieldRejectsEmptyName(t *testing.T) {
 	requireEqual(t, valueErr.Cause == nil, true)
 }
 
-func TestValidateObjectFieldRejectsInvalidValue(t *testing.T) {
-	err := validateObjectField(0, Field{Name: "name"}, nil)
+func TestValidateObjectMemberRejectsInvalidValue(t *testing.T) {
+	err := validateObjectMember(0, Member{Name: "name"}, nil)
 
 	requireValueError(
 		t,
 		err,
-		ErrInvalidField,
-		objectFieldValuePath(0),
+		ErrInvalidMember,
+		objectMemberValuePath(0),
 		ErrorReasonInvalidValue,
 	)
 	requireErrorIs(t, err, ErrInvalidObject)
 }
 
-func TestValidateObjectFieldRejectsDuplicateName(t *testing.T) {
-	err := validateObjectField(
+func TestValidateObjectMemberRejectsDuplicateName(t *testing.T) {
+	err := validateObjectMember(
 		1,
-		ObjectField("name", Null()),
-		[]Field{ObjectField("name", Null())},
+		ObjectMember("name", NullValue()),
+		[]Member{ObjectMember("name", NullValue())},
 	)
 
 	requireValueError(
 		t,
 		err,
 		ErrDuplicateName,
-		objectFieldNamePath(1),
+		objectMemberNamePath(1),
 		ErrorReasonDuplicateName,
 	)
 	requireErrorIs(t, err, ErrInvalidObject)

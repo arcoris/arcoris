@@ -19,15 +19,15 @@ import (
 	"testing"
 )
 
-func TestNewFloatAcceptsFiniteValues(t *testing.T) {
-	value, err := NewFloat(1.5)
+func TestFloatValueAcceptsFiniteValues(t *testing.T) {
+	value, err := FloatValue(1.5)
 	requireNoError(t, err)
 
 	requireEqual(t, value.Kind(), KindFloat)
 	requireEqual(t, value.floatValue, 1.5)
 }
 
-func TestNewFloatRejectsNonFiniteValues(t *testing.T) {
+func TestFloatValueRejectsNonFiniteValues(t *testing.T) {
 	tests := []struct {
 		name  string
 		value float64
@@ -39,15 +39,15 @@ func TestNewFloatRejectsNonFiniteValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewFloat(tt.value)
+			_, err := FloatValue(tt.value)
 			requireValueError(t, err, ErrInvalidFloat, pathFloat, ErrorReasonInvalidFloat)
 			requireErrorIs(t, err, ErrInvalidValue)
 		})
 	}
 }
 
-func TestMustFloatPanicsOnInvalidInput(t *testing.T) {
+func TestMustFloatValuePanicsOnInvalidInput(t *testing.T) {
 	requirePanic(t, func() {
-		MustFloat(math.NaN())
+		MustFloatValue(math.NaN())
 	})
 }

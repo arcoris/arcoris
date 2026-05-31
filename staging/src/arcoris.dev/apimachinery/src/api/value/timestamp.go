@@ -16,11 +16,11 @@ package value
 
 import "time"
 
-// Timestamp constructs a timestamp value and strips monotonic clock data.
+// TimestampValue constructs a KindTimestamp Value and strips monotonic clock data.
 //
 // The location and instant are preserved, but Go's monotonic clock component is
 // removed with Round(0) so equality and future serialization are deterministic.
 // The zero time is allowed as concrete payload data.
-func Timestamp(v time.Time) Value {
+func TimestampValue(v time.Time) Value {
 	return Value{kind: KindTimestamp, timestampValue: v.Round(0)}
 }

@@ -102,10 +102,10 @@ func requirePanic(t *testing.T, fn func()) {
 }
 
 // mustObject constructs an object value for tests.
-func mustObject(t *testing.T, fields ...Field) Value {
+func mustObject(t *testing.T, members ...Member) Value {
 	t.Helper()
 
-	value, err := NewObject(fields...)
+	value, err := ObjectValue(members...)
 	requireNoError(t, err)
 
 	return value
@@ -115,17 +115,7 @@ func mustObject(t *testing.T, fields ...Field) Value {
 func mustList(t *testing.T, items ...Value) Value {
 	t.Helper()
 
-	value, err := NewList(items...)
-	requireNoError(t, err)
-
-	return value
-}
-
-// mustMap constructs a map value for tests.
-func mustMap(t *testing.T, entries ...Entry) Value {
-	t.Helper()
-
-	value, err := NewMap(entries...)
+	value, err := ListValue(items...)
 	requireNoError(t, err)
 
 	return value

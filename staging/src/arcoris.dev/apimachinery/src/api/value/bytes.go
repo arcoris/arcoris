@@ -14,11 +14,11 @@
 
 package value
 
-// Bytes constructs a bytes value by cloning input.
+// BytesValue constructs a KindBytes Value by cloning input.
 //
 // The caller may safely mutate v after construction. Nil input is normalized to
 // an owned empty slice so byte payloads have stable non-nil storage internally.
-func Bytes(v []byte) Value {
+func BytesValue(v []byte) Value {
 	return Value{kind: KindBytes, bytesValue: cloneBytes(v)}
 }
 

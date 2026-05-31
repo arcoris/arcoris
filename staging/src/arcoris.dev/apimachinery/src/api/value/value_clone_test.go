@@ -17,7 +17,7 @@ package value
 import "testing"
 
 func TestCloneDeepCopiesBytes(t *testing.T) {
-	clone := Bytes([]byte{1, 2, 3}).Clone()
+	clone := BytesValue([]byte{1, 2, 3}).Clone()
 	bytes, ok := clone.Bytes()
 	requireEqual(t, ok, true)
 
@@ -27,12 +27,12 @@ func TestCloneDeepCopiesBytes(t *testing.T) {
 	requireBytesEqual(t, again, []byte{1, 2, 3})
 }
 
-func TestCloneDeepCopiesObjectFields(t *testing.T) {
-	original := mustObject(t, ObjectField("payload", Bytes([]byte{1, 2})))
+func TestCloneDeepCopiesObjectMembers(t *testing.T) {
+	original := mustObject(t, ObjectMember("payload", BytesValue([]byte{1, 2})))
 	clone := original.Clone()
 
-	fields := clone.objectValue.fields
-	fields[0].Value.bytesValue[0] = 9
+	members := clone.objectValue.members
+	members[0].Value.bytesValue[0] = 9
 
 	view, ok := original.Object()
 	requireEqual(t, ok, true)
@@ -46,7 +46,7 @@ func TestCloneDeepCopiesObjectFields(t *testing.T) {
 }
 
 func TestCloneDeepCopiesListItems(t *testing.T) {
-	original := mustList(t, Bytes([]byte{1, 2}))
+	original := mustList(t, BytesValue([]byte{1, 2}))
 	clone := original.Clone()
 
 	clone.listValue.items[0].bytesValue[0] = 9
@@ -55,23 +55,6 @@ func TestCloneDeepCopiesListItems(t *testing.T) {
 	requireEqual(t, ok, true)
 
 	value, ok := view.At(0)
-	requireEqual(t, ok, true)
-
-	bytes, ok := value.Bytes()
-	requireEqual(t, ok, true)
-	requireBytesEqual(t, bytes, []byte{1, 2})
-}
-
-func TestCloneDeepCopiesMapEntries(t *testing.T) {
-	original := mustMap(t, MapEntry("payload", Bytes([]byte{1, 2})))
-	clone := original.Clone()
-
-	clone.mapValue.entries[0].Value.bytesValue[0] = 9
-
-	view, ok := original.Map()
-	requireEqual(t, ok, true)
-
-	value, ok := view.Get("payload")
 	requireEqual(t, ok, true)
 
 	bytes, ok := value.Bytes()

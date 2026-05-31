@@ -17,7 +17,7 @@ package value
 // Clone returns a deep copy of v.
 //
 // Scalar payloads are copied by value. Mutable payloads and every nested Value
-// inside object/list/map payloads are copied recursively. Clone never validates
+// inside object/list payloads are copied recursively. Clone never validates
 // payloads because Values can only be built through constructors that already
 // enforce construction invariants.
 func (v Value) Clone() Value {
@@ -30,19 +30,17 @@ func (v Value) Clone() Value {
 		clone.objectValue = cloneObjectPayload(v.objectValue)
 	case KindList:
 		clone.listValue = cloneListPayload(v.listValue)
-	case KindMap:
-		clone.mapValue = cloneMapPayload(v.mapValue)
 	}
 
 	return clone
 }
 
-// cloneObjectPayload deep-copies object fields.
+// cloneObjectPayload deep-copies object members.
 //
-// No field-name index is rebuilt because object payloads intentionally use
+// No member-name index is rebuilt because object payloads intentionally use
 // linear lookup.
 func cloneObjectPayload(payload objectPayload) objectPayload {
-	return objectPayload{fields: cloneFields(payload.fields)}
+	return objectPayload{members: cloneMembers(payload.members)}
 }
 
 // cloneListPayload deep-copies list items.
@@ -52,42 +50,18 @@ func cloneListPayload(payload listPayload) listPayload {
 	return listPayload{items: cloneValues(payload.items)}
 }
 
-// cloneMapPayload deep-copies map entries.
+// cloneMembers deep-copies object members and nested values.
 //
-// No key index is rebuilt because map payloads intentionally use linear lookup.
-func cloneMapPayload(payload mapPayload) mapPayload {
-	return mapPayload{entries: cloneEntries(payload.entries)}
-}
-
-// cloneFields deep-copies object fields and nested values.
-//
-// ObjectField performs the nested Value clone, keeping clone semantics aligned
+// ObjectMember performs the nested Value clone, keeping clone semantics aligned
 // with object construction semantics.
-func cloneFields(fields []Field) []Field {
-	if fields == nil {
+func cloneMembers(members []Member) []Member {
+	if members == nil {
 		return nil
 	}
 
-	cloned := make([]Field, len(fields))
-	for i, field := range fields {
-		cloned[i] = ObjectField(field.Name, field.Value)
-	}
-
-	return cloned
-}
-
-// cloneEntries deep-copies map entries and nested values.
-//
-// MapEntry performs the nested Value clone, keeping clone semantics aligned with
-// map construction semantics.
-func cloneEntries(entries []Entry) []Entry {
-	if entries == nil {
-		return nil
-	}
-
-	cloned := make([]Entry, len(entries))
-	for i, entry := range entries {
-		cloned[i] = MapEntry(entry.Key, entry.Value)
+	cloned := make([]Member, len(members))
+	for i, member := range members {
+		cloned[i] = ObjectMember(member.Name, member.Value)
 	}
 
 	return cloned

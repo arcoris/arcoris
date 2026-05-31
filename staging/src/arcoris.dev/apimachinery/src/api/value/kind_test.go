@@ -40,7 +40,6 @@ func TestKindClassification(t *testing.T) {
 		{kind: KindDuration, text: "duration", valid: true, primitive: true, temporal: true},
 		{kind: KindObject, text: "object", valid: true, composite: true},
 		{kind: KindList, text: "list", valid: true, composite: true},
-		{kind: KindMap, text: "map", valid: true, composite: true},
 	}
 
 	for _, tt := range tests {
@@ -58,4 +57,11 @@ func TestKindClassification(t *testing.T) {
 func TestKindUnknownString(t *testing.T) {
 	requireEqual(t, Kind(255).String(), "unknown")
 	requireEqual(t, Kind(255).IsValid(), false)
+}
+
+func TestKindObjectIsOnlyKeyedPayloadKind(t *testing.T) {
+	requireEqual(t, KindObject.String(), "object")
+	requireEqual(t, KindObject.IsComposite(), true)
+	requireEqual(t, KindList.IsComposite(), true)
+	requireEqual(t, Kind(KindList+1).IsValid(), false)
 }

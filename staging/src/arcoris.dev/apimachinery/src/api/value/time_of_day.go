@@ -82,7 +82,7 @@ func (t TimeOfDay) String() string {
 
 // Equal reports whether t and other represent the same time of day.
 //
-// Equality compares only the four stored fields because TimeOfDay has no date
+// Equality compares only the four stored members because TimeOfDay has no date
 // or timezone state.
 func (t TimeOfDay) Equal(other TimeOfDay) bool {
 	return t.hour == other.hour &&

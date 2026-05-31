@@ -27,7 +27,7 @@ type ObjectView struct {
 // Object returns a read-only object view when v is KindObject.
 //
 // For every other kind, Object returns ok=false. The returned view preserves
-// object field order without eagerly deep-cloning the whole object payload.
+// object member order without eagerly deep-cloning the whole object payload.
 func (v Value) Object() (ObjectView, bool) {
 	if v.kind != KindObject {
 		return ObjectView{}, false
@@ -36,14 +36,14 @@ func (v Value) Object() (ObjectView, bool) {
 	return ObjectView{payload: v.objectValue}, true
 }
 
-// Len returns the number of object fields.
+// Len returns the number of object members.
 func (o ObjectView) Len() int {
-	return len(o.payload.fields)
+	return len(o.payload.members)
 }
 
-// IsEmpty reports whether the object has no fields.
+// IsEmpty reports whether the object has no members.
 func (o ObjectView) IsEmpty() bool {
-	return len(o.payload.fields) == 0
+	return len(o.payload.members) == 0
 }
 
 // Has reports whether the object contains name.
@@ -51,53 +51,53 @@ func (o ObjectView) IsEmpty() bool {
 // Lookup is linear by design. The value model favors cheap construction and
 // cloning over storing per-object indexes for small payloads.
 func (o ObjectView) Has(name string) bool {
-	return findObjectField(o.payload.fields, name) >= 0
+	return findObjectMember(o.payload.members, name) >= 0
 }
 
-// Get returns a cloned field value by name.
+// Get returns a cloned member value by name.
 //
 // The returned Value is detached from the view. Missing names return the zero
 // Value and ok=false.
 func (o ObjectView) Get(name string) (Value, bool) {
-	index := findObjectField(o.payload.fields, name)
+	index := findObjectMember(o.payload.members, name)
 	if index < 0 {
 		return Value{}, false
 	}
 
-	return o.payload.fields[index].Value.Clone(), true
+	return o.payload.members[index].Value.Clone(), true
 }
 
-// Fields returns detached fields in original order.
+// Members returns detached members in original order.
 //
 // Both the slice and every nested Value are cloned. Mutating the result cannot
 // affect the view or source Value.
-func (o ObjectView) Fields() []Field {
-	if len(o.payload.fields) == 0 {
-		return []Field{}
+func (o ObjectView) Members() []Member {
+	if len(o.payload.members) == 0 {
+		return []Member{}
 	}
 
-	return cloneFields(o.payload.fields)
+	return cloneMembers(o.payload.members)
 }
 
-// Names returns detached field names in original order.
+// Names returns detached member names in original order.
 //
-// Names mirrors Fields order and returns a caller-owned slice.
+// Names mirrors Members order and returns a caller-owned slice.
 func (o ObjectView) Names() []string {
-	names := make([]string, 0, len(o.payload.fields))
-	for _, field := range o.payload.fields {
-		names = append(names, field.Name)
+	names := make([]string, 0, len(o.payload.members))
+	for _, member := range o.payload.members {
+		names = append(names, member.Name)
 	}
 
 	return names
 }
 
-// findObjectField returns the ordered field index for name.
+// findObjectMember returns the ordered member index for name.
 //
-// A negative result means the field is absent. Keeping the search as a tiny
+// A negative result means the member is absent. Keeping the search as a tiny
 // helper makes Has and Get share the same linear lookup semantics.
-func findObjectField(fields []Field, name string) int {
-	for i, field := range fields {
-		if field.Name == name {
+func findObjectMember(members []Member, name string) int {
+	for i, member := range members {
+		if member.Name == name {
 			return i
 		}
 	}

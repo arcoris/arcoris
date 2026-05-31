@@ -16,11 +16,11 @@ package value
 
 import "time"
 
-// Duration constructs an elapsed interval value.
+// DurationValue constructs a KindDuration Value.
 //
 // Negative durations are accepted at this layer. Descriptor-aware validation
-// may reject them later for fields that require non-negative time. The value is
+// may reject them later for members that require non-negative time. The value is
 // stored as time.Duration and is not parsed or formatted here.
-func Duration(v time.Duration) Value {
+func DurationValue(v time.Duration) Value {
 	return Value{kind: KindDuration, durationValue: v}
 }

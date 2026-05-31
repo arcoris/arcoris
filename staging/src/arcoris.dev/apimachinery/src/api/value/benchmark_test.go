@@ -37,10 +37,10 @@ func BenchmarkObjectViewGet(b *testing.B) {
 }
 
 func BenchmarkListViewAt(b *testing.B) {
-	value := MustList(
-		String("first"),
+	value := MustListValue(
+		StringValue("first"),
 		benchmarkNestedObjectValue(),
-		Bytes([]byte("payload")),
+		BytesValue([]byte("payload")),
 	)
 	view, ok := value.List()
 	if !ok {
@@ -52,25 +52,6 @@ func BenchmarkListViewAt(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		benchmarkValueSink, benchmarkOKSink = view.At(1)
-	}
-}
-
-func BenchmarkMapViewGet(b *testing.B) {
-	value := MustMap(
-		MapEntry("name", String("worker")),
-		MapEntry("payload", benchmarkNestedObjectValue()),
-		MapEntry("token", Bytes([]byte("token"))),
-	)
-	view, ok := value.Map()
-	if !ok {
-		b.Fatal("expected map view")
-	}
-
-	b.ReportAllocs()
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		benchmarkValueSink, benchmarkOKSink = view.Get("payload")
 	}
 }
 
@@ -88,15 +69,15 @@ func BenchmarkValueCloneNestedObject(b *testing.B) {
 // benchmarkNestedObjectValue returns a small but nested payload for clone and
 // view benchmarks.
 func benchmarkNestedObjectValue() Value {
-	return MustObject(
-		ObjectField("name", String("worker")),
-		ObjectField("payload", Bytes([]byte("payload"))),
-		ObjectField("tags", MustList(
-			String("control"),
-			String("active"),
-			MustMap(
-				MapEntry("zone", String("east")),
-				MapEntry("tier", String("primary")),
+	return MustObjectValue(
+		ObjectMember("name", StringValue("worker")),
+		ObjectMember("payload", BytesValue([]byte("payload"))),
+		ObjectMember("tags", MustListValue(
+			StringValue("control"),
+			StringValue("active"),
+			MustObjectValue(
+				ObjectMember("zone", StringValue("east")),
+				ObjectMember("tier", StringValue("primary")),
 			),
 		)),
 	)

@@ -17,7 +17,7 @@ package value
 // DecimalValue constructs a decimal Value from an already canonical Decimal.
 //
 // The function still normalizes zero defensively because Decimal has private
-// fields and tests in this package may construct edge values directly.
+// members and tests in this package may construct edge values directly.
 func DecimalValue(v Decimal) Value {
 	if v.coefficient == "" || isZeroDigits(v.coefficient) {
 		v = Decimal{coefficient: "0"}

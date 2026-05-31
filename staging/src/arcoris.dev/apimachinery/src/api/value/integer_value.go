@@ -14,23 +14,23 @@
 
 package value
 
-// Int64 constructs an integer Value from a signed 64-bit value.
+// Int64Value constructs a KindInteger Value from a signed 64-bit value.
 //
 // The resulting payload kind is always KindInteger; signedness is payload data,
 // not a separate kind.
-func Int64(v int64) Value {
+func Int64Value(v int64) Value {
 	return IntegerValue(NewIntegerFromInt64(v))
 }
 
-// Uint64 constructs an integer Value from an unsigned 64-bit value.
+// Uint64Value constructs a KindInteger Value from an unsigned 64-bit value.
 //
 // The resulting payload kind is always KindInteger. Width-specific constraints
 // belong to descriptors and future value validation.
-func Uint64(v uint64) Value {
+func Uint64Value(v uint64) Value {
 	return IntegerValue(NewIntegerFromUint64(v))
 }
 
-// IntegerValue constructs an integer Value from an already canonical Integer.
+// IntegerValue constructs a KindInteger Value from an already canonical Integer.
 //
 // The Integer type is immutable by convention, so the value can be copied
 // directly into the active payload slot.

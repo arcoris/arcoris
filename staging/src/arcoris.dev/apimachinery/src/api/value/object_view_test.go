@@ -18,8 +18,8 @@ import "testing"
 
 func TestObjectViewAccessors(t *testing.T) {
 	value := mustObject(t,
-		ObjectField("name", String("worker")),
-		ObjectField("payload", Bytes([]byte{1, 2})),
+		ObjectMember("name", StringValue("worker")),
+		ObjectMember("payload", BytesValue([]byte{1, 2})),
 	)
 	view, ok := value.Object()
 	requireEqual(t, ok, true)
@@ -45,11 +45,11 @@ func TestObjectViewEmptySlicesAreNonNil(t *testing.T) {
 	view, ok := value.Object()
 	requireEqual(t, ok, true)
 
-	fields := view.Fields()
-	if fields == nil {
-		t.Fatal("Fields() returned nil")
+	members := view.Members()
+	if members == nil {
+		t.Fatal("Members() returned nil")
 	}
-	requireEqual(t, len(fields), 0)
+	requireEqual(t, len(members), 0)
 
 	names := view.Names()
 	if names == nil {
@@ -58,14 +58,14 @@ func TestObjectViewEmptySlicesAreNonNil(t *testing.T) {
 	requireEqual(t, len(names), 0)
 }
 
-func TestObjectViewReturnsDetachedFieldsAndValues(t *testing.T) {
-	value := mustObject(t, ObjectField("payload", Bytes([]byte{1, 2})))
+func TestObjectViewReturnsDetachedMembersAndValues(t *testing.T) {
+	value := mustObject(t, ObjectMember("payload", BytesValue([]byte{1, 2})))
 	view, ok := value.Object()
 	requireEqual(t, ok, true)
 
-	fields := view.Fields()
-	fields[0].Name = "changed"
-	fields[0].Value.bytesValue[0] = 9
+	members := view.Members()
+	members[0].Name = "changed"
+	members[0].Value.bytesValue[0] = 9
 
 	requireEqual(t, view.Has("payload"), true)
 	got, ok := view.Get("payload")
@@ -77,6 +77,6 @@ func TestObjectViewReturnsDetachedFieldsAndValues(t *testing.T) {
 }
 
 func TestObjectWrongKindAccessorReturnsFalse(t *testing.T) {
-	_, ok := Null().Object()
+	_, ok := NullValue().Object()
 	requireEqual(t, ok, false)
 }

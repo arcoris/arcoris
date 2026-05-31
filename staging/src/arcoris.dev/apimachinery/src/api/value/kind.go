@@ -17,8 +17,8 @@ package value
 // Kind identifies the concrete category stored in a Value.
 //
 // Kind is a value discriminator, not a descriptor. It deliberately omits exact
-// numeric widths, nullability, type references, required/optional field state,
-// unknown-field policy, and collection semantics because those are constraints
+// numeric widths, nullability, type references, required/optional member state,
+// unknown-member policy, or dynamic-map semantics because those are constraints
 // owned by descriptor packages and future validation layers.
 type Kind uint8
 
@@ -51,12 +51,14 @@ const (
 	// KindDuration represents one elapsed interval payload.
 	KindDuration
 
-	// KindObject represents a schema-defined record value with named fields.
+	// KindObject represents one concrete string-keyed payload node.
+	//
+	// It does not decide whether the payload should be interpreted as a fixed
+	// schema object or as a dynamic map. Descriptor-aware validation makes that
+	// decision using the expected api/types.Type.
 	KindObject
 	// KindList represents an ordered sequence of values.
 	KindList
-	// KindMap represents a dynamic key/value mapping.
-	KindMap
 )
 
 // IsValid reports whether k identifies a supported concrete value category.
@@ -64,7 +66,7 @@ const (
 // KindInvalid is reserved for the zero/uninitialized Value and is not a valid
 // payload category.
 func (k Kind) IsValid() bool {
-	return k > KindInvalid && k <= KindMap
+	return k > KindInvalid && k <= KindList
 }
 
 // String returns a stable diagnostic name for k.
@@ -101,8 +103,6 @@ func (k Kind) String() string {
 		return "object"
 	case KindList:
 		return "list"
-	case KindMap:
-		return "map"
 	default:
 		return "unknown"
 	}
@@ -110,7 +110,7 @@ func (k Kind) String() string {
 
 // IsPrimitive reports whether k stores one scalar payload value.
 //
-// Primitive here means "not object/list/map" for the value algebra. It includes
+// Primitive here means "not object/list" for the value algebra. It includes
 // numbers and temporal values even though descriptors may classify those more
 // narrowly.
 func (k Kind) IsPrimitive() bool {
@@ -153,5 +153,5 @@ func (k Kind) IsTemporal() bool {
 // Composite values preserve caller order and expose read-only views rather than
 // mutable maps or slices.
 func (k Kind) IsComposite() bool {
-	return k == KindObject || k == KindList || k == KindMap
+	return k == KindObject || k == KindList
 }

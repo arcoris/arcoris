@@ -18,7 +18,7 @@ import "testing"
 
 func TestBoolValue(t *testing.T) {
 	for _, want := range []bool{false, true} {
-		value := Bool(want)
+		value := BoolValue(want)
 		got, ok := value.Bool()
 
 		requireEqual(t, value.Kind(), KindBool)

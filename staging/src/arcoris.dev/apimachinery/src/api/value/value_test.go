@@ -25,18 +25,18 @@ func TestValueCoreState(t *testing.T) {
 	requireEqual(t, zero.IsScalar(), false)
 	requireEqual(t, zero.IsComposite(), false)
 
-	requireEqual(t, String("worker").IsScalar(), true)
-	requireEqual(t, mustList(t, Null()).IsComposite(), true)
+	requireEqual(t, StringValue("worker").IsScalar(), true)
+	requireEqual(t, mustList(t, NullValue()).IsComposite(), true)
 }
 
 func TestWrongKindAccessorsReturnFalse(t *testing.T) {
-	value := String("worker")
+	value := StringValue("worker")
 
 	if _, ok := value.Bool(); ok {
-		t.Fatal("Bool() ok = true for string value")
+		t.Fatal("BoolValue() ok = true for string value")
 	}
 	if _, ok := value.Bytes(); ok {
-		t.Fatal("Bytes() ok = true for string value")
+		t.Fatal("BytesValue() ok = true for string value")
 	}
 	if _, ok := value.Integer(); ok {
 		t.Fatal("Integer() ok = true for string value")
@@ -48,7 +48,7 @@ func TestWrongKindAccessorsReturnFalse(t *testing.T) {
 		t.Fatal("Decimal() ok = true for string value")
 	}
 	if _, ok := value.Timestamp(); ok {
-		t.Fatal("Timestamp() ok = true for string value")
+		t.Fatal("TimestampValue() ok = true for string value")
 	}
 	if _, ok := value.Date(); ok {
 		t.Fatal("Date() ok = true for string value")
@@ -57,15 +57,12 @@ func TestWrongKindAccessorsReturnFalse(t *testing.T) {
 		t.Fatal("TimeOfDay() ok = true for string value")
 	}
 	if _, ok := value.Duration(); ok {
-		t.Fatal("Duration() ok = true for string value")
+		t.Fatal("DurationValue() ok = true for string value")
 	}
 	if _, ok := value.Object(); ok {
 		t.Fatal("Object() ok = true for string value")
 	}
 	if _, ok := value.List(); ok {
 		t.Fatal("List() ok = true for string value")
-	}
-	if _, ok := value.Map(); ok {
-		t.Fatal("Map() ok = true for string value")
 	}
 }

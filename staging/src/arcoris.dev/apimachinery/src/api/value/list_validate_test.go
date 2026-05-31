@@ -31,5 +31,5 @@ func TestValidateListItemRejectsInvalidValue(t *testing.T) {
 }
 
 func TestValidateListItemAcceptsInitializedValue(t *testing.T) {
-	requireNoError(t, validateListItem(0, Null()))
+	requireNoError(t, validateListItem(0, NullValue()))
 }

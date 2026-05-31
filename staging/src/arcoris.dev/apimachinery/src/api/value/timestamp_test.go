@@ -21,7 +21,7 @@ import (
 
 func TestTimestampValue(t *testing.T) {
 	now := time.Now()
-	value := Timestamp(now)
+	value := TimestampValue(now)
 
 	requireEqual(t, value.Kind(), KindTimestamp)
 	if !value.timestampValue.Equal(now) {
@@ -29,5 +29,5 @@ func TestTimestampValue(t *testing.T) {
 	}
 	requireEqual(t, value.timestampValue, now.Round(0))
 
-	requireEqual(t, Timestamp(time.Time{}).timestampValue.IsZero(), true)
+	requireEqual(t, TimestampValue(time.Time{}).timestampValue.IsZero(), true)
 }

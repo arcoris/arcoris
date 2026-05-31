@@ -31,7 +31,7 @@ func NewIntegerFromInt64(v int64) Integer {
 //
 // The unsigned domain is accepted in full, including math.MaxUint64. Descriptor
 // validation can later decide whether a smaller signed or unsigned width is
-// allowed for a particular field.
+// allowed for a particular member.
 func NewIntegerFromUint64(v uint64) Integer {
 	return Integer{magnitude: v}
 }

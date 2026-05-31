@@ -20,7 +20,8 @@ import "time"
 //
 // A Value stores actual payload data, not a descriptor, constraint, or decoded
 // Go struct wrapper. The zero value is intentionally invalid and represents
-// missing initialization. Use Null to represent an explicit API null literal.
+// missing initialization. Use NullValue to represent an explicit API null
+// literal.
 //
 // All payload slots are private so constructors can preserve numeric
 // invariants, container ordering, and copy-on-boundary behavior. Public
@@ -58,14 +59,12 @@ type Value struct {
 	objectValue objectPayload
 	// listValue stores KindList payload data.
 	listValue listPayload
-	// mapValue stores KindMap payload data.
-	mapValue mapPayload
 }
 
 // Kind returns the concrete payload category stored in v.
 //
 // The zero Value reports KindInvalid. Kind is a value discriminator only; it
-// does not carry descriptor information such as integer width, field
+// does not carry descriptor information such as integer width, member
 // requirements, nullability, or collection constraints.
 func (v Value) Kind() Kind {
 	return v.kind
@@ -82,7 +81,7 @@ func (v Value) IsZero() bool {
 // IsNull reports whether v stores the explicit null literal.
 //
 // Explicit null is a payload value that future descriptor-aware validation may
-// accept or reject according to field nullability rules.
+// accept or reject according to member nullability rules.
 func (v Value) IsNull() bool {
 	return v.kind == KindNull
 }
@@ -97,8 +96,8 @@ func (v Value) IsScalar() bool {
 
 // IsComposite reports whether v stores nested payload values.
 //
-// Composite values are object, list, and map payloads. The method does not
-// inspect nested values because constructors already reject invalid children.
+// Composite values are object and list payloads. The method does not inspect
+// nested values because constructors already reject invalid children.
 func (v Value) IsComposite() bool {
 	return v.kind.IsComposite()
 }

@@ -31,7 +31,7 @@ func TestDurationValue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			value := Duration(tt.in)
+			value := DurationValue(tt.in)
 
 			requireEqual(t, value.Kind(), KindDuration)
 			requireEqual(t, value.durationValue, tt.in)

@@ -14,11 +14,11 @@
 
 package value
 
-// Null constructs the explicit null value.
+// NullValue constructs an explicit KindNull Value.
 //
-// Null is distinct from the invalid zero Value. It is real payload data that a
-// future descriptor-aware validation layer can accept only when the target
-// descriptor permits null.
-func Null() Value {
+// NullValue is distinct from the invalid zero Value. It is real payload data
+// that a future descriptor-aware validation layer can accept only when the
+// target descriptor permits null.
+func NullValue() Value {
 	return Value{kind: KindNull}
 }

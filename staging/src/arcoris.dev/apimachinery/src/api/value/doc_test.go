@@ -18,8 +18,8 @@ import "testing"
 
 func TestPackageProvidesConcreteValuesWithoutDescriptors(t *testing.T) {
 	payload := mustObject(t,
-		ObjectField("name", String("worker")),
-		ObjectField("replicas", Int64(3)),
+		ObjectMember("name", StringValue("worker")),
+		ObjectMember("replicas", Int64Value(3)),
 	)
 
 	view, ok := payload.Object()

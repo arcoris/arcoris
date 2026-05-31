@@ -14,15 +14,14 @@
 
 package value
 
-// NewObject constructs an object value from initialized, uniquely named fields.
+// ObjectValue constructs a KindObject Value from uniquely named members.
 //
-// Object values represent schema-shaped records with caller-ordered fields.
-// They do not store descriptor metadata such as required fields, optional
-// fields, JSON tags, or unknown-field policy. Field values are cloned during
-// construction so later mutations of caller-owned values cannot affect the
-// stored object.
-func NewObject(fields ...Field) (Value, error) {
-	payload, err := newObjectPayload(fields)
+// Object values are concrete keyed payload nodes with caller-ordered members.
+// They intentionally do not decide whether the data will satisfy a descriptor
+// object or descriptor map. Member values are cloned during construction so
+// later mutations of caller-owned values cannot affect the stored object.
+func ObjectValue(members ...Member) (Value, error) {
+	payload, err := newObjectPayload(members)
 	if err != nil {
 		return Value{}, err
 	}
@@ -30,13 +29,13 @@ func NewObject(fields ...Field) (Value, error) {
 	return Value{kind: KindObject, objectValue: payload}, nil
 }
 
-// MustObject constructs an object Value or panics when fields are malformed.
+// MustObjectValue constructs an object Value or panics when members are malformed.
 //
-// It is intended for tests and static fixtures where malformed field data is a
-// programmer error. Runtime construction paths should use NewObject and return
+// It is intended for tests and static fixtures where malformed member data is a
+// programmer error. Runtime construction paths should use ObjectValue and return
 // its structured error.
-func MustObject(fields ...Field) Value {
-	value, err := NewObject(fields...)
+func MustObjectValue(members ...Member) Value {
+	value, err := ObjectValue(members...)
 	if err != nil {
 		panic(err)
 	}

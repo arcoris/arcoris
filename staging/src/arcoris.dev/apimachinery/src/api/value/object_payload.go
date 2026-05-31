@@ -14,32 +14,32 @@
 
 package value
 
-// objectPayload stores object fields in caller order.
+// objectPayload stores object members in caller order.
 //
 // The payload intentionally has no name index. Objects are expected to be small,
 // and linear lookup avoids extra allocations and duplicate invariants during
 // construction, cloning, and view creation.
 type objectPayload struct {
-	// fields contains cloned field values in stable caller order.
-	fields []Field
+	// members contains cloned member values in stable caller order.
+	members []Member
 }
 
-// newObjectPayload validates fields and clones values into caller order.
+// newObjectPayload validates members and clones values into caller order.
 //
-// Duplicate detection scans the fields already accepted into the payload. This
-// keeps the constructor allocation profile small and makes field order the only
+// Duplicate detection scans the members already accepted into the payload. This
+// keeps the constructor allocation profile small and makes member order the only
 // stored object invariant.
-func newObjectPayload(fields []Field) (objectPayload, error) {
+func newObjectPayload(members []Member) (objectPayload, error) {
 	payload := objectPayload{
-		fields: make([]Field, 0, len(fields)),
+		members: make([]Member, 0, len(members)),
 	}
 
-	for i, field := range fields {
-		if err := validateObjectField(i, field, payload.fields); err != nil {
+	for i, member := range members {
+		if err := validateObjectMember(i, member, payload.members); err != nil {
 			return objectPayload{}, err
 		}
 
-		payload.fields = append(payload.fields, ObjectField(field.Name, field.Value))
+		payload.members = append(payload.members, ObjectMember(member.Name, member.Value))
 	}
 
 	return payload.compact(), nil
@@ -50,7 +50,7 @@ func newObjectPayload(fields []Field) (objectPayload, error) {
 // Empty objects are valid, but keeping nil storage for them avoids retaining an
 // otherwise unused zero-length backing array.
 func (p objectPayload) compact() objectPayload {
-	if len(p.fields) == 0 {
+	if len(p.members) == 0 {
 		return objectPayload{}
 	}
 

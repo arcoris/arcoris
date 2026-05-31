@@ -17,7 +17,7 @@ package value
 import "testing"
 
 func TestBytesAccessorReturnsClone(t *testing.T) {
-	value := Bytes([]byte{1, 2, 3})
+	value := BytesValue([]byte{1, 2, 3})
 
 	got, ok := value.Bytes()
 	requireEqual(t, ok, true)
@@ -30,11 +30,11 @@ func TestBytesAccessorReturnsClone(t *testing.T) {
 }
 
 func TestBytesAccessorPreservesEmptySlice(t *testing.T) {
-	got, ok := Bytes(nil).Bytes()
+	got, ok := BytesValue(nil).Bytes()
 
 	requireEqual(t, ok, true)
 	if got == nil {
-		t.Fatal("Bytes(nil) accessor returned nil slice")
+		t.Fatal("BytesValue(nil) accessor returned nil slice")
 	}
 	requireEqual(t, len(got), 0)
 }

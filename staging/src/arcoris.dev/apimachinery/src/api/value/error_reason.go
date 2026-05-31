@@ -21,18 +21,12 @@ type ErrorReason string
 const (
 	// ErrorReasonInvalidValue identifies an invalid nested Value input.
 	ErrorReasonInvalidValue ErrorReason = "invalid_value"
-	// ErrorReasonInvalidField identifies a malformed object field input.
-	ErrorReasonInvalidField ErrorReason = "invalid_field"
-	// ErrorReasonInvalidEntry identifies a malformed map entry input.
-	ErrorReasonInvalidEntry ErrorReason = "invalid_entry"
-	// ErrorReasonDuplicateName identifies a repeated object field name.
+	// ErrorReasonInvalidMember identifies a malformed object member input.
+	ErrorReasonInvalidMember ErrorReason = "invalid_member"
+	// ErrorReasonDuplicateName identifies a repeated object member name.
 	ErrorReasonDuplicateName ErrorReason = "duplicate_name"
-	// ErrorReasonDuplicateKey identifies a repeated map entry key.
-	ErrorReasonDuplicateKey ErrorReason = "duplicate_key"
-	// ErrorReasonEmptyName identifies an empty object field name.
+	// ErrorReasonEmptyName identifies an empty object member name.
 	ErrorReasonEmptyName ErrorReason = "empty_name"
-	// ErrorReasonEmptyKey identifies an empty map entry key.
-	ErrorReasonEmptyKey ErrorReason = "empty_key"
 	// ErrorReasonInvalidFloat identifies a non-finite float input.
 	ErrorReasonInvalidFloat ErrorReason = "invalid_float"
 	// ErrorReasonInvalidDecimal identifies malformed decimal text.

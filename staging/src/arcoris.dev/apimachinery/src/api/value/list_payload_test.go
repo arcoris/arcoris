@@ -16,10 +16,10 @@ package value
 
 import "testing"
 
-func TestNewListPayloadPreservesOrder(t *testing.T) {
+func TestListPayloadPreservesOrder(t *testing.T) {
 	payload, err := newListPayload([]Value{
-		String("first"),
-		String("second"),
+		StringValue("first"),
+		StringValue("second"),
 	})
 	requireNoError(t, err)
 

@@ -22,9 +22,7 @@ func TestDiagnosticPathHelpers(t *testing.T) {
 	requireEqual(t, pathDate, "date")
 	requireEqual(t, pathTimeOfDay, "timeOfDay")
 
-	requireEqual(t, objectFieldNamePath(1), "object.fields[1].name")
-	requireEqual(t, objectFieldValuePath(1), "object.fields[1].value")
+	requireEqual(t, objectMemberNamePath(1), "object.members[1].name")
+	requireEqual(t, objectMemberValuePath(1), "object.members[1].value")
 	requireEqual(t, listItemPath(1), "list.items[1]")
-	requireEqual(t, mapEntryKeyPath(1), "map.entries[1].key")
-	requireEqual(t, mapEntryValuePath(1), "map.entries[1].value")
 }

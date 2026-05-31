@@ -14,22 +14,22 @@
 
 package value
 
-// Field is one concrete object field in declaration order.
+// Member is one concrete object member in declaration order.
 //
-// Field is payload data, not a descriptor field. Name is the actual field name
+// Member is payload data, not a descriptor member. Name is the actual member name
 // present in the object, and Value is the actual nested payload value. Empty
-// names and invalid zero Values are rejected by NewObject.
-type Field struct {
-	// Name is the concrete object field name.
+// names and invalid zero Values are rejected by ObjectValue.
+type Member struct {
+	// Name is the concrete object member name.
 	Name string
-	// Value is the concrete field payload.
+	// Value is the concrete member payload.
 	Value Value
 }
 
-// ObjectField constructs one object field and clones the supplied value.
+// ObjectMember constructs one object member and clones the supplied value.
 //
-// Cloning here makes Field safe to pass into NewObject without retaining a
+// Cloning here makes Member safe to pass into ObjectValue without retaining a
 // mutable alias to bytes or nested composite values.
-func ObjectField(name string, value Value) Field {
-	return Field{Name: name, Value: value.Clone()}
+func ObjectMember(name string, value Value) Member {
+	return Member{Name: name, Value: value.Clone()}
 }

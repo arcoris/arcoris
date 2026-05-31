@@ -17,7 +17,7 @@ package value
 import "testing"
 
 func TestListViewAccessors(t *testing.T) {
-	value := mustList(t, String("first"), Bytes([]byte{1, 2}))
+	value := mustList(t, StringValue("first"), BytesValue([]byte{1, 2}))
 	view, ok := value.List()
 	requireEqual(t, ok, true)
 
@@ -51,7 +51,7 @@ func TestListViewEmptyItemsIsNonNil(t *testing.T) {
 }
 
 func TestListViewReturnsDetachedItems(t *testing.T) {
-	value := mustList(t, Bytes([]byte{1, 2}))
+	value := mustList(t, BytesValue([]byte{1, 2}))
 	view, ok := value.List()
 	requireEqual(t, ok, true)
 
@@ -67,6 +67,6 @@ func TestListViewReturnsDetachedItems(t *testing.T) {
 }
 
 func TestListWrongKindAccessorReturnsFalse(t *testing.T) {
-	_, ok := Null().List()
+	_, ok := NullValue().List()
 	requireEqual(t, ok, false)
 }

@@ -16,20 +16,20 @@ package value
 
 import "testing"
 
-func TestNewObjectPayloadPreservesOrder(t *testing.T) {
-	payload, err := newObjectPayload([]Field{
-		ObjectField("first", String("one")),
-		ObjectField("second", String("two")),
+func TestObjectPayloadPreservesOrder(t *testing.T) {
+	payload, err := newObjectPayload([]Member{
+		ObjectMember("first", StringValue("one")),
+		ObjectMember("second", StringValue("two")),
 	})
 	requireNoError(t, err)
 
-	requireEqual(t, payload.fields[0].Name, "first")
-	requireEqual(t, payload.fields[1].Name, "second")
+	requireEqual(t, payload.members[0].Name, "first")
+	requireEqual(t, payload.members[1].Name, "second")
 }
 
 func TestObjectPayloadCompactRemovesEmptyStorage(t *testing.T) {
 	payload, err := newObjectPayload(nil)
 	requireNoError(t, err)
 
-	requireEqual(t, payload.fields == nil, true)
+	requireEqual(t, payload.members == nil, true)
 }

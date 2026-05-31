@@ -14,12 +14,12 @@
 
 package value
 
-// NewList constructs a list value from initialized item values.
+// ListValue constructs a KindList Value from initialized item values.
 //
 // Lists preserve caller order and do not store element descriptors, uniqueness
-// policy, set/list/map semantics, or length constraints. Each item is cloned so
-// the caller keeps no mutable alias into the stored list.
-func NewList(items ...Value) (Value, error) {
+// policy, or length constraints. Each item is cloned so the caller keeps no
+// mutable alias into the stored list.
+func ListValue(items ...Value) (Value, error) {
 	payload, err := newListPayload(items)
 	if err != nil {
 		return Value{}, err
@@ -28,12 +28,12 @@ func NewList(items ...Value) (Value, error) {
 	return Value{kind: KindList, listValue: payload}, nil
 }
 
-// MustList constructs a list Value or panics when items are malformed.
+// MustListValue constructs a list Value or panics when items are malformed.
 //
 // It is intended for tests and static fixtures. Runtime construction paths
-// should use NewList and handle its structured error.
-func MustList(items ...Value) Value {
-	value, err := NewList(items...)
+// should use ListValue and handle its structured error.
+func MustListValue(items ...Value) Value {
+	value, err := ListValue(items...)
 	if err != nil {
 		panic(err)
 	}

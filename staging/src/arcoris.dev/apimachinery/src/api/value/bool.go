@@ -14,10 +14,10 @@
 
 package value
 
-// Bool constructs a boolean value.
+// BoolValue constructs a KindBool Value.
 //
 // Boolean values are scalar payload data and do not carry descriptor-level enum
 // or presence information.
-func Bool(v bool) Value {
+func BoolValue(v bool) Value {
 	return Value{kind: KindBool, boolValue: v}
 }

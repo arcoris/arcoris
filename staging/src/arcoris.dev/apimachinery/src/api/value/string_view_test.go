@@ -17,7 +17,7 @@ package value
 import "testing"
 
 func TestStringAccessor(t *testing.T) {
-	got, ok := String("worker").String()
+	got, ok := StringValue("worker").String()
 
 	requireEqual(t, ok, true)
 	requireEqual(t, got, "worker")

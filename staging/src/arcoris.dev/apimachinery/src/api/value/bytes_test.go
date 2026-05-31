@@ -18,7 +18,7 @@ import "testing"
 
 func TestBytesClonesInput(t *testing.T) {
 	input := []byte{1, 2, 3}
-	value := Bytes(input)
+	value := BytesValue(input)
 	input[0] = 9
 
 	requireEqual(t, value.Kind(), KindBytes)
@@ -26,11 +26,11 @@ func TestBytesClonesInput(t *testing.T) {
 }
 
 func TestBytesNilNormalizesToEmpty(t *testing.T) {
-	value := Bytes(nil)
+	value := BytesValue(nil)
 
 	requireEqual(t, value.Kind(), KindBytes)
 	if value.bytesValue == nil {
-		t.Fatal("Bytes(nil) stored nil slice")
+		t.Fatal("BytesValue(nil) stored nil slice")
 	}
 	requireEqual(t, len(value.bytesValue), 0)
 }

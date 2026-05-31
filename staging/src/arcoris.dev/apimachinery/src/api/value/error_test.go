@@ -19,12 +19,12 @@ import (
 	"testing"
 )
 
-func TestErrorStringIncludesStructuredFields(t *testing.T) {
+func TestErrorStringIncludesStructuredMembers(t *testing.T) {
 	err := &Error{
-		Path:   "object.fields[0].name",
+		Path:   "object.members[0].name",
 		Err:    ErrEmptyName,
 		Reason: ErrorReasonEmptyName,
-		Detail: "object field name is empty",
+		Detail: "object member name is empty",
 	}
 
 	got := err.Error()
@@ -50,18 +50,18 @@ func TestNilErrorMethodsAreSafe(t *testing.T) {
 	requireEqual(t, err.Unwrap() == nil, true)
 }
 
-func TestErrorUnwrapPreservesMapAndCause(t *testing.T) {
+func TestErrorUnwrapPreservesMemberAndCause(t *testing.T) {
 	cause := errors.New("nested")
 	err := &Error{
-		Path:   "map.entries[0].value",
-		Err:    ErrInvalidEntry,
+		Path:   "object.members[0].value",
+		Err:    ErrInvalidMember,
 		Reason: ErrorReasonInvalidValue,
-		Detail: "map entry has invalid value",
+		Detail: "object member has invalid value",
 		Cause:  cause,
 	}
 
 	requireErrorIs(t, err, ErrInvalidValue)
-	requireErrorIs(t, err, ErrInvalidMap)
-	requireErrorIs(t, err, ErrInvalidEntry)
+	requireErrorIs(t, err, ErrInvalidObject)
+	requireErrorIs(t, err, ErrInvalidMember)
 	requireErrorIs(t, err, cause)
 }

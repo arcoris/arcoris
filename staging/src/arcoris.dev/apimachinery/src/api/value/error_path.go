@@ -27,19 +27,19 @@ const (
 	pathTimeOfDay = "timeOfDay"
 )
 
-// objectFieldNamePath returns the diagnostic path for an object field name.
+// objectMemberNamePath returns the diagnostic path for an object member name.
 //
-// Paths use caller order indexes because object payloads preserve field order
+// Paths use caller order indexes because object payloads preserve member order
 // and do not store a lookup index.
-func objectFieldNamePath(index int) string {
-	return fmt.Sprintf("object.fields[%d].name", index)
+func objectMemberNamePath(index int) string {
+	return fmt.Sprintf("object.members[%d].name", index)
 }
 
-// objectFieldValuePath returns the diagnostic path for an object field value.
+// objectMemberValuePath returns the diagnostic path for an object member value.
 //
 // The path points to the nested Value slot, not to descriptor metadata.
-func objectFieldValuePath(index int) string {
-	return fmt.Sprintf("object.fields[%d].value", index)
+func objectMemberValuePath(index int) string {
+	return fmt.Sprintf("object.members[%d].value", index)
 }
 
 // listItemPath returns the diagnostic path for a list item.
@@ -48,19 +48,4 @@ func objectFieldValuePath(index int) string {
 // preserved.
 func listItemPath(index int) string {
 	return fmt.Sprintf("list.items[%d]", index)
-}
-
-// mapEntryKeyPath returns the diagnostic path for a map entry key.
-//
-// Map entries preserve caller order, so diagnostics identify the entry position
-// that failed construction.
-func mapEntryKeyPath(index int) string {
-	return fmt.Sprintf("map.entries[%d].key", index)
-}
-
-// mapEntryValuePath returns the diagnostic path for a map entry value.
-//
-// The path points to the nested Value slot, not to future map value descriptors.
-func mapEntryValuePath(index int) string {
-	return fmt.Sprintf("map.entries[%d].value", index)
 }

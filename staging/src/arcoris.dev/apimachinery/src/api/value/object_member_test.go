@@ -16,20 +16,13 @@ package value
 
 import "testing"
 
-func TestNewMapPayloadPreservesOrder(t *testing.T) {
-	payload, err := newMapPayload([]Entry{
-		MapEntry("first", String("one")),
-		MapEntry("second", String("two")),
-	})
-	requireNoError(t, err)
+func TestObjectMemberClonesValue(t *testing.T) {
+	source := BytesValue([]byte{1, 2})
+	member := ObjectMember("payload", source)
 
-	requireEqual(t, payload.entries[0].Key, "first")
-	requireEqual(t, payload.entries[1].Key, "second")
-}
+	source.bytesValue[0] = 9
 
-func TestMapPayloadCompactRemovesEmptyStorage(t *testing.T) {
-	payload, err := newMapPayload(nil)
-	requireNoError(t, err)
-
-	requireEqual(t, payload.entries == nil, true)
+	bytes, ok := member.Value.Bytes()
+	requireEqual(t, ok, true)
+	requireBytesEqual(t, bytes, []byte{1, 2})
 }

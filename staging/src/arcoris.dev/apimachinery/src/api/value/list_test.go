@@ -16,16 +16,16 @@ package value
 
 import "testing"
 
-func TestNewListConstructsListValue(t *testing.T) {
-	value, err := NewList(String("worker"), Int64(3))
+func TestListValueConstructsListValue(t *testing.T) {
+	value, err := ListValue(StringValue("worker"), Int64Value(3))
 	requireNoError(t, err)
 
 	requireEqual(t, value.Kind(), KindList)
 	requireEqual(t, len(value.listValue.items), 2)
 }
 
-func TestNewListAcceptsEmptyList(t *testing.T) {
-	value, err := NewList()
+func TestListValueAcceptsEmptyList(t *testing.T) {
+	value, err := ListValue()
 	requireNoError(t, err)
 
 	requireEqual(t, value.Kind(), KindList)
@@ -33,8 +33,8 @@ func TestNewListAcceptsEmptyList(t *testing.T) {
 	requireEqual(t, value.listValue.items == nil, true)
 }
 
-func TestMustListPanicsOnMalformedItems(t *testing.T) {
+func TestMustListValuePanicsOnMalformedItems(t *testing.T) {
 	requirePanic(t, func() {
-		MustList(Value{})
+		MustListValue(Value{})
 	})
 }
