@@ -31,6 +31,26 @@ func TestValidateEndToEnd(t *testing.T) {
 	}
 }
 
+func TestValidateHappyPathCallOrder(t *testing.T) {
+	calls := []string{}
+
+	desired := &spySurfaceValidator[testDesired]{
+		name:      "desired",
+		callOrder: &calls,
+	}
+	observed := &spySurfaceValidator[testObserved]{
+		name:      "observed",
+		callOrder: &calls,
+	}
+
+	plan := validPlan()
+	plan.DesiredValidator = desired
+	plan.ObservedValidator = observed
+
+	requireNoError(t, Validate(validObject(), plan))
+	requireCallOrder(t, calls, "desired", "observed")
+}
+
 func TestValidateFailureOrder(t *testing.T) {
 	calls := []string{}
 	cause := errors.New("desired failed")
@@ -58,7 +78,5 @@ func TestValidateFailureOrder(t *testing.T) {
 	)
 	requireErrorIs(t, err, cause)
 
-	if len(calls) != 1 || calls[0] != "desired" {
-		t.Fatalf("validator calls = %#v, want desired only", calls)
-	}
+	requireCallOrder(t, calls, "desired")
 }

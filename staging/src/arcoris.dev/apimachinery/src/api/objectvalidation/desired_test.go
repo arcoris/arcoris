@@ -23,6 +23,17 @@ import (
 	"arcoris.dev/apimachinery/api/resource"
 )
 
+// payloadWithValidate detects accidental calls to payload-local validation.
+type payloadWithValidate struct {
+	called *bool
+}
+
+// Validate would fail if objectvalidation incorrectly inspected payload APIs.
+func (p payloadWithValidate) Validate() error {
+	*p.called = true
+	return errors.New("payload Validate must not be called")
+}
+
 func TestValidateDesiredSurface(t *testing.T) {
 	plan, desired, _ := validPlanWithSpies()
 	resolver := &testResolver{name: "desired"}
@@ -44,6 +55,38 @@ func TestValidateDesiredSurface(t *testing.T) {
 	requireTypeEqual(t, desired.typ, alternateDescriptor())
 	if desired.resolver != resolver {
 		t.Fatalf("resolver = %#v, want %#v", desired.resolver, resolver)
+	}
+}
+
+func TestValidateDesiredReceivesNilResolver(t *testing.T) {
+	plan, desired, _ := validPlanWithSpies()
+	plan.Resolver = nil
+
+	requireNoError(t, Validate(validObject(), plan))
+
+	if desired.resolver != nil {
+		t.Fatalf("desired resolver = %#v, want nil", desired.resolver)
+	}
+}
+
+func TestValidateDesiredDoesNotCallPayloadValidate(t *testing.T) {
+	called := false
+
+	obj := apiobject.New[payloadWithValidate, testObserved](
+		validTypeMeta("v1"),
+		validObjectMeta("system"),
+		payloadWithValidate{called: &called},
+	)
+
+	plan := Plan[payloadWithValidate, testObserved]{
+		Resource:          resourceDefinition(resource.ScopeNamespaced),
+		DesiredValidator:  &spySurfaceValidator[payloadWithValidate]{},
+		ObservedValidator: &spySurfaceValidator[testObserved]{},
+	}
+
+	requireNoError(t, Validate(obj, plan))
+	if called {
+		t.Fatal("payload Validate was called")
 	}
 }
 
@@ -116,7 +159,9 @@ func TestValidateDesiredValidatorNotCalledAfterEarlierFailure(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			desired := &spySurfaceValidator[testDesired]{}
+			observed := &spySurfaceValidator[testObserved]{}
 			tt.plan.DesiredValidator = desired
+			tt.plan.ObservedValidator = observed
 
 			err := Validate(tt.obj, tt.plan)
 			if err == nil {
@@ -124,6 +169,9 @@ func TestValidateDesiredValidatorNotCalledAfterEarlierFailure(t *testing.T) {
 			}
 			if desired.called != 0 {
 				t.Fatalf("desired validator called after earlier failure: %d", desired.called)
+			}
+			if observed.called != 0 {
+				t.Fatalf("observed validator called after earlier failure: %d", observed.called)
 			}
 		})
 	}

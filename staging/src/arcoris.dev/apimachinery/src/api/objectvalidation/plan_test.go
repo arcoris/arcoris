@@ -52,8 +52,23 @@ func TestValidateRejectsInvalidPlanShape(t *testing.T) {
 			requireValidationError(t, err, tt.target, tt.path, tt.reason)
 			if tt.target == ErrMissingValidator {
 				requireErrorIs(t, err, ErrInvalidPlan)
+				requireErrorNotIs(t, err, ErrInvalidObject)
 			}
 		})
+	}
+}
+
+func TestValidateAllowsNilResolver(t *testing.T) {
+	plan, desired, observed := validPlanWithSpies()
+	plan.Resolver = nil
+
+	requireNoError(t, Validate(validObject(), plan))
+
+	if desired.resolver != nil {
+		t.Fatalf("desired resolver = %#v, want nil", desired.resolver)
+	}
+	if observed.resolver != nil {
+		t.Fatalf("observed resolver = %#v, want nil", observed.resolver)
 	}
 }
 

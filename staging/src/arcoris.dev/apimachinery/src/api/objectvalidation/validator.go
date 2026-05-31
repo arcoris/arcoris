@@ -22,6 +22,7 @@ import "arcoris.dev/apimachinery/api/types"
 // against the descriptor selected from a resource version. They must not mutate
 // the value. api/objectvalidation does not assume payloads expose a Validate
 // method because descriptor-aware conformance requires the selected types.Type.
+// The resolver argument is the exact resolver supplied by Plan and may be nil.
 type SurfaceValidator[T any] interface {
 	ValidateSurface(value T, descriptor types.Type, resolver types.Resolver) error
 }

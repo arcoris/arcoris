@@ -57,9 +57,63 @@ func TestErrorUnwrapPreservesObjectSentinelAndCause(t *testing.T) {
 	requireErrorIs(t, err, cause)
 }
 
+func TestErrorUnwrapClassifiesObjectFailures(t *testing.T) {
+	tests := []struct {
+		name   string
+		err    error
+		reason ErrorReason
+	}{
+		{
+			name:   "metadata",
+			err:    ErrInvalidMetadata,
+			reason: ErrorReasonInvalidMetadata,
+		},
+		{
+			name:   "resource mismatch",
+			err:    ErrResourceMismatch,
+			reason: ErrorReasonResourceMismatch,
+		},
+		{
+			name:   "version not defined",
+			err:    ErrVersionNotDefined,
+			reason: ErrorReasonVersionNotDefined,
+		},
+		{
+			name:   "invalid scope",
+			err:    ErrInvalidScope,
+			reason: ErrorReasonInvalidScope,
+		},
+		{
+			name:   "invalid desired",
+			err:    ErrInvalidDesired,
+			reason: ErrorReasonInvalidDesired,
+		},
+		{
+			name:   "invalid observed",
+			err:    ErrInvalidObserved,
+			reason: ErrorReasonInvalidObserved,
+		},
+		{
+			name:   "observed not allowed",
+			err:    ErrObservedNotAllowed,
+			reason: ErrorReasonObservedNotAllowed,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := errorf(pathObject, tt.err, tt.reason, "object contract failure")
+
+			requireErrorIs(t, err, ErrInvalidObject)
+			requireErrorIs(t, err, tt.err)
+		})
+	}
+}
+
 func TestErrorUnwrapPreservesInvalidPlanForMissingValidator(t *testing.T) {
 	err := missingValidator(pathPlanDesiredValidator, "desired surface validator is required")
 
 	requireErrorIs(t, err, ErrInvalidPlan)
 	requireErrorIs(t, err, ErrMissingValidator)
+	requireErrorNotIs(t, err, ErrInvalidObject)
 }

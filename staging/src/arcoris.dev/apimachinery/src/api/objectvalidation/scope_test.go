@@ -63,3 +63,18 @@ func TestValidateScopeCompatibility(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateRejectsInvalidResourceScope(t *testing.T) {
+	plan := validPlan()
+	plan.Resource = resourceDefinition(resource.ScopeInvalid)
+
+	err := Validate(validObjectWithoutObserved(), plan)
+	requireValidationError(
+		t,
+		err,
+		ErrInvalidScope,
+		pathResourceScope,
+		ErrorReasonInvalidScope,
+	)
+	requireErrorIs(t, err, ErrInvalidObject)
+}

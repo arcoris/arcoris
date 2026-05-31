@@ -21,11 +21,18 @@ import (
 
 // Plan contains already-resolved dependencies for object contract validation.
 //
-// Resource is the contract to validate against. Resolver is passed through to
-// surface validators so they can resolve structural TypeRef descriptors.
-// DesiredValidator is required because desired is a required resource surface.
-// ObservedValidator is needed only when the object carries observed data and
-// the selected resource version defines an observed descriptor.
+// Resource is the contract to validate against. It should already be resolved
+// and prevalidated by construction, registration, or catalog code before object
+// validation starts.
+//
+// Resolver is passed through to surface validators so they can resolve
+// structural TypeRef descriptors. It may be nil when the selected descriptors
+// and validators do not need reference resolution; objectvalidation itself does
+// not dereference it.
+//
+// DesiredValidator is required because desired is the required resource
+// surface. ObservedValidator is needed only when the selected resource version
+// defines an observed descriptor and the object carries observed data.
 type Plan[D any, O any] struct {
 	Resource resource.Definition
 	Resolver types.Resolver

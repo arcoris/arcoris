@@ -12,17 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package objectvalidation validates API object envelopes against resolved
-// resource contracts.
+// Package objectvalidation validates API object envelopes against already
+// resolved resource contracts.
 //
-// The package sits between api/object, api/resource, and api/types. It checks
-// that an object carries valid metadata, matches the resource family group and
-// kind, uses a version defined by that resource, satisfies minimal scope rules,
-// and delegates desired/observed payload checks to explicit typed surface
-// validators.
+// The package checks contract conformance, not request admissibility. It
+// coordinates object metadata validation, object GVK to resource group/kind
+// matching, resource version lookup, minimal scope compatibility, and desired
+// or observed surface validation through typed SurfaceValidator implementations.
 //
-// The package deliberately works with an already-resolved resource.Definition.
-// It does not perform catalog lookup, defaulting, conversion, pruning, storage
-// validation, selector matching, operation validation, runtime scheme work,
-// codecs, controllers, clients, or global registration.
+// Resource definitions supplied through Plan are expected to have been
+// validated at construction, registration, or catalog boundaries. This package
+// performs defensive plan-shape checks, but it does not repeatedly validate the
+// whole resource descriptor graph for every object.
+//
+// The package deliberately does not perform catalog lookup, admission,
+// defaulting, conversion, pruning, mutation, storage validation, serving
+// validation, selector matching, status or subresource handling, runtime scheme
+// registration, codecs, clients, controllers, or global registration.
 package objectvalidation

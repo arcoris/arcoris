@@ -17,7 +17,6 @@ package objectvalidation
 import (
 	"errors"
 	"reflect"
-	"strings"
 	"testing"
 
 	apiidentity "arcoris.dev/apimachinery/api/identity"
@@ -211,6 +210,14 @@ func requireErrorIs(t *testing.T, err error, target error) {
 	}
 }
 
+// requireErrorNotIs asserts that err does not report target through errors.Is.
+func requireErrorNotIs(t *testing.T, err error, target error) {
+	t.Helper()
+	if errors.Is(err, target) {
+		t.Fatalf("errors.Is(%v, %v) = true", err, target)
+	}
+}
+
 // requireValidationError asserts the structured objectvalidation error shape.
 func requireValidationError(
 	t *testing.T,
@@ -240,23 +247,18 @@ func requireValidationError(
 	return validationErr
 }
 
+// requireCallOrder compares validator call order without hiding the sequence.
+func requireCallOrder(t *testing.T, got []string, want ...string) {
+	t.Helper()
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("validator calls = %#v, want %#v", got, want)
+	}
+}
+
 // requireTypeEqual compares structural descriptors including private payload slots.
 func requireTypeEqual(t *testing.T, got types.Type, want types.Type) {
 	t.Helper()
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("Type = %#v, want %#v", got, want)
-	}
-}
-
-// requireDetailContains asserts diagnostic detail without pinning full text.
-func requireDetailContains(t *testing.T, err error, text string) {
-	t.Helper()
-
-	var validationErr *Error
-	if !errors.As(err, &validationErr) {
-		t.Fatalf("expected *Error, got %T", err)
-	}
-	if !strings.Contains(validationErr.Detail, text) {
-		t.Fatalf("Error.Detail = %q, want to contain %q", validationErr.Detail, text)
 	}
 }

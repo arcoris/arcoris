@@ -78,6 +78,17 @@ func TestValidateObservedSurface(t *testing.T) {
 	}
 }
 
+func TestValidateObservedReceivesNilResolver(t *testing.T) {
+	plan, _, observed := validPlanWithSpies()
+	plan.Resolver = nil
+
+	requireNoError(t, Validate(validObject(), plan))
+
+	if observed.resolver != nil {
+		t.Fatalf("observed resolver = %#v, want nil", observed.resolver)
+	}
+}
+
 func TestValidateObservedNeedsValidatorOnlyWhenValueIsPresent(t *testing.T) {
 	plan := validPlan()
 	plan.ObservedValidator = nil
@@ -93,6 +104,7 @@ func TestValidateObservedNeedsValidatorOnlyWhenValueIsPresent(t *testing.T) {
 		ErrorReasonMissingValidator,
 	)
 	requireErrorIs(t, err, ErrInvalidPlan)
+	requireErrorNotIs(t, err, ErrInvalidObject)
 }
 
 func TestValidateWrapsObservedSurfaceError(t *testing.T) {
