@@ -95,6 +95,9 @@ func validateList(t Type, resolver Resolver, path string, resolving map[TypeName
 				key,
 			)
 		}
+		if err := validateListMapKeyIdentityType(field, resolver, keyPath, resolving); err != nil {
+			return err
+		}
 	}
 	return nil
 }

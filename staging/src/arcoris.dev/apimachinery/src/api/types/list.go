@@ -82,8 +82,10 @@ func (t ListType) Set() ListType {
 // Map records map-like list semantics keyed by object field names.
 //
 // ValidateType later checks that map keys are valid field names, that the list
-// element is an object or resolvable object reference, and that each key field
-// is required. The builder only records the declared key order.
+// element is an object or resolvable object reference, that each key field is
+// required, and that each key field resolves to a non-nullable stable scalar
+// identity type suitable for future selector-based validation, diff, and apply
+// layers. The builder only records the declared key order.
 func (t ListType) Map(keys ...string) ListType {
 	t.payload.semantics = ListMap
 	t.payload.mapKeys = make([]FieldName, len(keys))

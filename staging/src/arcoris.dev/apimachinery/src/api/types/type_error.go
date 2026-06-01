@@ -107,6 +107,8 @@ const (
 	TypeErrorReasonListMapKeyNotFound TypeErrorReason = "list_map_key_not_found"
 	// TypeErrorReasonListMapKeyOptional reports a ListMap key field that is not required.
 	TypeErrorReasonListMapKeyOptional TypeErrorReason = "list_map_key_optional"
+	// TypeErrorReasonInvalidListMapKeyType reports a ListMap key field that cannot produce stable selector identity.
+	TypeErrorReasonInvalidListMapKeyType TypeErrorReason = "invalid_list_map_key_type"
 	// TypeErrorReasonListMapElementNotObject reports ListMap semantics over a non-object element.
 	TypeErrorReasonListMapElementNotObject TypeErrorReason = "list_map_element_not_object"
 
