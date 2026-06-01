@@ -14,20 +14,21 @@
 
 package fieldpath
 
-import "strconv"
+import (
+	"errors"
+	"testing"
+)
 
-// Validate checks whether p contains only valid semantic path elements.
-func (p Path) Validate() error {
-	for i, element := range p.elements {
-		if err := element.Validate(); err != nil {
-			return nested(
-				ErrInvalidPath,
-				ErrorReasonInvalidElement,
-				"path element "+strconv.Itoa(i)+" is invalid",
-				err,
-			)
-		}
+func TestPathParserSyntaxErrorIncludesOffset(t *testing.T) {
+	p := newPathParser(`$.`)
+
+	_, err := p.parsePath()
+
+	var pathErr *Error
+	if !errors.As(err, &pathErr) {
+		t.Fatalf("expected *Error, got %T", err)
 	}
 
-	return nil
+	requireErrorIs(t, err, ErrInvalidSyntax)
+	requireEqual(t, pathErr.Detail, "field element is truncated at byte 2")
 }

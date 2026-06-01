@@ -22,6 +22,8 @@ import (
 var (
 	// ErrInvalidPath classifies malformed semantic paths.
 	ErrInvalidPath = errors.New("invalid field path")
+	// ErrInvalidSyntax classifies malformed field-path text.
+	ErrInvalidSyntax = errors.New("invalid field path syntax")
 	// ErrInvalidElement classifies malformed path elements.
 	ErrInvalidElement = errors.New("invalid field path element")
 	// ErrInvalidSelector classifies malformed associative-list selectors.

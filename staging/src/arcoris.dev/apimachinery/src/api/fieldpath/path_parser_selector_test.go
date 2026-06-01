@@ -14,20 +14,28 @@
 
 package fieldpath
 
-import "strconv"
+import "testing"
 
-// Validate checks whether p contains only valid semantic path elements.
-func (p Path) Validate() error {
-	for i, element := range p.elements {
-		if err := element.Validate(); err != nil {
-			return nested(
-				ErrInvalidPath,
-				ErrorReasonInvalidElement,
-				"path element "+strconv.Itoa(i)+" is invalid",
-				err,
-			)
-		}
-	}
+func TestPathParserParseBracketElementSelector(t *testing.T) {
+	p := newPathParser(`[{"port":443,"host":"api.example.com"}]`)
 
-	return nil
+	element, err := p.parseBracketElement()
+	requireNoError(t, err)
+
+	requireEqual(t, element.Kind(), ElementSelector)
+	requireEqual(
+		t,
+		element.Selector().String(),
+		`{"host":"api.example.com","port":443}`,
+	)
+	requireEqual(t, p.done(), true)
+}
+
+func TestPathParserParseSelectorEntryRequiresColon(t *testing.T) {
+	p := newPathParser(`"type" "Ready"`)
+
+	_, err := p.parseSelectorEntry()
+
+	requireErrorIs(t, err, ErrInvalidPath)
+	requireErrorIs(t, err, ErrInvalidSyntax)
 }

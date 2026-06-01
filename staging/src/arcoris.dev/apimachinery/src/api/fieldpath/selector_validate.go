@@ -47,6 +47,14 @@ func (s Selector) Validate() error {
 				ErrDuplicateField,
 			)
 		}
+
+		if s.entries[i-1].Compare(entry) > 0 {
+			return newError(
+				ErrInvalidSelector,
+				ErrorReasonInvalidSelector,
+				"selector entries are not in canonical order",
+			)
+		}
 	}
 
 	return nil

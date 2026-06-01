@@ -16,13 +16,21 @@ package fieldpath
 
 import "slices"
 
-// sortSelectorEntries canonicalizes selector entries in-place by field name and
-// then literal value.
+// Has reports whether s contains path.
 //
-// The standard library generic sort keeps selector canonicalization compact
-// without using reflection-heavy helpers.
-func sortSelectorEntries(entries []SelectorEntry) {
-	slices.SortFunc(entries, func(left SelectorEntry, right SelectorEntry) int {
-		return left.Compare(right)
+// Membership uses the set's canonical sorted order, so callers get predictable
+// O(log n) lookup without exposing internal indexing structures.
+func (s PathSet) Has(path Path) bool {
+	_, ok := s.search(path)
+	return ok
+}
+
+// search locates path in the canonical sorted slice.
+//
+// It returns the index where path was found or, when absent, the insertion
+// point that would preserve canonical ordering.
+func (s PathSet) search(path Path) (int, bool) {
+	return slices.BinarySearchFunc(s.paths, path, func(candidate Path, target Path) int {
+		return candidate.Compare(target)
 	})
 }

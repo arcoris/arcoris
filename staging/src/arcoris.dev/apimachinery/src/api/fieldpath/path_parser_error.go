@@ -16,18 +16,13 @@ package fieldpath
 
 import "strconv"
 
-// Validate checks whether p contains only valid semantic path elements.
-func (p Path) Validate() error {
-	for i, element := range p.elements {
-		if err := element.Validate(); err != nil {
-			return nested(
-				ErrInvalidPath,
-				ErrorReasonInvalidElement,
-				"path element "+strconv.Itoa(i)+" is invalid",
-				err,
-			)
-		}
-	}
-
-	return nil
+// syntaxError wraps one precise parse failure into the package's structured
+// error model while preserving ErrInvalidPath for broad classification.
+func (p *pathParser) syntaxError(detail string) error {
+	return nested(
+		ErrInvalidPath,
+		ErrorReasonInvalidSyntax,
+		detail+" at byte "+strconv.Itoa(p.pos),
+		ErrInvalidSyntax,
+	)
 }

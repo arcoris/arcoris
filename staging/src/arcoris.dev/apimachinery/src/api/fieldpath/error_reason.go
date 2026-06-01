@@ -20,6 +20,8 @@ type ErrorReason string
 const (
 	// ErrorReasonInvalidPath identifies a path that contains an invalid element.
 	ErrorReasonInvalidPath ErrorReason = "invalidPath"
+	// ErrorReasonInvalidSyntax identifies malformed field-path text.
+	ErrorReasonInvalidSyntax ErrorReason = "invalidSyntax"
 	// ErrorReasonInvalidElement identifies a malformed path element.
 	ErrorReasonInvalidElement ErrorReason = "invalidElement"
 	// ErrorReasonInvalidSelector identifies a malformed selector.

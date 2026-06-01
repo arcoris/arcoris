@@ -45,7 +45,7 @@ func newUint64(v uint64) integer {
 // validate reports whether i satisfies the internal sign/magnitude invariant.
 func (i integer) validate() error {
 	if i.negative && i.magnitude == 0 {
-		return errorf(
+		return newError(
 			ErrInvalidLiteral,
 			ErrorReasonInvalidLiteral,
 			"integer literal uses an invalid negative zero representation",

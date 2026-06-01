@@ -17,7 +17,7 @@ package fieldpath
 // Validate accepts supported bool, integer, and string selector literals.
 func (l Literal) Validate() error {
 	if !l.kind.IsValid() {
-		return errorf(
+		return newError(
 			ErrInvalidLiteral,
 			ErrorReasonInvalidLiteral,
 			"literal kind is invalid",

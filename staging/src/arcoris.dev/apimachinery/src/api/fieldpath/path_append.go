@@ -18,8 +18,9 @@ package fieldpath
 //
 // The receiver is never mutated. The returned path owns a fresh element slice.
 func (p Path) Append(elements ...Element) Path {
-	appended := cloneElements(p.elements)
-	appended = append(appended, cloneElements(elements)...)
+	appended := make([]Element, 0, len(p.elements)+len(elements))
+	appended = appendClonedElements(appended, p.elements)
+	appended = appendClonedElements(appended, elements)
 
 	return Path{
 		elements: appended,

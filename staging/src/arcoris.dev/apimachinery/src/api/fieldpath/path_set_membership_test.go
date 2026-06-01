@@ -14,20 +14,20 @@
 
 package fieldpath
 
-import "strconv"
+import "testing"
 
-// Validate checks whether p contains only valid semantic path elements.
-func (p Path) Validate() error {
-	for i, element := range p.elements {
-		if err := element.Validate(); err != nil {
-			return nested(
-				ErrInvalidPath,
-				ErrorReasonInvalidElement,
-				"path element "+strconv.Itoa(i)+" is invalid",
-				err,
-			)
-		}
-	}
+func TestPathSetHas(t *testing.T) {
+	set := MustPathSet(
+		RootPath().Field("spec"),
+		RootPath().Field("status"),
+	)
 
-	return nil
+	requireEqual(t, set.Has(RootPath().Field("spec")), true)
+	requireEqual(t, set.Has(RootPath().Field("metadata")), false)
+}
+
+func TestEmptyPathSetHas(t *testing.T) {
+	var set PathSet
+
+	requireEqual(t, set.Has(RootPath()), false)
 }

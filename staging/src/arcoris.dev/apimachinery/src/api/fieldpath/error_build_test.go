@@ -19,34 +19,38 @@ import (
 	"testing"
 )
 
-func TestSelectorValidateReturnsStructuredError(t *testing.T) {
-	err := Selector{}.Validate()
+func TestNewErrorBuildsStructuredError(t *testing.T) {
+	err := newError(
+		ErrInvalidElement,
+		ErrorReasonInvalidElement,
+		"element kind is invalid",
+	)
 
 	var pathErr *Error
 	if !errors.As(err, &pathErr) {
 		t.Fatalf("expected *Error, got %T", err)
 	}
 
-	requireEqual(t, pathErr.Reason, ErrorReasonEmptySelector)
-	requireEqual(t, pathErr.Detail != "", true)
+	requireErrorIs(t, err, ErrInvalidElement)
+	requireEqual(t, pathErr.Reason, ErrorReasonInvalidElement)
+	requireEqual(t, pathErr.Detail, "element kind is invalid")
 }
 
-func TestSelectorValidateRejectsNonCanonicalOrder(t *testing.T) {
-	selector := Selector{
-		entries: []SelectorEntry{
-			NewSelectorEntry("type", StringLiteral("Ready")),
-			NewSelectorEntry("status", StringLiteral("True")),
-		},
-	}
-
-	err := selector.Validate()
-
-	requireErrorIs(t, err, ErrInvalidSelector)
+func TestNestedBuildsStructuredErrorWithCause(t *testing.T) {
+	cause := errors.New("cause")
+	err := nested(
+		ErrInvalidPath,
+		ErrorReasonInvalidElement,
+		"path element is invalid",
+		cause,
+	)
 
 	var pathErr *Error
 	if !errors.As(err, &pathErr) {
 		t.Fatalf("expected *Error, got %T", err)
 	}
 
-	requireEqual(t, pathErr.Reason, ErrorReasonInvalidSelector)
+	requireErrorIs(t, err, ErrInvalidPath)
+	requireErrorIs(t, err, cause)
+	requireEqual(t, pathErr.Cause, cause)
 }

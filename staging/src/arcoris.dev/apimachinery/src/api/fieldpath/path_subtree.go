@@ -14,25 +14,18 @@
 
 package fieldpath
 
-import "testing"
-
-func TestElementValidateRejectsEmptyFieldName(t *testing.T) {
-	err := FieldElement("").Validate()
-
-	requireErrorIs(t, err, ErrInvalidElement)
-	requireErrorIs(t, err, ErrEmptyFieldName)
+// IsDescendantOf reports whether p is a strict descendant of ancestor.
+//
+// The receiver must be longer than ancestor and share ancestor as a structural
+// prefix.
+func (p Path) IsDescendantOf(ancestor Path) bool {
+	return p.Len() > ancestor.Len() && p.HasPrefix(ancestor)
 }
 
-func TestElementValidateRejectsEmptyKey(t *testing.T) {
-	err := KeyElement("").Validate()
-
-	requireErrorIs(t, err, ErrInvalidElement)
-	requireErrorIs(t, err, ErrEmptyKey)
-}
-
-func TestElementValidateRejectsNegativeIndex(t *testing.T) {
-	err := IndexElement(-1).Validate()
-
-	requireErrorIs(t, err, ErrInvalidElement)
-	requireErrorIs(t, err, ErrNegativeIndex)
+// IntersectsSubtree reports whether p and other lie in the same subtree.
+//
+// Two paths intersect structurally when either one is a prefix of the other.
+// This makes the operation symmetric and useful for subtree filtering.
+func (p Path) IntersectsSubtree(other Path) bool {
+	return p.HasPrefix(other) || other.HasPrefix(p)
 }

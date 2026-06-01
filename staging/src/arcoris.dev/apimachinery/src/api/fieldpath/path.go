@@ -44,10 +44,17 @@ func cloneElements(elements []Element) []Element {
 		return nil
 	}
 
-	cloned := make([]Element, len(elements))
-	for i, element := range elements {
-		cloned[i] = element.clone()
-	}
+	cloned := make([]Element, 0, len(elements))
+	cloned = appendClonedElements(cloned, elements)
 
 	return cloned
+}
+
+// appendClonedElements appends detached element copies to dst.
+func appendClonedElements(dst []Element, elements []Element) []Element {
+	for _, element := range elements {
+		dst = append(dst, element.clone())
+	}
+
+	return dst
 }

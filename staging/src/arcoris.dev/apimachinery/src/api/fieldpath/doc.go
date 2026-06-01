@@ -31,6 +31,10 @@
 // diff, apply, and future managed-field layers compare, sort, group, and own
 // paths without reparsing formatted text.
 //
+// The package also provides a strict parser for the canonical diagnostic form
+// and a canonical sorted path set for higher layers that need subtree-aware
+// grouping, filtering, and ownership-style operations.
+//
 // Package fieldpath does not inspect api/value payloads, read api/types
 // descriptors, decode wire formats, validate values, compare payloads, apply
 // changes, or manage field ownership. Descriptor-aware callers decide which

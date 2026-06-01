@@ -14,14 +14,12 @@
 
 package fieldpath
 
-import "fmt"
-
-// errorf builds a structured field-path error with formatted detail.
-func errorf(err error, reason ErrorReason, format string, args ...any) error {
+// newError builds a structured field-path error without a nested cause.
+func newError(err error, reason ErrorReason, detail string) error {
 	return &Error{
 		Err:    err,
 		Reason: reason,
-		Detail: fmt.Sprintf(format, args...),
+		Detail: detail,
 	}
 }
 

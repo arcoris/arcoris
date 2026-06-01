@@ -14,20 +14,17 @@
 
 package fieldpath
 
-import "strconv"
+// pathParser incrementally decodes the canonical Path.String grammar.
+//
+// The parser intentionally works at the byte level because the field-path text
+// grammar is ASCII-structured. Quoted names and string literals are delegated
+// to strconv.Unquote for escaping and UTF-8 validation in narrower helpers.
+type pathParser struct {
+	text string
+	pos  int
+}
 
-// Validate checks whether p contains only valid semantic path elements.
-func (p Path) Validate() error {
-	for i, element := range p.elements {
-		if err := element.Validate(); err != nil {
-			return nested(
-				ErrInvalidPath,
-				ErrorReasonInvalidElement,
-				"path element "+strconv.Itoa(i)+" is invalid",
-				err,
-			)
-		}
-	}
-
-	return nil
+// newPathParser prepares one parser instance for text.
+func newPathParser(text string) pathParser {
+	return pathParser{text: text}
 }

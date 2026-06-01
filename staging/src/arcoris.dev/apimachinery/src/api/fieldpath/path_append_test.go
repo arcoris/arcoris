@@ -32,3 +32,13 @@ func TestPathAppendDoesNotMutateReceiver(t *testing.T) {
 	requireEqual(t, root.String(), "$.spec")
 	requireEqual(t, child.String(), "$.spec.replicas")
 }
+
+func TestPathAppendClonesSelectorElement(t *testing.T) {
+	selector := MustSelector(NewSelectorEntry("type", StringLiteral("Ready")))
+	element := SelectorElement(selector)
+
+	path := RootPath().Append(element)
+	element.selector.entries[0] = NewSelectorEntry("type", StringLiteral("Changed"))
+
+	requireEqual(t, path.String(), `$[{"type":"Ready"}]`)
+}
