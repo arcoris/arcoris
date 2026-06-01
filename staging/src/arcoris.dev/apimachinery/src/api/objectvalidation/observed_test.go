@@ -72,7 +72,7 @@ func TestValidateObservedSurface(t *testing.T) {
 	if observed.value != *obj.Observed {
 		t.Fatalf("observed value = %#v, want %#v", observed.value, *obj.Observed)
 	}
-	requireTypeEqual(t, observed.typ, alternateDescriptor())
+	requireAlternateDescriptor(t, observed.typ)
 	if observed.resolver != resolver {
 		t.Fatalf("resolver = %#v, want %#v", observed.resolver, resolver)
 	}

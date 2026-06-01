@@ -16,7 +16,6 @@ package objectvalidation
 
 import (
 	"errors"
-	"reflect"
 	"testing"
 
 	apiidentity "arcoris.dev/apimachinery/api/identity"
@@ -250,15 +249,45 @@ func requireValidationError(
 // requireCallOrder compares validator call order without hiding the sequence.
 func requireCallOrder(t *testing.T, got []string, want ...string) {
 	t.Helper()
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("validator calls = %#v, want %#v", got, want)
+
+	if len(got) != len(want) {
+		t.Fatalf("validator call count = %d, want %d; calls = %#v, want %#v", len(got), len(want), got, want)
+	}
+
+	for i := range got {
+		if got[i] != want[i] {
+			t.Fatalf("validator calls[%d] = %q, want %q; calls = %#v, want %#v", i, got[i], want[i], got, want)
+		}
 	}
 }
 
-// requireTypeEqual compares structural descriptors including private payload slots.
-func requireTypeEqual(t *testing.T, got types.Type, want types.Type) {
+// requireAlternateDescriptor asserts the selected version descriptor through
+// public type views instead of depending on private Type layout equality.
+func requireAlternateDescriptor(t *testing.T, got types.Type) {
 	t.Helper()
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("Type = %#v, want %#v", got, want)
+
+	if got.Code() != types.TypeObject {
+		t.Fatalf("Type.Code() = %s, want %s", got.Code(), types.TypeObject)
+	}
+
+	view, ok := got.Object()
+	if !ok {
+		t.Fatal("Type.Object() returned ok=false")
+	}
+
+	fields := view.Fields()
+	if len(fields) != 1 {
+		t.Fatalf("len(Object.Fields()) = %d, want 1; fields = %#v", len(fields), fields)
+	}
+
+	field := fields[0]
+	if field.Name() != "image" {
+		t.Fatalf("field.Name() = %q, want %q", field.Name(), "image")
+	}
+	if !field.IsRequired() {
+		t.Fatal("field.IsRequired() = false, want true")
+	}
+	if field.Type().Code() != types.TypeString {
+		t.Fatalf("field.Type().Code() = %s, want %s", field.Type().Code(), types.TypeString)
 	}
 }

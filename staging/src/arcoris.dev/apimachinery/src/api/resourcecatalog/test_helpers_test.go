@@ -16,7 +16,6 @@ package resourcecatalog
 
 import (
 	"errors"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -149,9 +148,16 @@ func requireEqual[T comparable](t *testing.T, got T, want T) {
 	}
 }
 
-func requireDeepEqual[T any](t *testing.T, got T, want T) {
+func requireSliceEqual[T comparable](t *testing.T, got []T, want []T) {
 	t.Helper()
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %#v, want %#v", got, want)
+
+	if len(got) != len(want) {
+		t.Fatalf("len(got) = %d, want %d; got %#v, want %#v", len(got), len(want), got, want)
+	}
+
+	for i := range got {
+		if got[i] != want[i] {
+			t.Fatalf("got[%d] = %#v, want %#v; got %#v, want %#v", i, got[i], want[i], got, want)
+		}
 	}
 }

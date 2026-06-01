@@ -31,7 +31,7 @@ func TestIndexKeyHelpers(t *testing.T) {
 	requireEqual(t, groupResourceOf(def), identity.GroupResource{Group: testGroup, Resource: "workers"})
 	requireEqual(t, groupKindOf(def), identity.GroupKind{Group: testGroup, Kind: "Worker"})
 
-	requireDeepEqual(
+	requireSliceEqual(
 		t,
 		versionResourceKeys(def),
 		[]identity.GroupVersionResource{
@@ -39,7 +39,7 @@ func TestIndexKeyHelpers(t *testing.T) {
 			{Group: testGroup, Version: "v1", Resource: "workers"},
 		},
 	)
-	requireDeepEqual(
+	requireSliceEqual(
 		t,
 		versionKindKeys(def),
 		[]identity.GroupVersionKind{

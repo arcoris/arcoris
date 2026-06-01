@@ -17,7 +17,6 @@ package resource
 import (
 	"encoding/json"
 	"errors"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -65,14 +64,6 @@ func requireEqual[T comparable](t *testing.T, got T, want T) {
 	t.Helper()
 	if got != want {
 		t.Fatalf("got %v, want %v", got, want)
-	}
-}
-
-// requireDeepEqual compares descriptor slices and composite values.
-func requireDeepEqual[T any](t *testing.T, got T, want T) {
-	t.Helper()
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %#v, want %#v", got, want)
 	}
 }
 

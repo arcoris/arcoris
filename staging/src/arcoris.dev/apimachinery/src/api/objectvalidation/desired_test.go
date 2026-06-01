@@ -52,7 +52,7 @@ func TestValidateDesiredSurface(t *testing.T) {
 	if desired.value != obj.Desired {
 		t.Fatalf("desired value = %#v, want %#v", desired.value, obj.Desired)
 	}
-	requireTypeEqual(t, desired.typ, alternateDescriptor())
+	requireAlternateDescriptor(t, desired.typ)
 	if desired.resolver != resolver {
 		t.Fatalf("resolver = %#v, want %#v", desired.resolver, resolver)
 	}

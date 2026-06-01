@@ -32,7 +32,7 @@ func TestDefinitionsAndResourcesStableOrder(t *testing.T) {
 	requireEqual(t, defs[0].GroupResource(), first.GroupResource())
 	requireEqual(t, defs[1].GroupResource(), second.GroupResource())
 
-	requireDeepEqual(
+	requireSliceEqual(
 		t,
 		catalog.Resources(),
 		[]identity.GroupResource{first.GroupResource(), second.GroupResource()},
