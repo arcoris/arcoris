@@ -16,21 +16,26 @@ package value
 
 import "testing"
 
-func TestNewErrorBuildsStructuredError(t *testing.T) {
-	err := newError(
-		pathFloat,
-		ErrInvalidFloat,
-		ErrorReasonInvalidFloat,
-		`float "NaN" is not finite`,
-	)
+func TestFormatTimeOfDay(t *testing.T) {
+	tests := []struct {
+		name string
+		time TimeOfDay
+		want string
+	}{
+		{name: "midnight", time: TimeOfDay{}, want: "00:00:00"},
+		{name: "whole second", time: TimeOfDay{hour: 1, minute: 2, second: 3}, want: "01:02:03"},
+		{
+			name: "with nanoseconds",
+			time: TimeOfDay{hour: 1, minute: 2, second: 3, nanosecond: 4},
+			want: "01:02:03.000000004",
+		},
+	}
 
-	valueErr := requireValueError(
-		t,
-		err,
-		ErrInvalidFloat,
-		pathFloat,
-		ErrorReasonInvalidFloat,
-	)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := formatTimeOfDay(tt.time)
 
-	requireEqual(t, valueErr.Detail, `float "NaN" is not finite`)
+			requireEqual(t, got, tt.want)
+		})
+	}
 }

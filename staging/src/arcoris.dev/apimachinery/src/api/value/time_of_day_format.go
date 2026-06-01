@@ -14,23 +14,19 @@
 
 package value
 
-import "testing"
+// formatTimeOfDay returns HH:MM:SS plus optional nanoseconds without using fmt.
+func formatTimeOfDay(t TimeOfDay) string {
+	out := make([]byte, 0, 18)
+	out = appendPaddedSignedDecimal(out, t.hour, 2)
+	out = append(out, ':')
+	out = appendPaddedSignedDecimal(out, t.minute, 2)
+	out = append(out, ':')
+	out = appendPaddedSignedDecimal(out, t.second, 2)
 
-func TestNewErrorBuildsStructuredError(t *testing.T) {
-	err := newError(
-		pathFloat,
-		ErrInvalidFloat,
-		ErrorReasonInvalidFloat,
-		`float "NaN" is not finite`,
-	)
+	if t.nanosecond != 0 {
+		out = append(out, '.')
+		out = appendPaddedSignedDecimal(out, t.nanosecond, 9)
+	}
 
-	valueErr := requireValueError(
-		t,
-		err,
-		ErrInvalidFloat,
-		pathFloat,
-		ErrorReasonInvalidFloat,
-	)
-
-	requireEqual(t, valueErr.Detail, `float "NaN" is not finite`)
+	return string(out)
 }

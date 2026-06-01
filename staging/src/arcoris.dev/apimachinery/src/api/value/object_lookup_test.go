@@ -16,21 +16,22 @@ package value
 
 import "testing"
 
-func TestNewErrorBuildsStructuredError(t *testing.T) {
-	err := newError(
-		pathFloat,
-		ErrInvalidFloat,
-		ErrorReasonInvalidFloat,
-		`float "NaN" is not finite`,
-	)
+func TestFindObjectMember(t *testing.T) {
+	members := []Member{
+		ObjectMember("first", StringValue("one")),
+		ObjectMember("second", StringValue("two")),
+	}
 
-	valueErr := requireValueError(
-		t,
-		err,
-		ErrInvalidFloat,
-		pathFloat,
-		ErrorReasonInvalidFloat,
-	)
+	requireEqual(t, findObjectMember(members, "first"), 0)
+	requireEqual(t, findObjectMember(members, "second"), 1)
+	requireEqual(t, findObjectMember(members, "missing"), -1)
+}
 
-	requireEqual(t, valueErr.Detail, `float "NaN" is not finite`)
+func TestHasObjectMemberName(t *testing.T) {
+	members := []Member{
+		ObjectMember("name", StringValue("worker")),
+	}
+
+	requireEqual(t, hasObjectMemberName(members, "name"), true)
+	requireEqual(t, hasObjectMemberName(members, "missing"), false)
 }

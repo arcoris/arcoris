@@ -14,6 +14,8 @@
 
 package value
 
+import "strconv"
+
 // validateObjectMember checks one object member before payload insertion.
 //
 // The existing slice contains only already validated and cloned members. Passing
@@ -21,7 +23,7 @@ package value
 // storing an index in the final payload.
 func validateObjectMember(index int, member Member, existing []Member) error {
 	if member.Name == "" {
-		return errorf(
+		return newError(
 			objectMemberNamePath(index),
 			ErrEmptyName,
 			ErrorReasonEmptyName,
@@ -30,38 +32,22 @@ func validateObjectMember(index int, member Member, existing []Member) error {
 	}
 
 	if member.Value.IsZero() {
-		return errorf(
+		return newError(
 			objectMemberValuePath(index),
 			ErrInvalidMember,
 			ErrorReasonInvalidValue,
-			"object member %q has an invalid zero value",
-			member.Name,
+			"object member "+strconv.Quote(member.Name)+" has an invalid zero value",
 		)
 	}
 
 	if hasObjectMemberName(existing, member.Name) {
-		return errorf(
+		return newError(
 			objectMemberNamePath(index),
 			ErrDuplicateName,
 			ErrorReasonDuplicateName,
-			"object member name %q is duplicated",
-			member.Name,
+			"object member name "+strconv.Quote(member.Name)+" is duplicated",
 		)
 	}
 
 	return nil
-}
-
-// hasObjectMemberName performs the intentionally small linear duplicate check.
-//
-// It trades O(n) lookup for lower allocation and simpler payload invariants,
-// which is the better default for short API objects.
-func hasObjectMemberName(members []Member, name string) bool {
-	for _, member := range members {
-		if member.Name == name {
-			return true
-		}
-	}
-
-	return false
 }

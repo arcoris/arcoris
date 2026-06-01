@@ -28,6 +28,10 @@ type listPayload struct {
 // Invalid zero Values are rejected so every stored item is a concrete payload
 // value. Explicit Null is allowed because it is real payload data.
 func newListPayload(items []Value) (listPayload, error) {
+	if len(items) == 0 {
+		return listPayload{}, nil
+	}
+
 	payload := listPayload{
 		items: make([]Value, 0, len(items)),
 	}
@@ -40,17 +44,5 @@ func newListPayload(items []Value) (listPayload, error) {
 		payload.items = append(payload.items, item.Clone())
 	}
 
-	return payload.compact(), nil
-}
-
-// compact removes empty backing storage from empty lists.
-//
-// Empty lists are valid, but nil storage avoids retaining an unused backing
-// array.
-func (p listPayload) compact() listPayload {
-	if len(p.items) == 0 {
-		return listPayload{}
-	}
-
-	return p
+	return payload, nil
 }

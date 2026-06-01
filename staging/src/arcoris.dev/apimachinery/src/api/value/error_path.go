@@ -14,7 +14,7 @@
 
 package value
 
-import "fmt"
+import "strconv"
 
 const (
 	// pathFloat identifies float scalar construction failures.
@@ -32,14 +32,14 @@ const (
 // Paths use caller order indexes because object payloads preserve member order
 // and do not store a lookup index.
 func objectMemberNamePath(index int) string {
-	return fmt.Sprintf("object.members[%d].name", index)
+	return "object.members[" + strconv.Itoa(index) + "].name"
 }
 
 // objectMemberValuePath returns the diagnostic path for an object member value.
 //
 // The path points to the nested Value slot, not to descriptor metadata.
 func objectMemberValuePath(index int) string {
-	return fmt.Sprintf("object.members[%d].value", index)
+	return "object.members[" + strconv.Itoa(index) + "].value"
 }
 
 // listItemPath returns the diagnostic path for a list item.
@@ -47,5 +47,5 @@ func objectMemberValuePath(index int) string {
 // List paths use ordered indexes because list payload order is semantically
 // preserved.
 func listItemPath(index int) string {
-	return fmt.Sprintf("list.items[%d]", index)
+	return "list.items[" + strconv.Itoa(index) + "]"
 }

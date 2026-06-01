@@ -21,7 +21,7 @@ package value
 // rejected because it cannot be produced by NewDate.
 func DateValue(v Date) (Value, error) {
 	if !v.IsValid() {
-		return Value{}, errorf(
+		return Value{}, newError(
 			pathDate,
 			ErrInvalidDate,
 			ErrorReasonInvalidDate,

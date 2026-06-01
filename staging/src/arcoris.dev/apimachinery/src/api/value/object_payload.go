@@ -30,6 +30,10 @@ type objectPayload struct {
 // keeps the constructor allocation profile small and makes member order the only
 // stored object invariant.
 func newObjectPayload(members []Member) (objectPayload, error) {
+	if len(members) == 0 {
+		return objectPayload{}, nil
+	}
+
 	payload := objectPayload{
 		members: make([]Member, 0, len(members)),
 	}
@@ -42,17 +46,5 @@ func newObjectPayload(members []Member) (objectPayload, error) {
 		payload.members = append(payload.members, ObjectMember(member.Name, member.Value))
 	}
 
-	return payload.compact(), nil
-}
-
-// compact removes empty backing storage from empty objects.
-//
-// Empty objects are valid, but keeping nil storage for them avoids retaining an
-// otherwise unused zero-length backing array.
-func (p objectPayload) compact() objectPayload {
-	if len(p.members) == 0 {
-		return objectPayload{}
-	}
-
-	return p
+	return payload, nil
 }

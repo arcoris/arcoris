@@ -14,32 +14,15 @@
 
 package value
 
-import "fmt"
-
-// errorf builds a structured value construction error with formatted detail.
+// newError builds a structured value construction error.
 //
 // It is used for direct validation failures where there is no nested cause. The
-// caller chooses the stable path, sentinel, and reason; only Detail is formatted
-// for humans.
-func errorf(path string, err error, reason ErrorReason, format string, args ...any) error {
-	return &Error{
-		Path:   path,
-		Err:    err,
-		Reason: reason,
-		Detail: fmt.Sprintf(format, args...),
-	}
-}
-
-// nested wraps a lower-level construction failure without hiding its identity.
-//
-// The nested cause remains available through errors.Is/errors.As while the outer
-// error gives the current value path and construction classification.
-func nested(path string, err error, reason ErrorReason, detail string, cause error) error {
+// caller chooses the stable path, sentinel, reason, and human detail explicitly.
+func newError(path string, err error, reason ErrorReason, detail string) error {
 	return &Error{
 		Path:   path,
 		Err:    err,
 		Reason: reason,
 		Detail: detail,
-		Cause:  cause,
 	}
 }

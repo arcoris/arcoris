@@ -24,7 +24,7 @@ import "math"
 // separate value kind.
 func FloatValue(v float64) (Value, error) {
 	if math.IsNaN(v) {
-		return Value{}, errorf(
+		return Value{}, newError(
 			pathFloat,
 			ErrInvalidFloat,
 			ErrorReasonInvalidFloat,
@@ -33,7 +33,7 @@ func FloatValue(v float64) (Value, error) {
 	}
 
 	if math.IsInf(v, 0) {
-		return Value{}, errorf(
+		return Value{}, newError(
 			pathFloat,
 			ErrInvalidFloat,
 			ErrorReasonInvalidFloat,

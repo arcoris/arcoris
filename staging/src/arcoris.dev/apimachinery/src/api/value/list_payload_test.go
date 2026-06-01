@@ -32,7 +32,7 @@ func TestListPayloadPreservesOrder(t *testing.T) {
 	requireEqual(t, second, "second")
 }
 
-func TestListPayloadCompactRemovesEmptyStorage(t *testing.T) {
+func TestListPayloadEmptyListUsesNilStorage(t *testing.T) {
 	payload, err := newListPayload(nil)
 	requireNoError(t, err)
 

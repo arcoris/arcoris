@@ -27,7 +27,7 @@ func TestObjectPayloadPreservesOrder(t *testing.T) {
 	requireEqual(t, payload.members[1].Name, "second")
 }
 
-func TestObjectPayloadCompactRemovesEmptyStorage(t *testing.T) {
+func TestObjectPayloadEmptyObjectUsesNilStorage(t *testing.T) {
 	payload, err := newObjectPayload(nil)
 	requireNoError(t, err)
 

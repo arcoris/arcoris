@@ -14,10 +14,7 @@
 
 package value
 
-import (
-	"fmt"
-	"time"
-)
+import "time"
 
 // Date stores a calendar date without time-of-day or timezone.
 //
@@ -71,7 +68,7 @@ func (d Date) IsValid() bool {
 // The YYYY-MM-DD text is for diagnostics and tests. JSON or other wire encoding
 // belongs to a codec layer.
 func (d Date) String() string {
-	return fmt.Sprintf("%04d-%02d-%02d", d.year, d.month, d.day)
+	return formatDate(d.year, d.month, d.day)
 }
 
 // Equal reports whether d and other represent the same calendar date.

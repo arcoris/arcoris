@@ -23,7 +23,7 @@ func validateListItem(index int, item Value) error {
 		return nil
 	}
 
-	return errorf(
+	return newError(
 		listItemPath(index),
 		ErrInvalidList,
 		ErrorReasonInvalidValue,

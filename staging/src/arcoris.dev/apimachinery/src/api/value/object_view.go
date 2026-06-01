@@ -90,17 +90,3 @@ func (o ObjectView) Names() []string {
 
 	return names
 }
-
-// findObjectMember returns the ordered member index for name.
-//
-// A negative result means the member is absent. Keeping the search as a tiny
-// helper makes Has and Get share the same linear lookup semantics.
-func findObjectMember(members []Member, name string) int {
-	for i, member := range members {
-		if member.Name == name {
-			return i
-		}
-	}
-
-	return -1
-}

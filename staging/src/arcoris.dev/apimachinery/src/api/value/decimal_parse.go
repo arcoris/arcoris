@@ -77,17 +77,14 @@ func splitDecimalSign(text string) (bool, string) {
 // in validateDecimalDigits so error reasons remain focused. hasFraction lets
 // callers distinguish "no dot" from "dot with an empty fractional part".
 func splitDecimalParts(text string) (string, string, bool, error) {
-	parts := strings.Split(text, ".")
-	if len(parts) > 2 {
+	point := strings.IndexByte(text, '.')
+	if point < 0 {
+		return text, "", false, nil
+	}
+
+	if strings.IndexByte(text[point+1:], '.') >= 0 {
 		return "", "", false, invalidDecimal("decimal text contains multiple decimal points")
 	}
 
-	integerPart := parts[0]
-	fractionPart := ""
-	hasFraction := len(parts) == 2
-	if len(parts) == 2 {
-		fractionPart = parts[1]
-	}
-
-	return integerPart, fractionPart, hasFraction, nil
+	return text[:point], text[point+1:], true, nil
 }

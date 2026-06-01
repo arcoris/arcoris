@@ -14,8 +14,6 @@
 
 package value
 
-import "fmt"
-
 // TimeOfDay stores a time of day without date or timezone.
 //
 // TimeOfDay models a wall-clock time within a single day. It intentionally has
@@ -73,11 +71,7 @@ func (t TimeOfDay) IsValid() bool {
 // Fractional seconds are emitted only when non-zero. The returned text is not a
 // package-level wire codec.
 func (t TimeOfDay) String() string {
-	if t.nanosecond == 0 {
-		return fmt.Sprintf("%02d:%02d:%02d", t.hour, t.minute, t.second)
-	}
-
-	return fmt.Sprintf("%02d:%02d:%02d.%09d", t.hour, t.minute, t.second, t.nanosecond)
+	return formatTimeOfDay(t)
 }
 
 // Equal reports whether t and other represent the same time of day.

@@ -84,10 +84,5 @@ func isZeroDigits(s string) bool {
 // Decimal parsing has no nested causes, so the detail text is the primary
 // human-readable diagnostic while the sentinel/reason remain stable.
 func invalidDecimal(detail string) error {
-	return &Error{
-		Path:   pathDecimal,
-		Err:    ErrInvalidDecimal,
-		Reason: ErrorReasonInvalidDecimal,
-		Detail: detail,
-	}
+	return newError(pathDecimal, ErrInvalidDecimal, ErrorReasonInvalidDecimal, detail)
 }

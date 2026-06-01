@@ -14,6 +14,8 @@
 
 package value
 
+import "strconv"
+
 // NewTimeOfDay constructs a wall-clock time without leap-second support.
 //
 // The accepted range is exactly 00:00:00.000000000 through
@@ -22,13 +24,15 @@ package value
 func NewTimeOfDay(hour, minute, second, nanosecond int) (TimeOfDay, error) {
 	switch {
 	case hour < 0 || hour > 23:
-		return TimeOfDay{}, invalidTimeOfDay("hour %d is outside 0..23", hour)
+		return TimeOfDay{}, invalidTimeOfDay("hour " + strconv.Itoa(hour) + " is outside 0..23")
 	case minute < 0 || minute > 59:
-		return TimeOfDay{}, invalidTimeOfDay("minute %d is outside 0..59", minute)
+		return TimeOfDay{}, invalidTimeOfDay("minute " + strconv.Itoa(minute) + " is outside 0..59")
 	case second < 0 || second > 59:
-		return TimeOfDay{}, invalidTimeOfDay("second %d is outside 0..59", second)
+		return TimeOfDay{}, invalidTimeOfDay("second " + strconv.Itoa(second) + " is outside 0..59")
 	case nanosecond < 0 || nanosecond > 999999999:
-		return TimeOfDay{}, invalidTimeOfDay("nanosecond %d is outside 0..999999999", nanosecond)
+		return TimeOfDay{}, invalidTimeOfDay(
+			"nanosecond " + strconv.Itoa(nanosecond) + " is outside 0..999999999",
+		)
 	default:
 		return TimeOfDay{hour: hour, minute: minute, second: second, nanosecond: nanosecond}, nil
 	}
@@ -38,6 +42,6 @@ func NewTimeOfDay(hour, minute, second, nanosecond int) (TimeOfDay, error) {
 //
 // All time-of-day range failures share the same path and reason; the detail
 // explains the specific component that failed.
-func invalidTimeOfDay(format string, args ...any) error {
-	return errorf(pathTimeOfDay, ErrInvalidTime, ErrorReasonInvalidTime, format, args...)
+func invalidTimeOfDay(detail string) error {
+	return newError(pathTimeOfDay, ErrInvalidTime, ErrorReasonInvalidTime, detail)
 }

@@ -14,7 +14,10 @@
 
 package value
 
-import "time"
+import (
+	"strconv"
+	"time"
+)
 
 // NewDate constructs a calendar date after verifying the day exists.
 //
@@ -23,24 +26,20 @@ import "time"
 // bounds such as "not before 1970"; those are descriptor or policy concerns.
 func NewDate(year int, month time.Month, day int) (Date, error) {
 	if month < time.January || month > time.December {
-		return Date{}, errorf(
+		return Date{}, newError(
 			pathDate,
 			ErrInvalidDate,
 			ErrorReasonInvalidDate,
-			"month %d is outside January..December",
-			month,
+			"month "+strconv.Itoa(int(month))+" is outside January..December",
 		)
 	}
 
 	if !isExistingDate(year, month, day) {
-		return Date{}, errorf(
+		return Date{}, newError(
 			pathDate,
 			ErrInvalidDate,
 			ErrorReasonInvalidDate,
-			"day %d does not exist in %04d-%02d",
-			day,
-			year,
-			month,
+			"day "+strconv.Itoa(day)+" does not exist in "+formatDateMonth(year, month),
 		)
 	}
 
