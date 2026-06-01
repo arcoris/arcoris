@@ -1,0 +1,136 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package valuevalidation_test
+
+import (
+	"testing"
+
+	"arcoris.dev/apimachinery/api/types"
+	"arcoris.dev/apimachinery/api/value"
+	"arcoris.dev/apimachinery/api/valuevalidation"
+)
+
+func TestValidateObjectRequiredFields(t *testing.T) {
+	shape := types.Object(
+		types.Field("name").String().Required(),
+	).Type()
+
+	err := valuevalidation.Validate(
+		mustObject(t),
+		shape,
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrMissingField,
+		valuevalidation.ErrorReasonMissingField,
+		"$.name",
+	)
+}
+
+func TestValidateObjectOptionalFields(t *testing.T) {
+	shape := types.Object(
+		types.Field("name").String().Optional(),
+	).Type()
+
+	requireNoError(
+		t,
+		valuevalidation.Validate(
+			mustObject(t),
+			shape,
+			valuevalidation.Options{},
+		),
+	)
+}
+
+func TestValidateObjectNullability(t *testing.T) {
+	shape := types.Object(
+		types.Field("name").String().Required(),
+		types.Field("note").String().Nullable().Optional(),
+	).Type()
+
+	payload := mustObject(
+		t,
+		value.ObjectMember("name", value.StringValue("main")),
+		value.ObjectMember("note", value.NullValue()),
+	)
+
+	requireNoError(
+		t,
+		valuevalidation.Validate(
+			payload,
+			shape,
+			valuevalidation.Options{},
+		),
+	)
+}
+
+func TestValidateObjectUnknownFieldRejected(t *testing.T) {
+	shape := types.Object(
+		types.Field("name").String().Required(),
+	).UnknownFields(types.UnknownReject).Type()
+
+	payload := mustObject(
+		t,
+		value.ObjectMember("name", value.StringValue("main")),
+		value.ObjectMember("extra", value.StringValue("x")),
+	)
+
+	err := valuevalidation.Validate(
+		payload,
+		shape,
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrUnknownField,
+		valuevalidation.ErrorReasonUnknownField,
+		"$.extra",
+	)
+}
+
+func TestValidateObjectNestedPath(t *testing.T) {
+	shape := types.Object(
+		types.Field("spec").Object(
+			types.Field("replicas").Int32().Required(),
+		).Required(),
+	).Type()
+
+	payload := mustObject(
+		t,
+		value.ObjectMember("spec", mustObject(
+			t,
+			value.ObjectMember("replicas", value.StringValue("three")),
+		)),
+	)
+
+	err := valuevalidation.Validate(
+		payload,
+		shape,
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrKindMismatch,
+		valuevalidation.ErrorReasonKindMismatch,
+		"$.spec.replicas",
+	)
+}
