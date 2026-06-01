@@ -18,16 +18,20 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 func TestError(t *testing.T) {
 	cause := errors.New("nested")
 	err := &Error{
-		Path:   "resourceVersion",
-		Err:    ErrInvalidResourceVersion,
-		Reason: ErrorReasonInvalidCharacter,
-		Detail: "bad token",
-		Cause:  cause,
+		Record: diagnostic.WrapRecord(
+			"resourceVersion",
+			ErrInvalidResourceVersion,
+			ErrorReasonInvalidCharacter,
+			"bad token",
+			cause,
+		),
 	}
 
 	if !errors.Is(err, ErrInvalidResourceVersion) || !errors.Is(err, cause) {

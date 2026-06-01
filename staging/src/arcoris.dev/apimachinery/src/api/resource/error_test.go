@@ -18,26 +18,39 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 func TestErrorFormattingAndUnwrap(t *testing.T) {
 	cause := errors.New("cause")
 	err := &Error{
-		Path:   "definition.versions[v1].desired",
-		Err:    ErrInvalidVersion,
-		Reason: ErrorReasonDesiredNotObject,
-		Detail: "desired root must be object",
-		Cause:  cause,
+		Record: diagnostic.WrapRecord(
+			"definition.versions[v1].desired",
+			ErrInvalidVersion,
+			ErrorReasonDesiredNotObject,
+			"desired root must be object",
+			cause,
+		),
 	}
 	text := err.Error()
-	for _, part := range []string{"resource", "definition.versions[v1].desired", "invalid API resource version", "desired_not_object", "desired root must be object"} {
+
+	for _, part := range []string{
+		"resource",
+		"definition.versions[v1].desired",
+		"invalid API resource version",
+		"desired_not_object",
+		"desired root must be object",
+	} {
 		if !strings.Contains(text, part) {
 			t.Fatalf("Error() = %q, missing %q", text, part)
 		}
 	}
+
 	if !errors.Is(err, ErrInvalidVersion) {
 		t.Fatalf("errors.Is(err, ErrInvalidVersion) = false")
 	}
+
 	if !errors.Is(err, cause) {
 		t.Fatalf("errors.Is(err, cause) = false")
 	}
@@ -53,6 +66,8 @@ func TestErrorNilReceiverFormatting(t *testing.T) {
 
 func TestErrorUnwrapWithOnlyCause(t *testing.T) {
 	cause := errors.New("cause")
-	err := &Error{Cause: cause}
+	err := &Error{
+		Record: diagnostic.CauseRecord[ErrorReason](cause),
+	}
 	requireErrorIs(t, err, cause)
 }

@@ -18,16 +18,20 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 func TestErrorPreservesStructuredOwnerDiagnostics(t *testing.T) {
 	cause := errors.New("nested")
 	err := &Error{
-		Path:   "owners[0]",
-		Err:    ErrInvalidList,
-		Reason: ErrorReasonInvalidReference,
-		Detail: "nested value is invalid",
-		Cause:  cause,
+		Record: diagnostic.WrapRecord(
+			"owners[0]",
+			ErrInvalidList,
+			ErrorReasonInvalidReference,
+			"nested value is invalid",
+			cause,
+		),
 	}
 
 	requireErrorIs(t, err, ErrInvalidList)

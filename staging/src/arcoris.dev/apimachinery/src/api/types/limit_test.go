@@ -20,15 +20,54 @@ func TestInvalidRange(t *testing.T) {
 	requireEqual(t, invalidRange(limit[int8]{}, limit[int8]{}), false)
 	requireEqual(t, invalidRange(limit[int8]{value: 1, set: true}, limit[int8]{}), false)
 	requireEqual(t, invalidRange(limit[uint64]{}, limit[uint64]{value: 1, set: true}), false)
-	requireEqual(t, invalidRange(limit[int8]{value: 1, set: true}, limit[int8]{value: 1, set: true}), false)
-	requireEqual(t, invalidRange(limit[int8]{value: 2, set: true}, limit[int8]{value: 1, set: true}), true)
-	requireEqual(t, invalidRange(limit[uint64]{value: 2, set: true}, limit[uint64]{value: 1, set: true}), true)
-	requireEqual(t, invalidRange(limit[string]{value: "b", set: true}, limit[string]{value: "a", set: true}), true)
+	requireEqual(
+		t,
+		invalidRange(limit[int8]{value: 1, set: true}, limit[int8]{value: 1, set: true}),
+		false,
+	)
+	requireEqual(
+		t,
+		invalidRange(limit[int8]{value: 2, set: true}, limit[int8]{value: 1, set: true}),
+		true,
+	)
+	requireEqual(
+		t,
+		invalidRange(limit[uint64]{value: 2, set: true}, limit[uint64]{value: 1, set: true}),
+		true,
+	)
+	requireEqual(
+		t,
+		invalidRange(limit[string]{value: "b", set: true}, limit[string]{value: "a", set: true}),
+		true,
+	)
 }
 
 func TestValidateLengthLimits(t *testing.T) {
-	requireNoError(t, validateLengthLimits(limit[int]{value: 0, set: true}, limit[int]{value: 1, set: true}, "len"))
-	requireErrorIs(t, validateLengthLimits(limit[int]{value: -1, set: true}, limit[int]{}, "len"), ErrInvalidType)
-	requireErrorIs(t, validateLengthLimits(limit[int]{}, limit[int]{value: -1, set: true}, "len"), ErrInvalidType)
-	requireErrorIs(t, validateLengthLimits(limit[int]{value: 2, set: true}, limit[int]{value: 1, set: true}, "len"), ErrInvalidType)
+	requireNoError(
+		t,
+		validateLengthLimits(
+			limit[int]{value: 0, set: true},
+			limit[int]{value: 1, set: true},
+			"len",
+		),
+	)
+	requireErrorIs(
+		t,
+		validateLengthLimits(limit[int]{value: -1, set: true}, limit[int]{}, "len"),
+		ErrInvalidType,
+	)
+	requireErrorIs(
+		t,
+		validateLengthLimits(limit[int]{}, limit[int]{value: -1, set: true}, "len"),
+		ErrInvalidType,
+	)
+	requireErrorIs(
+		t,
+		validateLengthLimits(
+			limit[int]{value: 2, set: true},
+			limit[int]{value: 1, set: true},
+			"len",
+		),
+		ErrInvalidType,
+	)
 }

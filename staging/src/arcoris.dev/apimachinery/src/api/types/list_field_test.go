@@ -17,7 +17,19 @@ package types
 import "testing"
 
 func TestListFieldWrapper(t *testing.T) {
-	field := Field("value").ListOf(Object(Field("type").String().Required())).Required().Nullable().MinLen(1).MaxLen(3).Map("type").Description("value").Field()
+	field := Field("value").
+		ListOf(
+			Object(
+				Field("type").String().Required(),
+			),
+		).
+		Required().
+		Nullable().
+		MinLen(1).
+		MaxLen(3).
+		Map("type").
+		Description("value").
+		Field()
 
 	requireEqual(t, field.Type().Code(), TypeList)
 	requireEqual(t, field.Type().Nullable(), true)
@@ -30,7 +42,12 @@ func TestListFieldExprMarker(t *testing.T) {
 }
 
 func TestListFieldOptionalPath(t *testing.T) {
-	field := Field("value").ListOf(String()).Optional().Atomic().Set().Field()
+	field := Field("value").
+		ListOf(String()).
+		Optional().
+		Atomic().
+		Set().
+		Field()
 
 	requireEqual(t, field.IsOptional(), true)
 }

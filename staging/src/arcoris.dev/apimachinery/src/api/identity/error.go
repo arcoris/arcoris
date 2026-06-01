@@ -17,7 +17,8 @@ package identity
 import (
 	"errors"
 	"fmt"
-	"strings"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 var (
@@ -62,12 +63,11 @@ const (
 // nested parser, validation, or JSON error when the failure originated below
 // the current identity boundary.
 type Error struct {
-	Name   string
-	Value  string
-	Err    error
-	Reason ErrorReason
-	Detail string
-	Cause  error
+	Name  string
+	Value string
+
+	// Record stores the shared sentinel, reason, detail, and cause fields.
+	diagnostic.Record[ErrorReason]
 }
 
 // Error returns a stable human-readable identity diagnostic.
@@ -75,7 +75,6 @@ func (e *Error) Error() string {
 	if e == nil {
 		return "<nil>"
 	}
-	parts := []string{"identity"}
 	subject := e.Name
 	switch e.Err {
 	case ErrInvalidJSON:
@@ -88,14 +87,8 @@ func (e *Error) Error() string {
 	if e.Value != "" {
 		subject += fmt.Sprintf(" %q", e.Value)
 	}
-	parts = append(parts, subject)
-	if e.Reason != "" {
-		parts = append(parts, string(e.Reason))
-	}
-	if e.Detail != "" {
-		parts = append(parts, e.Detail)
-	}
-	return strings.Join(parts, ": ")
+
+	return diagnostic.NewRecord(subject, nil, e.Reason, e.Detail).Format("identity")
 }
 
 // Unwrap preserves broad and nested error identity.
@@ -103,13 +96,7 @@ func (e *Error) Unwrap() error {
 	if e == nil {
 		return nil
 	}
-	if e.Err != nil && e.Cause != nil {
-		return errors.Join(e.Err, e.Cause)
-	}
-	if e.Err != nil {
-		return e.Err
-	}
-	return e.Cause
+	return e.Record.Unwrap()
 }
 
 // invalid reports a malformed identity with a precise reason and detail.
@@ -117,9 +104,7 @@ func invalid(name, value string, reason ErrorReason, detail string) error {
 	return &Error{
 		Name:   name,
 		Value:  value,
-		Err:    ErrInvalidIdentifier,
-		Reason: reason,
-		Detail: detail,
+		Record: diagnostic.NewRecord("", ErrInvalidIdentifier, reason, detail),
 	}
 }
 
@@ -131,12 +116,15 @@ func invalidf(name, value string, reason ErrorReason, format string, args ...any
 // invalidValue wraps an error from a nested identity segment.
 func invalidValue(name, value string, err error) error {
 	return &Error{
-		Name:   name,
-		Value:  value,
-		Err:    ErrInvalidIdentifier,
-		Reason: reasonOf(err),
-		Detail: fmt.Sprintf("nested identity is invalid: %v", err),
-		Cause:  err,
+		Name:  name,
+		Value: value,
+		Record: diagnostic.WrapRecord(
+			"",
+			ErrInvalidIdentifier,
+			reasonOf(err),
+			fmt.Sprintf("nested identity is invalid: %v", err),
+			err,
+		),
 	}
 }
 
@@ -145,20 +133,20 @@ func invalidJSON(name, value string, reason ErrorReason, detail string, cause er
 	return &Error{
 		Name:   name,
 		Value:  value,
-		Err:    ErrInvalidJSON,
-		Reason: reason,
-		Detail: detail,
-		Cause:  cause,
+		Record: diagnostic.WrapRecord("", ErrInvalidJSON, reason, detail, cause),
 	}
 }
 
 // nilReceiver reports Unmarshal calls made on nil receiver pointers.
 func nilReceiver(name string) error {
 	return &Error{
-		Name:   name,
-		Err:    ErrNilReceiver,
-		Reason: ErrorReasonNilReceiver,
-		Detail: "identity cannot be decoded into a nil receiver",
+		Name: name,
+		Record: diagnostic.NewRecord(
+			"",
+			ErrNilReceiver,
+			ErrorReasonNilReceiver,
+			"identity cannot be decoded into a nil receiver",
+		),
 	}
 }
 

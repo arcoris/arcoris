@@ -12,20 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package fieldpath
+package diagnostic
 
-import "arcoris.dev/apimachinery/api/internal/diagnostic"
+import "errors"
 
-// newError builds a structured field-path error without a nested cause.
-func newError(err error, reason ErrorReason, detail string) error {
-	return &Error{
-		Record: diagnostic.NewRecord("", err, reason, detail),
-	}
-}
-
-// nested wraps a lower-level failure without hiding its identity.
-func nested(err error, reason ErrorReason, detail string, cause error) error {
-	return &Error{
-		Record: diagnostic.WrapRecord("", err, reason, detail, cause),
+// Unwrap preserves the broad sentinel and nested cause identities.
+func (r Record[R]) Unwrap() error {
+	switch {
+	case r.Err != nil && r.Cause != nil:
+		return errors.Join(r.Err, r.Cause)
+	case r.Err != nil:
+		return r.Err
+	default:
+		return r.Cause
 	}
 }

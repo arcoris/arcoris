@@ -12,20 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package fieldpath
+package diagnostic
 
-import "arcoris.dev/apimachinery/api/internal/diagnostic"
+import "testing"
 
-// newError builds a structured field-path error without a nested cause.
-func newError(err error, reason ErrorReason, detail string) error {
-	return &Error{
-		Record: diagnostic.NewRecord("", err, reason, detail),
+func TestRecordZeroValue(t *testing.T) {
+	record := Record[string]{}
+
+	if record.Path != "" {
+		t.Fatalf("Path = %q, want empty", record.Path)
 	}
-}
-
-// nested wraps a lower-level failure without hiding its identity.
-func nested(err error, reason ErrorReason, detail string, cause error) error {
-	return &Error{
-		Record: diagnostic.WrapRecord("", err, reason, detail, cause),
+	if record.Err != nil {
+		t.Fatalf("Err = %v, want nil", record.Err)
+	}
+	if record.Reason != "" {
+		t.Fatalf("Reason = %q, want empty", record.Reason)
+	}
+	if record.Detail != "" {
+		t.Fatalf("Detail = %q, want empty", record.Detail)
+	}
+	if record.Cause != nil {
+		t.Fatalf("Cause = %v, want nil", record.Cause)
 	}
 }

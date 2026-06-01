@@ -17,7 +17,16 @@ package types
 import "testing"
 
 func TestFieldNameValidationMatrix(t *testing.T) {
-	tests := map[string]bool{"": false, "name": true, "maxConcurrency": true, "Name": false, "max_concurrency": false, "1name": false, "naïve": false}
+	tests := map[string]bool{
+		"":                false,
+		"name":            true,
+		"maxConcurrency":  true,
+		"Name":            false,
+		"max_concurrency": false,
+		"1name":           false,
+		"naïve":           false,
+	}
+
 	for value, valid := range tests {
 		requireEqual(t, FieldName(value).IsValid(), valid)
 		_, err := ParseFieldName(value)

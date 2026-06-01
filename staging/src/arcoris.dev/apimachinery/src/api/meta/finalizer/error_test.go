@@ -18,16 +18,20 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 func TestErrorPreservesStructuredFinalizerDiagnostics(t *testing.T) {
 	cause := errors.New("nested")
 	err := &Error{
-		Path:   "finalizers[0]",
-		Err:    ErrInvalidSet,
-		Reason: ErrorReasonDuplicateName,
-		Detail: "finalizer name appears more than once",
-		Cause:  cause,
+		Record: diagnostic.WrapRecord(
+			"finalizers[0]",
+			ErrInvalidSet,
+			ErrorReasonDuplicateName,
+			"finalizer name appears more than once",
+			cause,
+		),
 	}
 
 	requireErrorIs(t, err, ErrInvalidSet)

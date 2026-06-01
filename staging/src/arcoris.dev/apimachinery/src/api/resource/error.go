@@ -16,7 +16,8 @@ package resource
 
 import (
 	"errors"
-	"strings"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 // Broad validation sentinels preserved for errors.Is checks.
@@ -39,20 +40,8 @@ var (
 // exact invariant for humans, tests, CLIs, and future tooling. Cause preserves
 // nested api/identity or api/types diagnostics.
 type Error struct {
-	// Path identifies the descriptor location that failed validation.
-	Path string
-
-	// Err is the broad sentinel used for errors.Is classification.
-	Err error
-
-	// Reason is the precise invariant failure within Err's broad category.
-	Reason ErrorReason
-
-	// Detail is a human-facing explanation with descriptor-specific context.
-	Detail string
-
-	// Cause preserves nested api/identity, api/types, or JSON diagnostics.
-	Cause error
+	// Record stores the shared path, sentinel, reason, detail, and cause fields.
+	diagnostic.Record[ErrorReason]
 }
 
 // Error returns a stable human-readable diagnostic.
@@ -61,21 +50,7 @@ func (e *Error) Error() string {
 		return "<nil>"
 	}
 
-	var parts []string
-	parts = append(parts, "resource")
-	if e.Path != "" {
-		parts = append(parts, e.Path)
-	}
-	if e.Err != nil {
-		parts = append(parts, e.Err.Error())
-	}
-	if e.Reason != "" {
-		parts = append(parts, string(e.Reason))
-	}
-	if e.Detail != "" {
-		parts = append(parts, e.Detail)
-	}
-	return strings.Join(parts, ": ")
+	return e.Record.Format("resource")
 }
 
 // Unwrap preserves broad and nested error identities.
@@ -83,11 +58,5 @@ func (e *Error) Unwrap() error {
 	if e == nil {
 		return nil
 	}
-	if e.Err == nil {
-		return e.Cause
-	}
-	if e.Cause == nil {
-		return e.Err
-	}
-	return errors.Join(e.Err, e.Cause)
+	return e.Record.Unwrap()
 }

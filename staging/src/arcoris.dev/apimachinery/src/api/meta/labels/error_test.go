@@ -18,16 +18,20 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 func TestErrorPreservesStructuredLabelDiagnostics(t *testing.T) {
 	cause := errors.New("nested")
 	err := &Error{
-		Path:   "labels[key]",
-		Err:    ErrInvalidSet,
-		Reason: ErrorReasonInvalidForm,
-		Detail: "nested value is invalid",
-		Cause:  cause,
+		Record: diagnostic.WrapRecord(
+			"labels[key]",
+			ErrInvalidSet,
+			ErrorReasonInvalidForm,
+			"nested value is invalid",
+			cause,
+		),
 	}
 
 	requireErrorIs(t, err, ErrInvalidSet)

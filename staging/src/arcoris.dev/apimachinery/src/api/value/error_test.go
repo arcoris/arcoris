@@ -17,14 +17,18 @@ package value
 import (
 	"errors"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 func TestErrorStringIncludesStructuredMembers(t *testing.T) {
 	err := &Error{
-		Path:   "object.members[0].name",
-		Err:    ErrEmptyName,
-		Reason: ErrorReasonEmptyName,
-		Detail: "object member name is empty",
+		Record: diagnostic.NewRecord(
+			"object.members[0].name",
+			ErrEmptyName,
+			ErrorReasonEmptyName,
+			"object member name is empty",
+		),
 	}
 
 	got := err.Error()
@@ -53,11 +57,13 @@ func TestNilErrorMethodsAreSafe(t *testing.T) {
 func TestErrorUnwrapPreservesMemberAndCause(t *testing.T) {
 	cause := errors.New("nested")
 	err := &Error{
-		Path:   "object.members[0].value",
-		Err:    ErrInvalidMember,
-		Reason: ErrorReasonInvalidValue,
-		Detail: "object member has invalid value",
-		Cause:  cause,
+		Record: diagnostic.WrapRecord(
+			"object.members[0].value",
+			ErrInvalidMember,
+			ErrorReasonInvalidValue,
+			"object member has invalid value",
+			cause,
+		),
 	}
 
 	requireErrorIs(t, err, ErrInvalidValue)

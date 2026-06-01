@@ -18,16 +18,20 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 func TestErrorPreservesStructuredIdentityDiagnostics(t *testing.T) {
 	cause := errors.New("nested")
 	err := &Error{
-		Path:   "objectReference.name",
-		Err:    ErrInvalidObjectReference,
-		Reason: ErrorReasonInvalidForm,
-		Detail: "nested value is invalid",
-		Cause:  cause,
+		Record: diagnostic.WrapRecord(
+			"objectReference.name",
+			ErrInvalidObjectReference,
+			ErrorReasonInvalidForm,
+			"nested value is invalid",
+			cause,
+		),
 	}
 
 	requireErrorIs(t, err, ErrInvalidObjectReference)

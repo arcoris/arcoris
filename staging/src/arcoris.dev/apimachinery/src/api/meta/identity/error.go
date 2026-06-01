@@ -17,8 +17,8 @@ package identity
 import (
 	"errors"
 	"fmt"
-	"strings"
 
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 	"arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 )
 
@@ -67,16 +67,8 @@ const (
 
 // Error is the structured diagnostic returned by metadata identity validation.
 type Error struct {
-	// Path identifies the metadata identity field that failed validation.
-	Path string
-	// Err is the broad sentinel used with errors.Is.
-	Err error
-	// Reason gives stable machine-readable detail within Err.
-	Reason ErrorReason
-	// Detail gives human-readable context for logs and diagnostics.
-	Detail string
-	// Cause preserves nested validation or decoding failures.
-	Cause error
+	// Record stores the shared path, sentinel, reason, detail, and cause fields.
+	diagnostic.Record[ErrorReason]
 }
 
 // Error returns a human-readable metadata identity diagnostic.
@@ -85,25 +77,7 @@ func (e *Error) Error() string {
 		return "<nil>"
 	}
 
-	parts := []string{"meta/identity"}
-
-	if e.Path != "" {
-		parts = append(parts, e.Path)
-	}
-
-	if e.Err != nil {
-		parts = append(parts, e.Err.Error())
-	}
-
-	if e.Reason != "" {
-		parts = append(parts, string(e.Reason))
-	}
-
-	if e.Detail != "" {
-		parts = append(parts, e.Detail)
-	}
-
-	return strings.Join(parts, ": ")
+	return e.Record.Format("meta/identity")
 }
 
 // Unwrap preserves broad and nested error identity.
@@ -112,24 +86,13 @@ func (e *Error) Unwrap() error {
 		return nil
 	}
 
-	if e.Err != nil && e.Cause != nil {
-		return errors.Join(e.Err, e.Cause)
-	}
-
-	if e.Err != nil {
-		return e.Err
-	}
-
-	return e.Cause
+	return e.Record.Unwrap()
 }
 
 // invalid reports a metadata identity validation failure.
 func invalid(path string, err error, reason ErrorReason, detail string) error {
 	return &Error{
-		Path:   path,
-		Err:    err,
-		Reason: reason,
-		Detail: detail,
+		Record: diagnostic.NewRecord(path, err, reason, detail),
 	}
 }
 
@@ -141,11 +104,13 @@ func invalidf(path string, err error, reason ErrorReason, format string, args ..
 // nested reports a failure caused by a nested metadata or API identity value.
 func nested(path string, err error, cause error) error {
 	return &Error{
-		Path:   path,
-		Err:    err,
-		Reason: ErrorReasonInvalidForm,
-		Detail: fmt.Sprintf("nested value is invalid: %v", cause),
-		Cause:  cause,
+		Record: diagnostic.WrapRecord(
+			path,
+			err,
+			ErrorReasonInvalidForm,
+			fmt.Sprintf("nested value is invalid: %v", cause),
+			cause,
+		),
 	}
 }
 

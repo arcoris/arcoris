@@ -18,16 +18,20 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 func TestErrorFormattingAndUnwrap(t *testing.T) {
 	cause := errors.New("cause")
 	err := &Error{
-		Path:   "definitions[control.arcoris.dev:workers]",
-		Err:    ErrDefinitionExists,
-		Reason: ErrorReasonDefinitionExists,
-		Detail: "resource already exists",
-		Cause:  cause,
+		Record: diagnostic.WrapRecord(
+			"definitions[control.arcoris.dev:workers]",
+			ErrDefinitionExists,
+			ErrorReasonDefinitionExists,
+			"resource already exists",
+			cause,
+		),
 	}
 
 	text := err.Error()
@@ -57,5 +61,11 @@ func TestErrorNilReceiver(t *testing.T) {
 
 func TestErrorUnwrapWithOnlyCause(t *testing.T) {
 	cause := errors.New("cause")
-	requireErrorIs(t, &Error{Cause: cause}, cause)
+	requireErrorIs(
+		t,
+		&Error{
+			Record: diagnostic.CauseRecord[ErrorReason](cause),
+		},
+		cause,
+	)
 }

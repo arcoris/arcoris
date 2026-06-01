@@ -24,12 +24,24 @@ func TestTimeOfDayAccessorsAndString(t *testing.T) {
 	requireEqual(t, timeOfDay.Second(), 3)
 	requireEqual(t, timeOfDay.Nanosecond(), 4)
 	requireEqual(t, timeOfDay.String(), "01:02:03.000000004")
-	requireEqual(t, timeOfDay.Equal(TimeOfDay{hour: 1, minute: 2, second: 3, nanosecond: 4}), true)
-	requireEqual(t, timeOfDay.Equal(TimeOfDay{hour: 1, minute: 2, second: 3}), false)
+	requireEqual(
+		t,
+		timeOfDay.Equal(TimeOfDay{hour: 1, minute: 2, second: 3, nanosecond: 4}),
+		true,
+	)
+	requireEqual(
+		t,
+		timeOfDay.Equal(TimeOfDay{hour: 1, minute: 2, second: 3}),
+		false,
+	)
 }
 
 func TestTimeOfDayStringWholeSecond(t *testing.T) {
-	requireEqual(t, (TimeOfDay{hour: 1, minute: 2, second: 3}).String(), "01:02:03")
+	requireEqual(
+		t,
+		(TimeOfDay{hour: 1, minute: 2, second: 3}).String(),
+		"01:02:03",
+	)
 }
 
 func TestTimeOfDayIsValid(t *testing.T) {

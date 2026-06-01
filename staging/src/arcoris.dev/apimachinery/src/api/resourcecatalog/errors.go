@@ -16,7 +16,8 @@ package resourcecatalog
 
 import (
 	"errors"
-	"strings"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 var (
@@ -42,20 +43,8 @@ var (
 // describe the exact catalog invariant for humans, tests, CLIs, and future
 // tooling. Cause preserves nested api/resource diagnostics.
 type Error struct {
-	// Path identifies the catalog operation location that failed.
-	Path string
-
-	// Err is the broad catalog sentinel used for errors.Is classification.
-	Err error
-
-	// Reason is the precise catalog invariant failure within Err's category.
-	Reason ErrorReason
-
-	// Detail is a human-facing explanation with identity-specific context.
-	Detail string
-
-	// Cause preserves nested api/resource diagnostics.
-	Cause error
+	// Record stores the shared path, sentinel, reason, detail, and cause fields.
+	diagnostic.Record[ErrorReason]
 }
 
 // Error returns a stable human-readable diagnostic.
@@ -64,20 +53,7 @@ func (e *Error) Error() string {
 		return "<nil>"
 	}
 
-	parts := []string{"resourcecatalog"}
-	if e.Path != "" {
-		parts = append(parts, e.Path)
-	}
-	if e.Err != nil {
-		parts = append(parts, e.Err.Error())
-	}
-	if e.Reason != "" {
-		parts = append(parts, string(e.Reason))
-	}
-	if e.Detail != "" {
-		parts = append(parts, e.Detail)
-	}
-	return strings.Join(parts, ": ")
+	return e.Record.Format("resourcecatalog")
 }
 
 // Unwrap preserves catalog and nested resource error identities.
@@ -85,11 +61,5 @@ func (e *Error) Unwrap() error {
 	if e == nil {
 		return nil
 	}
-	if e.Err == nil {
-		return e.Cause
-	}
-	if e.Cause == nil {
-		return e.Err
-	}
-	return errors.Join(e.Err, e.Cause)
+	return e.Record.Unwrap()
 }

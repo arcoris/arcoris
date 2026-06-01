@@ -30,6 +30,7 @@ func requireObjectLike(t types.Type, resolver types.Resolver, path string, reaso
 	if ok {
 		return nil
 	}
+
 	return versionError(path, reason, detail)
 }
 
@@ -50,7 +51,11 @@ func objectLike(t types.Type, resolver types.Resolver, resolving map[types.TypeN
 		name := view.Name()
 
 		if resolver == nil {
-			return false, fmt.Sprintf("%s root reference %q requires a resolver so the resource surface can be proven object-like", label, name)
+			return false, fmt.Sprintf(
+				"%s root reference %q requires a resolver so the resource surface can be proven object-like",
+				label,
+				name,
+			)
 		}
 
 		if resolving[name] {
@@ -59,7 +64,11 @@ func objectLike(t types.Type, resolver types.Resolver, resolving map[types.TypeN
 
 		def, ok := resolver.ResolveType(name)
 		if !ok {
-			return false, fmt.Sprintf("%s root reference %q was not found in resolver", label, name)
+			return false, fmt.Sprintf(
+				"%s root reference %q was not found in resolver",
+				label,
+				name,
+			)
 		}
 
 		next := make(map[types.TypeName]bool, len(resolving)+1)
@@ -71,6 +80,10 @@ func objectLike(t types.Type, resolver types.Resolver, resolving map[types.TypeN
 		return objectLike(def.Type(), resolver, next, label)
 
 	default:
-		return false, fmt.Sprintf("%s root must be object or reference to object, got %s", label, t.Code())
+		return false, fmt.Sprintf(
+			"%s root must be object or reference to object, got %s",
+			label,
+			t.Code(),
+		)
 	}
 }

@@ -17,7 +17,16 @@ package types
 import "testing"
 
 func TestStringFieldWrapper(t *testing.T) {
-	field := Field("value").String().Required().Nullable().MinLen(1).MaxLen(8).Pattern("^[a-z]+$").Enum("alpha").Description("value").Field()
+	field := Field("value").
+		String().
+		Required().
+		Nullable().
+		MinLen(1).
+		MaxLen(8).
+		Pattern("^[a-z]+$").
+		Enum("alpha").
+		Description("value").
+		Field()
 
 	requireEqual(t, field.Name(), FieldName("value"))
 	requireEqual(t, field.IsRequired(), true)

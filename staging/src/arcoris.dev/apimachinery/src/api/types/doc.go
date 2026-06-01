@@ -109,14 +109,22 @@
 //				String().
 //					MinLen(1).
 //					MaxLen(63),
-//			).Optional().MaxLen(64),
-//		).Required().UnknownFields(UnknownReject),
+//			).
+//				Optional().
+//				MaxLen(64),
+//		).
+//			Required().
+//			UnknownFields(UnknownReject),
 //
 //		Field("status").Object(
 //			Field("conditions").ListOf(
 //				Ref("arcoris.meta.Condition"),
-//			).Optional().Map("type"),
-//		).Optional().UnknownFields(UnknownReject),
+//			).
+//				Optional().
+//				Map("type"),
+//		).
+//			Optional().
+//			UnknownFields(UnknownReject),
 //	).UnknownFields(UnknownReject)
 //
 // # Reusable Unnamed Type Builders

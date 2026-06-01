@@ -17,7 +17,8 @@ package types
 import (
 	"errors"
 	"fmt"
-	"strings"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 var (
@@ -118,14 +119,8 @@ const (
 // Path is a descriptor path such as object.fields[spec].type, list.elem, or
 // ref(arcoris.meta.Name). It is not a path into a future concrete API object.
 type TypeError struct {
-	// Path identifies the descriptor location that failed validation.
-	Path string
-	// Err is the classified validation error or wrapped validation failure.
-	Err error
-	// Reason identifies the precise descriptor invariant that failed.
-	Reason TypeErrorReason
-	// Detail carries a human-facing explanation with relevant rule values.
-	Detail string
+	// Record stores the shared path, sentinel, reason, and detail fields.
+	diagnostic.Record[TypeErrorReason]
 }
 
 // Error returns a stable diagnostic message for e.
@@ -133,24 +128,7 @@ func (e *TypeError) Error() string {
 	if e == nil {
 		return "<nil>"
 	}
-	parts := []string{"types"}
-	if e.Path == "" {
-		if e.Err != nil {
-			parts = append(parts, e.Err.Error())
-		}
-	} else {
-		parts = append(parts, e.Path)
-		if e.Err != nil {
-			parts = append(parts, e.Err.Error())
-		}
-	}
-	if e.Reason != "" {
-		parts = append(parts, string(e.Reason))
-	}
-	if e.Detail != "" {
-		parts = append(parts, e.Detail)
-	}
-	return strings.Join(parts, ": ")
+	return e.Record.Format("types")
 }
 
 // Unwrap returns the classified validation error.
@@ -158,12 +136,14 @@ func (e *TypeError) Unwrap() error {
 	if e == nil {
 		return nil
 	}
-	return e.Err
+	return e.Record.Unwrap()
 }
 
 // typeError creates a path-aware validation error.
 func typeError(path string, err error) error {
-	return &TypeError{Path: path, Err: err}
+	return &TypeError{
+		Record: diagnostic.NewRecord(path, err, TypeErrorReason(""), ""),
+	}
 }
 
 // typeErrorf creates a path-aware validation error with structured detail.
@@ -172,5 +152,7 @@ func typeErrorf(path string, err error, reason TypeErrorReason, format string, a
 	if format != "" {
 		detail = fmt.Sprintf(format, args...)
 	}
-	return &TypeError{Path: path, Err: err, Reason: reason, Detail: detail}
+	return &TypeError{
+		Record: diagnostic.NewRecord(path, err, reason, detail),
+	}
 }

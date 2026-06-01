@@ -14,7 +14,11 @@
 
 package objectvalidation
 
-import "fmt"
+import (
+	"fmt"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
+)
 
 const (
 	// pathPlanResource points at the resolved resource definition dependency.
@@ -51,30 +55,20 @@ const (
 // errorf builds a structured validation error with formatted detail text.
 func errorf(path string, err error, reason ErrorReason, format string, args ...any) error {
 	return &Error{
-		Path:   path,
-		Err:    err,
-		Reason: reason,
-		Detail: fmt.Sprintf(format, args...),
+		Record: diagnostic.NewRecord(path, err, reason, fmt.Sprintf(format, args...)),
 	}
 }
 
 // nested wraps a lower-layer validation failure without hiding its identity.
 func nested(path string, err error, reason ErrorReason, detail string, cause error) error {
 	return &Error{
-		Path:   path,
-		Err:    err,
-		Reason: reason,
-		Detail: detail,
-		Cause:  cause,
+		Record: diagnostic.WrapRecord(path, err, reason, detail, cause),
 	}
 }
 
 // missingValidator reports a required typed surface validator dependency.
 func missingValidator(path string, detail string) error {
 	return &Error{
-		Path:   path,
-		Err:    ErrMissingValidator,
-		Reason: ErrorReasonMissingValidator,
-		Detail: detail,
+		Record: diagnostic.NewRecord(path, ErrMissingValidator, ErrorReasonMissingValidator, detail),
 	}
 }

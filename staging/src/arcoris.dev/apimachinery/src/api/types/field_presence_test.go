@@ -21,7 +21,13 @@ func TestFieldPresenceValidityAndString(t *testing.T) {
 		p     FieldPresence
 		valid bool
 		text  string
-	}{{PresenceUnspecified, false, "unspecified"}, {PresenceRequired, true, "required"}, {PresenceOptional, true, "optional"}, {FieldPresence(99), false, "unknown"}}
+	}{
+		{PresenceUnspecified, false, "unspecified"},
+		{PresenceRequired, true, "required"},
+		{PresenceOptional, true, "optional"},
+		{FieldPresence(99), false, "unknown"},
+	}
+
 	for _, tt := range tests {
 		requireEqual(t, tt.p.IsValid(), tt.valid)
 		requireEqual(t, tt.p.String(), tt.text)

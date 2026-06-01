@@ -51,8 +51,38 @@ func TestIndexKeyHelpers(t *testing.T) {
 
 func TestIndexPathHelpers(t *testing.T) {
 	requireEqual(t, definitionPath(3), "definitions[3]")
-	requireEqual(t, resourcePath(identity.GroupResource{Group: testGroup, Resource: "workers"}), "definitions[control.arcoris.dev:workers]")
-	requireEqual(t, kindPath(identity.GroupKind{Group: testGroup, Kind: "Worker"}), "definitions[control.arcoris.dev#Worker]")
-	requireEqual(t, versionResourcePath(identity.GroupVersionResource{Group: testGroup, Version: "v1", Resource: "workers"}), "definitions[control.arcoris.dev/v1:workers]")
-	requireEqual(t, versionKindPath(identity.GroupVersionKind{Group: testGroup, Version: "v1", Kind: "Worker"}), "definitions[control.arcoris.dev/v1#Worker]")
+	requireEqual(
+		t,
+		resourcePath(identity.GroupResource{
+			Group:    testGroup,
+			Resource: "workers",
+		}),
+		"definitions[control.arcoris.dev:workers]",
+	)
+	requireEqual(
+		t,
+		kindPath(identity.GroupKind{
+			Group: testGroup,
+			Kind:  "Worker",
+		}),
+		"definitions[control.arcoris.dev#Worker]",
+	)
+	requireEqual(
+		t,
+		versionResourcePath(identity.GroupVersionResource{
+			Group:    testGroup,
+			Version:  "v1",
+			Resource: "workers",
+		}),
+		"definitions[control.arcoris.dev/v1:workers]",
+	)
+	requireEqual(
+		t,
+		versionKindPath(identity.GroupVersionKind{
+			Group:   testGroup,
+			Version: "v1",
+			Kind:    "Worker",
+		}),
+		"definitions[control.arcoris.dev/v1#Worker]",
+	)
 }

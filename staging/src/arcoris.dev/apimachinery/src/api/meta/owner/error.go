@@ -17,7 +17,8 @@ package owner
 import (
 	"errors"
 	"fmt"
-	"strings"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 // Owner sentinels classify broad validation failures.
@@ -47,16 +48,8 @@ const (
 
 // Error is the structured diagnostic returned by owner validation.
 type Error struct {
-	// Path identifies the owner field or list entry that failed validation.
-	Path string
-	// Err is the broad sentinel used with errors.Is.
-	Err error
-	// Reason gives stable machine-readable detail within Err.
-	Reason ErrorReason
-	// Detail gives human-readable context for logs and diagnostics.
-	Detail string
-	// Cause preserves nested validation failures.
-	Cause error
+	// Record stores the shared path, sentinel, reason, detail, and cause fields.
+	diagnostic.Record[ErrorReason]
 }
 
 // Error returns a compact human-readable owner diagnostic.
@@ -65,25 +58,7 @@ func (e *Error) Error() string {
 		return "<nil>"
 	}
 
-	parts := []string{"meta/owner"}
-
-	if e.Path != "" {
-		parts = append(parts, e.Path)
-	}
-
-	if e.Err != nil {
-		parts = append(parts, e.Err.Error())
-	}
-
-	if e.Reason != "" {
-		parts = append(parts, string(e.Reason))
-	}
-
-	if e.Detail != "" {
-		parts = append(parts, e.Detail)
-	}
-
-	return strings.Join(parts, ": ")
+	return e.Record.Format("meta/owner")
 }
 
 // Unwrap preserves both the broad sentinel and nested cause identity.
@@ -92,34 +67,25 @@ func (e *Error) Unwrap() error {
 		return nil
 	}
 
-	if e.Err != nil && e.Cause != nil {
-		return errors.Join(e.Err, e.Cause)
-	}
-
-	if e.Err != nil {
-		return e.Err
-	}
-
-	return e.Cause
+	return e.Record.Unwrap()
 }
 
 // invalid builds a direct owner validation diagnostic.
 func invalid(path string, err error, reason ErrorReason, detail string) error {
 	return &Error{
-		Path:   path,
-		Err:    err,
-		Reason: reason,
-		Detail: detail,
+		Record: diagnostic.NewRecord(path, err, reason, detail),
 	}
 }
 
 // nested wraps a failure reported by a nested object reference.
 func nested(path string, err error, cause error) error {
 	return &Error{
-		Path:   path,
-		Err:    err,
-		Reason: ErrorReasonInvalidReference,
-		Detail: fmt.Sprintf("nested value is invalid: %v", cause),
-		Cause:  cause,
+		Record: diagnostic.WrapRecord(
+			path,
+			err,
+			ErrorReasonInvalidReference,
+			fmt.Sprintf("nested value is invalid: %v", cause),
+			cause,
+		),
 	}
 }

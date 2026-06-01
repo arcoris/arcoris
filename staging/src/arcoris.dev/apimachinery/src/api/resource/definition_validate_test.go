@@ -38,8 +38,14 @@ func TestValidateDefinitionAcceptsValidCases(t *testing.T) {
 
 func TestValidateDefinitionAcceptsResolvedObjectRefs(t *testing.T) {
 	resolver := fakeResolver{
-		types.TypeName("control.arcoris.dev.WorkerDesired"):  types.Define("control.arcoris.dev.WorkerDesired", types.Object()),
-		types.TypeName("control.arcoris.dev.WorkerObserved"): types.Define("control.arcoris.dev.WorkerObserved", types.Object()),
+		types.TypeName("control.arcoris.dev.WorkerDesired"): types.Define(
+			"control.arcoris.dev.WorkerDesired",
+			types.Object(),
+		),
+		types.TypeName("control.arcoris.dev.WorkerObserved"): types.Define(
+			"control.arcoris.dev.WorkerObserved",
+			types.Object(),
+		),
 	}
 
 	def := NewDefinition(

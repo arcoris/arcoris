@@ -14,7 +14,10 @@
 
 package identity
 
-import "arcoris.dev/apimachinery/api/meta/internal/metaencoding"
+import (
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
+	"arcoris.dev/apimachinery/api/meta/internal/metaencoding"
+)
 
 // marshalText validates a metadata identity scalar before exposing it as text.
 func marshalText(value string, validate func() error) ([]byte, error) {
@@ -31,19 +34,23 @@ func unmarshalJSONString(path string, data []byte) (string, error) {
 	value, isNull, err := metaencoding.DecodeJSONString(data)
 	if err != nil {
 		return "", &Error{
-			Path:   path,
-			Err:    ErrInvalidJSON,
-			Reason: ErrorReasonInvalidJSON,
-			Detail: "expected JSON string",
-			Cause:  err,
+			Record: diagnostic.WrapRecord(
+				path,
+				ErrInvalidJSON,
+				ErrorReasonInvalidJSON,
+				"expected JSON string",
+				err,
+			),
 		}
 	}
 	if isNull {
 		return "", &Error{
-			Path:   path,
-			Err:    ErrInvalidJSON,
-			Reason: ErrorReasonInvalidJSON,
-			Detail: "expected JSON string, got null",
+			Record: diagnostic.NewRecord(
+				path,
+				ErrInvalidJSON,
+				ErrorReasonInvalidJSON,
+				"expected JSON string, got null",
+			),
 		}
 	}
 	return value, nil
@@ -52,9 +59,11 @@ func unmarshalJSONString(path string, data []byte) (string, error) {
 // nilReceiver reports an attempted scalar decode into a nil receiver.
 func nilReceiver(path string) error {
 	return &Error{
-		Path:   path,
-		Err:    ErrNilReceiver,
-		Reason: ErrorReasonNilReceiver,
-		Detail: "receiver must be non-nil",
+		Record: diagnostic.NewRecord(
+			path,
+			ErrNilReceiver,
+			ErrorReasonNilReceiver,
+			"receiver must be non-nil",
+		),
 	}
 }

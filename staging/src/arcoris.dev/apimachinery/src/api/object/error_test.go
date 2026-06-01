@@ -19,15 +19,18 @@ import (
 	"strings"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 	"arcoris.dev/apimachinery/api/meta"
 )
 
 func TestErrorFormatting(t *testing.T) {
 	err := &Error{
-		Path:   "object.metadata",
-		Err:    ErrInvalidObject,
-		Reason: ErrorReasonInvalidMetadata,
-		Detail: "metadata is invalid",
+		Record: diagnostic.NewRecord(
+			"object.metadata",
+			ErrInvalidObject,
+			ErrorReasonInvalidMetadata,
+			"metadata is invalid",
+		),
 	}
 
 	got := err.Error()

@@ -17,8 +17,22 @@ package types
 import "testing"
 
 func TestObjectValidateRejectsDuplicateInvalidFieldAndUnknownPolicy(t *testing.T) {
-	requireErrorIs(t, ValidateType(Object(Field("name").String().Required(), Field("name").String().Optional()).Type(), nil), ErrDuplicateField)
-	requireErrorIs(t, ValidateType(Object(Field("bad-name").String().Required()).Type(), nil), ErrInvalidField)
+	requireErrorIs(
+		t,
+		ValidateType(
+			Object(
+				Field("name").String().Required(),
+				Field("name").String().Optional(),
+			).Type(),
+			nil,
+		),
+		ErrDuplicateField,
+	)
+	requireErrorIs(
+		t,
+		ValidateType(Object(Field("bad-name").String().Required()).Type(), nil),
+		ErrInvalidField,
+	)
 	requireErrorIs(t, ValidateType(Object(Field("name").String()).Type(), nil), ErrInvalidField)
 
 	invalidPolicy := Object().Type()

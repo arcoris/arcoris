@@ -14,11 +14,17 @@
 
 package resourcecatalog
 
-import "fmt"
+import (
+	"fmt"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
+)
 
 // catalogError creates a catalog diagnostic with structured context.
 func catalogError(path string, err error, reason ErrorReason, detail string) error {
-	return &Error{Path: path, Err: err, Reason: reason, Detail: detail}
+	return &Error{
+		Record: diagnostic.NewRecord(path, err, reason, detail),
+	}
 }
 
 // catalogErrorf formats a catalog diagnostic detail.
@@ -30,11 +36,7 @@ func catalogErrorf(path string, err error, reason ErrorReason, format string, ar
 // catalog registration failure.
 func nestedCatalogError(path string, reason ErrorReason, detail string, cause error) error {
 	return &Error{
-		Path:   path,
-		Err:    ErrInvalidCatalog,
-		Reason: reason,
-		Detail: detail,
-		Cause:  cause,
+		Record: diagnostic.WrapRecord(path, ErrInvalidCatalog, reason, detail, cause),
 	}
 }
 

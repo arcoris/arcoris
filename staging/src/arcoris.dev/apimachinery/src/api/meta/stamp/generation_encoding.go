@@ -17,6 +17,8 @@ package stamp
 import (
 	"encoding/json"
 	"strconv"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 // MarshalText validates and encodes the generation as decimal text.
@@ -62,11 +64,13 @@ func (g *Generation) UnmarshalJSON(data []byte) error {
 	var value uint64
 	if err := json.Unmarshal(data, &value); err != nil {
 		return &Error{
-			Path:   "generation",
-			Err:    ErrInvalidJSON,
-			Reason: ErrorReasonInvalidJSON,
-			Detail: "expected JSON unsigned integer",
-			Cause:  err,
+			Record: diagnostic.WrapRecord(
+				"generation",
+				ErrInvalidJSON,
+				ErrorReasonInvalidJSON,
+				"expected JSON unsigned integer",
+				err,
+			),
 		}
 	}
 

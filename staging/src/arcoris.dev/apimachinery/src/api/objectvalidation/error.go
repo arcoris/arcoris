@@ -16,7 +16,8 @@ package objectvalidation
 
 import (
 	"errors"
-	"strings"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 // Object contract validation sentinels classify broad failure categories.
@@ -54,16 +55,8 @@ var (
 
 // Error is the structured diagnostic returned by object contract validation.
 type Error struct {
-	// Path identifies the plan, object, resource, or surface location that failed.
-	Path string
-	// Err is the broad sentinel used with errors.Is.
-	Err error
-	// Reason gives stable machine-readable detail within Err.
-	Reason ErrorReason
-	// Detail gives human-readable context for logs and diagnostics.
-	Detail string
-	// Cause preserves nested metadata or surface validation failures.
-	Cause error
+	// Record stores the shared path, sentinel, reason, detail, and cause fields.
+	diagnostic.Record[ErrorReason]
 }
 
 // Error returns a compact human-readable object validation diagnostic.
@@ -72,25 +65,7 @@ func (e *Error) Error() string {
 		return "<nil>"
 	}
 
-	parts := []string{"objectvalidation"}
-
-	if e.Path != "" {
-		parts = append(parts, e.Path)
-	}
-
-	if e.Err != nil {
-		parts = append(parts, e.Err.Error())
-	}
-
-	if e.Reason != "" {
-		parts = append(parts, string(e.Reason))
-	}
-
-	if e.Detail != "" {
-		parts = append(parts, e.Detail)
-	}
-
-	return strings.Join(parts, ": ")
+	return e.Record.Format("objectvalidation")
 }
 
 // Unwrap preserves broad classification and the nested validation cause.
@@ -111,11 +86,7 @@ func (e *Error) Unwrap() error {
 		base = errors.Join(ErrInvalidPlan, e.Err)
 	}
 
-	if base != nil && e.Cause != nil {
-		return errors.Join(base, e.Cause)
-	}
-
-	return base
+	return diagnostic.JoinRecord[ErrorReason](base, e.Cause).Unwrap()
 }
 
 // isObjectFailure reports whether err means the object fails the contract.

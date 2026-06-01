@@ -14,7 +14,11 @@
 
 package stamp
 
-import "time"
+import (
+	"time"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
+)
 
 // MarshalText validates and encodes the timestamp as RFC3339Nano text.
 func (t Timestamp) MarshalText() ([]byte, error) {
@@ -43,11 +47,13 @@ func (t *Timestamp) UnmarshalText(data []byte) error {
 	parsed, err := time.Parse(time.RFC3339Nano, string(data))
 	if err != nil {
 		return &Error{
-			Path:   "timestamp",
-			Err:    ErrInvalidTimestamp,
-			Reason: ErrorReasonInvalidForm,
-			Detail: "expected RFC3339Nano timestamp",
-			Cause:  err,
+			Record: diagnostic.WrapRecord(
+				"timestamp",
+				ErrInvalidTimestamp,
+				ErrorReasonInvalidForm,
+				"expected RFC3339Nano timestamp",
+				err,
+			),
 		}
 	}
 

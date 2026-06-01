@@ -14,15 +14,14 @@
 
 package value
 
+import "arcoris.dev/apimachinery/api/internal/diagnostic"
+
 // newError builds a structured value construction error.
 //
 // It is used for direct validation failures where there is no nested cause. The
 // caller chooses the stable path, sentinel, reason, and human detail explicitly.
 func newError(path string, err error, reason ErrorReason, detail string) error {
 	return &Error{
-		Path:   path,
-		Err:    err,
-		Reason: reason,
-		Detail: detail,
+		Record: diagnostic.NewRecord(path, err, reason, detail),
 	}
 }

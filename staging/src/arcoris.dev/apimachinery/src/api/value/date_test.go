@@ -26,8 +26,16 @@ func TestDateAccessorsAndString(t *testing.T) {
 	requireEqual(t, date.Month(), time.February)
 	requireEqual(t, date.Day(), 29)
 	requireEqual(t, date.String(), "2024-02-29")
-	requireEqual(t, date.Equal(Date{year: 2024, month: time.February, day: 29}), true)
-	requireEqual(t, date.Equal(Date{year: 2023, month: time.February, day: 28}), false)
+	requireEqual(
+		t,
+		date.Equal(Date{year: 2024, month: time.February, day: 29}),
+		true,
+	)
+	requireEqual(
+		t,
+		date.Equal(Date{year: 2023, month: time.February, day: 28}),
+		false,
+	)
 }
 
 func TestDateIsValid(t *testing.T) {

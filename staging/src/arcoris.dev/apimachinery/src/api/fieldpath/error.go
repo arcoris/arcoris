@@ -16,7 +16,8 @@ package fieldpath
 
 import (
 	"errors"
-	"strings"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 var (
@@ -47,14 +48,8 @@ var (
 
 // Error is the structured diagnostic returned by field-path validation.
 type Error struct {
-	// Err is the broad sentinel used with errors.Is.
-	Err error
-	// Reason gives stable machine-readable detail within Err.
-	Reason ErrorReason
-	// Detail gives human-readable diagnostic context.
-	Detail string
-	// Cause preserves more specific nested failures.
-	Cause error
+	// Record stores the shared sentinel, reason, detail, and cause fields.
+	diagnostic.Record[ErrorReason]
 }
 
 // Error returns a compact human-readable field-path diagnostic.
@@ -63,21 +58,7 @@ func (e *Error) Error() string {
 		return "<nil>"
 	}
 
-	parts := []string{"fieldpath"}
-
-	if e.Err != nil {
-		parts = append(parts, e.Err.Error())
-	}
-
-	if e.Reason != "" {
-		parts = append(parts, string(e.Reason))
-	}
-
-	if e.Detail != "" {
-		parts = append(parts, e.Detail)
-	}
-
-	return strings.Join(parts, ": ")
+	return e.Record.Format("fieldpath")
 }
 
 // Unwrap preserves broad sentinels and nested causes.
@@ -86,13 +67,5 @@ func (e *Error) Unwrap() error {
 		return nil
 	}
 
-	if e.Err != nil && e.Cause != nil {
-		return errors.Join(e.Err, e.Cause)
-	}
-
-	if e.Cause != nil {
-		return e.Cause
-	}
-
-	return e.Err
+	return e.Record.Unwrap()
 }

@@ -18,14 +18,18 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 func TestErrorFormatting(t *testing.T) {
 	err := &Error{
-		Path:   pathObjectDesired,
-		Err:    ErrInvalidDesired,
-		Reason: ErrorReasonInvalidDesired,
-		Detail: "desired surface is invalid",
+		Record: diagnostic.NewRecord(
+			pathObjectDesired,
+			ErrInvalidDesired,
+			ErrorReasonInvalidDesired,
+			"desired surface is invalid",
+		),
 	}
 
 	got := err.Error()

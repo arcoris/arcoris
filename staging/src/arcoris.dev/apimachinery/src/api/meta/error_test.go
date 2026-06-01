@@ -18,16 +18,20 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 )
 
 func TestError(t *testing.T) {
 	cause := errors.New("nested")
 	err := &Error{
-		Path:   "objectMeta.name",
-		Err:    ErrInvalidObjectMeta,
-		Reason: ErrorReasonInvalidForm,
-		Detail: "name failed",
-		Cause:  cause,
+		Record: diagnostic.WrapRecord(
+			"objectMeta.name",
+			ErrInvalidObjectMeta,
+			ErrorReasonInvalidForm,
+			"name failed",
+			cause,
+		),
 	}
 
 	if !errors.Is(err, ErrInvalidObjectMeta) {

@@ -17,8 +17,8 @@ package labels
 import (
 	"errors"
 	"fmt"
-	"strings"
 
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 	"arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 )
 
@@ -59,16 +59,8 @@ const (
 
 // Error is the structured diagnostic returned by label validation.
 type Error struct {
-	// Path identifies the label field or map entry that failed validation.
-	Path string
-	// Err is the broad sentinel used with errors.Is.
-	Err error
-	// Reason gives stable machine-readable detail within Err.
-	Reason ErrorReason
-	// Detail gives human-readable context for logs and diagnostics.
-	Detail string
-	// Cause preserves nested validation or decoding failures.
-	Cause error
+	// Record stores the shared path, sentinel, reason, detail, and cause fields.
+	diagnostic.Record[ErrorReason]
 }
 
 // Error returns a compact human-readable label diagnostic.
@@ -77,25 +69,7 @@ func (e *Error) Error() string {
 		return "<nil>"
 	}
 
-	parts := []string{"meta/labels"}
-
-	if e.Path != "" {
-		parts = append(parts, e.Path)
-	}
-
-	if e.Err != nil {
-		parts = append(parts, e.Err.Error())
-	}
-
-	if e.Reason != "" {
-		parts = append(parts, string(e.Reason))
-	}
-
-	if e.Detail != "" {
-		parts = append(parts, e.Detail)
-	}
-
-	return strings.Join(parts, ": ")
+	return e.Record.Format("meta/labels")
 }
 
 // Unwrap preserves both the broad sentinel and nested cause identity.
@@ -104,35 +78,26 @@ func (e *Error) Unwrap() error {
 		return nil
 	}
 
-	if e.Err != nil && e.Cause != nil {
-		return errors.Join(e.Err, e.Cause)
-	}
-
-	if e.Err != nil {
-		return e.Err
-	}
-
-	return e.Cause
+	return e.Record.Unwrap()
 }
 
 // invalid builds a direct label validation diagnostic.
 func invalid(path string, err error, reason ErrorReason, detail string) error {
 	return &Error{
-		Path:   path,
-		Err:    err,
-		Reason: reason,
-		Detail: detail,
+		Record: diagnostic.NewRecord(path, err, reason, detail),
 	}
 }
 
 // nested wraps a failure reported by a nested label value.
 func nested(path string, err error, cause error) error {
 	return &Error{
-		Path:   path,
-		Err:    err,
-		Reason: ErrorReasonInvalidForm,
-		Detail: fmt.Sprintf("nested value is invalid: %v", cause),
-		Cause:  cause,
+		Record: diagnostic.WrapRecord(
+			path,
+			err,
+			ErrorReasonInvalidForm,
+			fmt.Sprintf("nested value is invalid: %v", cause),
+			cause,
+		),
 	}
 }
 

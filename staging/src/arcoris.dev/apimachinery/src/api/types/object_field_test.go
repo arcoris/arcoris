@@ -17,7 +17,15 @@ package types
 import "testing"
 
 func TestObjectFieldWrapper(t *testing.T) {
-	field := Field("value").Object(Field("name").String().Required()).Required().Nullable().UnknownFields(UnknownPrune).Description("value").Field()
+	field := Field("value").
+		Object(
+			Field("name").String().Required(),
+		).
+		Required().
+		Nullable().
+		UnknownFields(UnknownPrune).
+		Description("value").
+		Field()
 
 	requireEqual(t, field.Type().Code(), TypeObject)
 	requireEqual(t, field.Type().Nullable(), true)

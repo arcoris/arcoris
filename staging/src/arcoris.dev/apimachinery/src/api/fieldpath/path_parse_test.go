@@ -56,7 +56,11 @@ func TestParseRejectsInvalidSyntax(t *testing.T) {
 		{name: "empty selector", text: `$.conditions[{}]`, target: ErrInvalidSelector},
 		{name: "truncated selector", text: `$.conditions[{"type":"Ready"]`, target: ErrInvalidSyntax},
 		{name: "unsupported literal", text: `$.conditions[{"type":null}]`, target: ErrInvalidSyntax},
-		{name: "duplicate selector field", text: `$.conditions[{"type":"Ready","type":"Scheduled"}]`, target: ErrDuplicateField},
+		{
+			name:   "duplicate selector field",
+			text:   `$.conditions[{"type":"Ready","type":"Scheduled"}]`,
+			target: ErrDuplicateField,
+		},
 		{name: "invalid bool token", text: `$.conditions[{"ready":truthy}]`, target: ErrInvalidSyntax},
 	}
 

@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/identity"
+	"arcoris.dev/apimachinery/api/internal/diagnostic"
 	"arcoris.dev/apimachinery/api/types"
 )
 
@@ -151,27 +152,36 @@ func TestInvalidSurfaceDetailUsesStructuredTypeError(t *testing.T) {
 		{
 			name: "path reason detail",
 			err: &types.TypeError{
-				Path:   "string.range",
-				Err:    types.ErrInvalidType,
-				Reason: types.TypeErrorReasonInvalidRange,
-				Detail: "minimum must be <= maximum",
+				Record: diagnostic.NewRecord(
+					"string.range",
+					types.ErrInvalidType,
+					types.TypeErrorReasonInvalidRange,
+					"minimum must be <= maximum",
+				),
 			},
 			want: "desired descriptor is structurally invalid at string.range: invalid_range: minimum must be <= maximum",
 		},
 		{
 			name: "path reason",
 			err: &types.TypeError{
-				Path:   "string.range",
-				Err:    types.ErrInvalidType,
-				Reason: types.TypeErrorReasonInvalidRange,
+				Record: diagnostic.NewRecord(
+					"string.range",
+					types.ErrInvalidType,
+					types.TypeErrorReasonInvalidRange,
+					"",
+				),
 			},
 			want: "desired descriptor is structurally invalid at string.range: invalid_range",
 		},
 		{
 			name: "path only",
 			err: &types.TypeError{
-				Path: "string.range",
-				Err:  types.ErrInvalidType,
+				Record: diagnostic.NewRecord(
+					"string.range",
+					types.ErrInvalidType,
+					types.TypeErrorReason(""),
+					"",
+				),
 			},
 			want: "desired descriptor is structurally invalid at string.range",
 		},

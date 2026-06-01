@@ -12,20 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package fieldpath
-
-import "arcoris.dev/apimachinery/api/internal/diagnostic"
-
-// newError builds a structured field-path error without a nested cause.
-func newError(err error, reason ErrorReason, detail string) error {
-	return &Error{
-		Record: diagnostic.NewRecord("", err, reason, detail),
-	}
-}
-
-// nested wraps a lower-level failure without hiding its identity.
-func nested(err error, reason ErrorReason, detail string, cause error) error {
-	return &Error{
-		Record: diagnostic.WrapRecord("", err, reason, detail, cause),
-	}
-}
+// Package diagnostic contains the shared record model for API diagnostics.
+//
+// Public API packages keep their own Error structs, sentinel errors, and
+// reason types. This internal package centralizes the repeated record storage,
+// construction, formatting, and unwrap behavior while keeping domain-specific
+// error types in their owning packages.
+package diagnostic
