@@ -23,7 +23,7 @@ import (
 	"arcoris.dev/apimachinery/api/valuevalidation"
 )
 
-func TestValidateIntegerConstraints(t *testing.T) {
+func TestValidateUnsignedIntegerConstraints(t *testing.T) {
 	tests := []struct {
 		name     string
 		payload  value.Value
@@ -32,14 +32,7 @@ func TestValidateIntegerConstraints(t *testing.T) {
 		reason   valuevalidation.ErrorReason
 	}{
 		{
-			name:     "signed width overflow",
-			payload:  value.Int64Value(128),
-			shape:    types.Int8().Type(),
-			sentinel: valuevalidation.ErrValueOutOfRange,
-			reason:   valuevalidation.ErrorReasonAboveMaximum,
-		},
-		{
-			name:     "unsigned rejects negative",
+			name:     "negative value",
 			payload:  value.Int64Value(-1),
 			shape:    types.Uint64().Type(),
 			sentinel: valuevalidation.ErrValueOutOfRange,
@@ -47,15 +40,15 @@ func TestValidateIntegerConstraints(t *testing.T) {
 		},
 		{
 			name:     "uint8 overflow",
-			payload:  value.Uint64Value(256),
+			payload:  value.Uint64Value(math.MaxUint8 + 1),
 			shape:    types.Uint8().Type(),
 			sentinel: valuevalidation.ErrValueOutOfRange,
 			reason:   valuevalidation.ErrorReasonAboveMaximum,
 		},
 		{
-			name:     "enum mismatch",
-			payload:  value.Int64Value(3),
-			shape:    types.Int64().Enum(1, 2).Type(),
+			name:     "uint32 enum mismatch",
+			payload:  value.Uint64Value(3),
+			shape:    types.Uint32().Enum(1, 2).Type(),
 			sentinel: valuevalidation.ErrEnumMismatch,
 			reason:   valuevalidation.ErrorReasonEnumMismatch,
 		},

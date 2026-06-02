@@ -12,33 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package valuevalidation_test
+package valuevalidation
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
-	"arcoris.dev/apimachinery/api/valuevalidation"
 )
 
 func TestValidateReportsKindMismatchDetail(t *testing.T) {
-	err := valuevalidation.Validate(
+	err := Validate(
 		value.StringValue("three"),
 		types.Int32().Type(),
-		valuevalidation.Options{},
+		Options{},
 	)
 
-	validationErr := findValidationError(
+	requireInternalError(
 		t,
 		err,
-		valuevalidation.ErrKindMismatch,
-		valuevalidation.ErrorReasonKindMismatch,
+		ErrKindMismatch,
+		ErrorReasonKindMismatch,
 		"$",
 	)
-	if validationErr == nil {
-		t.Fatalf("kind mismatch diagnostic not found: %v", err)
+
+	var validationErr *Error
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("errors.As(*Error) = false: %v", err)
 	}
 
 	for _, expected := range []string{"string", "int32", "integer"} {
@@ -49,17 +52,55 @@ func TestValidateReportsKindMismatchDetail(t *testing.T) {
 }
 
 func TestValidateRejectsNonNullValueForNullDescriptor(t *testing.T) {
-	err := valuevalidation.Validate(
+	err := Validate(
 		value.StringValue("not-null"),
 		types.Null().Type(),
-		valuevalidation.Options{},
+		Options{},
 	)
 
-	requireError(
+	requireInternalError(
 		t,
 		err,
-		valuevalidation.ErrKindMismatch,
-		valuevalidation.ErrorReasonKindMismatch,
+		ErrKindMismatch,
+		ErrorReasonKindMismatch,
 		"$",
 	)
+}
+
+func TestRequireKindAcceptsExpectedKind(t *testing.T) {
+	run := newValidator(Options{})
+
+	ok := run.requireKind(
+		fieldpath.RootPath(),
+		value.StringValue("main"),
+		value.KindString,
+		types.TypeString,
+	)
+
+	if !ok {
+		t.Fatalf("requireKind() = false")
+	}
+	if result := run.result(); result != nil {
+		t.Fatalf("result() = %v, want nil", result)
+	}
+}
+
+func TestRequireKindRecordsMismatch(t *testing.T) {
+	run := newValidator(Options{})
+
+	ok := run.requireKind(
+		fieldpath.RootPath(),
+		value.StringValue("main"),
+		value.KindInteger,
+		types.TypeInt32,
+	)
+
+	if ok {
+		t.Fatalf("requireKind() = true")
+	}
+
+	result := run.result()
+	if !errors.Is(result, ErrKindMismatch) {
+		t.Fatalf("errors.Is(ErrKindMismatch) = false: %v", result)
+	}
 }

@@ -15,8 +15,15 @@
 package valuevalidation_test
 
 import (
+	"errors"
 	"testing"
 
+	apiidentity "arcoris.dev/apimachinery/api/identity"
+	"arcoris.dev/apimachinery/api/meta"
+	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
+	"arcoris.dev/apimachinery/api/object"
+	"arcoris.dev/apimachinery/api/objectvalidation"
+	"arcoris.dev/apimachinery/api/resource"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 	"arcoris.dev/apimachinery/api/valuevalidation"
@@ -77,4 +84,42 @@ func TestSurfaceValidatorFallsBackToOptionsResolverWhenArgumentNil(t *testing.T)
 			nil,
 		),
 	)
+}
+
+func TestObjectValidationUsesValueSurfaceValidator(t *testing.T) {
+	desired := types.Object(
+		types.Field("replicas").Int32().Required(),
+	).Type()
+	resourceDefinition := resource.NewDefinition(
+		apiidentity.Group("control.arcoris.dev"),
+		apiidentity.Kind("Worker"),
+		apiidentity.Resource("workers"),
+		resource.ScopeNamespaced,
+		resource.NewVersion(apiidentity.Version("v1"), desired),
+	)
+	payload := mustObject(t, value.ObjectMember("replicas", value.StringValue("three")))
+	obj := object.New[value.Value, value.Value](
+		meta.FromGroupVersionKind(apiidentity.GroupVersionKind{
+			Group:   "control.arcoris.dev",
+			Version: "v1",
+			Kind:    "Worker",
+		}),
+		meta.ObjectMeta{
+			Name:      metaidentity.Name("worker"),
+			Namespace: metaidentity.Namespace("system"),
+		},
+		payload,
+	)
+	plan := objectvalidation.Plan[value.Value, value.Value]{
+		Resource:         resourceDefinition,
+		DesiredValidator: valuevalidation.SurfaceValidator{},
+	}
+
+	err := objectvalidation.Validate(obj, plan)
+	if !errors.Is(err, objectvalidation.ErrInvalidDesired) {
+		t.Fatalf("errors.Is(ErrInvalidDesired) = false: %v", err)
+	}
+	if !errors.Is(err, valuevalidation.ErrKindMismatch) {
+		t.Fatalf("errors.Is(valuevalidation.ErrKindMismatch) = false: %v", err)
+	}
 }

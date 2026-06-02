@@ -1,0 +1,84 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package valuevalidation_test
+
+import (
+	"math"
+	"testing"
+
+	"arcoris.dev/apimachinery/api/types"
+	"arcoris.dev/apimachinery/api/value"
+	"arcoris.dev/apimachinery/api/valuevalidation"
+)
+
+func TestValidateSignedIntegerConstraints(t *testing.T) {
+	tests := []struct {
+		name     string
+		payload  value.Value
+		shape    types.Type
+		sentinel error
+		reason   valuevalidation.ErrorReason
+	}{
+		{
+			name:     "int8 overflow",
+			payload:  value.Int64Value(math.MaxInt8 + 1),
+			shape:    types.Int8().Type(),
+			sentinel: valuevalidation.ErrValueOutOfRange,
+			reason:   valuevalidation.ErrorReasonAboveMaximum,
+		},
+		{
+			name:     "int16 descriptor minimum",
+			payload:  value.Int64Value(-3),
+			shape:    types.Int16().Min(-2).Type(),
+			sentinel: valuevalidation.ErrValueOutOfRange,
+			reason:   valuevalidation.ErrorReasonBelowMinimum,
+		},
+		{
+			name:     "int32 enum mismatch",
+			payload:  value.Int64Value(3),
+			shape:    types.Int32().Enum(1, 2).Type(),
+			sentinel: valuevalidation.ErrEnumMismatch,
+			reason:   valuevalidation.ErrorReasonEnumMismatch,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := valuevalidation.Validate(
+				tt.payload,
+				tt.shape,
+				valuevalidation.Options{},
+			)
+
+			requireError(t, err, tt.sentinel, tt.reason, "$")
+		})
+	}
+}
+
+func TestValidateSignedIntegerRejectsUint64OnlyValue(t *testing.T) {
+	err := valuevalidation.Validate(
+		value.Uint64Value(math.MaxUint64),
+		types.Int64().Type(),
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrValueOutOfRange,
+		valuevalidation.ErrorReasonAboveMaximum,
+		"$",
+	)
+}

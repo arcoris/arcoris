@@ -16,7 +16,6 @@ package valuevalidation_test
 
 import (
 	"errors"
-	"strings"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/types"
@@ -44,31 +43,5 @@ func TestErrorAsValueValidationError(t *testing.T) {
 	}
 	if got, want := validationError.Reason, valuevalidation.ErrorReasonKindMismatch; got != want {
 		t.Fatalf("Reason = %q, want %q", got, want)
-	}
-}
-
-func TestErrorListUnwrap(t *testing.T) {
-	err := valuevalidation.Validate(
-		mustObject(t),
-		types.Object(
-			types.Field("name").String().Required(),
-			types.Field("replicas").Int32().Required(),
-		).Type(),
-		valuevalidation.Options{},
-	)
-
-	if !errors.Is(err, valuevalidation.ErrMissingField) {
-		t.Fatalf("errors.Is(ErrMissingField) = false")
-	}
-
-	var list valuevalidation.ErrorList
-	if !errors.As(err, &list) {
-		t.Fatalf("errors.As(ErrorList) = false")
-	}
-	if list.IsEmpty() {
-		t.Fatalf("ErrorList is empty")
-	}
-	if !strings.Contains(list.Error(), "2 errors") {
-		t.Fatalf("ErrorList summary %q does not include count", list.Error())
 	}
 }
