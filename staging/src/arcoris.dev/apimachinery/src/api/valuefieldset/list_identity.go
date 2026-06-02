@@ -34,7 +34,7 @@ func (e *extractor) listMapSelector(
 	element types.Type,
 	keys []types.FieldName,
 ) (fieldpath.Selector, error) {
-	itemSelector, err := listmapkey.Selector(
+	itemSelector, err := listmapkey.ExtractSelector(
 		indexPath,
 		item,
 		element,

@@ -21,12 +21,16 @@ package types
 type ListSemantics uint8
 
 const (
-	// ListAtomic treats the complete list as one replaceable value.
+	// ListAtomic treats the complete list as one replaceable semantic field.
 	ListAtomic ListSemantics = iota
-	// ListOrdered treats physical item indexes as part of the payload contract.
+
+	// ListOrdered treats physical item indexes as part of the API contract.
 	ListOrdered
-	// ListSet treats list elements as set members in future merge layers.
+
+	// ListSet treats the complete list as one field until a stable value-based
+	// set identity model exists.
 	ListSet
+
 	// ListMap treats object elements as keyed by one or more required fields.
 	ListMap
 )

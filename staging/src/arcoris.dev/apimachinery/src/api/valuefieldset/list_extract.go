@@ -21,6 +21,11 @@ import (
 )
 
 // extractList interprets value.KindList through a list descriptor.
+//
+// Field-set extraction follows ownership/merge semantics, not diagnostic
+// precision. Atomic and set-like lists produce the list path. Ordered lists
+// produce index paths because index position is part of the API contract.
+// ListMap values produce selector paths from declared key fields.
 func (e *extractor) extractList(
 	path fieldpath.Path,
 	val value.Value,

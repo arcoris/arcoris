@@ -21,8 +21,8 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestSelectorObjectDescriptorRejectsNonObjectElement(t *testing.T) {
-	_, err := Selector(
+func TestExtractSelectorRejectsNonObjectElement(t *testing.T) {
+	_, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("type", value.StringValue("Ready")),
 		types.String().Type(),
@@ -33,8 +33,8 @@ func TestSelectorObjectDescriptorRejectsNonObjectElement(t *testing.T) {
 	requireErrorKind(t, err, FailureInvalidDescriptor)
 }
 
-func TestSelectorFieldDescriptorRejectsUndeclaredKey(t *testing.T) {
-	_, err := Selector(
+func TestExtractSelectorRejectsUndeclaredDescriptorKey(t *testing.T) {
+	_, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("type", value.StringValue("Ready")),
 		objectElement(types.Field("status").String().Required()),

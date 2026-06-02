@@ -124,11 +124,29 @@ func TestExtractObjectUnknownPreservedDoesNotTraverseNestedStructure(t *testing.
 
 func TestExtractObjectUnknownPrunedSkipsPath(t *testing.T) {
 	path := rootField("spec")
+	descriptor := types.Object(
+		types.Field("name").String().Required(),
+	).
+		UnknownFields(types.UnknownPrune).
+		Type()
+	val := value.MustObjectValue(
+		value.ObjectMember("name", value.StringValue("api")),
+		value.ObjectMember("extra", value.StringValue("debug")),
+	)
+
+	got, err := ExtractAt(path, val, descriptor, Options{})
+	requireNoError(t, err)
+
+	requireFieldSet(t, got, path.Field("name"))
+}
+
+func TestExtractObjectOnlyPrunedUnknownFieldsReturnsEmptySet(t *testing.T) {
+	path := rootField("spec")
 	descriptor := types.Object().
 		UnknownFields(types.UnknownPrune).
 		Type()
 	val := value.MustObjectValue(
-		value.ObjectMember("extra", value.StringValue("debug")),
+		value.ObjectMember("x-extra", value.StringValue("value")),
 	)
 
 	got, err := ExtractAt(path, val, descriptor, Options{})

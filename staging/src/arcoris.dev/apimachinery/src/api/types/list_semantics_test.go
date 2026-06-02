@@ -43,3 +43,7 @@ func TestListSemanticsString(t *testing.T) {
 		})
 	}
 }
+
+func TestListSemanticsStringOrdered(t *testing.T) {
+	requireEqual(t, ListOrdered.String(), "ordered")
+}

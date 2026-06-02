@@ -15,14 +15,15 @@
 package listmapkey
 
 import (
+	"math"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestSelectorEntryMissingKey(t *testing.T) {
-	_, err := Selector(
+func TestExtractSelectorEntryMissingKey(t *testing.T) {
+	_, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("status", value.StringValue("True")),
 		objectElement(types.Field("type").String().Required()),
@@ -34,8 +35,8 @@ func TestSelectorEntryMissingKey(t *testing.T) {
 	requireEqual(t, IsPayloadFailure(err), true)
 }
 
-func TestSelectorEntryNullKey(t *testing.T) {
-	_, err := Selector(
+func TestExtractSelectorEntryNullKey(t *testing.T) {
+	_, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("type", value.NullValue()),
 		objectElement(types.Field("type").String().Required()),
@@ -47,8 +48,8 @@ func TestSelectorEntryNullKey(t *testing.T) {
 	requireEqual(t, IsPayloadFailure(err), true)
 }
 
-func TestSelectorEntryWrongKeyKind(t *testing.T) {
-	_, err := Selector(
+func TestExtractSelectorEntryWrongKeyKind(t *testing.T) {
+	_, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("type", value.Int64Value(1)),
 		objectElement(types.Field("type").String().Required()),
@@ -60,8 +61,21 @@ func TestSelectorEntryWrongKeyKind(t *testing.T) {
 	requireEqual(t, IsPayloadFailure(err), true)
 }
 
-func TestSelectorEntryRejectsNonObjectItem(t *testing.T) {
-	_, err := Selector(
+func TestExtractSelectorIntegerRangeMismatch(t *testing.T) {
+	_, err := ExtractSelector(
+		conditionPath(0),
+		objectWith("port", value.Uint64Value(math.MaxUint64)),
+		objectElement(types.Field("port").Int64().Required()),
+		[]types.FieldName{"port"},
+		Options{},
+	)
+
+	requireErrorKind(t, err, FailureKeyIntegerRange)
+	requireEqual(t, IsPayloadFailure(err), true)
+}
+
+func TestExtractSelectorEntryRejectsNonObjectItem(t *testing.T) {
+	_, err := ExtractSelector(
 		conditionPath(0),
 		value.StringValue("not-object"),
 		objectElement(types.Field("type").String().Required()),

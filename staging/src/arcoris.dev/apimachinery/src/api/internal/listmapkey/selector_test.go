@@ -21,8 +21,8 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestSelectorExtractsPublicSelector(t *testing.T) {
-	gotSelector, err := Selector(
+func TestExtractSelectorExtractsPublicSelector(t *testing.T) {
+	gotSelector, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("type", value.StringValue("Ready")),
 		objectElement(types.Field("type").String().Required()),
@@ -34,8 +34,8 @@ func TestSelectorExtractsPublicSelector(t *testing.T) {
 	requireEqual(t, gotSelector.String(), `{"type":"Ready"}`)
 }
 
-func TestSelectorRejectsEmptyKeys(t *testing.T) {
-	_, err := Selector(
+func TestExtractSelectorRejectsEmptyKeys(t *testing.T) {
+	_, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("type", value.StringValue("Ready")),
 		objectElement(types.Field("type").String().Required()),

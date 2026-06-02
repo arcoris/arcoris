@@ -42,7 +42,7 @@ func TestListTypeOrdered(t *testing.T) {
 	requireNoError(t, ValidateType(typ, nil))
 }
 
-func TestListOrderedClearsMapKeysAfterMap(t *testing.T) {
+func TestListOrderedClearsMapKeys(t *testing.T) {
 	typ := ListOf(Object(Field("name").String().Required())).
 		Map("name").
 		Ordered().

@@ -28,10 +28,12 @@
 // field elements, map entries use key elements, ordered list items use index
 // elements, and ListMap items use selector elements.
 //
-// List extraction follows merge/ownership intent. Atomic and set-like lists
-// produce the list path as one semantic field. Ordered lists produce index
-// paths because item position is part of the descriptor contract. List-map
-// values produce selector paths based on their declared identity fields.
+// List extraction follows merge/ownership intent. Atomic lists produce the list
+// path because the whole list is one semantic field. Set-like lists also
+// produce the list path until a stable value-based set identity model exists.
+// Ordered lists produce index paths because item position is part of the
+// descriptor contract. ListMap values produce selector paths based on their
+// declared identity fields.
 //
 // Unknown preserved object fields are included as opaque leaves because no
 // descriptor exists for nested traversal. Unknown pruned fields are omitted, and

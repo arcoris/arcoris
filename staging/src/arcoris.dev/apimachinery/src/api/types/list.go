@@ -16,10 +16,11 @@ package types
 
 // ListType builds list descriptors.
 //
-// ListType describes a homogeneous sequence. The descriptor records element
-// type, length constraints, and future merge/apply intent, but it does not
-// implement scheduling, queues, patch/apply, field ownership, or concrete value
-// validation.
+// ListType describes a homogeneous sequence.
+//
+// The descriptor records element type, length constraints, and future
+// merge/apply intent, but it does not implement scheduling, queues, patch/apply,
+// field ownership, or concrete value validation.
 type ListType struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
@@ -73,8 +74,10 @@ func (t ListType) MaxLen(n int) ListType {
 
 // Atomic records atomic list semantics.
 //
-// Atomic semantics mean future merge/apply layers should treat the complete
-// list as a single replaceable value. This package records that intent only.
+// Atomic semantics are the conservative default. They mean future field-set,
+// ownership, merge, and apply layers should treat the complete list as a single
+// replaceable semantic field. Validation may still inspect individual items and
+// report item-level diagnostics by index.
 func (t ListType) Atomic() ListType {
 	t.payload.semantics = ListAtomic
 	t.payload.mapKeys = nil
@@ -84,10 +87,12 @@ func (t ListType) Atomic() ListType {
 
 // Ordered records index-addressable list semantics.
 //
-// Ordered semantics mean future field-set, diff, and apply layers may treat
-// physical item indexes as semantic addresses. Use ordered lists only when item
-// position is part of the API contract. Atomic remains the conservative default
-// because it treats the complete list as one field.
+// Ordered semantics mean physical item indexes are part of the API contract.
+// Future field-set, diff, and apply layers may therefore treat indexes as
+// semantic addresses. Use ordered lists only for truly positional values, such
+// as ordered command arguments or ordered pipeline stages.
+//
+// Atomic remains the default because it treats the complete list as one field.
 func (t ListType) Ordered() ListType {
 	t.payload.semantics = ListOrdered
 	t.payload.mapKeys = nil
@@ -98,9 +103,11 @@ func (t ListType) Ordered() ListType {
 // Set records set-like list semantics.
 //
 // Set semantics record that future merge/apply layers may treat list elements
-// as identity-less set members. Until a stable value-based identity model
-// exists, field-set extraction treats the complete list as one field. This
-// package does not compare elements or enforce set uniqueness for concrete
+// as identity-less set members. Until a stable value-based set identity model
+// exists, field-set extraction treats the complete list as one field and must
+// not use physical indexes for ownership purposes.
+//
+// This package does not compare elements or enforce set uniqueness for concrete
 // values.
 func (t ListType) Set() ListType {
 	t.payload.semantics = ListSet
@@ -109,14 +116,16 @@ func (t ListType) Set() ListType {
 	return t
 }
 
-// Map records map-like list semantics keyed by object field names.
+// Map records ListMap semantics keyed by object field names.
 //
 // ValidateType later checks that map keys are valid field names, that the list
 // element is an object or resolvable object reference, that each key field is
 // required, and that each key field resolves to a non-nullable stable scalar
-// identity type suitable for future selector-based validation, diff, and apply
-// layers. Field-set extraction can then address items by selector rather than
-// unstable physical index. The builder only records the declared key order.
+// identity type suitable for selector-based validation, field-set extraction,
+// diff, and apply layers.
+//
+// Field-set extraction can then address items by selector rather than unstable
+// physical index. The builder only records the declared key order.
 func (t ListType) Map(keys ...string) ListType {
 	t.payload.semantics = ListMap
 	t.payload.mapKeys = make([]FieldName, len(keys))

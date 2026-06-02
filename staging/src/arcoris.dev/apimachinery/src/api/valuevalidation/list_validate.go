@@ -82,9 +82,9 @@ func (v *validator) validateList(
 // validateIndexedList checks list item payloads by physical index.
 //
 // Validation uses indexes for atomic, ordered, and set-like lists because item
-// locations produce better diagnostics. Field-set extraction intentionally
-// differs: ownership semantics may still treat atomic and set-like lists as one
-// complete field.
+// locations produce better diagnostics. This intentionally differs from
+// valuefieldset: ownership semantics treat atomic and set-like lists as one
+// complete field, while validation still points users to the invalid item.
 func (v *validator) validateIndexedList(
 	path fieldpath.Path,
 	valueView value.ListView,
@@ -115,7 +115,7 @@ func (v *validator) validateListMap(
 		item, _ := valueView.At(index)
 		indexPath := path.Index(index)
 
-		itemSelector, err := listmapkey.Selector(
+		itemSelector, err := listmapkey.ExtractSelector(
 			indexPath,
 			item,
 			element,

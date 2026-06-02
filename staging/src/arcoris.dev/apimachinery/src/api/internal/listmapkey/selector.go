@@ -20,12 +20,12 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// Selector extracts the semantic selector for one ListMap item.
+// ExtractSelector extracts the semantic selector for one ListMap item.
 //
 // The element descriptor must be an object descriptor or a TypeRef resolving to
 // one. The declared keys must point at object fields whose concrete item values
 // can become fieldpath selector literals.
-func Selector(
+func ExtractSelector(
 	indexPath fieldpath.Path,
 	item value.Value,
 	element types.Type,

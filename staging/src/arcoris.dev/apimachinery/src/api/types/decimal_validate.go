@@ -16,9 +16,9 @@ package types
 
 // validateDecimal checks TypeDecimal precision and scale descriptor rules.
 //
-// Decimal deliberately has no min/max or enum rules in this package. Exact
-// decimal values need a future value representation design before those rules
-// can be added without encoding policy leaking into descriptors.
+// Decimal deliberately has no min/max or enum rules in this package. Future
+// descriptor bounds must be defined with exact decimal semantics and without
+// binary floating-point conversion.
 //
 // Scale without precision is allowed. It constrains fractional shape while
 // leaving total significant digits unconstrained.

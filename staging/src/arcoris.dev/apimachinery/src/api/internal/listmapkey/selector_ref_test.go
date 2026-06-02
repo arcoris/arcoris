@@ -21,7 +21,7 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestSelectorRefToObjectElement(t *testing.T) {
+func TestExtractSelectorRefToObjectElement(t *testing.T) {
 	typeResolver := resolverFunc(func(name types.TypeName) (types.TypeDefinition, bool) {
 		if name == "example.Condition" {
 			return types.Define(
@@ -33,7 +33,7 @@ func TestSelectorRefToObjectElement(t *testing.T) {
 		return types.TypeDefinition{}, false
 	})
 
-	gotSelector, err := Selector(
+	gotSelector, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("type", value.StringValue("Ready")),
 		types.Ref("example.Condition").Type(),
@@ -45,7 +45,7 @@ func TestSelectorRefToObjectElement(t *testing.T) {
 	requireEqual(t, gotSelector.String(), `{"type":"Ready"}`)
 }
 
-func TestSelectorRefKeyType(t *testing.T) {
+func TestExtractSelectorRefKeyType(t *testing.T) {
 	typeResolver := resolverFunc(func(name types.TypeName) (types.TypeDefinition, bool) {
 		if name == "example.ConditionType" {
 			return types.Define("example.ConditionType", types.String()), true
@@ -54,7 +54,7 @@ func TestSelectorRefKeyType(t *testing.T) {
 		return types.TypeDefinition{}, false
 	})
 
-	gotSelector, err := Selector(
+	gotSelector, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("type", value.StringValue("Ready")),
 		objectElement(types.Field("type").Ref("example.ConditionType").Required()),
@@ -66,8 +66,8 @@ func TestSelectorRefKeyType(t *testing.T) {
 	requireEqual(t, gotSelector.String(), `{"type":"Ready"}`)
 }
 
-func TestSelectorMissingResolver(t *testing.T) {
-	_, err := Selector(
+func TestExtractSelectorMissingResolver(t *testing.T) {
+	_, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("type", value.StringValue("Ready")),
 		types.Ref("example.Condition").Type(),
@@ -79,12 +79,12 @@ func TestSelectorMissingResolver(t *testing.T) {
 	requireEqual(t, IsDescriptorFailure(err), true)
 }
 
-func TestSelectorUnresolvedRef(t *testing.T) {
+func TestExtractSelectorUnresolvedRef(t *testing.T) {
 	typeResolver := resolverFunc(func(types.TypeName) (types.TypeDefinition, bool) {
 		return types.TypeDefinition{}, false
 	})
 
-	_, err := Selector(
+	_, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("type", value.StringValue("Ready")),
 		types.Ref("example.Condition").Type(),
@@ -96,7 +96,7 @@ func TestSelectorUnresolvedRef(t *testing.T) {
 	requireEqual(t, IsDescriptorFailure(err), true)
 }
 
-func TestSelectorReferenceCycle(t *testing.T) {
+func TestExtractSelectorReferenceCycle(t *testing.T) {
 	typeResolver := resolverFunc(func(name types.TypeName) (types.TypeDefinition, bool) {
 		if name == "example.Condition" {
 			return types.Define("example.Condition", types.Ref("example.Condition")), true
@@ -105,7 +105,7 @@ func TestSelectorReferenceCycle(t *testing.T) {
 		return types.TypeDefinition{}, false
 	})
 
-	_, err := Selector(
+	_, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("type", value.StringValue("Ready")),
 		types.Ref("example.Condition").Type(),

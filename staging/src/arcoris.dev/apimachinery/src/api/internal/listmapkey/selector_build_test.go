@@ -21,8 +21,8 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestSelectorStringKey(t *testing.T) {
-	gotSelector, err := Selector(
+func TestExtractSelectorStringKey(t *testing.T) {
+	gotSelector, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("type", value.StringValue("Ready")),
 		objectElement(types.Field("type").String().Required()),
@@ -34,8 +34,8 @@ func TestSelectorStringKey(t *testing.T) {
 	requireEqual(t, gotSelector.String(), `{"type":"Ready"}`)
 }
 
-func TestSelectorBoolKey(t *testing.T) {
-	gotSelector, err := Selector(
+func TestExtractSelectorBoolKey(t *testing.T) {
+	gotSelector, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("enabled", value.BoolValue(true)),
 		objectElement(types.Field("enabled").Bool().Required()),
@@ -47,8 +47,8 @@ func TestSelectorBoolKey(t *testing.T) {
 	requireEqual(t, gotSelector.String(), `{"enabled":true}`)
 }
 
-func TestSelectorSignedIntegerKey(t *testing.T) {
-	gotSelector, err := Selector(
+func TestExtractSelectorSignedIntegerKey(t *testing.T) {
+	gotSelector, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("port", value.Int64Value(-1)),
 		objectElement(types.Field("port").Int64().Required()),
@@ -60,8 +60,8 @@ func TestSelectorSignedIntegerKey(t *testing.T) {
 	requireEqual(t, gotSelector.String(), `{"port":-1}`)
 }
 
-func TestSelectorUnsignedIntegerKey(t *testing.T) {
-	gotSelector, err := Selector(
+func TestExtractSelectorUnsignedIntegerKey(t *testing.T) {
+	gotSelector, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("port", value.Uint64Value(443)),
 		objectElement(types.Field("port").Uint64().Required()),
@@ -73,8 +73,8 @@ func TestSelectorUnsignedIntegerKey(t *testing.T) {
 	requireEqual(t, gotSelector.String(), `{"port":443}`)
 }
 
-func TestSelectorMultiKeyCanonicalSelector(t *testing.T) {
-	gotSelector, err := Selector(
+func TestExtractSelectorMultiKeyCanonicalSelector(t *testing.T) {
+	gotSelector, err := ExtractSelector(
 		conditionPath(0),
 		objectWithMembers(
 			value.ObjectMember("port", value.Uint64Value(443)),
@@ -90,4 +90,17 @@ func TestSelectorMultiKeyCanonicalSelector(t *testing.T) {
 
 	requireNoError(t, err)
 	requireEqual(t, gotSelector.String(), `{"host":"api.example.com","port":443}`)
+}
+
+func TestExtractSelectorDuplicateKeysProduceInvalidSelector(t *testing.T) {
+	_, err := ExtractSelector(
+		conditionPath(0),
+		objectWith("type", value.StringValue("Ready")),
+		objectElement(types.Field("type").String().Required()),
+		[]types.FieldName{"type", "type"},
+		Options{},
+	)
+
+	requireErrorKind(t, err, FailureInvalidSelector)
+	requireEqual(t, IsDescriptorFailure(err), true)
 }
