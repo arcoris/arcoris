@@ -42,6 +42,7 @@ type MapType struct {
 //	).MaxLen(64)
 func MapOf(value TypeExpr) MapType {
 	valueType := typeFromExpr(value)
+
 	return MapType{
 		header: newHeader(TypeMap),
 		payload: mapPayload{
@@ -52,24 +53,37 @@ func MapOf(value TypeExpr) MapType {
 }
 
 // Nullable returns a map descriptor that admits null values.
-func (t MapType) Nullable() MapType { t.header = t.header.withNullable(); return t }
+func (t MapType) Nullable() MapType {
+	t.header = t.header.withNullable()
+
+	return t
+}
 
 // MinLen sets the inclusive minimum number of map entries.
 //
 // The limit is structural metadata only. Concrete map entry counts are checked
 // by future value-validation layers.
-func (t MapType) MinLen(n int) MapType { t.payload.minLen = limit[int]{n, true}; return t }
+func (t MapType) MinLen(n int) MapType {
+	t.payload.minLen = limit[int]{n, true}
+
+	return t
+}
 
 // MaxLen sets the inclusive maximum number of map entries.
 //
 // The limit uses limit[int] so an explicit zero maximum can be represented
 // without a pointer allocation.
-func (t MapType) MaxLen(n int) MapType { t.payload.maxLen = limit[int]{n, true}; return t }
+func (t MapType) MaxLen(n int) MapType {
+	t.payload.maxLen = limit[int]{n, true}
+
+	return t
+}
 
 // Type returns a detached Type descriptor.
 func (t MapType) Type() Type {
 	out := typeFromHeader(t.header)
 	out.mapType = cloneMapPayload(t.payload)
+
 	return out
 }
 

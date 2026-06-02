@@ -25,5 +25,6 @@ func (t Type) Date() (DateView, bool) {
 	if t.code != TypeDate {
 		return DateView{}, false
 	}
+
 	return DateView{payload: cloneDatePayload(t.date)}, true
 }

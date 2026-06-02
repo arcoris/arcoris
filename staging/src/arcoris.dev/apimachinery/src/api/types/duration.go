@@ -37,6 +37,7 @@ func Duration() DurationType {
 // Nullable returns a duration descriptor that admits null values.
 func (t DurationType) Nullable() DurationType {
 	t.header = t.header.withNullable()
+
 	return t
 }
 
@@ -44,6 +45,7 @@ func (t DurationType) Nullable() DurationType {
 func (t DurationType) Type() Type {
 	out := typeFromHeader(t.header)
 	out.duration = cloneDurationPayload(t.payload)
+
 	return out
 }
 

@@ -29,48 +29,56 @@ type Float64Field struct {
 // Required marks the field key as required.
 func (f Float64Field) Required() Float64Field {
 	f.field = f.field.withRequired()
+
 	return f
 }
 
 // Optional marks the field key as optional.
 func (f Float64Field) Optional() Float64Field {
 	f.field = f.field.withOptional()
+
 	return f
 }
 
 // Description attaches human-facing descriptor text.
 func (f Float64Field) Description(text string) Float64Field {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to float64 values.
 func (f Float64Field) Nullable() Float64Field {
 	f.typ = f.typ.Nullable()
+
 	return f
 }
 
 // Min sets the inclusive float64 lower bound.
 func (f Float64Field) Min(n float64) Float64Field {
 	f.typ = f.typ.Min(n)
+
 	return f
 }
 
 // Max sets the inclusive float64 upper bound.
 func (f Float64Field) Max(n float64) Float64Field {
 	f.typ = f.typ.Max(n)
+
 	return f
 }
 
 // Range sets the inclusive float64 lower and upper bounds.
 func (f Float64Field) Range(min, max float64) Float64Field {
 	f.typ = f.typ.Range(min, max)
+
 	return f
 }
 
 // Enum stores accepted float64 literals for the field.
 func (f Float64Field) Enum(values ...float64) Float64Field {
 	f.typ = f.typ.Enum(values...)
+
 	return f
 }
 

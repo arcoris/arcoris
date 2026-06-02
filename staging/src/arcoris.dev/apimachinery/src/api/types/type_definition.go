@@ -64,11 +64,13 @@ func (d TypeDefinition) Description() string {
 // WithDescription returns a copy of d with human-facing descriptor text.
 func (d TypeDefinition) WithDescription(text string) TypeDefinition {
 	d.description = text
+
 	return d
 }
 
 // cloneDefinition detaches the type payload stored in d.
 func cloneDefinition(d TypeDefinition) TypeDefinition {
 	d.typ = cloneType(d.typ)
+
 	return d
 }

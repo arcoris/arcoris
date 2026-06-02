@@ -37,6 +37,7 @@ type stringPayload struct {
 // cloneStringPayload detaches string enum values.
 func cloneStringPayload(p stringPayload) stringPayload {
 	p.enum = cloneSlice(p.enum)
+
 	return p
 }
 

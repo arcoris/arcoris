@@ -19,6 +19,7 @@ import "errors"
 // validateRef checks TypeRef syntax, optional resolver lookup, and cycles.
 func validateRef(t Type, resolver Resolver, path string, resolving map[TypeName]bool) error {
 	name := t.ref.name
+
 	if !name.IsValid() {
 		return typeErrorf(
 			path,
@@ -28,9 +29,11 @@ func validateRef(t Type, resolver Resolver, path string, resolving map[TypeName]
 			name,
 		)
 	}
+
 	if resolver == nil {
 		return nil
 	}
+
 	if resolving[name] {
 		return typeErrorf(
 			path,
@@ -40,7 +43,9 @@ func validateRef(t Type, resolver Resolver, path string, resolving map[TypeName]
 			name,
 		)
 	}
+
 	def, ok := resolver.ResolveType(name)
+
 	if !ok {
 		return typeErrorf(
 			path,
@@ -50,13 +55,17 @@ func validateRef(t Type, resolver Resolver, path string, resolving map[TypeName]
 			name,
 		)
 	}
+
 	next := copyResolving(resolving)
 	next[name] = true
+
 	if err := validateType(def.Type(), resolver, path, next); err != nil {
 		var typeErr *TypeError
+
 		if errors.As(err, &typeErr) && typeErr.Reason == TypeErrorReasonReferenceCycle {
 			return err
 		}
+
 		return typeErrorf(
 			path,
 			err,
@@ -66,5 +75,6 @@ func validateRef(t Type, resolver Resolver, path string, resolving map[TypeName]
 			err,
 		)
 	}
+
 	return nil
 }

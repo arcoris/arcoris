@@ -26,34 +26,65 @@ type Int32Field struct {
 }
 
 // Required marks the field key as required.
-func (f Int32Field) Required() Int32Field { f.field = f.field.withRequired(); return f }
+func (f Int32Field) Required() Int32Field {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f Int32Field) Optional() Int32Field { f.field = f.field.withOptional(); return f }
+func (f Int32Field) Optional() Int32Field {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f Int32Field) Description(text string) Int32Field {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to int32 values.
-func (f Int32Field) Nullable() Int32Field { f.typ = f.typ.Nullable(); return f }
+func (f Int32Field) Nullable() Int32Field {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // Min sets the inclusive int32 lower bound.
-func (f Int32Field) Min(n int32) Int32Field { f.typ = f.typ.Min(n); return f }
+func (f Int32Field) Min(n int32) Int32Field {
+	f.typ = f.typ.Min(n)
+
+	return f
+}
 
 // Max sets the inclusive int32 upper bound.
-func (f Int32Field) Max(n int32) Int32Field { f.typ = f.typ.Max(n); return f }
+func (f Int32Field) Max(n int32) Int32Field {
+	f.typ = f.typ.Max(n)
+
+	return f
+}
 
 // Range sets the inclusive int32 lower and upper bounds.
-func (f Int32Field) Range(min, max int32) Int32Field { f.typ = f.typ.Range(min, max); return f }
+func (f Int32Field) Range(min, max int32) Int32Field {
+	f.typ = f.typ.Range(min, max)
+
+	return f
+}
 
 // Enum stores accepted int32 literals for the field.
-func (f Int32Field) Enum(values ...int32) Int32Field { f.typ = f.typ.Enum(values...); return f }
+func (f Int32Field) Enum(values ...int32) Int32Field {
+	f.typ = f.typ.Enum(values...)
+
+	return f
+}
 
 // Field returns a detached finalized field descriptor.
-func (f Int32Field) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f Int32Field) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks Int32Field as a sealed FieldExpr implementation.
 func (f Int32Field) fieldExpr() {}

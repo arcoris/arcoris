@@ -24,6 +24,7 @@ func TestErrorReasonStrings(t *testing.T) {
 		{ErrorReasonInvalidZero, "invalid_zero"},
 		{ErrorReasonInvalidDescriptor, "invalid_descriptor"},
 		{ErrorReasonKindMismatch, "kind_mismatch"},
+		{ErrorReasonUnknownField, "unknown_field"},
 		{ErrorReasonUnresolvedRef, "unresolved_ref"},
 		{ErrorReasonReferenceCycle, "reference_cycle"},
 		{ErrorReasonMissingListKey, "missing_list_key"},

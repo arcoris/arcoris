@@ -27,22 +27,37 @@ type TimestampField struct {
 }
 
 // Required marks the field key as required.
-func (f TimestampField) Required() TimestampField { f.field = f.field.withRequired(); return f }
+func (f TimestampField) Required() TimestampField {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f TimestampField) Optional() TimestampField { f.field = f.field.withOptional(); return f }
+func (f TimestampField) Optional() TimestampField {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f TimestampField) Description(text string) TimestampField {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to timestamp values.
-func (f TimestampField) Nullable() TimestampField { f.typ = f.typ.Nullable(); return f }
+func (f TimestampField) Nullable() TimestampField {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // Field returns a detached finalized field descriptor.
-func (f TimestampField) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f TimestampField) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks TimestampField as a sealed FieldExpr implementation.
 func (f TimestampField) fieldExpr() {}

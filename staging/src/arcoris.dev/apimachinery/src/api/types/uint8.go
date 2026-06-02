@@ -38,18 +38,21 @@ func Uint8() Uint8Type {
 // Nullable returns a uint8 descriptor that admits null values.
 func (t Uint8Type) Nullable() Uint8Type {
 	t.header = t.header.withNullable()
+
 	return t
 }
 
 // Min sets the inclusive uint8 lower bound.
 func (t Uint8Type) Min(n uint8) Uint8Type {
 	t.payload.min = limit[uint8]{value: n, set: true}
+
 	return t
 }
 
 // Max sets the inclusive uint8 upper bound.
 func (t Uint8Type) Max(n uint8) Uint8Type {
 	t.payload.max = limit[uint8]{value: n, set: true}
+
 	return t
 }
 
@@ -61,6 +64,7 @@ func (t Uint8Type) Range(min, max uint8) Uint8Type {
 // Enum stores accepted uint8 literals in declaration order.
 func (t Uint8Type) Enum(values ...uint8) Uint8Type {
 	t.payload.enum = cloneSlice(values)
+
 	return t
 }
 
@@ -68,6 +72,7 @@ func (t Uint8Type) Enum(values ...uint8) Uint8Type {
 func (t Uint8Type) Type() Type {
 	out := typeFromHeader(t.header)
 	out.uint8 = cloneUint8Payload(t.payload)
+
 	return out
 }
 

@@ -25,6 +25,7 @@ func (t Type) Uint16() (Uint16View, bool) {
 	if t.code != TypeUint16 {
 		return Uint16View{}, false
 	}
+
 	return Uint16View{payload: cloneUint16Payload(t.uint16)}, true
 }
 

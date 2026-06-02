@@ -25,6 +25,7 @@ func (t Type) Ref() (RefView, bool) {
 	if t.code != TypeRef {
 		return RefView{}, false
 	}
+
 	return RefView{payload: cloneRefPayload(t.ref)}, true
 }
 

@@ -36,5 +36,6 @@ const (
 // enforces the exact TypeNull invariant that TypeNull cannot be nullable.
 func (t Type) withNullable() Type {
 	t.flags |= typeFlagNullable
+
 	return t
 }

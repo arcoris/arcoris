@@ -26,12 +26,15 @@ func validateList(t Type, resolver Resolver, path string, resolving map[TypeName
 			"list descriptor must have an element type",
 		)
 	}
+
 	if err := validateType(*t.list.elem, resolver, path+".elem", resolving); err != nil {
 		return err
 	}
+
 	if err := validateLengthLimits(t.list.minLen, t.list.maxLen, path+".len"); err != nil {
 		return err
 	}
+
 	if !t.list.semantics.IsValid() {
 		return typeErrorf(
 			path+".semantics",
@@ -41,9 +44,20 @@ func validateList(t Type, resolver Resolver, path string, resolving map[TypeName
 			t.list.semantics,
 		)
 	}
+
 	if t.list.semantics != ListMap {
+		if len(t.list.mapKeys) > 0 {
+			return typeErrorf(
+				path+".mapKeys",
+				ErrInvalidField,
+				TypeErrorReasonInvalidListMapKey,
+				"list map keys are only valid with ListMap semantics",
+			)
+		}
+
 		return nil
 	}
+
 	if len(t.list.mapKeys) == 0 {
 		return typeErrorf(
 			path+".mapKeys",
@@ -52,7 +66,9 @@ func validateList(t Type, resolver Resolver, path string, resolving map[TypeName
 			"ListMap semantics requires at least one key field",
 		)
 	}
+
 	object, ok := listMapObject(*t.list.elem, resolver)
+
 	if !ok {
 		return typeErrorf(
 			path+".elem",
@@ -61,12 +77,16 @@ func validateList(t Type, resolver Resolver, path string, resolving map[TypeName
 			"ListMap element must be an object descriptor or a TypeRef resolving to an object",
 		)
 	}
+
 	fields := make(map[FieldName]FieldDescriptor, len(object.fields))
+
 	for _, field := range object.fields {
 		fields[field.name] = field
 	}
+
 	for i, key := range t.list.mapKeys {
 		keyPath := fmt.Sprintf("%s.mapKeys[%d]", path, i)
+
 		if !key.IsValid() {
 			return typeErrorf(
 				keyPath,
@@ -76,7 +96,9 @@ func validateList(t Type, resolver Resolver, path string, resolving map[TypeName
 				key,
 			)
 		}
+
 		field, ok := fields[key]
+
 		if !ok {
 			return typeErrorf(
 				keyPath,
@@ -86,6 +108,7 @@ func validateList(t Type, resolver Resolver, path string, resolving map[TypeName
 				key,
 			)
 		}
+
 		if !field.IsRequired() {
 			return typeErrorf(
 				keyPath,
@@ -95,10 +118,12 @@ func validateList(t Type, resolver Resolver, path string, resolving map[TypeName
 				key,
 			)
 		}
+
 		if err := validateListMapKeyIdentityType(field, resolver, keyPath, resolving); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -107,16 +132,22 @@ func listMapObject(elem Type, resolver Resolver) (objectPayload, bool) {
 	if elem.code == TypeObject {
 		return elem.object, true
 	}
+
 	if elem.code != TypeRef || resolver == nil {
 		return objectPayload{}, false
 	}
+
 	def, ok := resolver.ResolveType(elem.ref.name)
+
 	if !ok {
 		return objectPayload{}, false
 	}
+
 	typ := def.Type()
+
 	if typ.code != TypeObject {
 		return objectPayload{}, false
 	}
+
 	return typ.object, true
 }

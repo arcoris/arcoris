@@ -41,6 +41,19 @@ func TestListFieldExprMarker(t *testing.T) {
 	Field("value").ListOf(String()).fieldExpr()
 }
 
+func TestListFieldOrderedDelegatesToListType(t *testing.T) {
+	field := Field("items").
+		ListOf(String()).
+		Ordered().
+		Required().
+		Field()
+	view, ok := field.Type().List()
+
+	requireEqual(t, ok, true)
+	requireEqual(t, view.Semantics(), ListOrdered)
+	requireEqual(t, len(view.MapKeys()), 0)
+}
+
 func TestListFieldOptionalPath(t *testing.T) {
 	field := Field("value").
 		ListOf(String()).

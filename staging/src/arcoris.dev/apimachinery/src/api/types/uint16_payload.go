@@ -27,6 +27,7 @@ type uint16Payload struct {
 // cloneUint16Payload detaches uint16 enum values.
 func cloneUint16Payload(p uint16Payload) uint16Payload {
 	p.enum = cloneSlice(p.enum)
+
 	return p
 }
 

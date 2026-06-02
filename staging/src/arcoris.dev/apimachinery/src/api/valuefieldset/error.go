@@ -30,16 +30,19 @@ var (
 	// ErrKindMismatch classifies value kind / descriptor type mismatches.
 	ErrKindMismatch = errors.New("value kind mismatch")
 
+	// ErrUnknownField classifies actual object members rejected by descriptor policy.
+	ErrUnknownField = errors.New("unknown field")
+
 	// ErrUnresolvedRef classifies TypeRef descriptors that cannot resolve.
 	ErrUnresolvedRef = errors.New("unresolved type reference")
 
 	// ErrReferenceCycle classifies recursive or too-deep TypeRef traversal.
 	ErrReferenceCycle = errors.New("type reference cycle")
 
-	// ErrInvalidListKey classifies associative-list identity extraction failures.
+	// ErrInvalidListKey classifies ListMap key extraction failures.
 	ErrInvalidListKey = errors.New("invalid list map key")
 
-	// ErrDuplicateListKey classifies repeated associative-list selector identities.
+	// ErrDuplicateListKey classifies repeated ListMap selector identities.
 	ErrDuplicateListKey = errors.New("duplicate list map key")
 )
 

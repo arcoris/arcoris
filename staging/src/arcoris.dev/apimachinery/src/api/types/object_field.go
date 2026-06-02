@@ -21,28 +21,44 @@ type ObjectField struct {
 }
 
 // Required marks the field key as required.
-func (f ObjectField) Required() ObjectField { f.field = f.field.withRequired(); return f }
+func (f ObjectField) Required() ObjectField {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f ObjectField) Optional() ObjectField { f.field = f.field.withOptional(); return f }
+func (f ObjectField) Optional() ObjectField {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f ObjectField) Description(text string) ObjectField {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to object values.
-func (f ObjectField) Nullable() ObjectField { f.typ = f.typ.Nullable(); return f }
+func (f ObjectField) Nullable() ObjectField {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // UnknownFields records the structural policy for undeclared nested fields.
 func (f ObjectField) UnknownFields(policy UnknownFieldPolicy) ObjectField {
 	f.typ = f.typ.UnknownFields(policy)
+
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
-func (f ObjectField) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f ObjectField) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks ObjectField as a sealed FieldExpr implementation.
 func (f ObjectField) fieldExpr() {}

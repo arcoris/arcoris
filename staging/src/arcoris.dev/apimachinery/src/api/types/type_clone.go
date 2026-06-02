@@ -42,5 +42,6 @@ func cloneType(t Type) Type {
 	t.list = cloneListPayload(t.list)
 	t.mapType = cloneMapPayload(t.mapType)
 	t.ref = cloneRefPayload(t.ref)
+
 	return t
 }

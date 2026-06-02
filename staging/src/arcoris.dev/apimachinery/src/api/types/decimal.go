@@ -37,14 +37,21 @@ type DecimalType struct {
 //	priceType := Decimal()
 //	priceType = priceType.Precision(12)
 //	priceType = priceType.Scale(2)
-func Decimal() DecimalType { return DecimalType{header: newHeader(TypeDecimal)} }
+func Decimal() DecimalType {
+	return DecimalType{header: newHeader(TypeDecimal)}
+}
 
 // Nullable returns a decimal descriptor that admits null values.
-func (t DecimalType) Nullable() DecimalType { t.header = t.header.withNullable(); return t }
+func (t DecimalType) Nullable() DecimalType {
+	t.header = t.header.withNullable()
+
+	return t
+}
 
 // Precision sets the maximum number of significant decimal digits.
 func (t DecimalType) Precision(n int) DecimalType {
 	t.payload.precision = limit[int]{n, true}
+
 	return t
 }
 
@@ -53,12 +60,17 @@ func (t DecimalType) Precision(n int) DecimalType {
 // Scale may be set without Precision. In that form it records fractional
 // shape without bounding total significant digits. When both rules are set,
 // validation requires Scale to be less than or equal to Precision.
-func (t DecimalType) Scale(n int) DecimalType { t.payload.scale = limit[int]{n, true}; return t }
+func (t DecimalType) Scale(n int) DecimalType {
+	t.payload.scale = limit[int]{n, true}
+
+	return t
+}
 
 // Type returns a detached Type descriptor.
 func (t DecimalType) Type() Type {
 	out := typeFromHeader(t.header)
 	out.decimal = cloneDecimalPayload(t.payload)
+
 	return out
 }
 

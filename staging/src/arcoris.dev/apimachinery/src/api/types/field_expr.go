@@ -33,5 +33,6 @@ func fieldFromExpr(expr FieldExpr) FieldDescriptor {
 	if expr == nil {
 		return FieldDescriptor{}
 	}
+
 	return expr.Field()
 }

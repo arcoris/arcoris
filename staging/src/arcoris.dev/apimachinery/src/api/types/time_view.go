@@ -25,5 +25,6 @@ func (t Type) Time() (TimeView, bool) {
 	if t.code != TypeTime {
 		return TimeView{}, false
 	}
+
 	return TimeView{payload: cloneTimePayload(t.timeOfDay)}, true
 }

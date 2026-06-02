@@ -25,6 +25,7 @@ func (t Type) Uint32() (Uint32View, bool) {
 	if t.code != TypeUint32 {
 		return Uint32View{}, false
 	}
+
 	return Uint32View{payload: cloneUint32Payload(t.uint32)}, true
 }
 

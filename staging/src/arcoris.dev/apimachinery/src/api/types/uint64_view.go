@@ -25,6 +25,7 @@ func (t Type) Uint64() (Uint64View, bool) {
 	if t.code != TypeUint64 {
 		return Uint64View{}, false
 	}
+
 	return Uint64View{payload: cloneUint64Payload(t.uint64)}, true
 }
 

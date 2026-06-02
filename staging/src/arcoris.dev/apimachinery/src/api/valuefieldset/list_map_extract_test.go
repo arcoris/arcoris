@@ -165,6 +165,45 @@ func TestExtractListMapRefElementUsesSelectorPaths(t *testing.T) {
 	)
 }
 
+func TestExtractListMapUnresolvedRefReturnsUnresolvedRef(t *testing.T) {
+	path := rootField("conditions")
+	descriptor := types.ListOf(types.Ref("example.Condition")).
+		Map("type").
+		Type()
+	val := value.MustListValue(readyConditionValue("True"))
+
+	_, err := ExtractAt(path, val, descriptor, Options{})
+
+	requireErrorIs(t, err, ErrUnresolvedRef)
+	requireErrorReason(t, err, ErrorReasonUnresolvedRef)
+	requireErrorPath(t, err, "$.conditions[0]")
+}
+
+func TestExtractListMapReferenceCycleReturnsReferenceCycle(t *testing.T) {
+	path := rootField("conditions")
+	resolver := testResolver{
+		"example.Condition": types.Define(
+			"example.Condition",
+			types.Ref("example.Condition"),
+		),
+	}
+	descriptor := types.ListOf(types.Ref("example.Condition")).
+		Map("type").
+		Type()
+	val := value.MustListValue(readyConditionValue("True"))
+
+	_, err := ExtractAt(
+		path,
+		val,
+		descriptor,
+		Options{Resolver: resolver},
+	)
+
+	requireErrorIs(t, err, ErrReferenceCycle)
+	requireErrorReason(t, err, ErrorReasonReferenceCycle)
+	requireErrorPath(t, err, "$.conditions[0]")
+}
+
 func TestExtractListMapRefKeyUsesSelectorLiteral(t *testing.T) {
 	path := rootField("conditions")
 	resolver := testResolver{

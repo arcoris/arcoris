@@ -28,8 +28,10 @@ func validateString(t Type, path string) error {
 	if err := validateLengthLimits(t.string.minLen, t.string.maxLen, path+".len"); err != nil {
 		return err
 	}
+
 	if t.string.hasPattern {
 		compiled, err := regexp.Compile(t.string.pattern)
+
 		if err != nil {
 			return typeErrorf(
 				path+".pattern",
@@ -40,6 +42,7 @@ func validateString(t Type, path string) error {
 				err,
 			)
 		}
+
 		for i, value := range t.string.enum {
 			if !compiled.MatchString(value) {
 				return typeErrorf(
@@ -53,6 +56,7 @@ func validateString(t Type, path string) error {
 			}
 		}
 	}
+
 	if index, value, ok := firstDuplicate(t.string.enum); ok {
 		return typeErrorf(
 			path+".enum",
@@ -63,6 +67,7 @@ func validateString(t Type, path string) error {
 			index,
 		)
 	}
+
 	for i, value := range t.string.enum {
 		if t.string.minLen.set && len(value) < t.string.minLen.value {
 			return typeErrorf(
@@ -75,6 +80,7 @@ func validateString(t Type, path string) error {
 				t.string.minLen.value,
 			)
 		}
+
 		if t.string.maxLen.set && len(value) > t.string.maxLen.value {
 			return typeErrorf(
 				fmt.Sprintf("%s.enum[%d]", path, i),
@@ -87,5 +93,6 @@ func validateString(t Type, path string) error {
 			)
 		}
 	}
+
 	return nil
 }

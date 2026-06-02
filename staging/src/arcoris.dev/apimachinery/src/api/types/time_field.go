@@ -26,22 +26,37 @@ type TimeField struct {
 }
 
 // Required marks the field key as required.
-func (f TimeField) Required() TimeField { f.field = f.field.withRequired(); return f }
+func (f TimeField) Required() TimeField {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f TimeField) Optional() TimeField { f.field = f.field.withOptional(); return f }
+func (f TimeField) Optional() TimeField {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f TimeField) Description(text string) TimeField {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to time values.
-func (f TimeField) Nullable() TimeField { f.typ = f.typ.Nullable(); return f }
+func (f TimeField) Nullable() TimeField {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // Field returns a detached finalized field descriptor.
-func (f TimeField) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f TimeField) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks TimeField as a sealed FieldExpr implementation.
 func (f TimeField) fieldExpr() {}

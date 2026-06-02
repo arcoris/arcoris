@@ -21,37 +21,79 @@ type ListField struct {
 }
 
 // Required marks the field key as required.
-func (f ListField) Required() ListField { f.field = f.field.withRequired(); return f }
+func (f ListField) Required() ListField {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f ListField) Optional() ListField { f.field = f.field.withOptional(); return f }
+func (f ListField) Optional() ListField {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f ListField) Description(text string) ListField {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to list values.
-func (f ListField) Nullable() ListField { f.typ = f.typ.Nullable(); return f }
+func (f ListField) Nullable() ListField {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // MinLen sets the inclusive minimum list length.
-func (f ListField) MinLen(n int) ListField { f.typ = f.typ.MinLen(n); return f }
+func (f ListField) MinLen(n int) ListField {
+	f.typ = f.typ.MinLen(n)
+
+	return f
+}
 
 // MaxLen sets the inclusive maximum list length.
-func (f ListField) MaxLen(n int) ListField { f.typ = f.typ.MaxLen(n); return f }
+func (f ListField) MaxLen(n int) ListField {
+	f.typ = f.typ.MaxLen(n)
+
+	return f
+}
 
 // Atomic records atomic list semantics.
-func (f ListField) Atomic() ListField { f.typ = f.typ.Atomic(); return f }
+func (f ListField) Atomic() ListField {
+	f.typ = f.typ.Atomic()
+
+	return f
+}
+
+// Ordered records index-addressable list semantics.
+func (f ListField) Ordered() ListField {
+	f.typ = f.typ.Ordered()
+
+	return f
+}
 
 // Set records set-like list semantics.
-func (f ListField) Set() ListField { f.typ = f.typ.Set(); return f }
+func (f ListField) Set() ListField {
+	f.typ = f.typ.Set()
+
+	return f
+}
 
 // Map records map-like list semantics keyed by object field names.
-func (f ListField) Map(keys ...string) ListField { f.typ = f.typ.Map(keys...); return f }
+func (f ListField) Map(keys ...string) ListField {
+	f.typ = f.typ.Map(keys...)
+
+	return f
+}
 
 // Field returns a detached finalized field descriptor.
-func (f ListField) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f ListField) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks ListField as a sealed FieldExpr implementation.
 func (f ListField) fieldExpr() {}

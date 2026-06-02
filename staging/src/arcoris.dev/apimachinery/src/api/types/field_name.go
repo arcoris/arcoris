@@ -24,6 +24,7 @@ type FieldName string
 // ParseFieldName validates s and returns it as a FieldName.
 func ParseFieldName(s string) (FieldName, error) {
 	name := FieldName(s)
+
 	if !name.IsValid() {
 		return "", typeErrorf(
 			"field.name",
@@ -33,20 +34,24 @@ func ParseFieldName(s string) (FieldName, error) {
 			s,
 		)
 	}
+
 	return name, nil
 }
 
 // IsValid reports whether n is non-empty ASCII lowerCamelCase.
 func (n FieldName) IsValid() bool {
 	s := string(n)
+
 	if s == "" || !isLower(s[0]) {
 		return false
 	}
+
 	for i := 1; i < len(s); i++ {
 		if !isLower(s[i]) && !isUpper(s[i]) && !isDigit(s[i]) {
 			return false
 		}
 	}
+
 	return true
 }
 

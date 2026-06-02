@@ -33,5 +33,6 @@ func typeFromExpr(expr TypeExpr) Type {
 	if expr == nil {
 		return Type{}
 	}
+
 	return expr.Type()
 }

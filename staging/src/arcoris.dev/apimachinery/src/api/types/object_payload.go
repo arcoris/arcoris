@@ -35,6 +35,7 @@ type objectPayload struct {
 // cloneObjectPayload detaches ordered object fields.
 func cloneObjectPayload(p objectPayload) objectPayload {
 	p.fields = cloneFields(p.fields)
+
 	return p
 }
 

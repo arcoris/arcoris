@@ -19,25 +19,31 @@ import "fmt"
 // hasDuplicates reports whether values contains any repeated comparable value.
 func hasDuplicates[T comparable](values []T) bool {
 	_, _, ok := firstDuplicate(values)
+
 	return ok
 }
 
 // firstDuplicate returns the first repeated enum value and its duplicate index.
 func firstDuplicate[T comparable](values []T) (int, T, bool) {
 	seen := make(map[T]struct{}, len(values))
+
 	for i, value := range values {
 		if _, ok := seen[value]; ok {
 			return i, value, true
 		}
+
 		seen[value] = struct{}{}
 	}
+
 	var zero T
+
 	return 0, zero, false
 }
 
 // enumBelowMin reports whether any enum value is below a configured minimum.
 func enumBelowMin[T ordered](values []T, min limit[T]) bool {
 	_, _, ok := firstEnumBelowMin(values, min)
+
 	return ok
 }
 
@@ -47,18 +53,22 @@ func firstEnumBelowMin[T ordered](values []T, min limit[T]) (int, T, bool) {
 		var zero T
 		return 0, zero, false
 	}
+
 	for i, value := range values {
 		if value < min.value {
 			return i, value, true
 		}
 	}
+
 	var zero T
+
 	return 0, zero, false
 }
 
 // enumAboveMax reports whether any enum value is above a configured maximum.
 func enumAboveMax[T ordered](values []T, max limit[T]) bool {
 	_, _, ok := firstEnumAboveMax(values, max)
+
 	return ok
 }
 
@@ -68,12 +78,15 @@ func firstEnumAboveMax[T ordered](values []T, max limit[T]) (int, T, bool) {
 		var zero T
 		return 0, zero, false
 	}
+
 	for i, value := range values {
 		if value > max.value {
 			return i, value, true
 		}
 	}
+
 	var zero T
+
 	return 0, zero, false
 }
 
@@ -90,6 +103,7 @@ func validateEnumRules[T ordered](path, descriptor string, values []T, min, max 
 			index,
 		)
 	}
+
 	if index, value, ok := firstEnumBelowMin(values, min); ok {
 		return typeErrorf(
 			fmt.Sprintf("%s.enum[%d]", path, index),
@@ -101,6 +115,7 @@ func validateEnumRules[T ordered](path, descriptor string, values []T, min, max 
 			min.value,
 		)
 	}
+
 	if index, value, ok := firstEnumAboveMax(values, max); ok {
 		return typeErrorf(
 			fmt.Sprintf("%s.enum[%d]", path, index),
@@ -112,5 +127,6 @@ func validateEnumRules[T ordered](path, descriptor string, values []T, min, max 
 			max.value,
 		)
 	}
+
 	return nil
 }

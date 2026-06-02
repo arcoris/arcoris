@@ -55,6 +55,7 @@ func validateRangeRule[T ordered](path, descriptor string, min, max limit[T]) er
 			max.value,
 		)
 	}
+
 	return nil
 }
 
@@ -69,6 +70,7 @@ func validateLengthLimits(min, max limit[int], path string) error {
 			min.value,
 		)
 	}
+
 	if max.set && max.value < 0 {
 		return typeErrorf(
 			path+".max",
@@ -78,6 +80,7 @@ func validateLengthLimits(min, max limit[int], path string) error {
 			max.value,
 		)
 	}
+
 	if invalidRange(min, max) {
 		return typeErrorf(
 			path,
@@ -88,5 +91,6 @@ func validateLengthLimits(min, max limit[int], path string) error {
 			max.value,
 		)
 	}
+
 	return nil
 }

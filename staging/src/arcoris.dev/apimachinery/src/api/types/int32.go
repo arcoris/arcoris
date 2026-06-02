@@ -38,18 +38,21 @@ func Int32() Int32Type {
 // Nullable returns an int32 descriptor that admits null values.
 func (t Int32Type) Nullable() Int32Type {
 	t.header = t.header.withNullable()
+
 	return t
 }
 
 // Min sets the inclusive int32 lower bound.
 func (t Int32Type) Min(n int32) Int32Type {
 	t.payload.min = limit[int32]{value: n, set: true}
+
 	return t
 }
 
 // Max sets the inclusive int32 upper bound.
 func (t Int32Type) Max(n int32) Int32Type {
 	t.payload.max = limit[int32]{value: n, set: true}
+
 	return t
 }
 
@@ -61,6 +64,7 @@ func (t Int32Type) Range(min, max int32) Int32Type {
 // Enum stores accepted int32 literals in declaration order.
 func (t Int32Type) Enum(values ...int32) Int32Type {
 	t.payload.enum = cloneSlice(values)
+
 	return t
 }
 
@@ -68,6 +72,7 @@ func (t Int32Type) Enum(values ...int32) Int32Type {
 func (t Int32Type) Type() Type {
 	out := typeFromHeader(t.header)
 	out.int32 = cloneInt32Payload(t.payload)
+
 	return out
 }
 

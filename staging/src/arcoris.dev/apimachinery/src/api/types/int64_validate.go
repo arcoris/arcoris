@@ -19,5 +19,6 @@ func validateInt64(t Type, path string) error {
 	if err := validateRangeRule(path, "int64", t.int64.min, t.int64.max); err != nil {
 		return err
 	}
+
 	return validateEnumRules(path, "int64", t.int64.enum, t.int64.min, t.int64.max)
 }

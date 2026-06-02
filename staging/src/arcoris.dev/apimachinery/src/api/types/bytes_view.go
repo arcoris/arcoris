@@ -25,6 +25,7 @@ func (t Type) Bytes() (BytesView, bool) {
 	if t.code != TypeBytes {
 		return BytesView{}, false
 	}
+
 	return BytesView{payload: cloneBytesPayload(t.bytes)}, true
 }
 

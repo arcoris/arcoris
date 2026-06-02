@@ -44,10 +44,13 @@ func ValidateDefinition(def TypeDefinition, resolver Resolver) error {
 			def.name,
 		)
 	}
+
 	resolving := map[TypeName]bool{def.name: true}
+
 	if err := validateType(def.typ, resolver, "definition.type", resolving); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -66,9 +69,11 @@ func validateType(t Type, resolver Resolver, path string, resolving map[TypeName
 			t.code,
 		)
 	}
+
 	if err := validateInactivePayloads(t, path); err != nil {
 		return err
 	}
+
 	if t.code == TypeNull && t.Nullable() {
 		return typeErrorf(
 			path,
@@ -77,6 +82,7 @@ func validateType(t Type, resolver Resolver, path string, resolving map[TypeName
 			"TypeNull is the null literal and cannot be nullable",
 		)
 	}
+
 	switch t.code {
 	case TypeNull:
 		return nil
@@ -142,8 +148,10 @@ func validateType(t Type, resolver Resolver, path string, resolving map[TypeName
 // detection still catches the active chain.
 func copyResolving(in map[TypeName]bool) map[TypeName]bool {
 	out := make(map[TypeName]bool, len(in)+1)
+
 	for name, resolving := range in {
 		out[name] = resolving
 	}
+
 	return out
 }

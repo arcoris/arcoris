@@ -22,10 +22,10 @@ import (
 
 // validateDecimal checks decimal kind, precision, and scale constraints.
 //
-// api/types does not currently expose decimal bounds or enum rules, and
-// api/value.Decimal intentionally has no ordering API yet. The validator
-// therefore keeps this first pass to exact descriptor rules that are already
-// defined: maximum precision and maximum scale.
+// api/types does not currently expose decimal bounds or enum rules. The
+// validator therefore checks the exact descriptor rules that are currently
+// defined: maximum precision and maximum scale. Future decimal bounds must use
+// value.Decimal.Compare and must not use binary floating-point conversion.
 func (v *validator) validateDecimal(path fieldpath.Path, val value.Value, descriptor types.Type) {
 	if !v.requireKind(path, val, value.KindDecimal, descriptor.Code()) {
 		return
@@ -49,6 +49,7 @@ func (v *validator) validateDecimal(path fieldpath.Path, val value.Value, descri
 			maxPrecision,
 		)
 	}
+
 	if scale, ok := view.Scale(); ok && int(got.Scale()) > scale {
 		v.addf(
 			path,

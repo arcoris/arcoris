@@ -19,5 +19,6 @@ func validateInt8(t Type, path string) error {
 	if err := validateRangeRule(path, "int8", t.int8.min, t.int8.max); err != nil {
 		return err
 	}
+
 	return validateEnumRules(path, "int8", t.int8.enum, t.int8.min, t.int8.max)
 }

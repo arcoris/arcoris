@@ -25,6 +25,7 @@ func (t Type) Map() (MapView, bool) {
 	if t.code != TypeMap {
 		return MapView{}, false
 	}
+
 	return MapView{payload: cloneMapPayload(t.mapType)}, true
 }
 
@@ -38,6 +39,7 @@ func (v MapView) Value() Type {
 	if v.payload.value == nil {
 		return Type{}
 	}
+
 	return cloneType(*v.payload.value)
 }
 

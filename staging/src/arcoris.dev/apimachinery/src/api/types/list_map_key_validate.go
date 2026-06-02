@@ -89,6 +89,7 @@ func validateListMapKeyRef(
 			name,
 		)
 	}
+
 	if resolver == nil {
 		return typeErrorf(
 			path,
@@ -98,6 +99,7 @@ func validateListMapKeyRef(
 			name,
 		)
 	}
+
 	if resolving[name] {
 		return typeErrorf(
 			path,
@@ -109,6 +111,7 @@ func validateListMapKeyRef(
 	}
 
 	def, ok := resolver.ResolveType(name)
+
 	if !ok {
 		return typeErrorf(
 			path,

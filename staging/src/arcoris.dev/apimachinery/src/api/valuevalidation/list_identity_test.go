@@ -159,6 +159,26 @@ func TestValidateListMapNonObjectItemReportsIndexPathKindMismatch(t *testing.T) 
 	)
 }
 
+func TestValidateListMapDescriptorFailureReportsIdentityError(t *testing.T) {
+	shape := types.ListOf(types.Ref("example.Condition")).Map("type").Type()
+	payload := mustList(t, conditionValue(t, "Ready", "True"))
+
+	err := valuevalidation.ValidateAt(
+		fieldpath.RootPath().Field("conditions"),
+		payload,
+		shape,
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrUnresolvedRef,
+		valuevalidation.ErrorReasonUnresolvedRef,
+		"$.conditions[0]",
+	)
+}
+
 func TestValidateListMapSelectorSuccessStillUsesSelectorPath(t *testing.T) {
 	shape := conditionListShape()
 	payload := mustList(t, conditionValue(t, "Ready", ""))

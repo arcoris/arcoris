@@ -40,18 +40,21 @@ func Bytes() BytesType {
 // Nullable returns a bytes descriptor that admits null values.
 func (t BytesType) Nullable() BytesType {
 	t.header = t.header.withNullable()
+
 	return t
 }
 
 // MinLen sets the inclusive minimum byte length.
 func (t BytesType) MinLen(n int) BytesType {
 	t.payload.minLen = limit[int]{value: n, set: true}
+
 	return t
 }
 
 // MaxLen sets the inclusive maximum byte length.
 func (t BytesType) MaxLen(n int) BytesType {
 	t.payload.maxLen = limit[int]{value: n, set: true}
+
 	return t
 }
 
@@ -59,6 +62,7 @@ func (t BytesType) MaxLen(n int) BytesType {
 func (t BytesType) Type() Type {
 	out := typeFromHeader(t.header)
 	out.bytes = cloneBytesPayload(t.payload)
+
 	return out
 }
 

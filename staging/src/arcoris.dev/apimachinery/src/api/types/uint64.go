@@ -38,18 +38,21 @@ func Uint64() Uint64Type {
 // Nullable returns a uint64 descriptor that admits null values.
 func (t Uint64Type) Nullable() Uint64Type {
 	t.header = t.header.withNullable()
+
 	return t
 }
 
 // Min sets the inclusive uint64 lower bound.
 func (t Uint64Type) Min(n uint64) Uint64Type {
 	t.payload.min = limit[uint64]{value: n, set: true}
+
 	return t
 }
 
 // Max sets the inclusive uint64 upper bound.
 func (t Uint64Type) Max(n uint64) Uint64Type {
 	t.payload.max = limit[uint64]{value: n, set: true}
+
 	return t
 }
 
@@ -61,6 +64,7 @@ func (t Uint64Type) Range(min, max uint64) Uint64Type {
 // Enum stores accepted uint64 literals in declaration order.
 func (t Uint64Type) Enum(values ...uint64) Uint64Type {
 	t.payload.enum = cloneSlice(values)
+
 	return t
 }
 
@@ -68,6 +72,7 @@ func (t Uint64Type) Enum(values ...uint64) Uint64Type {
 func (t Uint64Type) Type() Type {
 	out := typeFromHeader(t.header)
 	out.uint64 = cloneUint64Payload(t.payload)
+
 	return out
 }
 

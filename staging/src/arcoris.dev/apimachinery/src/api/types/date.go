@@ -37,6 +37,7 @@ func Date() DateType {
 // Nullable returns a date descriptor that admits null values.
 func (t DateType) Nullable() DateType {
 	t.header = t.header.withNullable()
+
 	return t
 }
 
@@ -44,6 +45,7 @@ func (t DateType) Nullable() DateType {
 func (t DateType) Type() Type {
 	out := typeFromHeader(t.header)
 	out.date = cloneDatePayload(t.payload)
+
 	return out
 }
 

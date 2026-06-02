@@ -77,6 +77,7 @@ func (f FieldDescriptor) IsZero() bool {
 // cloneField detaches the Type payload stored inside f.
 func cloneField(f FieldDescriptor) FieldDescriptor {
 	f.typ = cloneType(f.typ)
+
 	return f
 }
 
@@ -85,9 +86,12 @@ func cloneFields(fields []FieldDescriptor) []FieldDescriptor {
 	if fields == nil {
 		return nil
 	}
+
 	out := make([]FieldDescriptor, len(fields))
+
 	for i := range fields {
 		out[i] = cloneField(fields[i])
 	}
+
 	return out
 }

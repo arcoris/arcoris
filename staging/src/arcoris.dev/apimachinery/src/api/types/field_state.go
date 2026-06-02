@@ -31,22 +31,30 @@ type fieldState struct {
 // withRequired returns a copy marked as required.
 func (s fieldState) withRequired() fieldState {
 	s.presence = PresenceRequired
+
 	return s
 }
 
 // withOptional returns a copy marked as optional.
 func (s fieldState) withOptional() fieldState {
 	s.presence = PresenceOptional
+
 	return s
 }
 
 // withDescription returns a copy with human-facing descriptor text.
 func (s fieldState) withDescription(text string) fieldState {
 	s.description = text
+
 	return s
 }
 
 // fieldWithType finalizes shared state with a detached type descriptor.
 func (s fieldState) fieldWithType(t Type) FieldDescriptor {
-	return FieldDescriptor{name: s.name, presence: s.presence, typ: cloneType(t), description: s.description}
+	return FieldDescriptor{
+		name:        s.name,
+		presence:    s.presence,
+		typ:         cloneType(t),
+		description: s.description,
+	}
 }

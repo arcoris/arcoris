@@ -57,10 +57,10 @@ var (
 	// ErrReferenceCycle classifies recursive or too-deep TypeRef traversal.
 	ErrReferenceCycle = errors.New("type reference cycle")
 
-	// ErrDuplicateListKey classifies repeated associative-list selector identities.
+	// ErrDuplicateListKey classifies repeated ListMap selector identities.
 	ErrDuplicateListKey = errors.New("duplicate list map key")
 
-	// ErrInvalidListKey classifies associative-list identity extraction failures.
+	// ErrInvalidListKey classifies ListMap key extraction failures.
 	ErrInvalidListKey = errors.New("invalid list map key")
 )
 

@@ -27,9 +27,12 @@ func validateObject(t Type, resolver Resolver, path string, resolving map[TypeNa
 			t.object.unknown,
 		)
 	}
+
 	seen := make(map[FieldName]struct{}, len(t.object.fields))
+
 	for _, field := range t.object.fields {
 		fieldPath := fmt.Sprintf("%s.fields[%s]", path, field.name)
+
 		if !field.name.IsValid() {
 			return typeErrorf(
 				fieldPath+".name",
@@ -39,6 +42,7 @@ func validateObject(t Type, resolver Resolver, path string, resolving map[TypeNa
 				field.name,
 			)
 		}
+
 		if _, ok := seen[field.name]; ok {
 			return typeErrorf(
 				fieldPath+".name",
@@ -48,7 +52,9 @@ func validateObject(t Type, resolver Resolver, path string, resolving map[TypeNa
 				field.name,
 			)
 		}
+
 		seen[field.name] = struct{}{}
+
 		if !field.presence.IsValid() {
 			return typeErrorf(
 				fieldPath+".presence",
@@ -59,9 +65,11 @@ func validateObject(t Type, resolver Resolver, path string, resolving map[TypeNa
 				field.presence,
 			)
 		}
+
 		if err := validateType(field.typ, resolver, fieldPath+".type", resolving); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }

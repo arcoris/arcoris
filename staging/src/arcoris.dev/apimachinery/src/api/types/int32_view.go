@@ -25,6 +25,7 @@ func (t Type) Int32() (Int32View, bool) {
 	if t.code != TypeInt32 {
 		return Int32View{}, false
 	}
+
 	return Int32View{payload: cloneInt32Payload(t.int32)}, true
 }
 

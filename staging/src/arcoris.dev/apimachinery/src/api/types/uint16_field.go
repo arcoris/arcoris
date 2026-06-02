@@ -26,34 +26,65 @@ type Uint16Field struct {
 }
 
 // Required marks the field key as required.
-func (f Uint16Field) Required() Uint16Field { f.field = f.field.withRequired(); return f }
+func (f Uint16Field) Required() Uint16Field {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f Uint16Field) Optional() Uint16Field { f.field = f.field.withOptional(); return f }
+func (f Uint16Field) Optional() Uint16Field {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f Uint16Field) Description(text string) Uint16Field {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to uint16 values.
-func (f Uint16Field) Nullable() Uint16Field { f.typ = f.typ.Nullable(); return f }
+func (f Uint16Field) Nullable() Uint16Field {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // Min sets the inclusive uint16 lower bound.
-func (f Uint16Field) Min(n uint16) Uint16Field { f.typ = f.typ.Min(n); return f }
+func (f Uint16Field) Min(n uint16) Uint16Field {
+	f.typ = f.typ.Min(n)
+
+	return f
+}
 
 // Max sets the inclusive uint16 upper bound.
-func (f Uint16Field) Max(n uint16) Uint16Field { f.typ = f.typ.Max(n); return f }
+func (f Uint16Field) Max(n uint16) Uint16Field {
+	f.typ = f.typ.Max(n)
+
+	return f
+}
 
 // Range sets the inclusive uint16 lower and upper bounds.
-func (f Uint16Field) Range(min, max uint16) Uint16Field { f.typ = f.typ.Range(min, max); return f }
+func (f Uint16Field) Range(min, max uint16) Uint16Field {
+	f.typ = f.typ.Range(min, max)
+
+	return f
+}
 
 // Enum stores accepted uint16 literals for the field.
-func (f Uint16Field) Enum(values ...uint16) Uint16Field { f.typ = f.typ.Enum(values...); return f }
+func (f Uint16Field) Enum(values ...uint16) Uint16Field {
+	f.typ = f.typ.Enum(values...)
+
+	return f
+}
 
 // Field returns a detached finalized field descriptor.
-func (f Uint16Field) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f Uint16Field) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks Uint16Field as a sealed FieldExpr implementation.
 func (f Uint16Field) fieldExpr() {}

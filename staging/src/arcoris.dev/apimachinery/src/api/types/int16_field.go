@@ -26,34 +26,65 @@ type Int16Field struct {
 }
 
 // Required marks the field key as required.
-func (f Int16Field) Required() Int16Field { f.field = f.field.withRequired(); return f }
+func (f Int16Field) Required() Int16Field {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f Int16Field) Optional() Int16Field { f.field = f.field.withOptional(); return f }
+func (f Int16Field) Optional() Int16Field {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f Int16Field) Description(text string) Int16Field {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to int16 values.
-func (f Int16Field) Nullable() Int16Field { f.typ = f.typ.Nullable(); return f }
+func (f Int16Field) Nullable() Int16Field {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // Min sets the inclusive int16 lower bound.
-func (f Int16Field) Min(n int16) Int16Field { f.typ = f.typ.Min(n); return f }
+func (f Int16Field) Min(n int16) Int16Field {
+	f.typ = f.typ.Min(n)
+
+	return f
+}
 
 // Max sets the inclusive int16 upper bound.
-func (f Int16Field) Max(n int16) Int16Field { f.typ = f.typ.Max(n); return f }
+func (f Int16Field) Max(n int16) Int16Field {
+	f.typ = f.typ.Max(n)
+
+	return f
+}
 
 // Range sets the inclusive int16 lower and upper bounds.
-func (f Int16Field) Range(min, max int16) Int16Field { f.typ = f.typ.Range(min, max); return f }
+func (f Int16Field) Range(min, max int16) Int16Field {
+	f.typ = f.typ.Range(min, max)
+
+	return f
+}
 
 // Enum stores accepted int16 literals for the field.
-func (f Int16Field) Enum(values ...int16) Int16Field { f.typ = f.typ.Enum(values...); return f }
+func (f Int16Field) Enum(values ...int16) Int16Field {
+	f.typ = f.typ.Enum(values...)
+
+	return f
+}
 
 // Field returns a detached finalized field descriptor.
-func (f Int16Field) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f Int16Field) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks Int16Field as a sealed FieldExpr implementation.
 func (f Int16Field) fieldExpr() {}

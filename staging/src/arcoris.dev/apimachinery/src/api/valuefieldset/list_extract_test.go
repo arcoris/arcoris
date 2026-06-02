@@ -27,21 +27,53 @@ func TestExtractOrderedListUsesIndexPaths(t *testing.T) {
 		value.StringValue("a"),
 		value.StringValue("b"),
 	)
-	listView, _ := val.List()
-	element := types.String().Type()
-	run := newExtractor(Options{})
 
-	got, err := run.extractIndexedList(path, listView, element, 0)
+	got, err := ExtractAt(
+		path,
+		val,
+		types.ListOf(types.String()).Ordered().Type(),
+		Options{},
+	)
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path.Index(0), path.Index(1))
+}
+
+func TestExtractOrderedListObjectItemsUseIndexedChildPaths(t *testing.T) {
+	path := rootField("containers")
+	item := types.Object(
+		types.Field("name").String().Required(),
+		types.Field("image").String().Required(),
+	)
+	descriptor := types.ListOf(item).Ordered().Type()
+	val := value.MustListValue(
+		value.MustObjectValue(
+			value.ObjectMember("name", value.StringValue("api")),
+			value.ObjectMember("image", value.StringValue("api:v1")),
+		),
+	)
+
+	got, err := ExtractAt(path, val, descriptor, Options{})
+	requireNoError(t, err)
+
+	requireFieldSet(
+		t,
+		got,
+		path.Index(0).Field("name"),
+		path.Index(0).Field("image"),
+	)
 }
 
 func TestExtractOrderedListEmptyIncludesListPath(t *testing.T) {
 	path := rootField("args")
 	val := value.MustListValue()
 
-	got, err := ExtractAt(path, val, types.ListOf(types.String()).Type(), Options{})
+	got, err := ExtractAt(
+		path,
+		val,
+		types.ListOf(types.String()).Ordered().Type(),
+		Options{},
+	)
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path)

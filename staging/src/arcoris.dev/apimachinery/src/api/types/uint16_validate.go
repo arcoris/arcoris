@@ -19,5 +19,6 @@ func validateUint16(t Type, path string) error {
 	if err := validateRangeRule(path, "uint16", t.uint16.min, t.uint16.max); err != nil {
 		return err
 	}
+
 	return validateEnumRules(path, "uint16", t.uint16.enum, t.uint16.min, t.uint16.max)
 }

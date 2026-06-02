@@ -32,6 +32,7 @@ func validateDecimal(t Type, path string) error {
 			t.decimal.precision.value,
 		)
 	}
+
 	if t.decimal.scale.set && t.decimal.scale.value < 0 {
 		return typeErrorf(
 			path+".scale",
@@ -41,7 +42,10 @@ func validateDecimal(t Type, path string) error {
 			t.decimal.scale.value,
 		)
 	}
-	if t.decimal.precision.set && t.decimal.scale.set && t.decimal.scale.value > t.decimal.precision.value {
+
+	if t.decimal.precision.set &&
+		t.decimal.scale.set &&
+		t.decimal.scale.value > t.decimal.precision.value {
 		return typeErrorf(
 			path+".scale",
 			ErrInvalidType,
@@ -51,5 +55,6 @@ func validateDecimal(t Type, path string) error {
 			t.decimal.precision.value,
 		)
 	}
+
 	return nil
 }

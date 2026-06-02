@@ -25,6 +25,7 @@ func (t Type) List() (ListView, bool) {
 	if t.code != TypeList {
 		return ListView{}, false
 	}
+
 	return ListView{payload: cloneListPayload(t.list)}, true
 }
 
@@ -33,6 +34,7 @@ func (v ListView) Element() Type {
 	if v.payload.elem == nil {
 		return Type{}
 	}
+
 	return cloneType(*v.payload.elem)
 }
 

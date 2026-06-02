@@ -29,48 +29,56 @@ type Float32Field struct {
 // Required marks the field key as required.
 func (f Float32Field) Required() Float32Field {
 	f.field = f.field.withRequired()
+
 	return f
 }
 
 // Optional marks the field key as optional.
 func (f Float32Field) Optional() Float32Field {
 	f.field = f.field.withOptional()
+
 	return f
 }
 
 // Description attaches human-facing descriptor text.
 func (f Float32Field) Description(text string) Float32Field {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to float32 values.
 func (f Float32Field) Nullable() Float32Field {
 	f.typ = f.typ.Nullable()
+
 	return f
 }
 
 // Min sets the inclusive float32 lower bound.
 func (f Float32Field) Min(n float32) Float32Field {
 	f.typ = f.typ.Min(n)
+
 	return f
 }
 
 // Max sets the inclusive float32 upper bound.
 func (f Float32Field) Max(n float32) Float32Field {
 	f.typ = f.typ.Max(n)
+
 	return f
 }
 
 // Range sets the inclusive float32 lower and upper bounds.
 func (f Float32Field) Range(min, max float32) Float32Field {
 	f.typ = f.typ.Range(min, max)
+
 	return f
 }
 
 // Enum stores accepted float32 literals for the field.
 func (f Float32Field) Enum(values ...float32) Float32Field {
 	f.typ = f.typ.Enum(values...)
+
 	return f
 }
 

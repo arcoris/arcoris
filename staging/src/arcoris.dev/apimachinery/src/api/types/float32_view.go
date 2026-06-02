@@ -25,6 +25,7 @@ func (t Type) Float32() (Float32View, bool) {
 	if t.code != TypeFloat32 {
 		return Float32View{}, false
 	}
+
 	return Float32View{payload: cloneFloat32Payload(t.float32)}, true
 }
 

@@ -43,6 +43,7 @@ func Int64() Int64Type {
 // Nullable returns an int64 descriptor that admits null values.
 func (t Int64Type) Nullable() Int64Type {
 	t.header = t.header.withNullable()
+
 	return t
 }
 
@@ -52,6 +53,7 @@ func (t Int64Type) Nullable() Int64Type {
 // values against it; that belongs to future value-validation layers.
 func (t Int64Type) Min(n int64) Int64Type {
 	t.payload.min = limit[int64]{n, true}
+
 	return t
 }
 
@@ -61,6 +63,7 @@ func (t Int64Type) Min(n int64) Int64Type {
 // distinguished from an unset maximum without allocating a pointer.
 func (t Int64Type) Max(n int64) Int64Type {
 	t.payload.max = limit[int64]{n, true}
+
 	return t
 }
 
@@ -75,6 +78,7 @@ func (t Int64Type) Range(min, max int64) Int64Type {
 // array cannot rewrite the descriptor returned by Type.
 func (t Int64Type) Enum(values ...int64) Int64Type {
 	t.payload.enum = cloneSlice(values)
+
 	return t
 }
 
@@ -82,6 +86,7 @@ func (t Int64Type) Enum(values ...int64) Int64Type {
 func (t Int64Type) Type() Type {
 	out := typeFromHeader(t.header)
 	out.int64 = cloneInt64Payload(t.payload)
+
 	return out
 }
 

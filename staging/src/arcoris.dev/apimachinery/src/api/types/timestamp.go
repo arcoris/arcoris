@@ -38,6 +38,7 @@ func Timestamp() TimestampType {
 // Nullable returns a timestamp descriptor that admits null values.
 func (t TimestampType) Nullable() TimestampType {
 	t.header = t.header.withNullable()
+
 	return t
 }
 
@@ -45,6 +46,7 @@ func (t TimestampType) Nullable() TimestampType {
 func (t TimestampType) Type() Type {
 	out := typeFromHeader(t.header)
 	out.timestamp = cloneTimestampPayload(t.payload)
+
 	return out
 }
 

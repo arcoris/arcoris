@@ -103,14 +103,15 @@ func (e *extractor) extractUnknownObjectMember(
 	case types.UnknownReject:
 		return fieldpath.Set{}, errorfAt(
 			path,
-			ErrInvalidDescriptor,
-			ErrorReasonInvalidDescriptor,
-			"field %q is not declared by the object descriptor",
+			ErrUnknownField,
+			ErrorReasonUnknownField,
+			"field %q is rejected by the object descriptor",
 			name,
 		)
-	case types.UnknownPrune,
-		types.UnknownPreserve:
+	case types.UnknownPreserve:
 		return setAt(path)
+	case types.UnknownPrune:
+		return fieldpath.EmptySet(), nil
 	default:
 		return fieldpath.Set{}, errorAt(
 			path,

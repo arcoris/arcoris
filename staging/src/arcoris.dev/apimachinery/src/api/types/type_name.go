@@ -31,6 +31,7 @@ type TypeName string
 // ParseTypeName validates s and returns it as a TypeName.
 func ParseTypeName(s string) (TypeName, error) {
 	name := TypeName(s)
+
 	if !name.IsValid() {
 		return "", typeErrorf(
 			"type.name",
@@ -40,43 +41,54 @@ func ParseTypeName(s string) (TypeName, error) {
 			s,
 		)
 	}
+
 	return name, nil
 }
 
 // IsValid reports whether n satisfies the dot-separated type-name grammar.
 func (n TypeName) IsValid() bool {
 	s := string(n)
+
 	if s == "" || strings.Contains(s, "..") {
 		return false
 	}
+
 	segments := strings.Split(s, ".")
+
 	if len(segments) < 2 {
 		return false
 	}
+
 	for i, segment := range segments {
 		if segment == "" || !isASCII(segment) {
 			return false
 		}
+
 		if i == len(segments)-1 {
 			if !isUpper(segment[0]) {
 				return false
 			}
+
 			for j := 1; j < len(segment); j++ {
 				if !isLower(segment[j]) && !isUpper(segment[j]) && !isDigit(segment[j]) {
 					return false
 				}
 			}
+
 			continue
 		}
+
 		if !isLower(segment[0]) {
 			return false
 		}
+
 		for j := 1; j < len(segment); j++ {
 			if !isLower(segment[j]) && !isDigit(segment[j]) && segment[j] != '-' {
 				return false
 			}
 		}
 	}
+
 	return true
 }
 
@@ -92,14 +104,21 @@ func isASCII(s string) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
 // isLower reports whether b is an ASCII lower-case letter.
-func isLower(b byte) bool { return lexical.IsASCIILower(b) }
+func isLower(b byte) bool {
+	return lexical.IsASCIILower(b)
+}
 
 // isUpper reports whether b is an ASCII upper-case letter.
-func isUpper(b byte) bool { return lexical.IsASCIIUpper(b) }
+func isUpper(b byte) bool {
+	return lexical.IsASCIIUpper(b)
+}
 
 // isDigit reports whether b is an ASCII digit.
-func isDigit(b byte) bool { return lexical.IsASCIIDigit(b) }
+func isDigit(b byte) bool {
+	return lexical.IsASCIIDigit(b)
+}

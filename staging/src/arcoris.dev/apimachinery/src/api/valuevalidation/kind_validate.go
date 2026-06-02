@@ -50,5 +50,6 @@ func (v *validator) requireKind(
 	}
 
 	v.addKindMismatch(path, val.Kind(), expected, code)
+
 	return false
 }

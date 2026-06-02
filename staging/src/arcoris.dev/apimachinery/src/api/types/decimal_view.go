@@ -25,6 +25,7 @@ func (t Type) Decimal() (DecimalView, bool) {
 	if t.code != TypeDecimal {
 		return DecimalView{}, false
 	}
+
 	return DecimalView{payload: cloneDecimalPayload(t.decimal)}, true
 }
 

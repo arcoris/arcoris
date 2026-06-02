@@ -36,6 +36,7 @@ func Bool() BoolType {
 // Nullable returns a boolean descriptor that admits null values.
 func (t BoolType) Nullable() BoolType {
 	t.header = t.header.withNullable()
+
 	return t
 }
 

@@ -26,28 +26,51 @@ type BytesField struct {
 }
 
 // Required marks the field key as required.
-func (f BytesField) Required() BytesField { f.field = f.field.withRequired(); return f }
+func (f BytesField) Required() BytesField {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f BytesField) Optional() BytesField { f.field = f.field.withOptional(); return f }
+func (f BytesField) Optional() BytesField {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f BytesField) Description(text string) BytesField {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to byte-sequence values.
-func (f BytesField) Nullable() BytesField { f.typ = f.typ.Nullable(); return f }
+func (f BytesField) Nullable() BytesField {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // MinLen sets the inclusive minimum byte length.
-func (f BytesField) MinLen(n int) BytesField { f.typ = f.typ.MinLen(n); return f }
+func (f BytesField) MinLen(n int) BytesField {
+	f.typ = f.typ.MinLen(n)
+
+	return f
+}
 
 // MaxLen sets the inclusive maximum byte length.
-func (f BytesField) MaxLen(n int) BytesField { f.typ = f.typ.MaxLen(n); return f }
+func (f BytesField) MaxLen(n int) BytesField {
+	f.typ = f.typ.MaxLen(n)
+
+	return f
+}
 
 // Field returns a detached finalized field descriptor.
-func (f BytesField) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f BytesField) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks BytesField as a sealed FieldExpr implementation.
 func (f BytesField) fieldExpr() {}

@@ -37,6 +37,19 @@ func TestListValidateMapKeys(t *testing.T) {
 	requireErrorIs(t, ValidateType(optional, nil), ErrInvalidField)
 }
 
+func TestValidateListOrderedAcceptsNoMapKeys(t *testing.T) {
+	typ := ListOf(String()).Ordered().Type()
+
+	requireNoError(t, ValidateType(typ, nil))
+}
+
+func TestValidateListOrderedRejectsUnexpectedMapKeysIfConstructible(t *testing.T) {
+	typ := ListOf(String()).Ordered().Type()
+	typ.list.mapKeys = []FieldName{"name"}
+
+	requireErrorIs(t, ValidateType(typ, nil), ErrInvalidField)
+}
+
 func TestListValidateRefMapKeys(t *testing.T) {
 	resolver := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
 		switch name {

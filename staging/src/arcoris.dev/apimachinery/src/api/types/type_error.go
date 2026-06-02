@@ -48,7 +48,8 @@ const (
 	TypeErrorReasonInvalidTypeCode TypeErrorReason = "invalid_type_code"
 	// TypeErrorReasonInactivePayload reports a populated payload slot that does not match Type.Code.
 	TypeErrorReasonInactivePayload TypeErrorReason = "inactive_payload"
-	// TypeErrorReasonInvalidNullability reports a nullability flag that a descriptor kind cannot carry.
+	// TypeErrorReasonInvalidNullability reports a nullability flag that a
+	// descriptor kind cannot carry.
 	TypeErrorReasonInvalidNullability TypeErrorReason = "invalid_nullability"
 
 	// TypeErrorReasonInvalidRange reports an inverted minimum/maximum rule.
@@ -96,7 +97,8 @@ const (
 	TypeErrorReasonUnknownReference TypeErrorReason = "unknown_reference"
 	// TypeErrorReasonReferenceCycle reports a recursive TypeDefinition graph.
 	TypeErrorReasonReferenceCycle TypeErrorReason = "reference_cycle"
-	// TypeErrorReasonInvalidResolvedDefinition reports a TypeRef target that resolves but is structurally invalid.
+	// TypeErrorReasonInvalidResolvedDefinition reports a TypeRef target that
+	// resolves but is structurally invalid.
 	TypeErrorReasonInvalidResolvedDefinition TypeErrorReason = "invalid_resolved_definition"
 
 	// TypeErrorReasonMissingListMapKey reports ListMap semantics without map keys.
@@ -107,7 +109,8 @@ const (
 	TypeErrorReasonListMapKeyNotFound TypeErrorReason = "list_map_key_not_found"
 	// TypeErrorReasonListMapKeyOptional reports a ListMap key field that is not required.
 	TypeErrorReasonListMapKeyOptional TypeErrorReason = "list_map_key_optional"
-	// TypeErrorReasonInvalidListMapKeyType reports a ListMap key field that cannot produce stable selector identity.
+	// TypeErrorReasonInvalidListMapKeyType reports a ListMap key field that
+	// cannot produce stable selector identity.
 	TypeErrorReasonInvalidListMapKeyType TypeErrorReason = "invalid_list_map_key_type"
 	// TypeErrorReasonListMapElementNotObject reports ListMap semantics over a non-object element.
 	TypeErrorReasonListMapElementNotObject TypeErrorReason = "list_map_element_not_object"
@@ -130,6 +133,7 @@ func (e *TypeError) Error() string {
 	if e == nil {
 		return "<nil>"
 	}
+
 	return e.Record.Format("types")
 }
 
@@ -138,6 +142,7 @@ func (e *TypeError) Unwrap() error {
 	if e == nil {
 		return nil
 	}
+
 	return e.Record.Unwrap()
 }
 
@@ -151,9 +156,11 @@ func typeError(path string, err error) error {
 // typeErrorf creates a path-aware validation error with structured detail.
 func typeErrorf(path string, err error, reason TypeErrorReason, format string, args ...any) error {
 	detail := ""
+
 	if format != "" {
 		detail = fmt.Sprintf(format, args...)
 	}
+
 	return &TypeError{
 		Record: diagnostic.NewRecord(path, err, reason, detail),
 	}

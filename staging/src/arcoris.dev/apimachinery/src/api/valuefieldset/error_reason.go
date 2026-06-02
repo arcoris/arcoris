@@ -29,20 +29,24 @@ const (
 	// the descriptor type code.
 	ErrorReasonKindMismatch ErrorReason = "kind_mismatch"
 
+	// ErrorReasonUnknownField reports an actual object member rejected by the
+	// descriptor's unknown-field policy.
+	ErrorReasonUnknownField ErrorReason = "unknown_field"
+
 	// ErrorReasonUnresolvedRef reports a TypeRef that cannot be resolved.
 	ErrorReasonUnresolvedRef ErrorReason = "unresolved_ref"
 
 	// ErrorReasonReferenceCycle reports recursive TypeRef traversal.
 	ErrorReasonReferenceCycle ErrorReason = "reference_cycle"
 
-	// ErrorReasonMissingListKey reports an associative-list item missing an
+	// ErrorReasonMissingListKey reports an ListMap item missing an
 	// identity key field.
 	ErrorReasonMissingListKey ErrorReason = "missing_list_key"
 
-	// ErrorReasonInvalidListKey reports an associative-list identity key value
+	// ErrorReasonInvalidListKey reports an ListMap key value
 	// that cannot become a fieldpath selector literal.
 	ErrorReasonInvalidListKey ErrorReason = "invalid_list_key"
 
-	// ErrorReasonDuplicateListKey reports repeated associative-list selectors.
+	// ErrorReasonDuplicateListKey reports repeated ListMap selectors.
 	ErrorReasonDuplicateListKey ErrorReason = "duplicate_list_key"
 )

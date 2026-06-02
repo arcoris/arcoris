@@ -23,5 +23,6 @@ func cloneSlice[T any](values []T) []T {
 	if len(values) == 0 {
 		return nil
 	}
+
 	return append([]T(nil), values...)
 }

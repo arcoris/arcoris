@@ -37,6 +37,7 @@ func Time() TimeType {
 // Nullable returns a time descriptor that admits null values.
 func (t TimeType) Nullable() TimeType {
 	t.header = t.header.withNullable()
+
 	return t
 }
 
@@ -44,6 +45,7 @@ func (t TimeType) Nullable() TimeType {
 func (t TimeType) Type() Type {
 	out := typeFromHeader(t.header)
 	out.timeOfDay = cloneTimePayload(t.payload)
+
 	return out
 }
 

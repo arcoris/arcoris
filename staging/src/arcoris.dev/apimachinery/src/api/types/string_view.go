@@ -25,6 +25,7 @@ func (t Type) String() (StringView, bool) {
 	if t.code != TypeString {
 		return StringView{}, false
 	}
+
 	return StringView{payload: cloneStringPayload(t.string)}, true
 }
 

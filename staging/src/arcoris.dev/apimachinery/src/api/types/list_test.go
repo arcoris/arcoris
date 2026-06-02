@@ -23,11 +23,45 @@ func TestListOfRequiresValidElement(t *testing.T) {
 	requireErrorIs(t, ValidateType(typ, nil), ErrInvalidType)
 }
 
+func TestListOfDefaultsToAtomic(t *testing.T) {
+	typ := ListOf(String()).Type()
+	view, ok := typ.List()
+
+	requireEqual(t, ok, true)
+	requireEqual(t, view.Semantics(), ListAtomic)
+	requireEqual(t, len(view.MapKeys()), 0)
+}
+
+func TestListTypeOrdered(t *testing.T) {
+	typ := ListOf(String()).Ordered().Type()
+	view, ok := typ.List()
+
+	requireEqual(t, ok, true)
+	requireEqual(t, view.Semantics(), ListOrdered)
+	requireEqual(t, len(view.MapKeys()), 0)
+	requireNoError(t, ValidateType(typ, nil))
+}
+
+func TestListOrderedClearsMapKeysAfterMap(t *testing.T) {
+	typ := ListOf(Object(Field("name").String().Required())).
+		Map("name").
+		Ordered().
+		Type()
+	view, ok := typ.List()
+
+	requireEqual(t, ok, true)
+	requireEqual(t, view.Semantics(), ListOrdered)
+	requireEqual(t, len(view.MapKeys()), 0)
+	requireNoError(t, ValidateType(typ, nil))
+}
+
 func TestListLengthAndSemantics(t *testing.T) {
 	atomic := ListOf(String()).MinLen(1).MaxLen(3).Atomic().Type()
+	ordered := ListOf(String()).Ordered().Type()
 	set := ListOf(String()).Set().Type()
 
 	requireNoError(t, ValidateType(atomic, nil))
+	requireNoError(t, ValidateType(ordered, nil))
 	requireNoError(t, ValidateType(set, nil))
 
 	view, ok := set.List()

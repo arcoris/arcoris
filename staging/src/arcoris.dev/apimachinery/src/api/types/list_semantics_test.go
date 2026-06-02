@@ -18,7 +18,28 @@ import "testing"
 
 func TestListSemanticsValidity(t *testing.T) {
 	requireEqual(t, ListAtomic.IsValid(), true)
+	requireEqual(t, ListOrdered.IsValid(), true)
 	requireEqual(t, ListSet.IsValid(), true)
 	requireEqual(t, ListMap.IsValid(), true)
 	requireEqual(t, ListSemantics(99).IsValid(), false)
+}
+
+func TestListSemanticsString(t *testing.T) {
+	tests := []struct {
+		name      string
+		semantics ListSemantics
+		want      string
+	}{
+		{name: "atomic", semantics: ListAtomic, want: "atomic"},
+		{name: "ordered", semantics: ListOrdered, want: "ordered"},
+		{name: "set", semantics: ListSet, want: "set"},
+		{name: "map", semantics: ListMap, want: "map"},
+		{name: "unknown", semantics: ListSemantics(99), want: "unknown"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			requireEqual(t, tt.semantics.String(), tt.want)
+		})
+	}
 }

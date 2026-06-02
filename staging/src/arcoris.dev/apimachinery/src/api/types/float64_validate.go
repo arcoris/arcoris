@@ -30,6 +30,7 @@ func validateFloat64(t Type, path string) error {
 			float64Diagnostic(t.float64.min.value),
 		)
 	}
+
 	if t.float64.max.set && invalidFloat64(t.float64.max.value) {
 		return typeErrorf(
 			path+".max",
@@ -39,9 +40,11 @@ func validateFloat64(t Type, path string) error {
 			float64Diagnostic(t.float64.max.value),
 		)
 	}
+
 	if err := validateRangeRule(path, "float64", t.float64.min, t.float64.max); err != nil {
 		return err
 	}
+
 	for i, value := range t.float64.enum {
 		if invalidFloat64(value) {
 			return typeErrorf(
@@ -53,6 +56,7 @@ func validateFloat64(t Type, path string) error {
 			)
 		}
 	}
+
 	// NaN and infinities are rejected before duplicate checks. Descriptor enum
 	// identity then follows Go numeric equality, not float bit-pattern identity.
 	return validateEnumRules(path, "float64", t.float64.enum, t.float64.min, t.float64.max)

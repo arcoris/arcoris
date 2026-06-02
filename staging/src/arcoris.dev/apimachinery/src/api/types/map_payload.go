@@ -45,6 +45,7 @@ func cloneMapPayload(p mapPayload) mapPayload {
 		value := cloneType(*p.value)
 		p.value = &value
 	}
+
 	return p
 }
 

@@ -53,10 +53,15 @@ func cloneListPayload(p listPayload) listPayload {
 		p.elem = &elem
 	}
 	p.mapKeys = cloneSlice(p.mapKeys)
+
 	return p
 }
 
 // emptyListPayload reports whether p has no configured TypeList state.
 func emptyListPayload(p listPayload) bool {
-	return p.elem == nil && !p.minLen.set && !p.maxLen.set && p.semantics == ListAtomic && len(p.mapKeys) == 0
+	return p.elem == nil &&
+		!p.minLen.set &&
+		!p.maxLen.set &&
+		p.semantics == ListAtomic &&
+		len(p.mapKeys) == 0
 }

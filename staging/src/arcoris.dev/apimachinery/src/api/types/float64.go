@@ -42,18 +42,21 @@ func Float64() Float64Type {
 // Nullable returns a float64 descriptor that admits null values.
 func (t Float64Type) Nullable() Float64Type {
 	t.header = t.header.withNullable()
+
 	return t
 }
 
 // Min sets the inclusive float64 lower bound.
 func (t Float64Type) Min(n float64) Float64Type {
 	t.payload.min = limit[float64]{value: n, set: true}
+
 	return t
 }
 
 // Max sets the inclusive float64 upper bound.
 func (t Float64Type) Max(n float64) Float64Type {
 	t.payload.max = limit[float64]{value: n, set: true}
+
 	return t
 }
 
@@ -65,6 +68,7 @@ func (t Float64Type) Range(min, max float64) Float64Type {
 // Enum stores accepted float64 literals in declaration order.
 func (t Float64Type) Enum(values ...float64) Float64Type {
 	t.payload.enum = cloneSlice(values)
+
 	return t
 }
 
@@ -72,6 +76,7 @@ func (t Float64Type) Enum(values ...float64) Float64Type {
 func (t Float64Type) Type() Type {
 	out := typeFromHeader(t.header)
 	out.float64 = cloneFloat64Payload(t.payload)
+
 	return out
 }
 

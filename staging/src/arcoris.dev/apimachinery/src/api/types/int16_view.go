@@ -25,6 +25,7 @@ func (t Type) Int16() (Int16View, bool) {
 	if t.code != TypeInt16 {
 		return Int16View{}, false
 	}
+
 	return Int16View{payload: cloneInt16Payload(t.int16)}, true
 }
 

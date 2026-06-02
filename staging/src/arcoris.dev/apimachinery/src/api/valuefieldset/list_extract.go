@@ -60,6 +60,8 @@ func (e *extractor) extractList(
 	case types.ListAtomic,
 		types.ListSet:
 		return setAt(path)
+	case types.ListOrdered:
+		return e.extractIndexedList(path, valueView, element, depth)
 	case types.ListMap:
 		return e.extractListMap(path, valueView, element, listView.MapKeys(), depth)
 	default:
@@ -72,11 +74,12 @@ func (e *extractor) extractList(
 	}
 }
 
-// extractIndexedList extracts ordinary ordered-list item paths by physical index.
+// extractIndexedList extracts ordered-list item paths by physical index.
 //
-// The current descriptor model has no public ordered-list semantic distinct
-// from atomic/set/map. This helper is kept isolated for the future descriptor
-// mode that can safely use index paths as field ownership units.
+// Ordered list semantics explicitly make item position part of semantic
+// addressing. Atomic and set-like lists intentionally do not use this helper
+// because their future ownership/apply behavior treats the complete list as one
+// field until a stable non-index identity model exists.
 func (e *extractor) extractIndexedList(
 	path fieldpath.Path,
 	valueView value.ListView,
@@ -98,7 +101,7 @@ func (e *extractor) extractIndexedList(
 	return out, nil
 }
 
-// extractListMap extracts associative-list items through stable selector paths.
+// extractListMap extracts ListMap items through stable selector paths.
 func (e *extractor) extractListMap(
 	path fieldpath.Path,
 	valueView value.ListView,
@@ -122,7 +125,7 @@ func (e *extractor) extractListMap(
 		item, _ := valueView.At(index)
 		indexPath := path.Index(index)
 
-		selector, err := e.listMapSelector(indexPath, item, element, keys, depth+1)
+		selector, err := e.listMapSelector(indexPath, item, element, keys)
 		if err != nil {
 			return fieldpath.Set{}, err
 		}

@@ -25,5 +25,6 @@ func (t Type) Duration() (DurationView, bool) {
 	if t.code != TypeDuration {
 		return DurationView{}, false
 	}
+
 	return DurationView{payload: cloneDurationPayload(t.duration)}, true
 }

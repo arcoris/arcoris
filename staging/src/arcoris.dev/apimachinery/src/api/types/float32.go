@@ -43,18 +43,21 @@ func Float32() Float32Type {
 // Nullable returns a float32 descriptor that admits null values.
 func (t Float32Type) Nullable() Float32Type {
 	t.header = t.header.withNullable()
+
 	return t
 }
 
 // Min sets the inclusive float32 lower bound.
 func (t Float32Type) Min(n float32) Float32Type {
 	t.payload.min = limit[float32]{value: n, set: true}
+
 	return t
 }
 
 // Max sets the inclusive float32 upper bound.
 func (t Float32Type) Max(n float32) Float32Type {
 	t.payload.max = limit[float32]{value: n, set: true}
+
 	return t
 }
 
@@ -66,6 +69,7 @@ func (t Float32Type) Range(min, max float32) Float32Type {
 // Enum stores accepted float32 literals in declaration order.
 func (t Float32Type) Enum(values ...float32) Float32Type {
 	t.payload.enum = cloneSlice(values)
+
 	return t
 }
 
@@ -73,6 +77,7 @@ func (t Float32Type) Enum(values ...float32) Float32Type {
 func (t Float32Type) Type() Type {
 	out := typeFromHeader(t.header)
 	out.float32 = cloneFloat32Payload(t.payload)
+
 	return out
 }
 

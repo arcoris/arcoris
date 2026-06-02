@@ -26,34 +26,65 @@ type Uint8Field struct {
 }
 
 // Required marks the field key as required.
-func (f Uint8Field) Required() Uint8Field { f.field = f.field.withRequired(); return f }
+func (f Uint8Field) Required() Uint8Field {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f Uint8Field) Optional() Uint8Field { f.field = f.field.withOptional(); return f }
+func (f Uint8Field) Optional() Uint8Field {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f Uint8Field) Description(text string) Uint8Field {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to uint8 values.
-func (f Uint8Field) Nullable() Uint8Field { f.typ = f.typ.Nullable(); return f }
+func (f Uint8Field) Nullable() Uint8Field {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // Min sets the inclusive uint8 lower bound.
-func (f Uint8Field) Min(n uint8) Uint8Field { f.typ = f.typ.Min(n); return f }
+func (f Uint8Field) Min(n uint8) Uint8Field {
+	f.typ = f.typ.Min(n)
+
+	return f
+}
 
 // Max sets the inclusive uint8 upper bound.
-func (f Uint8Field) Max(n uint8) Uint8Field { f.typ = f.typ.Max(n); return f }
+func (f Uint8Field) Max(n uint8) Uint8Field {
+	f.typ = f.typ.Max(n)
+
+	return f
+}
 
 // Range sets the inclusive uint8 lower and upper bounds.
-func (f Uint8Field) Range(min, max uint8) Uint8Field { f.typ = f.typ.Range(min, max); return f }
+func (f Uint8Field) Range(min, max uint8) Uint8Field {
+	f.typ = f.typ.Range(min, max)
+
+	return f
+}
 
 // Enum stores accepted uint8 literals for the field.
-func (f Uint8Field) Enum(values ...uint8) Uint8Field { f.typ = f.typ.Enum(values...); return f }
+func (f Uint8Field) Enum(values ...uint8) Uint8Field {
+	f.typ = f.typ.Enum(values...)
+
+	return f
+}
 
 // Field returns a detached finalized field descriptor.
-func (f Uint8Field) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f Uint8Field) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks Uint8Field as a sealed FieldExpr implementation.
 func (f Uint8Field) fieldExpr() {}

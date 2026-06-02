@@ -34,6 +34,7 @@ func newHeader(code TypeCode) typeHeader {
 // withNullable returns a copy of h that admits null values.
 func (h typeHeader) withNullable() typeHeader {
 	h.flags |= typeFlagNullable
+
 	return h
 }
 

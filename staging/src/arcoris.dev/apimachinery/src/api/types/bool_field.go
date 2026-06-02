@@ -26,22 +26,37 @@ type BoolField struct {
 }
 
 // Required marks the field key as required.
-func (f BoolField) Required() BoolField { f.field = f.field.withRequired(); return f }
+func (f BoolField) Required() BoolField {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f BoolField) Optional() BoolField { f.field = f.field.withOptional(); return f }
+func (f BoolField) Optional() BoolField {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f BoolField) Description(text string) BoolField {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to boolean values.
-func (f BoolField) Nullable() BoolField { f.typ = f.typ.Nullable(); return f }
+func (f BoolField) Nullable() BoolField {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // Field returns a detached finalized field descriptor.
-func (f BoolField) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f BoolField) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks BoolField as a sealed FieldExpr implementation.
 func (f BoolField) fieldExpr() {}

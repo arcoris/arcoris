@@ -25,6 +25,7 @@ func (t Type) Float64() (Float64View, bool) {
 	if t.code != TypeFloat64 {
 		return Float64View{}, false
 	}
+
 	return Float64View{payload: cloneFloat64Payload(t.float64)}, true
 }
 

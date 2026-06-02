@@ -27,6 +27,7 @@ type uint8Payload struct {
 // cloneUint8Payload detaches uint8 enum values.
 func cloneUint8Payload(p uint8Payload) uint8Payload {
 	p.enum = cloneSlice(p.enum)
+
 	return p
 }
 

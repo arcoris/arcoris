@@ -43,15 +43,18 @@ type ObjectType struct {
 //	).UnknownFields(UnknownReject)
 func Object(fields ...FieldExpr) ObjectType {
 	payload := objectPayload{unknown: UnknownReject, fields: make([]FieldDescriptor, 0, len(fields))}
+
 	for _, expr := range fields {
 		payload.fields = append(payload.fields, fieldFromExpr(expr))
 	}
+
 	return ObjectType{header: newHeader(TypeObject), payload: payload}
 }
 
 // Nullable returns an object descriptor that admits null values.
 func (t ObjectType) Nullable() ObjectType {
 	t.header = t.header.withNullable()
+
 	return t
 }
 
@@ -62,6 +65,7 @@ func (t ObjectType) Nullable() ObjectType {
 // interpret the policy when they operate on actual API objects.
 func (t ObjectType) UnknownFields(policy UnknownFieldPolicy) ObjectType {
 	t.payload.unknown = policy
+
 	return t
 }
 
@@ -69,6 +73,7 @@ func (t ObjectType) UnknownFields(policy UnknownFieldPolicy) ObjectType {
 func (t ObjectType) Type() Type {
 	out := typeFromHeader(t.header)
 	out.object = cloneObjectPayload(t.payload)
+
 	return out
 }
 

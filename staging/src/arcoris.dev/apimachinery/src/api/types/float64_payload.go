@@ -27,6 +27,7 @@ type float64Payload struct {
 // cloneFloat64Payload detaches float64 enum values.
 func cloneFloat64Payload(p float64Payload) float64Payload {
 	p.enum = cloneSlice(p.enum)
+
 	return p
 }
 

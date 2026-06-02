@@ -44,12 +44,17 @@ func Ref[N ~string](name N) RefType {
 }
 
 // Nullable returns a reference descriptor that admits null values.
-func (t RefType) Nullable() RefType { t.header = t.header.withNullable(); return t }
+func (t RefType) Nullable() RefType {
+	t.header = t.header.withNullable()
+
+	return t
+}
 
 // Type returns a detached Type descriptor.
 func (t RefType) Type() Type {
 	out := typeFromHeader(t.header)
 	out.ref = cloneRefPayload(t.payload)
+
 	return out
 }
 

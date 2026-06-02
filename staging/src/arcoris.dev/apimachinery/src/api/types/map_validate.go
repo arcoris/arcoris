@@ -25,6 +25,7 @@ func validateMap(t Type, resolver Resolver, path string, resolving map[TypeName]
 			t.mapType.key,
 		)
 	}
+
 	if t.mapType.value == nil {
 		return typeErrorf(
 			path+".value",
@@ -33,8 +34,10 @@ func validateMap(t Type, resolver Resolver, path string, resolving map[TypeName]
 			"map descriptor must have a value type",
 		)
 	}
+
 	if err := validateType(*t.mapType.value, resolver, path+".value", resolving); err != nil {
 		return err
 	}
+
 	return validateLengthLimits(t.mapType.minLen, t.mapType.maxLen, path+".len")
 }

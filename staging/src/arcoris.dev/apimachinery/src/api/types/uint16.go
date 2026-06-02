@@ -38,18 +38,21 @@ func Uint16() Uint16Type {
 // Nullable returns a uint16 descriptor that admits null values.
 func (t Uint16Type) Nullable() Uint16Type {
 	t.header = t.header.withNullable()
+
 	return t
 }
 
 // Min sets the inclusive uint16 lower bound.
 func (t Uint16Type) Min(n uint16) Uint16Type {
 	t.payload.min = limit[uint16]{value: n, set: true}
+
 	return t
 }
 
 // Max sets the inclusive uint16 upper bound.
 func (t Uint16Type) Max(n uint16) Uint16Type {
 	t.payload.max = limit[uint16]{value: n, set: true}
+
 	return t
 }
 
@@ -61,6 +64,7 @@ func (t Uint16Type) Range(min, max uint16) Uint16Type {
 // Enum stores accepted uint16 literals in declaration order.
 func (t Uint16Type) Enum(values ...uint16) Uint16Type {
 	t.payload.enum = cloneSlice(values)
+
 	return t
 }
 
@@ -68,6 +72,7 @@ func (t Uint16Type) Enum(values ...uint16) Uint16Type {
 func (t Uint16Type) Type() Type {
 	out := typeFromHeader(t.header)
 	out.uint16 = cloneUint16Payload(t.payload)
+
 	return out
 }
 

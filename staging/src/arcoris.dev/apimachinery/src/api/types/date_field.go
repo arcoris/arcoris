@@ -26,22 +26,37 @@ type DateField struct {
 }
 
 // Required marks the field key as required.
-func (f DateField) Required() DateField { f.field = f.field.withRequired(); return f }
+func (f DateField) Required() DateField {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f DateField) Optional() DateField { f.field = f.field.withOptional(); return f }
+func (f DateField) Optional() DateField {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f DateField) Description(text string) DateField {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to date values.
-func (f DateField) Nullable() DateField { f.typ = f.typ.Nullable(); return f }
+func (f DateField) Nullable() DateField {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // Field returns a detached finalized field descriptor.
-func (f DateField) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f DateField) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks DateField as a sealed FieldExpr implementation.
 func (f DateField) fieldExpr() {}

@@ -33,6 +33,12 @@ func TestDecimalCompareNegativeValues(t *testing.T) {
 	requireEqual(t, MustDecimal("1").Compare(MustDecimal("-1")), 1)
 }
 
+func TestDecimalCompareSmallFractions(t *testing.T) {
+	requireEqual(t, MustDecimal("0.000000001").Compare(MustDecimal("0.000000002")), -1)
+	requireEqual(t, MustDecimal("0.000000010").Compare(MustDecimal("0.00000001")), 0)
+	requireEqual(t, MustDecimal("-0.000000002").Compare(MustDecimal("-0.000000001")), -1)
+}
+
 func TestDecimalCompareLargeCoefficient(t *testing.T) {
 	left := MustDecimal("123456789012345678901234567890.01")
 	right := MustDecimal("123456789012345678901234567890.02")

@@ -26,19 +26,30 @@ type NullField struct {
 }
 
 // Required marks the field key as required.
-func (f NullField) Required() NullField { f.field = f.field.withRequired(); return f }
+func (f NullField) Required() NullField {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f NullField) Optional() NullField { f.field = f.field.withOptional(); return f }
+func (f NullField) Optional() NullField {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f NullField) Description(text string) NullField {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
-func (f NullField) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f NullField) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks NullField as a sealed FieldExpr implementation.
 func (f NullField) fieldExpr() {}

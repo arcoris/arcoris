@@ -41,18 +41,21 @@ func String() StringType {
 // Nullable returns a string descriptor that admits null values.
 func (t StringType) Nullable() StringType {
 	t.header = t.header.withNullable()
+
 	return t
 }
 
 // MinLen sets the inclusive minimum string length.
 func (t StringType) MinLen(n int) StringType {
 	t.payload.minLen = limit[int]{value: n, set: true}
+
 	return t
 }
 
 // MaxLen sets the inclusive maximum string length.
 func (t StringType) MaxLen(n int) StringType {
 	t.payload.maxLen = limit[int]{value: n, set: true}
+
 	return t
 }
 
@@ -60,12 +63,14 @@ func (t StringType) MaxLen(n int) StringType {
 func (t StringType) Pattern(pattern string) StringType {
 	t.payload.pattern = pattern
 	t.payload.hasPattern = true
+
 	return t
 }
 
 // Enum stores accepted string literals in declaration order.
 func (t StringType) Enum(values ...string) StringType {
 	t.payload.enum = cloneSlice(values)
+
 	return t
 }
 
@@ -73,6 +78,7 @@ func (t StringType) Enum(values ...string) StringType {
 func (t StringType) Type() Type {
 	out := typeFromHeader(t.header)
 	out.string = cloneStringPayload(t.payload)
+
 	return out
 }
 

@@ -23,6 +23,8 @@ type ListSemantics uint8
 const (
 	// ListAtomic treats the complete list as one replaceable value.
 	ListAtomic ListSemantics = iota
+	// ListOrdered treats physical item indexes as part of the payload contract.
+	ListOrdered
 	// ListSet treats list elements as set members in future merge layers.
 	ListSet
 	// ListMap treats object elements as keyed by one or more required fields.
@@ -31,5 +33,21 @@ const (
 
 // IsValid reports whether s is a known list semantic.
 func (s ListSemantics) IsValid() bool {
-	return s == ListAtomic || s == ListSet || s == ListMap
+	return s == ListAtomic || s == ListOrdered || s == ListSet || s == ListMap
+}
+
+// String returns a stable diagnostic name for s.
+func (s ListSemantics) String() string {
+	switch s {
+	case ListAtomic:
+		return "atomic"
+	case ListOrdered:
+		return "ordered"
+	case ListSet:
+		return "set"
+	case ListMap:
+		return "map"
+	default:
+		return "unknown"
+	}
 }

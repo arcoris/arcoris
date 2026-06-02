@@ -23,10 +23,14 @@
 // Validation errors use api/fieldpath semantic paths for payload locations.
 // Object descriptor fields are addressed with field elements, dynamic map
 // entries with key elements, ordered list items with index elements, and
-// associative-list items with selector elements.
+// ListMap items with selector elements.
 //
 // Callers are expected to validate and register descriptors before using them
 // for value validation. This package does not run full descriptor validation on
 // every call. It performs only local defensive checks needed to avoid panics and
 // to report invalid descriptor use encountered during traversal.
+//
+// List diagnostics intentionally use physical indexes for atomic, set-like, and
+// ordered lists because item-level error locations are useful even when a later
+// field-set/apply layer treats the complete list as one semantic field.
 package valuevalidation

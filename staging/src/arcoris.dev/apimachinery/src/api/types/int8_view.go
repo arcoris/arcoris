@@ -25,6 +25,7 @@ func (t Type) Int8() (Int8View, bool) {
 	if t.code != TypeInt8 {
 		return Int8View{}, false
 	}
+
 	return Int8View{payload: cloneInt8Payload(t.int8)}, true
 }
 

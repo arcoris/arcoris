@@ -16,6 +16,7 @@ package valuevalidation
 
 import (
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/listmapkey"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -67,7 +68,9 @@ func (v *validator) validateList(
 	}
 
 	switch listView.Semantics() {
-	case types.ListAtomic, types.ListSet:
+	case types.ListAtomic,
+		types.ListOrdered,
+		types.ListSet:
 		v.validateIndexedList(path, valueView, element, depth)
 	case types.ListMap:
 		v.validateListMap(path, valueView, element, listView.MapKeys(), depth)
@@ -76,7 +79,12 @@ func (v *validator) validateList(
 	}
 }
 
-// validateIndexedList checks ordinary and set-like lists by physical index.
+// validateIndexedList checks list item payloads by physical index.
+//
+// Validation uses indexes for atomic, ordered, and set-like lists because item
+// locations produce better diagnostics. Field-set extraction intentionally
+// differs: ownership semantics may still treat atomic and set-like lists as one
+// complete field.
 func (v *validator) validateIndexedList(
 	path fieldpath.Path,
 	valueView value.ListView,
@@ -89,7 +97,7 @@ func (v *validator) validateIndexedList(
 	}
 }
 
-// validateListMap checks associative lists by stable selector identity.
+// validateListMap checks ListMap items by stable selector identity.
 func (v *validator) validateListMap(
 	path fieldpath.Path,
 	valueView value.ListView,
@@ -107,15 +115,26 @@ func (v *validator) validateListMap(
 		item, _ := valueView.At(index)
 		indexPath := path.Index(index)
 
-		selector, ok := v.tryListMapSelector(indexPath, item, element, keys)
-		if !ok {
-			v.validate(indexPath, item, element, depth+1)
+		itemSelector, err := listmapkey.Selector(
+			indexPath,
+			item,
+			element,
+			keys,
+			listmapkey.Options{
+				Resolver: v.resolver,
+				MaxDepth: v.maxDepth,
+			},
+		)
+		if err != nil {
+			if !v.reportListMapKeyFailure(err) {
+				v.validate(indexPath, item, element, depth+1)
+			}
 			continue
 		}
 
-		selectorPath := path.Select(selector)
-		selectorKey := selector.String()
-		if previous, exists := seen[selectorKey]; exists {
+		selectorPath := path.Select(itemSelector)
+		selectorIdentity := itemSelector.String()
+		if previous, exists := seen[selectorIdentity]; exists {
 			v.addf(
 				selectorPath,
 				ErrDuplicateListKey,
@@ -125,7 +144,7 @@ func (v *validator) validateListMap(
 				indexPath,
 			)
 		} else {
-			seen[selectorKey] = indexPath
+			seen[selectorIdentity] = indexPath
 		}
 
 		v.validate(selectorPath, item, element, depth+1)

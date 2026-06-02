@@ -25,5 +25,6 @@ func (t Type) Timestamp() (TimestampView, bool) {
 	if t.code != TypeTimestamp {
 		return TimestampView{}, false
 	}
+
 	return TimestampView{payload: cloneTimestampPayload(t.timestamp)}, true
 }

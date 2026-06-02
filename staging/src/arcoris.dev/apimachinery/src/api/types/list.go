@@ -16,10 +16,10 @@ package types
 
 // ListType builds list descriptors.
 //
-// ListType describes a homogeneous ordered sequence. The descriptor records
-// element type, length constraints, and future merge/apply intent, but it does
-// not implement scheduling, queues, patch/apply, field ownership, or concrete
-// value validation.
+// ListType describes a homogeneous sequence. The descriptor records element
+// type, length constraints, and future merge/apply intent, but it does not
+// implement scheduling, queues, patch/apply, field ownership, or concrete value
+// validation.
 type ListType struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
 	header typeHeader
@@ -40,6 +40,7 @@ type ListType struct {
 //	).Map("type")
 func ListOf(elem TypeExpr) ListType {
 	elemType := typeFromExpr(elem)
+
 	return ListType{
 		header: newHeader(TypeList),
 		payload: listPayload{
@@ -50,13 +51,25 @@ func ListOf(elem TypeExpr) ListType {
 }
 
 // Nullable returns a list descriptor that admits null values.
-func (t ListType) Nullable() ListType { t.header = t.header.withNullable(); return t }
+func (t ListType) Nullable() ListType {
+	t.header = t.header.withNullable()
+
+	return t
+}
 
 // MinLen sets the inclusive minimum list length.
-func (t ListType) MinLen(n int) ListType { t.payload.minLen = limit[int]{n, true}; return t }
+func (t ListType) MinLen(n int) ListType {
+	t.payload.minLen = limit[int]{n, true}
+
+	return t
+}
 
 // MaxLen sets the inclusive maximum list length.
-func (t ListType) MaxLen(n int) ListType { t.payload.maxLen = limit[int]{n, true}; return t }
+func (t ListType) MaxLen(n int) ListType {
+	t.payload.maxLen = limit[int]{n, true}
+
+	return t
+}
 
 // Atomic records atomic list semantics.
 //
@@ -65,17 +78,34 @@ func (t ListType) MaxLen(n int) ListType { t.payload.maxLen = limit[int]{n, true
 func (t ListType) Atomic() ListType {
 	t.payload.semantics = ListAtomic
 	t.payload.mapKeys = nil
+
+	return t
+}
+
+// Ordered records index-addressable list semantics.
+//
+// Ordered semantics mean future field-set, diff, and apply layers may treat
+// physical item indexes as semantic addresses. Use ordered lists only when item
+// position is part of the API contract. Atomic remains the conservative default
+// because it treats the complete list as one field.
+func (t ListType) Ordered() ListType {
+	t.payload.semantics = ListOrdered
+	t.payload.mapKeys = nil
+
 	return t
 }
 
 // Set records set-like list semantics.
 //
 // Set semantics record that future merge/apply layers may treat list elements
-// as identity-less set members. This package does not compare elements or
-// enforce set uniqueness for concrete values.
+// as identity-less set members. Until a stable value-based identity model
+// exists, field-set extraction treats the complete list as one field. This
+// package does not compare elements or enforce set uniqueness for concrete
+// values.
 func (t ListType) Set() ListType {
 	t.payload.semantics = ListSet
 	t.payload.mapKeys = nil
+
 	return t
 }
 
@@ -85,13 +115,16 @@ func (t ListType) Set() ListType {
 // element is an object or resolvable object reference, that each key field is
 // required, and that each key field resolves to a non-nullable stable scalar
 // identity type suitable for future selector-based validation, diff, and apply
-// layers. The builder only records the declared key order.
+// layers. Field-set extraction can then address items by selector rather than
+// unstable physical index. The builder only records the declared key order.
 func (t ListType) Map(keys ...string) ListType {
 	t.payload.semantics = ListMap
 	t.payload.mapKeys = make([]FieldName, len(keys))
+
 	for i, key := range keys {
 		t.payload.mapKeys[i] = FieldName(key)
 	}
+
 	return t
 }
 
@@ -99,6 +132,7 @@ func (t ListType) Map(keys ...string) ListType {
 func (t ListType) Type() Type {
 	out := typeFromHeader(t.header)
 	out.list = cloneListPayload(t.payload)
+
 	return out
 }
 

@@ -26,34 +26,65 @@ type Uint64Field struct {
 }
 
 // Required marks the field key as required.
-func (f Uint64Field) Required() Uint64Field { f.field = f.field.withRequired(); return f }
+func (f Uint64Field) Required() Uint64Field {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f Uint64Field) Optional() Uint64Field { f.field = f.field.withOptional(); return f }
+func (f Uint64Field) Optional() Uint64Field {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f Uint64Field) Description(text string) Uint64Field {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to uint64 values.
-func (f Uint64Field) Nullable() Uint64Field { f.typ = f.typ.Nullable(); return f }
+func (f Uint64Field) Nullable() Uint64Field {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // Min sets the inclusive uint64 lower bound.
-func (f Uint64Field) Min(n uint64) Uint64Field { f.typ = f.typ.Min(n); return f }
+func (f Uint64Field) Min(n uint64) Uint64Field {
+	f.typ = f.typ.Min(n)
+
+	return f
+}
 
 // Max sets the inclusive uint64 upper bound.
-func (f Uint64Field) Max(n uint64) Uint64Field { f.typ = f.typ.Max(n); return f }
+func (f Uint64Field) Max(n uint64) Uint64Field {
+	f.typ = f.typ.Max(n)
+
+	return f
+}
 
 // Range sets the inclusive uint64 lower and upper bounds.
-func (f Uint64Field) Range(min, max uint64) Uint64Field { f.typ = f.typ.Range(min, max); return f }
+func (f Uint64Field) Range(min, max uint64) Uint64Field {
+	f.typ = f.typ.Range(min, max)
+
+	return f
+}
 
 // Enum stores accepted uint64 literals for the field.
-func (f Uint64Field) Enum(values ...uint64) Uint64Field { f.typ = f.typ.Enum(values...); return f }
+func (f Uint64Field) Enum(values ...uint64) Uint64Field {
+	f.typ = f.typ.Enum(values...)
+
+	return f
+}
 
 // Field returns a detached finalized field descriptor.
-func (f Uint64Field) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f Uint64Field) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks Uint64Field as a sealed FieldExpr implementation.
 func (f Uint64Field) fieldExpr() {}

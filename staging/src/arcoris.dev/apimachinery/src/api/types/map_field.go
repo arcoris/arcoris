@@ -21,28 +21,51 @@ type MapField struct {
 }
 
 // Required marks the field key as required.
-func (f MapField) Required() MapField { f.field = f.field.withRequired(); return f }
+func (f MapField) Required() MapField {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f MapField) Optional() MapField { f.field = f.field.withOptional(); return f }
+func (f MapField) Optional() MapField {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f MapField) Description(text string) MapField {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to map values.
-func (f MapField) Nullable() MapField { f.typ = f.typ.Nullable(); return f }
+func (f MapField) Nullable() MapField {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // MinLen sets the inclusive minimum number of map entries.
-func (f MapField) MinLen(n int) MapField { f.typ = f.typ.MinLen(n); return f }
+func (f MapField) MinLen(n int) MapField {
+	f.typ = f.typ.MinLen(n)
+
+	return f
+}
 
 // MaxLen sets the inclusive maximum number of map entries.
-func (f MapField) MaxLen(n int) MapField { f.typ = f.typ.MaxLen(n); return f }
+func (f MapField) MaxLen(n int) MapField {
+	f.typ = f.typ.MaxLen(n)
+
+	return f
+}
 
 // Field returns a detached finalized field descriptor.
-func (f MapField) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f MapField) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks MapField as a sealed FieldExpr implementation.
 func (f MapField) fieldExpr() {}

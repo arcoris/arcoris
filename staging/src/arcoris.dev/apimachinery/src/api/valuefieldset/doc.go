@@ -26,5 +26,14 @@
 //
 // Extracted paths use api/fieldpath semantics: object descriptor fields use
 // field elements, map entries use key elements, ordered list items use index
-// elements, and associative list items use selector elements.
+// elements, and ListMap items use selector elements.
+//
+// List extraction follows merge/ownership intent. Atomic and set-like lists
+// produce the list path as one semantic field. Ordered lists produce index
+// paths because item position is part of the descriptor contract. List-map
+// values produce selector paths based on their declared identity fields.
+//
+// Unknown preserved object fields are included as opaque leaves because no
+// descriptor exists for nested traversal. Unknown pruned fields are omitted, and
+// rejected unknown fields fail extraction.
 package valuefieldset

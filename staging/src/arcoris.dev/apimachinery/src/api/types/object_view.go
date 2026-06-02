@@ -25,6 +25,7 @@ func (t Type) Object() (ObjectView, bool) {
 	if t.code != TypeObject {
 		return ObjectView{}, false
 	}
+
 	return ObjectView{payload: cloneObjectPayload(t.object)}, true
 }
 

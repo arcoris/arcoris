@@ -27,28 +27,51 @@ type DecimalField struct {
 }
 
 // Required marks the field key as required.
-func (f DecimalField) Required() DecimalField { f.field = f.field.withRequired(); return f }
+func (f DecimalField) Required() DecimalField {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f DecimalField) Optional() DecimalField { f.field = f.field.withOptional(); return f }
+func (f DecimalField) Optional() DecimalField {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f DecimalField) Description(text string) DecimalField {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to decimal values.
-func (f DecimalField) Nullable() DecimalField { f.typ = f.typ.Nullable(); return f }
+func (f DecimalField) Nullable() DecimalField {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // Precision sets the maximum number of significant decimal digits.
-func (f DecimalField) Precision(n int) DecimalField { f.typ = f.typ.Precision(n); return f }
+func (f DecimalField) Precision(n int) DecimalField {
+	f.typ = f.typ.Precision(n)
+
+	return f
+}
 
 // Scale sets the number of fractional decimal digits.
-func (f DecimalField) Scale(n int) DecimalField { f.typ = f.typ.Scale(n); return f }
+func (f DecimalField) Scale(n int) DecimalField {
+	f.typ = f.typ.Scale(n)
+
+	return f
+}
 
 // Field returns a detached finalized field descriptor.
-func (f DecimalField) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f DecimalField) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks DecimalField as a sealed FieldExpr implementation.
 func (f DecimalField) fieldExpr() {}

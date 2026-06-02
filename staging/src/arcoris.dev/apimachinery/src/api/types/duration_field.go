@@ -27,22 +27,37 @@ type DurationField struct {
 }
 
 // Required marks the field key as required.
-func (f DurationField) Required() DurationField { f.field = f.field.withRequired(); return f }
+func (f DurationField) Required() DurationField {
+	f.field = f.field.withRequired()
+
+	return f
+}
 
 // Optional marks the field key as optional.
-func (f DurationField) Optional() DurationField { f.field = f.field.withOptional(); return f }
+func (f DurationField) Optional() DurationField {
+	f.field = f.field.withOptional()
+
+	return f
+}
 
 // Description attaches human-facing descriptor text.
 func (f DurationField) Description(text string) DurationField {
 	f.field = f.field.withDescription(text)
+
 	return f
 }
 
 // Nullable admits null in addition to duration values.
-func (f DurationField) Nullable() DurationField { f.typ = f.typ.Nullable(); return f }
+func (f DurationField) Nullable() DurationField {
+	f.typ = f.typ.Nullable()
+
+	return f
+}
 
 // Field returns a detached finalized field descriptor.
-func (f DurationField) Field() FieldDescriptor { return f.field.fieldWithType(f.typ.Type()) }
+func (f DurationField) Field() FieldDescriptor {
+	return f.field.fieldWithType(f.typ.Type())
+}
 
 // fieldExpr marks DurationField as a sealed FieldExpr implementation.
 func (f DurationField) fieldExpr() {}
