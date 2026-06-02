@@ -24,7 +24,7 @@ import (
 	"arcoris.dev/apimachinery/api/valuevalidation"
 )
 
-func TestErrorListUnwrap(t *testing.T) {
+func TestErrorListUnwrapStillSupportsErrorsIs(t *testing.T) {
 	err := valuevalidation.Validate(
 		mustObject(t),
 		types.Object(
@@ -50,11 +50,114 @@ func TestErrorListUnwrap(t *testing.T) {
 	}
 }
 
+func TestErrorListErrorsReturnsDetachedCopy(t *testing.T) {
+	err := valuevalidation.Validate(
+		mustObject(t),
+		types.Object(types.Field("name").String().Required()).Type(),
+		valuevalidation.Options{},
+	)
+
+	var list valuevalidation.ErrorList
+	if !errors.As(err, &list) {
+		t.Fatalf("errors.As(ErrorList) = false")
+	}
+
+	copied := list.Errors()
+	copied[0] = nil
+
+	if list.First() == nil {
+		t.Fatalf("mutating Errors() result changed original list")
+	}
+}
+
+func TestErrorListFirst(t *testing.T) {
+	var empty valuevalidation.ErrorList
+	if got := empty.First(); got != nil {
+		t.Fatalf("empty First() = %v, want nil", got)
+	}
+
+	err := valuevalidation.Validate(
+		mustObject(t),
+		types.Object(types.Field("name").String().Required()).Type(),
+		valuevalidation.Options{},
+	)
+
+	var list valuevalidation.ErrorList
+	if !errors.As(err, &list) {
+		t.Fatalf("errors.As(ErrorList) = false")
+	}
+	if got := list.First(); got == nil {
+		t.Fatalf("First() = nil")
+	}
+}
+
+func TestErrorListFormatAll(t *testing.T) {
+	err := valuevalidation.Validate(
+		mustObject(t),
+		types.Object(
+			types.Field("name").String().Required(),
+			types.Field("replicas").Int32().Required(),
+		).Type(),
+		valuevalidation.Options{},
+	)
+
+	var list valuevalidation.ErrorList
+	if !errors.As(err, &list) {
+		t.Fatalf("errors.As(ErrorList) = false")
+	}
+
+	formatted := list.FormatAll()
+	if !strings.Contains(formatted, "$.name") {
+		t.Fatalf("FormatAll() = %q, want $.name", formatted)
+	}
+	if !strings.Contains(formatted, "$.replicas") {
+		t.Fatalf("FormatAll() = %q, want $.replicas", formatted)
+	}
+	if !strings.Contains(formatted, "\n") {
+		t.Fatalf("FormatAll() = %q, want multiple lines", formatted)
+	}
+}
+
+func TestErrorListFormatAllEmpty(t *testing.T) {
+	var list valuevalidation.ErrorList
+
+	if got := list.FormatAll(); got != "" {
+		t.Fatalf("FormatAll() = %q, want empty string", got)
+	}
+}
+
+func TestErrorListErrorRemainsCompact(t *testing.T) {
+	err := valuevalidation.Validate(
+		mustObject(t),
+		types.Object(
+			types.Field("name").String().Required(),
+			types.Field("replicas").Int32().Required(),
+		).Type(),
+		valuevalidation.Options{},
+	)
+
+	var list valuevalidation.ErrorList
+	if !errors.As(err, &list) {
+		t.Fatalf("errors.As(ErrorList) = false")
+	}
+
+	summary := list.Error()
+	if !strings.Contains(summary, "2 errors; first:") {
+		t.Fatalf("Error() = %q, want compact summary", summary)
+	}
+	if strings.Contains(summary, "$.replicas") {
+		t.Fatalf("Error() = %q, want only first diagnostic in compact summary", summary)
+	}
+}
+
 func TestErrorListEmptySummary(t *testing.T) {
 	var list valuevalidation.ErrorList
 
 	if got, want := list.Error(), "valuevalidation: no errors"; got != want {
 		t.Fatalf("Error() = %q, want %q", got, want)
+	}
+	if got := list.Errors(); got != nil {
+		t.Fatalf("Errors() = %#v, want nil", got)
 	}
 	if got := list.Unwrap(); got != nil {
 		t.Fatalf("Unwrap() = %#v, want nil", got)

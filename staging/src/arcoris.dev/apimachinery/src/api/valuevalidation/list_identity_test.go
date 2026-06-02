@@ -41,11 +41,11 @@ func TestValidateListMapAcceptsValidConditions(t *testing.T) {
 	)
 }
 
-func TestValidateListMapMissingKeyUsesIndexPath(t *testing.T) {
+func TestValidateListMapMissingKeyStillValidatesItemAtIndexPath(t *testing.T) {
 	shape := conditionListShape()
 	payload := mustList(
 		t,
-		mustObject(t, value.ObjectMember("status", value.StringValue("True"))),
+		mustObject(t, value.ObjectMember("status", value.StringValue(""))),
 	)
 
 	err := valuevalidation.ValidateAt(
@@ -58,20 +58,27 @@ func TestValidateListMapMissingKeyUsesIndexPath(t *testing.T) {
 	requireError(
 		t,
 		err,
-		valuevalidation.ErrInvalidListKey,
-		valuevalidation.ErrorReasonMissingListKey,
+		valuevalidation.ErrMissingField,
+		valuevalidation.ErrorReasonMissingField,
 		"$.conditions[0].type",
+	)
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrLengthOutOfRange,
+		valuevalidation.ErrorReasonTooShort,
+		"$.conditions[0].status",
 	)
 }
 
-func TestValidateListMapInvalidKeyUsesIndexPath(t *testing.T) {
+func TestValidateListMapWrongKeyKindStillValidatesItemAtIndexPath(t *testing.T) {
 	shape := conditionListShape()
 	payload := mustList(
 		t,
 		mustObject(
 			t,
-			value.ObjectMember("type", value.NullValue()),
-			value.ObjectMember("status", value.StringValue("True")),
+			value.ObjectMember("type", value.BoolValue(true)),
+			value.ObjectMember("status", value.StringValue("")),
 		),
 	)
 
@@ -85,13 +92,74 @@ func TestValidateListMapInvalidKeyUsesIndexPath(t *testing.T) {
 	requireError(
 		t,
 		err,
-		valuevalidation.ErrInvalidListKey,
-		valuevalidation.ErrorReasonInvalidListKey,
+		valuevalidation.ErrKindMismatch,
+		valuevalidation.ErrorReasonKindMismatch,
 		"$.conditions[0].type",
+	)
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrLengthOutOfRange,
+		valuevalidation.ErrorReasonTooShort,
+		"$.conditions[0].status",
 	)
 }
 
-func TestValidateListMapNestedErrorUsesSelectorPath(t *testing.T) {
+func TestValidateListMapNullKeyStillValidatesItemAtIndexPath(t *testing.T) {
+	shape := conditionListShape()
+	payload := mustList(
+		t,
+		mustObject(
+			t,
+			value.ObjectMember("type", value.NullValue()),
+			value.ObjectMember("status", value.StringValue("")),
+		),
+	)
+
+	err := valuevalidation.ValidateAt(
+		fieldpath.RootPath().Field("conditions"),
+		payload,
+		shape,
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrNullNotAllowed,
+		valuevalidation.ErrorReasonNullNotAllowed,
+		"$.conditions[0].type",
+	)
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrLengthOutOfRange,
+		valuevalidation.ErrorReasonTooShort,
+		"$.conditions[0].status",
+	)
+}
+
+func TestValidateListMapNonObjectItemReportsIndexPathKindMismatch(t *testing.T) {
+	shape := conditionListShape()
+	payload := mustList(t, value.StringValue("not-object"))
+
+	err := valuevalidation.ValidateAt(
+		fieldpath.RootPath().Field("conditions"),
+		payload,
+		shape,
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrKindMismatch,
+		valuevalidation.ErrorReasonKindMismatch,
+		"$.conditions[0]",
+	)
+}
+
+func TestValidateListMapSelectorSuccessStillUsesSelectorPath(t *testing.T) {
 	shape := conditionListShape()
 	payload := mustList(t, conditionValue(t, "Ready", ""))
 

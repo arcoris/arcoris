@@ -69,6 +69,54 @@ func TestValidateRejectsInvalidZeroValue(t *testing.T) {
 	)
 }
 
+func TestValidateRejectsInvalidZeroDescriptorDefensively(t *testing.T) {
+	err := valuevalidation.Validate(
+		value.StringValue("x"),
+		types.Type{},
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrInvalidDescriptor,
+		valuevalidation.ErrorReasonInvalidDescriptor,
+		"$",
+	)
+}
+
+func TestValidateRejectsMapWithInvalidValueDescriptorDefensively(t *testing.T) {
+	err := valuevalidation.Validate(
+		mustObject(t, value.ObjectMember("name", value.StringValue("main"))),
+		types.MapOf(nil).Type(),
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrInvalidDescriptor,
+		valuevalidation.ErrorReasonInvalidDescriptor,
+		"$",
+	)
+}
+
+func TestValidateRejectsListWithInvalidElementDescriptorDefensively(t *testing.T) {
+	err := valuevalidation.Validate(
+		mustList(t, value.StringValue("main")),
+		types.ListOf(nil).Type(),
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrInvalidDescriptor,
+		valuevalidation.ErrorReasonInvalidDescriptor,
+		"$",
+	)
+}
+
 func TestValidateRejectsKindMismatch(t *testing.T) {
 	err := valuevalidation.Validate(
 		value.StringValue("x"),
@@ -141,6 +189,54 @@ func TestValidateHonorsMaxErrors(t *testing.T) {
 	).Type()
 
 	payload := mustObject(t)
+	err := valuevalidation.Validate(
+		payload,
+		shape,
+		valuevalidation.Options{MaxErrors: 2},
+	)
+
+	requireErrorCount(t, err, 2)
+}
+
+func TestValidateHonorsMaxErrorsWithListMapFallback(t *testing.T) {
+	shape := types.ListOf(
+		types.Object(
+			types.Field("type").String().Required(),
+			types.Field("status").String().MinLen(1).Required(),
+		),
+	).Map("type").Type()
+	payload := mustList(
+		t,
+		mustObject(t, value.ObjectMember("status", value.StringValue(""))),
+		mustObject(t, value.ObjectMember("status", value.StringValue(""))),
+	)
+
+	err := valuevalidation.Validate(
+		payload,
+		shape,
+		valuevalidation.Options{MaxErrors: 2},
+	)
+
+	requireErrorCount(t, err, 2)
+}
+
+func TestValidateHonorsMaxErrorsWithObjectAndMapErrors(t *testing.T) {
+	shape := types.Object(
+		types.Field("name").String().Required(),
+		types.Field("labels").MapOf(types.String().MinLen(1)).Required(),
+	).Type()
+	payload := mustObject(
+		t,
+		value.ObjectMember(
+			"labels",
+			mustObject(
+				t,
+				value.ObjectMember("app", value.StringValue("")),
+				value.ObjectMember("tier", value.StringValue("")),
+			),
+		),
+	)
+
 	err := valuevalidation.Validate(
 		payload,
 		shape,

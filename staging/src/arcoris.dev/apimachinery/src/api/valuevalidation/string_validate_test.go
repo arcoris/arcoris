@@ -15,8 +15,11 @@
 package valuevalidation_test
 
 import (
+	"errors"
+	"regexp/syntax"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 	"arcoris.dev/apimachinery/api/valuevalidation"
@@ -70,5 +73,46 @@ func TestValidateStringConstraints(t *testing.T) {
 
 			requireError(t, err, tt.sentinel, tt.reason, "$")
 		})
+	}
+}
+
+func TestValidateStringPatternReusesPatternWithinRun(t *testing.T) {
+	shape := types.ListOf(types.String().Pattern(`^[a-z]+$`)).Type()
+	payload := mustList(t, value.StringValue("ok"), value.StringValue("bad1"))
+
+	err := valuevalidation.ValidateAt(
+		fieldpath.RootPath().Field("names"),
+		payload,
+		shape,
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrPatternMismatch,
+		valuevalidation.ErrorReasonPatternMismatch,
+		"$.names[1]",
+	)
+}
+
+func TestValidateStringInvalidPatternPreservesCompileError(t *testing.T) {
+	err := valuevalidation.Validate(
+		value.StringValue("anything"),
+		types.String().Pattern(`[`).Type(),
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrInvalidDescriptor,
+		valuevalidation.ErrorReasonInvalidDescriptor,
+		"$",
+	)
+
+	var syntaxError *syntax.Error
+	if !errors.As(err, &syntaxError) {
+		t.Fatalf("errors.As(*syntax.Error) = false: %v", err)
 	}
 }

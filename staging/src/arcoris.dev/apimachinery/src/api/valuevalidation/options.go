@@ -30,6 +30,9 @@ const (
 // Zero Options are valid. The validator uses conservative defaults for
 // recursion depth and diagnostic collection, and TypeRef validation reports
 // unresolved-reference diagnostics when no resolver is available.
+//
+// Options do not request full descriptor validation. Descriptor preparation is
+// an upstream responsibility of api/types validation and catalog registration.
 type Options struct {
 	// Resolver resolves TypeRef descriptors. It may be nil for descriptor trees
 	// that do not contain references.

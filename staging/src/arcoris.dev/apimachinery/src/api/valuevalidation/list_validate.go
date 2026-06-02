@@ -107,8 +107,9 @@ func (v *validator) validateListMap(
 		item, _ := valueView.At(index)
 		indexPath := path.Index(index)
 
-		selector, ok := v.listMapSelector(indexPath, item, keys)
+		selector, ok := v.tryListMapSelector(indexPath, item, element, keys)
 		if !ok {
+			v.validate(indexPath, item, element, depth+1)
 			continue
 		}
 
@@ -123,10 +124,9 @@ func (v *validator) validateListMap(
 				previous,
 				indexPath,
 			)
-			continue
+		} else {
+			seen[selectorKey] = indexPath
 		}
-
-		seen[selectorKey] = indexPath
 
 		v.validate(selectorPath, item, element, depth+1)
 	}

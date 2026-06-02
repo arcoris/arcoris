@@ -18,8 +18,25 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/types"
+	"arcoris.dev/apimachinery/api/value"
 	"arcoris.dev/apimachinery/api/valuevalidation"
 )
+
+func TestValidateDecimalRejectsKindMismatch(t *testing.T) {
+	err := valuevalidation.Validate(
+		value.StringValue("12.30"),
+		types.Decimal().Type(),
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrKindMismatch,
+		valuevalidation.ErrorReasonKindMismatch,
+		"$",
+	)
+}
 
 func TestValidateDecimalPrecisionAndScale(t *testing.T) {
 	err := valuevalidation.Validate(

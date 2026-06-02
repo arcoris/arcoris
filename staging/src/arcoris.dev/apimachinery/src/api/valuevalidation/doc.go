@@ -25,8 +25,8 @@
 // entries with key elements, ordered list items with index elements, and
 // associative-list items with selector elements.
 //
-// Descriptors supplied to this package are expected to have been validated by
-// api/types or a catalog registration boundary. The validator still reports
-// defensive descriptor and TypeRef diagnostics when it encounters malformed or
-// unresolved descriptor data during traversal.
+// Callers are expected to validate and register descriptors before using them
+// for value validation. This package does not run full descriptor validation on
+// every call. It performs only local defensive checks needed to avoid panics and
+// to report invalid descriptor use encountered during traversal.
 package valuevalidation

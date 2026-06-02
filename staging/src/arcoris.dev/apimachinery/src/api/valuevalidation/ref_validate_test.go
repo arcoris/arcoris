@@ -127,3 +127,38 @@ func TestValidateRefRejectsReferenceCycle(t *testing.T) {
 		"$",
 	)
 }
+
+func TestValidateRefRejectsMaxDepth(t *testing.T) {
+	resolver := testResolver{
+		"example.Name":       types.Define("example.Name", types.Ref("example.StringName")),
+		"example.StringName": types.Define("example.StringName", types.String().MinLen(1)),
+	}
+
+	err := valuevalidation.Validate(
+		value.StringValue("main"),
+		types.Ref("example.Name").Type(),
+		valuevalidation.Options{
+			Resolver: resolver,
+			MaxDepth: 0,
+		},
+	)
+
+	requireNoError(t, err)
+
+	err = valuevalidation.Validate(
+		value.StringValue("main"),
+		types.Ref("example.Name").Type(),
+		valuevalidation.Options{
+			Resolver: resolver,
+			MaxDepth: 1,
+		},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrReferenceCycle,
+		valuevalidation.ErrorReasonReferenceCycle,
+		"$",
+	)
+}

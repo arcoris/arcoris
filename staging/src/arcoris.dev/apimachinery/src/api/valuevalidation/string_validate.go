@@ -15,8 +15,6 @@
 package valuevalidation
 
 import (
-	"regexp"
-
 	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
@@ -78,7 +76,7 @@ func (v *validator) validateStringPattern(path fieldpath.Path, text string, stri
 		return
 	}
 
-	compiled, err := regexp.Compile(pattern)
+	compiled, err := v.compilePattern(pattern)
 	if err != nil {
 		v.wrap(
 			path,

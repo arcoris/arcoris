@@ -1,0 +1,70 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package fieldpath
+
+import "testing"
+
+func TestSetHasAnyUnder(t *testing.T) {
+	set := MustSet(
+		setSpecPath(),
+		setReplicasPath(),
+		RootPath().Field("spec").Field("template").Field("metadata").Field("labels").Key("app"),
+		RootPath().Field("metadata").Field("name"),
+	)
+
+	requireEqual(t, set.Has(setSpecPath()), true)
+	requireEqual(t, set.HasAnyUnder(setSpecPath()), true)
+	requireEqual(t, set.HasAnyUnder(setReplicasPath()), true)
+	requireEqual(t, set.HasAnyUnder(RootPath().Field("status")), false)
+}
+
+func TestSetHasAnyUnderMatchesDescendantWithoutExactPrefix(t *testing.T) {
+	set := MustSet(setReplicasPath())
+
+	requireEqual(t, set.Has(setSpecPath()), false)
+	requireEqual(t, set.HasAnyUnder(setSpecPath()), true)
+}
+
+func TestSetUnder(t *testing.T) {
+	templateLabel := RootPath().
+		Field("spec").
+		Field("template").
+		Field("metadata").
+		Field("labels").
+		Key("app")
+	set := MustSet(
+		setSpecPath(),
+		setReplicasPath(),
+		templateLabel,
+		RootPath().Field("metadata").Field("name"),
+	)
+
+	underSpec := set.Under(setSpecPath())
+
+	requireStringSliceEqual(t, setPathStrings(underSpec.Paths()), []string{
+		"$.spec",
+		"$.spec.replicas",
+		`$.spec.template.metadata.labels["app"]`,
+	})
+}
+
+func TestSetUnderReturnsEmptySetWhenPrefixAbsent(t *testing.T) {
+	set := MustSet(setReplicasPath(), setImagePath())
+
+	underStatus := set.Under(RootPath().Field("status"))
+
+	requireEqual(t, underStatus.IsEmpty(), true)
+	requireEqual(t, underStatus.String(), "{}")
+}

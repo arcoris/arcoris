@@ -14,7 +14,10 @@
 
 package valuevalidation
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // ErrorList contains collected validation diagnostics.
 //
@@ -37,6 +40,11 @@ func (l ErrorList) Error() string {
 
 // Unwrap returns the collected errors for errors.Is and errors.As.
 func (l ErrorList) Unwrap() []error {
+	return l.Errors()
+}
+
+// Errors returns the collected diagnostics as a caller-owned slice.
+func (l ErrorList) Errors() []error {
 	if len(l) == 0 {
 		return nil
 	}
@@ -44,6 +52,36 @@ func (l ErrorList) Unwrap() []error {
 	out := make([]error, len(l))
 	copy(out, l)
 	return out
+}
+
+// First returns the first diagnostic, or nil when the list is empty.
+func (l ErrorList) First() error {
+	if len(l) == 0 {
+		return nil
+	}
+
+	return l[0]
+}
+
+// FormatAll renders every collected diagnostic in order.
+//
+// Error keeps a compact summary for the error interface. FormatAll is for
+// callers that intentionally want the full ordered diagnostic list without
+// depending on ErrorList's slice representation.
+func (l ErrorList) FormatAll() string {
+	if len(l) == 0 {
+		return ""
+	}
+
+	var builder strings.Builder
+	for index, err := range l {
+		if index > 0 {
+			builder.WriteByte('\n')
+		}
+		builder.WriteString(err.Error())
+	}
+
+	return builder.String()
 }
 
 // Len reports the number of collected diagnostics.

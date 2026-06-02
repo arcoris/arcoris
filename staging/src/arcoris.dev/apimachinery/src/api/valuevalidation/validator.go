@@ -26,8 +26,9 @@ type validator struct {
 	maxDepth  int
 	maxErrors int
 
-	resolving map[types.TypeName]bool
-	errors    ErrorList
+	resolving    map[types.TypeName]bool
+	patternCache map[string]compiledPattern
+	errors       ErrorList
 }
 
 // newValidator normalizes options into an executable validation state.
