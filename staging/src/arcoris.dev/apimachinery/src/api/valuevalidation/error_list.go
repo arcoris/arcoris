@@ -74,8 +74,8 @@ func (l ErrorList) FormatAll() string {
 	}
 
 	var builder strings.Builder
-	for index, err := range l {
-		if index > 0 {
+	for i, err := range l {
+		if i > 0 {
 			builder.WriteByte('\n')
 		}
 		builder.WriteString(err.Error())

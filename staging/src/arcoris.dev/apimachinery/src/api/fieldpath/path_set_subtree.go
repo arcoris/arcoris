@@ -19,8 +19,8 @@ package fieldpath
 // The prefix itself does not count. This distinction matters for higher layers
 // that need to know whether a subtree contains deeper owned or changed fields.
 func (s PathSet) HasDescendant(prefix Path) bool {
-	for _, path := range s.paths {
-		if path.IsDescendantOf(prefix) {
+	for _, p := range s.paths {
+		if p.IsDescendantOf(prefix) {
 			return true
 		}
 	}
@@ -57,12 +57,12 @@ func (s PathSet) RemoveDescendants(prefix Path) PathSet {
 
 	filtered := make([]Path, 0, len(s.paths))
 
-	for _, path := range s.paths {
-		if path.IsDescendantOf(prefix) {
+	for _, p := range s.paths {
+		if p.IsDescendantOf(prefix) {
 			continue
 		}
 
-		filtered = append(filtered, Path{elements: cloneElements(path.elements)})
+		filtered = append(filtered, Path{elements: cloneElements(p.elements)})
 	}
 
 	return PathSet{paths: filtered}

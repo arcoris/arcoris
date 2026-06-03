@@ -92,10 +92,10 @@ func (e *extractor) extractIndexedList(
 	depth int,
 ) (fieldpath.Set, error) {
 	out := fieldpath.EmptySet()
-	for index := 0; index < valueView.Len(); index++ {
-		item, _ := valueView.At(index)
+	for i := 0; i < valueView.Len(); i++ {
+		item, _ := valueView.At(i)
 
-		itemSet, err := e.extract(path.Index(index), item, element, depth+1)
+		itemSet, err := e.extract(path.Index(i), item, element, depth+1)
 		if err != nil {
 			return fieldpath.Set{}, err
 		}
@@ -126,9 +126,9 @@ func (e *extractor) extractListMap(
 	out := fieldpath.EmptySet()
 	seen := make(map[string]fieldpath.Path, valueView.Len())
 
-	for index := 0; index < valueView.Len(); index++ {
-		item, _ := valueView.At(index)
-		indexPath := path.Index(index)
+	for i := 0; i < valueView.Len(); i++ {
+		item, _ := valueView.At(i)
+		indexPath := path.Index(i)
 
 		selector, err := e.listMapSelector(indexPath, item, element, keys)
 		if err != nil {

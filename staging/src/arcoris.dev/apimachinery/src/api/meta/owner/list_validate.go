@@ -25,8 +25,8 @@ func (l List) Validate() error {
 	controllerCount := 0
 	seenRefs := make(map[metaidentity.ObjectReference]struct{}, len(l))
 
-	for index, reference := range l {
-		path := fmt.Sprintf("ownerReferences[%d]", index)
+	for i, reference := range l {
+		path := fmt.Sprintf("ownerReferences[%d]", i)
 
 		if err := reference.Validate(); err != nil {
 			return nested(path, ErrInvalidList, err)

@@ -1,0 +1,74 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package valuecompare
+
+import (
+	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/types"
+	"arcoris.dev/apimachinery/api/value"
+)
+
+// equalMap reports descriptor-aware map equality without building diff sets.
+func (c *comparer) equalMap(
+	path fieldpath.Path,
+	oldValue value.Value,
+	newValue value.Value,
+	descriptor types.Type,
+	depth int,
+) (bool, error) {
+	if err := requireKind(path, oldValue, value.KindObject, descriptor.Code()); err != nil {
+		return false, err
+	}
+	if err := requireKind(path, newValue, value.KindObject, descriptor.Code()); err != nil {
+		return false, err
+	}
+
+	mapView, ok := descriptor.Map()
+	if !ok {
+		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not a map")
+	}
+	if !mapView.Key().IsValid() {
+		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map key type is invalid")
+	}
+
+	valueType := mapView.Value()
+	if !valueType.IsValid() {
+		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map value descriptor is invalid")
+	}
+
+	oldObject, _ := oldValue.Object()
+	newObject, _ := newValue.Object()
+	if oldObject.Len() != newObject.Len() {
+		return false, nil
+	}
+
+	oldMembers := membersByName(oldObject.Members())
+	for _, newMember := range newObject.Members() {
+		oldMember, found := oldMembers[newMember.Name]
+		if !found {
+			return false, nil
+		}
+
+		equal, err := c.equalValue(path.Key(newMember.Name), oldMember, newMember.Value, valueType, depth+1)
+		if err != nil {
+			return false, err
+		}
+		if !equal {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}

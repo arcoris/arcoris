@@ -91,9 +91,9 @@ func (v *validator) validateIndexedList(
 	element types.Type,
 	depth int,
 ) {
-	for index := 0; index < valueView.Len(); index++ {
-		item, _ := valueView.At(index)
-		v.validate(path.Index(index), item, element, depth+1)
+	for i := 0; i < valueView.Len(); i++ {
+		item, _ := valueView.At(i)
+		v.validate(path.Index(i), item, element, depth+1)
 	}
 }
 
@@ -111,9 +111,9 @@ func (v *validator) validateListMap(
 	}
 
 	seen := make(map[string]fieldpath.Path, valueView.Len())
-	for index := 0; index < valueView.Len(); index++ {
-		item, _ := valueView.At(index)
-		indexPath := path.Index(index)
+	for i := 0; i < valueView.Len(); i++ {
+		item, _ := valueView.At(i)
+		indexPath := path.Index(i)
 
 		itemSelector, err := listmapkey.ExtractSelector(
 			indexPath,

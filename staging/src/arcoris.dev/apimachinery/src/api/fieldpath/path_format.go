@@ -49,8 +49,8 @@ func (p Path) String() string {
 	builder.Grow(1 + len(p.elements)*8)
 	builder.WriteByte('$')
 
-	for _, element := range p.elements {
-		builder.WriteString(element.String())
+	for _, e := range p.elements {
+		builder.WriteString(e.String())
 	}
 
 	return builder.String()

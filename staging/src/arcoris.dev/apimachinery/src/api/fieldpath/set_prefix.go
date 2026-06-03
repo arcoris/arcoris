@@ -21,17 +21,7 @@ package fieldpath
 // subtree root as well as descendants.
 func (s Set) HasAnyUnder(prefix Path) bool {
 	start, _ := findSetPath(s.paths, prefix)
-
-	for index := start; index < len(s.paths); index++ {
-		path := s.paths[index]
-		if !path.HasPrefix(prefix) {
-			break
-		}
-
-		return true
-	}
-
-	return false
+	return start < len(s.paths) && s.paths[start].HasPrefix(prefix)
 }
 
 // Under returns paths equal to prefix or structurally below prefix.
@@ -41,15 +31,19 @@ func (s Set) Under(prefix Path) Set {
 	}
 
 	start, _ := findSetPath(s.paths, prefix)
+	if start >= len(s.paths) {
+		return Set{}
+	}
+
 	paths := make([]Path, 0, len(s.paths)-start)
 
-	for index := start; index < len(s.paths); index++ {
-		path := s.paths[index]
-		if !path.HasPrefix(prefix) {
+	for i := start; i < len(s.paths); i++ {
+		p := s.paths[i]
+		if !p.HasPrefix(prefix) {
 			break
 		}
 
-		paths = appendSetPath(paths, path)
+		paths = appendSetPath(paths, p)
 	}
 
 	return Set{paths: paths}

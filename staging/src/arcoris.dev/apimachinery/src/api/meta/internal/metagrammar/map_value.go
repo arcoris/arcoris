@@ -65,15 +65,15 @@ func ValidateMapValue(value string, opts MapValueOptions) *Violation {
 		)
 	}
 
-	for index := 0; index < len(value); index++ {
-		b := value[index]
+	for i := 0; i < len(value); i++ {
+		b := value[i]
 		if isStrictMapValueByte(b) {
 			continue
 		}
 
 		return violation(
 			ReasonInvalidCharacter,
-			fmt.Sprintf("map value contains invalid byte %q at index %d", b, index),
+			fmt.Sprintf("map value contains invalid byte %q at index %d", b, i),
 		)
 	}
 

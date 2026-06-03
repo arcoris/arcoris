@@ -58,8 +58,8 @@ func setReadyStatusPath() Path {
 
 func setPathStrings(paths []Path) []string {
 	out := make([]string, len(paths))
-	for index, path := range paths {
-		out[index] = path.String()
+	for i, p := range paths {
+		out[i] = p.String()
 	}
 
 	return out

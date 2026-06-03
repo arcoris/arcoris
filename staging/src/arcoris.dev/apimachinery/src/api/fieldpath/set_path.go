@@ -26,8 +26,8 @@ func appendSetPath(dst []Path, path Path) []Path {
 
 // appendSetPaths appends detached path copies to dst in source order.
 func appendSetPaths(dst []Path, paths []Path) []Path {
-	for _, path := range paths {
-		dst = appendSetPath(dst, path)
+	for _, p := range paths {
+		dst = appendSetPath(dst, p)
 	}
 
 	return dst
@@ -35,8 +35,8 @@ func appendSetPaths(dst []Path, paths []Path) []Path {
 
 // compareSetPathSlices compares canonical path slices lexicographically.
 func compareSetPathSlices(left []Path, right []Path) int {
-	for index := 0; index < len(left) && index < len(right); index++ {
-		if cmp := left[index].Compare(right[index]); cmp != 0 {
+	for i := 0; i < len(left) && i < len(right); i++ {
+		if cmp := left[i].Compare(right[i]); cmp != 0 {
 			return cmp
 		}
 	}

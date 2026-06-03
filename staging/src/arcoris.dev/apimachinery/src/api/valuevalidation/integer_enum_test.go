@@ -77,8 +77,8 @@ func equalInt64Slice(left, right []int64) bool {
 		return false
 	}
 
-	for index := range left {
-		if left[index] != right[index] {
+	for i := range left {
+		if left[i] != right[i] {
 			return false
 		}
 	}
@@ -91,8 +91,8 @@ func equalUint64Slice(left, right []uint64) bool {
 		return false
 	}
 
-	for index := range left {
-		if left[index] != right[index] {
+	for i := range left {
+		if left[i] != right[i] {
 			return false
 		}
 	}

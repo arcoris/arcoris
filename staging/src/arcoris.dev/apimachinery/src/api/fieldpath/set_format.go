@@ -27,12 +27,12 @@ func (s Set) String() string {
 
 	var builder strings.Builder
 	builder.WriteByte('{')
-	for index, path := range s.paths {
-		if index > 0 {
+	for i, p := range s.paths {
+		if i > 0 {
 			builder.WriteString(", ")
 		}
 
-		builder.WriteString(path.String())
+		builder.WriteString(p.String())
 	}
 	builder.WriteByte('}')
 
