@@ -16,6 +16,7 @@ package valuevalidation
 
 import (
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/typeref"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -27,35 +28,45 @@ func (v *validator) validateRef(
 	descriptor types.Type,
 	depth int,
 ) {
-	if depth >= v.maxDepth {
-		v.add(path, ErrReferenceCycle, ErrorReasonReferenceCycle, "maximum TypeRef validation depth reached")
+	name, resolved, err := v.refs.Resolve(path, descriptor, depth)
+	if err != nil {
+		v.addRefError(err)
 		return
 	}
 
-	view, ok := descriptor.Ref()
+	leave := v.refs.Enter(name)
+	defer leave()
+
+	v.validate(path, val, resolved, depth+1)
+}
+
+// addRefError maps shared TypeRef traversal failures into validation diagnostics.
+func (v *validator) addRefError(err error) {
+	refError, ok := typeref.AsError(err)
 	if !ok {
-		v.add(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not a reference")
+		v.wrap(
+			fieldpath.RootPath(),
+			ErrInvalidDescriptor,
+			ErrorReasonInvalidDescriptor,
+			"TypeRef traversal failed",
+			err,
+		)
 		return
 	}
 
-	name := view.Name()
-	if v.resolver == nil {
-		v.addf(path, ErrUnresolvedRef, ErrorReasonUnresolvedRef, "reference %q has no resolver", name)
-		return
-	}
-	if v.resolving[name] {
-		v.addf(path, ErrReferenceCycle, ErrorReasonReferenceCycle, "reference %q is recursive", name)
-		return
-	}
+	sentinel, reason := refErrorClassification(refError.Kind)
+	v.wrap(refError.Path, sentinel, reason, refError.Detail, err)
+}
 
-	definition, ok := v.resolver.ResolveType(name)
-	if !ok {
-		v.addf(path, ErrUnresolvedRef, ErrorReasonUnresolvedRef, "reference %q was not found", name)
-		return
+func refErrorClassification(kind typeref.FailureKind) (error, ErrorReason) {
+	switch kind {
+	case typeref.FailureInvalidDescriptor:
+		return ErrInvalidDescriptor, ErrorReasonInvalidDescriptor
+	case typeref.FailureUnresolvedRef:
+		return ErrUnresolvedRef, ErrorReasonUnresolvedRef
+	case typeref.FailureReferenceCycle:
+		return ErrReferenceCycle, ErrorReasonReferenceCycle
+	default:
+		return ErrInvalidDescriptor, ErrorReasonInvalidDescriptor
 	}
-
-	v.resolving[name] = true
-	defer delete(v.resolving, name)
-
-	v.validate(path, val, definition.Type(), depth+1)
 }

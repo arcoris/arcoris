@@ -16,6 +16,7 @@ package valuefieldset
 
 import (
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/typekind"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -49,36 +50,5 @@ func (e *extractor) extractScalar(
 
 // scalarKind maps descriptor scalar codes to concrete value kinds.
 func scalarKind(code types.TypeCode) (value.Kind, bool) {
-	switch code {
-	case types.TypeBool:
-		return value.KindBool, true
-	case types.TypeString:
-		return value.KindString, true
-	case types.TypeBytes:
-		return value.KindBytes, true
-	case types.TypeInt8,
-		types.TypeInt16,
-		types.TypeInt32,
-		types.TypeInt64,
-		types.TypeUint8,
-		types.TypeUint16,
-		types.TypeUint32,
-		types.TypeUint64:
-		return value.KindInteger, true
-	case types.TypeFloat32,
-		types.TypeFloat64:
-		return value.KindFloat, true
-	case types.TypeDecimal:
-		return value.KindDecimal, true
-	case types.TypeTimestamp:
-		return value.KindTimestamp, true
-	case types.TypeDate:
-		return value.KindDate, true
-	case types.TypeTime:
-		return value.KindTimeOfDay, true
-	case types.TypeDuration:
-		return value.KindDuration, true
-	default:
-		return value.KindInvalid, false
-	}
+	return typekind.Scalar(code)
 }

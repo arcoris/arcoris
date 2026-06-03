@@ -15,29 +15,35 @@
 package listmapkey
 
 import (
-	"fmt"
-
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/typeref"
 	"arcoris.dev/apimachinery/api/types"
 )
 
 // referenceResolver resolves descriptor references for one ListMap key extraction.
+//
+// The wrapper keeps listmapkey's failure taxonomy independent from typeref's
+// internal taxonomy. Callers of listmapkey see ListMap selector failures, not a
+// lower-level TypeRef traversal model.
 type referenceResolver struct {
-	typeResolver types.Resolver
-	maxDepth     int
-	activeRefs   map[types.TypeName]bool
+	refs *typeref.Resolver
 }
 
 // newReferenceResolver creates bounded resolver state for one extraction call.
+//
+// Options are normalized by listmapkey so this package keeps ownership of its
+// default depth policy.
 func newReferenceResolver(opts Options) referenceResolver {
 	return referenceResolver{
-		typeResolver: opts.Resolver,
-		maxDepth:     opts.normalizedMaxDepth(),
-		activeRefs:   make(map[types.TypeName]bool),
+		refs: typeref.New(opts.Resolver, opts.normalizedMaxDepth()),
 	}
 }
 
 // resolve resolves a descriptor until it reaches a non-ref descriptor.
+//
+// Non-reference descriptors return unchanged and do not require a resolver.
+// Reference failures are remapped to listmapkey FailureKind values so callers can
+// still decide whether a failure is descriptor-related or payload-related.
 func (r referenceResolver) resolve(
 	path fieldpath.Path,
 	descriptor types.Type,
@@ -47,52 +53,35 @@ func (r referenceResolver) resolve(
 		return descriptor, nil
 	}
 
-	if depth >= r.maxDepth {
-		return types.Type{}, failure(
-			path,
-			FailureReferenceCycle,
-			"maximum TypeRef ListMap key extraction depth reached",
-		)
+	resolvedDescriptor, err := r.refs.ResolveFinal(path, descriptor, depth)
+	if err != nil {
+		return types.Type{}, listMapRefError(err)
 	}
 
-	referenceView, ok := descriptor.Ref()
+	return resolvedDescriptor, nil
+}
+
+// listMapRefError maps shared TypeRef traversal errors into ListMap key errors.
+func listMapRefError(err error) error {
+	refError, ok := typeref.AsError(err)
 	if !ok {
-		return types.Type{}, failure(
-			path,
-			FailureInvalidDescriptor,
-			"descriptor is not a reference",
-		)
+		return err
 	}
 
-	referenceName := referenceView.Name()
-	if r.typeResolver == nil {
-		return types.Type{}, failure(
-			path,
-			FailureUnresolvedRef,
-			fmt.Sprintf("reference %q has no resolver", referenceName),
-		)
+	return failure(refError.Path, listMapRefFailureKind(refError.Kind), refError.Detail)
+}
+
+// listMapRefFailureKind keeps TypeRef classifications inside listmapkey's
+// existing FailureKind vocabulary.
+func listMapRefFailureKind(kind typeref.FailureKind) FailureKind {
+	switch kind {
+	case typeref.FailureInvalidDescriptor:
+		return FailureInvalidDescriptor
+	case typeref.FailureUnresolvedRef:
+		return FailureUnresolvedRef
+	case typeref.FailureReferenceCycle:
+		return FailureReferenceCycle
+	default:
+		return FailureInvalidDescriptor
 	}
-
-	if r.activeRefs[referenceName] {
-		return types.Type{}, failure(
-			path,
-			FailureReferenceCycle,
-			fmt.Sprintf("reference %q is recursive", referenceName),
-		)
-	}
-
-	typeDefinition, ok := r.typeResolver.ResolveType(referenceName)
-	if !ok {
-		return types.Type{}, failure(
-			path,
-			FailureUnresolvedRef,
-			fmt.Sprintf("reference %q was not found", referenceName),
-		)
-	}
-
-	r.activeRefs[referenceName] = true
-	resolvedDescriptor, err := r.resolve(path, typeDefinition.Type(), depth+1)
-	delete(r.activeRefs, referenceName)
-
-	return resolvedDescriptor, err
 }

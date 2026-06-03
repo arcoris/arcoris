@@ -16,23 +16,26 @@ package valuefieldset
 
 import (
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/typeref"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
 
 // extractor carries one extraction run's resolver and recursion state.
 type extractor struct {
-	resolver  types.Resolver
-	maxDepth  int
-	resolving map[types.TypeName]bool
+	resolver types.Resolver
+	maxDepth int
+	refs     *typeref.Resolver
 }
 
 // newExtractor normalizes options into executable extraction state.
 func newExtractor(opts Options) *extractor {
+	maxDepth := opts.normalizedMaxDepth()
+
 	return &extractor{
-		resolver:  opts.Resolver,
-		maxDepth:  opts.normalizedMaxDepth(),
-		resolving: make(map[types.TypeName]bool),
+		resolver: opts.Resolver,
+		maxDepth: maxDepth,
+		refs:     typeref.New(opts.Resolver, maxDepth),
 	}
 }
 

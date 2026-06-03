@@ -16,6 +16,7 @@ package valuevalidation
 
 import (
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/typeref"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -26,7 +27,7 @@ type validator struct {
 	maxDepth  int
 	maxErrors int
 
-	resolving    map[types.TypeName]bool
+	refs         *typeref.Resolver
 	patternCache map[string]compiledPattern
 	errors       ErrorList
 }
@@ -47,7 +48,7 @@ func newValidator(opts Options) *validator {
 		resolver:  opts.Resolver,
 		maxDepth:  maxDepth,
 		maxErrors: maxErrors,
-		resolving: make(map[types.TypeName]bool),
+		refs:      typeref.New(opts.Resolver, maxDepth),
 	}
 }
 

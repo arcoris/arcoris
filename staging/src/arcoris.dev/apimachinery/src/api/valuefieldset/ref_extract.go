@@ -16,6 +16,7 @@ package valuefieldset
 
 import (
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/typeref"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -27,14 +28,14 @@ func (e *extractor) extractRef(
 	descriptor types.Type,
 	depth int,
 ) (fieldpath.Set, error) {
-	name, resolved, err := e.resolveRefDefinition(path, descriptor, depth, e.resolving)
+	name, resolved, err := e.resolveRefDefinition(path, descriptor, depth, e.refs)
 	if err != nil {
 		return fieldpath.Set{}, err
 	}
 
-	e.resolving[name] = true
+	leave := e.refs.Enter(name)
 	set, err := e.extract(path, val, resolved, depth+1)
-	delete(e.resolving, name)
+	leave()
 
 	return set, err
 }
@@ -48,35 +49,12 @@ func (e *extractor) resolveRefDescriptor(
 	descriptor types.Type,
 	depth int,
 ) (types.Type, error) {
-	return e.resolveRefDescriptorWithStack(
-		path,
-		descriptor,
-		depth,
-		make(map[types.TypeName]bool),
-	)
-}
-
-// resolveRefDescriptorWithStack resolves a TypeRef chain into a non-ref descriptor.
-func (e *extractor) resolveRefDescriptorWithStack(
-	path fieldpath.Path,
-	descriptor types.Type,
-	depth int,
-	resolving map[types.TypeName]bool,
-) (types.Type, error) {
-	name, resolved, err := e.resolveRefDefinition(path, descriptor, depth, resolving)
+	resolved, err := typeref.New(e.resolver, e.maxDepth).ResolveFinal(path, descriptor, depth)
 	if err != nil {
-		return types.Type{}, err
+		return types.Type{}, valuefieldsetRefError(err)
 	}
 
-	if resolved.Code() != types.TypeRef {
-		return resolved, nil
-	}
-
-	resolving[name] = true
-	target, err := e.resolveRefDescriptorWithStack(path, resolved, depth+1, resolving)
-	delete(resolving, name)
-
-	return target, err
+	return resolved, nil
 }
 
 // resolveRefDefinition resolves the immediate TypeRef target.
@@ -84,57 +62,37 @@ func (e *extractor) resolveRefDefinition(
 	path fieldpath.Path,
 	descriptor types.Type,
 	depth int,
-	resolving map[types.TypeName]bool,
+	references *typeref.Resolver,
 ) (types.TypeName, types.Type, error) {
-	if depth >= e.maxDepth {
-		return "", types.Type{}, errorAt(
-			path,
-			ErrReferenceCycle,
-			ErrorReasonReferenceCycle,
-			"maximum TypeRef extraction depth reached",
-		)
+	name, resolved, err := references.Resolve(path, descriptor, depth)
+	if err != nil {
+		return "", types.Type{}, valuefieldsetRefError(err)
 	}
 
-	view, ok := descriptor.Ref()
+	return name, resolved, nil
+}
+
+// valuefieldsetRefError maps shared TypeRef traversal failures into this
+// package's structured error model.
+func valuefieldsetRefError(err error) error {
+	refError, ok := typeref.AsError(err)
 	if !ok {
-		return "", types.Type{}, errorAt(
-			path,
-			ErrInvalidDescriptor,
-			ErrorReasonInvalidDescriptor,
-			"descriptor is not a reference",
-		)
+		return err
 	}
 
-	name := view.Name()
-	if e.resolver == nil {
-		return "", types.Type{}, errorfAt(
-			path,
-			ErrUnresolvedRef,
-			ErrorReasonUnresolvedRef,
-			"reference %q has no resolver",
-			name,
-		)
-	}
-	if resolving[name] {
-		return "", types.Type{}, errorfAt(
-			path,
-			ErrReferenceCycle,
-			ErrorReasonReferenceCycle,
-			"reference %q is recursive",
-			name,
-		)
-	}
+	sentinel, reason := refErrorClassification(refError.Kind)
+	return wrapAt(refError.Path, sentinel, reason, refError.Detail, err)
+}
 
-	definition, ok := e.resolver.ResolveType(name)
-	if !ok {
-		return "", types.Type{}, errorfAt(
-			path,
-			ErrUnresolvedRef,
-			ErrorReasonUnresolvedRef,
-			"reference %q was not found",
-			name,
-		)
+func refErrorClassification(kind typeref.FailureKind) (error, ErrorReason) {
+	switch kind {
+	case typeref.FailureInvalidDescriptor:
+		return ErrInvalidDescriptor, ErrorReasonInvalidDescriptor
+	case typeref.FailureUnresolvedRef:
+		return ErrUnresolvedRef, ErrorReasonUnresolvedRef
+	case typeref.FailureReferenceCycle:
+		return ErrReferenceCycle, ErrorReasonReferenceCycle
+	default:
+		return ErrInvalidDescriptor, ErrorReasonInvalidDescriptor
 	}
-
-	return name, definition.Type(), nil
 }
