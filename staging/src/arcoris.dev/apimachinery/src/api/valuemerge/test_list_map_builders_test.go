@@ -1,0 +1,70 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package valuemerge
+
+import (
+	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/types"
+	"arcoris.dev/apimachinery/api/value"
+)
+
+func conditionElementDescriptor() types.Type {
+	return conditionElementExpr().Type()
+}
+
+func conditionElementExpr() types.ObjectType {
+	return types.Object(
+		types.Field("type").String().Required(),
+		types.Field("status").String().Optional(),
+	)
+}
+
+func conditionListDescriptor() types.Type {
+	return types.ListOf(conditionElementExpr()).Map("type").Type()
+}
+
+func conditionKeys() []types.FieldName {
+	return []types.FieldName{"type"}
+}
+
+func conditionItem(conditionType string, status string) value.Value {
+	return obj(
+		member("type", str(conditionType)),
+		member("status", str(status)),
+	)
+}
+
+func conditionPath(conditionType string) fieldpath.Path {
+	return root().Field("conditions").Select(
+		fieldpath.MustSelector(
+			fieldpath.NewSelectorEntry("type", fieldpath.StringLiteral(conditionType)),
+		),
+	)
+}
+
+func mergeConditions(
+	base value.Value,
+	overlay value.Value,
+	fields fieldpath.Set,
+) (value.Value, error) {
+	return MergeAt(
+		root().Field("conditions"),
+		base,
+		overlay,
+		conditionListDescriptor(),
+		fields,
+		Options{},
+	)
+}

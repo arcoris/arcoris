@@ -1,0 +1,105 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package valuemerge
+
+import (
+	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/valuepresence"
+	"arcoris.dev/apimachinery/api/types"
+	"arcoris.dev/apimachinery/api/value"
+)
+
+// Merge copies selected semantic fields from overlay into base at root.
+func Merge(
+	base value.Value,
+	overlay value.Value,
+	descriptor types.Type,
+	fields fieldpath.Set,
+	opts Options,
+) (value.Value, error) {
+	return MergeAt(fieldpath.RootPath(), base, overlay, descriptor, fields, opts)
+}
+
+// MergeAt copies selected semantic fields from overlay into base below path.
+func MergeAt(
+	path fieldpath.Path,
+	base value.Value,
+	overlay value.Value,
+	descriptor types.Type,
+	fields fieldpath.Set,
+	opts Options,
+) (value.Value, error) {
+	if err := path.Validate(); err != nil {
+		return value.Value{}, wrapAt(
+			path,
+			ErrInvalidPath,
+			ErrorReasonInvalidPath,
+			"base field path is invalid",
+			err,
+		)
+	}
+	if err := validateFields(fields); err != nil {
+		return value.Value{}, err
+	}
+	if err := requireValidValue(path, valuepresence.Present(base)); err != nil {
+		return value.Value{}, err
+	}
+	if err := requireValidValue(path, valuepresence.Present(overlay)); err != nil {
+		return value.Value{}, err
+	}
+	if fields.IsEmpty() {
+		return base.Clone(), nil
+	}
+
+	result, err := newMerger(opts).merge(
+		path,
+		valuepresence.Present(base),
+		valuepresence.Present(overlay),
+		descriptor,
+		fields,
+		0,
+	)
+
+	if err != nil {
+		return value.Value{}, err
+	}
+	if result.Absent() {
+		return value.Value{}, errorAt(
+			path,
+			ErrUnsupportedMerge,
+			ErrorReasonUnsupportedMerge,
+			"root removal is not representable",
+		)
+	}
+
+	return result.Value(), nil
+}
+
+// validateFields rejects malformed selected paths before traversal starts.
+func validateFields(fields fieldpath.Set) error {
+	for _, path := range fields.Paths() {
+		if err := path.Validate(); err != nil {
+			return wrapAt(
+				path,
+				ErrInvalidPath,
+				ErrorReasonInvalidPath,
+				"selected field path is invalid",
+				err,
+			)
+		}
+	}
+
+	return nil
+}

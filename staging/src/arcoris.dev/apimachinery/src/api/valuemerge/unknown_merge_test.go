@@ -1,0 +1,111 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package valuemerge
+
+import (
+	"testing"
+
+	"arcoris.dev/apimachinery/api/types"
+)
+
+func TestMergeUnknownRejectReturnsUnknownField(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownReject).Type()
+
+	_, err := Merge(
+		obj(member("xExtra", str("old"))),
+		obj(member("xExtra", str("new"))),
+		descriptor,
+		pathSet(root().Field("xExtra")),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrUnknownField)
+}
+
+func TestMergeUnknownPruneIgnoresUnknown(t *testing.T) {
+	descriptor := types.Object(
+		types.Field("name").String().Optional(),
+	).UnknownFields(types.UnknownPrune).Type()
+	base := obj(member("name", str("old")), member("xExtra", str("old")))
+	overlay := obj(member("xExtra", str("new")))
+
+	got, err := Merge(
+		base,
+		overlay,
+		descriptor,
+		pathSet(root().Field("xExtra")),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireStringMember(t, got, "name", "old")
+	requireNoMember(t, got, "xExtra")
+}
+
+func TestMergeUnknownPreserveExactCopiesOpaque(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Type()
+	overlayExtra := obj(member("nested", str("new")))
+
+	got, err := Merge(
+		obj(member("xExtra", obj(member("nested", str("old"))))),
+		obj(member("xExtra", overlayExtra)),
+		descriptor,
+		pathSet(root().Field("xExtra")),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	view, _ := got.Object()
+	extra, ok := view.Get("xExtra")
+	if !ok {
+		t.Fatalf("xExtra is absent")
+	}
+	requireValue(t, extra, overlayExtra)
+}
+
+func TestMergeUnknownPreserveRemovesOpaqueWhenOverlayAbsent(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Type()
+
+	got, err := Merge(
+		obj(member("xExtra", str("old"))),
+		obj(),
+		descriptor,
+		pathSet(root().Field("xExtra")),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireNoMember(t, got, "xExtra")
+}
+
+func TestMergeUnknownPreserveDescendantSelectionUnsupported(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Type()
+
+	_, err := Merge(
+		obj(member("xExtra", obj(member("nested", str("old"))))),
+		obj(member("xExtra", obj(member("nested", str("new"))))),
+		descriptor,
+		pathSet(root().Field("xExtra").Field("nested")),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrUnsupportedMerge)
+}
