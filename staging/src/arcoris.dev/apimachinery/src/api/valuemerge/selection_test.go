@@ -20,7 +20,7 @@ func TestSelectionExact(t *testing.T) {
 	path := root().Field("spec")
 	got := selectAt(pathSet(path), path)
 
-	if !got.exact || got.ancestor || !got.descendants.IsEmpty() {
+	if !got.exact || !got.descendants.IsEmpty() {
 		t.Fatalf("selection = %#v", got)
 	}
 }
@@ -30,7 +30,7 @@ func TestSelectionDescendant(t *testing.T) {
 	selected := path.Field("replicas")
 	got := selectAt(pathSet(selected), path)
 
-	if got.exact || got.ancestor || !got.descendants.Has(selected) {
+	if got.exact || !got.descendants.Has(selected) {
 		t.Fatalf("selection = %#v", got)
 	}
 }
@@ -39,16 +39,16 @@ func TestSelectionIrrelevant(t *testing.T) {
 	path := root().Field("spec")
 	got := selectAt(pathSet(root().Field("metadata")), path)
 
-	if got.selected() || got.ancestor {
+	if got.selected() {
 		t.Fatalf("selection = %#v", got)
 	}
 }
 
-func TestSelectionAncestorCoverage(t *testing.T) {
+func TestSelectionAncestorIsNotSelectedLocally(t *testing.T) {
 	path := root().Field("spec").Field("replicas")
 	got := selectAt(pathSet(root().Field("spec")), path)
 
-	if !got.ancestor || got.selected() {
+	if got.selected() {
 		t.Fatalf("selection = %#v", got)
 	}
 }
@@ -56,6 +56,16 @@ func TestSelectionAncestorCoverage(t *testing.T) {
 func TestSelectionMapKey(t *testing.T) {
 	path := root().Field("labels")
 	selected := path.Key("app")
+	got := selectAt(pathSet(selected), path)
+
+	if !got.descendants.Has(selected) {
+		t.Fatalf("selection descendants = %s", got.descendants)
+	}
+}
+
+func TestSelectionListIndex(t *testing.T) {
+	path := root()
+	selected := path.Index(1)
 	got := selectAt(pathSet(selected), path)
 
 	if !got.descendants.Has(selected) {

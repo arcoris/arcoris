@@ -33,6 +33,12 @@ func Merge(
 }
 
 // MergeAt copies selected semantic fields from overlay into base below path.
+//
+// Empty selected fields are a no-op: MergeAt validates path, fields, and base,
+// then returns a clone of base without inspecting overlay. For non-empty
+// selections, callers should validate base and overlay with api/valuevalidation
+// when full descriptor conformance is required. valuemerge performs only the
+// defensive checks needed for selected traversal and replacement shape.
 func MergeAt(
 	path fieldpath.Path,
 	base value.Value,
@@ -56,11 +62,11 @@ func MergeAt(
 	if err := requireValidValue(path, valuepresence.Present(base)); err != nil {
 		return value.Value{}, err
 	}
-	if err := requireValidValue(path, valuepresence.Present(overlay)); err != nil {
-		return value.Value{}, err
-	}
 	if fields.IsEmpty() {
 		return base.Clone(), nil
+	}
+	if err := requireValidValue(path, valuepresence.Present(overlay)); err != nil {
+		return value.Value{}, err
 	}
 
 	result, err := newMerger(opts).merge(

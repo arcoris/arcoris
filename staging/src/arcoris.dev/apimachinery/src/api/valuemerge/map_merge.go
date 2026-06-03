@@ -36,7 +36,11 @@ func (m *merger) mergeMap(
 	if err := requireObjectOperand(path, overlay); err != nil {
 		return operand{}, err
 	}
-	if preserved, ok := preserveWithoutOverlayContainer(base, overlay, value.KindObject); ok {
+	preserved, ok, err := preserveWithoutOverlayContainer(path, base, overlay, value.KindObject)
+	if err != nil {
+		return operand{}, err
+	}
+	if ok {
 		return preserved, nil
 	}
 

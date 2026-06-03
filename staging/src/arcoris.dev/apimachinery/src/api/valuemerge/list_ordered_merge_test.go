@@ -54,6 +54,71 @@ func TestMergeOrderedListAddsSelectedIndex(t *testing.T) {
 	requireListStrings(t, got, "a", "b")
 }
 
+func TestMergeOrderedListSparseAppendUnsupported(t *testing.T) {
+	descriptor := types.ListOf(types.String()).Ordered().Type()
+
+	_, err := Merge(
+		list(str("a")),
+		list(str("a"), str("b"), str("c")),
+		descriptor,
+		pathSet(root().Index(2)),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrUnsupportedMerge)
+}
+
+func TestMergeOrderedListContiguousAppendSelectedIndexes(t *testing.T) {
+	descriptor := types.ListOf(types.String()).Ordered().Type()
+
+	got, err := Merge(
+		list(str("a")),
+		list(str("a"), str("b"), str("c")),
+		descriptor,
+		pathSet(root().Index(1), root().Index(2)),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireListStrings(t, got, "a", "b", "c")
+}
+
+func TestMergeOrderedListAppendFirstMissingIndexAllowed(t *testing.T) {
+	descriptor := types.ListOf(types.String()).Ordered().Type()
+
+	got, err := Merge(
+		list(str("a")),
+		list(str("a"), str("b"), str("c")),
+		descriptor,
+		pathSet(root().Index(1)),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireListStrings(t, got, "a", "b")
+}
+
+func TestMergeOrderedListExistingIndexSelectionStillWorks(t *testing.T) {
+	descriptor := types.ListOf(types.String()).Ordered().Type()
+
+	got, err := Merge(
+		list(str("a"), str("b")),
+		list(str("x"), str("B"), str("c")),
+		descriptor,
+		pathSet(root().Index(1)),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireListStrings(t, got, "a", "B")
+}
+
 func TestMergeOrderedListRemovesSelectedIndex(t *testing.T) {
 	descriptor := types.ListOf(types.String()).Ordered().Type()
 
@@ -69,6 +134,23 @@ func TestMergeOrderedListRemovesSelectedIndex(t *testing.T) {
 	}
 
 	requireListStrings(t, got, "a")
+}
+
+func TestMergeOrderedListRemovesMultipleIndexes(t *testing.T) {
+	descriptor := types.ListOf(types.String()).Ordered().Type()
+
+	got, err := Merge(
+		list(str("a"), str("b"), str("c"), str("d")),
+		list(str("a")),
+		descriptor,
+		pathSet(root().Index(1), root().Index(3)),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireListStrings(t, got, "a", "c")
 }
 
 func TestMergeOrderedListNestedObjectItemField(t *testing.T) {

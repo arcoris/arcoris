@@ -15,6 +15,7 @@
 package valuemerge
 
 import (
+	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/internal/valuepresence"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -22,21 +23,40 @@ import (
 // preserveWithoutOverlayContainer preserves base when neither side can expose
 // the selected descendants under expected.
 func preserveWithoutOverlayContainer(
+	path fieldpath.Path,
 	base operand,
 	overlay operand,
 	expected value.Kind,
-) (operand, bool) {
+) (operand, bool, error) {
 	if hasKind(base, expected) || hasKind(overlay, expected) {
-		return operand{}, false
+		return operand{}, false, nil
+	}
+	if blocksContainerTraversal(base, expected) {
+		return operand{}, false, errorfAt(
+			path,
+			ErrKindMismatch,
+			ErrorReasonKindMismatch,
+			"value kind %s does not match descriptor kind %s",
+			base.Value().Kind(),
+			expected,
+		)
 	}
 	if base.Present() {
-		return base.Clone(), true
+		return base.Clone(), true, nil
 	}
 
-	return valuepresence.Absent(), true
+	return valuepresence.Absent(), true, nil
 }
 
 // hasKind reports whether o is present and stores kind.
 func hasKind(o operand, kind value.Kind) bool {
 	return o.Present() && o.Value().Kind() == kind
+}
+
+// blocksContainerTraversal reports wrong-kind base values that cannot be
+// traversed for selected descendant paths.
+func blocksContainerTraversal(base operand, expected value.Kind) bool {
+	return base.Present() &&
+		!base.Value().IsNull() &&
+		base.Value().Kind() != expected
 }

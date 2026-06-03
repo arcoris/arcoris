@@ -15,8 +15,10 @@
 package valuemerge
 
 import (
+	"errors"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/internal/listmapkey"
 )
 
@@ -40,4 +42,51 @@ func TestMergeListMapKeyErrorKindReferenceCycle(t *testing.T) {
 	if reason != ErrorReasonReferenceCycle {
 		t.Fatalf("reason = %q; want %q", reason, ErrorReasonReferenceCycle)
 	}
+}
+
+func TestMergeListMapKeyUnexpectedErrorWrapped(t *testing.T) {
+	err := mergeListMapKeyError(
+		root().Index(0),
+		errors.New("unexpected failure"),
+	)
+
+	requireErrorIs(t, err, ErrInvalidListKey)
+
+	var mergeError *Error
+	if !errors.As(err, &mergeError) {
+		t.Fatalf("error type = %T; want *Error", err)
+	}
+	if mergeError.Path != root().Index(0).String() {
+		t.Fatalf("path = %s; want %s", mergeError.Path, root().Index(0))
+	}
+}
+
+func TestMergeListMapKeyErrorUsesSharedErrorPath(t *testing.T) {
+	err := mergeListMapKeyError(
+		root().Index(0),
+		&listmapkey.Error{
+			Path:   root().Index(1),
+			Kind:   listmapkey.FailureMissingKey,
+			Detail: "missing key",
+		},
+	)
+
+	requireErrorIs(t, err, ErrInvalidListKey)
+
+	var mergeError *Error
+	if !errors.As(err, &mergeError) {
+		t.Fatalf("error type = %T; want *Error", err)
+	}
+	if mergeError.Path != root().Index(1).String() {
+		t.Fatalf("path = %s; want %s", mergeError.Path, root().Index(1))
+	}
+}
+
+func TestMergeListMapKeyUnexpectedErrorAcceptsAnyPath(t *testing.T) {
+	err := mergeListMapKeyError(
+		fieldpath.RootPath(),
+		errors.New("unexpected failure"),
+	)
+
+	requireErrorIs(t, err, ErrInvalidListKey)
 }

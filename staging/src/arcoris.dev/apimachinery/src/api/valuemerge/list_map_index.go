@@ -111,7 +111,7 @@ func (m *merger) listMapEntryAt(
 		listmapkey.Options{Resolver: m.resolver, MaxDepth: m.maxDepth},
 	)
 	if err != nil {
-		return listMapEntry{}, mergeListMapKeyError(err)
+		return listMapEntry{}, mergeListMapKeyError(indexPath, err)
 	}
 
 	return listMapEntry{

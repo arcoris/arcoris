@@ -32,6 +32,10 @@ func (m *merger) mergeOrderedList(
 ) (operand, error) {
 	baseItems := listItems(base)
 	overlayItems := listItems(overlay)
+	if err := validateOrderedAppendContiguous(path, len(baseItems), len(overlayItems), fields); err != nil {
+		return operand{}, err
+	}
+
 	items := make([]value.Value, 0, orderedListCapacity(baseItems, overlayItems))
 
 	for i, item := range baseItems {
@@ -105,4 +109,36 @@ func orderedListCapacity(base []value.Value, overlay []value.Value) int {
 	}
 
 	return len(base)
+}
+
+// validateOrderedAppendContiguous prevents selected appends from changing
+// physical indexes by skipping earlier missing indexes.
+func validateOrderedAppendContiguous(
+	path fieldpath.Path,
+	baseLen int,
+	overlayLen int,
+	fields fieldpath.Set,
+) error {
+	for i := baseLen; i < overlayLen; i++ {
+		if hasSelectedChild(fields, path.Index(i)) {
+			continue
+		}
+
+		for j := i + 1; j < overlayLen; j++ {
+			if hasSelectedChild(fields, path.Index(j)) {
+				return errorfAt(
+					path.Index(j),
+					ErrUnsupportedMerge,
+					ErrorReasonUnsupportedMerge,
+					"ordered-list append index %d requires selected index %d",
+					j,
+					i,
+				)
+			}
+		}
+
+		return nil
+	}
+
+	return nil
 }

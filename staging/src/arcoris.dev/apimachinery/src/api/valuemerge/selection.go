@@ -23,9 +23,6 @@ type mergeSelection struct {
 
 	// descendants contains selected paths strictly below the current path.
 	descendants fieldpath.Set
-
-	// ancestor reports that an already-selected parent covers the current path.
-	ancestor bool
 }
 
 // selected reports whether the current node must do merge work.
@@ -43,8 +40,6 @@ func selectAt(fields fieldpath.Set, path fieldpath.Path) mergeSelection {
 			selection.exact = true
 		case selected.IsDescendantOf(path):
 			selection.descendants = selection.descendants.Insert(selected)
-		case path.IsDescendantOf(selected):
-			selection.ancestor = true
 		}
 	}
 

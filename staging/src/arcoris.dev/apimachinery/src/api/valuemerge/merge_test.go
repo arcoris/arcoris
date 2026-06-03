@@ -20,7 +20,6 @@ import (
 	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
-	"arcoris.dev/apimachinery/api/valuecompare"
 )
 
 func TestMergeEmptyFieldsPreservesBase(t *testing.T) {
@@ -33,6 +32,43 @@ func TestMergeEmptyFieldsPreservesBase(t *testing.T) {
 	}
 
 	requireValue(t, got, base)
+}
+
+func TestMergeEmptyFieldsDoesNotRequireValidOverlay(t *testing.T) {
+	base := str("old")
+
+	got, err := Merge(
+		base,
+		value.Value{},
+		types.String().Type(),
+		fieldpath.EmptySet(),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireValue(t, got, base)
+}
+
+func TestMergeEmptyFieldsClonesBase(t *testing.T) {
+	base := obj(member("name", str("old")))
+
+	got, err := Merge(
+		base,
+		value.Value{},
+		types.Object(types.Field("name").String().Optional()).Type(),
+		fieldpath.EmptySet(),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireValue(t, got, base)
+	if got.IsZero() {
+		t.Fatalf("got is zero")
+	}
 }
 
 func TestMergeDoesNotMutateBase(t *testing.T) {
@@ -109,30 +145,4 @@ func TestMergeKindMismatchReturnsKindMismatch(t *testing.T) {
 	)
 
 	requireErrorIs(t, err, ErrKindMismatch)
-}
-
-func TestMergeValueCompareModifiedSet(t *testing.T) {
-	descriptor := types.Object(
-		types.Field("spec").Object(
-			types.Field("image").String().Optional(),
-			types.Field("replicas").Int64().Optional(),
-		).Optional(),
-	).Type()
-	base := obj(member("spec", obj(member("image", str("api:v1")), member("replicas", intValue(3)))))
-	overlay := obj(member("spec", obj(member("image", str("api:v1")), member("replicas", intValue(5)))))
-
-	changes, err := valuecompare.Compare(base, overlay, descriptor, valuecompare.Options{})
-	if err != nil {
-		t.Fatalf("Compare returned error: %v", err)
-	}
-
-	got, err := Merge(base, overlay, descriptor, changes.Modified, Options{})
-	if err != nil {
-		t.Fatalf("Merge returned error: %v", err)
-	}
-
-	view, _ := got.Object()
-	spec, _ := view.Get("spec")
-	requireStringMember(t, spec, "image", "api:v1")
-	requireIntegerMember(t, spec, "replicas", 5)
 }

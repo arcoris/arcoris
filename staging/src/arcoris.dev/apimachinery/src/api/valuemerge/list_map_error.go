@@ -38,10 +38,16 @@ func duplicateListMapEntryError(
 }
 
 // mergeListMapKeyError maps shared ListMap key failures to merge diagnostics.
-func mergeListMapKeyError(err error) error {
+func mergeListMapKeyError(path fieldpath.Path, err error) error {
 	var keyError *listmapkey.Error
 	if !errors.As(err, &keyError) {
-		return err
+		return wrapAt(
+			path,
+			ErrInvalidListKey,
+			ErrorReasonInvalidListKey,
+			"list map key extraction failed",
+			err,
+		)
 	}
 
 	sentinel, reason := mergeListMapKeyErrorKind(keyError.Kind)

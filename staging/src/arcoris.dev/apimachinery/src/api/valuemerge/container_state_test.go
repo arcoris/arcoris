@@ -22,11 +22,15 @@ import (
 )
 
 func TestPreserveWithoutOverlayContainerPreservesBaseNull(t *testing.T) {
-	got, ok := preserveWithoutOverlayContainer(
+	got, ok, err := preserveWithoutOverlayContainer(
+		root().Field("spec"),
 		valuepresence.Present(value.NullValue()),
 		valuepresence.Absent(),
 		value.KindObject,
 	)
+	if err != nil {
+		t.Fatalf("preserveWithoutOverlayContainer returned error: %v", err)
+	}
 
 	if !ok {
 		t.Fatalf("ok = false")
@@ -37,11 +41,15 @@ func TestPreserveWithoutOverlayContainerPreservesBaseNull(t *testing.T) {
 }
 
 func TestPreserveWithoutOverlayContainerReturnsAbsentForAbsentBase(t *testing.T) {
-	got, ok := preserveWithoutOverlayContainer(
+	got, ok, err := preserveWithoutOverlayContainer(
+		root().Field("spec"),
 		valuepresence.Absent(),
 		valuepresence.Absent(),
 		value.KindObject,
 	)
+	if err != nil {
+		t.Fatalf("preserveWithoutOverlayContainer returned error: %v", err)
+	}
 
 	if !ok {
 		t.Fatalf("ok = false")
@@ -52,13 +60,28 @@ func TestPreserveWithoutOverlayContainerReturnsAbsentForAbsentBase(t *testing.T)
 }
 
 func TestPreserveWithoutOverlayContainerContinuesWhenOverlayHasContainer(t *testing.T) {
-	_, ok := preserveWithoutOverlayContainer(
+	_, ok, err := preserveWithoutOverlayContainer(
+		root().Field("spec"),
 		valuepresence.Absent(),
 		valuepresence.Present(obj()),
 		value.KindObject,
 	)
+	if err != nil {
+		t.Fatalf("preserveWithoutOverlayContainer returned error: %v", err)
+	}
 
 	if ok {
 		t.Fatalf("ok = true")
 	}
+}
+
+func TestPreserveWithoutOverlayContainerRejectsWrongKindBase(t *testing.T) {
+	_, _, err := preserveWithoutOverlayContainer(
+		root().Field("spec"),
+		valuepresence.Present(str("invalid")),
+		valuepresence.Absent(),
+		value.KindObject,
+	)
+
+	requireErrorIs(t, err, ErrKindMismatch)
 }

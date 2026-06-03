@@ -20,7 +20,7 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
-func TestMergeUnknownRejectReturnsUnknownField(t *testing.T) {
+func TestMergeUnknownRejectSelectedUnknownReturnsUnknownField(t *testing.T) {
 	descriptor := types.Object().UnknownFields(types.UnknownReject).Type()
 
 	_, err := Merge(
@@ -28,6 +28,38 @@ func TestMergeUnknownRejectReturnsUnknownField(t *testing.T) {
 		obj(member("xExtra", str("new"))),
 		descriptor,
 		pathSet(root().Field("xExtra")),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrUnknownField)
+}
+
+func TestMergeUnknownRejectUnselectedBaseUnknownReturnsUnknownField(t *testing.T) {
+	descriptor := types.Object(
+		types.Field("name").String().Optional(),
+	).UnknownFields(types.UnknownReject).Type()
+
+	_, err := Merge(
+		obj(member("name", str("old")), member("xExtra", str("old"))),
+		obj(member("name", str("new"))),
+		descriptor,
+		pathSet(root().Field("name")),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrUnknownField)
+}
+
+func TestMergeUnknownRejectUnselectedOverlayUnknownReturnsUnknownField(t *testing.T) {
+	descriptor := types.Object(
+		types.Field("name").String().Optional(),
+	).UnknownFields(types.UnknownReject).Type()
+
+	_, err := Merge(
+		obj(member("name", str("old"))),
+		obj(member("name", str("new")), member("xExtra", str("new"))),
+		descriptor,
+		pathSet(root().Field("name")),
 		Options{},
 	)
 
@@ -54,6 +86,63 @@ func TestMergeUnknownPruneIgnoresUnknown(t *testing.T) {
 
 	requireStringMember(t, got, "name", "old")
 	requireNoMember(t, got, "xExtra")
+}
+
+func TestMergeUnknownPruneUnselectedBaseUnknownPruned(t *testing.T) {
+	descriptor := types.Object(
+		types.Field("name").String().Optional(),
+	).UnknownFields(types.UnknownPrune).Type()
+
+	got, err := Merge(
+		obj(member("name", str("old")), member("xExtra", str("old"))),
+		obj(member("name", str("new"))),
+		descriptor,
+		pathSet(root().Field("name")),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireStringMember(t, got, "name", "new")
+	requireNoMember(t, got, "xExtra")
+}
+
+func TestMergeUnknownPruneSelectedUnknownIgnored(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownPrune).Type()
+
+	got, err := Merge(
+		obj(member("xExtra", str("old"))),
+		obj(member("xExtra", str("new"))),
+		descriptor,
+		pathSet(root().Field("xExtra")),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireNoMember(t, got, "xExtra")
+}
+
+func TestMergeUnknownPreserveUnselectedBaseUnknownPreserved(t *testing.T) {
+	descriptor := types.Object(
+		types.Field("name").String().Optional(),
+	).UnknownFields(types.UnknownPreserve).Type()
+
+	got, err := Merge(
+		obj(member("name", str("old")), member("xExtra", str("old"))),
+		obj(member("name", str("new"))),
+		descriptor,
+		pathSet(root().Field("name")),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireStringMember(t, got, "name", "new")
+	requireStringMember(t, got, "xExtra", "old")
 }
 
 func TestMergeUnknownPreserveExactCopiesOpaque(t *testing.T) {

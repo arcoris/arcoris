@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/types"
+	"arcoris.dev/apimachinery/api/value"
 )
 
 func TestMergeObjectSelectedField(t *testing.T) {
@@ -138,6 +139,93 @@ func TestMergeObjectNestedSelectedField(t *testing.T) {
 	spec, _ := specView.Get("spec")
 	requireStringMember(t, spec, "image", "api:v2")
 	requireIntegerMember(t, spec, "replicas", 3)
+}
+
+func TestMergeDescendantIntoWrongKindBaseReturnsKindMismatch(t *testing.T) {
+	descriptor := types.Object(
+		types.Field("spec").Object(
+			types.Field("replicas").Int64().Optional(),
+		).Optional(),
+	).Type()
+
+	_, err := Merge(
+		obj(member("spec", str("invalid"))),
+		obj(),
+		descriptor,
+		pathSet(root().Field("spec").Field("replicas")),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrKindMismatch)
+}
+
+func TestMergeDescendantIntoAbsentBaseAndAbsentOverlayNoops(t *testing.T) {
+	descriptor := types.Object(
+		types.Field("spec").Object(
+			types.Field("replicas").Int64().Optional(),
+		).Optional(),
+	).Type()
+
+	got, err := Merge(
+		obj(),
+		obj(),
+		descriptor,
+		pathSet(root().Field("spec").Field("replicas")),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireNoMember(t, got, "spec")
+}
+
+func TestMergeDescendantIntoNullBaseAndAbsentOverlayPreservesNull(t *testing.T) {
+	descriptor := types.Object(
+		types.Field("spec").Object(
+			types.Field("replicas").Int64().Optional(),
+		).Optional(),
+	).Type()
+
+	got, err := Merge(
+		obj(member("spec", value.NullValue())),
+		obj(),
+		descriptor,
+		pathSet(root().Field("spec").Field("replicas")),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	spec := requireMember(t, got, "spec")
+	if !spec.IsNull() {
+		t.Fatalf("spec is not null")
+	}
+}
+
+func TestMergeDescendantIntoAbsentBaseCreatesFromOverlayContainer(t *testing.T) {
+	descriptor := types.Object(
+		types.Field("spec").Object(
+			types.Field("image").String().Optional(),
+			types.Field("replicas").Int64().Optional(),
+		).Optional(),
+	).Type()
+
+	got, err := Merge(
+		obj(),
+		obj(member("spec", obj(member("image", str("ignored")), member("replicas", intValue(5))))),
+		descriptor,
+		pathSet(root().Field("spec").Field("replicas")),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	spec := requireMember(t, got, "spec")
+	requireIntegerMember(t, spec, "replicas", 5)
+	requireNoMember(t, spec, "image")
 }
 
 func TestMergeObjectRequiredFieldAbsentIsNotValidationError(t *testing.T) {

@@ -35,7 +35,11 @@ func (m *merger) mergeList(
 	if err := requireListOperand(path, overlay); err != nil {
 		return operand{}, err
 	}
-	if preserved, ok := preserveWithoutOverlayContainer(base, overlay, value.KindList); ok {
+	preserved, ok, err := preserveWithoutOverlayContainer(path, base, overlay, value.KindList)
+	if err != nil {
+		return operand{}, err
+	}
+	if ok {
 		return preserved, nil
 	}
 

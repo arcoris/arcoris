@@ -109,11 +109,19 @@ func (m *merger) mergeObjectMember(
 ) (operand, error) {
 	selection := selectAt(fields, path)
 	if !selection.selected() {
-		if known || unknown == types.UnknownPreserve {
+		switch {
+		case known || unknown == types.UnknownPreserve:
 			return base.Clone(), nil
+		case unknown == types.UnknownReject:
+			return operand{}, errorAt(
+				path,
+				ErrUnknownField,
+				ErrorReasonUnknownField,
+				"object field is not declared",
+			)
+		default:
+			return valuepresence.Absent(), nil
 		}
-
-		return valuepresence.Absent(), nil
 	}
 
 	if known {

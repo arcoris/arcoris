@@ -49,3 +49,15 @@ func TestReplaceSubtreeAbsentRemoves(t *testing.T) {
 		t.Fatalf("replacement is present")
 	}
 }
+
+func TestMergeExactSelectedReplacementChecksKind(t *testing.T) {
+	_, err := Merge(
+		obj(),
+		str("invalid"),
+		types.Object().Type(),
+		pathSet(root()),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrKindMismatch)
+}

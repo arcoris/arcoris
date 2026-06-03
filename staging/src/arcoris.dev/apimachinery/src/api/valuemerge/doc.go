@@ -30,6 +30,13 @@
 // perform admission, decode wire formats, normalize values, apply defaults,
 // access storage, or validate object/resource metadata.
 //
+// Callers are expected to validate base and overlay values with
+// api/valuevalidation before merge when full descriptor conformance is required.
+// valuemerge performs only the defensive checks needed for selected traversal
+// and replacement shape. Exact subtree replacement checks zero values, TypeRef
+// resolution, and descriptor/value kind compatibility; it does not fully
+// validate the replacement subtree.
+//
 // Higher layers decide which fields are selected for merge. For example, a
 // future apply layer may combine valuevalidation, valuefieldset, valuecompare,
 // fieldownership, and valuemerge.
