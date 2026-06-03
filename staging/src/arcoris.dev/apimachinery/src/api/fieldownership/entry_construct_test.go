@@ -35,6 +35,18 @@ func TestNewEntryRejectsInvalidOwner(t *testing.T) {
 	requireErrorIs(t, err, ErrInvalidEntry)
 }
 
+func TestNewEntryInvalidOwnerIsInvalidEntryAndInvalidOwner(t *testing.T) {
+	_, err := NewEntry("", set(imagePath()))
+
+	requireErrorIs(t, err, ErrInvalidEntry)
+	requireErrorIs(t, err, ErrInvalidOwner)
+
+	var fieldError *Error
+	if !errors.As(err, &fieldError) {
+		t.Fatalf("errors.As did not find Error")
+	}
+}
+
 func TestNewEntryAllowsEmptyFields(t *testing.T) {
 	entry, err := NewEntry("user-cli", fieldpath.EmptySet())
 

@@ -15,9 +15,24 @@
 package fieldownership
 
 // ConflictError wraps a non-empty conflict set for errors.Is support.
+//
+// Prefer NewConflictError when converting conflicts into an error. It returns
+// nil for empty conflict sets and stores non-empty conflicts in deterministic
+// order.
 type ConflictError struct {
 	// Conflicts contains the deterministic conflict details.
 	Conflicts ConflictSet
+}
+
+// NewConflictError returns nil for empty conflicts or a deterministic conflict error.
+func NewConflictError(conflicts ConflictSet) error {
+	if conflicts.IsEmpty() {
+		return nil
+	}
+
+	return &ConflictError{
+		Conflicts: sortedConflicts(conflicts),
+	}
 }
 
 // Error returns deterministic conflict text.

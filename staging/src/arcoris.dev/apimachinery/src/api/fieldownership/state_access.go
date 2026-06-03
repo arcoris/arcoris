@@ -53,6 +53,8 @@ func (s State) Fields() fieldpath.Set {
 }
 
 // FieldsFor returns fields owned by owner, or an empty set when owner is absent.
+//
+// Invalid owner values behave as absent because this query API has no error return.
 func (s State) FieldsFor(owner Owner) fieldpath.Set {
 	for _, entry := range s.entries {
 		if entry.owner == owner {

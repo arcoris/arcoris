@@ -90,3 +90,18 @@ func TestNewStateAllowsNoEntries(t *testing.T) {
 	requireNoError(t, err)
 	requireEqual(t, state.Fields().Equal(fieldpath.EmptySet()), true)
 }
+
+func TestNewStateDoesNotRetainCallerEntrySlice(t *testing.T) {
+	entries := []Entry{
+		entry("user-cli", imagePath()),
+		entry("autoscaler", replicasPath()),
+	}
+	state, err := NewState(entries...)
+
+	requireNoError(t, err)
+
+	entries[0] = entry("other", metadataPath())
+
+	requireOwners(t, state.Owners(), "autoscaler", "user-cli")
+	requireSet(t, state.FieldsFor("user-cli"), "$.spec.image")
+}

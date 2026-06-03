@@ -40,3 +40,32 @@ func TestNilConflictErrorString(t *testing.T) {
 
 	requireEqual(t, err.Error(), "<nil>")
 }
+
+func TestNewConflictErrorEmptyReturnsNil(t *testing.T) {
+	requireEqual(t, NewConflictError(ConflictSet{}) == nil, true)
+}
+
+func TestNewConflictErrorNonEmptyReturnsErrConflict(t *testing.T) {
+	err := NewConflictError(ConflictSet{
+		{Owner: "autoscaler", OwnedPath: replicasPath(), AttemptedPath: replicasPath()},
+	})
+
+	requireErrorIs(t, err, ErrConflict)
+}
+
+func TestNewConflictErrorSortsConflicts(t *testing.T) {
+	err := NewConflictError(ConflictSet{
+		{Owner: "user-cli", OwnedPath: imagePath(), AttemptedPath: specPath()},
+		{Owner: "autoscaler", OwnedPath: replicasPath(), AttemptedPath: specPath()},
+	})
+
+	var conflictError *ConflictError
+	if !errors.As(err, &conflictError) {
+		t.Fatalf("errors.As did not find ConflictError")
+	}
+
+	requireConflictStrings(t, conflictError.Conflicts,
+		"autoscaler:$.spec.replicas->$.spec",
+		"user-cli:$.spec.image->$.spec",
+	)
+}
