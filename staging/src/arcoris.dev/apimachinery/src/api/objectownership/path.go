@@ -32,7 +32,7 @@ func (p Path) String() string {
 //
 // It validates that p is present, parseable, and already canonical.
 func (p Path) Parse() (fieldpath.Path, error) {
-	return parsePath("", p)
+	return parsePath("path", p)
 }
 
 // parsePath validates and parses canonical document path text.

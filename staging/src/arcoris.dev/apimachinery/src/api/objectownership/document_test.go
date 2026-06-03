@@ -27,3 +27,9 @@ func TestDocumentIsEmpty(t *testing.T) {
 		t.Fatalf("document with entry IsEmpty() = true")
 	}
 }
+
+func TestDocumentIsEmptyIgnoresVersionValidity(t *testing.T) {
+	if !(Document{Version: "unsupported"}).IsEmpty() {
+		t.Fatalf("document with invalid version but no ownership IsEmpty() = false")
+	}
+}

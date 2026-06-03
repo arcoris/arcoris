@@ -24,3 +24,9 @@ func TestEntryIsEmpty(t *testing.T) {
 		t.Fatalf("entry with field IsEmpty() = true")
 	}
 }
+
+func TestEntryIsEmptyDoesNotValidateOwner(t *testing.T) {
+	if !documentEntry(" ").IsEmpty() {
+		t.Fatalf("entry with invalid owner but no fields IsEmpty() = false")
+	}
+}

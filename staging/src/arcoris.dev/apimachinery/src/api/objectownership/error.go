@@ -27,7 +27,8 @@ var (
 	// ErrUnsupportedVersion classifies unknown document versions.
 	ErrUnsupportedVersion = errors.New("unsupported object ownership document version")
 
-	// ErrInvalidSurface classifies malformed surface ownership data.
+	// ErrInvalidSurface classifies defensive surface invariant failures after
+	// entry-level validation has already succeeded.
 	ErrInvalidSurface = errors.New("invalid object ownership surface")
 
 	// ErrInvalidEntry classifies malformed owner/path records.

@@ -26,6 +26,11 @@ import (
 // The conversion accepts valid raw document shape, canonicalizes it through
 // Normalize, and then builds fieldownership.State for each object surface. It
 // does not perform codec decoding or storage reads.
+//
+// StateFromDocument intentionally performs a second surface-to-state pass after
+// Normalize. The extra pass keeps validation, canonical document output, and
+// final State construction explicit until real performance targets justify
+// merging those steps.
 func StateFromDocument(doc Document) (State, error) {
 	normalized, err := Normalize(doc)
 	if err != nil {

@@ -27,3 +27,15 @@ func TestSurfaceIsEmpty(t *testing.T) {
 		t.Fatalf("surface with owned field IsEmpty() = true")
 	}
 }
+
+func TestSurfaceIsEmptyDoesNotValidateEntries(t *testing.T) {
+	surface := Surface{
+		Entries: []Entry{
+			documentEntry(" ", ""),
+		},
+	}
+
+	if surface.IsEmpty() {
+		t.Fatalf("surface with invalid but mentioned field IsEmpty() = true")
+	}
+}

@@ -19,12 +19,14 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/fieldownership"
+	"arcoris.dev/apimachinery/api/fieldpath"
 )
 
 func TestInvalidPathErrorWrapsObjectOwnershipInvalidPath(t *testing.T) {
 	err := Validate(document(documentEntry("user", "image")))
 
 	requireErrorIs(t, err, ErrInvalidPath)
+	requireErrorIs(t, err, fieldpath.ErrInvalidPath)
 }
 
 func TestInvalidOwnerErrorWrapsFieldOwnershipInvalidOwner(t *testing.T) {

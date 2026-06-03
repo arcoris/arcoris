@@ -94,3 +94,15 @@ func TestValidateRejectsNonCanonicalPathIfApplicable(t *testing.T) {
 
 	requireErrorIs(t, err, ErrInvalidPath)
 }
+
+func TestValidateRejectsNonCanonicalPathWithObjectOwnershipError(t *testing.T) {
+	err := Validate(document(documentEntry("user", `$."image"`)))
+
+	requireErrorIs(t, err, ErrInvalidPath)
+	requireObjectOwnershipError(
+		t,
+		err,
+		"document.desired.entries[0].fields[0]",
+		ErrorReasonInvalidPath,
+	)
+}

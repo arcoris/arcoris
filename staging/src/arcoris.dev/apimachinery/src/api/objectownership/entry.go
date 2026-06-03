@@ -32,6 +32,9 @@ type Entry struct {
 
 // IsEmpty reports whether the entry owns no fields.
 //
+// IsEmpty is not a validity check. It ignores Owner validity and path validity,
+// and only answers whether the entry mentions fields.
+//
 // Empty entries can appear in raw documents, but Normalize removes them from
 // canonical output and StateFromDocument ignores them through normalization.
 func (e Entry) IsEmpty() bool {

@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/fieldownership"
+	"arcoris.dev/apimachinery/api/fieldpath"
 )
 
 func TestStateFromDocumentEmptyDocument(t *testing.T) {
@@ -59,6 +60,25 @@ func TestStateFromDocumentRejectsInvalidPath(t *testing.T) {
 	_, err := StateFromDocument(document(documentEntry("user", "image")))
 
 	requireErrorIs(t, err, ErrInvalidPath)
+}
+
+func TestStateFromDocumentRejectsInvalidPathWithFieldPathCause(t *testing.T) {
+	_, err := StateFromDocument(document(documentEntry("user", "image")))
+
+	requireErrorIs(t, err, ErrInvalidPath)
+	requireErrorIs(t, err, fieldpath.ErrInvalidPath)
+}
+
+func TestStateFromDocumentRejectsNonCanonicalPath(t *testing.T) {
+	_, err := StateFromDocument(document(documentEntry("user", `$."image"`)))
+
+	requireErrorIs(t, err, ErrInvalidPath)
+	requireObjectOwnershipError(
+		t,
+		err,
+		"document.desired.entries[0].fields[0]",
+		ErrorReasonInvalidPath,
+	)
 }
 
 func TestStateFromDocumentMergesDuplicateOwners(t *testing.T) {

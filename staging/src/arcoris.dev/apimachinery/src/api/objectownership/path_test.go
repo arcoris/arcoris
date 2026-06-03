@@ -14,7 +14,11 @@
 
 package objectownership
 
-import "testing"
+import (
+	"testing"
+
+	"arcoris.dev/apimachinery/api/fieldpath"
+)
 
 func TestPathString(t *testing.T) {
 	if Path("$.image").String() != "$.image" {
@@ -35,4 +39,25 @@ func TestPathParseRejectsEmpty(t *testing.T) {
 	_, err := Path("").Parse()
 
 	requireErrorIs(t, err, ErrInvalidPath)
+}
+
+func TestPathParseRejectsEmptyReportsPathDiagnostic(t *testing.T) {
+	_, err := Path("").Parse()
+
+	requireObjectOwnershipError(t, err, "path", ErrorReasonInvalidPath)
+}
+
+func TestPathParseRejectsInvalidPathReportsPathDiagnostic(t *testing.T) {
+	_, err := Path("image").Parse()
+
+	requireErrorIs(t, err, ErrInvalidPath)
+	requireErrorIs(t, err, fieldpath.ErrInvalidPath)
+	requireObjectOwnershipError(t, err, "path", ErrorReasonInvalidPath)
+}
+
+func TestPathParseRejectsNonCanonicalPath(t *testing.T) {
+	_, err := Path(`$."image"`).Parse()
+
+	requireErrorIs(t, err, ErrInvalidPath)
+	requireObjectOwnershipError(t, err, "path", ErrorReasonInvalidPath)
 }

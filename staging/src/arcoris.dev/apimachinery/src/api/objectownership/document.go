@@ -31,6 +31,10 @@ type Document struct {
 
 // IsEmpty reports whether the document contains no owned object fields.
 //
+// IsEmpty is not a validity check. It ignores Version and every other document
+// validation concern, and only answers whether normalized ownership would be
+// empty.
+//
 // Empty raw entries do not make a document semantically non-empty because
 // Normalize prunes them before constructing State.
 func (d Document) IsEmpty() bool {

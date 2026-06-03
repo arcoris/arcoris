@@ -28,6 +28,10 @@ type Surface struct {
 
 // IsEmpty reports whether the surface contains no owned fields.
 //
+// IsEmpty is not a validity check. It ignores owner validity, path validity,
+// duplicate entries, and ordering, and only answers whether any entry mentions
+// at least one field.
+//
 // This is semantic emptiness, not raw slice emptiness: entries with no fields
 // are ignored because they would be pruned from normalized documents.
 func (s Surface) IsEmpty() bool {
