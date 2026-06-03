@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"arcoris.dev/admission"
+	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
 	"arcoris.dev/resilience/bulkhead"
 	"arcoris.dev/resilience/deadline"
 	"arcoris.dev/resilience/retrybudget"
@@ -48,7 +49,7 @@ func TestBulkheadAdmissionResultShape(t *testing.T) {
 	if !denied.IsValid() || !denied.IsDenied() {
 		t.Fatalf("bulkhead denial = %+v, want valid denied", denied.Decision())
 	}
-	if got, want := denied.Decision(), admission.Deny(admission.ReasonCapacityExhausted); got != want {
+	if got, want := denied.Decision(), admission.Deny(admissionbuiltin.ReasonCapacityExhausted); got != want {
 		t.Fatalf("denied decision = %+v, want %+v", got, want)
 	}
 	if denied.HasGrant() || !denied.HasMetadata() {
@@ -84,7 +85,7 @@ func TestRetryBudgetAdmissionResultShape(t *testing.T) {
 	if !denied.IsValid() || !denied.IsDenied() {
 		t.Fatalf("retrybudget denial = %+v, want valid denied", denied.Decision())
 	}
-	if got, want := denied.Decision(), admission.Deny(admission.ReasonBudgetExhausted); got != want {
+	if got, want := denied.Decision(), admission.Deny(admissionbuiltin.ReasonBudgetExhausted); got != want {
 		t.Fatalf("denied decision = %+v, want %+v", got, want)
 	}
 	if denied.HasGrant() || !denied.HasMetadata() {
@@ -121,7 +122,7 @@ func TestDeadlineAdmissionResultShape(t *testing.T) {
 	if !denied.IsValid() || !denied.IsDenied() {
 		t.Fatalf("deadline denied = %+v, want valid denied", denied.Decision())
 	}
-	if got, want := denied.Decision(), admission.Deny(admission.ReasonDeadlineExceeded); got != want {
+	if got, want := denied.Decision(), admission.Deny(admissionbuiltin.ReasonDeadlineExceeded); got != want {
 		t.Fatalf("denied decision = %+v, want %+v", got, want)
 	}
 	if denied.HasGrant() || !denied.HasMetadata() {

@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"arcoris.dev/admission"
+	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
 	"arcoris.dev/resilience/retrybudget"
 	"arcoris.dev/snapshot"
 )
@@ -95,7 +96,7 @@ func TestLimiterTryAdmitDeniedMapsToBudgetExhaustedAdmissionResult(t *testing.T)
 	if !result.HasMetadata() {
 		t.Fatal("TryAdmit denied result has no metadata")
 	}
-	if got, want := result.Decision(), admission.Deny(admission.ReasonBudgetExhausted); got != want {
+	if got, want := result.Decision(), admission.Deny(admissionbuiltin.ReasonBudgetExhausted); got != want {
 		t.Fatalf("decision = %+v, want %+v", got, want)
 	}
 
@@ -138,7 +139,7 @@ func TestFixedWindowTryAdmitAdmissionDeniedMapsToDeniedNoGrant(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("result is invalid: %+v", result.Decision())
 	}
-	if got, want := result.Decision(), admission.Deny(admission.ReasonBudgetExhausted); got != want {
+	if got, want := result.Decision(), admission.Deny(admissionbuiltin.ReasonBudgetExhausted); got != want {
 		t.Fatalf("decision = %+v, want %+v", got, want)
 	}
 	if result.HasGrant() {

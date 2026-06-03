@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
 import (
@@ -20,6 +19,7 @@ import (
 	"time"
 
 	"arcoris.dev/admission"
+	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
 )
 
 func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
@@ -66,7 +66,7 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 			decision: Decision{
 				Reason: ReasonExpired,
 			},
-			want:   admission.Deny(admission.ReasonDeadlineExceeded),
+			want:   admission.Deny(admissionbuiltin.ReasonDeadlineExceeded),
 			denied: true,
 			metadata: Decision{
 				Reason: ReasonExpired,
@@ -78,7 +78,7 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 				Remaining: time.Second,
 				Reason:    ReasonInsufficientBudget,
 			},
-			want:   admission.Deny(admission.ReasonDeadlineExceeded),
+			want:   admission.Deny(admissionbuiltin.ReasonDeadlineExceeded),
 			denied: true,
 			metadata: Decision{
 				Remaining: time.Second,
@@ -90,7 +90,7 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 			decision: Decision{
 				Reason: ReasonContextDone,
 			},
-			want:   admission.Deny(admission.ReasonCanceled),
+			want:   admission.Deny(admissionbuiltin.ReasonCanceled),
 			denied: true,
 			metadata: Decision{
 				Reason: ReasonContextDone,
@@ -102,7 +102,7 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 				Remaining: time.Second,
 				Reason:    ReasonContextDone,
 			},
-			want:   admission.Deny(admission.ReasonCanceled),
+			want:   admission.Deny(admissionbuiltin.ReasonCanceled),
 			denied: true,
 			metadata: Decision{
 				Remaining: time.Second,

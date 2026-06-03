@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package bulkhead
 
 import (
 	"arcoris.dev/admission"
+	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
 	"arcoris.dev/snapshot"
 )
 
@@ -35,7 +35,7 @@ func (b *Bulkhead) TryAdmit(req Request) admission.Result[*Lease, snapshot.Snaps
 	lease, snap, ok := b.TryAcquireAmount(req.Amount)
 	if !ok {
 		return admission.DeniedFor[*Lease](
-			admission.ReasonCapacityExhausted,
+			admissionbuiltin.ReasonCapacityExhausted,
 			snap,
 		)
 	}

@@ -71,7 +71,7 @@ func TestResultStateHelpers(t *testing.T) {
 		{
 			name: "denied no metadata",
 			result: resultWith(
-				Deny(ReasonCapacityExhausted),
+				Deny(Reason("capacity_exhausted")),
 				noneString(),
 				noneString(),
 			),

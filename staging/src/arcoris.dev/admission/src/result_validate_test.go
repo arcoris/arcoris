@@ -34,7 +34,7 @@ func TestResultIsValidRejectsInvalidGrantShape(t *testing.T) {
 		{
 			name: "denied with grant",
 			result: resultWith(
-				Deny(ReasonCapacityExhausted),
+				Deny(Reason("capacity_exhausted")),
 				someString("lease"),
 				noneMetadata(),
 			),

@@ -4,6 +4,7 @@ toolchain go1.25.9
 
 use (
 	./staging/src/arcoris.dev/admission/src
+	./staging/src/arcoris.dev/admissioncatalog/src
 	./staging/src/arcoris.dev/apimachinery/src
 	./staging/src/arcoris.dev/atomicx/src
 	./staging/src/arcoris.dev/capacity/src

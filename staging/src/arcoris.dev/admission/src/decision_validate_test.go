@@ -26,7 +26,7 @@ func TestDecisionIsValidAcceptsConstructedDecisions(t *testing.T) {
 		{name: "admit", decision: Admit(ReasonAdmitted)},
 		{name: "commit", decision: Commit(ReasonAdmitted)},
 		{name: "grant", decision: Grant(ReasonAdmitted)},
-		{name: "deny", decision: Deny(ReasonCapacityExhausted)},
+		{name: "deny", decision: Deny(Reason("capacity_exhausted"))},
 		{name: "queue", decision: Queue(ReasonQueued)},
 		{name: "defer", decision: Defer(ReasonDeferred)},
 		{name: "admitted default", decision: Admitted()},
@@ -79,7 +79,7 @@ func TestDecisionIsValidRejectsInvalidCombinations(t *testing.T) {
 			name: "denied committed effect",
 			decision: Decision{
 				Outcome: OutcomeDenied,
-				Reason:  ReasonCapacityExhausted,
+				Reason:  Reason("capacity_exhausted"),
 				Effect:  EffectCommitted,
 			},
 		},

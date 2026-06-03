@@ -25,39 +25,6 @@ const maxComponentKindLength = 64
 // instance data.
 type ComponentKind string
 
-const (
-	// KindBulkhead describes bounded in-flight isolation components.
-	KindBulkhead ComponentKind = "bulkhead"
-
-	// KindRetryBudget describes components that limit retry amplification.
-	KindRetryBudget ComponentKind = "retry_budget"
-
-	// KindDeadline describes components that derive or enforce execution
-	// budgets from deadlines.
-	KindDeadline ComponentKind = "deadline"
-
-	// KindRateLimiter describes components that gate work by rate or token
-	// availability.
-	KindRateLimiter ComponentKind = "rate_limiter"
-
-	// KindQueue describes components that can take ownership of waiting work.
-	KindQueue ComponentKind = "queue"
-
-	// KindScheduler describes components that choose when or where work runs.
-	KindScheduler ComponentKind = "scheduler"
-
-	// KindWorkerPool describes components that own worker execution capacity.
-	KindWorkerPool ComponentKind = "worker_pool"
-
-	// KindOverloadGate describes components that deny or defer work under
-	// overload.
-	KindOverloadGate ComponentKind = "overload_gate"
-
-	// KindTenantIsolation describes components that isolate tenants or other
-	// workload classes from each other.
-	KindTenantIsolation ComponentKind = "tenant_isolation"
-)
-
 // IsValid reports whether k is a valid lower_snake_case component kind.
 //
 // Custom kinds are allowed, but they must remain short, stable, ASCII

@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
-import "arcoris.dev/admission"
+import (
+	"arcoris.dev/admission"
+	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
+)
 
 // invalidAdmissionReason preserves invalid deadline decisions during conversion
 // to admission.Result.
@@ -32,9 +34,9 @@ const invalidAdmissionReason admission.Reason = ""
 // denials. No grant is returned, no release or rollback path exists, and the
 // deadline Decision itself is carried as metadata.
 //
-// ReasonInsufficientBudget maps to admission.ReasonDeadlineExceeded because the
+// ReasonInsufficientBudget maps to builtin.ReasonDeadlineExceeded because the
 // remaining execution budget cannot satisfy the required minimum at this
-// boundary. ReasonContextDone maps to admission.ReasonCanceled because Decision
+// boundary. ReasonContextDone maps to builtin.ReasonCanceled because Decision
 // records that the parent context was already done, not whether the original
 // cause was context.Canceled or context.DeadlineExceeded.
 func (d Decision) AdmissionResult() admission.Result[
@@ -64,12 +66,12 @@ func (d Decision) AdmissionResult() admission.Result[
 	switch d.Reason {
 	case ReasonContextDone:
 		return admission.Denied(
-			admission.ReasonCanceled,
+			admissionbuiltin.ReasonCanceled,
 			d,
 		)
 	case ReasonExpired, ReasonInsufficientBudget:
 		return admission.Denied(
-			admission.ReasonDeadlineExceeded,
+			admissionbuiltin.ReasonDeadlineExceeded,
 			d,
 		)
 	default:

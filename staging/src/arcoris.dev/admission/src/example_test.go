@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"arcoris.dev/admission"
+	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
 )
 
 type lease struct {
@@ -47,7 +48,7 @@ func ExampleResult() {
 func ExampleAdmitterFunc() {
 	admitter := admission.AdmitterFunc[admission.Unit, admission.NoGrant, admission.NoMetadata](
 		func(admission.Unit) admission.Result[admission.NoGrant, admission.NoMetadata] {
-			return admission.DeniedNoMetadata(admission.ReasonCapacityExhausted)
+			return admission.DeniedNoMetadata(admission.Reason("capacity_exhausted"))
 		},
 	)
 
@@ -58,8 +59,8 @@ func ExampleAdmitterFunc() {
 	// true capacity_exhausted
 }
 
-func ExampleNewBuiltinCatalog() {
-	catalog := admission.NewBuiltinCatalog()
+func Example_builtinCatalog() {
+	catalog := admissionbuiltin.NewCatalog()
 	component, ok := catalog.Component("resilience.bulkhead")
 
 	fmt.Println(ok, component.Kind)

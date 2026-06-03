@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retrybudget
 
 import (
 	"testing"
 
 	"arcoris.dev/admission"
+	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
 	"arcoris.dev/snapshot"
 )
 
@@ -93,7 +93,7 @@ func TestDecisionAdmissionResultDeniedMapsToBudgetExhausted(t *testing.T) {
 	if !result.HasMetadata() {
 		t.Fatal("AdmissionResult has no metadata")
 	}
-	if got, want := result.Decision(), admission.Deny(admission.ReasonBudgetExhausted); got != want {
+	if got, want := result.Decision(), admission.Deny(admissionbuiltin.ReasonBudgetExhausted); got != want {
 		t.Fatalf("decision = %+v, want %+v", got, want)
 	}
 	if metadata, ok := result.Metadata(); !ok || metadata != snap {

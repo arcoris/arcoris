@@ -25,8 +25,8 @@ func TestReasonIsValid(t *testing.T) {
 		want   bool
 	}{
 		{name: "admitted", reason: ReasonAdmitted, want: true},
-		{name: "capacity exhausted", reason: ReasonCapacityExhausted, want: true},
-		{name: "budget exhausted", reason: ReasonBudgetExhausted, want: true},
+		{name: "capacity exhausted", reason: Reason("capacity_exhausted"), want: true},
+		{name: "budget exhausted", reason: Reason("budget_exhausted"), want: true},
 		{name: "custom stable reason", reason: "tenant_quota_exhausted", want: true},
 		{name: "custom with version", reason: "scheduler_unschedulable_v2", want: true},
 		{name: "empty", reason: "", want: false},
@@ -53,7 +53,7 @@ func TestReasonIsValid(t *testing.T) {
 func TestReasonString(t *testing.T) {
 	t.Parallel()
 
-	if got := ReasonCapacityExhausted.String(); got != "capacity_exhausted" {
+	if got := Reason("capacity_exhausted").String(); got != "capacity_exhausted" {
 		t.Fatalf("String = %q, want capacity_exhausted", got)
 	}
 }

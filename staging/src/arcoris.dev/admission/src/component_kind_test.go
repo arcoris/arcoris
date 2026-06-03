@@ -24,9 +24,9 @@ func TestComponentKindIsValid(t *testing.T) {
 		kind ComponentKind
 		want bool
 	}{
-		{name: "bulkhead", kind: KindBulkhead, want: true},
-		{name: "retry budget", kind: KindRetryBudget, want: true},
-		{name: "deadline", kind: KindDeadline, want: true},
+		{name: "bulkhead", kind: ComponentKind("bulkhead"), want: true},
+		{name: "retry budget", kind: ComponentKind("retry_budget"), want: true},
+		{name: "deadline", kind: ComponentKind("deadline"), want: true},
 		{name: "custom", kind: "custom_guard", want: true},
 		{name: "empty", kind: "", want: false},
 		{name: "uppercase", kind: "Bulkhead", want: false},
@@ -50,7 +50,7 @@ func TestComponentKindIsValid(t *testing.T) {
 func TestComponentKindString(t *testing.T) {
 	t.Parallel()
 
-	if got := KindBulkhead.String(); got != "bulkhead" {
+	if got := ComponentKind("bulkhead").String(); got != "bulkhead" {
 		t.Fatalf("String = %q, want bulkhead", got)
 	}
 }

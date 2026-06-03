@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"arcoris.dev/admission"
+	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
 	"arcoris.dev/snapshot"
 	panicassert "arcoris.dev/testutil/panic"
 )
@@ -102,7 +103,7 @@ func TestBulkheadTryAdmitDeniesWhenCapacityExhausted(t *testing.T) {
 	if !result.HasMetadata() {
 		t.Fatal("denied result has no metadata")
 	}
-	if got, want := result.Decision(), admission.Deny(admission.ReasonCapacityExhausted); got != want {
+	if got, want := result.Decision(), admission.Deny(admissionbuiltin.ReasonCapacityExhausted); got != want {
 		t.Fatalf("decision = %+v, want %+v", got, want)
 	}
 	if grant, ok := result.Grant(); ok || grant != nil {

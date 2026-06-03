@@ -6,6 +6,7 @@ toolchain go1.25.9
 
 require (
 	arcoris.dev/admission v0.0.0
+	arcoris.dev/admissioncatalog v0.0.0
 	arcoris.dev/capacity v0.0.0
 	arcoris.dev/chrono v0.0.0
 	arcoris.dev/snapshot v0.0.0
@@ -13,6 +14,7 @@ require (
 )
 
 replace arcoris.dev/admission => ../../admission/src
+replace arcoris.dev/admissioncatalog => ../../admissioncatalog/src
 replace arcoris.dev/capacity => ../../capacity/src
 replace arcoris.dev/chrono => ../../chrono/src
 replace arcoris.dev/snapshot => ../../snapshot/src

@@ -49,7 +49,7 @@ func TestDecisionStateHelpers(t *testing.T) {
 		},
 		{
 			name:     "denied",
-			decision: Deny(ReasonCapacityExhausted),
+			decision: Deny(Reason("capacity_exhausted")),
 			denied:   true,
 			terminal: true,
 		},

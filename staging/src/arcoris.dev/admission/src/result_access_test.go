@@ -35,7 +35,7 @@ func TestResultAccessors(t *testing.T) {
 		t.Fatalf("Metadata = (%q, %v), want (snapshot, true)", got, ok)
 	}
 
-	denied := DeniedFor[string](ReasonCapacityExhausted, "snapshot")
+	denied := DeniedFor[string](Reason("capacity_exhausted"), "snapshot")
 	if got, ok := denied.Grant(); ok || got != "" {
 		t.Fatalf("denied Grant = (%q, %v), want zero value and false", got, ok)
 	}

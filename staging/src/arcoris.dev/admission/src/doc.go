@@ -21,12 +21,12 @@
 // reason and component identifiers, typed generic results, and generic admitter
 // contracts.
 //
-// The package owns the common language of admission results and owner-created
-// catalogs for stable admission metadata. It does not own capacity accounting,
-// leases, retry budgets, token buckets, queues, workers, schedulers, health
-// state, metrics, logging, tracing, distributed coordination, dynamic service
-// discovery, or rollback chains. Domain packages compose Result with their own
-// request, grant, and metadata types.
+// The package owns the common language of admission results. It does not own
+// capacity accounting, leases, retry budgets, token buckets, queues, workers,
+// schedulers, health state, metrics, logging, tracing, distributed
+// coordination, dynamic service discovery, rollback chains, or admission
+// metadata catalogs. Domain packages compose Result with their own request,
+// grant, and metadata types.
 //
 // # Open-world model
 //
@@ -43,31 +43,12 @@
 // tracing attributes, health state, config ownership, and dynamic discovery
 // belong to higher-level owners.
 //
-// # Catalog registries
-//
-// ReasonRegistry catalogs stable ReasonDescriptor values. KindRegistry catalogs
-// stable ComponentKindDescriptor values. ComponentRegistry catalogs stable
-// ComponentDescriptor values and validates them against a KindRegistry. Catalog
-// aggregates those owner-created registries behind one metadata boundary.
-// Catalog construction rejects a ComponentRegistry backed by a different
-// KindRegistry than the one passed to NewCatalog. That reference check
-// guarantees RegisterKind and RegisterComponent operate over one consistent
-// kind catalog.
-//
-// Built-in catalog constructors return ordinary owner-created registries. They
-// do not create global mutable state. Admission does not provide package-level
-// Register functions, init-time registration, global mutable registries, or
-// process-wide singleton catalogs.
-//
-// Catalog registries are metadata catalogs, not enforcement engines. Result
-// validity still depends on Decision, Effect, and grant-shape invariants.
-// Registry membership can support deterministic listing, docs/tests/config
-// validation, and future chain validation foundations, but ordinary Result
-// construction does not require a registry lookup.
-//
-// Runtime instances, live admitters, chains, queues, health state, metrics,
-// tracing attributes, dynamic discovery, config ownership, scheduling, and
-// service discovery remain outside admission.
+// Optional admission metadata catalogs live in package
+// arcoris.dev/admissioncatalog. The standard ARCORIS catalog lives in package
+// arcoris.dev/admissioncatalog/builtin. Those packages describe metadata for
+// documentation, tests, configuration validation, and future chain validation
+// foundations. They do not change Result validity, and this core package does
+// not import them.
 //
 // # Side effects
 //

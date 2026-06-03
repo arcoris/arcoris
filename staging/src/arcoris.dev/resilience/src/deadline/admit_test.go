@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
 import (
@@ -21,6 +20,7 @@ import (
 	"time"
 
 	"arcoris.dev/admission"
+	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
 	panicassert "arcoris.dev/testutil/panic"
 )
 
@@ -81,7 +81,7 @@ func TestTryAdmit(t *testing.T) {
 				Context: contextWithDeadline(t, now),
 				Now:     now,
 			},
-			want:   admission.Deny(admission.ReasonDeadlineExceeded),
+			want:   admission.Deny(admissionbuiltin.ReasonDeadlineExceeded),
 			denied: true,
 			metadata: Decision{
 				Reason: ReasonExpired,
@@ -94,7 +94,7 @@ func TestTryAdmit(t *testing.T) {
 				Now:     now,
 				Min:     2 * time.Second,
 			},
-			want:   admission.Deny(admission.ReasonDeadlineExceeded),
+			want:   admission.Deny(admissionbuiltin.ReasonDeadlineExceeded),
 			denied: true,
 			metadata: Decision{
 				Remaining: time.Second,
@@ -107,7 +107,7 @@ func TestTryAdmit(t *testing.T) {
 				Context: canceled,
 				Now:     now,
 			},
-			want:   admission.Deny(admission.ReasonCanceled),
+			want:   admission.Deny(admissionbuiltin.ReasonCanceled),
 			denied: true,
 			metadata: Decision{
 				Reason: ReasonContextDone,
@@ -120,7 +120,7 @@ func TestTryAdmit(t *testing.T) {
 				Now:     now,
 				Min:     time.Second,
 			},
-			want:   admission.Deny(admission.ReasonCanceled),
+			want:   admission.Deny(admissionbuiltin.ReasonCanceled),
 			denied: true,
 			metadata: Decision{
 				Remaining: 10 * time.Second,

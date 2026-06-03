@@ -41,43 +41,6 @@ const (
 	// ReasonDeferred is the generic reason for work left with the caller for a
 	// later retry or reconsideration.
 	ReasonDeferred Reason = "deferred"
-
-	// ReasonCapacityExhausted reports that bounded live capacity is currently
-	// unavailable.
-	ReasonCapacityExhausted Reason = "capacity_exhausted"
-
-	// ReasonBudgetExhausted reports that a spend-only budget cannot accept more
-	// work.
-	ReasonBudgetExhausted Reason = "budget_exhausted"
-
-	// ReasonRateLimited reports that a rate or token gate denied the attempt.
-	ReasonRateLimited Reason = "rate_limited"
-
-	// ReasonOverloaded reports that the component is protecting itself from
-	// overload.
-	ReasonOverloaded Reason = "overloaded"
-
-	// ReasonBackpressured reports that downstream pressure prevented immediate
-	// admission.
-	ReasonBackpressured Reason = "backpressured"
-
-	// ReasonClosed reports that the component is closed and no longer admits
-	// work.
-	ReasonClosed Reason = "closed"
-
-	// ReasonDraining reports that the component is intentionally winding down.
-	ReasonDraining Reason = "draining"
-
-	// ReasonDeadlineExceeded reports that admission failed because the execution
-	// budget was already exhausted.
-	ReasonDeadlineExceeded Reason = "deadline_exceeded"
-
-	// ReasonCanceled reports that admission failed because caller-owned
-	// cancellation was already observed.
-	ReasonCanceled Reason = "canceled"
-
-	// ReasonPolicyDenied reports that a domain policy denied the attempt.
-	ReasonPolicyDenied Reason = "policy_denied"
 )
 
 // IsValid reports whether r is a stable lower_snake_case admission reason.

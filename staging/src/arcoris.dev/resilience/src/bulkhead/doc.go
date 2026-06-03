@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package bulkhead provides bounded in-flight isolation for ARCORIS component
 // internals.
 //
@@ -27,14 +26,14 @@
 // admission.Result so generic admission-compatible code can consume the same
 // non-blocking operation. TryAdmit maps success to admission.Granted with
 // admission.ReasonAdmitted, and capacity exhaustion to admission.DeniedFor with
-// admission.ReasonCapacityExhausted. Successful admission still transfers Lease
-// ownership to the caller; the caller must release the Lease.
+// admissioncatalog/builtin.ReasonCapacityExhausted. Successful admission still
+// transfers Lease ownership to the caller; the caller must release the Lease.
 //
 // The package is local and non-blocking. It does not wait, queue callers,
 // observe contexts, implement fairness, rate-limit throughput, retry work,
 // classify operation failures, integrate with health, export metrics, log, trace,
-// schedule work, use admission.Catalog in the hot path, or manage worker pools.
-// Those policies belong above this primitive.
+// schedule work, use admission metadata catalogs in the hot path, or manage
+// worker pools. Those policies belong above this primitive.
 //
 // capacity owns scalar accounting and lease/release semantics. bulkhead owns the
 // resilience meaning: bounded in-flight isolation around protected execution.

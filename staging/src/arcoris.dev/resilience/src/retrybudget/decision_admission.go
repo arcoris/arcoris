@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retrybudget
 
 import (
 	"arcoris.dev/admission"
+	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
 	"arcoris.dev/snapshot"
 )
 
@@ -63,7 +63,7 @@ func (d Decision) AdmissionResult() admission.Result[
 	}
 
 	return admission.Denied(
-		admission.ReasonBudgetExhausted,
+		admissionbuiltin.ReasonBudgetExhausted,
 		d.Snapshot,
 	)
 }

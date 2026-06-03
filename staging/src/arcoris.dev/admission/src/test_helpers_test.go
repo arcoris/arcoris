@@ -14,8 +14,6 @@
 
 package admission
 
-import "testing"
-
 // someString builds a present string Maybe through the admission-local helper.
 //
 // Tests use this instead of importing arcoris.dev/value/maybe directly so the
@@ -33,20 +31,4 @@ func noneString() Maybe[string] {
 // noneMetadata builds an absent NoMetadata Maybe for invalid-shape tests.
 func noneMetadata() Maybe[NoMetadata] {
 	return none[NoMetadata]()
-}
-
-// requireCapability verifies that set advertises capability.
-//
-// Built-in descriptor tests use this helper to make semantic capability
-// expectations read as catalog requirements instead of low-level bit checks.
-func requireCapability(
-	t *testing.T,
-	set CapabilitySet,
-	capability Capability,
-) {
-	t.Helper()
-
-	if !set.Has(capability) {
-		t.Fatalf("capabilities %08b should contain %08b", set, capability)
-	}
 }

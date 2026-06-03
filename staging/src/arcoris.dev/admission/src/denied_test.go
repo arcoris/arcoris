@@ -19,7 +19,7 @@ import "testing"
 func TestDenyDecision(t *testing.T) {
 	t.Parallel()
 
-	decision := Deny(ReasonCapacityExhausted)
+	decision := Deny(Reason("capacity_exhausted"))
 	if !decision.IsValid() {
 		t.Fatalf("decision should be valid: %+v", decision)
 	}
@@ -34,11 +34,11 @@ func TestDenyDecision(t *testing.T) {
 func TestDeniedResult(t *testing.T) {
 	t.Parallel()
 
-	result := Denied(ReasonCapacityExhausted, "snapshot")
+	result := Denied(Reason("capacity_exhausted"), "snapshot")
 	if !result.IsValid() {
 		t.Fatalf("denied result should be valid: %+v", result.Decision())
 	}
-	if got := result.Decision(); got != Deny(ReasonCapacityExhausted) {
+	if got := result.Decision(); got != Deny(Reason("capacity_exhausted")) {
 		t.Fatalf("decision = %+v, want denied no-effect decision", got)
 	}
 	if result.HasGrant() {
@@ -55,7 +55,7 @@ func TestDeniedResult(t *testing.T) {
 func TestDeniedForResult(t *testing.T) {
 	t.Parallel()
 
-	result := DeniedFor[string](ReasonCapacityExhausted, "snapshot")
+	result := DeniedFor[string](Reason("capacity_exhausted"), "snapshot")
 	if !result.IsValid() {
 		t.Fatalf("denied result should be valid: %+v", result.Decision())
 	}
@@ -70,7 +70,7 @@ func TestDeniedForResult(t *testing.T) {
 func TestDeniedNoMetadataResult(t *testing.T) {
 	t.Parallel()
 
-	result := DeniedNoMetadata(ReasonCapacityExhausted)
+	result := DeniedNoMetadata(Reason("capacity_exhausted"))
 	if !result.IsValid() {
 		t.Fatalf("denied result should be valid: %+v", result.Decision())
 	}
