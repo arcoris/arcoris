@@ -377,16 +377,15 @@ func TestListMapOperandKeepsPresence(t *testing.T) {
 	entry := listMapEntry{item: conditionValue("Ready", "True")}
 
 	got := listMapOperand(entry, true)
-	equal, err := newComparer(Options{}).equalOpaqueValue(rootField("conditions").Index(0), got.value, entry.item)
+	val, ok := got.ValueOK()
+	equal, err := newComparer(Options{}).equalOpaqueValue(rootField("conditions").Index(0), val, entry.item)
 	requireNoError(t, err)
-	if !got.present || !equal {
+	if !ok || !equal {
 		t.Fatalf("listMapOperand(present) = %#v", got)
 	}
 
 	got = listMapOperand(entry, false)
-	equal, err = newComparer(Options{}).equalOpaqueValue(rootField("conditions").Index(0), got.value, entry.item)
-	requireNoError(t, err)
-	if got.present || !equal {
+	if got.Present() || !got.Value().IsZero() {
 		t.Fatalf("listMapOperand(absent) = %#v", got)
 	}
 }

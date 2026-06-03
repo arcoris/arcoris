@@ -85,13 +85,14 @@ func TestMapOperandReportsPresence(t *testing.T) {
 	members := map[string]value.Value{"env": value.StringValue("prod")}
 
 	got := mapOperand(members, "env")
-	text, _ := got.value.String()
-	if !got.present || text != "prod" {
+	val, ok := got.ValueOK()
+	text, _ := val.String()
+	if !ok || text != "prod" {
 		t.Fatalf("mapOperand(existing) = %#v", got)
 	}
 
 	got = mapOperand(members, "missing")
-	if got.present {
-		t.Fatalf("mapOperand(missing).present = true")
+	if got.Present() {
+		t.Fatalf("mapOperand(missing).Present() = true")
 	}
 }

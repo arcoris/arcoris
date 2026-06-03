@@ -16,6 +16,7 @@ package valuecompare
 
 import (
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/valuepresence"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 	"testing"
@@ -24,8 +25,8 @@ import (
 func TestComparerAbsentAbsentIsEmpty(t *testing.T) {
 	got, err := newComparer(Options{}).compare(
 		fieldpath.RootPath(),
-		absentOperand(),
-		absentOperand(),
+		valuepresence.Absent(),
+		valuepresence.Absent(),
 		types.String().Type(),
 		0,
 	)
@@ -36,8 +37,8 @@ func TestComparerAbsentAbsentIsEmpty(t *testing.T) {
 func TestComparerAbsentPresentIsAddedSubtree(t *testing.T) {
 	got, err := newComparer(Options{}).compare(
 		fieldpath.RootPath(),
-		absentOperand(),
-		presentOperand(value.StringValue("new")),
+		valuepresence.Absent(),
+		valuepresence.Present(value.StringValue("new")),
 		types.String().Type(),
 		0,
 	)
@@ -48,8 +49,8 @@ func TestComparerAbsentPresentIsAddedSubtree(t *testing.T) {
 func TestComparerPresentAbsentIsRemovedSubtree(t *testing.T) {
 	got, err := newComparer(Options{}).compare(
 		fieldpath.RootPath(),
-		presentOperand(value.StringValue("old")),
-		absentOperand(),
+		valuepresence.Present(value.StringValue("old")),
+		valuepresence.Absent(),
 		types.String().Type(),
 		0,
 	)

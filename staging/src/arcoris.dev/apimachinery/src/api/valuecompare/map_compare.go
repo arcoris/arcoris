@@ -16,6 +16,7 @@ package valuecompare
 
 import (
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/valuepresence"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -78,7 +79,7 @@ func (c *comparer) compareMap(
 }
 
 // mapOperand converts a dynamic map lookup into presence-aware compare input.
-func mapOperand(members map[string]value.Value, key string) operand {
+func mapOperand(members map[string]value.Value, key string) valuepresence.Operand {
 	val, ok := members[key]
-	return operand{value: val, present: ok}
+	return valuepresence.From(val, ok)
 }

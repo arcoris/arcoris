@@ -18,6 +18,7 @@ import (
 	"slices"
 
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/valuepresence"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -64,8 +65,8 @@ func (c *comparer) compareObject(
 
 		child, err := c.compare(
 			fieldPath,
-			operand{value: oldFieldValue, present: oldFound},
-			operand{value: newFieldValue, present: newFound},
+			valuepresence.From(oldFieldValue, oldFound),
+			valuepresence.From(newFieldValue, newFound),
 			field.Type(),
 			depth+1,
 		)

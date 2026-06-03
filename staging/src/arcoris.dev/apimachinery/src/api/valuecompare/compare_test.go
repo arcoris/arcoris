@@ -16,6 +16,7 @@ package valuecompare
 
 import (
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/valuepresence"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 	"arcoris.dev/apimachinery/api/valuefieldset"
@@ -79,8 +80,8 @@ func TestCompareAtMatchesValidationAndFieldSetPathSemantics(t *testing.T) {
 func TestCompareDispatchesScalarDescriptor(t *testing.T) {
 	got, err := newComparer(Options{}).compare(
 		fieldpath.RootPath(),
-		presentOperand(value.StringValue("old")),
-		presentOperand(value.StringValue("new")),
+		valuepresence.Present(value.StringValue("old")),
+		valuepresence.Present(value.StringValue("new")),
 		types.String().Type(),
 		0,
 	)
@@ -91,8 +92,8 @@ func TestCompareDispatchesScalarDescriptor(t *testing.T) {
 func TestComparePresenceBothAbsentIsEmpty(t *testing.T) {
 	got, done, err := newComparer(Options{}).comparePresence(
 		rootField("name"),
-		absentOperand(),
-		absentOperand(),
+		valuepresence.Absent(),
+		valuepresence.Absent(),
 		types.String().Type(),
 	)
 	requireNoError(t, err)
@@ -108,7 +109,12 @@ func TestComparePresenceAddedUsesSubtree(t *testing.T) {
 	descriptor := types.Object(types.Field("image").String().Optional()).Type()
 	newValue := value.MustObjectValue(value.ObjectMember("image", value.StringValue("v1")))
 
-	got, done, err := newComparer(Options{}).comparePresence(path, absentOperand(), presentOperand(newValue), descriptor)
+	got, done, err := newComparer(Options{}).comparePresence(
+		path,
+		valuepresence.Absent(),
+		valuepresence.Present(newValue),
+		descriptor,
+	)
 	requireNoError(t, err)
 
 	if !done {
@@ -122,7 +128,12 @@ func TestComparePresenceRemovedUsesSubtree(t *testing.T) {
 	descriptor := types.Object(types.Field("image").String().Optional()).Type()
 	oldValue := value.MustObjectValue(value.ObjectMember("image", value.StringValue("v1")))
 
-	got, done, err := newComparer(Options{}).comparePresence(path, presentOperand(oldValue), absentOperand(), descriptor)
+	got, done, err := newComparer(Options{}).comparePresence(
+		path,
+		valuepresence.Present(oldValue),
+		valuepresence.Absent(),
+		descriptor,
+	)
 	requireNoError(t, err)
 
 	if !done {
@@ -134,8 +145,8 @@ func TestComparePresenceRemovedUsesSubtree(t *testing.T) {
 func TestComparePresenceBothPresentContinues(t *testing.T) {
 	_, done, err := newComparer(Options{}).comparePresence(
 		rootField("name"),
-		presentOperand(value.StringValue("old")),
-		presentOperand(value.StringValue("new")),
+		valuepresence.Present(value.StringValue("old")),
+		valuepresence.Present(value.StringValue("new")),
 		types.String().Type(),
 	)
 	requireNoError(t, err)
@@ -190,18 +201,20 @@ func TestCompareNullDescriptorRejectsNonNull(t *testing.T) {
 
 	requireErrorIs(t, err, ErrKindMismatch)
 }
-func TestPresentOperand(t *testing.T) {
-	got := presentOperand(value.NullValue())
+func TestCompareUsesPresentOperand(t *testing.T) {
+	got := valuepresence.Present(value.NullValue())
+	val, ok := got.ValueOK()
 
-	if !got.present || !got.value.IsNull() {
-		t.Fatalf("presentOperand() = %#v", got)
+	if !ok || !val.IsNull() {
+		t.Fatalf("Present() = %#v", got)
 	}
 }
 
-func TestAbsentOperand(t *testing.T) {
-	got := absentOperand()
+func TestCompareUsesAbsentOperand(t *testing.T) {
+	got := valuepresence.Absent()
+	val, ok := got.ValueOK()
 
-	if got.present || !got.value.IsZero() {
-		t.Fatalf("absentOperand() = %#v", got)
+	if ok || !val.IsZero() {
+		t.Fatalf("Absent() = %#v", got)
 	}
 }

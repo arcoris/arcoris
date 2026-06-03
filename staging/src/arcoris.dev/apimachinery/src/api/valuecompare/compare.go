@@ -16,6 +16,7 @@ package valuecompare
 
 import (
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/valuepresence"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -60,32 +61,11 @@ func CompareAt(
 	run := newComparer(opts)
 	return run.compare(
 		path,
-		presentOperand(oldValue),
-		presentOperand(newValue),
+		valuepresence.Present(oldValue),
+		valuepresence.Present(newValue),
 		descriptor,
 		0,
 	)
-}
-
-// operand carries one side of a comparison while preserving presence.
-//
-// Presence is separate from value.Value because explicit null, scalar zeroes,
-// and empty composites are real payload data. Only present=false means absent.
-type operand struct {
-	// value is meaningful only when present is true.
-	value value.Value
-	// present distinguishes absent fields/items from present payload values.
-	present bool
-}
-
-// presentOperand wraps a concrete payload value as present input.
-func presentOperand(v value.Value) operand {
-	return operand{value: v, present: true}
-}
-
-// absentOperand returns the canonical absent input marker.
-func absentOperand() operand {
-	return operand{}
 }
 
 // compare is the recursive descriptor dispatcher.
@@ -95,8 +75,8 @@ func absentOperand() operand {
 // same semantic path.
 func (c *comparer) compare(
 	path fieldpath.Path,
-	oldOperand operand,
-	newOperand operand,
+	oldOperand valuepresence.Operand,
+	newOperand valuepresence.Operand,
 	descriptor types.Type,
 	depth int,
 ) (Result, error) {
@@ -104,8 +84,8 @@ func (c *comparer) compare(
 		return result, err
 	}
 
-	oldValue := oldOperand.value
-	newValue := newOperand.value
+	oldValue := oldOperand.Value()
+	newValue := newOperand.Value()
 	if err := requireComparableInputs(path, oldValue, newValue, descriptor); err != nil {
 		return Result{}, err
 	}
@@ -160,18 +140,18 @@ func (c *comparer) compare(
 // later use. Present null is not absence and flows through normal comparison.
 func (c *comparer) comparePresence(
 	path fieldpath.Path,
-	oldOperand operand,
-	newOperand operand,
+	oldOperand valuepresence.Operand,
+	newOperand valuepresence.Operand,
 	descriptor types.Type,
 ) (Result, bool, error) {
 	switch {
-	case !oldOperand.present && !newOperand.present:
+	case oldOperand.Absent() && newOperand.Absent():
 		return EmptyResult(), true, nil
-	case !oldOperand.present:
-		result, err := c.addSubtree(path, newOperand.value, descriptor, EmptyResult())
+	case oldOperand.Absent():
+		result, err := c.addSubtree(path, newOperand.Value(), descriptor, EmptyResult())
 		return result, true, err
-	case !newOperand.present:
-		result, err := c.removeSubtree(path, oldOperand.value, descriptor, EmptyResult())
+	case newOperand.Absent():
+		result, err := c.removeSubtree(path, oldOperand.Value(), descriptor, EmptyResult())
 		return result, true, err
 	default:
 		return Result{}, false, nil

@@ -17,6 +17,7 @@ package valuecompare
 import (
 	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/internal/typeref"
+	"arcoris.dev/apimachinery/api/internal/valuepresence"
 	"arcoris.dev/apimachinery/api/types"
 )
 
@@ -25,8 +26,8 @@ import (
 // Result paths describe payload locations, not descriptor definition paths.
 func (c *comparer) compareRef(
 	path fieldpath.Path,
-	oldOperand operand,
-	newOperand operand,
+	oldOperand valuepresence.Operand,
+	newOperand valuepresence.Operand,
 	descriptor types.Type,
 	depth int,
 ) (Result, error) {

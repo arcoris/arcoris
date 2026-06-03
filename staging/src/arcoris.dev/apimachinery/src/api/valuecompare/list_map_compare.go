@@ -19,6 +19,7 @@ import (
 
 	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/internal/listmapkey"
+	"arcoris.dev/apimachinery/api/internal/valuepresence"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -187,8 +188,8 @@ func (c *comparer) listMapEntryAt(
 }
 
 // listMapOperand converts a selector lookup into presence-aware compare input.
-func listMapOperand(entry listMapEntry, present bool) operand {
-	return operand{value: entry.item, present: present}
+func listMapOperand(entry listMapEntry, present bool) valuepresence.Operand {
+	return valuepresence.From(entry.item, present)
 }
 
 // unionSortedListMapKeys returns deterministic traversal order for selector keys.
