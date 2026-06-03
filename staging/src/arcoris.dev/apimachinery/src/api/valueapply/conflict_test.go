@@ -92,6 +92,29 @@ func TestApplyChangedFieldOwnedByOtherForceTakesOwnership(t *testing.T) {
 	requireStringMember(t, result.Value, "image", "api:v2")
 }
 
+func TestApplyForceResultKeepsPreForceConflicts(t *testing.T) {
+	req := specRequest(owner("user"))
+	req.Ownership = state(entry("other", imagePath()))
+
+	result, err := Apply(req, Options{Force: true})
+	requireNoError(t, err)
+
+	if result.Conflicts.Len() != 1 {
+		t.Fatalf("conflicts = %d; want 1", result.Conflicts.Len())
+	}
+	requireSet(t, result.Conflicts.AttemptedPaths(), "$.image")
+}
+
+func TestApplyForceResultOwnershipReflectsTakeover(t *testing.T) {
+	req := specRequest(owner("user"))
+	req.Ownership = state(entry("other", imagePath()))
+
+	result, err := Apply(req, Options{Force: true})
+	requireNoError(t, err)
+
+	requireOwners(t, result.Ownership.OwnersOf(imagePath()), "user")
+}
+
 func TestApplyForceRemovesOnlyConflictingOwnership(t *testing.T) {
 	req := specRequest(owner("user"))
 	req.Ownership = state(

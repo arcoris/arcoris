@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/types"
+	"arcoris.dev/apimachinery/api/valuemerge"
 )
 
 func TestMerge(t *testing.T) {
@@ -51,4 +52,5 @@ func TestApplyValueMergeErrorWrapped(t *testing.T) {
 	_, err := newApplier(Options{}).merge(req, result)
 
 	requireErrorIs(t, err, ErrMergeFailed)
+	requireErrorIs(t, err, valuemerge.ErrUnsupportedMerge)
 }

@@ -20,7 +20,7 @@ import (
 	"arcoris.dev/apimachinery/api/valuecompare"
 )
 
-func TestChangedAppliedFieldsUsesAppliedIntersectionWithChanges(t *testing.T) {
+func TestChangedAppliedFieldsExactMatch(t *testing.T) {
 	changes := valuecompare.Result{
 		Added:    fields(path("$.image")),
 		Modified: fields(path("$.replicas")),
@@ -32,13 +32,113 @@ func TestChangedAppliedFieldsUsesAppliedIntersectionWithChanges(t *testing.T) {
 	requireSet(t, got, "$.replicas")
 }
 
-func TestDroppedFieldsOldOwnerMinusApplied(t *testing.T) {
+func TestChangedAppliedFieldsAppliedAncestorOfChanged(t *testing.T) {
+	changes := valuecompare.Result{
+		Modified: fields(path("$.spec.replicas")),
+	}
+
+	got := changedAppliedFields(fields(path("$.spec")), changes)
+
+	requireSet(t, got, "$.spec")
+}
+
+func TestChangedAppliedFieldsAppliedDescendantOfChanged(t *testing.T) {
+	changes := valuecompare.Result{
+		Modified: fields(path("$.spec")),
+	}
+
+	got := changedAppliedFields(fields(path("$.spec.replicas")), changes)
+
+	requireSet(t, got, "$.spec.replicas")
+}
+
+func TestChangedAppliedFieldsSiblingIgnored(t *testing.T) {
+	changes := valuecompare.Result{
+		Modified: fields(path("$.spec.image")),
+	}
+
+	got := changedAppliedFields(fields(path("$.metadata.name")), changes)
+
+	requireSet(t, got)
+}
+
+func TestChangedAppliedFieldsListMapItemAndFieldOverlap(t *testing.T) {
+	itemPath := root().Select(readySelector())
+	changes := valuecompare.Result{
+		Modified: fields(readyStatusPath()),
+	}
+
+	got := changedAppliedFields(fields(itemPath), changes)
+
+	requireSet(t, got, `$[{"type":"Ready"}]`)
+}
+
+func TestChangedAppliedFieldsDoesNotReturnUnappliedChangedPath(t *testing.T) {
+	changes := valuecompare.Result{
+		Modified: fields(path("$.spec.image")),
+	}
+
+	got := changedAppliedFields(fields(path("$.metadata.name")), changes)
+
+	requireSet(t, got)
+}
+
+func TestDroppedFieldsExactAppliedRetainsOld(t *testing.T) {
 	got := droppedFields(
 		fields(path("$.image"), path("$.replicas")),
 		fields(path("$.replicas")),
 	)
 
 	requireSet(t, got, "$.image")
+}
+
+func TestDroppedFieldsAppliedAncestorRetainsOldDescendant(t *testing.T) {
+	got := droppedFields(
+		fields(path("$.spec.image")),
+		fields(path("$.spec")),
+	)
+
+	requireSet(t, got)
+}
+
+func TestDroppedFieldsAppliedDescendantDoesNotRetainOldAncestor(t *testing.T) {
+	got := droppedFields(
+		fields(path("$.spec")),
+		fields(path("$.spec.image")),
+	)
+
+	requireSet(t, got, "$.spec")
+}
+
+func TestDroppedFieldsSiblingDoesNotRetainOld(t *testing.T) {
+	got := droppedFields(
+		fields(path("$.spec.image")),
+		fields(path("$.metadata.name")),
+	)
+
+	requireSet(t, got, "$.spec.image")
+}
+
+func TestDroppedFieldsListMapItemRetainsItemField(t *testing.T) {
+	itemPath := root().Select(readySelector())
+
+	got := droppedFields(
+		fields(readyStatusPath()),
+		fields(itemPath),
+	)
+
+	requireSet(t, got)
+}
+
+func TestDroppedFieldsListMapItemFieldDoesNotRetainWholeItem(t *testing.T) {
+	itemPath := root().Select(readySelector())
+
+	got := droppedFields(
+		fields(itemPath),
+		fields(readyStatusPath()),
+	)
+
+	requireSet(t, got, `$[{"type":"Ready"}]`)
 }
 
 func TestMergeFieldsAppliedUnionDeleted(t *testing.T) {

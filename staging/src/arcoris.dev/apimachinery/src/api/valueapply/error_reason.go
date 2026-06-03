@@ -39,6 +39,10 @@ const (
 	// ErrorReasonConflict reports ownership conflict on changed applied fields.
 	ErrorReasonConflict ErrorReason = "conflict"
 
+	// ErrorReasonUnsupportedTakeover reports a forced conflict that cannot be
+	// represented without over-removing another owner's ancestor field.
+	ErrorReasonUnsupportedTakeover ErrorReason = "unsupported_takeover"
+
 	// ErrorReasonMergeFailed reports failure while running valuemerge.
 	ErrorReasonMergeFailed ErrorReason = "merge_failed"
 )

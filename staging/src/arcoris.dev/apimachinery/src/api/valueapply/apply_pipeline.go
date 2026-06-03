@@ -31,6 +31,9 @@ func (a *applier) apply(req Request) (Result, error) {
 	if err := a.rejectConflicts(req, result); err != nil {
 		return result, err
 	}
+	if err := a.rejectUnsupportedForceTakeover(req, result); err != nil {
+		return result, err
+	}
 
 	result.Value, err = a.merge(req, result)
 	if err != nil {

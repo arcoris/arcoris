@@ -31,6 +31,11 @@
 // Force only takes conflicting fields from other owners. It does not remove
 // unrelated ownership or ownership for dropped fields.
 //
+// valueapply requires both live and applied values to be valid for the
+// descriptor before apply proceeds. It is not a repair, pruning, defaulting, or
+// normalization operation. Invalid live data is rejected even if the applied
+// value would otherwise remove the invalid field.
+//
 // The package does not read or write storage, run admission, authorize request
 // subjects, manage object metadata, serialize managed fields, decode wire
 // formats, emit events, access resource catalogs, or execute runtime lifecycle

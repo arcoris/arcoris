@@ -44,3 +44,42 @@ func TestApplyInvalidAppliedValueReturnsInvalidValue(t *testing.T) {
 
 	requireErrorIs(t, err, ErrInvalidValue)
 }
+
+func TestApplyInvalidLiveValueRejectedBeforeMerge(t *testing.T) {
+	_, err := Apply(Request{
+		Path:       root(),
+		Owner:      owner("user"),
+		Live:       intValue(1),
+		Applied:    str("new"),
+		Descriptor: types.String().Type(),
+	}, Options{})
+
+	requireErrorIs(t, err, ErrInvalidValue)
+}
+
+func TestApplyInvalidAppliedValueRejectedBeforeMerge(t *testing.T) {
+	_, err := Apply(Request{
+		Path:       root(),
+		Owner:      owner("user"),
+		Live:       str("old"),
+		Applied:    intValue(1),
+		Descriptor: types.String().Type(),
+	}, Options{})
+
+	requireErrorIs(t, err, ErrInvalidValue)
+}
+
+func TestApplyDoesNotRepairInvalidLiveValue(t *testing.T) {
+	_, err := Apply(Request{
+		Path:    root(),
+		Owner:   owner("user"),
+		Live:    obj(member("bad", intValue(1))),
+		Applied: obj(),
+		Descriptor: types.Object(
+			types.Field("bad").String().Optional(),
+		).Type(),
+		Ownership: state(entry("user", path("$.bad"))),
+	}, Options{})
+
+	requireErrorIs(t, err, ErrInvalidValue)
+}

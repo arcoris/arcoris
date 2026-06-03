@@ -22,20 +22,70 @@ import (
 // changedAppliedFields returns the applied subset that would change Live.
 //
 // This set drives conflict detection. Unchanged applied fields can become
-// shared ownership without conflicting with existing owners.
+// shared ownership without conflicting with existing owners. Matching is
+// structural rather than exact because lower layers may report a changed parent
+// while Applied mentions a child, or the other way around.
 func changedAppliedFields(applied fieldpath.Set, changes valuecompare.Result) fieldpath.Set {
-	return applied.Intersection(changes.Changed())
+	changed := changes.Changed()
+	result := fieldpath.EmptySet()
+
+	for _, appliedPath := range applied.Paths() {
+		if overlapsAny(changed, appliedPath) {
+			result = result.Insert(appliedPath)
+		}
+	}
+
+	return result
 }
 
 // droppedFields returns fields previously owned by Owner but omitted by Applied.
 //
-// Dropped fields are release/deletion candidates, not conflict candidates.
+// Dropped fields are release/deletion candidates, not conflict candidates. A
+// previous field remains owned when Applied contains that exact path or an
+// ancestor path that covers it.
 func droppedFields(oldOwnerFields fieldpath.Set, appliedFields fieldpath.Set) fieldpath.Set {
-	return oldOwnerFields.Difference(appliedFields)
+	dropped := fieldpath.EmptySet()
+
+	for _, oldPath := range oldOwnerFields.Paths() {
+		if coveredByApplied(oldPath, appliedFields) {
+			continue
+		}
+
+		dropped = dropped.Insert(oldPath)
+	}
+
+	return dropped
 }
 
 // mergeFields combines fields copied from Applied with dropped fields selected
 // for deletion from Live.
 func mergeFields(appliedFields fieldpath.Set, deletedFields fieldpath.Set) fieldpath.Set {
 	return appliedFields.Union(deletedFields)
+}
+
+// overlapsAny reports whether path has structural overlap with any path in set.
+func overlapsAny(set fieldpath.Set, path fieldpath.Path) bool {
+	for _, candidate := range set.Paths() {
+		if pathsOverlap(candidate, path) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// pathsOverlap reports exact, ancestor, or descendant path overlap.
+func pathsOverlap(a fieldpath.Path, b fieldpath.Path) bool {
+	return a.HasPrefix(b) || b.HasPrefix(a)
+}
+
+// coveredByApplied reports whether Applied keeps ownership of oldPath.
+func coveredByApplied(oldPath fieldpath.Path, appliedFields fieldpath.Set) bool {
+	for _, appliedPath := range appliedFields.Paths() {
+		if oldPath.HasPrefix(appliedPath) {
+			return true
+		}
+	}
+
+	return false
 }

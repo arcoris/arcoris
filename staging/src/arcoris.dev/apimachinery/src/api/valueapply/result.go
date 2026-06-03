@@ -52,6 +52,8 @@ type Result struct {
 	// Changes is the live/applied semantic comparison.
 	Changes valuecompare.Result
 
-	// Conflicts are ownership conflicts found before force handling.
+	// Conflicts are ownership conflicts found before force handling. Conflicts
+	// may be non-empty on a successful forced apply; in that case they describe
+	// the ownership overlaps that Force resolved.
 	Conflicts fieldownership.ConflictSet
 }

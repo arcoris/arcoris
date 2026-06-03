@@ -90,6 +90,33 @@ func TestApplySameValueOwnedByOtherCreatesSharedOwnership(t *testing.T) {
 	requireOwners(t, result.Ownership.OwnersOf(imagePath()), "other", "user")
 }
 
+func TestApplySameValueOwnedByOtherDoesNotRemoveOtherOwnership(t *testing.T) {
+	req := specRequest(owner("user"))
+	req.Applied = obj(member("image", str("api:v1")))
+	req.Ownership = state(entry("other", imagePath(), replicasPath()))
+
+	result, err := Apply(req, Options{})
+	requireNoError(t, err)
+
+	requireOwners(t, result.Ownership.OwnersOf(imagePath()), "other", "user")
+	requireOwners(t, result.Ownership.OwnersOf(replicasPath()), "other")
+}
+
+func TestApplySameValueMapKeyCreatesSharedOwnership(t *testing.T) {
+	result, err := Apply(Request{
+		Path:       root(),
+		Owner:      owner("user"),
+		Live:       obj(member("app", str("same"))),
+		Applied:    obj(member("app", str("same"))),
+		Descriptor: mapDescriptor(),
+		Ownership:  state(entry("other", labelPath())),
+	}, Options{})
+	requireNoError(t, err)
+
+	requireSet(t, result.ChangedAppliedFields)
+	requireOwners(t, result.Ownership.OwnersOf(labelPath()), "other", "user")
+}
+
 func TestApplyEmptyAppliedFieldsReleasesOwner(t *testing.T) {
 	req := Request{
 		Path:       root(),

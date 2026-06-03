@@ -47,6 +47,10 @@ var (
 	// by other owners.
 	ErrConflict = errors.New("field ownership conflict")
 
+	// ErrUnsupportedTakeover classifies forced ownership takeovers that cannot
+	// be represented precisely by fieldownership.State transformations.
+	ErrUnsupportedTakeover = errors.New("unsupported ownership takeover")
+
 	// ErrMergeFailed classifies failures while merging selected fields.
 	ErrMergeFailed = errors.New("value merge failed")
 )

@@ -20,6 +20,9 @@ func TestErrorReasonStrings(t *testing.T) {
 	if ErrorReasonConflict != "conflict" {
 		t.Fatalf("conflict reason = %q", ErrorReasonConflict)
 	}
+	if ErrorReasonUnsupportedTakeover != "unsupported_takeover" {
+		t.Fatalf("unsupported takeover reason = %q", ErrorReasonUnsupportedTakeover)
+	}
 	if ErrorReasonMergeFailed != "merge_failed" {
 		t.Fatalf("merge reason = %q", ErrorReasonMergeFailed)
 	}

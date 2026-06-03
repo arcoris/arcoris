@@ -113,6 +113,22 @@ func TestApplyDroppedParentPreservedWhenOtherOwnerOwnsDescendant(t *testing.T) {
 	requireSet(t, result.DeletedFields)
 }
 
+func TestApplyDroppedChildPreservedWhenOtherOwnerOwnsAncestor(t *testing.T) {
+	req := specRequest(owner("user"))
+	req.Applied = obj(member("image", str("api:v1")))
+	req.Ownership = state(
+		entry("user", imagePath(), replicasPath()),
+		entry("other", root()),
+	)
+
+	result, err := Apply(req, Options{})
+	requireNoError(t, err)
+
+	requireStringMember(t, result.Value, "replicas", "3")
+	requireSet(t, result.DroppedFields, "$.replicas")
+	requireSet(t, result.DeletedFields)
+}
+
 func TestApplyDroppedFieldDoesNotConflict(t *testing.T) {
 	req := specRequest(owner("user"))
 	req.Ownership = state(
@@ -125,4 +141,31 @@ func TestApplyDroppedFieldDoesNotConflict(t *testing.T) {
 
 	requireSet(t, result.Conflicts.AttemptedPaths())
 	requireSet(t, result.DroppedFields, "$.replicas")
+}
+
+func TestApplyAppliedParentDoesNotDropOldChild(t *testing.T) {
+	got := droppedFields(
+		fields(path("$.spec.image")),
+		fields(path("$.spec")),
+	)
+
+	requireSet(t, got)
+}
+
+func TestApplyAppliedChildDropsOldParent(t *testing.T) {
+	got := droppedFields(
+		fields(path("$.spec")),
+		fields(path("$.spec.image")),
+	)
+
+	requireSet(t, got, "$.spec")
+}
+
+func TestApplyDroppedFieldsAffectMergeFields(t *testing.T) {
+	got := mergeFields(
+		fields(path("$.spec.image")),
+		fields(path("$.spec.replicas")),
+	)
+
+	requireSet(t, got, "$.spec.image", "$.spec.replicas")
 }
