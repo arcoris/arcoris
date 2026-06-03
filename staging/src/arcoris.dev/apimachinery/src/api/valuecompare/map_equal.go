@@ -20,7 +20,10 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// equalMap reports descriptor-aware map equality without building diff sets.
+// equalMap reports descriptor-aware map equality without building result sets.
+//
+// Map entries use key-path semantics even when equality is called from a
+// whole-value decision such as atomic list comparison.
 func (c *comparer) equalMap(
 	path fieldpath.Path,
 	oldValue value.Value,

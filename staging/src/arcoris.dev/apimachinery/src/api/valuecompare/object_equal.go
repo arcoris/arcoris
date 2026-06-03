@@ -20,7 +20,11 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// equalObject reports descriptor-aware object equality without building diff sets.
+// equalObject reports descriptor-aware object equality without building result sets.
+//
+// It is used by whole-value decisions, such as atomic list equality. Missing
+// declared members compare as absence on both sides; unknown members follow the
+// same policy as compareObject.
 func (c *comparer) equalObject(
 	path fieldpath.Path,
 	oldValue value.Value,
@@ -73,7 +77,7 @@ func (c *comparer) equalObject(
 	)
 }
 
-// equalUnknownObjectMembers applies unknown-field policy in equality-only mode.
+// equalUnknownObjectMembers applies unknown-field policy without producing paths.
 func (c *comparer) equalUnknownObjectMembers(
 	path fieldpath.Path,
 	oldObject value.ObjectView,
@@ -94,7 +98,7 @@ func (c *comparer) equalUnknownObjectMembers(
 	}
 }
 
-// equalPreservedUnknownObjectMembers compares preserved unknown fields as leaves.
+// equalPreservedUnknownObjectMembers compares preserved unknown members as opaque leaves.
 func (c *comparer) equalPreservedUnknownObjectMembers(
 	path fieldpath.Path,
 	oldObject value.ObjectView,

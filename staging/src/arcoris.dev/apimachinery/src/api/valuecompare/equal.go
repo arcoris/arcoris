@@ -20,13 +20,12 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// equalValue reports whether two present concrete values are equal under
-// descriptor semantics.
+// equalValue reports whether two present payload values are equal by descriptor semantics.
 //
-// It is used only for leaf-style decisions: scalar modification checks,
-// atomic/list-set whole-field checks, and descriptor-aware structural equality.
-// Added and removed subtrees still go through valuefieldset so their paths match
-// ownership/field-set semantics.
+// It is used for whole-value decisions that need equality but not a diff set:
+// scalar changes, atomic/list-set list comparison, opaque-preserve comparison,
+// and nested equality under those cases. Added and removed subtrees still go
+// through valuefieldset so their paths match field-set semantics.
 func (c *comparer) equalValue(
 	path fieldpath.Path,
 	oldValue value.Value,
@@ -95,8 +94,8 @@ func (c *comparer) equalValue(
 			return false, err
 		}
 
-		c.resolving[name] = true
-		defer delete(c.resolving, name)
+		leave := c.refs.Enter(name)
+		defer leave()
 
 		return c.equalValue(path, oldValue, newValue, resolved, depth+1)
 	default:

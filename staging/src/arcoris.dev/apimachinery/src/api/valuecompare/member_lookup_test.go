@@ -15,9 +15,8 @@
 package valuecompare
 
 import (
-	"testing"
-
 	"arcoris.dev/apimachinery/api/value"
+	"testing"
 )
 
 func TestMembersByNameBuildsLookup(t *testing.T) {

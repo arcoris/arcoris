@@ -15,11 +15,10 @@
 package valuecompare
 
 import (
-	"testing"
-
 	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
+	"testing"
 )
 
 func TestCompareRefScalar(t *testing.T) {
@@ -77,4 +76,66 @@ func TestCompareRefCycle(t *testing.T) {
 	requireErrorIs(t, err, ErrReferenceCycle)
 	requireErrorReason(t, err, ErrorReasonReferenceCycle)
 	requireErrorPath(t, err, "$")
+}
+
+func TestCompareRefDirectCycle(t *testing.T) {
+	resolver := testResolver{
+		"example.A": types.Define("example.A", types.Ref("example.A")),
+	}
+
+	_, err := Compare(value.StringValue("old"), value.StringValue("new"), types.Ref("example.A").Type(), Options{Resolver: resolver})
+
+	requireErrorIs(t, err, ErrReferenceCycle)
+	requireErrorReason(t, err, ErrorReasonReferenceCycle)
+	requireErrorPath(t, err, "$")
+}
+
+func TestCompareRefIndirectCycle(t *testing.T) {
+	resolver := testResolver{
+		"example.A": types.Define("example.A", types.Ref("example.B")),
+		"example.B": types.Define("example.B", types.Ref("example.C")),
+		"example.C": types.Define("example.C", types.Ref("example.A")),
+	}
+
+	_, err := Compare(value.StringValue("old"), value.StringValue("new"), types.Ref("example.A").Type(), Options{Resolver: resolver})
+
+	requireErrorIs(t, err, ErrReferenceCycle)
+	requireErrorReason(t, err, ErrorReasonReferenceCycle)
+	requireErrorPath(t, err, "$")
+}
+
+func TestCompareRefMaxDepth(t *testing.T) {
+	resolver := testResolver{
+		"example.A": types.Define("example.A", types.Ref("example.B")),
+		"example.B": types.Define("example.B", types.String()),
+	}
+
+	_, err := Compare(
+		value.StringValue("old"),
+		value.StringValue("new"),
+		types.Ref("example.A").Type(),
+		Options{Resolver: resolver, MaxDepth: 1},
+	)
+
+	requireErrorIs(t, err, ErrReferenceCycle)
+	requireErrorReason(t, err, ErrorReasonReferenceCycle)
+	requireErrorPath(t, err, "$")
+}
+
+func TestCompareAtomicListOfRefs(t *testing.T) {
+	path := rootField("args")
+	resolver := testResolver{
+		"example.Name": types.Define("example.Name", types.String()),
+	}
+	descriptor := types.ListOf(types.Ref("example.Name")).Atomic().Type()
+
+	got, err := CompareAt(
+		path,
+		value.MustListValue(value.StringValue("old")),
+		value.MustListValue(value.StringValue("new")),
+		descriptor,
+		Options{Resolver: resolver},
+	)
+	requireNoError(t, err)
+	requireResult(t, got, nil, nil, paths(path))
 }

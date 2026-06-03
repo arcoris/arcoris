@@ -15,11 +15,11 @@
 package valuecompare
 
 import (
-	"testing"
-
 	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
+	"math"
+	"testing"
 )
 
 func TestCompareSameStringIsEmpty(t *testing.T) {
@@ -58,6 +58,18 @@ func TestCompareDifferentFloatIsModified(t *testing.T) {
 	requireResult(t, got, nil, nil, paths(fieldpath.RootPath()))
 }
 
+func TestCompareFloatSameIsEmpty(t *testing.T) {
+	got, err := Compare(mustFloat(t, 1.25), mustFloat(t, 1.25), types.Float64().Type(), Options{})
+	requireNoError(t, err)
+	requireResult(t, got, nil, nil, nil)
+}
+
+func TestCompareFloatNegativeZeroEqualsZero(t *testing.T) {
+	got, err := Compare(mustFloat(t, math.Copysign(0, -1)), mustFloat(t, 0), types.Float64().Type(), Options{})
+	requireNoError(t, err)
+	requireResult(t, got, nil, nil, nil)
+}
+
 func TestCompareDecimalEqualDifferentScaleIsEmpty(t *testing.T) {
 	got, err := Compare(mustDecimal(t, "1.0"), mustDecimal(t, "1.00"), types.Decimal().Type(), Options{})
 	requireNoError(t, err)
@@ -66,6 +78,18 @@ func TestCompareDecimalEqualDifferentScaleIsEmpty(t *testing.T) {
 
 func TestCompareDecimalDifferentValueIsModified(t *testing.T) {
 	got, err := Compare(mustDecimal(t, "1.0"), mustDecimal(t, "1.01"), types.Decimal().Type(), Options{})
+	requireNoError(t, err)
+	requireResult(t, got, nil, nil, paths(fieldpath.RootPath()))
+}
+
+func TestCompareDecimalNegativeEqualDifferentScaleIsEmpty(t *testing.T) {
+	got, err := Compare(mustDecimal(t, "-1.0"), mustDecimal(t, "-1.00"), types.Decimal().Type(), Options{})
+	requireNoError(t, err)
+	requireResult(t, got, nil, nil, nil)
+}
+
+func TestCompareDecimalSmallFractionDifferentIsModified(t *testing.T) {
+	got, err := Compare(mustDecimal(t, "0.0001"), mustDecimal(t, "0.0002"), types.Decimal().Type(), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(fieldpath.RootPath()))
 }

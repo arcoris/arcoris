@@ -21,7 +21,7 @@ import (
 	"arcoris.dev/apimachinery/api/valuefieldset"
 )
 
-// addSubtree records all semantic fields mentioned by a newly present value.
+// addSubtree records every semantic path introduced by a newly present value.
 func (c *comparer) addSubtree(
 	path fieldpath.Path,
 	val value.Value,
@@ -36,7 +36,7 @@ func (c *comparer) addSubtree(
 	return result.withAdded(set), nil
 }
 
-// removeSubtree records all semantic fields mentioned by a removed value.
+// removeSubtree records every semantic path lost with a removed value.
 func (c *comparer) removeSubtree(
 	path fieldpath.Path,
 	val value.Value,
@@ -51,7 +51,11 @@ func (c *comparer) removeSubtree(
 	return result.withRemoved(set), nil
 }
 
-// extractSubtree delegates descriptor-aware path discovery to valuefieldset.
+// extractSubtree delegates added/removed subtree path discovery to valuefieldset.
+//
+// valuecompare deliberately does not duplicate field-set traversal. That keeps
+// ListMap selectors, empty composites, atomic lists, and unknown-field policy
+// aligned across both packages.
 func (c *comparer) extractSubtree(
 	path fieldpath.Path,
 	val value.Value,

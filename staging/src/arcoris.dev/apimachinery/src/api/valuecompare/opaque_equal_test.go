@@ -15,10 +15,9 @@
 package valuecompare
 
 import (
-	"testing"
-
 	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/value"
+	"testing"
 )
 
 func TestEqualOpaqueValueDifferentKindsIsFalse(t *testing.T) {
@@ -34,4 +33,61 @@ func TestEqualOpaqueValueRejectsZeroValue(t *testing.T) {
 	_, err := newComparer(Options{}).equalOpaqueValue(fieldpath.RootPath(), value.Value{}, value.StringValue("x"))
 
 	requireErrorIs(t, err, ErrInvalidValue)
+}
+func TestEqualOpaqueListSameItemsIsTrue(t *testing.T) {
+	oldValue := value.MustListValue(value.StringValue("a"))
+	newValue := value.MustListValue(value.StringValue("a"))
+
+	got, err := newComparer(Options{}).equalOpaqueList(rootField("items"), oldValue, newValue)
+	requireNoError(t, err)
+
+	if !got {
+		t.Fatalf("equalOpaqueList() = false")
+	}
+}
+
+func TestEqualOpaqueListDifferentLengthIsFalse(t *testing.T) {
+	oldValue := value.MustListValue(value.StringValue("a"))
+	newValue := value.MustListValue(value.StringValue("a"), value.StringValue("b"))
+
+	got, err := newComparer(Options{}).equalOpaqueList(rootField("items"), oldValue, newValue)
+	requireNoError(t, err)
+
+	if got {
+		t.Fatalf("equalOpaqueList() = true")
+	}
+}
+func TestEqualOpaqueObjectComparesStructure(t *testing.T) {
+	oldValue := valueObject("nested", "one")
+	newValue := valueObject("nested", "two")
+
+	got, err := newComparer(Options{}).equalOpaqueObject(rootField("extra"), oldValue, newValue)
+	requireNoError(t, err)
+
+	if got {
+		t.Fatalf("equalOpaqueObject() = true")
+	}
+}
+
+func TestEqualOpaqueObjectMissingMemberIsFalse(t *testing.T) {
+	got, err := newComparer(Options{}).equalOpaqueObject(rootField("extra"), valueObject("nested", "one"), valueObject())
+	requireNoError(t, err)
+
+	if got {
+		t.Fatalf("equalOpaqueObject() = true")
+	}
+}
+func TestOpaqueScalarValuesEqualBytes(t *testing.T) {
+	if !opaqueScalarValuesEqual(value.BytesValue([]byte("a")), value.BytesValue([]byte("a"))) {
+		t.Fatalf("opaqueScalarValuesEqual(bytes) = false")
+	}
+	if opaqueScalarValuesEqual(value.BytesValue([]byte("a")), value.BytesValue([]byte("b"))) {
+		t.Fatalf("opaqueScalarValuesEqual(bytes) = true")
+	}
+}
+
+func TestOpaqueScalarValuesEqualDecimalUsesNumericCompare(t *testing.T) {
+	if !opaqueScalarValuesEqual(mustDecimal(t, "1.0"), mustDecimal(t, "1.00")) {
+		t.Fatalf("opaqueScalarValuesEqual(decimal) = false")
+	}
 }

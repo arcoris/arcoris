@@ -15,9 +15,8 @@
 package valuecompare
 
 import (
-	"testing"
-
 	"arcoris.dev/apimachinery/api/types"
+	"testing"
 )
 
 func TestEqualObjectSameIsTrue(t *testing.T) {

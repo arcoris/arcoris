@@ -15,10 +15,9 @@
 package valuecompare
 
 import (
-	"testing"
-
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
+	"testing"
 )
 
 func TestCompareAtomicListSameIsEmpty(t *testing.T) {
@@ -63,6 +62,22 @@ func TestCompareAtomicListRemovedItemIsModifiedAtListPath(t *testing.T) {
 	requireResult(t, got, nil, nil, paths(path))
 }
 
+func TestCompareAtomicListNeverEmitsIndexPaths(t *testing.T) {
+	path := rootField("args")
+	descriptor := types.ListOf(types.String()).Atomic().Type()
+
+	got, err := CompareAt(
+		path,
+		value.MustListValue(value.StringValue("one")),
+		value.MustListValue(value.StringValue("two")),
+		descriptor,
+		Options{},
+	)
+	requireNoError(t, err)
+	requireResult(t, got, nil, nil, paths(path))
+	requireNoChangedPathContaining(t, got, "[0]")
+}
+
 func TestCompareSetListSameIsEmpty(t *testing.T) {
 	descriptor := types.ListOf(types.String()).Set().Type()
 	oldValue := value.MustListValue(value.StringValue("one"))
@@ -85,6 +100,16 @@ func TestCompareSetListDifferentOrderIsModifiedAtListPathForNow(t *testing.T) {
 	)
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(path))
+}
+
+func TestCompareSetListNeverEmitsIndexPaths(t *testing.T) {
+	path := rootField("tags")
+	descriptor := types.ListOf(types.String()).Set().Type()
+
+	got, err := CompareAt(path, value.MustListValue(), value.MustListValue(value.StringValue("a")), descriptor, Options{})
+	requireNoError(t, err)
+	requireResult(t, got, nil, nil, paths(path))
+	requireNoChangedPathContaining(t, got, "[0]")
 }
 
 func TestCompareSetListAddedItemIsModifiedAtListPath(t *testing.T) {
@@ -120,7 +145,31 @@ func TestCompareOrderedListModifiedItem(t *testing.T) {
 	requireResult(t, got, nil, nil, paths(path.Index(1)))
 }
 
+func TestCompareOrderedListModifiedItemUsesIndexPath(t *testing.T) {
+	path := rootField("args")
+	descriptor := types.ListOf(types.String()).Ordered().Type()
+
+	got, err := CompareAt(
+		path,
+		value.MustListValue(value.StringValue("one"), value.StringValue("two")),
+		value.MustListValue(value.StringValue("one"), value.StringValue("three")),
+		descriptor,
+		Options{},
+	)
+	requireNoError(t, err)
+	requireResult(t, got, nil, nil, paths(path.Index(1)))
+}
+
 func TestCompareOrderedListAddedItem(t *testing.T) {
+	path := rootField("args")
+	descriptor := types.ListOf(types.String()).Ordered().Type()
+
+	got, err := CompareAt(path, value.MustListValue(value.StringValue("one")), value.MustListValue(value.StringValue("one"), value.StringValue("two")), descriptor, Options{})
+	requireNoError(t, err)
+	requireResult(t, got, paths(path.Index(1)), nil, nil)
+}
+
+func TestCompareOrderedListAddedItemUsesIndexPath(t *testing.T) {
 	path := rootField("args")
 	descriptor := types.ListOf(types.String()).Ordered().Type()
 
@@ -138,7 +187,30 @@ func TestCompareOrderedListRemovedItem(t *testing.T) {
 	requireResult(t, got, nil, paths(path.Index(1)), nil)
 }
 
+func TestCompareOrderedListRemovedItemUsesIndexPath(t *testing.T) {
+	path := rootField("args")
+	descriptor := types.ListOf(types.String()).Ordered().Type()
+
+	got, err := CompareAt(path, value.MustListValue(value.StringValue("one"), value.StringValue("two")), value.MustListValue(value.StringValue("one")), descriptor, Options{})
+	requireNoError(t, err)
+	requireResult(t, got, nil, paths(path.Index(1)), nil)
+}
+
 func TestCompareOrderedListObjectItemModifiedField(t *testing.T) {
+	path := rootField("containers")
+	descriptor := types.ListOf(
+		types.Object(
+			types.Field("name").String().Optional(),
+			types.Field("image").String().Optional(),
+		),
+	).Ordered().Type()
+
+	got, err := CompareAt(path, value.MustListValue(imageContainer("v1")), value.MustListValue(imageContainer("v2")), descriptor, Options{})
+	requireNoError(t, err)
+	requireResult(t, got, nil, nil, paths(path.Index(0).Field("image")))
+}
+
+func TestCompareOrderedListObjectItemModifiedFieldUsesIndexedFieldPath(t *testing.T) {
 	path := rootField("containers")
 	descriptor := types.ListOf(
 		types.Object(
@@ -172,4 +244,58 @@ func TestCompareOrderedListObjectItemRemovedField(t *testing.T) {
 	got, err := CompareAt(path, value.MustListValue(valueObject("image", "v1")), value.MustListValue(valueObject()), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, paths(path.Index(0).Field("image")), nil)
+}
+func TestEqualListOrderedDifferentLengthIsFalse(t *testing.T) {
+	descriptor := types.ListOf(types.String()).Ordered().Type()
+
+	got, err := newComparer(Options{}).equalList(
+		rootField("args"),
+		value.MustListValue(value.StringValue("one")),
+		value.MustListValue(value.StringValue("one"), value.StringValue("two")),
+		descriptor,
+		0,
+	)
+	requireNoError(t, err)
+
+	if got {
+		t.Fatalf("equalList() = true")
+	}
+}
+
+func TestEqualListMapIgnoresPhysicalOrder(t *testing.T) {
+	oldValue := value.MustListValue(
+		conditionValue("Ready", "True"),
+		conditionValue("Degraded", "False"),
+	)
+	newValue := value.MustListValue(
+		conditionValue("Degraded", "False"),
+		conditionValue("Ready", "True"),
+	)
+
+	got, err := newComparer(Options{}).equalList(rootField("conditions"), oldValue, newValue, conditionsDescriptor(), 0)
+	requireNoError(t, err)
+
+	if !got {
+		t.Fatalf("equalList() = false")
+	}
+}
+func TestEqualListByIndexSameItemsIsTrue(t *testing.T) {
+	oldList, _ := value.MustListValue(value.StringValue("one")).List()
+	newList, _ := value.MustListValue(value.StringValue("one")).List()
+
+	got, err := newComparer(Options{}).equalListByIndex(rootField("args"), oldList, newList, types.String().Type(), 0)
+	requireNoError(t, err)
+
+	if !got {
+		t.Fatalf("equalListByIndex() = false")
+	}
+}
+
+func TestEqualListByIndexInvalidElementDescriptorReturnsError(t *testing.T) {
+	oldList, _ := value.MustListValue(value.StringValue("one")).List()
+	newList, _ := value.MustListValue(value.StringValue("one")).List()
+
+	_, err := newComparer(Options{}).equalListByIndex(rootField("args"), oldList, newList, types.Type{}, 0)
+
+	requireErrorIs(t, err, ErrInvalidDescriptor)
 }

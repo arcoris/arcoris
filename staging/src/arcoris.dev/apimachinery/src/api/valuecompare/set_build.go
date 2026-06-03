@@ -16,15 +16,15 @@ package valuecompare
 
 import "arcoris.dev/apimachinery/api/fieldpath"
 
-// setAt builds the one-path set used for modified or opaque unknown fields.
+// setAt builds the one-path set used for modified leaves and opaque unknowns.
 func setAt(path fieldpath.Path) (fieldpath.Set, error) {
 	set, err := fieldpath.NewSet(path)
 
 	if err != nil {
 		return fieldpath.Set{}, wrapAt(
 			path,
-			ErrInvalidDescriptor,
-			ErrorReasonInvalidDescriptor,
+			ErrInvalidPath,
+			ErrorReasonInvalidPath,
 			"field path cannot be stored in a set",
 			err,
 		)

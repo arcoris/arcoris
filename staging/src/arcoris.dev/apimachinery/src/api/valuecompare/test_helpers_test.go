@@ -45,6 +45,13 @@ func requireErrorIs(t *testing.T, err, target error) {
 	}
 }
 
+func requireErrorNotIs(t *testing.T, err, target error) {
+	t.Helper()
+	if errors.Is(err, target) {
+		t.Fatalf("errors.Is(%v, %v) = true", err, target)
+	}
+}
+
 func requireErrorPath(t *testing.T, err error, want string) {
 	t.Helper()
 
@@ -90,9 +97,29 @@ func requireResult(
 ) {
 	t.Helper()
 
+	requireDisjointResult(t, got)
 	requireSet(t, "added", got.Added, added...)
 	requireSet(t, "removed", got.Removed, removed...)
 	requireSet(t, "modified", got.Modified, modified...)
+}
+
+func requireDisjointResult(t *testing.T, result Result) {
+	t.Helper()
+
+	if overlap := result.Added.Intersection(result.Removed); !overlap.IsEmpty() {
+		t.Fatalf("added/removed overlap = %s", overlap)
+	}
+	if overlap := result.Added.Intersection(result.Modified); !overlap.IsEmpty() {
+		t.Fatalf("added/modified overlap = %s", overlap)
+	}
+	if overlap := result.Removed.Intersection(result.Modified); !overlap.IsEmpty() {
+		t.Fatalf("removed/modified overlap = %s", overlap)
+	}
+
+	union := result.Added.Union(result.Removed).Union(result.Modified)
+	if !result.Changed().Equal(union) {
+		t.Fatalf("changed = %s, want union %s", result.Changed(), union)
+	}
 }
 
 func requireSet(t *testing.T, name string, got fieldpath.Set, want ...fieldpath.Path) {
@@ -101,6 +128,16 @@ func requireSet(t *testing.T, name string, got fieldpath.Set, want ...fieldpath.
 	expected := fieldpath.MustSet(want...)
 	if !got.Equal(expected) {
 		t.Fatalf("%s = %s, want %s", name, got, expected)
+	}
+}
+
+func requireNoChangedPathContaining(t *testing.T, result Result, fragment string) {
+	t.Helper()
+
+	for _, p := range result.Changed().Paths() {
+		if strings.Contains(p.String(), fragment) {
+			t.Fatalf("changed path %s contains %q", p, fragment)
+		}
 	}
 }
 
@@ -148,6 +185,12 @@ func readySelector() fieldpath.Selector {
 func degradedSelector() fieldpath.Selector {
 	return fieldpath.MustSelector(
 		fieldpath.NewSelectorEntry("type", fieldpath.StringLiteral("Degraded")),
+	)
+}
+
+func progressingSelector() fieldpath.Selector {
+	return fieldpath.MustSelector(
+		fieldpath.NewSelectorEntry("type", fieldpath.StringLiteral("Progressing")),
 	)
 }
 

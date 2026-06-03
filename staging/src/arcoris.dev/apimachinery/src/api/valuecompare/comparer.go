@@ -14,23 +14,31 @@
 
 package valuecompare
 
-import "arcoris.dev/apimachinery/api/types"
+import (
+	"arcoris.dev/apimachinery/api/internal/typeref"
+	"arcoris.dev/apimachinery/api/types"
+)
 
-// comparer holds per-run state that must not leak between Compare calls.
+// comparer holds one isolated comparison run.
 //
-// The resolver and depth limit are normalized once. The resolving map is the
-// active TypeRef stack, used only while descending through references.
+// The resolver and depth limit are normalized once, then shared with the
+// internal TypeRef helper for this one comparison run.
 type comparer struct {
-	resolver  types.Resolver
-	maxDepth  int
-	resolving map[types.TypeName]bool
+	// resolver loads named descriptor definitions for TypeRef nodes.
+	resolver types.Resolver
+	// maxDepth is the effective TypeRef hop limit for this run.
+	maxDepth int
+	// refs tracks the active TypeRef stack for cycle detection.
+	refs *typeref.Resolver
 }
 
-// newComparer converts user options into immutable run configuration.
+// newComparer copies user options into fresh per-run state.
 func newComparer(opts Options) *comparer {
+	maxDepth := opts.normalizedMaxDepth()
+
 	return &comparer{
-		resolver:  opts.Resolver,
-		maxDepth:  opts.normalizedMaxDepth(),
-		resolving: make(map[types.TypeName]bool),
+		resolver: opts.Resolver,
+		maxDepth: maxDepth,
+		refs:     typeref.New(opts.Resolver, maxDepth),
 	}
 }

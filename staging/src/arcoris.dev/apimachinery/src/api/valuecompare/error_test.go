@@ -15,10 +15,11 @@
 package valuecompare
 
 import (
+	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/types"
+	"arcoris.dev/apimachinery/api/value"
 	"errors"
 	"testing"
-
-	"arcoris.dev/apimachinery/api/fieldpath"
 )
 
 func TestErrorIsSentinel(t *testing.T) {
@@ -26,6 +27,14 @@ func TestErrorIsSentinel(t *testing.T) {
 
 	if !errors.Is(err, ErrInvalidValue) {
 		t.Fatalf("errors.Is(err, ErrInvalidValue) = false")
+	}
+}
+
+func TestErrorIsInvalidPath(t *testing.T) {
+	err := errorAt(fieldpath.RootPath(), ErrInvalidPath, ErrorReasonInvalidPath, "bad")
+
+	if !errors.Is(err, ErrInvalidPath) {
+		t.Fatalf("errors.Is(err, ErrInvalidPath) = false")
 	}
 }
 
@@ -50,4 +59,144 @@ func TestNilErrorStringAndUnwrap(t *testing.T) {
 	if err.Unwrap() != nil {
 		t.Fatalf("nil Unwrap() != nil")
 	}
+}
+func TestErrorAtBuildsStructuredError(t *testing.T) {
+	err := errorAt(fieldpath.RootPath(), ErrInvalidValue, ErrorReasonInvalidZero, "bad")
+
+	requireErrorIs(t, err, ErrInvalidValue)
+	requireErrorReason(t, err, ErrorReasonInvalidZero)
+	requireErrorPath(t, err, "$")
+	requireErrorDetailContains(t, err, "bad")
+}
+
+func TestErrorfAtBuildsFormattedDetail(t *testing.T) {
+	err := errorfAt(fieldpath.RootPath(), ErrUnknownField, ErrorReasonUnknownField, "field %q", "extra")
+
+	requireErrorDetailContains(t, err, `field "extra"`)
+}
+
+func TestWrapAtPreservesCause(t *testing.T) {
+	cause := errors.New("cause")
+	err := wrapAt(fieldpath.RootPath(), ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "bad", cause)
+
+	requireErrorIs(t, err, ErrInvalidDescriptor)
+	if !errors.Is(err, cause) {
+		t.Fatalf("errors.Is(err, cause) = false")
+	}
+}
+func TestErrorReasonStrings(t *testing.T) {
+	cases := map[ErrorReason]string{
+		ErrorReasonInvalidZero:       "invalid_zero",
+		ErrorReasonInvalidDescriptor: "invalid_descriptor",
+		ErrorReasonInvalidPath:       "invalid_path",
+		ErrorReasonKindMismatch:      "kind_mismatch",
+		ErrorReasonUnknownField:      "unknown_field",
+		ErrorReasonUnresolvedRef:     "unresolved_ref",
+		ErrorReasonReferenceCycle:    "reference_cycle",
+		ErrorReasonMissingListKey:    "missing_list_key",
+		ErrorReasonInvalidListKey:    "invalid_list_key",
+		ErrorReasonDuplicateListKey:  "duplicate_list_key",
+	}
+
+	for reason, want := range cases {
+		if string(reason) != want {
+			t.Fatalf("reason = %q, want %q", reason, want)
+		}
+	}
+}
+
+func TestErrorReasonInvalidPath(t *testing.T) {
+	if string(ErrorReasonInvalidPath) != "invalid_path" {
+		t.Fatalf("invalid path reason = %q", ErrorReasonInvalidPath)
+	}
+}
+func TestAddedSubtreeErrorUsesValueCompareErrorModel(t *testing.T) {
+	descriptor := types.Object(types.Field("name").String().Optional()).Type()
+	newValue := value.MustObjectValue(value.ObjectMember("name", value.BoolValue(true)))
+
+	_, err := Compare(valueObject(), newValue, descriptor, Options{})
+
+	requireErrorIs(t, err, ErrKindMismatch)
+	requireErrorReason(t, err, ErrorReasonKindMismatch)
+	requireErrorPath(t, err, "$.name")
+}
+
+func TestCompareAddedSubtreeWrapsValueFieldSetUnknownField(t *testing.T) {
+	descriptor := types.Object(types.Field("child").Object().Optional()).Type()
+	newValue := value.MustObjectValue(value.ObjectMember("child", valueObject("extra", "new")))
+
+	_, err := Compare(valueObject(), newValue, descriptor, Options{})
+
+	requireErrorIs(t, err, ErrUnknownField)
+	requireErrorReason(t, err, ErrorReasonUnknownField)
+	requireErrorPath(t, err, "$.child.extra")
+}
+
+func TestCompareRemovedSubtreeWrapsValueFieldSetUnknownField(t *testing.T) {
+	descriptor := types.Object(types.Field("child").Object().Optional()).Type()
+	oldValue := value.MustObjectValue(value.ObjectMember("child", valueObject("extra", "old")))
+
+	_, err := Compare(oldValue, valueObject(), descriptor, Options{})
+
+	requireErrorIs(t, err, ErrUnknownField)
+	requireErrorReason(t, err, ErrorReasonUnknownField)
+	requireErrorPath(t, err, "$.child.extra")
+}
+
+func TestCompareAddedSubtreeWrapsInvalidListKey(t *testing.T) {
+	descriptor := types.Object(
+		types.Field("conditions").ListOf(conditionExpr()).Map("type").Optional(),
+	).Type()
+	newValue := value.MustObjectValue(value.ObjectMember(
+		"conditions",
+		value.MustListValue(valueObject("status", "True")),
+	))
+
+	_, err := Compare(valueObject(), newValue, descriptor, Options{})
+
+	requireErrorIs(t, err, ErrInvalidListKey)
+	requireErrorReason(t, err, ErrorReasonMissingListKey)
+	requireErrorPath(t, err, "$.conditions[0].type")
+}
+
+func TestCompareRemovedSubtreeWrapsInvalidListKey(t *testing.T) {
+	descriptor := types.Object(
+		types.Field("conditions").ListOf(conditionExpr()).Map("type").Optional(),
+	).Type()
+	oldValue := value.MustObjectValue(value.ObjectMember(
+		"conditions",
+		value.MustListValue(valueObject("status", "True")),
+	))
+
+	_, err := Compare(oldValue, valueObject(), descriptor, Options{})
+
+	requireErrorIs(t, err, ErrInvalidListKey)
+	requireErrorReason(t, err, ErrorReasonMissingListKey)
+	requireErrorPath(t, err, "$.conditions[0].type")
+}
+
+func TestCompareAddedSubtreeWrapsUnresolvedRef(t *testing.T) {
+	descriptor := types.Object(types.Field("name").Ref("example.Name").Optional()).Type()
+	newValue := value.MustObjectValue(value.ObjectMember("name", value.StringValue("api")))
+
+	_, err := Compare(valueObject(), newValue, descriptor, Options{})
+
+	requireErrorIs(t, err, ErrUnresolvedRef)
+	requireErrorReason(t, err, ErrorReasonUnresolvedRef)
+	requireErrorPath(t, err, "$.name")
+}
+
+func TestCompareRemovedSubtreeWrapsReferenceCycle(t *testing.T) {
+	resolver := testResolver{
+		"example.A": types.Define("example.A", types.Ref("example.B")),
+		"example.B": types.Define("example.B", types.Ref("example.A")),
+	}
+	descriptor := types.Object(types.Field("name").Ref("example.A").Optional()).Type()
+	oldValue := value.MustObjectValue(value.ObjectMember("name", value.StringValue("api")))
+
+	_, err := Compare(oldValue, valueObject(), descriptor, Options{Resolver: resolver})
+
+	requireErrorIs(t, err, ErrReferenceCycle)
+	requireErrorReason(t, err, ErrorReasonReferenceCycle)
+	requireErrorPath(t, err, "$.name")
 }

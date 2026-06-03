@@ -20,7 +20,11 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// compareList interprets value.KindList through a list descriptor.
+// compareList dispatches list comparison by descriptor list semantics.
+//
+// Atomic and set lists are one semantic field. Ordered lists use physical index
+// paths. ListMap values use selector identity and must not fall back to index
+// comparison when selector extraction fails.
 func (c *comparer) compareList(
 	path fieldpath.Path,
 	oldValue value.Value,
@@ -85,6 +89,9 @@ func (c *comparer) compareWholeList(
 }
 
 // compareOrderedList compares list items by physical index.
+//
+// Ordered list semantics make indexes part of the API contract, so added,
+// removed, and modified item paths are allowed to use path.Index(i).
 func (c *comparer) compareOrderedList(
 	path fieldpath.Path,
 	oldList value.ListView,
@@ -115,8 +122,81 @@ func (c *comparer) compareOrderedList(
 	return result, nil
 }
 
-// listOperand builds an operand from a list index.
+// listOperand converts an index lookup into presence-aware compare input.
 func listOperand(list value.ListView, index int) operand {
 	val, ok := list.At(index)
 	return operand{value: val, present: ok}
+}
+
+// equalList compares list payloads according to descriptor list semantics.
+//
+// It is an equality-only companion to compareList. For ListSet, equality remains
+// whole-list and order-sensitive until stable value-based set identity exists.
+func (c *comparer) equalList(
+	path fieldpath.Path,
+	oldValue value.Value,
+	newValue value.Value,
+	descriptor types.Type,
+	depth int,
+) (bool, error) {
+	if err := requireKind(path, oldValue, value.KindList, descriptor.Code()); err != nil {
+		return false, err
+	}
+	if err := requireKind(path, newValue, value.KindList, descriptor.Code()); err != nil {
+		return false, err
+	}
+
+	listView, ok := descriptor.List()
+	if !ok {
+		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not a list")
+	}
+
+	oldList, _ := oldValue.List()
+	newList, _ := newValue.List()
+	element := listView.Element()
+
+	switch listView.Semantics() {
+	case types.ListAtomic,
+		types.ListSet,
+		types.ListOrdered:
+		return c.equalListByIndex(path, oldList, newList, element, depth)
+	case types.ListMap:
+		return c.equalListMap(path, oldList, newList, element, listView.MapKeys(), depth)
+	default:
+		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "list semantics are invalid")
+	}
+}
+
+// equalListByIndex compares list items in physical order.
+//
+// Atomic, set, and ordered whole-list equality all use this exact sequence
+// comparison today. Only ListMap gets selector-based equality.
+func (c *comparer) equalListByIndex(
+	path fieldpath.Path,
+	oldList value.ListView,
+	newList value.ListView,
+	element types.Type,
+	depth int,
+) (bool, error) {
+	n := oldList.Len()
+	if n != newList.Len() {
+		return false, nil
+	}
+	if !element.IsValid() {
+		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "list element descriptor is invalid")
+	}
+
+	for i := 0; i < n; i++ {
+		oldItem, _ := oldList.At(i)
+		newItem, _ := newList.At(i)
+		equal, err := c.equalValue(path.Index(i), oldItem, newItem, element, depth+1)
+		if err != nil {
+			return false, err
+		}
+		if !equal {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }

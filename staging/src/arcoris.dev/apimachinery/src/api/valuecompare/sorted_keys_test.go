@@ -15,10 +15,9 @@
 package valuecompare
 
 import (
+	"arcoris.dev/apimachinery/api/value"
 	"slices"
 	"testing"
-
-	"arcoris.dev/apimachinery/api/value"
 )
 
 func TestUnionSortedKeys(t *testing.T) {

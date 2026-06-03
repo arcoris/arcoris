@@ -15,9 +15,8 @@
 package valuecompare
 
 import (
-	"testing"
-
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"testing"
 )
 
 func TestEmptyResult(t *testing.T) {
@@ -53,6 +52,7 @@ func TestResultChangedIsUnion(t *testing.T) {
 	modified := fieldpath.MustSet(rootField("same"))
 	result := Result{Added: added, Removed: removed, Modified: modified}
 
+	requireDisjointResult(t, result)
 	requireSet(t, "changed", result.Changed(), rootField("new"), rootField("old"), rootField("same"))
 }
 
@@ -63,7 +63,7 @@ func TestUnionSetsReturnsNonEmptySide(t *testing.T) {
 	requireSet(t, "right empty", unionSets(set, fieldpath.EmptySet()), rootField("name"))
 }
 
-func TestResultSetsAreDisjoint(t *testing.T) {
+func TestResultBucketsAreDisjoint(t *testing.T) {
 	got, err := Compare(
 		valueObject(
 			"same", "old",
@@ -78,9 +78,5 @@ func TestResultSetsAreDisjoint(t *testing.T) {
 	)
 	requireNoError(t, err)
 
-	if !got.Added.Intersection(got.Removed).IsEmpty() ||
-		!got.Added.Intersection(got.Modified).IsEmpty() ||
-		!got.Removed.Intersection(got.Modified).IsEmpty() {
-		t.Fatalf("result sets overlap: added=%s removed=%s modified=%s", got.Added, got.Removed, got.Modified)
-	}
+	requireDisjointResult(t, got)
 }

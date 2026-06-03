@@ -20,7 +20,7 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// unionSortedKeys returns canonical traversal order for dynamic object members.
+// unionSortedKeys returns canonical traversal order for dynamic map members.
 func unionSortedKeys(left, right map[string]value.Value) []string {
 	return unionSortedMapKeys(left, right)
 }

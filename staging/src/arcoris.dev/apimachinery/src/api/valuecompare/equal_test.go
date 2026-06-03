@@ -15,10 +15,9 @@
 package valuecompare
 
 import (
-	"testing"
-
 	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/types"
+	"testing"
 )
 
 func TestEqualValueDecimalUsesNumericCompare(t *testing.T) {

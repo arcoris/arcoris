@@ -16,23 +16,26 @@ package valuecompare
 
 import "arcoris.dev/apimachinery/api/types"
 
+// defaultMaxDepth bounds TypeRef traversal when callers do not provide a limit.
 const defaultMaxDepth = 64
 
 // Options configures one value comparison run.
 //
 // Zero Options are valid for descriptor graphs that do not contain TypeRef.
+// Options are copied into a comparer at the start of Compare or CompareAt.
 type Options struct {
-	// Resolver resolves api/types TypeRef descriptors. It may be nil when the
-	// compared descriptor tree contains no references.
+	// Resolver resolves api/types TypeRef descriptors during traversal.
+	//
+	// A nil resolver is accepted only when no reachable descriptor is TypeRef.
 	Resolver types.Resolver
 
-	// MaxDepth prevents runaway TypeRef recursion.
+	// MaxDepth limits TypeRef hops before comparison reports ErrReferenceCycle.
 	//
 	// Values <= 0 use the package default.
 	MaxDepth int
 }
 
-// normalizedMaxDepth returns the effective TypeRef traversal budget.
+// normalizedMaxDepth returns the per-run TypeRef hop budget.
 func (o Options) normalizedMaxDepth() int {
 	if o.MaxDepth > 0 {
 		return o.MaxDepth

@@ -18,18 +18,19 @@ import (
 	"bytes"
 
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/typekind"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// compareScalar records the current path when scalar payloads differ.
+// compareScalar records the current path when descriptor-compatible scalars differ.
 func (c *comparer) compareScalar(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
 	descriptor types.Type,
 ) (Result, error) {
-	equal, err := c.equalValue(path, oldValue, newValue, descriptor, 0)
+	equal, err := c.equalScalar(path, oldValue, newValue, descriptor)
 	if err != nil {
 		return Result{}, err
 	}
@@ -40,7 +41,10 @@ func (c *comparer) compareScalar(
 	return EmptyResult().withModified(path)
 }
 
-// equalScalar compares scalar payloads under scalar descriptor semantics.
+// equalScalar compares scalar payloads after enforcing descriptor-compatible kind.
+//
+// Decimal equality uses value.Decimal.Compare so numerically equal values with
+// different scales compare equal. Bytes compare by byte content.
 func (c *comparer) equalScalar(
 	path fieldpath.Path,
 	oldValue value.Value,
@@ -66,43 +70,12 @@ func (c *comparer) equalScalar(
 	return equal, nil
 }
 
-// scalarKind maps a scalar descriptor code to its concrete value kind.
+// scalarKind maps scalar descriptor codes to their concrete payload kind.
 func scalarKind(code types.TypeCode) (value.Kind, bool) {
-	switch code {
-	case types.TypeBool:
-		return value.KindBool, true
-	case types.TypeString:
-		return value.KindString, true
-	case types.TypeBytes:
-		return value.KindBytes, true
-	case types.TypeInt8,
-		types.TypeInt16,
-		types.TypeInt32,
-		types.TypeInt64,
-		types.TypeUint8,
-		types.TypeUint16,
-		types.TypeUint32,
-		types.TypeUint64:
-		return value.KindInteger, true
-	case types.TypeFloat32,
-		types.TypeFloat64:
-		return value.KindFloat, true
-	case types.TypeDecimal:
-		return value.KindDecimal, true
-	case types.TypeTimestamp:
-		return value.KindTimestamp, true
-	case types.TypeDate:
-		return value.KindDate, true
-	case types.TypeTime:
-		return value.KindTimeOfDay, true
-	case types.TypeDuration:
-		return value.KindDuration, true
-	default:
-		return value.KindInvalid, false
-	}
+	return typekind.Scalar(code)
 }
 
-// scalarValuesEqual compares payloads after the caller checked kind compatibility.
+// scalarValuesEqual compares same-kind scalar payloads without descriptor redispatch.
 func scalarValuesEqual(oldValue value.Value, newValue value.Value, code types.TypeCode) (bool, bool) {
 	switch code {
 	case types.TypeBool:

@@ -16,10 +16,13 @@ package valuecompare
 
 import (
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"arcoris.dev/apimachinery/api/internal/typeref"
 	"arcoris.dev/apimachinery/api/types"
 )
 
-// compareRef resolves a TypeRef and compares at the same semantic path.
+// compareRef resolves one TypeRef edge without changing the semantic path.
+//
+// Result paths describe payload locations, not descriptor definition paths.
 func (c *comparer) compareRef(
 	path fieldpath.Path,
 	oldOperand operand,
@@ -32,67 +35,50 @@ func (c *comparer) compareRef(
 		return Result{}, err
 	}
 
-	c.resolving[name] = true
-	defer delete(c.resolving, name)
+	leave := c.refs.Enter(name)
+	defer leave()
 
 	return c.compare(path, oldOperand, newOperand, resolved, depth+1)
 }
 
-// resolveRefDefinition resolves one TypeRef edge and checks recursion guards.
+// resolveRefDefinition resolves one TypeRef edge and enforces recursion guards.
+//
+// The caller owns marking the returned name in c.refs while it descends
+// into the resolved descriptor.
 func (c *comparer) resolveRefDefinition(
 	path fieldpath.Path,
 	descriptor types.Type,
 	depth int,
 ) (types.TypeName, types.Type, error) {
-	if depth >= c.maxDepth {
-		return "", types.Type{}, errorAt(
-			path,
-			ErrReferenceCycle,
-			ErrorReasonReferenceCycle,
-			"maximum TypeRef comparison depth reached",
-		)
+	name, resolved, err := c.refs.Resolve(path, descriptor, depth)
+	if err != nil {
+		return "", types.Type{}, valuecompareRefError(err)
 	}
 
-	view, ok := descriptor.Ref()
+	return name, resolved, nil
+}
+
+// valuecompareRefError maps internal TypeRef traversal failures into this
+// package's public sentinel and reason model.
+func valuecompareRefError(err error) error {
+	refError, ok := typeref.AsError(err)
 	if !ok {
-		return "", types.Type{}, errorAt(
-			path,
-			ErrInvalidDescriptor,
-			ErrorReasonInvalidDescriptor,
-			"descriptor is not a reference",
-		)
+		return err
 	}
 
-	name := view.Name()
-	if c.resolver == nil {
-		return "", types.Type{}, errorfAt(
-			path,
-			ErrUnresolvedRef,
-			ErrorReasonUnresolvedRef,
-			"reference %q has no resolver",
-			name,
-		)
-	}
-	if c.resolving[name] {
-		return "", types.Type{}, errorfAt(
-			path,
-			ErrReferenceCycle,
-			ErrorReasonReferenceCycle,
-			"reference %q is recursive",
-			name,
-		)
-	}
+	sentinel, reason := refErrorClassification(refError.Kind)
+	return wrapAt(refError.Path, sentinel, reason, refError.Detail, err)
+}
 
-	definition, ok := c.resolver.ResolveType(name)
-	if !ok {
-		return "", types.Type{}, errorfAt(
-			path,
-			ErrUnresolvedRef,
-			ErrorReasonUnresolvedRef,
-			"reference %q was not found",
-			name,
-		)
+func refErrorClassification(kind typeref.FailureKind) (error, ErrorReason) {
+	switch kind {
+	case typeref.FailureInvalidDescriptor:
+		return ErrInvalidDescriptor, ErrorReasonInvalidDescriptor
+	case typeref.FailureUnresolvedRef:
+		return ErrUnresolvedRef, ErrorReasonUnresolvedRef
+	case typeref.FailureReferenceCycle:
+		return ErrReferenceCycle, ErrorReasonReferenceCycle
+	default:
+		return ErrInvalidDescriptor, ErrorReasonInvalidDescriptor
 	}
-
-	return name, definition.Type(), nil
 }

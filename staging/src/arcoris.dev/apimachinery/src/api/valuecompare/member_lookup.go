@@ -16,7 +16,7 @@ package valuecompare
 
 import "arcoris.dev/apimachinery/api/value"
 
-// membersByName builds a lookup from concrete object members.
+// membersByName indexes concrete object members by their string name.
 func membersByName(members []value.Member) map[string]value.Value {
 	if len(members) == 0 {
 		return nil

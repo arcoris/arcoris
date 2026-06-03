@@ -15,11 +15,10 @@
 package valuecompare
 
 import (
-	"testing"
-
 	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
+	"testing"
 )
 
 func TestComparerAbsentAbsentIsEmpty(t *testing.T) {

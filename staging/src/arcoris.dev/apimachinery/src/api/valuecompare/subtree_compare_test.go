@@ -15,10 +15,9 @@
 package valuecompare
 
 import (
-	"testing"
-
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
+	"testing"
 )
 
 func TestAddSubtreeUsesValueFieldSet(t *testing.T) {

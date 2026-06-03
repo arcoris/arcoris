@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package valuecompare compares concrete ARCORIS API payload values under
+// Package valuecompare compares concrete ARCORIS API payload values using
 // api/types descriptor semantics and reports semantic field changes.
 //
-// The package is descriptor-aware and path-aware, but side-effect free. It
-// reads descriptors and immutable-by-convention payload values, then returns
-// paths that were added, removed, or modified. It does not validate complete
-// values, decode wire formats, normalize values, apply defaults, prune values,
-// merge values, manage ownership, validate API object metadata, access storage,
-// or perform admission.
+// The package is descriptor-aware and path-aware, but side-effect free. It reads
+// descriptor metadata and immutable-by-convention payload values, then returns
+// the semantic paths that were added, removed, or modified. It does not validate
+// complete values, decode wire formats, normalize values, apply defaults, prune
+// values, merge values, manage ownership, validate API object metadata, access
+// storage, or perform admission.
 //
 // Compare results are expressed as added, removed, and modified api/fieldpath
 // sets. Object fields, map keys, ordered list indexes, and ListMap selectors are
-// compared according to descriptor semantics. Added and removed subtrees are
-// discovered through api/valuefieldset so compare output stays aligned with
-// future field ownership and apply planning layers.
+// addressed according to descriptor semantics. Explicit null is treated as
+// present data, not as absence. Added and removed subtrees are discovered through
+// api/valuefieldset so compare output stays aligned with future field ownership
+// and apply planning layers.
 package valuecompare

@@ -15,13 +15,12 @@
 package valuecompare
 
 import (
-	"testing"
-
 	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 	"arcoris.dev/apimachinery/api/valuefieldset"
 	"arcoris.dev/apimachinery/api/valuevalidation"
+	"testing"
 )
 
 func TestCompareStartsAtRoot(t *testing.T) {
@@ -40,13 +39,14 @@ func TestCompareAtPreservesBasePath(t *testing.T) {
 	requireResult(t, got, nil, nil, paths(path))
 }
 
-func TestCompareAtInvalidBasePathReturnsInvalidDescriptor(t *testing.T) {
+func TestCompareAtInvalidBasePathReturnsInvalidPath(t *testing.T) {
 	path := fieldpath.RootPath().Index(-1)
 
 	_, err := CompareAt(path, value.StringValue("old"), value.StringValue("new"), types.String().Type(), Options{})
 
-	requireErrorIs(t, err, ErrInvalidDescriptor)
-	requireErrorReason(t, err, ErrorReasonInvalidDescriptor)
+	requireErrorIs(t, err, ErrInvalidPath)
+	requireErrorNotIs(t, err, ErrInvalidDescriptor)
+	requireErrorReason(t, err, ErrorReasonInvalidPath)
 }
 
 func TestCompareAtMatchesValidationAndFieldSetPathSemantics(t *testing.T) {
@@ -75,4 +75,133 @@ func TestCompareAtMatchesValidationAndFieldSetPathSemantics(t *testing.T) {
 	got, err := CompareAt(path, oldValue, newValue, descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(selectorPath.Field("status")))
+}
+func TestCompareDispatchesScalarDescriptor(t *testing.T) {
+	got, err := newComparer(Options{}).compare(
+		fieldpath.RootPath(),
+		presentOperand(value.StringValue("old")),
+		presentOperand(value.StringValue("new")),
+		types.String().Type(),
+		0,
+	)
+	requireNoError(t, err)
+
+	requireResult(t, got, nil, nil, paths(fieldpath.RootPath()))
+}
+func TestComparePresenceBothAbsentIsEmpty(t *testing.T) {
+	got, done, err := newComparer(Options{}).comparePresence(
+		rootField("name"),
+		absentOperand(),
+		absentOperand(),
+		types.String().Type(),
+	)
+	requireNoError(t, err)
+
+	if !done {
+		t.Fatalf("done = false")
+	}
+	requireResult(t, got, nil, nil, nil)
+}
+
+func TestComparePresenceAddedUsesSubtree(t *testing.T) {
+	path := rootField("spec")
+	descriptor := types.Object(types.Field("image").String().Optional()).Type()
+	newValue := value.MustObjectValue(value.ObjectMember("image", value.StringValue("v1")))
+
+	got, done, err := newComparer(Options{}).comparePresence(path, absentOperand(), presentOperand(newValue), descriptor)
+	requireNoError(t, err)
+
+	if !done {
+		t.Fatalf("done = false")
+	}
+	requireResult(t, got, paths(path.Field("image")), nil, nil)
+}
+
+func TestComparePresenceRemovedUsesSubtree(t *testing.T) {
+	path := rootField("spec")
+	descriptor := types.Object(types.Field("image").String().Optional()).Type()
+	oldValue := value.MustObjectValue(value.ObjectMember("image", value.StringValue("v1")))
+
+	got, done, err := newComparer(Options{}).comparePresence(path, presentOperand(oldValue), absentOperand(), descriptor)
+	requireNoError(t, err)
+
+	if !done {
+		t.Fatalf("done = false")
+	}
+	requireResult(t, got, nil, paths(path.Field("image")), nil)
+}
+
+func TestComparePresenceBothPresentContinues(t *testing.T) {
+	_, done, err := newComparer(Options{}).comparePresence(
+		rootField("name"),
+		presentOperand(value.StringValue("old")),
+		presentOperand(value.StringValue("new")),
+		types.String().Type(),
+	)
+	requireNoError(t, err)
+
+	if done {
+		t.Fatalf("done = true")
+	}
+}
+func TestRequireComparableInputsRejectsZeroValue(t *testing.T) {
+	err := requireComparableInputs(fieldpath.RootPath(), value.Value{}, value.StringValue("x"), types.String().Type())
+
+	requireErrorIs(t, err, ErrInvalidValue)
+	requireErrorReason(t, err, ErrorReasonInvalidZero)
+}
+
+func TestRequireComparableInputsRejectsInvalidDescriptor(t *testing.T) {
+	err := requireComparableInputs(fieldpath.RootPath(), value.StringValue("x"), value.StringValue("y"), types.Type{})
+
+	requireErrorIs(t, err, ErrInvalidDescriptor)
+	requireErrorReason(t, err, ErrorReasonInvalidDescriptor)
+}
+
+func TestRequireKindRejectsMismatch(t *testing.T) {
+	err := requireKind(fieldpath.RootPath(), value.StringValue("x"), value.KindBool, types.TypeBool)
+
+	requireErrorIs(t, err, ErrKindMismatch)
+	requireErrorReason(t, err, ErrorReasonKindMismatch)
+}
+func TestCompareNullBothNullIsEmpty(t *testing.T) {
+	got, err := newComparer(Options{}).compareNull(rootField("name"), value.NullValue(), value.NullValue())
+	requireNoError(t, err)
+
+	requireResult(t, got, nil, nil, nil)
+}
+
+func TestCompareNullScalarChangeIsModified(t *testing.T) {
+	path := rootField("name")
+
+	got, err := newComparer(Options{}).compareNull(path, value.NullValue(), value.StringValue("x"))
+	requireNoError(t, err)
+
+	requireResult(t, got, nil, nil, paths(path))
+}
+
+func TestCompareNullDescriptorRejectsNonNull(t *testing.T) {
+	_, err := newComparer(Options{}).compareNullDescriptor(
+		rootField("name"),
+		value.StringValue("x"),
+		value.NullValue(),
+		types.Null().Type(),
+	)
+
+	requireErrorIs(t, err, ErrKindMismatch)
+}
+func TestPresentOperand(t *testing.T) {
+	got := presentOperand(value.NullValue())
+
+	if !got.present || !got.value.IsNull() {
+		t.Fatalf("presentOperand() = %#v", got)
+	}
+}
+
+func TestAbsentOperand(t *testing.T) {
+	got := absentOperand()
+
+	if got.present || !got.value.IsZero() {
+		t.Fatalf("absentOperand() = %#v", got)
+	}
 }

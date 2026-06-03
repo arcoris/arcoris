@@ -15,10 +15,9 @@
 package valuecompare
 
 import (
-	"testing"
-
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
+	"testing"
 )
 
 func TestCompareMapSameIsEmpty(t *testing.T) {
@@ -81,4 +80,18 @@ func TestCompareMapNonEmptyToEmpty(t *testing.T) {
 	got, err := CompareAt(path, valueObject("env", "prod"), valueObject(), types.MapOf(types.String()).Type(), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, paths(path.Key("env")), nil)
+}
+func TestMapOperandReportsPresence(t *testing.T) {
+	members := map[string]value.Value{"env": value.StringValue("prod")}
+
+	got := mapOperand(members, "env")
+	text, _ := got.value.String()
+	if !got.present || text != "prod" {
+		t.Fatalf("mapOperand(existing) = %#v", got)
+	}
+
+	got = mapOperand(members, "missing")
+	if got.present {
+		t.Fatalf("mapOperand(missing).present = true")
+	}
 }

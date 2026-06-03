@@ -15,10 +15,12 @@
 package valuecompare
 
 import (
-	"testing"
-
+	"arcoris.dev/apimachinery/api/internal/listmapkey"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
+	"errors"
+	"slices"
+	"testing"
 )
 
 func TestCompareListMapSameReorderedIsEmpty(t *testing.T) {
@@ -47,6 +49,17 @@ func TestCompareListMapModifiedItemField(t *testing.T) {
 	requireResult(t, got, nil, nil, paths(path.Select(readySelector()).Field("status")))
 }
 
+func TestCompareListMapModifiedItemFieldUsesSelectorPath(t *testing.T) {
+	path := rootField("conditions")
+	oldValue := value.MustListValue(conditionValue("Ready", "False"))
+	newValue := value.MustListValue(conditionValue("Ready", "True"))
+
+	got, err := CompareAt(path, oldValue, newValue, conditionsDescriptor(), Options{})
+	requireNoError(t, err)
+	requireResult(t, got, nil, nil, paths(path.Select(readySelector()).Field("status")))
+	requireNoChangedPathContaining(t, got, "[0]")
+}
+
 func TestCompareListMapAddedItem(t *testing.T) {
 	path := rootField("conditions")
 	newValue := value.MustListValue(conditionValue("Ready", "True"))
@@ -56,6 +69,17 @@ func TestCompareListMapAddedItem(t *testing.T) {
 	requireResult(t, got, paths(path.Select(readySelector()).Field("type"), path.Select(readySelector()).Field("status")), nil, nil)
 }
 
+func TestCompareListMapAddedItemUsesSelectorFieldSet(t *testing.T) {
+	path := rootField("conditions")
+	newValue := value.MustListValue(conditionValue("Progressing", "True"))
+	selectorPath := path.Select(progressingSelector())
+
+	got, err := CompareAt(path, value.MustListValue(), newValue, conditionsDescriptor(), Options{})
+	requireNoError(t, err)
+	requireResult(t, got, paths(selectorPath.Field("type"), selectorPath.Field("status")), nil, nil)
+	requireNoChangedPathContaining(t, got, "[0]")
+}
+
 func TestCompareListMapRemovedItem(t *testing.T) {
 	path := rootField("conditions")
 	oldValue := value.MustListValue(conditionValue("Ready", "True"))
@@ -63,6 +87,40 @@ func TestCompareListMapRemovedItem(t *testing.T) {
 	got, err := CompareAt(path, oldValue, value.MustListValue(), conditionsDescriptor(), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, paths(path.Select(readySelector()).Field("type"), path.Select(readySelector()).Field("status")), nil)
+}
+
+func TestCompareListMapRemovedItemUsesSelectorFieldSet(t *testing.T) {
+	path := rootField("conditions")
+	oldValue := value.MustListValue(conditionValue("Progressing", "True"))
+	selectorPath := path.Select(progressingSelector())
+
+	got, err := CompareAt(path, oldValue, value.MustListValue(), conditionsDescriptor(), Options{})
+	requireNoError(t, err)
+	requireResult(t, got, nil, paths(selectorPath.Field("type"), selectorPath.Field("status")), nil)
+	requireNoChangedPathContaining(t, got, "[0]")
+}
+
+func TestCompareListMapAddedRemovedModifiedKeepsBucketsDisjoint(t *testing.T) {
+	path := rootField("conditions")
+	oldValue := value.MustListValue(
+		conditionValue("Ready", "False"),
+		conditionValue("Degraded", "False"),
+	)
+	newValue := value.MustListValue(
+		conditionValue("Ready", "True"),
+		conditionValue("Progressing", "True"),
+	)
+	readyPath := path.Select(readySelector())
+	degradedPath := path.Select(degradedSelector())
+	progressingPath := path.Select(progressingSelector())
+
+	got, err := CompareAt(path, oldValue, newValue, conditionsDescriptor(), Options{})
+	requireNoError(t, err)
+	requireResult(t, got,
+		paths(progressingPath.Field("type"), progressingPath.Field("status")),
+		paths(degradedPath.Field("type"), degradedPath.Field("status")),
+		paths(readyPath.Field("status")),
+	)
 }
 
 func TestCompareListMapMultiKeySelector(t *testing.T) {
@@ -117,6 +175,20 @@ func TestCompareListMapMissingKeyReturnsError(t *testing.T) {
 	requireErrorPath(t, err, "$.conditions[0].type")
 }
 
+func TestCompareListMapNullKeyReturnsInvalidListKey(t *testing.T) {
+	path := rootField("conditions")
+	newValue := value.MustListValue(value.MustObjectValue(
+		value.ObjectMember("type", value.NullValue()),
+		value.ObjectMember("status", value.StringValue("True")),
+	))
+
+	_, err := CompareAt(path, value.MustListValue(), newValue, conditionsDescriptor(), Options{})
+
+	requireErrorIs(t, err, ErrInvalidListKey)
+	requireErrorReason(t, err, ErrorReasonInvalidListKey)
+	requireErrorPath(t, err, "$.conditions[0].type")
+}
+
 func TestCompareListMapWrongKeyKindReturnsError(t *testing.T) {
 	path := rootField("conditions")
 	newValue := value.MustListValue(value.MustObjectValue(
@@ -129,6 +201,17 @@ func TestCompareListMapWrongKeyKindReturnsError(t *testing.T) {
 	requireErrorIs(t, err, ErrInvalidListKey)
 	requireErrorReason(t, err, ErrorReasonInvalidListKey)
 	requireErrorPath(t, err, "$.conditions[0].type")
+}
+
+func TestCompareListMapDoesNotUseIndexPathForSuccessfulSelector(t *testing.T) {
+	path := rootField("conditions")
+	oldValue := value.MustListValue(conditionValue("Ready", "False"))
+	newValue := value.MustListValue(conditionValue("Ready", "True"))
+
+	got, err := CompareAt(path, oldValue, newValue, conditionsDescriptor(), Options{})
+	requireNoError(t, err)
+	requireResult(t, got, nil, nil, paths(path.Select(readySelector()).Field("status")))
+	requireNoChangedPathContaining(t, got, "[0]")
 }
 
 func TestCompareListMapRefElement(t *testing.T) {
@@ -170,4 +253,165 @@ func routeValue(backend string) value.Value {
 		value.ObjectMember("port", value.Uint64Value(443)),
 		value.ObjectMember("backend", value.StringValue(backend)),
 	)
+}
+func TestListMapEntriesIndexesBySelector(t *testing.T) {
+	descriptor := conditionsDescriptor()
+	listView, _ := descriptor.List()
+	listValue, _ := value.MustListValue(conditionValue("Ready", "True")).List()
+
+	got, err := newComparer(Options{}).listMapEntries(rootField("conditions"), listValue, listView.Element(), listView.MapKeys())
+	requireNoError(t, err)
+
+	entry, ok := got[readySelector().String()]
+	if !ok {
+		t.Fatalf("ready selector missing")
+	}
+	if !entry.selector.Equal(readySelector()) {
+		t.Fatalf("selector = %s, want %s", entry.selector, readySelector())
+	}
+}
+
+func TestListMapEntriesRejectsEmptyKeys(t *testing.T) {
+	descriptor := conditionsDescriptor()
+	listView, _ := descriptor.List()
+	listValue, _ := value.MustListValue(conditionValue("Ready", "True")).List()
+
+	_, err := newComparer(Options{}).listMapEntries(rootField("conditions"), listValue, listView.Element(), nil)
+
+	requireErrorIs(t, err, ErrInvalidDescriptor)
+}
+func TestListMapEntryStoresSelectorIndexAndItem(t *testing.T) {
+	item := conditionValue("Ready", "True")
+	entry := listMapEntry{
+		selector:  readySelector(),
+		indexPath: rootField("conditions").Index(0),
+		item:      item,
+	}
+
+	if !entry.selector.Equal(readySelector()) {
+		t.Fatalf("selector = %s, want %s", entry.selector, readySelector())
+	}
+	if !entry.indexPath.Equal(rootField("conditions").Index(0)) {
+		t.Fatalf("indexPath = %s", entry.indexPath)
+	}
+	equal, err := newComparer(Options{}).equalOpaqueValue(rootField("conditions").Index(0), entry.item, item)
+	requireNoError(t, err)
+	if !equal {
+		t.Fatalf("item mismatch")
+	}
+}
+func TestEqualListMapSameReorderedIsTrue(t *testing.T) {
+	descriptor := conditionsDescriptor()
+	listView, _ := descriptor.List()
+	oldList, _ := value.MustListValue(
+		conditionValue("Ready", "True"),
+		conditionValue("Degraded", "False"),
+	).List()
+	newList, _ := value.MustListValue(
+		conditionValue("Degraded", "False"),
+		conditionValue("Ready", "True"),
+	).List()
+
+	got, err := newComparer(Options{}).equalListMap(rootField("conditions"), oldList, newList, listView.Element(), listView.MapKeys(), 0)
+	requireNoError(t, err)
+
+	if !got {
+		t.Fatalf("equalListMap() = false")
+	}
+}
+
+func TestEqualListMapDifferentSelectorSetIsFalse(t *testing.T) {
+	descriptor := conditionsDescriptor()
+	listView, _ := descriptor.List()
+	oldList, _ := value.MustListValue(conditionValue("Ready", "True")).List()
+	newList, _ := value.MustListValue(conditionValue("Degraded", "False")).List()
+
+	got, err := newComparer(Options{}).equalListMap(rootField("conditions"), oldList, newList, listView.Element(), listView.MapKeys(), 0)
+	requireNoError(t, err)
+
+	if got {
+		t.Fatalf("equalListMap() = true")
+	}
+}
+func TestDuplicateListMapEntryErrorIncludesBothIndexes(t *testing.T) {
+	err := duplicateListMapEntryError(
+		rootField("conditions").Select(readySelector()),
+		rootField("conditions").Index(0),
+		rootField("conditions").Index(1),
+	)
+
+	requireErrorIs(t, err, ErrDuplicateListKey)
+	requireErrorDetailContains(t, err, "$.conditions[0]")
+	requireErrorDetailContains(t, err, "$.conditions[1]")
+}
+
+func TestCompareListMapKeyErrorMapsInternalError(t *testing.T) {
+	err := compareListMapKeyError(&listmapkey.Error{
+		Path:   rootField("conditions").Index(0).Field("type"),
+		Kind:   listmapkey.FailureMissingKey,
+		Detail: "missing",
+	})
+
+	requireErrorIs(t, err, ErrInvalidListKey)
+	requireErrorReason(t, err, ErrorReasonMissingListKey)
+}
+
+func TestCompareListMapKeyErrorLeavesUnknownErrorAlone(t *testing.T) {
+	cause := errors.New("plain")
+
+	if got := compareListMapKeyError(cause); !errors.Is(got, cause) {
+		t.Fatalf("compareListMapKeyError() did not preserve plain error")
+	}
+}
+func TestUnionSortedListMapKeys(t *testing.T) {
+	got := unionSortedListMapKeys(
+		map[string]listMapEntry{"b": {}, "a": {}},
+		map[string]listMapEntry{"c": {}, "a": {}},
+	)
+
+	if want := []string{"a", "b", "c"}; !slices.Equal(got, want) {
+		t.Fatalf("unionSortedListMapKeys() = %#v, want %#v", got, want)
+	}
+}
+func TestListMapOperandKeepsPresence(t *testing.T) {
+	entry := listMapEntry{item: conditionValue("Ready", "True")}
+
+	got := listMapOperand(entry, true)
+	equal, err := newComparer(Options{}).equalOpaqueValue(rootField("conditions").Index(0), got.value, entry.item)
+	requireNoError(t, err)
+	if !got.present || !equal {
+		t.Fatalf("listMapOperand(present) = %#v", got)
+	}
+
+	got = listMapOperand(entry, false)
+	equal, err = newComparer(Options{}).equalOpaqueValue(rootField("conditions").Index(0), got.value, entry.item)
+	requireNoError(t, err)
+	if got.present || !equal {
+		t.Fatalf("listMapOperand(absent) = %#v", got)
+	}
+}
+func TestExtractListMapSelectorSuccess(t *testing.T) {
+	got, err := newComparer(Options{}).extractListMapSelector(
+		rootField("conditions").Index(0),
+		conditionValue("Ready", "True"),
+		conditionDescriptor(),
+		[]types.FieldName{"type"},
+	)
+	requireNoError(t, err)
+
+	if !got.Equal(readySelector()) {
+		t.Fatalf("selector = %s, want %s", got, readySelector())
+	}
+}
+
+func TestExtractListMapSelectorMapsMissingKey(t *testing.T) {
+	_, err := newComparer(Options{}).extractListMapSelector(
+		rootField("conditions").Index(0),
+		valueObject("status", "True"),
+		conditionDescriptor(),
+		[]types.FieldName{"type"},
+	)
+
+	requireErrorIs(t, err, ErrInvalidListKey)
+	requireErrorReason(t, err, ErrorReasonMissingListKey)
 }

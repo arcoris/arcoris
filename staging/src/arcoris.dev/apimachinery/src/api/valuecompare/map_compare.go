@@ -21,6 +21,10 @@ import (
 )
 
 // compareMap interprets value.KindObject as a dynamic string-keyed map.
+//
+// TypeMap shares the concrete object payload with TypeObject, but uses
+// path.Key(key) rather than path.Field(name). Dynamic keys are sorted before
+// traversal so result construction is deterministic.
 func (c *comparer) compareMap(
 	path fieldpath.Path,
 	oldValue value.Value,
@@ -71,4 +75,10 @@ func (c *comparer) compareMap(
 	}
 
 	return result, nil
+}
+
+// mapOperand converts a dynamic map lookup into presence-aware compare input.
+func mapOperand(members map[string]value.Value, key string) operand {
+	val, ok := members[key]
+	return operand{value: val, present: ok}
 }

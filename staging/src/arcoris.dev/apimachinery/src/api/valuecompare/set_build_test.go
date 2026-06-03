@@ -15,9 +15,8 @@
 package valuecompare
 
 import (
-	"testing"
-
 	"arcoris.dev/apimachinery/api/fieldpath"
+	"testing"
 )
 
 func TestSetAtBuildsOnePathSet(t *testing.T) {
@@ -29,9 +28,9 @@ func TestSetAtBuildsOnePathSet(t *testing.T) {
 	requireSet(t, "set", got, path)
 }
 
-func TestSetAtInvalidPathReturnsInvalidDescriptor(t *testing.T) {
+func TestSetAtInvalidPathReturnsInvalidPath(t *testing.T) {
 	_, err := setAt(fieldpath.RootPath().Index(-1))
 
-	requireErrorIs(t, err, ErrInvalidDescriptor)
-	requireErrorReason(t, err, ErrorReasonInvalidDescriptor)
+	requireErrorIs(t, err, ErrInvalidPath)
+	requireErrorReason(t, err, ErrorReasonInvalidPath)
 }
