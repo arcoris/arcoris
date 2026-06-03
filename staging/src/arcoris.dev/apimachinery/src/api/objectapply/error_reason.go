@@ -18,9 +18,6 @@ package objectapply
 type ErrorReason string
 
 const (
-	// ErrorReasonInvalidRequest reports malformed request shape.
-	ErrorReasonInvalidRequest ErrorReason = "invalid_request"
-
 	// ErrorReasonInvalidOwner reports malformed field owner input.
 	ErrorReasonInvalidOwner ErrorReason = "invalid_owner"
 

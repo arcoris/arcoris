@@ -17,8 +17,8 @@ package objectapply
 import "testing"
 
 func TestErrorReasonStrings(t *testing.T) {
-	if ErrorReasonInvalidRequest != "invalid_request" {
-		t.Fatalf("invalid request reason = %q", ErrorReasonInvalidRequest)
+	if ErrorReasonInvalidResource != "invalid_resource" {
+		t.Fatalf("invalid resource reason = %q", ErrorReasonInvalidResource)
 	}
 	if ErrorReasonConflict != "conflict" {
 		t.Fatalf("conflict reason = %q", ErrorReasonConflict)

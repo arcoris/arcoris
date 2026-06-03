@@ -19,6 +19,7 @@ import (
 
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 	"arcoris.dev/apimachinery/api/meta"
+	"arcoris.dev/apimachinery/api/objectvalidation"
 	"arcoris.dev/apimachinery/api/resource"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
@@ -72,7 +73,8 @@ func TestApplyResourceMismatch(t *testing.T) {
 
 	_, err := Apply(req, Options{})
 
-	requireErrorIs(t, err, ErrInvalidObject)
+	requireErrorIs(t, err, ErrInvalidResource)
+	requireErrorIs(t, err, objectvalidation.ErrResourceMismatch)
 }
 
 func TestApplyScopeMismatch(t *testing.T) {
@@ -87,7 +89,39 @@ func TestApplyScopeMismatch(t *testing.T) {
 
 	_, err := Apply(req, Options{})
 
-	requireErrorIs(t, err, ErrInvalidObject)
+	requireErrorIs(t, err, ErrInvalidResource)
+	requireErrorIs(t, err, objectvalidation.ErrInvalidScope)
+}
+
+func TestApplyInvalidResourceDefinitionReturnsInvalidResource(t *testing.T) {
+	req := testRequest()
+	req.Resource = resource.NewDefinition(
+		apiidentity.Group("control.arcoris.dev"),
+		apiidentity.Kind("Worker"),
+		apiidentity.Resource("workers"),
+		resource.ScopeNamespaced,
+	)
+
+	_, err := Apply(req, Options{})
+
+	requireErrorIs(t, err, ErrInvalidResource)
+	requireErrorIs(t, err, resource.ErrInvalidDefinition)
+}
+
+func TestApplyMissingResourceVersionReturnsInvalidResource(t *testing.T) {
+	req := testRequest()
+	req.Resource = resource.NewDefinition(
+		apiidentity.Group("control.arcoris.dev"),
+		apiidentity.Kind("Worker"),
+		apiidentity.Resource("workers"),
+		resource.ScopeNamespaced,
+		resource.NewVersion("v2", desiredDescriptor(), resource.Exposed(), resource.Canonical()),
+	)
+
+	_, err := Apply(req, Options{})
+
+	requireErrorIs(t, err, ErrInvalidResource)
+	requireErrorIs(t, err, objectvalidation.ErrVersionNotDefined)
 }
 
 func TestApplyDesiredValidationFailure(t *testing.T) {
@@ -99,13 +133,30 @@ func TestApplyDesiredValidationFailure(t *testing.T) {
 	requireErrorIs(t, err, ErrInvalidObject)
 }
 
-func TestApplyInvalidDesiredValueRejectedByValueApply(t *testing.T) {
+func TestApplyMissingDesiredDescriptorReturnsInvalidResource(t *testing.T) {
 	req := testRequest()
-	req.Live = testObject(value.Value{})
-	req.Applied = appliedObject(str("new"))
-	req.Resource = testResource(types.String().Type())
+	req.Resource = resource.NewDefinition(
+		apiidentity.Group("control.arcoris.dev"),
+		apiidentity.Kind("Worker"),
+		apiidentity.Resource("workers"),
+		resource.ScopeNamespaced,
+		resource.NewVersion("v1", types.Type{}, resource.Exposed(), resource.Canonical()),
+	)
+
+	_, err := Apply(req, Options{})
+
+	requireErrorIs(t, err, ErrInvalidResource)
+	requireErrorIs(t, err, resource.ErrInvalidVersion)
+}
+
+func TestApplyInvalidLiveObservedReturnsInvalidLiveObject(t *testing.T) {
+	req := testRequest()
+	req.Live = testObjectObserved(req.Live.Desired, obj(member("ready", value.Int64Value(1))))
+	req.Resource = testResourceWithObserved(desiredDescriptor())
 
 	_, err := Apply(req, Options{})
 
 	requireErrorIs(t, err, ErrInvalidObject)
+	requireObjectApplyError(t, err, pathObjectLive, ErrorReasonInvalidLiveObject)
+	requireErrorIs(t, err, objectvalidation.ErrInvalidObserved)
 }

@@ -15,28 +15,29 @@
 package objectapply
 
 import (
-	"errors"
 	"testing"
+
+	apiidentity "arcoris.dev/apimachinery/api/identity"
+	"arcoris.dev/apimachinery/api/resource"
 )
 
-func TestErrorAt(t *testing.T) {
-	err := errorAt(pathRequestResource, ErrInvalidResource, ErrorReasonInvalidResource, "bad resource")
+func TestValidateResource(t *testing.T) {
+	err := newApplier(Options{}).validateResource(testRequest().Resource)
 
-	requireObjectApplyError(t, err, pathRequestResource, ErrorReasonInvalidResource)
+	requireNoError(t, err)
 }
 
-func TestWrapAt(t *testing.T) {
-	cause := errors.New("cause")
-	err := wrapAt(pathRequestResource, ErrInvalidResource, ErrorReasonInvalidResource, "bad resource", cause)
+func TestValidateResourceRejectsInvalidDefinition(t *testing.T) {
+	def := resource.NewDefinition(
+		apiidentity.Group("control.arcoris.dev"),
+		apiidentity.Kind("Worker"),
+		apiidentity.Resource("workers"),
+		resource.ScopeNamespaced,
+	)
 
-	requireObjectApplyError(t, err, pathRequestResource, ErrorReasonInvalidResource)
-	if !errors.Is(err, cause) {
-		t.Fatalf("wrapped error does not preserve cause")
-	}
-}
+	err := newApplier(Options{}).validateResource(def)
 
-func TestErrorfAt(t *testing.T) {
-	err := errorfAt(pathRequestResource, ErrInvalidResource, ErrorReasonInvalidResource, "bad %s", "resource")
-
+	requireErrorIs(t, err, ErrInvalidResource)
+	requireErrorIs(t, err, resource.ErrInvalidDefinition)
 	requireObjectApplyError(t, err, pathRequestResource, ErrorReasonInvalidResource)
 }

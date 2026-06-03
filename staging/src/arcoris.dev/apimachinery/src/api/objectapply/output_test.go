@@ -78,7 +78,7 @@ func TestApplyOutputDoesNotMutateOwnership(t *testing.T) {
 	requireOwners(t, req.Ownership.Desired().OwnersOf(path("$.replicas")), "old")
 }
 
-func TestBuildOutputObjectClonesDesiredAndObserved(t *testing.T) {
+func TestBuildOutputObjectPreservesDesiredAndObservedValues(t *testing.T) {
 	live := testObjectObserved(obj(member("image", str("old"))), obj(member("ready", str("true"))))
 	desired := obj(member("image", str("new")))
 

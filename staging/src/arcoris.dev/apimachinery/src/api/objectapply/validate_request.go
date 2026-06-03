@@ -43,12 +43,20 @@ func (a applier) validateRequest(req Request) error {
 			"resource definition is required",
 		)
 	}
+	if err := a.validateResource(req.Resource); err != nil {
+		return err
+	}
 
 	// Observed apply is rejected before objectvalidation so a resource that
 	// defines Observed still cannot accept applied Observed in v1.
 	if err := validateObservedPolicy(req.Applied); err != nil {
 		return err
 	}
+
+	// Applied metadata may carry a non-nil zero deletion marker from decoded
+	// wire input. objectapply treats that marker as absent for its metadata
+	// policy instead of surfacing a lower-level metadata validation error.
+	req.Applied = normalizeAppliedMetadata(req.Applied)
 
 	// Metadata must be structurally valid before identity and metadata-policy
 	// comparisons can be trusted.
@@ -59,15 +67,16 @@ func (a applier) validateRequest(req Request) error {
 		return err
 	}
 
-	// No conversion is performed. Version mismatch is reported separately from
-	// broader identity mismatch because callers may handle it differently.
-	if err := validateVersionCompatibility(req.Live, req.Applied); err != nil {
-		return err
-	}
-
 	// Name, namespace, group, kind, and non-empty UID must refer to the same
 	// object before Desired payloads are compared or merged.
 	if err := validateIdentityCompatibility(req.Live, req.Applied); err != nil {
+		return err
+	}
+
+	// No conversion is performed. Version mismatch is checked after
+	// version-independent identity so group/kind mismatches are not mislabeled
+	// as conversion problems.
+	if err := validateVersionCompatibility(req.Live, req.Applied); err != nil {
 		return err
 	}
 

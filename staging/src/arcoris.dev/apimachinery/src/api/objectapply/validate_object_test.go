@@ -17,7 +17,10 @@ package objectapply
 import (
 	"testing"
 
+	apiidentity "arcoris.dev/apimachinery/api/identity"
 	"arcoris.dev/apimachinery/api/meta"
+	"arcoris.dev/apimachinery/api/objectvalidation"
+	"arcoris.dev/apimachinery/api/resource"
 )
 
 func TestValidateObjectMeta(t *testing.T) {
@@ -46,4 +49,26 @@ func TestValidateObject(t *testing.T) {
 	)
 
 	requireNoError(t, err)
+}
+
+func TestValidateObjectMapsResourceFailure(t *testing.T) {
+	req := testRequest()
+	req.Resource = resource.NewDefinition(
+		apiidentity.Group("control.arcoris.dev"),
+		apiidentity.Kind("Worker"),
+		apiidentity.Resource("workers"),
+		resource.ScopeNamespaced,
+		resource.NewVersion("v2", desiredDescriptor(), resource.Exposed(), resource.Canonical()),
+	)
+
+	err := newApplier(Options{}).validateObject(
+		pathObjectLive,
+		req.Live,
+		ErrorReasonInvalidLiveObject,
+		req,
+	)
+
+	requireErrorIs(t, err, ErrInvalidResource)
+	requireErrorIs(t, err, objectvalidation.ErrVersionNotDefined)
+	requireObjectApplyError(t, err, pathRequestResource, ErrorReasonInvalidResource)
 }

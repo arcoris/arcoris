@@ -15,8 +15,11 @@
 package objectapply
 
 import (
+	"errors"
 	"testing"
 
+	apiidentity "arcoris.dev/apimachinery/api/identity"
+	"arcoris.dev/apimachinery/api/meta"
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 )
 
@@ -44,4 +47,32 @@ func TestValidateIdentityCompatibilityRejectsUIDMismatch(t *testing.T) {
 	err := validateIdentityCompatibility(req.Live, req.Applied)
 
 	requireErrorIs(t, err, ErrIdentityMismatch)
+}
+
+func TestApplyDifferentGroupKindAndVersionReturnsIdentityMismatch(t *testing.T) {
+	req := testRequest()
+	req.Applied.TypeMeta = meta.FromGroupVersionKind(apiidentity.GroupVersionKind{
+		Group:   "other.arcoris.dev",
+		Version: "v2",
+		Kind:    "Other",
+	})
+
+	_, err := Apply(req, Options{})
+
+	requireErrorIs(t, err, ErrIdentityMismatch)
+	if errors.Is(err, ErrVersionMismatch) {
+		t.Fatalf("errors.Is(%v, ErrVersionMismatch) = true", err)
+	}
+}
+
+func TestApplyDifferentVersionSameGroupKindReturnsVersionMismatch(t *testing.T) {
+	req := testRequest()
+	req.Applied.TypeMeta = testTypeMeta("v2")
+
+	_, err := Apply(req, Options{})
+
+	requireErrorIs(t, err, ErrVersionMismatch)
+	if errors.Is(err, ErrIdentityMismatch) {
+		t.Fatalf("errors.Is(%v, ErrIdentityMismatch) = true", err)
+	}
 }

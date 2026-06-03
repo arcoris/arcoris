@@ -24,20 +24,20 @@ import (
 )
 
 func TestErrorIsSentinel(t *testing.T) {
-	err := errorAt(pathObject, ErrInvalidRequest, ErrorReasonInvalidRequest, "bad request")
+	err := errorAt(pathRequestResource, ErrInvalidResource, ErrorReasonInvalidResource, "bad resource")
 
-	requireErrorIs(t, err, ErrInvalidRequest)
+	requireErrorIs(t, err, ErrInvalidResource)
 }
 
 func TestErrorAsObjectApplyError(t *testing.T) {
-	err := errorAt(pathObject, ErrInvalidRequest, ErrorReasonInvalidRequest, "bad request")
+	err := errorAt(pathRequestResource, ErrInvalidResource, ErrorReasonInvalidResource, "bad resource")
 
 	var applyErr *Error
 	if !errors.As(err, &applyErr) {
 		t.Fatalf("error type = %T; want *Error", err)
 	}
-	if applyErr.Reason != ErrorReasonInvalidRequest {
-		t.Fatalf("reason = %q; want %q", applyErr.Reason, ErrorReasonInvalidRequest)
+	if applyErr.Reason != ErrorReasonInvalidResource {
+		t.Fatalf("reason = %q; want %q", applyErr.Reason, ErrorReasonInvalidResource)
 	}
 }
 

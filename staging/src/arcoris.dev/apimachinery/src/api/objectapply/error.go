@@ -21,9 +21,6 @@ import (
 )
 
 var (
-	// ErrInvalidRequest classifies malformed objectapply request shapes.
-	ErrInvalidRequest = errors.New("invalid object apply request")
-
 	// ErrInvalidOwner classifies malformed Desired field owner identities.
 	ErrInvalidOwner = errors.New("invalid field owner")
 

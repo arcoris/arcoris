@@ -28,6 +28,19 @@ func validateMetadataPolicy(applied ValueObject) error {
 	return rejectAppliedNonIdentityMetadata(applied.ObjectMeta)
 }
 
+// normalizeAppliedMetadata collapses semantically absent metadata spellings.
+//
+// A non-nil zero deletion pointer can appear after decoding but carries no
+// metadata update intent. Clearing it lets Apply treat that spelling exactly
+// like an omitted deletion field without mutating the caller's object.
+func normalizeAppliedMetadata(applied ValueObject) ValueObject {
+	if deletionIsZero(applied.ObjectMeta.Deletion) {
+		applied.ObjectMeta.Deletion = nil
+	}
+
+	return applied
+}
+
 // rejectAppliedNonIdentityMetadata enforces the Desired-only v1 metadata policy.
 //
 // Name, namespace, and optional UID are identity fields and may be present after
