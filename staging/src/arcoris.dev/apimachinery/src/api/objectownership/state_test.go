@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package objectapply
+package objectownership
 
 import (
 	"testing"
@@ -27,7 +27,7 @@ func TestEmptyState(t *testing.T) {
 }
 
 func TestNewState(t *testing.T) {
-	desired := fieldownership.MustState(entry("user", path("$.image")))
+	desired := ownershipState(ownershipEntry("user", "$.image"))
 
 	got := NewState(desired)
 
@@ -35,14 +35,14 @@ func TestNewState(t *testing.T) {
 }
 
 func TestStateDesired(t *testing.T) {
-	state := desiredOwnership(entry("user", path("$.image")))
+	state := NewState(ownershipState(ownershipEntry("user", "$.image")))
 
 	requireOwners(t, state.Desired().OwnersOf(path("$.image")), "user")
 }
 
 func TestStateWithDesired(t *testing.T) {
-	original := desiredOwnership(entry("old", path("$.image")))
-	replacement := fieldownership.MustState(entry("new", path("$.replicas")))
+	original := NewState(ownershipState(ownershipEntry("old", "$.image")))
+	replacement := ownershipState(ownershipEntry("new", "$.replicas"))
 
 	got := original.WithDesired(replacement)
 
@@ -51,13 +51,14 @@ func TestStateWithDesired(t *testing.T) {
 }
 
 func TestStateIsEmpty(t *testing.T) {
-	if desiredOwnership(entry("user", path("$.image"))).IsEmpty() {
+	state := NewState(ownershipState(ownershipEntry("user", "$.image")))
+	if state.IsEmpty() {
 		t.Fatalf("non-empty state IsEmpty() = true")
 	}
 }
 
 func TestStateImmutability(t *testing.T) {
-	original := desiredOwnership(entry("user", path("$.image")))
+	original := NewState(ownershipState(ownershipEntry("user", "$.image")))
 
 	_ = original.WithDesired(fieldownership.EmptyState())
 

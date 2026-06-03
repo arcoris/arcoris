@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package objectapply
+package objectownership
 
 import "arcoris.dev/apimachinery/api/fieldownership"
 
@@ -23,45 +23,47 @@ import "arcoris.dev/apimachinery/api/fieldownership"
 type State struct {
 	// desired is the fieldownership.State for the object's Desired surface.
 	//
-	// It is private so future observed/metadata ownership can be added without
-	// making callers construct State literals.
+	// It stays private so callers cannot construct brittle State literals that
+	// would block future Observed or metadata ownership surfaces.
 	desired fieldownership.State
 }
 
 // EmptyState returns an empty object ownership state.
 //
-// It is equivalent to the zero State but makes call sites explicit.
+// It is equivalent to the zero State but keeps call sites explicit when they are
+// constructing object ownership rather than ordinary field ownership.
 func EmptyState() State {
 	return State{}
 }
 
 // NewState constructs object ownership state from Desired ownership.
 //
-// The supplied fieldownership.State is already immutable-by-convention, so it is
-// stored by value.
+// The supplied fieldownership.State is stored by value and follows
+// fieldownership's immutable-by-convention contract.
 func NewState(desired fieldownership.State) State {
 	return State{desired: desired}
 }
 
 // IsEmpty reports whether no object surface has ownership state.
 //
-// Today this means only Desired ownership is empty. The method is intentionally
-// future-proof for additional surfaces.
+// Today this means Desired ownership is empty. The method intentionally hides
+// that detail so adding future surfaces does not change callers.
 func (s State) IsEmpty() bool {
 	return s.desired.IsEmpty()
 }
 
 // Desired returns Desired-surface ownership.
 //
-// The returned fieldownership.State follows fieldownership's
-// immutable-by-convention model.
+// The returned fieldownership.State remains immutable-by-convention; callers
+// transform it through fieldownership APIs and store the result with WithDesired.
 func (s State) Desired() fieldownership.State {
 	return s.desired
 }
 
 // WithDesired returns a copy of s with replacement Desired ownership.
 //
-// Other future object surfaces should be preserved by this method.
+// Future object surfaces should be preserved by this method, making it the
+// stable update point for Desired ownership.
 func (s State) WithDesired(desired fieldownership.State) State {
 	s.desired = desired
 

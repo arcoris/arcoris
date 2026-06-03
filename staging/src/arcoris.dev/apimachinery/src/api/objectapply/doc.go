@@ -18,15 +18,16 @@
 // The package is a pure object-level orchestration layer. It validates live and
 // applied object envelopes against a resource definition, checks object identity
 // compatibility, applies the Desired surface through api/valueapply, preserves
-// live Observed data, and returns updated object-level field ownership state.
+// live Observed data, and returns updated api/objectownership state.
 //
 // Version 1 applies Desired only. Observed apply is unsupported. Metadata apply
 // is unsupported. The result preserves live TypeMeta, live ObjectMeta, and live
 // Observed data.
 //
-// objectapply delegates field-level apply semantics to api/valueapply. It does
-// not reimplement field extraction, comparison, merge, conflict detection, force
-// semantics, dropped-field deletion, or ownership takeover rules.
+// objectapply delegates object ownership storage shape to api/objectownership
+// and field-level apply semantics to api/valueapply. It does not reimplement
+// field extraction, comparison, merge, conflict detection, force semantics,
+// dropped-field deletion, or ownership takeover rules.
 //
 // The package does not read or write storage, run admission, authorize request
 // subjects, perform resource catalog lookup, convert between API versions,

@@ -26,6 +26,7 @@ import (
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 	"arcoris.dev/apimachinery/api/meta/stamp"
 	"arcoris.dev/apimachinery/api/object"
+	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/resource"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
@@ -118,9 +119,9 @@ func entry(name string, paths ...fieldpath.Path) fieldownership.Entry {
 	return fieldownership.MustEntry(owner(name), fields(paths...))
 }
 
-// desiredOwnership builds objectapply State with Desired ownership only.
-func desiredOwnership(entries ...fieldownership.Entry) State {
-	return NewState(fieldownership.MustState(entries...))
+// desiredOwnership builds object ownership state with Desired ownership only.
+func desiredOwnership(entries ...fieldownership.Entry) objectownership.State {
+	return objectownership.NewState(fieldownership.MustState(entries...))
 }
 
 // desiredDescriptor returns the standard object Desired descriptor.

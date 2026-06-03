@@ -14,7 +14,10 @@
 
 package objectapply
 
-import "arcoris.dev/apimachinery/api/valueapply"
+import (
+	"arcoris.dev/apimachinery/api/objectownership"
+	"arcoris.dev/apimachinery/api/valueapply"
+)
 
 // Result contains the object, ownership state, and Desired apply metadata.
 //
@@ -28,7 +31,7 @@ type Result struct {
 
 	// Ownership is the updated object-level ownership state. It is populated only
 	// after Desired apply succeeds.
-	Ownership State
+	Ownership objectownership.State
 
 	// Desired is the value-level apply result for the Desired surface. It may be
 	// partially populated when Desired apply returns a conflict or merge error.

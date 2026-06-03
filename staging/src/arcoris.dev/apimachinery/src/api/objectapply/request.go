@@ -16,6 +16,7 @@ package objectapply
 
 import (
 	"arcoris.dev/apimachinery/api/fieldownership"
+	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/resource"
 )
 
@@ -42,7 +43,6 @@ type Request struct {
 	// catalog boundaries.
 	Resource resource.Definition
 
-	// Ownership is the current object-level ownership state. v1 consumes and
-	// returns Desired ownership only through State.
-	Ownership State
+	// Ownership is the current object-level ownership state.
+	Ownership objectownership.State
 }
