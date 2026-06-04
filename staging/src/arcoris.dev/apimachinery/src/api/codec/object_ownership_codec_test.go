@@ -27,18 +27,18 @@ type fakeObjectOwnershipCodec struct {
 	fakeBaseCodec
 }
 
-func (fakeObjectOwnershipCodec) DecodeObjectOwnership([]byte, DecodeOptions) (objectownership.Document, error) {
+func (fakeObjectOwnershipCodec) DecodeObjectOwnership([]byte) (objectownership.Document, error) {
 	return objectownership.Document{}, nil
 }
 
-func (fakeObjectOwnershipCodec) EncodeObjectOwnership(objectownership.Document, EncodeOptions) ([]byte, error) {
+func (fakeObjectOwnershipCodec) EncodeObjectOwnership(objectownership.Document) ([]byte, error) {
 	return nil, nil
 }
 
-func (fakeByteCodec) DecodeObjectOwnership(data []byte, opts DecodeOptions) (objectownership.Document, error) {
-	return fakeObjectOwnershipCodec{}.DecodeObjectOwnership(data, opts)
+func (fakeByteCodec) DecodeObjectOwnership(data []byte) (objectownership.Document, error) {
+	return fakeObjectOwnershipCodec{}.DecodeObjectOwnership(data)
 }
 
-func (fakeByteCodec) EncodeObjectOwnership(doc objectownership.Document, opts EncodeOptions) ([]byte, error) {
-	return fakeObjectOwnershipCodec{}.EncodeObjectOwnership(doc, opts)
+func (fakeByteCodec) EncodeObjectOwnership(doc objectownership.Document) ([]byte, error) {
+	return fakeObjectOwnershipCodec{}.EncodeObjectOwnership(doc)
 }

@@ -12,14 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package codec
+package jsonconfig
 
 import "testing"
 
-func TestDecodeOptionsZeroValueIsUsable(t *testing.T) {
-	var opts DecodeOptions
+func TestUnknownFieldModeIsKnown(t *testing.T) {
+	t.Parallel()
 
-	if opts.Strict || opts.MaxDepth != 0 || opts.RejectDuplicateFields {
-		t.Fatalf("zero DecodeOptions = %#v", opts)
+	if !isKnownUnknownFieldMode(UnknownFieldDefault) ||
+		!isKnownUnknownFieldMode(UnknownFieldReject) ||
+		!isKnownUnknownFieldMode(UnknownFieldIgnore) {
+		t.Fatalf("known unknown field mode reported unknown")
+	}
+	if isKnownUnknownFieldMode(UnknownFieldMode(99)) {
+		t.Fatalf("unknown unknown field mode reported known")
 	}
 }

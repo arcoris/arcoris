@@ -55,8 +55,8 @@ func mediaTypeTokenOptions() lexical.TokenOptions {
 
 // normalizeCodecToken trims surrounding whitespace and canonicalizes case.
 //
-// It is shared by Format.Normalize and MediaType.Normalize. Strict Validate
-// methods deliberately do not call this helper.
+// It is shared by Format.Normalize and MediaType.Normalize. Validate methods
+// deliberately do not call this helper.
 func normalizeCodecToken(text string) string {
 	return strings.ToLower(strings.TrimSpace(text))
 }

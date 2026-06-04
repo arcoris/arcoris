@@ -77,11 +77,8 @@ var (
 	// ErrInvalidDocument classifies malformed encoded document content.
 	ErrInvalidDocument = errors.New("invalid encoded document")
 
-	// ErrStrictViolation classifies input rejected by strict decode mode.
-	ErrStrictViolation = errors.New("strict codec violation")
-
-	// ErrMaxDepthExceeded classifies documents exceeding configured nesting depth.
-	ErrMaxDepthExceeded = errors.New("maximum codec depth exceeded")
+	// ErrDepthExceeded classifies documents exceeding configured nesting depth.
+	ErrDepthExceeded = errors.New("codec document depth exceeded")
 
 	// ErrInvalidNumber classifies encoded numbers outside the API value model.
 	//

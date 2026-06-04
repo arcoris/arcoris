@@ -30,10 +30,10 @@ type fakeValueStreamCodec struct {
 	fakeBaseCodec
 }
 
-func (fakeValueStreamCodec) DecodeValueFrom(io.Reader, DecodeOptions) (value.Value, error) {
+func (fakeValueStreamCodec) DecodeValueFrom(io.Reader) (value.Value, error) {
 	return value.NullValue(), nil
 }
 
-func (fakeValueStreamCodec) EncodeValueTo(io.Writer, value.Value, EncodeOptions) error {
+func (fakeValueStreamCodec) EncodeValueTo(io.Writer, value.Value) error {
 	return nil
 }

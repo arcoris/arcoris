@@ -29,26 +29,26 @@ type fakeStreamingCodec struct {
 	fakeBaseCodec
 }
 
-func (fakeStreamingCodec) DecodeValueFrom(io.Reader, DecodeOptions) (value.Value, error) {
+func (fakeStreamingCodec) DecodeValueFrom(io.Reader) (value.Value, error) {
 	return value.NullValue(), nil
 }
 
-func (fakeStreamingCodec) EncodeValueTo(io.Writer, value.Value, EncodeOptions) error {
+func (fakeStreamingCodec) EncodeValueTo(io.Writer, value.Value) error {
 	return nil
 }
 
-func (fakeStreamingCodec) DecodeObjectFrom(io.Reader, DecodeOptions) (Object, error) {
+func (fakeStreamingCodec) DecodeObjectFrom(io.Reader) (Object, error) {
 	return Object{}, nil
 }
 
-func (fakeStreamingCodec) EncodeObjectTo(io.Writer, Object, EncodeOptions) error {
+func (fakeStreamingCodec) EncodeObjectTo(io.Writer, Object) error {
 	return nil
 }
 
-func (fakeStreamingCodec) DecodeObjectOwnershipFrom(io.Reader, DecodeOptions) (objectownership.Document, error) {
+func (fakeStreamingCodec) DecodeObjectOwnershipFrom(io.Reader) (objectownership.Document, error) {
 	return objectownership.Document{}, nil
 }
 
-func (fakeStreamingCodec) EncodeObjectOwnershipTo(io.Writer, objectownership.Document, EncodeOptions) error {
+func (fakeStreamingCodec) EncodeObjectOwnershipTo(io.Writer, objectownership.Document) error {
 	return nil
 }

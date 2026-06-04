@@ -22,7 +22,7 @@ import "arcoris.dev/apimachinery/api/value"
 // value against api/types descriptors, apply defaults, prune fields, or infer
 // resource-specific semantics.
 type ValueDecoder interface {
-	DecodeValue(data []byte, opts DecodeOptions) (value.Value, error)
+	DecodeValue(data []byte) (value.Value, error)
 }
 
 // ValueEncoder encodes one api/value.Value document to bytes.
@@ -31,7 +31,7 @@ type ValueDecoder interface {
 // normalize semantic values, update field ownership, or perform descriptor
 // validation as part of byte formatting.
 type ValueEncoder interface {
-	EncodeValue(v value.Value, opts EncodeOptions) ([]byte, error)
+	EncodeValue(v value.Value) ([]byte, error)
 }
 
 // ValueCodec is a byte-based codec for api/value.Value documents.

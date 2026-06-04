@@ -51,11 +51,8 @@ const (
 	// ErrorReasonInvalidDocument reports malformed encoded document content.
 	ErrorReasonInvalidDocument ErrorReason = "invalid_document"
 
-	// ErrorReasonStrictViolation reports input rejected by strict mode.
-	ErrorReasonStrictViolation ErrorReason = "strict_violation"
-
-	// ErrorReasonMaxDepthExceeded reports input deeper than the configured limit.
-	ErrorReasonMaxDepthExceeded ErrorReason = "max_depth_exceeded"
+	// ErrorReasonDepthExceeded reports input deeper than the configured limit.
+	ErrorReasonDepthExceeded ErrorReason = "depth_exceeded"
 
 	// ErrorReasonInvalidNumber reports an encoded number outside supported shape.
 	ErrorReasonInvalidNumber ErrorReason = "invalid_number"

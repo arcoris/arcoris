@@ -32,7 +32,7 @@ type Object = object.Object[value.Value, value.Value]
 // catalog lookup, object validation, version conversion, admission, or apply
 // behavior.
 type ObjectDecoder interface {
-	DecodeObject(data []byte, opts DecodeOptions) (Object, error)
+	DecodeObject(data []byte) (Object, error)
 }
 
 // ObjectEncoder encodes one value-backed object envelope to bytes.
@@ -40,7 +40,7 @@ type ObjectDecoder interface {
 // EncodeObject serializes the supplied envelope. It must not synthesize or
 // update metadata such as managed fields, resource versions, or generation.
 type ObjectEncoder interface {
-	EncodeObject(obj Object, opts EncodeOptions) ([]byte, error)
+	EncodeObject(obj Object) ([]byte, error)
 }
 
 // ObjectCodec is a byte-based codec for value-backed object envelopes.

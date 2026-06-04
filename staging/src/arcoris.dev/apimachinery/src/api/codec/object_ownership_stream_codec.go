@@ -25,7 +25,7 @@ import (
 // The stream form is for concrete codecs that can parse ownership documents
 // incrementally. It still returns the in-memory objectownership.Document model.
 type ObjectOwnershipStreamDecoder interface {
-	DecodeObjectOwnershipFrom(r io.Reader, opts DecodeOptions) (objectownership.Document, error)
+	DecodeObjectOwnershipFrom(r io.Reader) (objectownership.Document, error)
 }
 
 // ObjectOwnershipStreamEncoder encodes object ownership documents to a stream.
@@ -33,7 +33,7 @@ type ObjectOwnershipStreamDecoder interface {
 // The encoder formats the supplied document only. It does not call
 // objectownership.Normalize or compute semantic ownership changes.
 type ObjectOwnershipStreamEncoder interface {
-	EncodeObjectOwnershipTo(w io.Writer, doc objectownership.Document, opts EncodeOptions) error
+	EncodeObjectOwnershipTo(w io.Writer, doc objectownership.Document) error
 }
 
 // ObjectOwnershipStreamCodec is an optional streaming codec for ownership docs.

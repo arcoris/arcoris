@@ -26,10 +26,10 @@ type fakeObjectStreamCodec struct {
 	fakeBaseCodec
 }
 
-func (fakeObjectStreamCodec) DecodeObjectFrom(io.Reader, DecodeOptions) (Object, error) {
+func (fakeObjectStreamCodec) DecodeObjectFrom(io.Reader) (Object, error) {
 	return Object{}, nil
 }
 
-func (fakeObjectStreamCodec) EncodeObjectTo(io.Writer, Object, EncodeOptions) error {
+func (fakeObjectStreamCodec) EncodeObjectTo(io.Writer, Object) error {
 	return nil
 }

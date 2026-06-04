@@ -1,0 +1,36 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package apidocument_test
+
+import (
+	"testing"
+
+	"arcoris.dev/apimachinery/api/apidocument"
+)
+
+func TestObjectMetaFieldNames(t *testing.T) {
+	assertFieldName(t, "ObjectMetaFieldName", apidocument.ObjectMetaFieldName, "name")
+	assertFieldName(t, "ObjectMetaFieldGenerateName", apidocument.ObjectMetaFieldGenerateName, "generateName")
+	assertFieldName(t, "ObjectMetaFieldNamespace", apidocument.ObjectMetaFieldNamespace, "namespace")
+	assertFieldName(t, "ObjectMetaFieldUID", apidocument.ObjectMetaFieldUID, "uid")
+	assertFieldName(t, "ObjectMetaFieldResourceVersion", apidocument.ObjectMetaFieldResourceVersion, "resourceVersion")
+	assertFieldName(t, "ObjectMetaFieldGeneration", apidocument.ObjectMetaFieldGeneration, "generation")
+	assertFieldName(t, "ObjectMetaFieldCreatedAt", apidocument.ObjectMetaFieldCreatedAt, "createdAt")
+	assertFieldName(t, "ObjectMetaFieldDeletion", apidocument.ObjectMetaFieldDeletion, "deletion")
+	assertFieldName(t, "ObjectMetaFieldLabels", apidocument.ObjectMetaFieldLabels, "labels")
+	assertFieldName(t, "ObjectMetaFieldAnnotations", apidocument.ObjectMetaFieldAnnotations, "annotations")
+	assertFieldName(t, "ObjectMetaFieldOwnerReferences", apidocument.ObjectMetaFieldOwnerReferences, "ownerReferences")
+	assertFieldName(t, "ObjectMetaFieldFinalizers", apidocument.ObjectMetaFieldFinalizers, "finalizers")
+}

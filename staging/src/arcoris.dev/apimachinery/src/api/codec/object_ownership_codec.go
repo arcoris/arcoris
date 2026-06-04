@@ -22,7 +22,7 @@ import "arcoris.dev/apimachinery/api/objectownership"
 // objectownership.Document representation. Semantic document validation remains
 // the responsibility of api/objectownership, not the codec contract itself.
 type ObjectOwnershipDecoder interface {
-	DecodeObjectOwnership(data []byte, opts DecodeOptions) (objectownership.Document, error)
+	DecodeObjectOwnership(data []byte) (objectownership.Document, error)
 }
 
 // ObjectOwnershipEncoder encodes object ownership documents to bytes.
@@ -30,7 +30,7 @@ type ObjectOwnershipDecoder interface {
 // EncodeObjectOwnership formats an existing ownership document. It must not
 // compute ownership, merge ownership, or mutate object metadata.
 type ObjectOwnershipEncoder interface {
-	EncodeObjectOwnership(doc objectownership.Document, opts EncodeOptions) ([]byte, error)
+	EncodeObjectOwnership(doc objectownership.Document) ([]byte, error)
 }
 
 // ObjectOwnershipCodec is a byte-based codec for object ownership documents.

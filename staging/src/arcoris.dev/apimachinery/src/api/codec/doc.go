@@ -15,15 +15,21 @@
 // Package codec defines common contracts for API document codecs.
 //
 // The package is the format-independent codec foundation for ARCORIS API
-// machinery. It defines open-world codec formats, media types, document
-// targets, common encode/decode options, typed encoder and decoder interfaces,
-// optional streaming interfaces, full byte/stream convenience interfaces, codec
-// metadata, and structured diagnostics.
+// machinery for already-configured codec implementations. It defines
+// open-world codec formats, media types, document targets, typed encoder and
+// decoder interfaces, optional streaming interfaces, full byte/stream
+// convenience interfaces, codec metadata, and structured diagnostics.
 //
 // Package codec does not implement JSON, YAML, CBOR, or any other concrete wire
 // format. Concrete implementations live in packages such as api/codecjson,
 // api/codecyaml, and api/codeccbor. Codec registration and lookup live in a
 // separate api/codecregistry package.
+//
+// Concrete codec packages own their typed configuration, defaults, validation,
+// and effective runtime policy. Runtime callers receive configured codec
+// capabilities and call Decode or Encode methods without per-call option bags.
+// Different policies should be represented by different configured codec
+// instances or by a higher-level selection/profile plan.
 //
 // Codecs transform bytes or streams to and from API document models such as
 // api/value.Value, value-backed api/object envelopes, and
@@ -61,13 +67,6 @@
 // arbitrary or textual numbers must preserve enough information for later value
 // and type validation, and must not parse arbitrary input numbers through
 // float64 when that can change the value.
-//
-// Strict decode mode requests the implementation's safe, unambiguous behavior.
-// For structured formats, strict mode should reject ambiguous or lossy input
-// when detectable, including duplicate object/map keys, trailing garbage,
-// unsupported extensions, non-finite numbers, and unsupported map key forms.
-// Concrete codec packages must document their exact format-specific strict
-// behavior.
 //
 // Formats and media types are open-world so custom codecs can exist. Targets
 // are closed-world in v1 because they name API document models understood by the

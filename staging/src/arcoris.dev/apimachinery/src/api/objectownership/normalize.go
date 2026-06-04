@@ -24,14 +24,14 @@ func Normalize(doc Document) (Document, error) {
 		return Document{}, err
 	}
 
-	desired, err := stateFromSurface(pathDocumentDesired, doc.Desired)
+	desired, err := fieldOwnershipStateFromDocumentSurface(pathDocumentDesired, doc.Desired)
 	if err != nil {
 		return Document{}, err
 	}
 
 	return Document{
 		Version: VersionV1,
-		Desired: surfaceToDocument(
+		Desired: fieldOwnershipStateToDocumentSurface(
 			desired,
 		),
 	}, nil

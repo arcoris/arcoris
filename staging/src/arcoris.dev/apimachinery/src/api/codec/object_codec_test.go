@@ -32,20 +32,20 @@ type fakeObjectCodec struct {
 	fakeBaseCodec
 }
 
-func (fakeObjectCodec) DecodeObject([]byte, DecodeOptions) (Object, error) {
+func (fakeObjectCodec) DecodeObject([]byte) (Object, error) {
 	return Object{}, nil
 }
 
-func (fakeObjectCodec) EncodeObject(Object, EncodeOptions) ([]byte, error) {
+func (fakeObjectCodec) EncodeObject(Object) ([]byte, error) {
 	return nil, nil
 }
 
-func (fakeByteCodec) DecodeObject(data []byte, opts DecodeOptions) (Object, error) {
-	return fakeObjectCodec{}.DecodeObject(data, opts)
+func (fakeByteCodec) DecodeObject(data []byte) (Object, error) {
+	return fakeObjectCodec{}.DecodeObject(data)
 }
 
-func (fakeByteCodec) EncodeObject(obj Object, opts EncodeOptions) ([]byte, error) {
-	return fakeObjectCodec{}.EncodeObject(obj, opts)
+func (fakeByteCodec) EncodeObject(obj Object) ([]byte, error) {
+	return fakeObjectCodec{}.EncodeObject(obj)
 }
 
 func TestObjectAlias(t *testing.T) {

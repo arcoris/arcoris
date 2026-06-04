@@ -30,10 +30,10 @@ type fakeObjectOwnershipStreamCodec struct {
 	fakeBaseCodec
 }
 
-func (fakeObjectOwnershipStreamCodec) DecodeObjectOwnershipFrom(io.Reader, DecodeOptions) (objectownership.Document, error) {
+func (fakeObjectOwnershipStreamCodec) DecodeObjectOwnershipFrom(io.Reader) (objectownership.Document, error) {
 	return objectownership.Document{}, nil
 }
 
-func (fakeObjectOwnershipStreamCodec) EncodeObjectOwnershipTo(io.Writer, objectownership.Document, EncodeOptions) error {
+func (fakeObjectOwnershipStreamCodec) EncodeObjectOwnershipTo(io.Writer, objectownership.Document) error {
 	return nil
 }

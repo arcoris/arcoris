@@ -29,8 +29,7 @@ func TestErrorReasonStrings(t *testing.T) {
 		ErrorReasonDecodeFailed:         "decode_failed",
 		ErrorReasonEncodeFailed:         "encode_failed",
 		ErrorReasonInvalidDocument:      "invalid_document",
-		ErrorReasonStrictViolation:      "strict_violation",
-		ErrorReasonMaxDepthExceeded:     "max_depth_exceeded",
+		ErrorReasonDepthExceeded:        "depth_exceeded",
 		ErrorReasonInvalidNumber:        "invalid_number",
 	}
 

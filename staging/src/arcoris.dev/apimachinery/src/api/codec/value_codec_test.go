@@ -27,18 +27,18 @@ type fakeValueCodec struct {
 	fakeBaseCodec
 }
 
-func (fakeValueCodec) DecodeValue([]byte, DecodeOptions) (value.Value, error) {
+func (fakeValueCodec) DecodeValue([]byte) (value.Value, error) {
 	return value.NullValue(), nil
 }
 
-func (fakeValueCodec) EncodeValue(value.Value, EncodeOptions) ([]byte, error) {
+func (fakeValueCodec) EncodeValue(value.Value) ([]byte, error) {
 	return nil, nil
 }
 
-func (fakeByteCodec) DecodeValue(data []byte, opts DecodeOptions) (value.Value, error) {
-	return fakeValueCodec{}.DecodeValue(data, opts)
+func (fakeByteCodec) DecodeValue(data []byte) (value.Value, error) {
+	return fakeValueCodec{}.DecodeValue(data)
 }
 
-func (fakeByteCodec) EncodeValue(v value.Value, opts EncodeOptions) ([]byte, error) {
-	return fakeValueCodec{}.EncodeValue(v, opts)
+func (fakeByteCodec) EncodeValue(v value.Value) ([]byte, error) {
+	return fakeValueCodec{}.EncodeValue(v)
 }

@@ -12,14 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package codec
+package jsonconfig
 
 import "testing"
 
-func TestEncodeOptionsZeroValueIsUsable(t *testing.T) {
-	var opts EncodeOptions
+func TestNegativeZeroModeIsKnown(t *testing.T) {
+	t.Parallel()
 
-	if opts.Deterministic || opts.Pretty {
-		t.Fatalf("zero EncodeOptions = %#v", opts)
+	if !isKnownNegativeZeroMode(NegativeZeroDefault) ||
+		!isKnownNegativeZeroMode(NegativeZeroNormalize) ||
+		!isKnownNegativeZeroMode(NegativeZeroPreserve) ||
+		!isKnownNegativeZeroMode(NegativeZeroReject) {
+		t.Fatalf("known negative zero mode reported unknown")
+	}
+	if isKnownNegativeZeroMode(NegativeZeroMode(99)) {
+		t.Fatalf("unknown negative zero mode reported known")
 	}
 }

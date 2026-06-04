@@ -25,7 +25,7 @@ import (
 // Streaming decoders are optional capabilities for implementations that can
 // process large documents without first materializing a byte slice.
 type ValueStreamDecoder interface {
-	DecodeValueFrom(r io.Reader, opts DecodeOptions) (value.Value, error)
+	DecodeValueFrom(r io.Reader) (value.Value, error)
 }
 
 // ValueStreamEncoder encodes one api/value.Value document to a stream.
@@ -33,7 +33,7 @@ type ValueStreamDecoder interface {
 // Implementations should write exactly one document and return any write or
 // formatting failure as a structured codec error when possible.
 type ValueStreamEncoder interface {
-	EncodeValueTo(w io.Writer, v value.Value, opts EncodeOptions) error
+	EncodeValueTo(w io.Writer, v value.Value) error
 }
 
 // ValueStreamCodec is an optional streaming codec for api/value.Value documents.

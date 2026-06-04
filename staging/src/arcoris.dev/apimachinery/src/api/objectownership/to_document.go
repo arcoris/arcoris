@@ -27,17 +27,18 @@ import (
 func ToDocument(state State) Document {
 	return Document{
 		Version: VersionV1,
-		Desired: surfaceToDocument(
+		Desired: fieldOwnershipStateToDocumentSurface(
 			state.Desired(),
 		),
 	}
 }
 
-// surfaceToDocument converts one field ownership surface to document form.
+// fieldOwnershipStateToDocumentSurface converts field-level state to one
+// object-level document surface.
 //
 // fieldownership.State already owns owner ordering and field set ordering, so
 // this helper only filters empty entries and formats paths.
-func surfaceToDocument(state fieldownership.State) Surface {
+func fieldOwnershipStateToDocumentSurface(state fieldownership.State) Surface {
 	entries := state.Entries()
 	if len(entries) == 0 {
 		return Surface{}
@@ -48,28 +49,30 @@ func surfaceToDocument(state fieldownership.State) Surface {
 		if entry.IsEmpty() {
 			continue
 		}
-		out = append(out, entryToDocument(entry))
+		out = append(out, fieldOwnershipEntryToDocumentEntry(entry))
 	}
 
 	return Surface{Entries: out}
 }
 
-// entryToDocument converts one owner entry without changing ownership semantics.
+// fieldOwnershipEntryToDocumentEntry converts one field-level owner entry to
+// document form without changing ownership semantics.
 //
 // Shared ownership is preserved because conversion happens per owner and does
 // not inspect other owners' fields.
-func entryToDocument(entry fieldownership.Entry) Entry {
+func fieldOwnershipEntryToDocumentEntry(entry fieldownership.Entry) Entry {
 	return Entry{
 		Owner:  entry.Owner(),
-		Fields: pathsToDocument(entry.Fields()),
+		Fields: fieldPathSetToDocumentPaths(entry.Fields()),
 	}
 }
 
-// pathsToDocument formats semantic paths in fieldpath.Set canonical order.
+// fieldPathSetToDocumentPaths formats a semantic field set as document paths in
+// fieldpath.Set canonical order.
 //
 // Parent and descendant paths remain separate; the document layer does not
 // compact or reinterpret fieldpath.Set semantics.
-func pathsToDocument(fields fieldpath.Set) []Path {
+func fieldPathSetToDocumentPaths(fields fieldpath.Set) []Path {
 	paths := fields.Paths()
 	if len(paths) == 0 {
 		return nil

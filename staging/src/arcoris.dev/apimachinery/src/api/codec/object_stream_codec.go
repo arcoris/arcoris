@@ -21,7 +21,7 @@ import "io"
 // The stream contract mirrors ObjectDecoder while avoiding an intermediate
 // byte-slice requirement for implementations that support incremental parsing.
 type ObjectStreamDecoder interface {
-	DecodeObjectFrom(r io.Reader, opts DecodeOptions) (Object, error)
+	DecodeObjectFrom(r io.Reader) (Object, error)
 }
 
 // ObjectStreamEncoder encodes one value-backed object envelope to a stream.
@@ -29,7 +29,7 @@ type ObjectStreamDecoder interface {
 // The encoder writes the supplied value-backed object envelope as one document
 // and must not apply object-level policy while doing so.
 type ObjectStreamEncoder interface {
-	EncodeObjectTo(w io.Writer, obj Object, opts EncodeOptions) error
+	EncodeObjectTo(w io.Writer, obj Object) error
 }
 
 // ObjectStreamCodec is an optional streaming codec for value-backed objects.

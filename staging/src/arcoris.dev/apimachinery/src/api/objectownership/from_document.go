@@ -37,7 +37,7 @@ func StateFromDocument(doc Document) (State, error) {
 		return State{}, err
 	}
 
-	desired, err := stateFromSurface(pathDocumentDesired, normalized.Desired)
+	desired, err := fieldOwnershipStateFromDocumentSurface(pathDocumentDesired, normalized.Desired)
 	if err != nil {
 		return State{}, err
 	}
@@ -45,14 +45,15 @@ func StateFromDocument(doc Document) (State, error) {
 	return NewState(desired), nil
 }
 
-// stateFromSurface builds fieldownership.State for one normalized surface.
+// fieldOwnershipStateFromDocumentSurface builds field-level state from one
+// normalized object-level document surface.
 //
 // The surface is expected to have valid canonical paths. fieldownership.NewState
 // still performs the final invariant check and duplicate-owner merge.
-func stateFromSurface(path string, surface Surface) (fieldownership.State, error) {
+func fieldOwnershipStateFromDocumentSurface(path string, surface Surface) (fieldownership.State, error) {
 	entries := make([]fieldownership.Entry, 0, len(surface.Entries))
 	for i, entry := range surface.Entries {
-		stateEntry, err := entryFromDocument(entryPath(path, i), entry)
+		stateEntry, err := fieldOwnershipEntryFromDocumentEntry(entryPath(path, i), entry)
 		if err != nil {
 			return fieldownership.State{}, err
 		}
@@ -73,12 +74,13 @@ func stateFromSurface(path string, surface Surface) (fieldownership.State, error
 	return state, nil
 }
 
-// entryFromDocument converts one document entry into fieldownership.Entry.
+// fieldOwnershipEntryFromDocumentEntry converts one document entry into a
+// field-level ownership entry.
 //
 // Owner validation and empty-field allowances are delegated to fieldownership so
 // objectownership does not duplicate field-level ownership rules.
-func entryFromDocument(path string, entry Entry) (fieldownership.Entry, error) {
-	fields, err := fieldsFromDocument(path, entry.Fields)
+func fieldOwnershipEntryFromDocumentEntry(path string, entry Entry) (fieldownership.Entry, error) {
+	fields, err := fieldPathSetFromDocumentPaths(path, entry.Fields)
 	if err != nil {
 		return fieldownership.Entry{}, err
 	}
@@ -97,11 +99,12 @@ func entryFromDocument(path string, entry Entry) (fieldownership.Entry, error) {
 	return stateEntry, nil
 }
 
-// fieldsFromDocument parses document path strings into a canonical field set.
+// fieldPathSetFromDocumentPaths parses document path strings into a canonical
+// field set.
 //
 // Duplicate fields are allowed in raw documents and are deduplicated by
 // fieldpath.NewSet.
-func fieldsFromDocument(path string, fields []Path) (fieldpath.Set, error) {
+func fieldPathSetFromDocumentPaths(path string, fields []Path) (fieldpath.Set, error) {
 	paths := make([]fieldpath.Path, 0, len(fields))
 	for i, field := range fields {
 		parsed, err := parsePath(fieldPath(path, i), field)

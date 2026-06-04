@@ -15,10 +15,10 @@
 // Package codecregistry provides owner-created registries for API codec
 // implementations.
 //
-// The package indexes api/codec BaseCodec implementations by format and media
-// type, validates codec metadata, checks declared targets against implemented
-// byte and streaming capabilities, and exposes typed lookup helpers for codec
-// capabilities.
+// The package indexes already-configured api/codec BaseCodec implementations by
+// format and media type, validates codec metadata, checks declared targets
+// against implemented byte and streaming capabilities, and exposes typed lookup
+// helpers for codec capabilities.
 //
 // Registry construction accepts normalizable codec.Info metadata, stores a
 // normalized detached metadata snapshot, and rejects invalid or non-normalizable
