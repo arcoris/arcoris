@@ -18,6 +18,11 @@ import "arcoris.dev/apimachinery/api/codec"
 
 // New validates codecs and returns an immutable registry.
 //
+// New accepts normalizable codec.Info metadata, stores normalized detached
+// metadata in registry entries, and rejects invalid or non-normalizable
+// metadata. Registered codec implementations are kept as-is, but their metadata
+// is snapshotted during construction.
+//
 // Construction is all-or-nothing. If any codec is invalid, no partial Registry
 // is returned.
 func New(codecs ...codec.BaseCodec) (Registry, error) {

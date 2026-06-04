@@ -45,6 +45,18 @@ func TestNewRejectsDeclaredTargetWithoutCapability(t *testing.T) {
 	requireRegistryError(t, err, "codecs[0].capabilities", ErrorReasonCapabilityMismatch)
 }
 
+func TestCapabilityMismatchDetailDeclaredTargetWithoutCapability(t *testing.T) {
+	c := fakeBaseCodec{
+		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue),
+	}
+
+	_, err := New(c)
+
+	requireErrorIs(t, err, ErrCapabilityMismatch)
+	requireRegistryDetailContains(t, err, "declares target")
+	requireRegistryDetailContains(t, err, "implements neither codec.ValueCodec nor codec.ValueStreamCodec")
+}
+
 func TestNewRejectsCapabilityWithoutDeclaredTarget(t *testing.T) {
 	c := &fakeValueByteCodec{fakeBaseCodec: fakeBaseCodec{
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetObject),
@@ -54,6 +66,18 @@ func TestNewRejectsCapabilityWithoutDeclaredTarget(t *testing.T) {
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
 	requireRegistryError(t, err, "codecs[0].capabilities", ErrorReasonCapabilityMismatch)
+}
+
+func TestCapabilityMismatchDetailCapabilityWithoutDeclaredTarget(t *testing.T) {
+	c := &fakeValueByteCodec{fakeBaseCodec: fakeBaseCodec{
+		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetObject),
+	}}
+
+	_, err := New(c)
+
+	requireErrorIs(t, err, ErrCapabilityMismatch)
+	requireRegistryDetailContains(t, err, "does not declare target")
+	requireRegistryDetailContains(t, err, "codec.ValueCodec or codec.ValueStreamCodec")
 }
 
 func TestCapabilityValidationTargetValueRequiresValueByteOrStream(t *testing.T) {
@@ -126,33 +150,69 @@ func TestCapabilityValidationTargetObjectOwnershipRequiresOwnershipByteOrStream(
 }
 
 func TestCapabilityValidationValueCapabilityRequiresDeclaredTarget(t *testing.T) {
-	c := &fakeValueByteCodec{fakeBaseCodec: fakeBaseCodec{
-		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetObject),
+	c := &fakeFullByteCodec{fakeBaseCodec: fakeBaseCodec{
+		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetObject, codec.TargetObjectOwnership),
 	}}
 
 	_, err := New(c)
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
+	requireRegistryDetailContains(t, err, "codec.ValueCodec or codec.ValueStreamCodec")
+}
+
+func TestCapabilityValidationValueStreamCapabilityRequiresDeclaredTarget(t *testing.T) {
+	c := &fakeFullStreamingCodec{fakeBaseCodec: fakeBaseCodec{
+		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetObject, codec.TargetObjectOwnership),
+	}}
+
+	_, err := New(c)
+
+	requireErrorIs(t, err, ErrCapabilityMismatch)
+	requireRegistryDetailContains(t, err, "codec.ValueCodec or codec.ValueStreamCodec")
 }
 
 func TestCapabilityValidationObjectCapabilityRequiresDeclaredTarget(t *testing.T) {
-	c := &fakeObjectByteCodec{fakeBaseCodec: fakeBaseCodec{
-		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue),
+	c := &fakeFullByteCodec{fakeBaseCodec: fakeBaseCodec{
+		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue, codec.TargetObjectOwnership),
 	}}
 
 	_, err := New(c)
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
+	requireRegistryDetailContains(t, err, "codec.ObjectCodec or codec.ObjectStreamCodec")
+}
+
+func TestCapabilityValidationObjectStreamCapabilityRequiresDeclaredTarget(t *testing.T) {
+	c := &fakeFullStreamingCodec{fakeBaseCodec: fakeBaseCodec{
+		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue, codec.TargetObjectOwnership),
+	}}
+
+	_, err := New(c)
+
+	requireErrorIs(t, err, ErrCapabilityMismatch)
+	requireRegistryDetailContains(t, err, "codec.ObjectCodec or codec.ObjectStreamCodec")
 }
 
 func TestCapabilityValidationOwnershipCapabilityRequiresDeclaredTarget(t *testing.T) {
-	c := &fakeOwnershipByteCodec{fakeBaseCodec: fakeBaseCodec{
-		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue),
+	c := &fakeFullByteCodec{fakeBaseCodec: fakeBaseCodec{
+		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue, codec.TargetObject),
 	}}
 
 	_, err := New(c)
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
+	requireRegistryDetailContains(t, err, "codec.ObjectOwnershipCodec or codec.ObjectOwnershipStreamCodec")
+}
+
+func TestCapabilityValidationOwnershipStreamCapabilityRequiresDeclaredTarget(t *testing.T) {
+	c := &fakeFullStreamingCodec{fakeBaseCodec: fakeBaseCodec{
+		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue, codec.TargetObject),
+	}}
+
+	_, err := New(c)
+
+	requireErrorIs(t, err, ErrCapabilityMismatch)
+	requireRegistryDetailContains(t, err, "codec.ObjectOwnershipCodec or codec.ObjectOwnershipStreamCodec")
 }
 
 func TestCapabilityValidationFullByteRequiresAllTargets(t *testing.T) {

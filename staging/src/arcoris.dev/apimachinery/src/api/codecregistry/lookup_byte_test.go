@@ -76,3 +76,20 @@ func TestLookupMissingByteMediaTypeReturnsFalse(t *testing.T) {
 		t.Fatalf("LookupValue() = true for missing media type")
 	}
 }
+
+func TestZeroRegistryByteLookupsReturnFalse(t *testing.T) {
+	var registry Registry
+
+	if _, ok := registry.LookupValue(codec.MediaTypeJSON); ok {
+		t.Fatalf("LookupValue() = true on zero registry")
+	}
+	if _, ok := registry.LookupObject(codec.MediaTypeJSON); ok {
+		t.Fatalf("LookupObject() = true on zero registry")
+	}
+	if _, ok := registry.LookupObjectOwnership(codec.MediaTypeJSON); ok {
+		t.Fatalf("LookupObjectOwnership() = true on zero registry")
+	}
+	if _, ok := registry.LookupCodec(codec.MediaTypeJSON); ok {
+		t.Fatalf("LookupCodec() = true on zero registry")
+	}
+}

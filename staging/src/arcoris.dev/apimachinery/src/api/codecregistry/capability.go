@@ -14,7 +14,11 @@
 
 package codecregistry
 
-import "arcoris.dev/apimachinery/api/codec"
+import (
+	"fmt"
+
+	"arcoris.dev/apimachinery/api/codec"
+)
 
 // validateCapabilities checks that semantic targets match byte or stream APIs.
 func validateCapabilities(path string, c codec.BaseCodec, info codec.Info) error {
@@ -23,14 +27,11 @@ func validateCapabilities(path string, c codec.BaseCodec, info codec.Info) error
 			continue
 		}
 
-		return errorfAt(
+		return errorAt(
 			path,
 			ErrCapabilityMismatch,
 			ErrorReasonCapabilityMismatch,
-			"codec target %q declared=%v implemented=%v",
-			check.target,
-			check.declared,
-			check.implemented,
+			check.detail(),
 		)
 	}
 
@@ -41,6 +42,12 @@ func validateCapabilities(path string, c codec.BaseCodec, info codec.Info) error
 type capabilityCheck struct {
 	// target is the semantic API document model being checked.
 	target codec.Target
+
+	// byteInterface names the byte-slice capability interface for target.
+	byteInterface string
+
+	// streamInterface names the streaming capability interface for target.
+	streamInterface string
 
 	// declared records whether codec.Info advertises target.
 	declared bool
@@ -53,21 +60,49 @@ type capabilityCheck struct {
 func capabilityChecks(c codec.BaseCodec, info codec.Info) []capabilityCheck {
 	return []capabilityCheck{
 		{
-			target:      codec.TargetValue,
-			declared:    info.Supports(codec.TargetValue),
-			implemented: implementsValue(c),
+			target:          codec.TargetValue,
+			byteInterface:   "codec.ValueCodec",
+			streamInterface: "codec.ValueStreamCodec",
+			declared:        info.Supports(codec.TargetValue),
+			implemented:     implementsValue(c),
 		},
 		{
-			target:      codec.TargetObject,
-			declared:    info.Supports(codec.TargetObject),
-			implemented: implementsObject(c),
+			target:          codec.TargetObject,
+			byteInterface:   "codec.ObjectCodec",
+			streamInterface: "codec.ObjectStreamCodec",
+			declared:        info.Supports(codec.TargetObject),
+			implemented:     implementsObject(c),
 		},
 		{
-			target:      codec.TargetObjectOwnership,
-			declared:    info.Supports(codec.TargetObjectOwnership),
-			implemented: implementsObjectOwnership(c),
+			target:          codec.TargetObjectOwnership,
+			byteInterface:   "codec.ObjectOwnershipCodec",
+			streamInterface: "codec.ObjectOwnershipStreamCodec",
+			declared:        info.Supports(codec.TargetObjectOwnership),
+			implemented:     implementsObjectOwnership(c),
 		},
 	}
+}
+
+// detail returns a directional capability mismatch diagnostic.
+func (c capabilityCheck) detail() string {
+	if c.declared && !c.implemented {
+		return fmt.Sprintf(
+			"codec declares target %q but implements neither %s nor %s",
+			c.target,
+			c.byteInterface,
+			c.streamInterface,
+		)
+	}
+	if !c.declared && c.implemented {
+		return fmt.Sprintf(
+			"codec implements %s or %s but Info.Targets does not declare target %q",
+			c.byteInterface,
+			c.streamInterface,
+			c.target,
+		)
+	}
+
+	return fmt.Sprintf("codec target %q declared=%v implemented=%v", c.target, c.declared, c.implemented)
 }
 
 // implementsValue reports byte or streaming support for value documents.

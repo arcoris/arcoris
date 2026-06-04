@@ -17,6 +17,7 @@ package codecregistry
 import (
 	"errors"
 	"io"
+	"strings"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/codec"
@@ -338,5 +339,17 @@ func requireRegistryError(t *testing.T, err error, path string, reason ErrorReas
 	}
 	if registryError.Reason != reason {
 		t.Fatalf("reason = %q; want %q", registryError.Reason, reason)
+	}
+}
+
+func requireRegistryDetailContains(t *testing.T, err error, want string) {
+	t.Helper()
+
+	var registryError *Error
+	if !errors.As(err, &registryError) {
+		t.Fatalf("error = %T; want *Error", err)
+	}
+	if !strings.Contains(registryError.Detail, want) {
+		t.Fatalf("detail = %q; want substring %q", registryError.Detail, want)
 	}
 }

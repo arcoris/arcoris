@@ -20,6 +20,11 @@
 // byte and streaming capabilities, and exposes typed lookup helpers for codec
 // capabilities.
 //
+// Registry construction accepts normalizable codec.Info metadata, stores a
+// normalized detached metadata snapshot, and rejects invalid or non-normalizable
+// metadata. Lookup and listing methods always operate on that normalized
+// snapshot rather than calling codec.Info again.
+//
 // Registries are immutable after construction and do not use global mutable
 // state, init-time registration, or default codec bundles. Concrete codec
 // implementations live in packages such as api/codecjson, api/codecyaml, and

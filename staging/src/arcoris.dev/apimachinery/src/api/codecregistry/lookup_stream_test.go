@@ -91,3 +91,20 @@ func TestByteLookupDoesNotRequireStreamingCodec(t *testing.T) {
 		t.Fatalf("LookupValueStream() = true for byte-only codec")
 	}
 }
+
+func TestZeroRegistryStreamLookupsReturnFalse(t *testing.T) {
+	var registry Registry
+
+	if _, ok := registry.LookupValueStream(codec.MediaTypeJSON); ok {
+		t.Fatalf("LookupValueStream() = true on zero registry")
+	}
+	if _, ok := registry.LookupObjectStream(codec.MediaTypeJSON); ok {
+		t.Fatalf("LookupObjectStream() = true on zero registry")
+	}
+	if _, ok := registry.LookupObjectOwnershipStream(codec.MediaTypeJSON); ok {
+		t.Fatalf("LookupObjectOwnershipStream() = true on zero registry")
+	}
+	if _, ok := registry.LookupStreamingCodec(codec.MediaTypeJSON); ok {
+		t.Fatalf("LookupStreamingCodec() = true on zero registry")
+	}
+}

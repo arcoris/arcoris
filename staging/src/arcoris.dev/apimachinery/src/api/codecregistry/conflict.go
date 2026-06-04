@@ -17,6 +17,10 @@ package codecregistry
 import "arcoris.dev/apimachinery/api/codec"
 
 // checkEntryConflicts rejects ambiguous format and media type indexes.
+//
+// Duplicate formats are rejected in v1 so LookupFormat always has one
+// unambiguous answer. Duplicate media types are rejected for the same reason:
+// exact media type lookup is an index, not a negotiation algorithm.
 func checkEntryConflicts(
 	index int,
 	entry Entry,
