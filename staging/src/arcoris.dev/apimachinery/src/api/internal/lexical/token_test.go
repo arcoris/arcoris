@@ -44,9 +44,10 @@ func TestValidateASCIITokenOptionalCharacters(t *testing.T) {
 		AllowDigit:      true,
 		AllowDot:        true,
 		AllowUnderscore: true,
+		AllowPlus:       true,
 	}
 
-	requireValid(t, ValidateASCIIToken("Work_1.main", opts))
+	requireValid(t, ValidateASCIIToken("Work_1.main+json", opts))
 	requireViolation(t, ValidateASCIIToken("ab", opts), ReasonInvalidLength)
 	requireViolation(t, ValidateASCIIToken("work-main", opts), ReasonInvalidCharacter)
 }

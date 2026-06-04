@@ -45,6 +45,13 @@ type TokenOptions struct {
 	// AllowUnderscore allows "_".
 	AllowUnderscore bool
 
+	// AllowPlus allows "+".
+	//
+	// This is useful for protocol tokens that embed media-type structured suffix
+	// grammar, such as "object+json", while still avoiding full media type
+	// parsing in the lexical package.
+	AllowPlus bool
+
 	// RequireAlnumEdges requires non-empty values to start and end with an
 	// ASCII letter or digit.
 	RequireAlnumEdges bool
@@ -101,6 +108,8 @@ func tokenByteAllowed(b byte, opts TokenOptions) bool {
 	case opts.AllowDot && b == '.':
 		return true
 	case opts.AllowUnderscore && b == '_':
+		return true
+	case opts.AllowPlus && b == '+':
 		return true
 	default:
 		return false
