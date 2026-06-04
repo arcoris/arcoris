@@ -48,11 +48,11 @@ func (r Registry) Codecs() []codec.BaseCodec {
 	return out
 }
 
-// Formats returns detached registered formats sorted by canonical format string.
+// Formats returns detached unique formats sorted by canonical format string.
 func (r Registry) Formats() []codec.Format {
-	out := make([]codec.Format, 0, len(r.entries))
-	for _, entry := range r.entries {
-		out = append(out, entry.info.Format)
+	out := make([]codec.Format, 0, len(r.byFormat))
+	for format := range r.byFormat {
+		out = append(out, format)
 	}
 	slices.Sort(out)
 

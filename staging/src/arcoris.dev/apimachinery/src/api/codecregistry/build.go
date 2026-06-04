@@ -48,21 +48,21 @@ func buildEntry(index int, c codec.BaseCodec) (Entry, error) {
 	return Entry{codec: c, info: cloneInfo(info)}, nil
 }
 
-// buildRegistry sorts entries and builds indexes against sorted positions.
+// buildRegistry sorts entries and builds immutable indexes against sorted positions.
 func buildRegistry(entries []Entry) Registry {
 	sorted := slices.Clone(entries)
 	slices.SortFunc(sorted, compareEntries)
 
 	registry := Registry{
 		entries:     sorted,
-		byFormat:    make(map[codec.Format]int, len(sorted)),
 		byMediaType: make(map[codec.MediaType]int, mediaTypeCount(sorted)),
+		byFormat:    make(map[codec.Format][]int, len(sorted)),
 	}
 	for i, entry := range sorted {
-		registry.byFormat[entry.info.Format] = i
 		for _, mediaType := range entry.info.MediaTypes {
 			registry.byMediaType[mediaType] = i
 		}
+		registry.byFormat[entry.info.Format] = append(registry.byFormat[entry.info.Format], i)
 	}
 
 	return registry

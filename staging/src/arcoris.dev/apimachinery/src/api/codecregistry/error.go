@@ -27,9 +27,6 @@ var (
 	// ErrInvalidInfo classifies malformed or non-normalizable codec metadata.
 	ErrInvalidInfo = errors.New("invalid codec info")
 
-	// ErrDuplicateFormat classifies ambiguous format indexes.
-	ErrDuplicateFormat = errors.New("duplicate codec format")
-
 	// ErrDuplicateMediaType classifies ambiguous media type indexes.
 	ErrDuplicateMediaType = errors.New("duplicate codec media type")
 

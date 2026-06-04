@@ -18,9 +18,9 @@ import "arcoris.dev/apimachinery/api/codec"
 
 // Entry is one normalized codec registration record.
 //
-// Entry stores the original codec implementation together with normalized,
-// detached metadata accepted by Registry construction. It does not call Info()
-// again after registration.
+// Entry stores the original already-configured codec implementation together
+// with normalized, detached metadata accepted by Registry construction. It does
+// not call Info again after registration.
 type Entry struct {
 	// codec is the original implementation passed to New.
 	//

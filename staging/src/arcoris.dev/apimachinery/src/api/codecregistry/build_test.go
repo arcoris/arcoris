@@ -82,11 +82,32 @@ func TestBuildRegistrySortsEntriesAndIndexes(t *testing.T) {
 	if got := registry.entries[0].Format(); got != codec.FormatJSON {
 		t.Fatalf("entries[0].Format() = %q", got)
 	}
-	if entry, ok := registry.LookupFormat(codec.FormatYAML); !ok || entry.Format() != codec.FormatYAML {
-		t.Fatalf("LookupFormat(yaml) = %#v, %v", entry, ok)
+	entries := registry.EntriesByFormat(codec.FormatYAML)
+	if len(entries) != 1 || entries[0].Format() != codec.FormatYAML {
+		t.Fatalf("EntriesByFormat(yaml) = %#v", entries)
 	}
 	if entry, ok := registry.LookupMediaType(codec.MediaTypeJSON); !ok || entry.Format() != codec.FormatJSON {
 		t.Fatalf("LookupMediaType(json) = %#v, %v", entry, ok)
+	}
+}
+
+func TestNewBuildsFormatGroupsAfterSorting(t *testing.T) {
+	zEntry, err := buildEntry(0, newValueByteCodec(codec.FormatJSON, "application/vnd.z+json"))
+	requireNoError(t, err)
+	jsonEntry, err := buildEntry(1, newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
+	requireNoError(t, err)
+
+	registry := buildRegistry([]Entry{zEntry, jsonEntry})
+
+	indexes := registry.byFormat[codec.FormatJSON]
+	if len(indexes) != 2 {
+		t.Fatalf("format group length = %d; want 2", len(indexes))
+	}
+	if indexes[0] != 0 || indexes[1] != 1 {
+		t.Fatalf("format group indexes = %#v; want [0 1]", indexes)
+	}
+	if got := registry.entries[indexes[0]].MediaTypes()[0]; got != codec.MediaTypeJSON {
+		t.Fatalf("first grouped media type = %q; want %q", got, codec.MediaTypeJSON)
 	}
 }
 

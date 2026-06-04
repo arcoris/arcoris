@@ -16,22 +16,15 @@ package codecregistry
 
 import "arcoris.dev/apimachinery/api/codec"
 
-// checkEntryConflicts rejects ambiguous format and media type indexes.
+// checkEntryConflicts rejects ambiguous media type indexes.
 //
-// Duplicate formats are rejected in v1 so LookupFormat always has one
-// unambiguous answer. Duplicate media types are rejected for the same reason:
-// exact media type lookup is an index, not a negotiation algorithm.
+// Formats are grouping attributes and may repeat. Media types are unique lookup
+// keys, so duplicates are rejected to keep exact lookup deterministic.
 func checkEntryConflicts(
 	index int,
 	entry Entry,
-	seenFormats map[codec.Format]int,
 	seenMediaTypes map[codec.MediaType]int,
 ) error {
-	if previous, ok := seenFormats[entry.info.Format]; ok {
-		return duplicateFormatError(index, previous, entry.info.Format)
-	}
-	seenFormats[entry.info.Format] = index
-
 	for mediaTypeIndex, mediaType := range entry.info.MediaTypes {
 		if previous, ok := seenMediaTypes[mediaType]; ok {
 			return duplicateMediaTypeError(index, mediaTypeIndex, previous, mediaType)
@@ -40,18 +33,6 @@ func checkEntryConflicts(
 	}
 
 	return nil
-}
-
-// duplicateFormatError creates a stable duplicate format diagnostic.
-func duplicateFormatError(index int, previous int, format codec.Format) error {
-	return errorfAt(
-		infoPath(index)+".format",
-		ErrDuplicateFormat,
-		ErrorReasonDuplicateFormat,
-		"codec format %q duplicates codecs[%d]",
-		format,
-		previous,
-	)
 }
 
 // duplicateMediaTypeError creates a stable duplicate media type diagnostic.

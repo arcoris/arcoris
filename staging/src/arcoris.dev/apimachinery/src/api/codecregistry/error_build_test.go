@@ -31,15 +31,15 @@ func TestErrorAtBuildsStructuredError(t *testing.T) {
 
 func TestErrorfAtFormatsDetail(t *testing.T) {
 	err := errorfAt(
-		"codecs[0].info.format",
-		ErrDuplicateFormat,
-		ErrorReasonDuplicateFormat,
-		"codec format %q duplicates codecs[%d]",
-		codec.FormatJSON,
+		"codecs[0].info.mediaTypes[0]",
+		ErrDuplicateMediaType,
+		ErrorReasonDuplicateMediaType,
+		"codec media type %q duplicates codecs[%d]",
+		codec.MediaTypeJSON,
 		1,
 	)
 
-	if !strings.Contains(err.Error(), "json") || !strings.Contains(err.Error(), "1") {
+	if !strings.Contains(err.Error(), "application/json") || !strings.Contains(err.Error(), "1") {
 		t.Fatalf("Error() = %q; want formatted detail", err.Error())
 	}
 }
@@ -79,15 +79,6 @@ func TestTypedNilCodecError(t *testing.T) {
 	requireRegistryError(t, err, "codecs[0]", ErrorReasonInvalidCodec)
 }
 
-func TestDuplicateFormatErrorIs(t *testing.T) {
-	_, err := New(
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeYAML),
-	)
-
-	requireErrorIs(t, err, ErrDuplicateFormat)
-}
-
 func TestDuplicateMediaTypeErrorIs(t *testing.T) {
 	_, err := New(
 		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
@@ -104,4 +95,13 @@ func TestErrorDiagnosticPath(t *testing.T) {
 	)
 
 	requireRegistryError(t, err, "codecs[1].info.mediaTypes[0]", ErrorReasonDuplicateMediaType)
+}
+
+func TestDuplicateFormatNoLongerErrors(t *testing.T) {
+	_, err := New(
+		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
+		newValueByteCodec(codec.FormatJSON, codec.MediaTypeYAML),
+	)
+
+	requireNoError(t, err)
 }

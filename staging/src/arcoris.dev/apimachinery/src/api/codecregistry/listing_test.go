@@ -108,6 +108,23 @@ func TestRegistryFormatsSorted(t *testing.T) {
 	}
 }
 
+func TestFormatsDeduplicatesAndSorts(t *testing.T) {
+	registry, err := New(
+		newValueByteCodec(codec.FormatJSON, "application/vnd.z+json"),
+		newValueByteCodec(codec.FormatYAML, codec.MediaTypeYAML),
+		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
+	)
+	requireNoError(t, err)
+
+	formats := registry.Formats()
+	if len(formats) != 2 {
+		t.Fatalf("Formats() length = %d; want 2", len(formats))
+	}
+	if formats[0] != codec.FormatJSON || formats[1] != codec.FormatYAML {
+		t.Fatalf("Formats() = %#v", formats)
+	}
+}
+
 func TestRegistryFormatsDetached(t *testing.T) {
 	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
 	requireNoError(t, err)

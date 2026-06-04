@@ -16,12 +16,16 @@ package codecregistry
 
 import "arcoris.dev/apimachinery/api/codec"
 
-// New validates codecs and returns an immutable registry.
+// New validates configured codecs and returns an immutable registry.
 //
 // New accepts normalizable codec.Info metadata, stores normalized detached
 // metadata in registry entries, and rejects invalid or non-normalizable
 // metadata. Registered codec implementations are kept as-is, but their metadata
 // is snapshotted during construction.
+//
+// Media types are unique registry lookup keys. Formats are non-unique grouping
+// attributes, so multiple configured codec instances may share the same format
+// when they expose different media types.
 //
 // Construction is all-or-nothing. If any codec is invalid, no partial Registry
 // is returned.
@@ -31,7 +35,6 @@ func New(codecs ...codec.BaseCodec) (Registry, error) {
 	}
 
 	entries := make([]Entry, 0, len(codecs))
-	seenFormats := make(map[codec.Format]int, len(codecs))
 	seenMediaTypes := make(map[codec.MediaType]int, len(codecs))
 
 	for i, current := range codecs {
@@ -39,7 +42,7 @@ func New(codecs ...codec.BaseCodec) (Registry, error) {
 		if err != nil {
 			return Registry{}, err
 		}
-		if err := checkEntryConflicts(i, entry, seenFormats, seenMediaTypes); err != nil {
+		if err := checkEntryConflicts(i, entry, seenMediaTypes); err != nil {
 			return Registry{}, err
 		}
 

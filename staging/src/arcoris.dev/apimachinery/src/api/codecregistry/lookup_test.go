@@ -20,25 +20,30 @@ import (
 	"arcoris.dev/apimachinery/api/codec"
 )
 
-func TestLookupFormat(t *testing.T) {
-	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
+func TestEntriesByFormat(t *testing.T) {
+	registry, err := New(
+		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
+		newValueByteCodec(codec.FormatJSON, codec.MediaTypeYAML),
+	)
 	requireNoError(t, err)
 
-	entry, ok := registry.LookupFormat(codec.FormatJSON)
-	if !ok {
-		t.Fatalf("LookupFormat() = false")
+	entries := registry.EntriesByFormat(codec.FormatJSON)
+	if len(entries) != 2 {
+		t.Fatalf("EntriesByFormat() length = %d; want 2", len(entries))
 	}
-	if entry.Format() != codec.FormatJSON {
-		t.Fatalf("LookupFormat() format = %q", entry.Format())
+	for i, entry := range entries {
+		if entry.Format() != codec.FormatJSON {
+			t.Fatalf("entries[%d].Format() = %q", i, entry.Format())
+		}
 	}
 }
 
-func TestLookupFormatNormalizesInputIfSupported(t *testing.T) {
+func TestEntriesByFormatNormalizesInputIfSupported(t *testing.T) {
 	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
 	requireNoError(t, err)
 
-	if _, ok := registry.LookupFormat(" JSON "); !ok {
-		t.Fatalf("LookupFormat() did not normalize input")
+	if entries := registry.EntriesByFormat(" JSON "); len(entries) != 1 {
+		t.Fatalf("EntriesByFormat() length = %d; want 1", len(entries))
 	}
 }
 
@@ -64,12 +69,12 @@ func TestLookupMediaTypeNormalizesInputIfSupported(t *testing.T) {
 	}
 }
 
-func TestLookupMissingFormatReturnsFalse(t *testing.T) {
+func TestEntriesByFormatReturnsEmptyForMissingFormat(t *testing.T) {
 	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
 	requireNoError(t, err)
 
-	if _, ok := registry.LookupFormat(codec.FormatYAML); ok {
-		t.Fatalf("LookupFormat() = true for missing format")
+	if entries := registry.EntriesByFormat(codec.FormatYAML); len(entries) != 0 {
+		t.Fatalf("EntriesByFormat() length = %d; want 0", len(entries))
 	}
 }
 
@@ -82,12 +87,40 @@ func TestLookupMissingMediaTypeReturnsFalse(t *testing.T) {
 	}
 }
 
-func TestLookupInvalidFormatReturnsFalse(t *testing.T) {
+func TestEntriesByFormatReturnsEmptyForInvalidFormat(t *testing.T) {
 	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
 	requireNoError(t, err)
 
-	if _, ok := registry.LookupFormat("application/json"); ok {
-		t.Fatalf("LookupFormat() = true for invalid format")
+	if entries := registry.EntriesByFormat("application/json"); len(entries) != 0 {
+		t.Fatalf("EntriesByFormat() length = %d; want 0", len(entries))
+	}
+}
+
+func TestEntriesByFormatReturnsDetachedSlice(t *testing.T) {
+	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
+	requireNoError(t, err)
+
+	entries := registry.EntriesByFormat(codec.FormatJSON)
+	entries[0] = Entry{}
+
+	if registry.EntriesByFormat(codec.FormatJSON)[0].IsZero() {
+		t.Fatalf("registry entries mutated through EntriesByFormat()")
+	}
+}
+
+func TestEntriesByFormatPreservesRegistryOrder(t *testing.T) {
+	registry, err := New(
+		newValueByteCodec(codec.FormatJSON, "application/vnd.z+json"),
+		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
+	)
+	requireNoError(t, err)
+
+	entries := registry.EntriesByFormat(codec.FormatJSON)
+	if got := entries[0].MediaTypes()[0]; got != codec.MediaTypeJSON {
+		t.Fatalf("entries[0] media type = %q; want %q", got, codec.MediaTypeJSON)
+	}
+	if got := entries[1].MediaTypes()[0]; got != "application/vnd.z+json" {
+		t.Fatalf("entries[1] media type = %q; want application/vnd.z+json", got)
 	}
 }
 
@@ -103,8 +136,8 @@ func TestLookupInvalidMediaTypeReturnsFalse(t *testing.T) {
 func TestZeroRegistryLookupReturnsFalse(t *testing.T) {
 	var registry Registry
 
-	if _, ok := registry.LookupFormat(codec.FormatJSON); ok {
-		t.Fatalf("LookupFormat() = true on zero registry")
+	if entries := registry.EntriesByFormat(codec.FormatJSON); len(entries) != 0 {
+		t.Fatalf("EntriesByFormat() length = %d; want 0", len(entries))
 	}
 	if _, ok := registry.LookupMediaType(codec.MediaTypeJSON); ok {
 		t.Fatalf("LookupMediaType() = true on zero registry")

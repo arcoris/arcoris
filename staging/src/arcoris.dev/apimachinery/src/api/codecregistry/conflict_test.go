@@ -20,14 +20,17 @@ import (
 	"arcoris.dev/apimachinery/api/codec"
 )
 
-func TestNewRejectsDuplicateFormat(t *testing.T) {
-	_, err := New(
+func TestNewAllowsDuplicateFormatWithDifferentMediaTypes(t *testing.T) {
+	registry, err := New(
 		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
 		newValueByteCodec(codec.FormatJSON, codec.MediaTypeYAML),
 	)
+	requireNoError(t, err)
 
-	requireErrorIs(t, err, ErrDuplicateFormat)
-	requireRegistryError(t, err, "codecs[1].info.format", ErrorReasonDuplicateFormat)
+	entries := registry.EntriesByFormat(codec.FormatJSON)
+	if len(entries) != 2 {
+		t.Fatalf("EntriesByFormat(json) length = %d; want 2", len(entries))
+	}
 }
 
 func TestNewRejectsDuplicateMediaType(t *testing.T) {
@@ -61,15 +64,6 @@ func TestDuplicateMediaTypeErrorUsesNormalizedMediaTypeIndex(t *testing.T) {
 	requireRegistryError(t, err, "codecs[1].info.mediaTypes[1]", ErrorReasonDuplicateMediaType)
 }
 
-func TestDuplicateFormatError(t *testing.T) {
-	_, err := New(
-		newObjectByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
-		newObjectByteCodec(codec.FormatJSON, codec.MediaTypeYAML),
-	)
-
-	requireErrorIs(t, err, ErrDuplicateFormat)
-}
-
 func TestDuplicateMediaTypeError(t *testing.T) {
 	_, err := New(
 		newObjectByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
@@ -84,5 +78,5 @@ func TestDuplicateCodecInstanceRejected(t *testing.T) {
 
 	_, err := New(c, c)
 
-	requireErrorIs(t, err, ErrDuplicateFormat)
+	requireErrorIs(t, err, ErrDuplicateMediaType)
 }

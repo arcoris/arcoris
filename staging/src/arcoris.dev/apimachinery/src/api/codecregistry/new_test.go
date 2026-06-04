@@ -69,10 +69,10 @@ func TestNewRejectsInvalidInfo(t *testing.T) {
 func TestNewReturnsZeroRegistryOnError(t *testing.T) {
 	registry, err := New(
 		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeYAML),
+		newValueByteCodec(codec.FormatYAML, codec.MediaTypeJSON),
 	)
 
-	requireErrorIs(t, err, ErrDuplicateFormat)
+	requireErrorIs(t, err, ErrDuplicateMediaType)
 	if !registry.IsEmpty() {
 		t.Fatalf("registry = %#v; want zero registry on error", registry)
 	}

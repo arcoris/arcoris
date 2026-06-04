@@ -24,9 +24,6 @@ const (
 	// ErrorReasonInvalidInfo reports malformed codec metadata.
 	ErrorReasonInvalidInfo ErrorReason = "invalid_info"
 
-	// ErrorReasonDuplicateFormat reports an ambiguous format index.
-	ErrorReasonDuplicateFormat ErrorReason = "duplicate_format"
-
 	// ErrorReasonDuplicateMediaType reports an ambiguous media type index.
 	ErrorReasonDuplicateMediaType ErrorReason = "duplicate_media_type"
 

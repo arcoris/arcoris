@@ -16,15 +16,29 @@ package codecregistry
 
 import "arcoris.dev/apimachinery/api/codec"
 
-// LookupFormat returns the codec entry registered for format.
-func (r Registry) LookupFormat(format codec.Format) (Entry, bool) {
+// EntriesByFormat returns codec entries registered for format.
+//
+// Format is a grouping attribute, not a unique codec identity. The returned
+// slice is detached and preserves deterministic registry entry order.
+func (r Registry) EntriesByFormat(format codec.Format) []Entry {
 	normalized, ok := normalizeFormat(format)
 	if !ok {
-		return Entry{}, false
+		return nil
 	}
 
-	index, ok := r.byFormat[normalized]
-	return r.entryAt(index, ok)
+	indexes := r.byFormat[normalized]
+	if len(indexes) == 0 {
+		return nil
+	}
+
+	out := make([]Entry, 0, len(indexes))
+	for _, index := range indexes {
+		if entry, ok := r.entryAt(index, true); ok {
+			out = append(out, entry)
+		}
+	}
+
+	return out
 }
 
 // LookupMediaType returns the codec entry registered for mediaType.

@@ -37,10 +37,13 @@ func TestRegistryIndexesPointAtSortedEntries(t *testing.T) {
 
 	jsonIndex := registry.byFormat[codec.FormatJSON]
 	yamlIndex := registry.byFormat[codec.FormatYAML]
-	if jsonIndex != 0 || yamlIndex != 1 {
-		t.Fatalf("format indexes json=%d yaml=%d", jsonIndex, yamlIndex)
+	if len(jsonIndex) != 1 || jsonIndex[0] != 0 {
+		t.Fatalf("json format indexes = %#v; want [0]", jsonIndex)
 	}
-	if got := registry.byMediaType[codec.MediaTypeYAML]; got != yamlIndex {
-		t.Fatalf("yaml media index = %d; want %d", got, yamlIndex)
+	if len(yamlIndex) != 1 || yamlIndex[0] != 1 {
+		t.Fatalf("yaml format indexes = %#v; want [1]", yamlIndex)
+	}
+	if got := registry.byMediaType[codec.MediaTypeYAML]; got != yamlIndex[0] {
+		t.Fatalf("yaml media index = %d; want %d", got, yamlIndex[0])
 	}
 }

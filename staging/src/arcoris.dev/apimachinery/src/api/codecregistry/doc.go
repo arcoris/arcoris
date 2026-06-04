@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package codecregistry provides owner-created registries for API codec
-// implementations.
+// Package codecregistry provides owner-created registries for configured API
+// codec implementations.
 //
 // The package indexes already-configured api/codec BaseCodec implementations by
-// format and media type, validates codec metadata, checks declared targets
-// against implemented byte and streaming capabilities, and exposes typed lookup
-// helpers for codec capabilities.
+// media type and groups them by format. MediaType is the unique lookup key.
+// Format is a non-unique grouping attribute for families such as JSON, YAML, or
+// CBOR, where one family may expose multiple media types. The registry validates
+// codec metadata, checks declared targets against implemented byte and
+// streaming capabilities, and exposes typed lookup helpers for codec
+// capabilities.
 //
 // Registry construction accepts normalizable codec.Info metadata, stores a
 // normalized detached metadata snapshot, and rejects invalid or non-normalizable
@@ -26,9 +29,8 @@
 // snapshot rather than calling codec.Info again.
 //
 // Registries are immutable after construction and do not use global mutable
-// state, init-time registration, or default codec bundles. Concrete codec
-// implementations live in packages such as api/codecjson, api/codecyaml, and
-// api/codeccbor; callers decide which implementations to register.
+// state, init-time registration, or default codec bundles. Callers decide which
+// already-configured concrete implementations to register.
 //
 // A codec's Info.Targets must match its implemented capability interfaces.
 // Declaring TargetValue requires ValueCodec or ValueStreamCodec. Implementing
@@ -36,7 +38,9 @@
 // TargetObject with ObjectCodec/ObjectStreamCodec and TargetObjectOwnership
 // with ObjectOwnershipCodec/ObjectOwnershipStreamCodec.
 //
-// The package does not implement codecs, parse HTTP headers, negotiate Accept
-// values, validate API values, apply objects, access storage, run admission,
-// perform resource catalog lookup, or execute runtime/server lifecycle behavior.
+// The package does not configure codecs, resolve options, interpret profiles,
+// parse protocol metadata, negotiate media preferences, create codec instances,
+// implement codecs, validate API values, apply objects, access storage, run
+// admission, perform resource catalog lookup, or execute runtime/server
+// lifecycle behavior.
 package codecregistry

@@ -16,7 +16,7 @@ package codecregistry
 
 import "arcoris.dev/apimachinery/api/codec"
 
-// Registry is an immutable owner-created index of codec implementations.
+// Registry is an immutable owner-created index of configured codec instances.
 //
 // Registry is safe for concurrent lookup after construction. It does not make
 // registered codec implementations themselves concurrency-safe.
@@ -24,9 +24,9 @@ type Registry struct {
 	// entries stores registrations in deterministic listing order.
 	entries []Entry
 
-	// byFormat maps canonical formats to indexes in entries.
-	byFormat map[codec.Format]int
-
 	// byMediaType maps canonical media types to indexes in entries.
 	byMediaType map[codec.MediaType]int
+
+	// byFormat maps canonical formats to one or more indexes in entries.
+	byFormat map[codec.Format][]int
 }
