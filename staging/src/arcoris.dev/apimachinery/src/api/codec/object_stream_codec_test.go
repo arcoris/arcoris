@@ -18,6 +18,8 @@ import "io"
 
 var _ ObjectStreamDecoder = fakeObjectStreamCodec{}
 var _ ObjectStreamEncoder = fakeObjectStreamCodec{}
+
+// ObjectStreamCodec is a partial streaming capability for the object target.
 var _ ObjectStreamCodec = fakeObjectStreamCodec{}
 
 type fakeObjectStreamCodec struct {

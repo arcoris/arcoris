@@ -33,6 +33,20 @@
 // catalog lookup, access storage, run admission, or execute runtime/server
 // lifecycle behavior.
 //
+// Terminology:
+//
+//   - BaseCodec is the metadata-only base interface shared by codec
+//     implementations.
+//   - ValueCodec, ObjectCodec, and ObjectOwnershipCodec are byte-slice target
+//     capabilities.
+//   - Codec is the full byte-slice codec interface for all v1 targets.
+//   - ValueStreamCodec, ObjectStreamCodec, and ObjectOwnershipStreamCodec are
+//     streaming target capabilities.
+//   - StreamingCodec is the full stream codec interface for all v1 targets.
+//
+// Codec does not imply streaming support. StreamingCodec does not imply
+// byte-slice support. Implementations may expose either surface or both.
+//
 // Codec diagnostic paths are syntactic document locations, not api/fieldpath
 // paths. Implementations should use "$" for the encoded document root and
 // locations such as "$.desired.conditions[0].status" for decoded input shape

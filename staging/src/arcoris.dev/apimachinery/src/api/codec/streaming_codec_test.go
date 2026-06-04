@@ -21,6 +21,8 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
+// StreamingCodec is the full streaming aggregate and intentionally does not
+// require byte-slice Codec support.
 var _ StreamingCodec = fakeStreamingCodec{}
 
 type fakeStreamingCodec struct {

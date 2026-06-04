@@ -22,6 +22,8 @@ import (
 
 var _ ValueStreamDecoder = fakeValueStreamCodec{}
 var _ ValueStreamEncoder = fakeValueStreamCodec{}
+
+// ValueStreamCodec is a partial streaming capability for the value target.
 var _ ValueStreamCodec = fakeValueStreamCodec{}
 
 type fakeValueStreamCodec struct {

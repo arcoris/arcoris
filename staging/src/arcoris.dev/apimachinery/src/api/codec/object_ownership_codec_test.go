@@ -18,8 +18,10 @@ import "arcoris.dev/apimachinery/api/objectownership"
 
 var _ ObjectOwnershipDecoder = fakeObjectOwnershipCodec{}
 var _ ObjectOwnershipEncoder = fakeObjectOwnershipCodec{}
+
+// ObjectOwnershipCodec is a partial byte capability for ownership documents.
 var _ ObjectOwnershipCodec = fakeObjectOwnershipCodec{}
-var _ ObjectOwnershipCodec = fakeFullCodec{}
+var _ ObjectOwnershipCodec = fakeByteCodec{}
 
 type fakeObjectOwnershipCodec struct {
 	fakeBaseCodec
@@ -33,10 +35,10 @@ func (fakeObjectOwnershipCodec) EncodeObjectOwnership(objectownership.Document, 
 	return nil, nil
 }
 
-func (fakeFullCodec) DecodeObjectOwnership(data []byte, opts DecodeOptions) (objectownership.Document, error) {
+func (fakeByteCodec) DecodeObjectOwnership(data []byte, opts DecodeOptions) (objectownership.Document, error) {
 	return fakeObjectOwnershipCodec{}.DecodeObjectOwnership(data, opts)
 }
 
-func (fakeFullCodec) EncodeObjectOwnership(doc objectownership.Document, opts EncodeOptions) ([]byte, error) {
+func (fakeByteCodec) EncodeObjectOwnership(doc objectownership.Document, opts EncodeOptions) ([]byte, error) {
 	return fakeObjectOwnershipCodec{}.EncodeObjectOwnership(doc, opts)
 }

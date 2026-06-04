@@ -14,8 +14,9 @@
 
 package codec
 
-var _ Codec = fakeFullCodec{}
+// Codec is the full byte-slice aggregate for every v1 target.
+var _ Codec = fakeByteCodec{}
 
-type fakeFullCodec struct {
+type fakeByteCodec struct {
 	fakeBaseCodec
 }

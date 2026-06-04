@@ -14,6 +14,7 @@
 
 package codec
 
+// BaseCodec is intentionally metadata-only.
 var _ BaseCodec = fakeBaseCodec{}
 
 type fakeBaseCodec struct{}

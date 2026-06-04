@@ -23,8 +23,10 @@ import (
 
 var _ ObjectDecoder = fakeObjectCodec{}
 var _ ObjectEncoder = fakeObjectCodec{}
+
+// ObjectCodec is a partial byte capability for the object target.
 var _ ObjectCodec = fakeObjectCodec{}
-var _ ObjectCodec = fakeFullCodec{}
+var _ ObjectCodec = fakeByteCodec{}
 
 type fakeObjectCodec struct {
 	fakeBaseCodec
@@ -38,11 +40,11 @@ func (fakeObjectCodec) EncodeObject(Object, EncodeOptions) ([]byte, error) {
 	return nil, nil
 }
 
-func (fakeFullCodec) DecodeObject(data []byte, opts DecodeOptions) (Object, error) {
+func (fakeByteCodec) DecodeObject(data []byte, opts DecodeOptions) (Object, error) {
 	return fakeObjectCodec{}.DecodeObject(data, opts)
 }
 
-func (fakeFullCodec) EncodeObject(obj Object, opts EncodeOptions) ([]byte, error) {
+func (fakeByteCodec) EncodeObject(obj Object, opts EncodeOptions) ([]byte, error) {
 	return fakeObjectCodec{}.EncodeObject(obj, opts)
 }
 

@@ -36,6 +36,10 @@ type Info struct {
 
 	// Targets lists API document models supported by the codec.
 	//
+	// Targets describe semantic API document models, not transport
+	// capabilities. Byte-slice support is represented by ValueCodec,
+	// ObjectCodec, and ObjectOwnershipCodec. Streaming support is represented
+	// by ValueStreamCodec, ObjectStreamCodec, and ObjectOwnershipStreamCodec.
 	// The list must be non-empty and contain only the closed-world Target values
 	// known to this package.
 	Targets []Target

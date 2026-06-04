@@ -18,8 +18,10 @@ import "arcoris.dev/apimachinery/api/value"
 
 var _ ValueDecoder = fakeValueCodec{}
 var _ ValueEncoder = fakeValueCodec{}
+
+// ValueCodec is a partial byte capability for the value target.
 var _ ValueCodec = fakeValueCodec{}
-var _ ValueCodec = fakeFullCodec{}
+var _ ValueCodec = fakeByteCodec{}
 
 type fakeValueCodec struct {
 	fakeBaseCodec
@@ -33,10 +35,10 @@ func (fakeValueCodec) EncodeValue(value.Value, EncodeOptions) ([]byte, error) {
 	return nil, nil
 }
 
-func (fakeFullCodec) DecodeValue(data []byte, opts DecodeOptions) (value.Value, error) {
+func (fakeByteCodec) DecodeValue(data []byte, opts DecodeOptions) (value.Value, error) {
 	return fakeValueCodec{}.DecodeValue(data, opts)
 }
 
-func (fakeFullCodec) EncodeValue(v value.Value, opts EncodeOptions) ([]byte, error) {
+func (fakeByteCodec) EncodeValue(v value.Value, opts EncodeOptions) ([]byte, error) {
 	return fakeValueCodec{}.EncodeValue(v, opts)
 }

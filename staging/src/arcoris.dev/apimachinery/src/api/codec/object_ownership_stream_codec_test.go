@@ -22,6 +22,8 @@ import (
 
 var _ ObjectOwnershipStreamDecoder = fakeObjectOwnershipStreamCodec{}
 var _ ObjectOwnershipStreamEncoder = fakeObjectOwnershipStreamCodec{}
+
+// ObjectOwnershipStreamCodec is a partial streaming capability for ownership documents.
 var _ ObjectOwnershipStreamCodec = fakeObjectOwnershipStreamCodec{}
 
 type fakeObjectOwnershipStreamCodec struct {
