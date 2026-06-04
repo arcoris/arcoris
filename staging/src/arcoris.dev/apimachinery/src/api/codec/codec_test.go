@@ -14,10 +14,8 @@
 
 package codec
 
-var _ BaseCodec = fakeBaseCodec{}
+var _ Codec = fakeFullCodec{}
 
-type fakeBaseCodec struct{}
-
-func (fakeBaseCodec) Info() Info {
-	return validInfo()
+type fakeFullCodec struct {
+	fakeBaseCodec
 }

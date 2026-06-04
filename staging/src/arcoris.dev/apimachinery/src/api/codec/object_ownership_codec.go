@@ -38,7 +38,7 @@ type ObjectOwnershipEncoder interface {
 // Implementations should also report TargetObjectOwnership from Info when they
 // expose this capability.
 type ObjectOwnershipCodec interface {
-	Codec
+	BaseCodec
 	ObjectOwnershipDecoder
 	ObjectOwnershipEncoder
 }

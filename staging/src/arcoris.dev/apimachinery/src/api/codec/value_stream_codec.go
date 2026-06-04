@@ -40,7 +40,7 @@ type ValueStreamEncoder interface {
 //
 // A codec may implement ValueCodec without implementing ValueStreamCodec.
 type ValueStreamCodec interface {
-	Codec
+	BaseCodec
 	ValueStreamDecoder
 	ValueStreamEncoder
 }

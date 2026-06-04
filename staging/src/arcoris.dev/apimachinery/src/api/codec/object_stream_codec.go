@@ -36,7 +36,7 @@ type ObjectStreamEncoder interface {
 //
 // A codec may implement ObjectCodec without implementing ObjectStreamCodec.
 type ObjectStreamCodec interface {
-	Codec
+	BaseCodec
 	ObjectStreamDecoder
 	ObjectStreamEncoder
 }

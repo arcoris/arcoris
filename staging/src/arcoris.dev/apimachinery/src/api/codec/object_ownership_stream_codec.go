@@ -41,7 +41,7 @@ type ObjectOwnershipStreamEncoder interface {
 // A codec may implement ObjectOwnershipCodec without implementing this optional
 // streaming capability.
 type ObjectOwnershipStreamCodec interface {
-	Codec
+	BaseCodec
 	ObjectOwnershipStreamDecoder
 	ObjectOwnershipStreamEncoder
 }

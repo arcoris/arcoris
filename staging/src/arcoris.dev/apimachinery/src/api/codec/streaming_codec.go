@@ -14,10 +14,13 @@
 
 package codec
 
-var _ BaseCodec = fakeBaseCodec{}
-
-type fakeBaseCodec struct{}
-
-func (fakeBaseCodec) Info() Info {
-	return validInfo()
+// StreamingCodec is implemented by stream-based codecs supporting every v1 target.
+//
+// StreamingCodec is the stream counterpart to Codec. It is intentionally
+// separate from Codec so implementations can support byte slices, streams,
+// or both without artificial coupling between those capabilities.
+type StreamingCodec interface {
+	ValueStreamCodec
+	ObjectStreamCodec
+	ObjectOwnershipStreamCodec
 }

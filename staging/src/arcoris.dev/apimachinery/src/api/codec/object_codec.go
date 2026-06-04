@@ -48,7 +48,7 @@ type ObjectEncoder interface {
 // Implementations should also report TargetObject from Info when they expose
 // this capability.
 type ObjectCodec interface {
-	Codec
+	BaseCodec
 	ObjectDecoder
 	ObjectEncoder
 }

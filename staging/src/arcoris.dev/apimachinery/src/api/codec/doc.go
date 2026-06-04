@@ -17,7 +17,8 @@
 // The package is the format-independent codec foundation for ARCORIS API
 // machinery. It defines open-world codec formats, media types, document
 // targets, common encode/decode options, typed encoder and decoder interfaces,
-// optional streaming interfaces, codec metadata, and structured diagnostics.
+// optional streaming interfaces, full byte/stream convenience interfaces, codec
+// metadata, and structured diagnostics.
 //
 // Package codec does not implement JSON, YAML, CBOR, or any other concrete wire
 // format. Concrete implementations live in packages such as api/codecjson,

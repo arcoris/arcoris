@@ -14,10 +14,13 @@
 
 package codec
 
-var _ BaseCodec = fakeBaseCodec{}
-
-type fakeBaseCodec struct{}
-
-func (fakeBaseCodec) Info() Info {
-	return validInfo()
+// Codec is implemented by byte-based codecs supporting every v1 target.
+//
+// Codec is the full byte-slice convenience interface. Streaming support is
+// intentionally not required here; a codec can be complete for bytes while still
+// choosing not to expose io.Reader or io.Writer APIs.
+type Codec interface {
+	ValueCodec
+	ObjectCodec
+	ObjectOwnershipCodec
 }

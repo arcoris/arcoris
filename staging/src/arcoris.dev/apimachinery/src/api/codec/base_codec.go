@@ -24,21 +24,10 @@ type Describer interface {
 	Info() Info
 }
 
-// Codec is the base marker for codec implementations.
+// BaseCodec is the base marker for codec implementations.
 //
 // Capabilities are discovered through the typed target interfaces rather than a
 // universal any-based Encode or Decode method.
-type Codec interface {
+type BaseCodec interface {
 	Describer
-}
-
-// FullCodec is implemented by byte-based codecs supporting every v1 target.
-//
-// Streaming support is intentionally not required by FullCodec. A codec can be
-// complete for byte slices while still choosing not to support io.Reader or
-// io.Writer APIs.
-type FullCodec interface {
-	ValueCodec
-	ObjectCodec
-	ObjectOwnershipCodec
 }

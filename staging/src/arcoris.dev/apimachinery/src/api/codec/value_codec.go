@@ -39,7 +39,7 @@ type ValueEncoder interface {
 // Implementations should also report TargetValue from Info when they expose
 // this capability.
 type ValueCodec interface {
-	Codec
+	BaseCodec
 	ValueDecoder
 	ValueEncoder
 }
