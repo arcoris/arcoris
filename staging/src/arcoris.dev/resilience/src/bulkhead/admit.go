@@ -34,13 +34,13 @@ import (
 func (b *Bulkhead) TryAdmit(req Request) admission.Result[*Lease, snapshot.Snapshot[Snapshot]] {
 	lease, snap, ok := b.TryAcquireAmount(req.Amount)
 	if !ok {
-		return admission.DeniedFor[*Lease](
+		return admission.DeniedForResult[*Lease](
 			admissionbuiltin.ReasonCapacityExhausted,
 			snap,
 		)
 	}
 
-	return admission.Granted(
+	return admission.GrantedResult(
 		admission.ReasonAdmitted,
 		lease,
 		snap,

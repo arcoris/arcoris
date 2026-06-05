@@ -30,25 +30,25 @@ func TestLimiterTryAdmitAllowedMapsToCommittedAdmissionResult(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("TryAdmit result is invalid: %+v", result.Decision())
 	}
-	if !result.IsAdmitted() {
+	if !result.Decision().IsAdmitted() {
 		t.Fatal("TryAdmit result is not admitted")
 	}
-	if result.IsDenied() {
+	if result.Decision().IsDenied() {
 		t.Fatal("TryAdmit result is denied, want admitted")
 	}
-	if !result.HasSideEffect() {
+	if !result.Decision().HasSideEffect() {
 		t.Fatal("TryAdmit result has no committed side effect")
 	}
 	if result.HasGrant() {
 		t.Fatal("TryAdmit result has grant, want none")
 	}
 	if _, ok := result.Grant(); ok {
-		t.Fatal("TryAdmit Grant() ok=true, want false")
+		t.Fatal("TryAdmit GrantDecision() ok=true, want false")
 	}
 	if !result.HasMetadata() {
 		t.Fatal("TryAdmit result has no metadata")
 	}
-	if got, want := result.Decision(), admission.Commit(admission.ReasonAdmitted); got != want {
+	if got, want := result.Decision(), admission.CommitDecision(admission.ReasonAdmitted); got != want {
 		t.Fatalf("decision = %+v, want %+v", got, want)
 	}
 
@@ -69,7 +69,7 @@ func TestLimiterTryAdmitDeniedMapsToBudgetExhaustedAdmissionResult(t *testing.T)
 	limiter, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(1))
 
 	allowed := limiter.TryAdmit(retrybudget.Request{})
-	if !allowed.IsValid() || !allowed.IsAdmitted() {
+	if !allowed.IsValid() || !allowed.Decision().IsAdmitted() {
 		t.Fatalf("first TryAdmit result = %+v, want valid admitted", allowed.Decision())
 	}
 	prev := limiter.Revision()
@@ -78,25 +78,25 @@ func TestLimiterTryAdmitDeniedMapsToBudgetExhaustedAdmissionResult(t *testing.T)
 	if !result.IsValid() {
 		t.Fatalf("denied TryAdmit result is invalid: %+v", result.Decision())
 	}
-	if !result.IsDenied() {
+	if !result.Decision().IsDenied() {
 		t.Fatal("TryAdmit result is not denied")
 	}
-	if result.IsAdmitted() {
+	if result.Decision().IsAdmitted() {
 		t.Fatal("TryAdmit result is admitted, want denied")
 	}
-	if result.HasSideEffect() {
+	if result.Decision().HasSideEffect() {
 		t.Fatal("TryAdmit denied result has side effect")
 	}
 	if result.HasGrant() {
 		t.Fatal("TryAdmit denied result has grant")
 	}
 	if _, ok := result.Grant(); ok {
-		t.Fatal("TryAdmit denied Grant() ok=true, want false")
+		t.Fatal("TryAdmit denied GrantDecision() ok=true, want false")
 	}
 	if !result.HasMetadata() {
 		t.Fatal("TryAdmit denied result has no metadata")
 	}
-	if got, want := result.Decision(), admission.Deny(admissionbuiltin.ReasonBudgetExhausted); got != want {
+	if got, want := result.Decision(), admission.DenyDecision(admissionbuiltin.ReasonBudgetExhausted); got != want {
 		t.Fatalf("decision = %+v, want %+v", got, want)
 	}
 
@@ -122,7 +122,7 @@ func TestFixedWindowTryAdmitAdmissionAllowedMapsToCommittedNoGrant(t *testing.T)
 	if !result.IsValid() {
 		t.Fatalf("result is invalid: %+v", result.Decision())
 	}
-	if got, want := result.Decision(), admission.Commit(admission.ReasonAdmitted); got != want {
+	if got, want := result.Decision(), admission.CommitDecision(admission.ReasonAdmitted); got != want {
 		t.Fatalf("decision = %+v, want %+v", got, want)
 	}
 	if result.HasGrant() {
@@ -139,7 +139,7 @@ func TestFixedWindowTryAdmitAdmissionDeniedMapsToDeniedNoGrant(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("result is invalid: %+v", result.Decision())
 	}
-	if got, want := result.Decision(), admission.Deny(admissionbuiltin.ReasonBudgetExhausted); got != want {
+	if got, want := result.Decision(), admission.DenyDecision(admissionbuiltin.ReasonBudgetExhausted); got != want {
 		t.Fatalf("decision = %+v, want %+v", got, want)
 	}
 	if result.HasGrant() {

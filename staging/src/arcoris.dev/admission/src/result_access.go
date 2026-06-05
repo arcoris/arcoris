@@ -28,7 +28,11 @@ func (r Result[G, M]) Decision() Decision {
 // ownership to the caller. Callers must interpret the grant according to the
 // domain package that created the Result.
 func (r Result[G, M]) Grant() (G, bool) {
-	return r.grant.Load()
+	if !r.hasGrant {
+		var zero G
+		return zero, false
+	}
+	return r.grant, true
 }
 
 // Metadata returns the typed metadata when the result contains it.
@@ -36,5 +40,9 @@ func (r Result[G, M]) Grant() (G, bool) {
 // Metadata is intended for snapshots, diagnostics, and read models associated
 // with the decision. It is not required for a Result to be valid.
 func (r Result[G, M]) Metadata() (M, bool) {
-	return r.metadata.Load()
+	if !r.hasMetadata {
+		var zero M
+		return zero, false
+	}
+	return r.metadata, true
 }

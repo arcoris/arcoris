@@ -33,10 +33,10 @@ func TestBulkheadTryAdmitGrantsLease(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("result is invalid: %+v", result.Decision())
 	}
-	if !result.IsAdmitted() {
+	if !result.Decision().IsAdmitted() {
 		t.Fatal("result is not admitted")
 	}
-	if result.IsDenied() {
+	if result.Decision().IsDenied() {
 		t.Fatal("result is denied, want admitted")
 	}
 	if !result.HasGrant() {
@@ -45,7 +45,7 @@ func TestBulkheadTryAdmitGrantsLease(t *testing.T) {
 	if !result.HasMetadata() {
 		t.Fatal("result has no metadata")
 	}
-	if got, want := result.Decision(), admission.Grant(admission.ReasonAdmitted); got != want {
+	if got, want := result.Decision(), admission.GrantDecision(admission.ReasonAdmitted); got != want {
 		t.Fatalf("decision = %+v, want %+v", got, want)
 	}
 
@@ -91,10 +91,10 @@ func TestBulkheadTryAdmitDeniesWhenCapacityExhausted(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("denied result is invalid: %+v", result.Decision())
 	}
-	if !result.IsDenied() {
+	if !result.Decision().IsDenied() {
 		t.Fatal("result is not denied")
 	}
-	if result.IsAdmitted() {
+	if result.Decision().IsAdmitted() {
 		t.Fatal("result is admitted, want denied")
 	}
 	if result.HasGrant() {
@@ -103,7 +103,7 @@ func TestBulkheadTryAdmitDeniesWhenCapacityExhausted(t *testing.T) {
 	if !result.HasMetadata() {
 		t.Fatal("denied result has no metadata")
 	}
-	if got, want := result.Decision(), admission.Deny(admissionbuiltin.ReasonCapacityExhausted); got != want {
+	if got, want := result.Decision(), admission.DenyDecision(admissionbuiltin.ReasonCapacityExhausted); got != want {
 		t.Fatalf("decision = %+v, want %+v", got, want)
 	}
 	if grant, ok := result.Grant(); ok || grant != nil {
@@ -127,14 +127,14 @@ func TestBulkheadTryAdmitDeniedCreatesNoLease(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("denied result is invalid: %+v", result.Decision())
 	}
-	if !result.IsDenied() {
+	if !result.Decision().IsDenied() {
 		t.Fatalf("result = %+v, want denied", result.Decision())
 	}
 	if result.HasGrant() {
 		t.Fatal("denied result has grant")
 	}
 	if grant, ok := result.Grant(); ok || grant != nil {
-		t.Fatalf("Grant() = (%#v,%t), want nil,false", grant, ok)
+		t.Fatalf("GrantDecision() = (%#v,%t), want nil,false", grant, ok)
 	}
 
 	after := b.Snapshot()
@@ -151,7 +151,7 @@ func TestBulkheadTryAdmitWeighted(t *testing.T) {
 	if !first.IsValid() {
 		t.Fatalf("first result is invalid: %+v", first.Decision())
 	}
-	if !first.IsAdmitted() {
+	if !first.Decision().IsAdmitted() {
 		t.Fatal("first result is not admitted")
 	}
 	lease, ok := first.Grant()
@@ -169,7 +169,7 @@ func TestBulkheadTryAdmitWeighted(t *testing.T) {
 	if !denied.IsValid() {
 		t.Fatalf("denied weighted result is invalid: %+v", denied.Decision())
 	}
-	if !denied.IsDenied() {
+	if !denied.Decision().IsDenied() {
 		t.Fatal("second TryAdmit was not denied")
 	}
 
@@ -178,7 +178,7 @@ func TestBulkheadTryAdmitWeighted(t *testing.T) {
 	if !third.IsValid() {
 		t.Fatalf("third result is invalid: %+v", third.Decision())
 	}
-	if !third.IsAdmitted() {
+	if !third.Decision().IsAdmitted() {
 		t.Fatal("third result is not admitted")
 	}
 	next, ok := third.Grant()
@@ -242,7 +242,7 @@ func TestBulkheadTryAdmitConcurrentDoesNotOverspend(t *testing.T) {
 			}
 
 			switch {
-			case result.IsAdmitted():
+			case result.Decision().IsAdmitted():
 				lease, ok := result.Grant()
 				if !ok {
 					errCh <- fmt.Errorf("admitted result has no grant: %+v", result.Decision())
@@ -254,13 +254,13 @@ func TestBulkheadTryAdmitConcurrentDoesNotOverspend(t *testing.T) {
 				}
 				leases <- lease
 
-			case result.IsDenied():
+			case result.Decision().IsDenied():
 				if result.HasGrant() {
 					errCh <- fmt.Errorf("denied result has grant: %+v", result.Decision())
 					return
 				}
 				if grant, ok := result.Grant(); ok || grant != nil {
-					errCh <- fmt.Errorf("denied Grant() = (%#v, %t), want (nil, false)", grant, ok)
+					errCh <- fmt.Errorf("denied GrantDecision() = (%#v, %t), want (nil, false)", grant, ok)
 					return
 				}
 

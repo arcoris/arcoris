@@ -49,6 +49,26 @@ func (e Effect) IsValid() bool {
 	}
 }
 
+// IsNone reports whether e records no side effect.
+func (e Effect) IsNone() bool {
+	return e == EffectNone
+}
+
+// IsCommitted reports whether e records a committed spend-only side effect.
+func (e Effect) IsCommitted() bool {
+	return e == EffectCommitted
+}
+
+// IsOwned reports whether e records a caller-owned grant side effect.
+func (e Effect) IsOwned() bool {
+	return e == EffectOwned
+}
+
+// IsQueued reports whether e records system-owned waiting state.
+func (e Effect) IsQueued() bool {
+	return e == EffectQueued
+}
+
 // HasSideEffect reports whether e records a committed, owned, or queued effect.
 func (e Effect) HasSideEffect() bool {
 	return e == EffectCommitted || e == EffectOwned || e == EffectQueued

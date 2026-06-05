@@ -54,3 +54,15 @@ func TestComponentKindString(t *testing.T) {
 		t.Fatalf("String = %q, want bulkhead", got)
 	}
 }
+
+func TestMustComponentKind(t *testing.T) {
+	t.Parallel()
+
+	if got := MustComponentKind("bulkhead"); got != "bulkhead" {
+		t.Fatalf("MustComponentKind() = %q, want bulkhead", got)
+	}
+
+	requirePanicValue(t, "admission.ComponentKind: invalid component kind", func() {
+		_ = MustComponentKind("bad-kind")
+	})
+}

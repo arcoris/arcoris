@@ -14,24 +14,18 @@
 
 package admission
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
-func TestMaybeAliasUsesAdmissionHelpers(t *testing.T) {
+func TestMarkerTypesAreZeroSize(t *testing.T) {
 	t.Parallel()
 
-	present := some("grant")
-	if !present.IsSome() {
-		t.Fatal("some should create a present value")
+	if got := reflect.TypeOf(NoGrant{}).Size(); got != 0 {
+		t.Fatalf("NoGrant size = %d, want 0", got)
 	}
-	if got, ok := present.Load(); !ok || got != "grant" {
-		t.Fatalf("Load = (%q, %v), want (grant, true)", got, ok)
-	}
-
-	absent := none[string]()
-	if !absent.IsNone() {
-		t.Fatal("none should create an absent value")
-	}
-	if got, ok := absent.Load(); ok || got != "" {
-		t.Fatalf("Load = (%q, %v), want zero value and false", got, ok)
+	if got := reflect.TypeOf(NoMetadata{}).Size(); got != 0 {
+		t.Fatalf("NoMetadata size = %d, want 0", got)
 	}
 }

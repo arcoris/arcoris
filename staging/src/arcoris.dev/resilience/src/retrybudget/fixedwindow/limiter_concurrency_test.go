@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package fixedwindow
 
 import (
@@ -103,15 +102,15 @@ func TestLimiterConcurrentTryAdmitDoesNotOverspend(t *testing.T) {
 				return
 			}
 			switch {
-			case result.IsAdmitted():
+			case result.Decision().IsAdmitted():
 				if result.HasGrant() {
 					errCh <- fmt.Errorf("admitted result has grant: %+v", result.Decision())
 					return
 				}
 				allowed.Add(1)
 
-			case result.IsDenied():
-				if result.HasSideEffect() {
+			case result.Decision().IsDenied():
+				if result.Decision().HasSideEffect() {
 					errCh <- fmt.Errorf("denied result has side effect: %+v", result.Decision())
 					return
 				}

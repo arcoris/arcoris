@@ -40,7 +40,7 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 				Remaining: time.Second,
 				Reason:    ReasonAllowed,
 			},
-			want:     admission.Admit(admission.ReasonAdmitted),
+			want:     admission.AdmitDecision(admission.ReasonAdmitted),
 			admitted: true,
 			metadata: Decision{
 				Allowed:   true,
@@ -54,7 +54,7 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 				Allowed: true,
 				Reason:  ReasonNoDeadline,
 			},
-			want:     admission.Admit(admission.ReasonAdmitted),
+			want:     admission.AdmitDecision(admission.ReasonAdmitted),
 			admitted: true,
 			metadata: Decision{
 				Allowed: true,
@@ -66,7 +66,7 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 			decision: Decision{
 				Reason: ReasonExpired,
 			},
-			want:   admission.Deny(admissionbuiltin.ReasonDeadlineExceeded),
+			want:   admission.DenyDecision(admissionbuiltin.ReasonDeadlineExceeded),
 			denied: true,
 			metadata: Decision{
 				Reason: ReasonExpired,
@@ -78,7 +78,7 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 				Remaining: time.Second,
 				Reason:    ReasonInsufficientBudget,
 			},
-			want:   admission.Deny(admissionbuiltin.ReasonDeadlineExceeded),
+			want:   admission.DenyDecision(admissionbuiltin.ReasonDeadlineExceeded),
 			denied: true,
 			metadata: Decision{
 				Remaining: time.Second,
@@ -90,7 +90,7 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 			decision: Decision{
 				Reason: ReasonContextDone,
 			},
-			want:   admission.Deny(admissionbuiltin.ReasonCanceled),
+			want:   admission.DenyDecision(admissionbuiltin.ReasonCanceled),
 			denied: true,
 			metadata: Decision{
 				Reason: ReasonContextDone,
@@ -102,7 +102,7 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 				Remaining: time.Second,
 				Reason:    ReasonContextDone,
 			},
-			want:   admission.Deny(admissionbuiltin.ReasonCanceled),
+			want:   admission.DenyDecision(admissionbuiltin.ReasonCanceled),
 			denied: true,
 			metadata: Decision{
 				Remaining: time.Second,
@@ -122,20 +122,20 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 			if got := result.Decision(); got != test.want {
 				t.Fatalf("decision = %+v, want %+v", got, test.want)
 			}
-			if got := result.IsAdmitted(); got != test.admitted {
+			if got := result.Decision().IsAdmitted(); got != test.admitted {
 				t.Fatalf("IsAdmitted = %v, want %v", got, test.admitted)
 			}
-			if got := result.IsDenied(); got != test.denied {
+			if got := result.Decision().IsDenied(); got != test.denied {
 				t.Fatalf("IsDenied = %v, want %v", got, test.denied)
 			}
-			if result.HasSideEffect() {
+			if result.Decision().HasSideEffect() {
 				t.Fatal("AdmissionResult has side effect, want none")
 			}
 			if result.HasGrant() {
 				t.Fatal("AdmissionResult has grant, want none")
 			}
 			if _, ok := result.Grant(); ok {
-				t.Fatal("Grant() ok=true, want false")
+				t.Fatal("GrantDecision() ok=true, want false")
 			}
 			if !result.HasMetadata() {
 				t.Fatal("AdmissionResult has no metadata")
@@ -212,7 +212,7 @@ func TestDecisionAdmissionResultInvalidDecisionStaysInvalid(t *testing.T) {
 				t.Fatal("invalid AdmissionResult has grant, want none")
 			}
 			if _, ok := result.Grant(); ok {
-				t.Fatal("invalid AdmissionResult Grant() ok=true, want false")
+				t.Fatal("invalid AdmissionResult GrantDecision() ok=true, want false")
 			}
 			if !result.HasMetadata() {
 				t.Fatal("invalid AdmissionResult should still preserve metadata")

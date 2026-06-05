@@ -23,50 +23,26 @@ type Result[G any, M any] struct {
 	// decision is the closed semantic core of the admission result.
 	decision Decision
 
-	// grant is present only when the decision effect allows or requires a typed
-	// domain grant. It stays private so Result invariants are preserved through
-	// constructors and validation helpers.
-	grant Maybe[G]
+	// grant is the caller-owned value returned by grant-bearing result shapes.
+	//
+	// The value is meaningful only when hasGrant is true. Constructors must leave
+	// grant as the zero value when no grant is present, so omitted pointer-like
+	// grants do not retain references supplied to unrelated constructor paths.
+	grant G
 
-	// metadata is optional typed read-model data associated with the decision.
-	// It is private for the same reason as grant: absence and presence are part
-	// of the Result shape, not raw struct mutation.
-	metadata Maybe[M]
-}
+	// hasGrant records grant presence separately from grant's zero value.
+	hasGrant bool
 
-// IsAdmitted reports whether r allows work to proceed immediately.
-//
-// The helper delegates to the embedded Decision and ignores grant/metadata
-// presence. Use IsValid when the full Result shape must be checked.
-func (r Result[G, M]) IsAdmitted() bool {
-	return r.decision.IsAdmitted()
-}
+	// metadata is domain-owned read-model or diagnostic data associated with the
+	// result.
+	//
+	// The value is meaningful only when hasMetadata is true. Constructors must
+	// leave metadata as the zero value when no metadata is present.
+	metadata M
 
-// IsDenied reports whether r rejects the current admission attempt.
-//
-// Denied results must not contain grants when valid, but this helper reports
-// only the outcome state.
-func (r Result[G, M]) IsDenied() bool {
-	return r.decision.IsDenied()
-}
-
-// IsQueued reports whether r accepted system-owned waiting work.
-//
-// A queued Result may or may not carry a queue handle depending on the domain
-// package. The outcome itself only says that waiting ownership moved to the
-// system.
-func (r Result[G, M]) IsQueued() bool {
-	return r.decision.IsQueued()
-}
-
-// IsDeferred reports whether r leaves retry ownership with the caller.
-func (r Result[G, M]) IsDeferred() bool {
-	return r.decision.IsDeferred()
-}
-
-// HasSideEffect reports whether r records committed, owned, or queued state.
-func (r Result[G, M]) HasSideEffect() bool {
-	return r.decision.HasSideEffect()
+	// hasMetadata records metadata presence separately from metadata's zero
+	// value.
+	hasMetadata bool
 }
 
 // HasGrant reports whether r contains a typed grant value.
@@ -74,7 +50,7 @@ func (r Result[G, M]) HasSideEffect() bool {
 // Presence alone does not prove the Result is valid. For example, a denied
 // result with a grant is invalid even though HasGrant reports true.
 func (r Result[G, M]) HasGrant() bool {
-	return r.grant.IsSome()
+	return r.hasGrant
 }
 
 // HasMetadata reports whether r contains typed metadata.
@@ -82,5 +58,5 @@ func (r Result[G, M]) HasGrant() bool {
 // Metadata is always optional from the core admission perspective. Domain
 // packages may impose stronger expectations on their own Result aliases.
 func (r Result[G, M]) HasMetadata() bool {
-	return r.metadata.IsSome()
+	return r.hasMetadata
 }

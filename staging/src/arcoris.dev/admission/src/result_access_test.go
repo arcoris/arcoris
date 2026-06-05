@@ -16,27 +16,44 @@ package admission
 
 import "testing"
 
-func TestResultAccessors(t *testing.T) {
+func TestResultAccessorsReturnDecisionGrantAndMetadata(t *testing.T) {
 	t.Parallel()
 
-	result := Granted(
-		ReasonAdmitted,
-		"lease",
-		"snapshot",
-	)
-
-	if got := result.Decision(); got != Grant(ReasonAdmitted) {
-		t.Fatalf("Decision = %+v, want granted admitted decision", got)
+	result := GrantedResult(ReasonAdmitted, "lease", "snapshot")
+	if got, want := result.Decision(), GrantDecision(ReasonAdmitted); got != want {
+		t.Fatalf("Decision() = %+v, want %+v", got, want)
 	}
 	if got, ok := result.Grant(); !ok || got != "lease" {
-		t.Fatalf("Grant = (%q, %v), want (lease, true)", got, ok)
+		t.Fatalf("Grant() = (%q, %t), want lease,true", got, ok)
 	}
 	if got, ok := result.Metadata(); !ok || got != "snapshot" {
-		t.Fatalf("Metadata = (%q, %v), want (snapshot, true)", got, ok)
+		t.Fatalf("Metadata() = (%q, %t), want snapshot,true", got, ok)
 	}
+}
 
-	denied := DeniedFor[string](Reason("capacity_exhausted"), "snapshot")
-	if got, ok := denied.Grant(); ok || got != "" {
-		t.Fatalf("denied Grant = (%q, %v), want zero value and false", got, ok)
+func TestResultAbsentGrantReturnsZeroFalse(t *testing.T) {
+	t.Parallel()
+
+	result := DeniedForResult[*struct{}](ReasonDenied, "snapshot")
+	if got, ok := result.Grant(); ok || got != nil {
+		t.Fatalf("Grant() = (%v, %t), want nil,false", got, ok)
+	}
+}
+
+func TestResultAbsentMetadataReturnsZeroFalse(t *testing.T) {
+	t.Parallel()
+
+	result := GrantedNoMetadataResult(ReasonAdmitted, "lease")
+	if got, ok := result.Metadata(); ok || got != (NoMetadata{}) {
+		t.Fatalf("Metadata() = (%+v, %t), want zero,false", got, ok)
+	}
+}
+
+func TestZeroResultIsInvalid(t *testing.T) {
+	t.Parallel()
+
+	var result Result[string, string]
+	if result.IsValid() {
+		t.Fatal("zero-value Result is valid, want invalid")
 	}
 }

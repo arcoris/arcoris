@@ -22,12 +22,16 @@ package admission
 // invariant coverage.
 func resultWith[G any, M any](
 	decision Decision,
-	grant Maybe[G],
-	metadata Maybe[M],
+	grant G,
+	hasGrant bool,
+	metadata M,
+	hasMetadata bool,
 ) Result[G, M] {
 	return Result[G, M]{
-		decision: decision,
-		grant:    grant,
-		metadata: metadata,
+		decision:    decision,
+		grant:       grant,
+		hasGrant:    hasGrant,
+		metadata:    metadata,
+		hasMetadata: hasMetadata,
 	}
 }

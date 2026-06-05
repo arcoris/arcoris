@@ -26,41 +26,51 @@ func TestResultIsValidRejectsInvalidGrantShape(t *testing.T) {
 		{
 			name: "owned without grant",
 			result: resultWith[string, NoMetadata](
-				Grant(ReasonAdmitted),
-				noneString(),
-				noneMetadata(),
+				GrantDecision(ReasonAdmitted),
+				"",
+				false,
+				NoMetadata{},
+				false,
 			),
 		},
 		{
 			name: "denied with grant",
 			result: resultWith(
-				Deny(Reason("capacity_exhausted")),
-				someString("lease"),
-				noneMetadata(),
+				DenyDecision(Reason("capacity_exhausted")),
+				"lease",
+				true,
+				NoMetadata{},
+				false,
 			),
 		},
 		{
 			name: "committed with grant",
 			result: resultWith(
-				Commit(ReasonAdmitted),
-				someString("token"),
-				noneMetadata(),
+				CommitDecision(ReasonAdmitted),
+				"token",
+				true,
+				NoMetadata{},
+				false,
 			),
 		},
 		{
 			name: "deferred with grant",
 			result: resultWith(
-				Defer(ReasonDeferred),
-				someString("retry-token"),
-				noneMetadata(),
+				DeferDecision(ReasonDeferred),
+				"retry-token",
+				true,
+				NoMetadata{},
+				false,
 			),
 		},
 		{
 			name: "invalid decision",
 			result: resultWith[string, NoMetadata](
 				Decision{},
-				noneString(),
-				noneMetadata(),
+				"",
+				false,
+				NoMetadata{},
+				false,
 			),
 		},
 	}
@@ -76,18 +86,20 @@ func TestResultIsValidRejectsInvalidGrantShape(t *testing.T) {
 	}
 }
 
-func TestResultStateHelpersDoNotReplaceValidation(t *testing.T) {
+func TestResultDecisionDoesNotReplaceValidation(t *testing.T) {
 	t.Parallel()
 
 	result := resultWith[string, NoMetadata](
-		Grant(ReasonAdmitted),
-		noneString(),
-		noneMetadata(),
+		GrantDecision(ReasonAdmitted),
+		"",
+		false,
+		NoMetadata{},
+		false,
 	)
-	if !result.IsAdmitted() {
+	if !result.Decision().IsAdmitted() {
 		t.Fatal("invalid owned result should still report admitted outcome")
 	}
-	if !result.HasSideEffect() {
+	if !result.Decision().HasSideEffect() {
 		t.Fatal("invalid owned result should still report side-effect state")
 	}
 	if result.HasGrant() {

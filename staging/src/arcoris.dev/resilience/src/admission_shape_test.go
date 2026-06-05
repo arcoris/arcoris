@@ -31,10 +31,10 @@ func TestBulkheadAdmissionResultShape(t *testing.T) {
 
 	b := bulkhead.New(1)
 	success := b.TryAdmit(bulkhead.Request{Amount: 1})
-	if !success.IsValid() || !success.IsAdmitted() {
+	if !success.IsValid() || !success.Decision().IsAdmitted() {
 		t.Fatalf("bulkhead success = %+v, want valid admitted", success.Decision())
 	}
-	if got, want := success.Decision(), admission.Grant(admission.ReasonAdmitted); got != want {
+	if got, want := success.Decision(), admission.GrantDecision(admission.ReasonAdmitted); got != want {
 		t.Fatalf("success decision = %+v, want %+v", got, want)
 	}
 	if !success.HasGrant() || !success.HasMetadata() {
@@ -46,17 +46,17 @@ func TestBulkheadAdmissionResultShape(t *testing.T) {
 	}
 
 	denied := b.TryAdmit(bulkhead.Request{Amount: 1})
-	if !denied.IsValid() || !denied.IsDenied() {
+	if !denied.IsValid() || !denied.Decision().IsDenied() {
 		t.Fatalf("bulkhead denial = %+v, want valid denied", denied.Decision())
 	}
-	if got, want := denied.Decision(), admission.Deny(admissionbuiltin.ReasonCapacityExhausted); got != want {
+	if got, want := denied.Decision(), admission.DenyDecision(admissionbuiltin.ReasonCapacityExhausted); got != want {
 		t.Fatalf("denied decision = %+v, want %+v", got, want)
 	}
 	if denied.HasGrant() || !denied.HasMetadata() {
 		t.Fatalf("denied grant=%t metadata=%t, want false,true", denied.HasGrant(), denied.HasMetadata())
 	}
 	if grant, ok := denied.Grant(); ok || grant != nil {
-		t.Fatalf("denied Grant() = (%#v,%t), want nil,false", grant, ok)
+		t.Fatalf("denied GrantDecision() = (%#v,%t), want nil,false", grant, ok)
 	}
 
 	lease.Release()
@@ -67,10 +67,10 @@ func TestRetryBudgetAdmissionResultShape(t *testing.T) {
 
 	allowedLimiter := newRetryBudget(t, 1)
 	success := allowedLimiter.TryAdmit(retrybudget.Request{})
-	if !success.IsValid() || !success.IsAdmitted() {
+	if !success.IsValid() || !success.Decision().IsAdmitted() {
 		t.Fatalf("retrybudget success = %+v, want valid admitted", success.Decision())
 	}
-	if got, want := success.Decision(), admission.Commit(admission.ReasonAdmitted); got != want {
+	if got, want := success.Decision(), admission.CommitDecision(admission.ReasonAdmitted); got != want {
 		t.Fatalf("success decision = %+v, want %+v", got, want)
 	}
 	if success.HasGrant() || !success.HasMetadata() {
@@ -82,10 +82,10 @@ func TestRetryBudgetAdmissionResultShape(t *testing.T) {
 
 	deniedLimiter := newRetryBudget(t, 0)
 	denied := deniedLimiter.TryAdmit(retrybudget.Request{})
-	if !denied.IsValid() || !denied.IsDenied() {
+	if !denied.IsValid() || !denied.Decision().IsDenied() {
 		t.Fatalf("retrybudget denial = %+v, want valid denied", denied.Decision())
 	}
-	if got, want := denied.Decision(), admission.Deny(admissionbuiltin.ReasonBudgetExhausted); got != want {
+	if got, want := denied.Decision(), admission.DenyDecision(admissionbuiltin.ReasonBudgetExhausted); got != want {
 		t.Fatalf("denied decision = %+v, want %+v", got, want)
 	}
 	if denied.HasGrant() || !denied.HasMetadata() {
@@ -104,10 +104,10 @@ func TestDeadlineAdmissionResultShape(t *testing.T) {
 		Now:     compositionNow,
 		Min:     time.Second,
 	})
-	if !allowed.IsValid() || !allowed.IsAdmitted() {
+	if !allowed.IsValid() || !allowed.Decision().IsAdmitted() {
 		t.Fatalf("deadline allowed = %+v, want valid admitted", allowed.Decision())
 	}
-	if got, want := allowed.Decision(), admission.Admit(admission.ReasonAdmitted); got != want {
+	if got, want := allowed.Decision(), admission.AdmitDecision(admission.ReasonAdmitted); got != want {
 		t.Fatalf("allowed decision = %+v, want %+v", got, want)
 	}
 	if allowed.HasGrant() || !allowed.HasMetadata() {
@@ -119,10 +119,10 @@ func TestDeadlineAdmissionResultShape(t *testing.T) {
 		Now:     compositionNow,
 		Min:     time.Second,
 	})
-	if !denied.IsValid() || !denied.IsDenied() {
+	if !denied.IsValid() || !denied.Decision().IsDenied() {
 		t.Fatalf("deadline denied = %+v, want valid denied", denied.Decision())
 	}
-	if got, want := denied.Decision(), admission.Deny(admissionbuiltin.ReasonDeadlineExceeded); got != want {
+	if got, want := denied.Decision(), admission.DenyDecision(admissionbuiltin.ReasonDeadlineExceeded); got != want {
 		t.Fatalf("denied decision = %+v, want %+v", got, want)
 	}
 	if denied.HasGrant() || !denied.HasMetadata() {

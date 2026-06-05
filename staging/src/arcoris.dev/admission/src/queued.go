@@ -14,13 +14,12 @@
 
 package admission
 
-// Queue returns a queued decision with system-owned waiting semantics.
+// QueueDecision returns a queued decision with system-owned waiting semantics.
 //
-// Queue means the component accepted ownership of waiting work. The returned
-// Result may include a queue handle, ticket, or other domain-specific reference
-// if the component exposes one. The returned Decision is the semantic base for
-// Queued and QueuedNoGrant results.
-func Queue(reason Reason) Decision {
+// Queued means the component accepted ownership of waiting work. A queued result
+// may optionally include a queue handle, ticket, cancellation token, or other
+// domain-specific grant.
+func QueueDecision(reason Reason) Decision {
 	return Decision{
 		Outcome: OutcomeQueued,
 		Reason:  reason,
@@ -28,34 +27,13 @@ func Queue(reason Reason) Decision {
 	}
 }
 
-// Queued returns a queued result with a queue handle and metadata.
-//
-// Queued means the system accepted waiting ownership. The grant value should be
-// a domain-owned handle, ticket, or cancellation/reconciliation value when the
-// queue exposes one.
-func Queued[G any, M any](
-	reason Reason,
-	handle G,
-	metadata M,
-) Result[G, M] {
-	return resultWith(
-		Queue(reason),
-		some(handle),
-		some(metadata),
-	)
+// QueuedResult returns a queued result with a queue grant and metadata.
+func QueuedResult[G any, M any](reason Reason, grant G, metadata M) Result[G, M] {
+	return resultWith(QueueDecision(reason), grant, true, metadata, true)
 }
 
-// QueuedNoGrant returns a queued result without a queue handle.
-//
-// Some queues accept waiting work without exposing a caller-owned handle. The
-// effect still records queued ownership, but the Result carries no grant.
-func QueuedNoGrant[M any](
-	reason Reason,
-	metadata M,
-) Result[NoGrant, M] {
-	return resultWith(
-		Queue(reason),
-		none[NoGrant](),
-		some(metadata),
-	)
+// QueuedNoGrantResult returns a queued result with metadata and no queue grant.
+func QueuedNoGrantResult[M any](reason Reason, metadata M) Result[NoGrant, M] {
+	var grant NoGrant
+	return resultWith(QueueDecision(reason), grant, false, metadata, true)
 }

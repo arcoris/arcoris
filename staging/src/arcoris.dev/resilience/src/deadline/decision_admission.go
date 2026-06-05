@@ -45,19 +45,19 @@ func (d Decision) AdmissionResult() admission.Result[
 ] {
 	if !d.IsValid() {
 		if d.IsAllowed() {
-			return admission.Accepted(
+			return admission.AcceptedResult(
 				invalidAdmissionReason,
 				d,
 			)
 		}
-		return admission.Denied(
+		return admission.DeniedResult(
 			invalidAdmissionReason,
 			d,
 		)
 	}
 
 	if d.IsAllowed() {
-		return admission.Accepted(
+		return admission.AcceptedResult(
 			admission.ReasonAdmitted,
 			d,
 		)
@@ -65,17 +65,17 @@ func (d Decision) AdmissionResult() admission.Result[
 
 	switch d.Reason {
 	case ReasonContextDone:
-		return admission.Denied(
+		return admission.DeniedResult(
 			admissionbuiltin.ReasonCanceled,
 			d,
 		)
 	case ReasonExpired, ReasonInsufficientBudget:
-		return admission.Denied(
+		return admission.DeniedResult(
 			admissionbuiltin.ReasonDeadlineExceeded,
 			d,
 		)
 	default:
-		return admission.Denied(
+		return admission.DeniedResult(
 			invalidAdmissionReason,
 			d,
 		)

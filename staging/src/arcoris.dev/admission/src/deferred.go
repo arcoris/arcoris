@@ -14,12 +14,11 @@
 
 package admission
 
-// Defer returns a deferred decision with no side effect.
+// DeferDecision returns a deferred decision with no side effect.
 //
-// Deferred work is not accepted now, but the caller retains responsibility for
-// deciding whether and when to try again. The returned Decision is the semantic
-// base for Deferred, DeferredFor, and DeferredNoMetadata results.
-func Defer(reason Reason) Decision {
+// Deferred work is not admitted now, but the caller retains responsibility for
+// deciding whether and when to try again.
+func DeferDecision(reason Reason) Decision {
 	return Decision{
 		Outcome: OutcomeDeferred,
 		Reason:  reason,
@@ -27,39 +26,22 @@ func Defer(reason Reason) Decision {
 	}
 }
 
-// Deferred returns a deferred result with metadata.
-//
-// Deferred means the component did not accept the work now and did not create
-// system-owned waiting. The caller keeps responsibility for any later retry.
-func Deferred[M any](
-	reason Reason,
-	metadata M,
-) Result[NoGrant, M] {
-	return resultWith(
-		Defer(reason),
-		none[NoGrant](),
-		some(metadata),
-	)
+// DeferredResult returns a deferred result with metadata.
+func DeferredResult[M any](reason Reason, metadata M) Result[NoGrant, M] {
+	var grant NoGrant
+	return resultWith(DeferDecision(reason), grant, false, metadata, true)
 }
 
-// DeferredFor returns a deferred result typed for callers whose success path has
-// a grant.
-func DeferredFor[G any, M any](
-	reason Reason,
-	metadata M,
-) Result[G, M] {
-	return resultWith(
-		Defer(reason),
-		none[G](),
-		some(metadata),
-	)
+// DeferredForResult returns a deferred result typed for callers whose success
+// path carries a grant.
+func DeferredForResult[G any, M any](reason Reason, metadata M) Result[G, M] {
+	var grant G
+	return resultWith(DeferDecision(reason), grant, false, metadata, true)
 }
 
-// DeferredNoMetadata returns a deferred result without metadata.
-func DeferredNoMetadata(reason Reason) Result[NoGrant, NoMetadata] {
-	return resultWith(
-		Defer(reason),
-		none[NoGrant](),
-		none[NoMetadata](),
-	)
+// DeferredNoMetadataResult returns a deferred result without metadata.
+func DeferredNoMetadataResult(reason Reason) Result[NoGrant, NoMetadata] {
+	var grant NoGrant
+	var metadata NoMetadata
+	return resultWith(DeferDecision(reason), grant, false, metadata, false)
 }

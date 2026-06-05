@@ -77,6 +77,18 @@ func TestEffectGrantSemantics(t *testing.T) {
 			if got := tt.effect.HasSideEffect(); got != tt.sideEffect {
 				t.Fatalf("HasSideEffect = %v, want %v", got, tt.sideEffect)
 			}
+			if got := tt.effect.IsNone(); got != (tt.effect == EffectNone) {
+				t.Fatalf("IsNone = %v, want %v", got, tt.effect == EffectNone)
+			}
+			if got := tt.effect.IsCommitted(); got != (tt.effect == EffectCommitted) {
+				t.Fatalf("IsCommitted = %v, want %v", got, tt.effect == EffectCommitted)
+			}
+			if got := tt.effect.IsOwned(); got != (tt.effect == EffectOwned) {
+				t.Fatalf("IsOwned = %v, want %v", got, tt.effect == EffectOwned)
+			}
+			if got := tt.effect.IsQueued(); got != (tt.effect == EffectQueued) {
+				t.Fatalf("IsQueued = %v, want %v", got, tt.effect == EffectQueued)
+			}
 			if got := tt.effect.RequiresGrant(); got != tt.requiresGrant {
 				t.Fatalf("RequiresGrant = %v, want %v", got, tt.requiresGrant)
 			}

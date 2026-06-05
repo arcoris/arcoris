@@ -34,25 +34,25 @@ func TestDecisionAdmissionResultAllowedMapsToCommitted(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("AdmissionResult is invalid: %+v", result.Decision())
 	}
-	if !result.IsAdmitted() {
+	if !result.Decision().IsAdmitted() {
 		t.Fatal("AdmissionResult is not admitted")
 	}
-	if result.IsDenied() {
+	if result.Decision().IsDenied() {
 		t.Fatal("AdmissionResult is denied, want admitted")
 	}
-	if !result.HasSideEffect() {
+	if !result.Decision().HasSideEffect() {
 		t.Fatal("AdmissionResult has no side effect")
 	}
 	if result.HasGrant() {
 		t.Fatal("AdmissionResult has grant, want none")
 	}
 	if _, ok := result.Grant(); ok {
-		t.Fatal("AdmissionResult Grant() ok=true, want false")
+		t.Fatal("AdmissionResult GrantDecision() ok=true, want false")
 	}
 	if !result.HasMetadata() {
 		t.Fatal("AdmissionResult has no metadata")
 	}
-	if got, want := result.Decision(), admission.Commit(admission.ReasonAdmitted); got != want {
+	if got, want := result.Decision(), admission.CommitDecision(admission.ReasonAdmitted); got != want {
 		t.Fatalf("decision = %+v, want %+v", got, want)
 	}
 	if metadata, ok := result.Metadata(); !ok || metadata != snap {
@@ -75,25 +75,25 @@ func TestDecisionAdmissionResultDeniedMapsToBudgetExhausted(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("AdmissionResult is invalid: %+v", result.Decision())
 	}
-	if !result.IsDenied() {
+	if !result.Decision().IsDenied() {
 		t.Fatal("AdmissionResult is not denied")
 	}
-	if result.IsAdmitted() {
+	if result.Decision().IsAdmitted() {
 		t.Fatal("AdmissionResult is admitted, want denied")
 	}
-	if result.HasSideEffect() {
+	if result.Decision().HasSideEffect() {
 		t.Fatal("AdmissionResult has side effect")
 	}
 	if result.HasGrant() {
 		t.Fatal("AdmissionResult has grant, want none")
 	}
 	if _, ok := result.Grant(); ok {
-		t.Fatal("AdmissionResult Grant() ok=true, want false")
+		t.Fatal("AdmissionResult GrantDecision() ok=true, want false")
 	}
 	if !result.HasMetadata() {
 		t.Fatal("AdmissionResult has no metadata")
 	}
-	if got, want := result.Decision(), admission.Deny(admissionbuiltin.ReasonBudgetExhausted); got != want {
+	if got, want := result.Decision(), admission.DenyDecision(admissionbuiltin.ReasonBudgetExhausted); got != want {
 		t.Fatalf("decision = %+v, want %+v", got, want)
 	}
 	if metadata, ok := result.Metadata(); !ok || metadata != snap {

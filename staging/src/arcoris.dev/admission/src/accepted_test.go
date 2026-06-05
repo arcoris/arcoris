@@ -19,61 +19,51 @@ import "testing"
 func TestAdmitDecision(t *testing.T) {
 	t.Parallel()
 
-	decision := Admit(ReasonAdmitted)
-	if !decision.IsValid() {
-		t.Fatalf("decision should be valid: %+v", decision)
-	}
-	if decision.Outcome != OutcomeAdmitted {
-		t.Fatalf("outcome = %v, want %v", decision.Outcome, OutcomeAdmitted)
-	}
-	if decision.Effect != EffectNone {
-		t.Fatalf("effect = %v, want %v", decision.Effect, EffectNone)
-	}
+	requireDecision(t, AdmitDecision(ReasonAdmitted), Decision{
+		Outcome: OutcomeAdmitted,
+		Reason:  ReasonAdmitted,
+		Effect:  EffectNone,
+	})
 }
 
 func TestAdmittedDecision(t *testing.T) {
 	t.Parallel()
 
-	if got := Admitted(); got != Admit(ReasonAdmitted) {
-		t.Fatalf("Admitted = %+v, want default admitted decision", got)
-	}
+	requireDecision(t, AdmittedDecision(), Decision{
+		Outcome: OutcomeAdmitted,
+		Reason:  ReasonAdmitted,
+		Effect:  EffectNone,
+	})
 }
 
 func TestAcceptedResult(t *testing.T) {
 	t.Parallel()
 
-	result := Accepted(ReasonAdmitted, "snapshot")
-	if !result.IsValid() {
-		t.Fatalf("accepted result should be valid: %+v", result.Decision())
-	}
-	if got := result.Decision(); got != Admit(ReasonAdmitted) {
-		t.Fatalf("decision = %+v, want admitted no-effect decision", got)
-	}
-	if !result.IsAdmitted() {
-		t.Fatal("accepted result should be admitted")
-	}
-	if result.HasGrant() {
-		t.Fatal("accepted result should not carry a grant")
-	}
-	if !result.HasMetadata() {
-		t.Fatal("accepted result should carry metadata")
-	}
-	if metadata, ok := result.Metadata(); !ok || metadata != "snapshot" {
-		t.Fatalf("metadata = (%q, %v), want (snapshot, true)", metadata, ok)
+	result := AcceptedResult(ReasonAdmitted, "metadata")
+	requireResultShape(t, result, AdmitDecision(ReasonAdmitted), false, true)
+	if metadata, ok := result.Metadata(); !ok || metadata != "metadata" {
+		t.Fatalf("Metadata() = (%q, %t), want metadata,true", metadata, ok)
 	}
 }
 
 func TestAcceptedNoMetadataResult(t *testing.T) {
 	t.Parallel()
 
-	result := AcceptedNoMetadata(ReasonAdmitted)
-	if !result.IsValid() {
-		t.Fatalf("accepted result should be valid: %+v", result.Decision())
+	result := AcceptedNoMetadataResult(ReasonAdmitted)
+	requireResultShape(t, result, AdmitDecision(ReasonAdmitted), false, false)
+}
+
+func TestAcceptedConstructorsWithInvalidReasonReturnInvalidValues(t *testing.T) {
+	t.Parallel()
+
+	invalid := Reason("bad-reason")
+	if AdmitDecision(invalid).IsValid() {
+		t.Fatal("AdmitDecision with invalid reason is valid")
 	}
-	if result.HasGrant() {
-		t.Fatal("accepted no-metadata result should not carry a grant")
+	if AcceptedResult(invalid, "metadata").IsValid() {
+		t.Fatal("AcceptedResult with invalid reason is valid")
 	}
-	if result.HasMetadata() {
-		t.Fatal("accepted no-metadata result should not carry metadata")
+	if AcceptedNoMetadataResult(invalid).IsValid() {
+		t.Fatal("AcceptedNoMetadataResult with invalid reason is valid")
 	}
 }

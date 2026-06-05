@@ -58,3 +58,15 @@ func (r Reason) IsValid() bool {
 func (r Reason) String() string {
 	return string(r)
 }
+
+// MustReason returns value as a Reason or panics when value is invalid.
+//
+// The helper is intended for package-level constants and tests where an invalid
+// literal is a programming error.
+func MustReason(value string) Reason {
+	reason := Reason(value)
+	if !reason.IsValid() {
+		panic("admission.Reason: invalid reason")
+	}
+	return reason
+}

@@ -16,22 +16,28 @@ package admission
 
 import "testing"
 
-func TestResultWithPreservesDecisionGrantAndMetadata(t *testing.T) {
+func TestResultWithBuildsExactShape(t *testing.T) {
 	t.Parallel()
 
-	result := resultWith(
-		Grant(ReasonAdmitted),
-		someString("lease"),
-		someString("snapshot"),
-	)
+	decision := GrantDecision(ReasonAdmitted)
+	result := resultWith(decision, "grant", true, "metadata", true)
 
-	if result.Decision() != Grant(ReasonAdmitted) {
-		t.Fatalf("decision = %+v, want granted admitted decision", result.Decision())
+	if got := result.Decision(); got != decision {
+		t.Fatalf("Decision() = %+v, want %+v", got, decision)
 	}
-	if grant, ok := result.Grant(); !ok || grant != "lease" {
-		t.Fatalf("grant = (%q, %v), want (lease, true)", grant, ok)
+	if got, ok := result.Grant(); !ok || got != "grant" {
+		t.Fatalf("Grant() = (%q, %t), want grant,true", got, ok)
 	}
-	if metadata, ok := result.Metadata(); !ok || metadata != "snapshot" {
-		t.Fatalf("metadata = (%q, %v), want (snapshot, true)", metadata, ok)
+	if got, ok := result.Metadata(); !ok || got != "metadata" {
+		t.Fatalf("Metadata() = (%q, %t), want metadata,true", got, ok)
+	}
+}
+
+func TestResultWithCanBuildIntentionallyInvalidShapes(t *testing.T) {
+	t.Parallel()
+
+	result := resultWith(GrantDecision(ReasonAdmitted), "", false, NoMetadata{}, false)
+	if result.IsValid() {
+		t.Fatal("owned result without grant is valid")
 	}
 }

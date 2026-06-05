@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"arcoris.dev/admission"
-	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
 )
 
 type lease struct {
@@ -27,7 +26,7 @@ type lease struct {
 }
 
 func ExampleResult() {
-	result := admission.Granted(
+	result := admission.GrantedResult(
 		admission.ReasonAdmitted,
 		&lease{id: "l1"},
 		"snapshot-1",
@@ -35,7 +34,8 @@ func ExampleResult() {
 	grant, hasGrant := result.Grant()
 	metadata, hasMetadata := result.Metadata()
 
-	fmt.Println(result.IsAdmitted(), result.HasSideEffect())
+	decision := result.Decision()
+	fmt.Println(decision.IsAdmitted(), decision.HasOwnedEffect())
 	fmt.Println(hasGrant, grant.id)
 	fmt.Println(hasMetadata, metadata)
 
@@ -48,23 +48,14 @@ func ExampleResult() {
 func ExampleAdmitterFunc() {
 	admitter := admission.AdmitterFunc[admission.Unit, admission.NoGrant, admission.NoMetadata](
 		func(admission.Unit) admission.Result[admission.NoGrant, admission.NoMetadata] {
-			return admission.DeniedNoMetadata(admission.Reason("capacity_exhausted"))
+			return admission.DeniedNoMetadataResult(admission.Reason("capacity_exhausted"))
 		},
 	)
 
 	result := admitter.TryAdmit(admission.Unit{})
-	fmt.Println(result.IsDenied(), result.Decision().Reason)
+	decision := result.Decision()
+	fmt.Println(decision.IsDenied(), decision.Reason)
 
 	// Output:
 	// true capacity_exhausted
-}
-
-func Example_builtinCatalog() {
-	catalog := admissionbuiltin.NewCatalog()
-	component, ok := catalog.Component("resilience.bulkhead")
-
-	fmt.Println(ok, component.Kind)
-
-	// Output:
-	// true bulkhead
 }

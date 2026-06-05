@@ -28,6 +28,11 @@
 // metadata catalogs. Domain packages compose Result with their own request,
 // grant, and metadata types.
 //
+// Constructors are unified by return category without using generated Cartesian
+// names. Decision constructors use the Decision suffix, such as AdmitDecision,
+// CommitDecision, and DenyDecision. Result constructors use the Result suffix,
+// such as AcceptedResult, GrantedResult, DeniedForResult, and QueuedNoGrantResult.
+//
 // # Open-world model
 //
 // Outcome and Effect are closed because Result validity depends on their exact
@@ -43,12 +48,11 @@
 // tracing attributes, health state, config ownership, and dynamic discovery
 // belong to higher-level owners.
 //
-// Optional admission metadata catalogs live in package
-// arcoris.dev/admissioncatalog. The standard ARCORIS catalog lives in package
-// arcoris.dev/admissioncatalog/builtin. Those packages describe metadata for
-// documentation, tests, configuration validation, and future chain validation
-// foundations. They do not change Result validity, and this core package does
-// not import them.
+// Admission metadata catalogs are separate packages layered above this core
+// algebra. Catalogs may depend on admission values to describe known components,
+// outcomes, effects, and reasons for documentation or configuration validation,
+// but catalogs do not change Result validity and this package does not depend on
+// them.
 //
 // # Side effects
 //

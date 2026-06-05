@@ -25,7 +25,8 @@
 // an observed capacity snapshot. TryAdmit accepts a typed Request and returns an
 // admission.Result so generic admission-compatible code can consume the same
 // non-blocking operation. TryAdmit maps success to admission.Granted with
-// admission.ReasonAdmitted, and capacity exhaustion to admission.DeniedFor with
+// admission.ReasonAdmitted, and capacity exhaustion to
+// admission.DeniedFor with
 // admissioncatalog/builtin.ReasonCapacityExhausted. Successful admission still
 // transfers Lease ownership to the caller; the caller must release the Lease.
 //

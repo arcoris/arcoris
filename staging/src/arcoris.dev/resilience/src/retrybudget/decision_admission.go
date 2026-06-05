@@ -44,25 +44,25 @@ func (d Decision) AdmissionResult() admission.Result[
 ] {
 	if !d.IsValid() {
 		if d.Allowed {
-			return admission.Committed(
+			return admission.CommittedResult(
 				invalidAdmissionReason,
 				d.Snapshot,
 			)
 		}
-		return admission.Denied(
+		return admission.DeniedResult(
 			invalidAdmissionReason,
 			d.Snapshot,
 		)
 	}
 
 	if d.IsAllowed() {
-		return admission.Committed(
+		return admission.CommittedResult(
 			admission.ReasonAdmitted,
 			d.Snapshot,
 		)
 	}
 
-	return admission.Denied(
+	return admission.DeniedResult(
 		admissionbuiltin.ReasonBudgetExhausted,
 		d.Snapshot,
 	)

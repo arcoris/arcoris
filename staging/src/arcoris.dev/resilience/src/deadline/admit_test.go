@@ -53,7 +53,7 @@ func TestTryAdmit(t *testing.T) {
 				Now:     now,
 				Min:     time.Second,
 			},
-			want:     admission.Admit(admission.ReasonAdmitted),
+			want:     admission.AdmitDecision(admission.ReasonAdmitted),
 			admitted: true,
 			metadata: Decision{
 				Allowed: true,
@@ -67,7 +67,7 @@ func TestTryAdmit(t *testing.T) {
 				Now:     now,
 				Min:     time.Second,
 			},
-			want:     admission.Admit(admission.ReasonAdmitted),
+			want:     admission.AdmitDecision(admission.ReasonAdmitted),
 			admitted: true,
 			metadata: Decision{
 				Allowed:   true,
@@ -81,7 +81,7 @@ func TestTryAdmit(t *testing.T) {
 				Context: contextWithDeadline(t, now),
 				Now:     now,
 			},
-			want:   admission.Deny(admissionbuiltin.ReasonDeadlineExceeded),
+			want:   admission.DenyDecision(admissionbuiltin.ReasonDeadlineExceeded),
 			denied: true,
 			metadata: Decision{
 				Reason: ReasonExpired,
@@ -94,7 +94,7 @@ func TestTryAdmit(t *testing.T) {
 				Now:     now,
 				Min:     2 * time.Second,
 			},
-			want:   admission.Deny(admissionbuiltin.ReasonDeadlineExceeded),
+			want:   admission.DenyDecision(admissionbuiltin.ReasonDeadlineExceeded),
 			denied: true,
 			metadata: Decision{
 				Remaining: time.Second,
@@ -107,7 +107,7 @@ func TestTryAdmit(t *testing.T) {
 				Context: canceled,
 				Now:     now,
 			},
-			want:   admission.Deny(admissionbuiltin.ReasonCanceled),
+			want:   admission.DenyDecision(admissionbuiltin.ReasonCanceled),
 			denied: true,
 			metadata: Decision{
 				Reason: ReasonContextDone,
@@ -120,7 +120,7 @@ func TestTryAdmit(t *testing.T) {
 				Now:     now,
 				Min:     time.Second,
 			},
-			want:   admission.Deny(admissionbuiltin.ReasonCanceled),
+			want:   admission.DenyDecision(admissionbuiltin.ReasonCanceled),
 			denied: true,
 			metadata: Decision{
 				Remaining: 10 * time.Second,
@@ -140,20 +140,20 @@ func TestTryAdmit(t *testing.T) {
 			if got := result.Decision(); got != test.want {
 				t.Fatalf("decision = %+v, want %+v", got, test.want)
 			}
-			if got := result.IsAdmitted(); got != test.admitted {
+			if got := result.Decision().IsAdmitted(); got != test.admitted {
 				t.Fatalf("IsAdmitted = %v, want %v", got, test.admitted)
 			}
-			if got := result.IsDenied(); got != test.denied {
+			if got := result.Decision().IsDenied(); got != test.denied {
 				t.Fatalf("IsDenied = %v, want %v", got, test.denied)
 			}
-			if result.HasSideEffect() {
+			if result.Decision().HasSideEffect() {
 				t.Fatal("TryAdmit result has side effect, want none")
 			}
 			if result.HasGrant() {
 				t.Fatal("TryAdmit result has grant, want none")
 			}
 			if _, ok := result.Grant(); ok {
-				t.Fatal("Grant() ok=true, want false")
+				t.Fatal("GrantDecision() ok=true, want false")
 			}
 			if !result.HasMetadata() {
 				t.Fatal("TryAdmit result has no metadata")

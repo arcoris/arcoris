@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package bulkhead_test
 
 import (
@@ -44,7 +43,7 @@ func ExampleBulkhead_TryAdmit() {
 	b := bulkhead.New(1)
 
 	result := b.TryAdmit(bulkhead.Request{Amount: 1})
-	fmt.Println(result.IsAdmitted(), result.HasGrant())
+	fmt.Println(result.Decision().IsAdmitted(), result.HasGrant())
 
 	if lease, ok := result.Grant(); ok {
 		lease.Release()

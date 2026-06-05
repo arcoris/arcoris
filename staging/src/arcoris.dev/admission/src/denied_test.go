@@ -19,65 +19,58 @@ import "testing"
 func TestDenyDecision(t *testing.T) {
 	t.Parallel()
 
-	decision := Deny(Reason("capacity_exhausted"))
-	if !decision.IsValid() {
-		t.Fatalf("decision should be valid: %+v", decision)
-	}
-	if !decision.IsDenied() {
-		t.Fatal("denied decision should reject the attempt")
-	}
-	if decision.HasSideEffect() {
-		t.Fatal("denied decision should not record side effects")
-	}
+	requireDecision(t, DenyDecision(ReasonDenied), Decision{
+		Outcome: OutcomeDenied,
+		Reason:  ReasonDenied,
+		Effect:  EffectNone,
+	})
 }
 
 func TestDeniedResult(t *testing.T) {
 	t.Parallel()
 
-	result := Denied(Reason("capacity_exhausted"), "snapshot")
-	if !result.IsValid() {
-		t.Fatalf("denied result should be valid: %+v", result.Decision())
-	}
-	if got := result.Decision(); got != Deny(Reason("capacity_exhausted")) {
-		t.Fatalf("decision = %+v, want denied no-effect decision", got)
-	}
-	if result.HasGrant() {
-		t.Fatal("denied result should not carry a grant")
-	}
-	if !result.HasMetadata() {
-		t.Fatal("denied result should carry metadata")
-	}
-	if metadata, ok := result.Metadata(); !ok || metadata != "snapshot" {
-		t.Fatalf("metadata = (%q, %v), want (snapshot, true)", metadata, ok)
-	}
+	result := DeniedResult(ReasonDenied, "metadata")
+	requireResultShape(t, result, DenyDecision(ReasonDenied), false, true)
 }
 
 func TestDeniedForResult(t *testing.T) {
 	t.Parallel()
 
-	result := DeniedFor[string](Reason("capacity_exhausted"), "snapshot")
-	if !result.IsValid() {
-		t.Fatalf("denied result should be valid: %+v", result.Decision())
-	}
-	if !result.HasMetadata() {
-		t.Fatal("denied typed result should carry metadata")
-	}
-	if grant, ok := result.Grant(); ok || grant != "" {
-		t.Fatalf("grant = (%q, %v), want zero value and false", grant, ok)
-	}
+	result := DeniedForResult[string](ReasonDenied, "metadata")
+	requireResultShape(t, result, DenyDecision(ReasonDenied), false, true)
 }
 
 func TestDeniedNoMetadataResult(t *testing.T) {
 	t.Parallel()
 
-	result := DeniedNoMetadata(Reason("capacity_exhausted"))
-	if !result.IsValid() {
-		t.Fatalf("denied result should be valid: %+v", result.Decision())
+	result := DeniedNoMetadataResult(ReasonDenied)
+	requireResultShape(t, result, DenyDecision(ReasonDenied), false, false)
+}
+
+func TestDeniedConstructorsWithInvalidReasonReturnInvalidValues(t *testing.T) {
+	t.Parallel()
+
+	invalid := Reason("bad-reason")
+	if DenyDecision(invalid).IsValid() {
+		t.Fatal("DenyDecision with invalid reason is valid")
 	}
-	if result.HasGrant() {
-		t.Fatal("denied no-metadata result should not carry a grant")
+	if DeniedResult(invalid, "metadata").IsValid() {
+		t.Fatal("DeniedResult with invalid reason is valid")
 	}
-	if result.HasMetadata() {
-		t.Fatal("denied no-metadata result should not carry metadata")
+	if DeniedForResult[string](invalid, "metadata").IsValid() {
+		t.Fatal("DeniedForResult with invalid reason is valid")
+	}
+	if DeniedNoMetadataResult(invalid).IsValid() {
+		t.Fatal("DeniedNoMetadataResult with invalid reason is valid")
+	}
+}
+
+func TestDeniedForResultDoesNotRetainGrantReferences(t *testing.T) {
+	t.Parallel()
+
+	type grant struct{ value string }
+	result := DeniedForResult[*grant](ReasonDenied, "metadata")
+	if got, ok := result.Grant(); ok || got != nil {
+		t.Fatalf("Grant() = (%v, %t), want nil,false", got, ok)
 	}
 }

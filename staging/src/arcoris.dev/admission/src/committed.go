@@ -14,12 +14,11 @@
 
 package admission
 
-// Commit returns an admitted decision with a committed spend-only side effect.
+// CommitDecision returns an admitted decision with a committed side effect.
 //
-// Commit fits budgets, tokens, and counters that are consumed by the successful
-// admission attempt and are not released by the caller later. The returned
-// Decision is the semantic base for Committed and CommittedNoMetadata results.
-func Commit(reason Reason) Decision {
+// Committed decisions fit budgets, tokens, and counters that are consumed by the
+// successful admission attempt and are not released by the caller later.
+func CommitDecision(reason Reason) Decision {
 	return Decision{
 		Outcome: OutcomeAdmitted,
 		Reason:  reason,
@@ -27,27 +26,17 @@ func Commit(reason Reason) Decision {
 	}
 }
 
-// Committed returns an admitted spend-only result with metadata.
-//
-// The result carries no grant because committed effects are not released by the
-// caller. Retry-budget spends and token-bucket spends are examples of committed
-// admission effects.
-func Committed[M any](
-	reason Reason,
-	metadata M,
-) Result[NoGrant, M] {
-	return resultWith(
-		Commit(reason),
-		none[NoGrant](),
-		some(metadata),
-	)
+// CommittedResult returns an admitted committed-side-effect result with
+// metadata.
+func CommittedResult[M any](reason Reason, metadata M) Result[NoGrant, M] {
+	var grant NoGrant
+	return resultWith(CommitDecision(reason), grant, false, metadata, true)
 }
 
-// CommittedNoMetadata returns an admitted spend-only result without metadata.
-func CommittedNoMetadata(reason Reason) Result[NoGrant, NoMetadata] {
-	return resultWith(
-		Commit(reason),
-		none[NoGrant](),
-		none[NoMetadata](),
-	)
+// CommittedNoMetadataResult returns an admitted committed-side-effect result
+// without metadata.
+func CommittedNoMetadataResult(reason Reason) Result[NoGrant, NoMetadata] {
+	var grant NoGrant
+	var metadata NoMetadata
+	return resultWith(CommitDecision(reason), grant, false, metadata, false)
 }

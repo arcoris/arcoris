@@ -19,59 +19,38 @@ import "testing"
 func TestCommitDecision(t *testing.T) {
 	t.Parallel()
 
-	decision := Commit(ReasonAdmitted)
-	if !decision.IsValid() {
-		t.Fatalf("decision should be valid: %+v", decision)
-	}
-	if !decision.IsAdmitted() {
-		t.Fatal("committed decision should admit work")
-	}
-	if !decision.HasSideEffect() {
-		t.Fatal("committed decision should record a side effect")
-	}
-	if decision.AllowsGrant() {
-		t.Fatal("committed decision should not allow caller-owned grants")
-	}
+	requireDecision(t, CommitDecision(ReasonAdmitted), Decision{
+		Outcome: OutcomeAdmitted,
+		Reason:  ReasonAdmitted,
+		Effect:  EffectCommitted,
+	})
 }
 
 func TestCommittedResult(t *testing.T) {
 	t.Parallel()
 
-	result := Committed(ReasonAdmitted, "budget-snapshot")
-	if !result.IsValid() {
-		t.Fatalf("committed result should be valid: %+v", result.Decision())
-	}
-	if got := result.Decision(); got != Commit(ReasonAdmitted) {
-		t.Fatalf("decision = %+v, want admitted committed decision", got)
-	}
-	if !result.IsAdmitted() {
-		t.Fatal("committed result should admit work")
-	}
-	if !result.HasSideEffect() {
-		t.Fatal("committed result should record a side effect")
-	}
-	if result.HasGrant() {
-		t.Fatal("committed result should not carry a grant")
-	}
-	if !result.HasMetadata() {
-		t.Fatal("committed result should carry metadata")
-	}
-	if metadata, ok := result.Metadata(); !ok || metadata != "budget-snapshot" {
-		t.Fatalf("metadata = (%q, %v), want (budget-snapshot, true)", metadata, ok)
-	}
+	result := CommittedResult(ReasonAdmitted, "metadata")
+	requireResultShape(t, result, CommitDecision(ReasonAdmitted), false, true)
 }
 
 func TestCommittedNoMetadataResult(t *testing.T) {
 	t.Parallel()
 
-	result := CommittedNoMetadata(ReasonAdmitted)
-	if !result.IsValid() {
-		t.Fatalf("committed result should be valid: %+v", result.Decision())
+	result := CommittedNoMetadataResult(ReasonAdmitted)
+	requireResultShape(t, result, CommitDecision(ReasonAdmitted), false, false)
+}
+
+func TestCommittedConstructorsWithInvalidReasonReturnInvalidValues(t *testing.T) {
+	t.Parallel()
+
+	invalid := Reason("bad-reason")
+	if CommitDecision(invalid).IsValid() {
+		t.Fatal("CommitDecision with invalid reason is valid")
 	}
-	if result.HasGrant() {
-		t.Fatal("committed no-metadata result should not carry a grant")
+	if CommittedResult(invalid, "metadata").IsValid() {
+		t.Fatal("CommittedResult with invalid reason is valid")
 	}
-	if result.HasMetadata() {
-		t.Fatal("committed no-metadata result should not carry metadata")
+	if CommittedNoMetadataResult(invalid).IsValid() {
+		t.Fatal("CommittedNoMetadataResult with invalid reason is valid")
 	}
 }

@@ -25,6 +25,19 @@ const maxComponentKindLength = 64
 // instance data.
 type ComponentKind string
 
+// MustComponentKind returns value as a ComponentKind or panics when value is
+// invalid.
+//
+// The helper is intended for package-level constants and tests where an invalid
+// literal is a programming error.
+func MustComponentKind(value string) ComponentKind {
+	kind := ComponentKind(value)
+	if !kind.IsValid() {
+		panic("admission.ComponentKind: invalid component kind")
+	}
+	return kind
+}
+
 // IsValid reports whether k is a valid lower_snake_case component kind.
 //
 // Custom kinds are allowed, but they must remain short, stable, ASCII

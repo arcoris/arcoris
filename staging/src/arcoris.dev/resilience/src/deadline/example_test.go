@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline_test
 
 import (
@@ -59,7 +58,7 @@ func ExampleTryAdmit() {
 		Min:     time.Second,
 	})
 
-	fmt.Println(result.IsAdmitted())
+	fmt.Println(result.Decision().IsAdmitted())
 	fmt.Println(result.HasGrant())
 
 	// Output:

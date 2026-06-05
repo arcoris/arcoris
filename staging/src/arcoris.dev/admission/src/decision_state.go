@@ -45,6 +45,27 @@ func (d Decision) HasSideEffect() bool {
 	return d.Effect.HasSideEffect()
 }
 
+// HasNoEffect reports whether d records no side effect.
+func (d Decision) HasNoEffect() bool {
+	return d.Effect.IsNone()
+}
+
+// HasCommittedEffect reports whether d records a committed spend-only side
+// effect.
+func (d Decision) HasCommittedEffect() bool {
+	return d.Effect.IsCommitted()
+}
+
+// HasOwnedEffect reports whether d records a caller-owned grant side effect.
+func (d Decision) HasOwnedEffect() bool {
+	return d.Effect.IsOwned()
+}
+
+// HasQueuedEffect reports whether d records system-owned waiting state.
+func (d Decision) HasQueuedEffect() bool {
+	return d.Effect.IsQueued()
+}
+
 // RequiresGrant reports whether a typed Result carrying d must include a grant.
 func (d Decision) RequiresGrant() bool {
 	return d.Effect.RequiresGrant()

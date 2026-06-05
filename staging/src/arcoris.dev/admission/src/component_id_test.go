@@ -55,13 +55,9 @@ func TestMustComponentID(t *testing.T) {
 		t.Fatalf("got %q, want resilience.bulkhead", got)
 	}
 
-	defer func() {
-		if recover() == nil {
-			t.Fatal("expected panic")
-		}
-	}()
-
-	_ = MustComponentID("bad/id")
+	requirePanicValue(t, "admission.ComponentID: invalid component id", func() {
+		_ = MustComponentID("bad/id")
+	})
 }
 
 func TestComponentIDString(t *testing.T) {

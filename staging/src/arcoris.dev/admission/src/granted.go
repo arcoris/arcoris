@@ -14,13 +14,12 @@
 
 package admission
 
-// Grant returns an admitted decision that requires a caller-owned grant.
+// GrantDecision returns an admitted decision that requires a caller-owned grant.
 //
-// Grant fits lease-style admission such as bulkheads where successful admission
-// transfers ownership that the caller must later release, close, commit, or roll
-// back according to the domain API. The returned Decision is the semantic base
-// for Granted and GrantedNoMetadata results.
-func Grant(reason Reason) Decision {
+// Grant decisions fit lease-style admission such as bulkheads where successful
+// admission transfers ownership that the caller must later release, close,
+// commit, or roll back according to the domain API.
+func GrantDecision(reason Reason) Decision {
 	return Decision{
 		Outcome: OutcomeAdmitted,
 		Reason:  reason,
@@ -28,32 +27,15 @@ func Grant(reason Reason) Decision {
 	}
 }
 
-// Granted returns an admitted result with a caller-owned grant and metadata.
-//
-// The grant is required because the decision uses EffectOwned. The caller is
-// responsible for following the grant's domain lifecycle, such as releasing a
-// bulkhead lease or rolling back a staged allocation.
-func Granted[G any, M any](
-	reason Reason,
-	grant G,
-	metadata M,
-) Result[G, M] {
-	return resultWith(
-		Grant(reason),
-		some(grant),
-		some(metadata),
-	)
+// GrantedResult returns an admitted result with a caller-owned grant and
+// metadata.
+func GrantedResult[G any, M any](reason Reason, grant G, metadata M) Result[G, M] {
+	return resultWith(GrantDecision(reason), grant, true, metadata, true)
 }
 
-// GrantedNoMetadata returns an admitted result with a caller-owned grant and no
-// metadata.
-func GrantedNoMetadata[G any](
-	reason Reason,
-	grant G,
-) Result[G, NoMetadata] {
-	return resultWith(
-		Grant(reason),
-		some(grant),
-		none[NoMetadata](),
-	)
+// GrantedNoMetadataResult returns an admitted result with a caller-owned grant
+// and no metadata.
+func GrantedNoMetadataResult[G any](reason Reason, grant G) Result[G, NoMetadata] {
+	var metadata NoMetadata
+	return resultWith(GrantDecision(reason), grant, true, metadata, false)
 }

@@ -43,7 +43,7 @@ func TestManualCompositionReleasesBulkheadLeaseWhenRetryBudgetDenies(t *testing.
 	if !composed.BudgetResult.IsValid() {
 		t.Fatalf("retrybudget result is invalid: %+v", composed.BudgetResult.Decision())
 	}
-	if !composed.BudgetResult.IsDenied() {
+	if !composed.BudgetResult.Decision().IsDenied() {
 		t.Fatalf("retrybudget result should be denied: %+v", composed.BudgetResult.Decision())
 	}
 	if composed.BudgetResult.HasGrant() {
@@ -66,7 +66,7 @@ func TestManualCompositionReleasesBulkheadLeaseWhenDeadlineDenies(t *testing.T) 
 	if !composed.DeadlineResult.IsValid() {
 		t.Fatalf("deadline result is invalid: %+v", composed.DeadlineResult.Decision())
 	}
-	if !composed.DeadlineResult.IsDenied() {
+	if !composed.DeadlineResult.Decision().IsDenied() {
 		t.Fatalf("deadline result should be denied: %+v", composed.DeadlineResult.Decision())
 	}
 	if composed.DeadlineResult.HasGrant() {
@@ -88,12 +88,12 @@ func TestManualCompositionDeniedBeforeBulkheadDoesNotAcquireLease(t *testing.T) 
 	}
 
 	deadlineResult := deadline.TryAdmit(req)
-	if !deadlineResult.IsValid() || !deadlineResult.IsDenied() {
+	if !deadlineResult.IsValid() || !deadlineResult.Decision().IsDenied() {
 		t.Fatalf("deadline result = %+v, want valid denial", deadlineResult.Decision())
 	}
 
 	var lease *bulkhead.Lease
-	if deadlineResult.IsAdmitted() {
+	if deadlineResult.Decision().IsAdmitted() {
 		bulkheadResult := b.TryAdmit(bulkhead.Request{Amount: 1})
 		lease, _ = bulkheadResult.Grant()
 	}
@@ -175,7 +175,7 @@ func Example_manualAdmissionComposition_releaseOnLaterDeny() {
 	}()
 
 	budgetResult := budget.TryAdmit(retrybudget.Request{})
-	if !budgetResult.IsAdmitted() {
+	if !budgetResult.Decision().IsAdmitted() {
 		fmt.Println("released after later denial")
 		return
 	}
@@ -206,7 +206,7 @@ func Example_manualAdmissionComposition_returnOwnedLease() {
 	}()
 
 	budgetResult := budget.TryAdmit(retrybudget.Request{})
-	if !budgetResult.IsAdmitted() {
+	if !budgetResult.Decision().IsAdmitted() {
 		fmt.Println("budget denied")
 		return
 	}
@@ -241,12 +241,12 @@ func manuallyCompose(
 	var out composedAdmission
 
 	out.DeadlineResult = deadline.TryAdmit(deadlineReq)
-	if !out.DeadlineResult.IsValid() || out.DeadlineResult.IsDenied() {
+	if !out.DeadlineResult.IsValid() || out.DeadlineResult.Decision().IsDenied() {
 		return out
 	}
 
 	out.BulkheadResult = b.TryAdmit(bulkhead.Request{Amount: 1})
-	if !out.BulkheadResult.IsValid() || out.BulkheadResult.IsDenied() {
+	if !out.BulkheadResult.IsValid() || out.BulkheadResult.Decision().IsDenied() {
 		return out
 	}
 
@@ -265,7 +265,7 @@ func manuallyCompose(
 
 	if budgetAfterBulkhead {
 		out.BudgetResult = budget.TryAdmit(retrybudget.Request{})
-		if !out.BudgetResult.IsValid() || out.BudgetResult.IsDenied() {
+		if !out.BudgetResult.IsValid() || out.BudgetResult.Decision().IsDenied() {
 			return out
 		}
 	}

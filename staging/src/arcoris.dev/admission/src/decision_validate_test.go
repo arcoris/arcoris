@@ -23,13 +23,12 @@ func TestDecisionIsValidAcceptsConstructedDecisions(t *testing.T) {
 		name     string
 		decision Decision
 	}{
-		{name: "admit", decision: Admit(ReasonAdmitted)},
-		{name: "commit", decision: Commit(ReasonAdmitted)},
-		{name: "grant", decision: Grant(ReasonAdmitted)},
-		{name: "deny", decision: Deny(Reason("capacity_exhausted"))},
-		{name: "queue", decision: Queue(ReasonQueued)},
-		{name: "defer", decision: Defer(ReasonDeferred)},
-		{name: "admitted default", decision: Admitted()},
+		{name: "admitted", decision: AdmitDecision(ReasonAdmitted)},
+		{name: "committed", decision: CommitDecision(ReasonAdmitted)},
+		{name: "grant", decision: GrantDecision(ReasonAdmitted)},
+		{name: "denied", decision: DenyDecision(Reason("capacity_exhausted"))},
+		{name: "queued", decision: QueueDecision(ReasonQueued)},
+		{name: "deferred", decision: DeferDecision(ReasonDeferred)},
 	}
 
 	for _, tt := range tests {

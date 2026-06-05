@@ -33,14 +33,14 @@ func TestDecisionStateHelpers(t *testing.T) {
 	}{
 		{
 			name:        "plain admitted",
-			decision:    Admit(ReasonAdmitted),
+			decision:    AdmitDecision(ReasonAdmitted),
 			admitted:    true,
 			terminal:    true,
 			allowsGrant: false,
 		},
 		{
 			name:          "owned grant admitted",
-			decision:      Grant(ReasonAdmitted),
+			decision:      GrantDecision(ReasonAdmitted),
 			admitted:      true,
 			terminal:      true,
 			sideEffect:    true,
@@ -49,20 +49,20 @@ func TestDecisionStateHelpers(t *testing.T) {
 		},
 		{
 			name:     "denied",
-			decision: Deny(Reason("capacity_exhausted")),
+			decision: DenyDecision(Reason("capacity_exhausted")),
 			denied:   true,
 			terminal: true,
 		},
 		{
 			name:        "queued",
-			decision:    Queue(ReasonQueued),
+			decision:    QueueDecision(ReasonQueued),
 			queued:      true,
 			sideEffect:  true,
 			allowsGrant: true,
 		},
 		{
 			name:     "deferred",
-			decision: Defer(ReasonDeferred),
+			decision: DeferDecision(ReasonDeferred),
 			deferred: true,
 			terminal: true,
 		},

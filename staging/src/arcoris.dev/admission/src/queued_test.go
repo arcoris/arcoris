@@ -19,60 +19,38 @@ import "testing"
 func TestQueueDecision(t *testing.T) {
 	t.Parallel()
 
-	decision := Queue(ReasonQueued)
-	if !decision.IsValid() {
-		t.Fatalf("decision should be valid: %+v", decision)
-	}
-	if !decision.IsQueued() {
-		t.Fatal("queued decision should accept system-owned waiting")
-	}
-	if decision.IsTerminal() {
-		t.Fatal("queued decision should not be terminal")
-	}
-	if !decision.AllowsGrant() {
-		t.Fatal("queued decision should allow an optional queue handle")
-	}
+	requireDecision(t, QueueDecision(ReasonQueued), Decision{
+		Outcome: OutcomeQueued,
+		Reason:  ReasonQueued,
+		Effect:  EffectQueued,
+	})
 }
 
 func TestQueuedResult(t *testing.T) {
 	t.Parallel()
 
-	result := Queued(
-		ReasonQueued,
-		"ticket",
-		"snapshot",
-	)
-	if !result.IsValid() {
-		t.Fatalf("queued result should be valid: %+v", result.Decision())
-	}
-	if got := result.Decision(); got != Queue(ReasonQueued) {
-		t.Fatalf("decision = %+v, want queued decision", got)
-	}
-	if grant, ok := result.Grant(); !ok || grant != "ticket" {
-		t.Fatalf("grant = (%q, %v), want (ticket, true)", grant, ok)
-	}
-	if !result.HasMetadata() {
-		t.Fatal("queued result should carry metadata")
-	}
-	if metadata, ok := result.Metadata(); !ok || metadata != "snapshot" {
-		t.Fatalf("metadata = (%q, %v), want (snapshot, true)", metadata, ok)
-	}
+	result := QueuedResult(ReasonQueued, "ticket", "metadata")
+	requireResultShape(t, result, QueueDecision(ReasonQueued), true, true)
 }
 
 func TestQueuedNoGrantResult(t *testing.T) {
 	t.Parallel()
 
-	result := QueuedNoGrant(ReasonQueued, "snapshot")
-	if !result.IsValid() {
-		t.Fatalf("queued result should be valid: %+v", result.Decision())
+	result := QueuedNoGrantResult(ReasonQueued, "metadata")
+	requireResultShape(t, result, QueueDecision(ReasonQueued), false, true)
+}
+
+func TestQueuedConstructorsWithInvalidReasonReturnInvalidValues(t *testing.T) {
+	t.Parallel()
+
+	invalid := Reason("bad-reason")
+	if QueueDecision(invalid).IsValid() {
+		t.Fatal("QueueDecision with invalid reason is valid")
 	}
-	if result.HasGrant() {
-		t.Fatal("queued no-grant result should not carry a grant")
+	if QueuedResult(invalid, "ticket", "metadata").IsValid() {
+		t.Fatal("QueuedResult with invalid reason is valid")
 	}
-	if !result.HasMetadata() {
-		t.Fatal("queued no-grant result should carry metadata")
-	}
-	if metadata, ok := result.Metadata(); !ok || metadata != "snapshot" {
-		t.Fatalf("metadata = (%q, %v), want (snapshot, true)", metadata, ok)
+	if QueuedNoGrantResult(invalid, "metadata").IsValid() {
+		t.Fatal("QueuedNoGrantResult with invalid reason is valid")
 	}
 }

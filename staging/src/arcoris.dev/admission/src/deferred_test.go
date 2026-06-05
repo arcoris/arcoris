@@ -19,65 +19,58 @@ import "testing"
 func TestDeferDecision(t *testing.T) {
 	t.Parallel()
 
-	decision := Defer(ReasonDeferred)
-	if !decision.IsValid() {
-		t.Fatalf("decision should be valid: %+v", decision)
-	}
-	if !decision.IsDeferred() {
-		t.Fatal("deferred decision should leave retry ownership with the caller")
-	}
-	if decision.HasSideEffect() {
-		t.Fatal("deferred decision should not record side effects")
-	}
+	requireDecision(t, DeferDecision(ReasonDeferred), Decision{
+		Outcome: OutcomeDeferred,
+		Reason:  ReasonDeferred,
+		Effect:  EffectNone,
+	})
 }
 
 func TestDeferredResult(t *testing.T) {
 	t.Parallel()
 
-	result := Deferred(ReasonDeferred, "snapshot")
-	if !result.IsValid() {
-		t.Fatalf("deferred result should be valid: %+v", result.Decision())
-	}
-	if got := result.Decision(); got != Defer(ReasonDeferred) {
-		t.Fatalf("decision = %+v, want deferred no-effect decision", got)
-	}
-	if result.HasGrant() {
-		t.Fatal("deferred result should not carry a grant")
-	}
-	if !result.HasMetadata() {
-		t.Fatal("deferred result should carry metadata")
-	}
-	if metadata, ok := result.Metadata(); !ok || metadata != "snapshot" {
-		t.Fatalf("metadata = (%q, %v), want (snapshot, true)", metadata, ok)
-	}
+	result := DeferredResult(ReasonDeferred, "metadata")
+	requireResultShape(t, result, DeferDecision(ReasonDeferred), false, true)
 }
 
 func TestDeferredForResult(t *testing.T) {
 	t.Parallel()
 
-	result := DeferredFor[string](ReasonDeferred, "snapshot")
-	if !result.IsValid() {
-		t.Fatalf("deferred result should be valid: %+v", result.Decision())
-	}
-	if !result.HasMetadata() {
-		t.Fatal("deferred typed result should carry metadata")
-	}
-	if grant, ok := result.Grant(); ok || grant != "" {
-		t.Fatalf("grant = (%q, %v), want zero value and false", grant, ok)
-	}
+	result := DeferredForResult[string](ReasonDeferred, "metadata")
+	requireResultShape(t, result, DeferDecision(ReasonDeferred), false, true)
 }
 
 func TestDeferredNoMetadataResult(t *testing.T) {
 	t.Parallel()
 
-	result := DeferredNoMetadata(ReasonDeferred)
-	if !result.IsValid() {
-		t.Fatalf("deferred result should be valid: %+v", result.Decision())
+	result := DeferredNoMetadataResult(ReasonDeferred)
+	requireResultShape(t, result, DeferDecision(ReasonDeferred), false, false)
+}
+
+func TestDeferredConstructorsWithInvalidReasonReturnInvalidValues(t *testing.T) {
+	t.Parallel()
+
+	invalid := Reason("bad-reason")
+	if DeferDecision(invalid).IsValid() {
+		t.Fatal("DeferDecision with invalid reason is valid")
 	}
-	if result.HasGrant() {
-		t.Fatal("deferred no-metadata result should not carry a grant")
+	if DeferredResult(invalid, "metadata").IsValid() {
+		t.Fatal("DeferredResult with invalid reason is valid")
 	}
-	if result.HasMetadata() {
-		t.Fatal("deferred no-metadata result should not carry metadata")
+	if DeferredForResult[string](invalid, "metadata").IsValid() {
+		t.Fatal("DeferredForResult with invalid reason is valid")
+	}
+	if DeferredNoMetadataResult(invalid).IsValid() {
+		t.Fatal("DeferredNoMetadataResult with invalid reason is valid")
+	}
+}
+
+func TestDeferredForResultDoesNotRetainGrantReferences(t *testing.T) {
+	t.Parallel()
+
+	type grant struct{ value string }
+	result := DeferredForResult[*grant](ReasonDeferred, "metadata")
+	if got, ok := result.Grant(); ok || got != nil {
+		t.Fatalf("Grant() = (%v, %t), want nil,false", got, ok)
 	}
 }

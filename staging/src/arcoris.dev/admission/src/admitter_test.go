@@ -20,14 +20,14 @@ func TestAdmitterFunc(t *testing.T) {
 	t.Parallel()
 
 	admitter := AdmitterFunc[Unit, NoGrant, NoMetadata](func(Unit) Result[NoGrant, NoMetadata] {
-		return AcceptedNoMetadata(ReasonAdmitted)
+		return AcceptedNoMetadataResult(ReasonAdmitted)
 	})
 	var _ Admitter[Unit, NoGrant, NoMetadata] = admitter
 	result := admitter.TryAdmit(Unit{})
 	if !result.IsValid() {
 		t.Fatalf("unexpected invalid result: %+v", result.Decision())
 	}
-	if !result.IsAdmitted() {
+	if !result.Decision().IsAdmitted() {
 		t.Fatalf("result should be admitted: %+v", result.Decision())
 	}
 }
@@ -49,7 +49,7 @@ func TestAdmitterFuncPassesRequestAndReturnsTypedResult(t *testing.T) {
 	var admitter Admitter[request, grant, metadata] = AdmitterFunc[request, grant, metadata](
 		func(req request) Result[grant, metadata] {
 			seen = req
-			return Granted(
+			return GrantedResult(
 				ReasonAdmitted,
 				grant{id: "lease-1"},
 				metadata{available: 7},

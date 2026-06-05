@@ -14,12 +14,11 @@
 
 package admission
 
-// Deny returns a denied decision with no side effect.
+// DenyDecision returns a denied decision with no side effect.
 //
-// Denied work is not accepted by the current component, and the component does
-// not own waiting state or caller cleanup. The returned Decision is the semantic
-// base for Denied, DeniedFor, and DeniedNoMetadata results.
-func Deny(reason Reason) Decision {
+// Denied work is not admitted by the current component, and the component does
+// not own waiting state or caller cleanup.
+func DenyDecision(reason Reason) Decision {
 	return Decision{
 		Outcome: OutcomeDenied,
 		Reason:  reason,
@@ -27,42 +26,25 @@ func Deny(reason Reason) Decision {
 	}
 }
 
-// Denied returns a denied result with metadata.
-//
-// Denied results never carry grants because the component did not accept the
-// work and transferred no caller-owned lifecycle state.
-func Denied[M any](
-	reason Reason,
-	metadata M,
-) Result[NoGrant, M] {
-	return resultWith(
-		Deny(reason),
-		none[NoGrant](),
-		some(metadata),
-	)
+// DeniedResult returns a denied result with metadata.
+func DeniedResult[M any](reason Reason, metadata M) Result[NoGrant, M] {
+	var grant NoGrant
+	return resultWith(DenyDecision(reason), grant, false, metadata, true)
 }
 
-// DeniedFor returns a denied result typed for callers whose success path has a
-// grant.
+// DeniedForResult returns a denied result typed for callers whose success path
+// carries a grant.
 //
-// This keeps generic call sites ergonomic: a function that usually returns
-// Result[Lease, Snapshot] can deny without manufacturing a zero Lease value.
-func DeniedFor[G any, M any](
-	reason Reason,
-	metadata M,
-) Result[G, M] {
-	return resultWith(
-		Deny(reason),
-		none[G](),
-		some(metadata),
-	)
+// The returned result does not retain or manufacture a grant. Its grant type is
+// present only to keep generic success and denial paths type-compatible.
+func DeniedForResult[G any, M any](reason Reason, metadata M) Result[G, M] {
+	var grant G
+	return resultWith(DenyDecision(reason), grant, false, metadata, true)
 }
 
-// DeniedNoMetadata returns a denied result without metadata.
-func DeniedNoMetadata(reason Reason) Result[NoGrant, NoMetadata] {
-	return resultWith(
-		Deny(reason),
-		none[NoGrant](),
-		none[NoMetadata](),
-	)
+// DeniedNoMetadataResult returns a denied result without metadata.
+func DeniedNoMetadataResult(reason Reason) Result[NoGrant, NoMetadata] {
+	var grant NoGrant
+	var metadata NoMetadata
+	return resultWith(DenyDecision(reason), grant, false, metadata, false)
 }

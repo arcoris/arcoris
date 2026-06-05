@@ -19,66 +19,60 @@ import "testing"
 func TestGrantDecision(t *testing.T) {
 	t.Parallel()
 
-	decision := Grant(ReasonAdmitted)
-	if !decision.IsValid() {
-		t.Fatalf("decision should be valid: %+v", decision)
-	}
-	if !decision.RequiresGrant() {
-		t.Fatal("owned decision should require a grant")
-	}
-	if !decision.AllowsGrant() {
-		t.Fatal("owned decision should allow a grant")
-	}
+	requireDecision(t, GrantDecision(ReasonAdmitted), Decision{
+		Outcome: OutcomeAdmitted,
+		Reason:  ReasonAdmitted,
+		Effect:  EffectOwned,
+	})
 }
 
 func TestGrantedResult(t *testing.T) {
 	t.Parallel()
 
-	result := Granted(
-		ReasonAdmitted,
-		"lease",
-		"snapshot",
-	)
-	if !result.IsValid() {
-		t.Fatalf("granted result should be valid: %+v", result.Decision())
-	}
-	if got := result.Decision(); got != Grant(ReasonAdmitted) {
-		t.Fatalf("decision = %+v, want admitted owned decision", got)
-	}
-	if grant, ok := result.Grant(); !ok || grant != "lease" {
-		t.Fatalf("grant = (%q, %v), want (lease, true)", grant, ok)
-	}
-	if !result.HasMetadata() {
-		t.Fatal("granted result should carry metadata")
-	}
-	if metadata, ok := result.Metadata(); !ok || metadata != "snapshot" {
-		t.Fatalf("metadata = (%q, %v), want (snapshot, true)", metadata, ok)
-	}
-}
-
-func TestGrantedResultAllowsZeroGrantValue(t *testing.T) {
-	t.Parallel()
-
-	result := Granted(ReasonAdmitted, 0, "snapshot")
-	if !result.IsValid() {
-		t.Fatalf("granted zero-value result should be valid: %+v", result.Decision())
-	}
-	if grant, ok := result.Grant(); !ok || grant != 0 {
-		t.Fatalf("grant = (%d, %v), want (0, true)", grant, ok)
+	result := GrantedResult(ReasonAdmitted, "grant", "metadata")
+	requireResultShape(t, result, GrantDecision(ReasonAdmitted), true, true)
+	if grant, ok := result.Grant(); !ok || grant != "grant" {
+		t.Fatalf("Grant() = (%q, %t), want grant,true", grant, ok)
 	}
 }
 
 func TestGrantedNoMetadataResult(t *testing.T) {
 	t.Parallel()
 
-	result := GrantedNoMetadata(ReasonAdmitted, "lease")
-	if !result.IsValid() {
-		t.Fatalf("granted result should be valid: %+v", result.Decision())
+	result := GrantedNoMetadataResult(ReasonAdmitted, "grant")
+	requireResultShape(t, result, GrantDecision(ReasonAdmitted), true, false)
+}
+
+func TestGrantedConstructorsWithInvalidReasonReturnInvalidValues(t *testing.T) {
+	t.Parallel()
+
+	invalid := Reason("bad-reason")
+	if GrantDecision(invalid).IsValid() {
+		t.Fatal("GrantDecision with invalid reason is valid")
 	}
-	if !result.HasGrant() {
-		t.Fatal("granted no-metadata result should carry a grant")
+	if GrantedResult(invalid, "grant", "metadata").IsValid() {
+		t.Fatal("GrantedResult with invalid reason is valid")
 	}
-	if result.HasMetadata() {
-		t.Fatal("granted no-metadata result should not carry metadata")
+	if GrantedNoMetadataResult(invalid, "grant").IsValid() {
+		t.Fatal("GrantedNoMetadataResult with invalid reason is valid")
+	}
+}
+
+func TestGrantedNoMetadataResultDoesNotRetainMetadataReferences(t *testing.T) {
+	t.Parallel()
+
+	type metadata struct{ value string }
+	result := Result[string, *metadata]{
+		decision: GrantDecision(ReasonAdmitted),
+		grant:    "grant",
+		hasGrant: true,
+		metadata: &metadata{
+			value: "should not be visible",
+		},
+		hasMetadata: false,
+	}
+
+	if got, ok := result.Metadata(); ok || got != nil {
+		t.Fatalf("Metadata() = (%v, %t), want nil,false", got, ok)
 	}
 }

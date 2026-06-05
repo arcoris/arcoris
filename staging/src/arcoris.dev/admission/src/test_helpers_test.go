@@ -14,21 +14,87 @@
 
 package admission
 
-// someString builds a present string Maybe through the admission-local helper.
-//
-// Tests use this instead of importing arcoris.dev/value/maybe directly so the
-// package-local alias remains the only optional-value vocabulary inside
-// admission tests.
-func someString(value string) Maybe[string] {
-	return some(value)
+import (
+	"reflect"
+	"testing"
+)
+
+// requirePanicValue verifies fn panics with want.
+func requirePanicValue(t *testing.T, want any, fn func()) {
+	t.Helper()
+
+	defer func() {
+		got := recover()
+		if got == nil {
+			t.Fatalf("panic = nil, want %v", want)
+		}
+		if got != want {
+			t.Fatalf("panic = %v, want %v", got, want)
+		}
+	}()
+
+	fn()
 }
 
-// noneString builds an absent string Maybe through the admission-local helper.
-func noneString() Maybe[string] {
-	return none[string]()
+// requireNoMethod fails if typ exposes an exported method that should not be
+// part of the public admission contract.
+func requireNoMethod(t *testing.T, typ reflect.Type, name string) {
+	t.Helper()
+
+	if _, ok := typ.MethodByName(name); ok {
+		t.Fatalf("%s exposes %s, want removed", typ, name)
+	}
 }
 
-// noneMetadata builds an absent NoMetadata Maybe for invalid-shape tests.
-func noneMetadata() Maybe[NoMetadata] {
-	return none[NoMetadata]()
+// requireDecision verifies a constructor returned the expected valid decision.
+func requireDecision(t *testing.T, got Decision, want Decision) {
+	t.Helper()
+
+	if got != want {
+		t.Fatalf("decision = %+v, want %+v", got, want)
+	}
+	if !got.IsValid() {
+		t.Fatalf("decision is invalid: %+v", got)
+	}
+}
+
+// requireResultShape verifies a constructor returned the expected valid result
+// shape without asserting domain metadata or grant values.
+func requireResultShape[G any, M any](
+	t *testing.T,
+	result Result[G, M],
+	decision Decision,
+	hasGrant bool,
+	hasMetadata bool,
+) {
+	t.Helper()
+
+	if !result.IsValid() {
+		t.Fatalf("result is invalid: %+v", result.Decision())
+	}
+	if got := result.Decision(); got != decision {
+		t.Fatalf("Decision() = %+v, want %+v", got, decision)
+	}
+	if got := result.HasGrant(); got != hasGrant {
+		t.Fatalf("HasGrant() = %t, want %t", got, hasGrant)
+	}
+	if got := result.HasMetadata(); got != hasMetadata {
+		t.Fatalf("HasMetadata() = %t, want %t", got, hasMetadata)
+	}
+}
+
+// matrixName formats a compact decision/result matrix case name.
+func matrixName(outcome Outcome, effect Effect, grantPresent bool, metadataPresent bool) string {
+	name := outcome.String() + "_" + effect.String()
+	if grantPresent {
+		name += "_grant"
+	} else {
+		name += "_no_grant"
+	}
+	if metadataPresent {
+		name += "_metadata"
+	} else {
+		name += "_no_metadata"
+	}
+	return name
 }

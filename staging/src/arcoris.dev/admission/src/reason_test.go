@@ -57,3 +57,15 @@ func TestReasonString(t *testing.T) {
 		t.Fatalf("String = %q, want capacity_exhausted", got)
 	}
 }
+
+func TestMustReason(t *testing.T) {
+	t.Parallel()
+
+	if got := MustReason("capacity_exhausted"); got != "capacity_exhausted" {
+		t.Fatalf("MustReason() = %q, want capacity_exhausted", got)
+	}
+
+	requirePanicValue(t, "admission.Reason: invalid reason", func() {
+		_ = MustReason("bad-reason")
+	})
+}

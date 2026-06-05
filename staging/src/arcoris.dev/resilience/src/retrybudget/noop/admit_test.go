@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package noop
 
 import (
@@ -30,25 +29,25 @@ func TestBudgetTryAdmit(t *testing.T) {
 	if !result.IsValid() {
 		t.Fatalf("TryAdmit result is invalid: %+v", result.Decision())
 	}
-	if !result.IsAdmitted() {
+	if !result.Decision().IsAdmitted() {
 		t.Fatal("TryAdmit result is not admitted")
 	}
-	if result.IsDenied() {
+	if result.Decision().IsDenied() {
 		t.Fatal("TryAdmit result is denied")
 	}
-	if !result.HasSideEffect() {
+	if !result.Decision().HasSideEffect() {
 		t.Fatal("TryAdmit result has no committed side effect")
 	}
 	if result.HasGrant() {
 		t.Fatal("TryAdmit result has grant")
 	}
 	if _, ok := result.Grant(); ok {
-		t.Fatal("TryAdmit Grant() ok=true, want false")
+		t.Fatal("TryAdmit GrantDecision() ok=true, want false")
 	}
 	if !result.HasMetadata() {
 		t.Fatal("TryAdmit result has no metadata")
 	}
-	if got, want := result.Decision(), admission.Commit(admission.ReasonAdmitted); got != want {
+	if got, want := result.Decision(), admission.CommitDecision(admission.ReasonAdmitted); got != want {
 		t.Fatalf("decision = %+v, want %+v", got, want)
 	}
 
