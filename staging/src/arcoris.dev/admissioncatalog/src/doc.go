@@ -12,18 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package admissioncatalog provides owner-created catalogs of stable admission
-// metadata.
+// Package admissioncatalog defines immutable metadata catalogs for admission
+// contracts.
 //
-// The package is the concrete metadata-catalog counterpart to the open-world
-// identifier types in package arcoris.dev/admission. Package admission owns
-// Result, Decision, Outcome, Effect, Reason, ComponentID, and ComponentKind.
-// Package admissioncatalog owns descriptors, registries, and aggregate catalogs
-// used by documentation, tests, configuration validation, and future admission
-// chain validation foundations.
+// The package is the metadata layer above arcoris.dev/admission. It catalogs
+// reason descriptors, component kind descriptors, component descriptors, and
+// declared capability metadata for documentation, configuration checks, and
+// future admission-chain validation.
 //
-// Catalogs are not runtime admission chains, live admitter registries, service
-// discovery, metrics registries, tracing registries, global extension
-// registries, or process-wide singleton state. They perform no admission
-// attempts and store no Admitter values.
+// Builder is the mutable owner-controlled assembly API. Catalog is the
+// immutable read model produced by Build, Builder.Build, or Merge. Descriptors
+// are copy-safe values, and every public slice returned by this package is a
+// fresh copy.
+//
+// Declared capabilities are descriptive metadata only. They do not validate or
+// execute admission results, configure admitters, enforce capacity, run policy
+// engines, record metrics, perform logging or tracing, discover live runtime
+// components, or provide process-wide registration.
 package admissioncatalog

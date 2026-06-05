@@ -16,38 +16,98 @@ package admissioncatalog
 
 import "arcoris.dev/admission"
 
-// Reason returns the descriptor registered for reason.
+// Reason returns the descriptor declared for reason.
+//
+// Invalid reasons and missing valid reasons both return false. Lookup is not a
+// validation report.
 func (c *Catalog) Reason(reason admission.Reason) (ReasonDescriptor, bool) {
 	c.requireNonNil()
-	return c.reasons.Lookup(reason)
+	if !reason.IsValid() {
+		return ReasonDescriptor{}, false
+	}
+	return c.reasons.get(reason)
 }
 
-// Kind returns the descriptor registered for kind.
-func (c *Catalog) Kind(kind admission.ComponentKind) (ComponentKindDescriptor, bool) {
-	c.requireNonNil()
-	return c.kinds.Lookup(kind)
+// HasReason reports whether reason has been declared in the catalog.
+func (c *Catalog) HasReason(reason admission.Reason) bool {
+	_, ok := c.Reason(reason)
+	return ok
 }
 
-// Component returns the descriptor registered for id.
-func (c *Catalog) Component(id admission.ComponentID) (ComponentDescriptor, bool) {
-	c.requireNonNil()
-	return c.components.Lookup(id)
-}
-
-// Reasons returns sorted, copy-safe reason descriptors.
+// Reasons returns declared reason descriptors sorted by reason string.
+//
+// The returned slice is a fresh copy.
 func (c *Catalog) Reasons() []ReasonDescriptor {
 	c.requireNonNil()
-	return c.reasons.List()
+	return c.reasons.list()
 }
 
-// Kinds returns sorted, copy-safe component kind descriptors.
+// LenReasons reports the number of declared reasons.
+func (c *Catalog) LenReasons() int {
+	c.requireNonNil()
+	return c.reasons.len()
+}
+
+// Kind returns the descriptor declared for kind.
+//
+// Invalid kinds and missing valid kinds both return false. Lookup is not a
+// validation report.
+func (c *Catalog) Kind(kind admission.ComponentKind) (ComponentKindDescriptor, bool) {
+	c.requireNonNil()
+	if !kind.IsValid() {
+		return ComponentKindDescriptor{}, false
+	}
+	return c.kinds.get(kind)
+}
+
+// HasKind reports whether kind has been declared in the catalog.
+func (c *Catalog) HasKind(kind admission.ComponentKind) bool {
+	_, ok := c.Kind(kind)
+	return ok
+}
+
+// Kinds returns declared component kind descriptors sorted by kind string.
+//
+// The returned slice is a fresh copy.
 func (c *Catalog) Kinds() []ComponentKindDescriptor {
 	c.requireNonNil()
-	return c.kinds.List()
+	return c.kinds.list()
 }
 
-// Components returns sorted, copy-safe component descriptors.
+// LenKinds reports the number of declared component kinds.
+func (c *Catalog) LenKinds() int {
+	c.requireNonNil()
+	return c.kinds.len()
+}
+
+// Component returns the descriptor declared for id.
+//
+// Invalid IDs and missing valid IDs both return false. Lookup is not a
+// validation report.
+func (c *Catalog) Component(id admission.ComponentID) (ComponentDescriptor, bool) {
+	c.requireNonNil()
+	if !id.IsValid() {
+		return ComponentDescriptor{}, false
+	}
+	return c.components.get(id)
+}
+
+// HasComponent reports whether id has been declared in the catalog.
+func (c *Catalog) HasComponent(id admission.ComponentID) bool {
+	_, ok := c.Component(id)
+	return ok
+}
+
+// Components returns declared component descriptors sorted by component ID.
+//
+// The returned slice is a fresh copy.
 func (c *Catalog) Components() []ComponentDescriptor {
 	c.requireNonNil()
-	return c.components.List()
+	return c.components.list()
+}
+
+// LenComponents reports the number of declared components.
+func (c *Catalog) LenComponents() int {
+	c.requireNonNil()
+	return c.components.len()
 }

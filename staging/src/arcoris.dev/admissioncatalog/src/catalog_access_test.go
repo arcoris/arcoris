@@ -15,134 +15,89 @@
 package admissioncatalog
 
 import (
-	"fmt"
-	"sync"
 	"testing"
 
 	"arcoris.dev/admission"
 )
 
-func TestCatalogLookupMethods(t *testing.T) {
-	t.Parallel()
+func TestCatalogAccessLookups(t *testing.T) {
+	catalog := mustCatalog(t, validInput())
 
-	catalog := testCatalog()
-
-	if got, ok := catalog.Reason(admission.ReasonDenied); !ok || got.Reason != admission.ReasonDenied {
-		t.Fatalf("Reason = (%+v, %v), want descriptor,true", got, ok)
+	if descriptor, ok := catalog.Reason(testReason); !ok || descriptor.Reason != testReason {
+		t.Fatalf("Reason = %+v, %v", descriptor, ok)
 	}
-	if got, ok := catalog.Kind(testKindBulkhead); !ok || got.Kind != testKindBulkhead {
-		t.Fatalf("Kind = (%+v, %v), want descriptor,true", got, ok)
+	if descriptor, ok := catalog.Kind(testKind); !ok || descriptor.Kind != testKind {
+		t.Fatalf("Kind = %+v, %v", descriptor, ok)
 	}
-	if got, ok := catalog.Component("resilience.bulkhead"); !ok || got.ID != "resilience.bulkhead" {
-		t.Fatalf("Component = (%+v, %v), want descriptor,true", got, ok)
+	if descriptor, ok := catalog.Component(testComponent); !ok || descriptor.ID != testComponent {
+		t.Fatalf("Component = %+v, %v", descriptor, ok)
 	}
 }
 
-func TestCatalogListMethodsReturnSortedCopies(t *testing.T) {
-	t.Parallel()
+func TestCatalogAccessInvalidAndMissingLookupsReturnFalse(t *testing.T) {
+	catalog := mustCatalog(t, validInput())
 
-	catalog := testCatalog()
+	if _, ok := catalog.Reason(admission.Reason("bad-reason")); ok {
+		t.Fatal("invalid reason lookup returned true")
+	}
+	if _, ok := catalog.Kind(admission.ComponentKind("bad-kind")); ok {
+		t.Fatal("invalid kind lookup returned true")
+	}
+	if _, ok := catalog.Component(admission.ComponentID("bad id")); ok {
+		t.Fatal("invalid component lookup returned true")
+	}
+	if catalog.HasReason(admission.Reason("missing_reason")) {
+		t.Fatal("missing reason returned true")
+	}
+	if catalog.HasKind(admission.ComponentKind("missing_kind")) {
+		t.Fatal("missing kind returned true")
+	}
+	if catalog.HasComponent(admission.ComponentID("missing.component")) {
+		t.Fatal("missing component returned true")
+	}
+}
+
+func TestCatalogAccessListsAreSortedAndDetached(t *testing.T) {
+	catalog := mustCatalog(t, validInput())
 
 	reasons := catalog.Reasons()
-	if len(reasons) == 0 {
-		t.Fatal("Reasons should not be empty")
+	if got, want := reasons[0].Reason, testReason; got != want {
+		t.Fatalf("first reason = %s, want %s", got, want)
 	}
-	for i := 1; i < len(reasons); i++ {
-		if reasons[i-1].Reason.String() > reasons[i].Reason.String() {
-			t.Fatalf("Reasons order[%d:%d] = %q,%q, want sorted",
-				i-1,
-				i,
-				reasons[i-1].Reason,
-				reasons[i].Reason,
-			)
-		}
-	}
-	reasons[0].Reason = "mutated_reason"
-	if catalog.LenReasons() == 0 || catalog.Reasons()[0].Reason == "mutated_reason" {
-		t.Fatal("mutating Reasons result should not mutate catalog")
+	reasons[0] = reasonDescriptor(admission.Reason("mutated_reason"))
+	if catalog.HasReason(admission.Reason("mutated_reason")) {
+		t.Fatal("mutating returned reasons changed catalog")
 	}
 
 	kinds := catalog.Kinds()
-	if len(kinds) == 0 {
-		t.Fatal("Kinds should not be empty")
+	if got, want := kinds[0].Kind, testKind; got != want {
+		t.Fatalf("first kind = %s, want %s", got, want)
 	}
-	for i := 1; i < len(kinds); i++ {
-		if kinds[i-1].Kind.String() > kinds[i].Kind.String() {
-			t.Fatalf("Kinds order[%d:%d] = %q,%q, want sorted",
-				i-1,
-				i,
-				kinds[i-1].Kind,
-				kinds[i].Kind,
-			)
-		}
-	}
-	kinds[0].Kind = "mutated_kind"
-	if catalog.LenKinds() == 0 || catalog.Kinds()[0].Kind == "mutated_kind" {
-		t.Fatal("mutating Kinds result should not mutate catalog")
+	kinds[0] = kindDescriptor(admission.ComponentKind("mutated_kind"))
+	if catalog.HasKind(admission.ComponentKind("mutated_kind")) {
+		t.Fatal("mutating returned kinds changed catalog")
 	}
 
 	components := catalog.Components()
-	if len(components) == 0 {
-		t.Fatal("Components should not be empty")
+	if got, want := components[0].ID, testComponent; got != want {
+		t.Fatalf("first component = %s, want %s", got, want)
 	}
-	for i := 1; i < len(components); i++ {
-		if components[i-1].ID.String() > components[i].ID.String() {
-			t.Fatalf("Components order[%d:%d] = %q,%q, want sorted",
-				i-1,
-				i,
-				components[i-1].ID,
-				components[i].ID,
-			)
-		}
-	}
-	components[0].ID = "resilience.mutated"
-	if catalog.LenComponents() == 0 || catalog.Components()[0].ID == "resilience.mutated" {
-		t.Fatal("mutating Components result should not mutate catalog")
+	components[0] = componentDescriptor(admission.ComponentID("mutated.component"), testKind)
+	if catalog.HasComponent(admission.ComponentID("mutated.component")) {
+		t.Fatal("mutating returned components changed catalog")
 	}
 }
 
-func TestCatalogConcurrentAccess(t *testing.T) {
-	catalog := testCatalog()
+func TestCatalogAccessLengths(t *testing.T) {
+	catalog := mustCatalog(t, validInput())
 
-	var wg sync.WaitGroup
-	errCh := make(chan error, 32*3)
-	for i := 0; i < 32; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-
-			suffix := string(rune('a'+i/26)) + string(rune('a'+i%26))
-			reason := admission.Reason("custom_reason_" + suffix)
-			kind := admission.ComponentKind("custom_kind_" + suffix)
-			componentID := admission.ComponentID("custom.component_" + suffix)
-
-			if err := catalog.RegisterReason(testReasonDescriptor(reason)); err != nil {
-				errCh <- fmt.Errorf("register reason %q: %w", reason, err)
-			}
-			if err := catalog.RegisterKind(testKindDescriptor(kind)); err != nil {
-				errCh <- fmt.Errorf("register kind %q: %w", kind, err)
-			}
-			if err := catalog.RegisterComponent(testComponentDescriptor(componentID, kind)); err != nil {
-				errCh <- fmt.Errorf("register component %q: %w", componentID, err)
-			}
-
-			_, _ = catalog.Reason(reason)
-			_, _ = catalog.Kind(kind)
-			_, _ = catalog.Component(componentID)
-			_ = catalog.Reasons()
-			_ = catalog.Kinds()
-			_ = catalog.Components()
-			_ = catalog.LenReasons()
-			_ = catalog.LenKinds()
-			_ = catalog.LenComponents()
-		}(i)
+	if got, want := catalog.LenReasons(), len(validInput().Reasons); got != want {
+		t.Fatalf("LenReasons = %d, want %d", got, want)
 	}
-	wg.Wait()
-	close(errCh)
-
-	for err := range errCh {
-		if err != nil {
-			t.Fatalf("unexpected concurrent catalog error: %v", err)
-		}
+	if got, want := catalog.LenKinds(), len(validInput().Kinds); got != want {
+		t.Fatalf("LenKinds = %d, want %d", got, want)
+	}
+	if got, want := catalog.LenComponents(), len(validInput().Components); got != want {
+		t.Fatalf("LenComponents = %d, want %d", got, want)
 	}
 }

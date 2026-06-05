@@ -12,14 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package builtin provides standard ARCORIS admission catalog metadata.
-//
-// The package contains stable descriptors for core admission reasons,
-// cross-component reasons, standard component kinds, and established ARCORIS
-// components. It returns fresh slices and fresh immutable catalogs on demand.
-//
-// Builtin metadata is not a global mutable registry, does not install live
-// admitters, and does not perform runtime admission. Component packages can
-// expose their own descriptors and compose them with NewCatalog through
-// admissioncatalog.Merge.
-package builtin
+package admissioncatalog
+
+import (
+	"errors"
+	"testing"
+)
+
+func TestCatalogErrorsSupportIsAndAs(t *testing.T) {
+	err := NilCatalogError{Operation: "merge", Index: 0}
+	if !errors.Is(err, ErrNilCatalog) {
+		t.Fatal("nil catalog error does not match sentinel")
+	}
+	var typed NilCatalogError
+	if !errors.As(err, &typed) {
+		t.Fatal("nil catalog error does not expose typed value")
+	}
+}
+
+func TestCatalogErrorsExposeDetails(t *testing.T) {
+	err := NilCatalogError{Operation: "merge", Index: 3}
+	if err.Operation != "merge" || err.Index != 3 {
+		t.Fatalf("NilCatalogError = %+v", err)
+	}
+}

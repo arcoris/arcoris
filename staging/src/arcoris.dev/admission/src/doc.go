@@ -43,7 +43,7 @@
 // raw errors, secrets, or resource-specific identifiers.
 //
 // ComponentID identifies a component kind or role, not a runtime instance. For
-// example, resilience.bulkhead and resilience.retrybudget are valid component
+// example, resilience.bulkhead and resilience.retry_budget are valid component
 // IDs; resilience.bulkhead.tenant_123 is not. Instance naming, metrics labels,
 // tracing attributes, health state, config ownership, and dynamic discovery
 // belong to higher-level owners.

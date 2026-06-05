@@ -17,17 +17,42 @@ package builtin
 import (
 	"testing"
 
+	"arcoris.dev/admission"
 	"arcoris.dev/admissioncatalog"
 )
 
-func requireCapability(
-	t *testing.T,
-	set admissioncatalog.CapabilitySet,
-	capability admissioncatalog.Capability,
-) {
+func requireReason(t *testing.T, descriptors []admissioncatalog.ReasonDescriptor, reason admission.Reason) admissioncatalog.ReasonDescriptor {
 	t.Helper()
 
-	if !set.Has(capability) {
-		t.Fatalf("capabilities %08b should contain %08b", set, capability)
+	for _, descriptor := range descriptors {
+		if descriptor.Reason == reason {
+			return descriptor
+		}
 	}
+	t.Fatalf("reason %s not found", reason)
+	return admissioncatalog.ReasonDescriptor{}
+}
+
+func requireKind(t *testing.T, descriptors []admissioncatalog.ComponentKindDescriptor, kind admission.ComponentKind) admissioncatalog.ComponentKindDescriptor {
+	t.Helper()
+
+	for _, descriptor := range descriptors {
+		if descriptor.Kind == kind {
+			return descriptor
+		}
+	}
+	t.Fatalf("kind %s not found", kind)
+	return admissioncatalog.ComponentKindDescriptor{}
+}
+
+func requireComponent(t *testing.T, descriptors []admissioncatalog.ComponentDescriptor, id admission.ComponentID) admissioncatalog.ComponentDescriptor {
+	t.Helper()
+
+	for _, descriptor := range descriptors {
+		if descriptor.ID == id {
+			return descriptor
+		}
+	}
+	t.Fatalf("component %s not found", id)
+	return admissioncatalog.ComponentDescriptor{}
 }
