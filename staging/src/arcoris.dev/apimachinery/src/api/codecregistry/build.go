@@ -20,8 +20,29 @@ import (
 	"arcoris.dev/apimachinery/api/codec"
 )
 
-// buildEntry validates one constructor argument and stores normalized metadata.
-func buildEntry(index int, c codec.BaseCodec) (Entry, error) {
+// buildEntry validates one registration and stores normalized metadata.
+func buildEntry(index int, registration Registration) (Entry, error) {
+	if registration.IsZero() {
+		return Entry{}, errorAt(
+			registrationPath(index),
+			ErrInvalidRegistration,
+			ErrorReasonInvalidRegistration,
+			"registration must be non-zero",
+		)
+	}
+
+	id, err := registration.id.Normalize()
+	if err != nil {
+		return Entry{}, wrapAt(
+			registrationIDPath(index),
+			ErrInvalidEntryID,
+			ErrorReasonInvalidEntryID,
+			"entry ID is invalid",
+			err,
+		)
+	}
+
+	c := registration.codec
 	if isNilCodec(c) {
 		return Entry{}, errorAt(
 			codecPath(index),
@@ -45,7 +66,7 @@ func buildEntry(index int, c codec.BaseCodec) (Entry, error) {
 		return Entry{}, err
 	}
 
-	return Entry{codec: c, info: cloneInfo(info)}, nil
+	return Entry{id: id, codec: c, info: cloneInfo(info)}, nil
 }
 
 // buildRegistry sorts entries and builds immutable indexes against sorted positions.
@@ -55,12 +76,14 @@ func buildRegistry(entries []Entry) Registry {
 
 	registry := Registry{
 		entries:     sorted,
-		byMediaType: make(map[codec.MediaType]int, mediaTypeCount(sorted)),
+		byID:        make(map[EntryID]int, len(sorted)),
+		byMediaType: make(map[codec.MediaType][]int, mediaTypeCount(sorted)),
 		byFormat:    make(map[codec.Format][]int, len(sorted)),
 	}
 	for i, entry := range sorted {
+		registry.byID[entry.id] = i
 		for _, mediaType := range entry.info.MediaTypes {
-			registry.byMediaType[mediaType] = i
+			registry.byMediaType[mediaType] = append(registry.byMediaType[mediaType], i)
 		}
 		registry.byFormat[entry.info.Format] = append(registry.byFormat[entry.info.Format], i)
 	}
@@ -78,8 +101,11 @@ func mediaTypeCount(entries []Entry) int {
 	return total
 }
 
-// compareEntries orders entries deterministically by format and first media type.
+// compareEntries orders entries deterministically by ID, format, and media type.
 func compareEntries(a Entry, b Entry) int {
+	if cmp := compareText(a.id.String(), b.id.String()); cmp != 0 {
+		return cmp
+	}
 	if cmp := compareText(a.info.Format.String(), b.info.Format.String()); cmp != 0 {
 		return cmp
 	}

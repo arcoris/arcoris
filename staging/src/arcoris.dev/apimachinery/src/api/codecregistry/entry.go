@@ -22,10 +22,13 @@ import "arcoris.dev/apimachinery/api/codec"
 // with normalized, detached metadata accepted by Registry construction. It does
 // not call Info again after registration.
 type Entry struct {
+	// id is the caller-owned stable identity for this configured codec candidate.
+	id EntryID
+
 	// codec is the original implementation passed to New.
 	//
 	// The registry keeps this exact interface value so typed lookup methods can
-	// return the implementation without wrappers or adapter allocations.
+	// return candidate implementations without wrappers or adapter allocations.
 	codec codec.BaseCodec
 
 	// info is the normalized metadata accepted during construction.
@@ -37,7 +40,12 @@ type Entry struct {
 
 // IsZero reports whether e contains no codec and no metadata.
 func (e Entry) IsZero() bool {
-	return e.codec == nil && e.info.IsZero()
+	return e.id.IsZero() && e.codec == nil && e.info.IsZero()
+}
+
+// ID returns the stable registry identity for this configured codec candidate.
+func (e Entry) ID() EntryID {
+	return e.id
 }
 
 // Codec returns the original codec implementation.

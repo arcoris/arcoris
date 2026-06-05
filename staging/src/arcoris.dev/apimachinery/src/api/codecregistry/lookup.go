@@ -16,6 +16,31 @@ package codecregistry
 
 import "arcoris.dev/apimachinery/api/codec"
 
+// LookupID returns the registry entry for one configured codec candidate.
+func (r Registry) LookupID(id EntryID) (Entry, bool) {
+	normalized, ok := normalizeEntryID(id)
+	if !ok {
+		return Entry{}, false
+	}
+
+	index, ok := r.byID[normalized]
+	return r.entryAt(index, ok)
+}
+
+// EntriesByMediaType returns entries grouped under mediaType.
+//
+// MediaType is a wire-representation grouping key, not a unique codec
+// identity. The returned slice is detached and preserves deterministic registry
+// entry order.
+func (r Registry) EntriesByMediaType(mediaType codec.MediaType) []Entry {
+	normalized, ok := normalizeMediaType(mediaType)
+	if !ok {
+		return nil
+	}
+
+	return r.entriesByIndexes(r.byMediaType[normalized])
+}
+
 // EntriesByFormat returns codec entries registered for format.
 //
 // Format is a grouping attribute, not a unique codec identity. The returned
@@ -26,7 +51,20 @@ func (r Registry) EntriesByFormat(format codec.Format) []Entry {
 		return nil
 	}
 
-	indexes := r.byFormat[normalized]
+	return r.entriesByIndexes(r.byFormat[normalized])
+}
+
+// entryAt returns the indexed entry when ok and index are valid.
+func (r Registry) entryAt(index int, ok bool) (Entry, bool) {
+	if !ok || index < 0 || index >= len(r.entries) {
+		return Entry{}, false
+	}
+
+	return r.entries[index], true
+}
+
+// entriesByIndexes returns detached entries for sorted registry indexes.
+func (r Registry) entriesByIndexes(indexes []int) []Entry {
 	if len(indexes) == 0 {
 		return nil
 	}
@@ -41,24 +79,14 @@ func (r Registry) EntriesByFormat(format codec.Format) []Entry {
 	return out
 }
 
-// LookupMediaType returns the codec entry registered for mediaType.
-func (r Registry) LookupMediaType(mediaType codec.MediaType) (Entry, bool) {
-	normalized, ok := normalizeMediaType(mediaType)
-	if !ok {
-		return Entry{}, false
+// normalizeEntryID canonicalizes lookup input and treats invalid input as absent.
+func normalizeEntryID(id EntryID) (EntryID, bool) {
+	normalized, err := id.Normalize()
+	if err != nil {
+		return "", false
 	}
 
-	index, ok := r.byMediaType[normalized]
-	return r.entryAt(index, ok)
-}
-
-// entryAt returns the indexed entry when ok and index are valid.
-func (r Registry) entryAt(index int, ok bool) (Entry, bool) {
-	if !ok || index < 0 || index >= len(r.entries) {
-		return Entry{}, false
-	}
-
-	return r.entries[index], true
+	return normalized, true
 }
 
 // normalizeFormat canonicalizes lookup input and treats invalid input as absent.

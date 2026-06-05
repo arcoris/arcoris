@@ -29,6 +29,9 @@ func TestEntryZero(t *testing.T) {
 	if entry.Codec() != nil {
 		t.Fatalf("zero entry Codec() = %v", entry.Codec())
 	}
+	if !entry.ID().IsZero() {
+		t.Fatalf("zero entry ID() = %q", entry.ID())
+	}
 	if !entry.Info().IsZero() {
 		t.Fatalf("zero entry Info() = %#v", entry.Info())
 	}
@@ -38,8 +41,7 @@ func TestEntryZero(t *testing.T) {
 }
 
 func TestEntryInfoDetached(t *testing.T) {
-	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
+	registry := testRegistry(t, testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON))
 	entry := registry.Entries()[0]
 
 	info := entry.Info()
@@ -55,9 +57,16 @@ func TestEntryInfoDetached(t *testing.T) {
 	}
 }
 
+func TestEntryID(t *testing.T) {
+	registry := testRegistry(t, testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON))
+
+	if got := registry.Entries()[0].ID(); got != MustEntryID("json.public") {
+		t.Fatalf("ID() = %q", got)
+	}
+}
+
 func TestEntryFormat(t *testing.T) {
-	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
+	registry := testRegistry(t, testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON))
 
 	if got := registry.Entries()[0].Format(); got != codec.FormatJSON {
 		t.Fatalf("Format() = %q", got)
@@ -65,8 +74,7 @@ func TestEntryFormat(t *testing.T) {
 }
 
 func TestEntryMediaTypesDetached(t *testing.T) {
-	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
+	registry := testRegistry(t, testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON))
 	entry := registry.Entries()[0]
 
 	mediaTypes := entry.MediaTypes()
@@ -78,8 +86,7 @@ func TestEntryMediaTypesDetached(t *testing.T) {
 }
 
 func TestEntryTargetsDetached(t *testing.T) {
-	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
+	registry := testRegistry(t, testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON))
 	entry := registry.Entries()[0]
 
 	targets := entry.Targets()
@@ -92,8 +99,7 @@ func TestEntryTargetsDetached(t *testing.T) {
 
 func TestEntryCodec(t *testing.T) {
 	c := newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON)
-	registry, err := New(c)
-	requireNoError(t, err)
+	registry := testRegistry(t, testRegistration("json.public", c))
 
 	if got := registry.Entries()[0].Codec(); got != c {
 		t.Fatalf("Codec() = %v; want original codec", got)

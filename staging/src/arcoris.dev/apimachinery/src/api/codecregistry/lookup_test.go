@@ -20,12 +20,143 @@ import (
 	"arcoris.dev/apimachinery/api/codec"
 )
 
-func TestEntriesByFormat(t *testing.T) {
-	registry, err := New(
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeYAML),
+func TestLookupID(t *testing.T) {
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
 	)
-	requireNoError(t, err)
+
+	entry, ok := registry.LookupID(MustEntryID("json.public"))
+	if !ok {
+		t.Fatalf("LookupID() = false")
+	}
+	if entry.ID() != MustEntryID("json.public") {
+		t.Fatalf("LookupID() ID = %q", entry.ID())
+	}
+}
+
+func TestLookupIDRejectsInvalidInput(t *testing.T) {
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
+
+	if _, ok := registry.LookupID("JSON.Public"); ok {
+		t.Fatalf("LookupID() = true for invalid ID")
+	}
+}
+
+func TestLookupIDMissingReturnsFalse(t *testing.T) {
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
+
+	if _, ok := registry.LookupID(MustEntryID("json.missing")); ok {
+		t.Fatalf("LookupID() = true for missing ID")
+	}
+}
+
+func TestEntriesByMediaType(t *testing.T) {
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
+
+	entries := registry.EntriesByMediaType(codec.MediaTypeJSON)
+	if len(entries) != 1 {
+		t.Fatalf("EntriesByMediaType() length = %d; want 1", len(entries))
+	}
+	if entries[0].ID() != MustEntryID("json.public") {
+		t.Fatalf("EntriesByMediaType()[0].ID() = %q", entries[0].ID())
+	}
+}
+
+func TestEntriesByMediaTypeAllowsMultipleEntries(t *testing.T) {
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+		testValueByteRegistration("json.storage", codec.FormatJSON, codec.MediaTypeJSON),
+	)
+
+	entries := registry.EntriesByMediaType(codec.MediaTypeJSON)
+	if len(entries) != 2 {
+		t.Fatalf("EntriesByMediaType() length = %d; want 2", len(entries))
+	}
+	if entries[0].ID() != MustEntryID("json.public") || entries[1].ID() != MustEntryID("json.storage") {
+		t.Fatalf("entry IDs = %q, %q", entries[0].ID(), entries[1].ID())
+	}
+}
+
+func TestEntriesByMediaTypeNormalizesInputIfSupported(t *testing.T) {
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
+
+	if entries := registry.EntriesByMediaType(" Application/JSON "); len(entries) != 1 {
+		t.Fatalf("EntriesByMediaType() length = %d; want 1", len(entries))
+	}
+}
+
+func TestEntriesByMediaTypeReturnsEmptyForMissingMediaType(t *testing.T) {
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
+
+	if entries := registry.EntriesByMediaType(codec.MediaTypeYAML); len(entries) != 0 {
+		t.Fatalf("EntriesByMediaType() length = %d; want 0", len(entries))
+	}
+}
+
+func TestEntriesByMediaTypeReturnsEmptyForInvalidMediaType(t *testing.T) {
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
+
+	if entries := registry.EntriesByMediaType("application/json; charset=utf-8"); len(entries) != 0 {
+		t.Fatalf("EntriesByMediaType() length = %d; want 0", len(entries))
+	}
+}
+
+func TestEntriesByMediaTypeReturnsDetachedSlice(t *testing.T) {
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
+
+	entries := registry.EntriesByMediaType(codec.MediaTypeJSON)
+	entries[0] = Entry{}
+
+	if registry.EntriesByMediaType(codec.MediaTypeJSON)[0].IsZero() {
+		t.Fatalf("registry entries mutated through EntriesByMediaType()")
+	}
+}
+
+func TestEntriesByMediaTypePreservesRegistryOrder(t *testing.T) {
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.z", codec.FormatJSON, codec.MediaTypeJSON),
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
+
+	entries := registry.EntriesByMediaType(codec.MediaTypeJSON)
+	if got := entries[0].ID(); got != MustEntryID("json.public") {
+		t.Fatalf("entries[0].ID() = %q; want json.public", got)
+	}
+	if got := entries[1].ID(); got != MustEntryID("json.z") {
+		t.Fatalf("entries[1].ID() = %q; want json.z", got)
+	}
+}
+
+func TestEntriesByFormat(t *testing.T) {
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+		testValueByteRegistration("json.storage", codec.FormatJSON, codec.MediaTypeYAML),
+	)
 
 	entries := registry.EntriesByFormat(codec.FormatJSON)
 	if len(entries) != 2 {
@@ -38,58 +169,45 @@ func TestEntriesByFormat(t *testing.T) {
 	}
 }
 
+func TestEntriesByFormatAllowsMultipleEntries(t *testing.T) {
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+		testValueByteRegistration("json.storage", codec.FormatJSON, codec.MediaTypeJSON),
+	)
+
+	if entries := registry.EntriesByFormat(codec.FormatJSON); len(entries) != 2 {
+		t.Fatalf("EntriesByFormat() length = %d; want 2", len(entries))
+	}
+}
+
 func TestEntriesByFormatNormalizesInputIfSupported(t *testing.T) {
-	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
 
 	if entries := registry.EntriesByFormat(" JSON "); len(entries) != 1 {
 		t.Fatalf("EntriesByFormat() length = %d; want 1", len(entries))
 	}
 }
 
-func TestLookupMediaType(t *testing.T) {
-	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
-
-	entry, ok := registry.LookupMediaType(codec.MediaTypeJSON)
-	if !ok {
-		t.Fatalf("LookupMediaType() = false")
-	}
-	if entry.Format() != codec.FormatJSON {
-		t.Fatalf("LookupMediaType() format = %q", entry.Format())
-	}
-}
-
-func TestLookupMediaTypeNormalizesInputIfSupported(t *testing.T) {
-	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
-
-	if _, ok := registry.LookupMediaType(" Application/JSON "); !ok {
-		t.Fatalf("LookupMediaType() did not normalize input")
-	}
-}
-
 func TestEntriesByFormatReturnsEmptyForMissingFormat(t *testing.T) {
-	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
 
 	if entries := registry.EntriesByFormat(codec.FormatYAML); len(entries) != 0 {
 		t.Fatalf("EntriesByFormat() length = %d; want 0", len(entries))
 	}
 }
 
-func TestLookupMissingMediaTypeReturnsFalse(t *testing.T) {
-	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
-
-	if _, ok := registry.LookupMediaType(codec.MediaTypeYAML); ok {
-		t.Fatalf("LookupMediaType() = true for missing media type")
-	}
-}
-
 func TestEntriesByFormatReturnsEmptyForInvalidFormat(t *testing.T) {
-	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
 
 	if entries := registry.EntriesByFormat("application/json"); len(entries) != 0 {
 		t.Fatalf("EntriesByFormat() length = %d; want 0", len(entries))
@@ -97,8 +215,10 @@ func TestEntriesByFormatReturnsEmptyForInvalidFormat(t *testing.T) {
 }
 
 func TestEntriesByFormatReturnsDetachedSlice(t *testing.T) {
-	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
 
 	entries := registry.EntriesByFormat(codec.FormatJSON)
 	entries[0] = Entry{}
@@ -109,37 +229,31 @@ func TestEntriesByFormatReturnsDetachedSlice(t *testing.T) {
 }
 
 func TestEntriesByFormatPreservesRegistryOrder(t *testing.T) {
-	registry, err := New(
-		newValueByteCodec(codec.FormatJSON, "application/vnd.z+json"),
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.z", codec.FormatJSON, "application/vnd.z+json"),
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
 	)
-	requireNoError(t, err)
 
 	entries := registry.EntriesByFormat(codec.FormatJSON)
-	if got := entries[0].MediaTypes()[0]; got != codec.MediaTypeJSON {
-		t.Fatalf("entries[0] media type = %q; want %q", got, codec.MediaTypeJSON)
+	if got := entries[0].ID(); got != MustEntryID("json.public") {
+		t.Fatalf("entries[0].ID() = %q; want json.public", got)
 	}
-	if got := entries[1].MediaTypes()[0]; got != "application/vnd.z+json" {
-		t.Fatalf("entries[1] media type = %q; want application/vnd.z+json", got)
-	}
-}
-
-func TestLookupInvalidMediaTypeReturnsFalse(t *testing.T) {
-	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
-
-	if _, ok := registry.LookupMediaType("application/json; charset=utf-8"); ok {
-		t.Fatalf("LookupMediaType() = true for invalid media type")
+	if got := entries[1].ID(); got != MustEntryID("json.z") {
+		t.Fatalf("entries[1].ID() = %q; want json.z", got)
 	}
 }
 
-func TestZeroRegistryLookupReturnsFalse(t *testing.T) {
+func TestZeroRegistryLookupsReturnEmpty(t *testing.T) {
 	var registry Registry
 
+	if _, ok := registry.LookupID(MustEntryID("json.public")); ok {
+		t.Fatalf("LookupID() = true on zero registry")
+	}
+	if entries := registry.EntriesByMediaType(codec.MediaTypeJSON); len(entries) != 0 {
+		t.Fatalf("EntriesByMediaType() length = %d; want 0", len(entries))
+	}
 	if entries := registry.EntriesByFormat(codec.FormatJSON); len(entries) != 0 {
 		t.Fatalf("EntriesByFormat() length = %d; want 0", len(entries))
-	}
-	if _, ok := registry.LookupMediaType(codec.MediaTypeJSON); ok {
-		t.Fatalf("LookupMediaType() = true on zero registry")
 	}
 }

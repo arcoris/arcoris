@@ -24,7 +24,9 @@ func TestErrorReasonStrings(t *testing.T) {
 	}{
 		{name: "invalid codec", reason: ErrorReasonInvalidCodec, want: "invalid_codec"},
 		{name: "invalid info", reason: ErrorReasonInvalidInfo, want: "invalid_info"},
-		{name: "duplicate media type", reason: ErrorReasonDuplicateMediaType, want: "duplicate_media_type"},
+		{name: "invalid entry ID", reason: ErrorReasonInvalidEntryID, want: "invalid_entry_id"},
+		{name: "duplicate entry ID", reason: ErrorReasonDuplicateEntryID, want: "duplicate_entry_id"},
+		{name: "invalid registration", reason: ErrorReasonInvalidRegistration, want: "invalid_registration"},
 		{name: "capability mismatch", reason: ErrorReasonCapabilityMismatch, want: "capability_mismatch"},
 	}
 

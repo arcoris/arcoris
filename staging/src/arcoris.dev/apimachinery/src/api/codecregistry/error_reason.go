@@ -24,8 +24,14 @@ const (
 	// ErrorReasonInvalidInfo reports malformed codec metadata.
 	ErrorReasonInvalidInfo ErrorReason = "invalid_info"
 
-	// ErrorReasonDuplicateMediaType reports an ambiguous media type index.
-	ErrorReasonDuplicateMediaType ErrorReason = "duplicate_media_type"
+	// ErrorReasonInvalidEntryID reports malformed configured codec identity.
+	ErrorReasonInvalidEntryID ErrorReason = "invalid_entry_id"
+
+	// ErrorReasonDuplicateEntryID reports duplicate configured codec identity.
+	ErrorReasonDuplicateEntryID ErrorReason = "duplicate_entry_id"
+
+	// ErrorReasonInvalidRegistration reports a missing or incomplete registration.
+	ErrorReasonInvalidRegistration ErrorReason = "invalid_registration"
 
 	// ErrorReasonCapabilityMismatch reports disagreement between metadata
 	// targets and implemented codec capability interfaces.

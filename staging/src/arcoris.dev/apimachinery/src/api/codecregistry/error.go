@@ -27,8 +27,14 @@ var (
 	// ErrInvalidInfo classifies malformed or non-normalizable codec metadata.
 	ErrInvalidInfo = errors.New("invalid codec info")
 
-	// ErrDuplicateMediaType classifies ambiguous media type indexes.
-	ErrDuplicateMediaType = errors.New("duplicate codec media type")
+	// ErrInvalidEntryID classifies malformed registry entry identities.
+	ErrInvalidEntryID = errors.New("invalid codec registry entry ID")
+
+	// ErrDuplicateEntryID classifies duplicate configured codec identities.
+	ErrDuplicateEntryID = errors.New("duplicate codec registry entry ID")
+
+	// ErrInvalidRegistration classifies missing or incomplete registrations.
+	ErrInvalidRegistration = errors.New("invalid codec registration")
 
 	// ErrCapabilityMismatch classifies disagreement between Info.Targets and
 	// implemented byte or streaming capability interfaces.

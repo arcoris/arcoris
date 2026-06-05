@@ -16,14 +16,24 @@ package codecregistry
 
 import "fmt"
 
-// codecPath returns the stable diagnostic path for one constructor argument.
+// registrationPath returns the stable diagnostic path for one registration.
+func registrationPath(index int) string {
+	return fmt.Sprintf("registrations[%d]", index)
+}
+
+// registrationIDPath returns the stable diagnostic path for one entry ID.
+func registrationIDPath(index int) string {
+	return registrationPath(index) + ".id"
+}
+
+// codecPath returns the stable diagnostic path for one registered codec.
 func codecPath(index int) string {
-	return fmt.Sprintf("codecs[%d]", index)
+	return registrationPath(index) + ".codec"
 }
 
 // infoPath returns the stable diagnostic path for codec metadata.
 func infoPath(index int) string {
-	return codecPath(index) + ".info"
+	return registrationPath(index) + ".info"
 }
 
 // mediaTypePath returns the stable diagnostic path for one declared media type.
@@ -33,5 +43,5 @@ func mediaTypePath(index int, mediaTypeIndex int) string {
 
 // capabilityPath returns the stable diagnostic path for capability checks.
 func capabilityPath(index int) string {
-	return codecPath(index) + ".capabilities"
+	return registrationPath(index) + ".capabilities"
 }

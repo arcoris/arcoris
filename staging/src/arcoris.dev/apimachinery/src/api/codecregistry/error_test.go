@@ -29,7 +29,7 @@ func TestErrorStringNil(t *testing.T) {
 }
 
 func TestErrorStringIncludesPackageName(t *testing.T) {
-	err := errorAt("codecs[0]", ErrInvalidCodec, ErrorReasonInvalidCodec, "codec must be non-nil")
+	err := errorAt("registrations[0].codec", ErrInvalidCodec, ErrorReasonInvalidCodec, "codec must be non-nil")
 
 	if got := err.Error(); got == "" || !strings.Contains(got, "codecregistry") {
 		t.Fatalf("Error() = %q; want package name", got)
@@ -45,13 +45,13 @@ func TestErrorUnwrapNil(t *testing.T) {
 }
 
 func TestErrorUnwrapExposesSentinel(t *testing.T) {
-	err := errorAt("codecs[0]", ErrInvalidCodec, ErrorReasonInvalidCodec, "codec must be non-nil")
+	err := errorAt("registrations[0].codec", ErrInvalidCodec, ErrorReasonInvalidCodec, "codec must be non-nil")
 
 	requireErrorIs(t, err, ErrInvalidCodec)
 }
 
 func TestErrorAsRegistryError(t *testing.T) {
-	err := errorAt("codecs[0]", ErrInvalidCodec, ErrorReasonInvalidCodec, "codec must be non-nil")
+	err := errorAt("registrations[0].codec", ErrInvalidCodec, ErrorReasonInvalidCodec, "codec must be non-nil")
 
 	var registryError *Error
 	if !errors.As(err, &registryError) {

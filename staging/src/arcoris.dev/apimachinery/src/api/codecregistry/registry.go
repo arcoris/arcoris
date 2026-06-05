@@ -18,14 +18,21 @@ import "arcoris.dev/apimachinery/api/codec"
 
 // Registry is an immutable owner-created index of configured codec instances.
 //
+// EntryID is the only unique registry identity. MediaType and Format are
+// grouping keys because multiple configured codec candidates may intentionally
+// share the same wire media type and codec family.
+//
 // Registry is safe for concurrent lookup after construction. It does not make
 // registered codec implementations themselves concurrency-safe.
 type Registry struct {
 	// entries stores registrations in deterministic listing order.
 	entries []Entry
 
-	// byMediaType maps canonical media types to indexes in entries.
-	byMediaType map[codec.MediaType]int
+	// byID maps canonical entry IDs to one index in entries.
+	byID map[EntryID]int
+
+	// byMediaType maps canonical media types to one or more indexes in entries.
+	byMediaType map[codec.MediaType][]int
 
 	// byFormat maps canonical formats to one or more indexes in entries.
 	byFormat map[codec.Format][]int

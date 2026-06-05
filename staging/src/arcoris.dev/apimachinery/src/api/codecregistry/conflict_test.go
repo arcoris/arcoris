@@ -20,12 +20,25 @@ import (
 	"arcoris.dev/apimachinery/api/codec"
 )
 
-func TestNewAllowsDuplicateFormatWithDifferentMediaTypes(t *testing.T) {
-	registry, err := New(
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeYAML),
+func TestNewAllowsRepeatedMediaTypeWithDifferentEntryIDs(t *testing.T) {
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+		testValueByteRegistration("json.storage", codec.FormatJSON, codec.MediaTypeJSON),
 	)
-	requireNoError(t, err)
+
+	entries := registry.EntriesByMediaType(codec.MediaTypeJSON)
+	if len(entries) != 2 {
+		t.Fatalf("EntriesByMediaType(json) length = %d; want 2", len(entries))
+	}
+}
+
+func TestNewAllowsDuplicateFormat(t *testing.T) {
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+		testValueByteRegistration("json.storage", codec.FormatJSON, "application/vnd.arcoris.storage+json"),
+	)
 
 	entries := registry.EntriesByFormat(codec.FormatJSON)
 	if len(entries) != 2 {
@@ -33,50 +46,36 @@ func TestNewAllowsDuplicateFormatWithDifferentMediaTypes(t *testing.T) {
 	}
 }
 
-func TestNewRejectsDuplicateMediaType(t *testing.T) {
+func TestNewRejectsDuplicateEntryID(t *testing.T) {
 	_, err := New(
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
-		newValueByteCodec(codec.FormatYAML, codec.MediaTypeJSON),
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+		testValueByteRegistration("json.public", codec.FormatJSON, "application/vnd.arcoris.storage+json"),
 	)
 
-	requireErrorIs(t, err, ErrDuplicateMediaType)
-	requireRegistryError(t, err, "codecs[1].info.mediaTypes[0]", ErrorReasonDuplicateMediaType)
+	requireErrorIs(t, err, ErrDuplicateEntryID)
+	requireRegistryError(t, err, "registrations[1].id", ErrorReasonDuplicateEntryID)
+	requireRegistryDetailContains(t, err, "registrations[0]")
 }
 
-func TestDuplicateMediaTypeErrorUsesNormalizedMediaTypeIndex(t *testing.T) {
-	c := &fakeValueByteCodec{fakeBaseCodec: fakeBaseCodec{
-		info: codec.Info{
-			Format: codec.FormatYAML,
-			MediaTypes: []codec.MediaType{
-				"application/aaa",
-				codec.MediaTypeJSON,
-			},
-			Targets: []codec.Target{codec.TargetValue},
-		},
-	}}
-
+func TestRepeatedMediaTypeNoLongerErrors(t *testing.T) {
 	_, err := New(
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
-		c,
+		testObjectByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+		testObjectByteRegistration("json.storage", codec.FormatJSON, codec.MediaTypeJSON),
 	)
 
-	requireErrorIs(t, err, ErrDuplicateMediaType)
-	requireRegistryError(t, err, "codecs[1].info.mediaTypes[1]", ErrorReasonDuplicateMediaType)
+	requireNoError(t, err)
 }
 
-func TestDuplicateMediaTypeError(t *testing.T) {
-	_, err := New(
-		newObjectByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
-		newObjectByteCodec(codec.FormatYAML, codec.MediaTypeJSON),
-	)
-
-	requireErrorIs(t, err, ErrDuplicateMediaType)
-}
-
-func TestDuplicateCodecInstanceRejected(t *testing.T) {
+func TestDuplicateCodecInstanceAllowedWithDifferentEntryIDs(t *testing.T) {
 	c := newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON)
 
-	_, err := New(c, c)
+	registry := testRegistry(
+		t,
+		testRegistration("json.public", c),
+		testRegistration("json.storage", c),
+	)
 
-	requireErrorIs(t, err, ErrDuplicateMediaType)
+	if registry.Len() != 2 {
+		t.Fatalf("Len() = %d; want 2", registry.Len())
+	}
 }

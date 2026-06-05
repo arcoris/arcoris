@@ -16,26 +16,38 @@ package codecregistry
 
 import "testing"
 
+func TestRegistrationPath(t *testing.T) {
+	if got := registrationPath(7); got != "registrations[7]" {
+		t.Fatalf("registrationPath() = %q", got)
+	}
+}
+
+func TestRegistrationIDPath(t *testing.T) {
+	if got := registrationIDPath(7); got != "registrations[7].id" {
+		t.Fatalf("registrationIDPath() = %q", got)
+	}
+}
+
 func TestCodecPath(t *testing.T) {
-	if got := codecPath(7); got != "codecs[7]" {
+	if got := codecPath(7); got != "registrations[7].codec" {
 		t.Fatalf("codecPath() = %q", got)
 	}
 }
 
 func TestInfoPath(t *testing.T) {
-	if got := infoPath(7); got != "codecs[7].info" {
+	if got := infoPath(7); got != "registrations[7].info" {
 		t.Fatalf("infoPath() = %q", got)
 	}
 }
 
 func TestMediaTypePath(t *testing.T) {
-	if got := mediaTypePath(7, 2); got != "codecs[7].info.mediaTypes[2]" {
+	if got := mediaTypePath(7, 2); got != "registrations[7].info.mediaTypes[2]" {
 		t.Fatalf("mediaTypePath() = %q", got)
 	}
 }
 
 func TestCapabilityPath(t *testing.T) {
-	if got := capabilityPath(7); got != "codecs[7].capabilities" {
+	if got := capabilityPath(7); got != "registrations[7].capabilities" {
 		t.Fatalf("capabilityPath() = %q", got)
 	}
 }

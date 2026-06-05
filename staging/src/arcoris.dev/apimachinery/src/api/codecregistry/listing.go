@@ -48,6 +48,17 @@ func (r Registry) Codecs() []codec.BaseCodec {
 	return out
 }
 
+// IDs returns detached unique entry IDs sorted by canonical ID string.
+func (r Registry) IDs() []EntryID {
+	out := make([]EntryID, 0, len(r.byID))
+	for id := range r.byID {
+		out = append(out, id)
+	}
+	slices.Sort(out)
+
+	return out
+}
+
 // Formats returns detached unique formats sorted by canonical format string.
 func (r Registry) Formats() []codec.Format {
 	out := make([]codec.Format, 0, len(r.byFormat))
@@ -59,7 +70,7 @@ func (r Registry) Formats() []codec.Format {
 	return out
 }
 
-// MediaTypes returns detached media types sorted by canonical media type string.
+// MediaTypes returns detached unique media types sorted by canonical media type string.
 func (r Registry) MediaTypes() []codec.MediaType {
 	out := make([]codec.MediaType, 0, len(r.byMediaType))
 	for mediaType := range r.byMediaType {

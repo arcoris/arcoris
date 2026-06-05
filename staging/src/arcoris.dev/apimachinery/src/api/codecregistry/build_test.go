@@ -21,13 +21,13 @@ import (
 )
 
 func TestBuildEntryRejectsNilCodec(t *testing.T) {
-	entry, err := buildEntry(0, nil)
+	entry, err := buildEntry(0, Register(MustEntryID("json.public"), nil))
 
 	if !entry.IsZero() {
 		t.Fatalf("entry = %#v; want zero", entry)
 	}
 	requireErrorIs(t, err, ErrInvalidCodec)
-	requireRegistryError(t, err, "codecs[0]", ErrorReasonInvalidCodec)
+	requireRegistryError(t, err, "registrations[0].codec", ErrorReasonInvalidCodec)
 }
 
 func TestBuildEntryNormalizesInfo(t *testing.T) {
@@ -35,9 +35,12 @@ func TestBuildEntryNormalizesInfo(t *testing.T) {
 		info: testInfo(" JSON ", " Application/JSON ", codec.TargetValue),
 	}}
 
-	entry, err := buildEntry(0, c)
+	entry, err := buildEntry(0, testRegistration("json.public", c))
 	requireNoError(t, err)
 
+	if entry.ID() != MustEntryID("json.public") {
+		t.Fatalf("ID() = %q", entry.ID())
+	}
 	if entry.Format() != codec.FormatJSON {
 		t.Fatalf("Format() = %q", entry.Format())
 	}
@@ -57,7 +60,7 @@ func TestBuildEntryStoresDetachedInfo(t *testing.T) {
 		},
 	}}
 
-	entry, err := buildEntry(0, c)
+	entry, err := buildEntry(0, testRegistration("json.public", c))
 	requireNoError(t, err)
 
 	mediaTypes[0] = codec.MediaTypeYAML
@@ -72,29 +75,45 @@ func TestBuildEntryStoresDetachedInfo(t *testing.T) {
 }
 
 func TestBuildRegistrySortsEntriesAndIndexes(t *testing.T) {
-	yamlEntry, err := buildEntry(0, newValueByteCodec(codec.FormatYAML, codec.MediaTypeYAML))
+	yamlEntry, err := buildEntry(
+		0,
+		testValueByteRegistration("yaml.public", codec.FormatYAML, codec.MediaTypeYAML),
+	)
 	requireNoError(t, err)
-	jsonEntry, err := buildEntry(1, newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
+	jsonEntry, err := buildEntry(
+		1,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
 	requireNoError(t, err)
 
 	registry := buildRegistry([]Entry{yamlEntry, jsonEntry})
 
-	if got := registry.entries[0].Format(); got != codec.FormatJSON {
-		t.Fatalf("entries[0].Format() = %q", got)
+	if got := registry.entries[0].ID(); got != MustEntryID("json.public") {
+		t.Fatalf("entries[0].ID() = %q", got)
 	}
 	entries := registry.EntriesByFormat(codec.FormatYAML)
 	if len(entries) != 1 || entries[0].Format() != codec.FormatYAML {
 		t.Fatalf("EntriesByFormat(yaml) = %#v", entries)
 	}
-	if entry, ok := registry.LookupMediaType(codec.MediaTypeJSON); !ok || entry.Format() != codec.FormatJSON {
-		t.Fatalf("LookupMediaType(json) = %#v, %v", entry, ok)
+	entries = registry.EntriesByMediaType(codec.MediaTypeJSON)
+	if len(entries) != 1 || entries[0].Format() != codec.FormatJSON {
+		t.Fatalf("EntriesByMediaType(json) = %#v", entries)
+	}
+	if entry, ok := registry.LookupID(MustEntryID("json.public")); !ok || entry.Format() != codec.FormatJSON {
+		t.Fatalf("LookupID(json.public) = %#v, %v", entry, ok)
 	}
 }
 
-func TestNewBuildsFormatGroupsAfterSorting(t *testing.T) {
-	zEntry, err := buildEntry(0, newValueByteCodec(codec.FormatJSON, "application/vnd.z+json"))
+func TestNewBuildsIDMediaTypeAndFormatIndexesAfterSorting(t *testing.T) {
+	zEntry, err := buildEntry(
+		0,
+		testValueByteRegistration("json.z", codec.FormatJSON, "application/vnd.z+json"),
+	)
 	requireNoError(t, err)
-	jsonEntry, err := buildEntry(1, newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
+	jsonEntry, err := buildEntry(
+		1,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
 	requireNoError(t, err)
 
 	registry := buildRegistry([]Entry{zEntry, jsonEntry})
@@ -109,10 +128,17 @@ func TestNewBuildsFormatGroupsAfterSorting(t *testing.T) {
 	if got := registry.entries[indexes[0]].MediaTypes()[0]; got != codec.MediaTypeJSON {
 		t.Fatalf("first grouped media type = %q; want %q", got, codec.MediaTypeJSON)
 	}
+	if _, ok := registry.byID[MustEntryID("json.public")]; !ok {
+		t.Fatalf("byID missing json.public")
+	}
+	if indexes := registry.byMediaType[codec.MediaTypeJSON]; len(indexes) != 1 {
+		t.Fatalf("byMediaType length = %d; want 1", len(indexes))
+	}
 }
 
 func TestMediaTypeCount(t *testing.T) {
 	entry := Entry{
+		id: MustEntryID("json.public"),
 		info: codec.Info{
 			MediaTypes: []codec.MediaType{
 				codec.MediaTypeJSON,
@@ -126,10 +152,18 @@ func TestMediaTypeCount(t *testing.T) {
 	}
 }
 
-func TestCompareEntriesByFormatThenMediaType(t *testing.T) {
-	a := Entry{info: codec.Info{Format: codec.FormatJSON, MediaTypes: []codec.MediaType{codec.MediaTypeYAML}}}
-	b := Entry{info: codec.Info{Format: codec.FormatYAML, MediaTypes: []codec.MediaType{codec.MediaTypeJSON}}}
+func TestCompareEntriesByIDThenFormatThenMediaType(t *testing.T) {
+	a := Entry{id: MustEntryID("json.a"), info: codec.Info{Format: codec.FormatYAML, MediaTypes: []codec.MediaType{codec.MediaTypeYAML}}}
+	b := Entry{id: MustEntryID("json.b"), info: codec.Info{Format: codec.FormatJSON, MediaTypes: []codec.MediaType{codec.MediaTypeJSON}}}
 
+	if got := compareEntries(a, b); got >= 0 {
+		t.Fatalf("compareEntries(id a, id b) = %d", got)
+	}
+
+	a.id = MustEntryID("json.same")
+	b.id = MustEntryID("json.same")
+	a.info.Format = codec.FormatJSON
+	b.info.Format = codec.FormatYAML
 	if got := compareEntries(a, b); got >= 0 {
 		t.Fatalf("compareEntries(json, yaml) = %d", got)
 	}

@@ -39,10 +39,10 @@ func TestNewRejectsDeclaredTargetWithoutCapability(t *testing.T) {
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue),
 	}
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
-	requireRegistryError(t, err, "codecs[0].capabilities", ErrorReasonCapabilityMismatch)
+	requireRegistryError(t, err, "registrations[0].capabilities", ErrorReasonCapabilityMismatch)
 }
 
 func TestCapabilityMismatchDetailDeclaredTargetWithoutCapability(t *testing.T) {
@@ -50,7 +50,7 @@ func TestCapabilityMismatchDetailDeclaredTargetWithoutCapability(t *testing.T) {
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue),
 	}
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
 	requireRegistryDetailContains(t, err, "declares target")
@@ -62,10 +62,10 @@ func TestNewRejectsCapabilityWithoutDeclaredTarget(t *testing.T) {
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetObject),
 	}}
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
-	requireRegistryError(t, err, "codecs[0].capabilities", ErrorReasonCapabilityMismatch)
+	requireRegistryError(t, err, "registrations[0].capabilities", ErrorReasonCapabilityMismatch)
 }
 
 func TestCapabilityMismatchDetailCapabilityWithoutDeclaredTarget(t *testing.T) {
@@ -73,7 +73,7 @@ func TestCapabilityMismatchDetailCapabilityWithoutDeclaredTarget(t *testing.T) {
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetObject),
 	}}
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
 	requireRegistryDetailContains(t, err, "does not declare target")
@@ -91,7 +91,7 @@ func TestCapabilityValidationTargetValueRequiresValueByteOrStream(t *testing.T) 
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := New(tt.codec)
+			_, err := New(testRegistration("codec."+tt.name, tt.codec))
 			requireNoError(t, err)
 		})
 	}
@@ -99,7 +99,7 @@ func TestCapabilityValidationTargetValueRequiresValueByteOrStream(t *testing.T) 
 	c := fakeBaseCodec{
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue),
 	}
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 	requireErrorIs(t, err, ErrCapabilityMismatch)
 }
 
@@ -114,7 +114,7 @@ func TestCapabilityValidationTargetObjectRequiresObjectByteOrStream(t *testing.T
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := New(tt.codec)
+			_, err := New(testRegistration("codec."+tt.name, tt.codec))
 			requireNoError(t, err)
 		})
 	}
@@ -122,7 +122,7 @@ func TestCapabilityValidationTargetObjectRequiresObjectByteOrStream(t *testing.T
 	c := fakeBaseCodec{
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetObject),
 	}
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 	requireErrorIs(t, err, ErrCapabilityMismatch)
 }
 
@@ -137,7 +137,7 @@ func TestCapabilityValidationTargetObjectOwnershipRequiresOwnershipByteOrStream(
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := New(tt.codec)
+			_, err := New(testRegistration("codec."+tt.name, tt.codec))
 			requireNoError(t, err)
 		})
 	}
@@ -145,7 +145,7 @@ func TestCapabilityValidationTargetObjectOwnershipRequiresOwnershipByteOrStream(
 	c := fakeBaseCodec{
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetObjectOwnership),
 	}
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 	requireErrorIs(t, err, ErrCapabilityMismatch)
 }
 
@@ -154,7 +154,7 @@ func TestCapabilityValidationValueCapabilityRequiresDeclaredTarget(t *testing.T)
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetObject, codec.TargetObjectOwnership),
 	}}
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
 	requireRegistryDetailContains(t, err, "codec.ValueCodec or codec.ValueStreamCodec")
@@ -165,7 +165,7 @@ func TestCapabilityValidationValueStreamCapabilityRequiresDeclaredTarget(t *test
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetObject, codec.TargetObjectOwnership),
 	}}
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
 	requireRegistryDetailContains(t, err, "codec.ValueCodec or codec.ValueStreamCodec")
@@ -176,7 +176,7 @@ func TestCapabilityValidationObjectCapabilityRequiresDeclaredTarget(t *testing.T
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue, codec.TargetObjectOwnership),
 	}}
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
 	requireRegistryDetailContains(t, err, "codec.ObjectCodec or codec.ObjectStreamCodec")
@@ -187,7 +187,7 @@ func TestCapabilityValidationObjectStreamCapabilityRequiresDeclaredTarget(t *tes
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue, codec.TargetObjectOwnership),
 	}}
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
 	requireRegistryDetailContains(t, err, "codec.ObjectCodec or codec.ObjectStreamCodec")
@@ -198,7 +198,7 @@ func TestCapabilityValidationOwnershipCapabilityRequiresDeclaredTarget(t *testin
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue, codec.TargetObject),
 	}}
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
 	requireRegistryDetailContains(t, err, "codec.ObjectOwnershipCodec or codec.ObjectOwnershipStreamCodec")
@@ -209,7 +209,7 @@ func TestCapabilityValidationOwnershipStreamCapabilityRequiresDeclaredTarget(t *
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue, codec.TargetObject),
 	}}
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
 	requireRegistryDetailContains(t, err, "codec.ObjectOwnershipCodec or codec.ObjectOwnershipStreamCodec")
@@ -220,7 +220,7 @@ func TestCapabilityValidationFullByteRequiresAllTargets(t *testing.T) {
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue, codec.TargetObject),
 	}}
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
 }
@@ -230,7 +230,7 @@ func TestCapabilityValidationFullStreamingRequiresAllTargets(t *testing.T) {
 		info: testInfo(codec.FormatJSON, codec.MediaTypeJSON, codec.TargetValue, codec.TargetObject),
 	}}
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrCapabilityMismatch)
 }

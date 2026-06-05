@@ -12,15 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package codecregistry provides owner-created registries for configured API
-// codec implementations.
+// Package codecregistry provides immutable owner-created candidate catalogs for
+// configured API codec implementations.
 //
 // The package indexes already-configured api/codec BaseCodec implementations by
-// media type and groups them by format. MediaType is the unique lookup key.
-// Format is a non-unique grouping attribute for families such as JSON, YAML, or
-// CBOR, where one family may expose multiple media types. The registry validates
-// codec metadata, checks declared targets against implemented byte and
-// streaming capabilities, and exposes typed lookup helpers for codec
+// caller-supplied EntryID and groups them by media type and format. EntryID is
+// the unique identity of one configured codec candidate. MediaType is a
+// non-unique grouping key for wire representation. Format is a non-unique
+// grouping key for codec families such as JSON, YAML, or CBOR. Multiple entries
+// may intentionally share the same MediaType and Format when they represent
+// different configured runtime policies.
+//
+// The registry validates codec metadata, checks declared targets against
+// implemented byte and streaming capabilities, stores normalized detached
+// metadata snapshots, and exposes typed candidate-list helpers for codec
 // capabilities.
 //
 // Registry construction accepts normalizable codec.Info metadata, stores a
@@ -30,7 +35,8 @@
 //
 // Registries are immutable after construction and do not use global mutable
 // state, init-time registration, or default codec bundles. Callers decide which
-// already-configured concrete implementations to register.
+// already-configured concrete implementations to register and assign each
+// configured candidate a stable EntryID.
 //
 // A codec's Info.Targets must match its implemented capability interfaces.
 // Declaring TargetValue requires ValueCodec or ValueStreamCodec. Implementing
@@ -38,9 +44,11 @@
 // TargetObject with ObjectCodec/ObjectStreamCodec and TargetObjectOwnership
 // with ObjectOwnershipCodec/ObjectOwnershipStreamCodec.
 //
-// The package does not configure codecs, resolve options, interpret profiles,
-// parse protocol metadata, negotiate media preferences, create codec instances,
-// implement codecs, validate API values, apply objects, access storage, run
-// admission, perform resource catalog lookup, or execute runtime/server
-// lifecycle behavior.
+// The package does not select an operational codec. It does not configure
+// codecs, resolve options, interpret roles, profiles, parameters, MIME headers,
+// HTTP Accept values, media preferences, or runtime policies. It does not create
+// codec instances, implement codecs, validate API values, apply objects, access
+// storage, run admission, perform resource catalog lookup, or execute
+// runtime/server lifecycle behavior. Future selection/profile layers choose
+// exactly one candidate from registry candidate sets.
 package codecregistry

@@ -14,35 +14,33 @@
 
 package codecregistry
 
-import "arcoris.dev/apimachinery/api/codec"
-
-// New validates configured codecs and returns an immutable registry.
+// New validates configured codec registrations and returns an immutable registry.
 //
 // New accepts normalizable codec.Info metadata, stores normalized detached
 // metadata in registry entries, and rejects invalid or non-normalizable
 // metadata. Registered codec implementations are kept as-is, but their metadata
 // is snapshotted during construction.
 //
-// Media types are unique registry lookup keys. Formats are non-unique grouping
-// attributes, so multiple configured codec instances may share the same format
-// when they expose different media types.
+// EntryID is the only unique registry identity. Media types and formats are
+// grouping attributes, so multiple configured codec instances may share the same
+// media type and format.
 //
-// Construction is all-or-nothing. If any codec is invalid, no partial Registry
-// is returned.
-func New(codecs ...codec.BaseCodec) (Registry, error) {
-	if len(codecs) == 0 {
+// Construction is all-or-nothing. If any registration is invalid, no partial
+// Registry is returned.
+func New(registrations ...Registration) (Registry, error) {
+	if len(registrations) == 0 {
 		return Registry{}, nil
 	}
 
-	entries := make([]Entry, 0, len(codecs))
-	seenMediaTypes := make(map[codec.MediaType]int, len(codecs))
+	entries := make([]Entry, 0, len(registrations))
+	seenIDs := make(map[EntryID]int, len(registrations))
 
-	for i, current := range codecs {
+	for i, current := range registrations {
 		entry, err := buildEntry(i, current)
 		if err != nil {
 			return Registry{}, err
 		}
-		if err := checkEntryConflicts(i, entry, seenMediaTypes); err != nil {
+		if err := checkEntryConflicts(i, entry, seenIDs); err != nil {
 			return Registry{}, err
 		}
 

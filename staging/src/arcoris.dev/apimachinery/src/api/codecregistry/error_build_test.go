@@ -23,23 +23,23 @@ import (
 )
 
 func TestErrorAtBuildsStructuredError(t *testing.T) {
-	err := errorAt("codecs[0]", ErrInvalidCodec, ErrorReasonInvalidCodec, "codec must be non-nil")
+	err := errorAt("registrations[0].codec", ErrInvalidCodec, ErrorReasonInvalidCodec, "codec must be non-nil")
 
 	requireErrorIs(t, err, ErrInvalidCodec)
-	requireRegistryError(t, err, "codecs[0]", ErrorReasonInvalidCodec)
+	requireRegistryError(t, err, "registrations[0].codec", ErrorReasonInvalidCodec)
 }
 
 func TestErrorfAtFormatsDetail(t *testing.T) {
 	err := errorfAt(
-		"codecs[0].info.mediaTypes[0]",
-		ErrDuplicateMediaType,
-		ErrorReasonDuplicateMediaType,
-		"codec media type %q duplicates codecs[%d]",
-		codec.MediaTypeJSON,
+		"registrations[1].id",
+		ErrDuplicateEntryID,
+		ErrorReasonDuplicateEntryID,
+		"entry ID %q duplicates registrations[%d]",
+		MustEntryID("json.public"),
 		1,
 	)
 
-	if !strings.Contains(err.Error(), "application/json") || !strings.Contains(err.Error(), "1") {
+	if !strings.Contains(err.Error(), "json.public") || !strings.Contains(err.Error(), "1") {
 		t.Fatalf("Error() = %q; want formatted detail", err.Error())
 	}
 }
@@ -47,7 +47,7 @@ func TestErrorfAtFormatsDetail(t *testing.T) {
 func TestWrapAtPreservesCause(t *testing.T) {
 	cause := codec.ErrorAt("codec.info", codec.ErrInvalidInfo, codec.ErrorReasonInvalidInfo, "bad info")
 
-	err := wrapAt("codecs[0].info", ErrInvalidInfo, ErrorReasonInvalidInfo, "codec info is invalid", cause)
+	err := wrapAt("registrations[0].info", ErrInvalidInfo, ErrorReasonInvalidInfo, "codec info is invalid", cause)
 
 	requireErrorIs(t, err, ErrInvalidInfo)
 	requireErrorIs(t, err, codec.ErrInvalidInfo)
@@ -57,50 +57,50 @@ func TestWrapAtPreservesCause(t *testing.T) {
 }
 
 func TestInvalidInfoWrapsCodecInvalidInfo(t *testing.T) {
-	_, err := New(fakeBaseCodec{info: codec.Info{}})
+	_, err := New(testRegistration("json.public", fakeBaseCodec{info: codec.Info{}}))
 
 	requireErrorIs(t, err, ErrInvalidInfo)
 	requireErrorIs(t, err, codec.ErrInvalidInfo)
 }
 
 func TestNilCodecError(t *testing.T) {
-	_, err := New(nil)
+	_, err := New(Register(MustEntryID("json.public"), nil))
 
 	requireErrorIs(t, err, ErrInvalidCodec)
-	requireRegistryError(t, err, "codecs[0]", ErrorReasonInvalidCodec)
+	requireRegistryError(t, err, "registrations[0].codec", ErrorReasonInvalidCodec)
 }
 
 func TestTypedNilCodecError(t *testing.T) {
 	var c *fakeValueByteCodec
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrInvalidCodec)
-	requireRegistryError(t, err, "codecs[0]", ErrorReasonInvalidCodec)
+	requireRegistryError(t, err, "registrations[0].codec", ErrorReasonInvalidCodec)
 }
 
-func TestDuplicateMediaTypeErrorIs(t *testing.T) {
+func TestDuplicateEntryIDErrorIs(t *testing.T) {
 	_, err := New(
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
-		newValueByteCodec(codec.FormatYAML, codec.MediaTypeJSON),
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+		testValueByteRegistration("json.public", codec.FormatYAML, codec.MediaTypeJSON),
 	)
 
-	requireErrorIs(t, err, ErrDuplicateMediaType)
+	requireErrorIs(t, err, ErrDuplicateEntryID)
 }
 
 func TestErrorDiagnosticPath(t *testing.T) {
 	_, err := New(
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
-		newValueByteCodec(codec.FormatYAML, codec.MediaTypeJSON),
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+		testValueByteRegistration("json.public", codec.FormatYAML, codec.MediaTypeJSON),
 	)
 
-	requireRegistryError(t, err, "codecs[1].info.mediaTypes[0]", ErrorReasonDuplicateMediaType)
+	requireRegistryError(t, err, "registrations[1].id", ErrorReasonDuplicateEntryID)
 }
 
 func TestDuplicateFormatNoLongerErrors(t *testing.T) {
 	_, err := New(
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeYAML),
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+		testValueByteRegistration("json.storage", codec.FormatJSON, codec.MediaTypeYAML),
 	)
 
 	requireNoError(t, err)

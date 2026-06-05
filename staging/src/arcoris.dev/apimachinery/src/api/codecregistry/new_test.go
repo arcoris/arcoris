@@ -35,44 +35,61 @@ func TestZeroRegistryIsUsable(t *testing.T) {
 	if !registry.IsEmpty() || registry.Len() != 0 {
 		t.Fatalf("zero registry empty = %v len = %d", registry.IsEmpty(), registry.Len())
 	}
-	if _, ok := registry.LookupMediaType(codec.MediaTypeJSON); ok {
-		t.Fatalf("zero registry lookup returned true")
+	if _, ok := registry.LookupID(MustEntryID("json.public")); ok {
+		t.Fatalf("zero registry ID lookup returned true")
+	}
+	if entries := registry.EntriesByMediaType(codec.MediaTypeJSON); len(entries) != 0 {
+		t.Fatalf("zero registry media type entries length = %d; want 0", len(entries))
 	}
 }
 
+func TestNewRejectsZeroRegistration(t *testing.T) {
+	_, err := New(Registration{})
+
+	requireErrorIs(t, err, ErrInvalidRegistration)
+	requireRegistryError(t, err, "registrations[0]", ErrorReasonInvalidRegistration)
+}
+
+func TestNewRejectsInvalidEntryID(t *testing.T) {
+	_, err := New(Register("JSON.Public", newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON)))
+
+	requireErrorIs(t, err, ErrInvalidEntryID)
+	requireRegistryError(t, err, "registrations[0].id", ErrorReasonInvalidEntryID)
+}
+
 func TestNewRejectsNilCodec(t *testing.T) {
-	_, err := New(nil)
+	_, err := New(Register(MustEntryID("json.public"), nil))
 
 	requireErrorIs(t, err, ErrInvalidCodec)
-	requireRegistryError(t, err, "codecs[0]", ErrorReasonInvalidCodec)
+	requireRegistryError(t, err, "registrations[0].codec", ErrorReasonInvalidCodec)
 }
 
 func TestNewRejectsTypedNilCodec(t *testing.T) {
 	var c *fakeValueByteCodec
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrInvalidCodec)
-	requireRegistryError(t, err, "codecs[0]", ErrorReasonInvalidCodec)
+	requireRegistryError(t, err, "registrations[0].codec", ErrorReasonInvalidCodec)
 }
 
 func TestNewRejectsInvalidInfo(t *testing.T) {
 	c := fakeBaseCodec{info: codec.Info{}}
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 
 	requireErrorIs(t, err, ErrInvalidInfo)
 	requireErrorIs(t, err, codec.ErrInvalidInfo)
-	requireRegistryError(t, err, "codecs[0].info", ErrorReasonInvalidInfo)
+	requireRegistryError(t, err, "registrations[0].info", ErrorReasonInvalidInfo)
 }
 
 func TestNewReturnsZeroRegistryOnError(t *testing.T) {
 	registry, err := New(
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
-		newValueByteCodec(codec.FormatYAML, codec.MediaTypeJSON),
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+		testValueByteRegistration("json.public", codec.FormatYAML, codec.MediaTypeJSON),
 	)
 
-	requireErrorIs(t, err, ErrDuplicateMediaType)
+	requireErrorIs(t, err, ErrDuplicateEntryID)
 	if !registry.IsEmpty() {
 		t.Fatalf("registry = %#v; want zero registry on error", registry)
 	}
@@ -83,7 +100,7 @@ func TestNewCallsInfoOncePerCodec(t *testing.T) {
 		fakeValueByteCodec: newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
 	}
 
-	_, err := New(c)
+	_, err := New(testRegistration("json.public", c))
 	requireNoError(t, err)
 
 	if c.calls != 1 {
@@ -92,49 +109,59 @@ func TestNewCallsInfoOncePerCodec(t *testing.T) {
 }
 
 func TestNewAcceptsByteOnlyValueCodec(t *testing.T) {
-	registry, err := New(newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
 
-	if _, ok := registry.LookupValue(codec.MediaTypeJSON); !ok {
-		t.Fatalf("LookupValue() = false")
+	if candidates := registry.ValueCandidates(codec.MediaTypeJSON); len(candidates) != 1 {
+		t.Fatalf("ValueCandidates() length = %d; want 1", len(candidates))
 	}
 }
 
 func TestNewAcceptsStreamOnlyValueCodec(t *testing.T) {
-	registry, err := New(newValueStreamCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
+	registry := testRegistry(
+		t,
+		testValueStreamRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
 
-	if _, ok := registry.LookupValueStream(codec.MediaTypeJSON); !ok {
-		t.Fatalf("LookupValueStream() = false")
+	if candidates := registry.ValueStreamCandidates(codec.MediaTypeJSON); len(candidates) != 1 {
+		t.Fatalf("ValueStreamCandidates() length = %d; want 1", len(candidates))
 	}
 }
 
 func TestNewAcceptsFullByteCodec(t *testing.T) {
-	registry, err := New(newFullByteCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
+	registry := testRegistry(
+		t,
+		testFullByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
 
-	if _, ok := registry.LookupCodec(codec.MediaTypeJSON); !ok {
-		t.Fatalf("LookupCodec() = false")
+	if candidates := registry.FullCandidates(codec.MediaTypeJSON); len(candidates) != 1 {
+		t.Fatalf("FullCandidates() length = %d; want 1", len(candidates))
 	}
 }
 
 func TestNewAcceptsFullStreamingCodec(t *testing.T) {
-	registry, err := New(newFullStreamingCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
+	registry := testRegistry(
+		t,
+		testFullStreamRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
+	)
 
-	if _, ok := registry.LookupStreamingCodec(codec.MediaTypeJSON); !ok {
-		t.Fatalf("LookupStreamingCodec() = false")
+	if candidates := registry.FullStreamCandidates(codec.MediaTypeJSON); len(candidates) != 1 {
+		t.Fatalf("FullStreamCandidates() length = %d; want 1", len(candidates))
 	}
 }
 
 func TestNewAcceptsCodecImplementingBothByteAndStream(t *testing.T) {
-	registry, err := New(newByteAndStreamCodec(codec.FormatJSON, codec.MediaTypeJSON))
-	requireNoError(t, err)
+	registry := testRegistry(
+		t,
+		testRegistration("json.public", newByteAndStreamCodec(codec.FormatJSON, codec.MediaTypeJSON)),
+	)
 
-	if _, ok := registry.LookupCodec(codec.MediaTypeJSON); !ok {
-		t.Fatalf("LookupCodec() = false")
+	if candidates := registry.FullCandidates(codec.MediaTypeJSON); len(candidates) != 1 {
+		t.Fatalf("FullCandidates() length = %d; want 1", len(candidates))
 	}
-	if _, ok := registry.LookupStreamingCodec(codec.MediaTypeJSON); !ok {
-		t.Fatalf("LookupStreamingCodec() = false")
+	if candidates := registry.FullStreamCandidates(codec.MediaTypeJSON); len(candidates) != 1 {
+		t.Fatalf("FullStreamCandidates() length = %d; want 1", len(candidates))
 	}
 }

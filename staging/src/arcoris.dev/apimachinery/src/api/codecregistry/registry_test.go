@@ -23,17 +23,17 @@ import (
 func TestRegistryZeroValueHasNoIndexes(t *testing.T) {
 	var registry Registry
 
-	if registry.entries != nil || registry.byFormat != nil || registry.byMediaType != nil {
+	if registry.entries != nil || registry.byID != nil || registry.byFormat != nil || registry.byMediaType != nil {
 		t.Fatalf("zero registry = %#v; want nil storage", registry)
 	}
 }
 
 func TestRegistryIndexesPointAtSortedEntries(t *testing.T) {
-	registry, err := New(
-		newValueByteCodec(codec.FormatYAML, codec.MediaTypeYAML),
-		newValueByteCodec(codec.FormatJSON, codec.MediaTypeJSON),
+	registry := testRegistry(
+		t,
+		testValueByteRegistration("yaml.public", codec.FormatYAML, codec.MediaTypeYAML),
+		testValueByteRegistration("json.public", codec.FormatJSON, codec.MediaTypeJSON),
 	)
-	requireNoError(t, err)
 
 	jsonIndex := registry.byFormat[codec.FormatJSON]
 	yamlIndex := registry.byFormat[codec.FormatYAML]
@@ -43,7 +43,11 @@ func TestRegistryIndexesPointAtSortedEntries(t *testing.T) {
 	if len(yamlIndex) != 1 || yamlIndex[0] != 1 {
 		t.Fatalf("yaml format indexes = %#v; want [1]", yamlIndex)
 	}
-	if got := registry.byMediaType[codec.MediaTypeYAML]; got != yamlIndex[0] {
-		t.Fatalf("yaml media index = %d; want %d", got, yamlIndex[0])
+	if got := registry.byID[MustEntryID("json.public")]; got != jsonIndex[0] {
+		t.Fatalf("json ID index = %d; want %d", got, jsonIndex[0])
+	}
+	mediaIndexes := registry.byMediaType[codec.MediaTypeYAML]
+	if len(mediaIndexes) != 1 || mediaIndexes[0] != yamlIndex[0] {
+		t.Fatalf("yaml media indexes = %#v; want [%d]", mediaIndexes, yamlIndex[0])
 	}
 }

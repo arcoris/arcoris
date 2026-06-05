@@ -57,13 +57,15 @@ func TestInfoDetached(t *testing.T) {
 }
 
 func TestRegistryIntegration(t *testing.T) {
-	registry, err := codecregistry.New(newTestCodec(t))
+	registry, err := codecregistry.New(
+		codecregistry.Register(codecregistry.MustEntryID("json.public"), newTestCodec(t)),
+	)
 	requireNoError(t, err)
 
-	if _, ok := registry.LookupCodec(codec.MediaTypeJSON); !ok {
-		t.Fatalf("LookupCodec(%q) = false", codec.MediaTypeJSON)
+	if candidates := registry.FullCandidates(codec.MediaTypeJSON); len(candidates) != 1 {
+		t.Fatalf("FullCandidates(%q) length = %d; want 1", codec.MediaTypeJSON, len(candidates))
 	}
-	if _, ok := registry.LookupStreamingCodec(codec.MediaTypeJSON); !ok {
-		t.Fatalf("LookupStreamingCodec(%q) = false", codec.MediaTypeJSON)
+	if candidates := registry.FullStreamCandidates(codec.MediaTypeJSON); len(candidates) != 1 {
+		t.Fatalf("FullStreamCandidates(%q) length = %d; want 1", codec.MediaTypeJSON, len(candidates))
 	}
 }

@@ -14,40 +14,35 @@
 
 package codecregistry
 
-import "arcoris.dev/apimachinery/api/codec"
-
-// checkEntryConflicts rejects ambiguous media type indexes.
+// checkEntryConflicts rejects duplicate entry identities.
 //
-// Formats are grouping attributes and may repeat. Media types are unique lookup
-// keys, so duplicates are rejected to keep exact lookup deterministic.
+// Formats and media types are grouping attributes and may repeat. EntryID is the
+// only unique registry identity.
 func checkEntryConflicts(
 	index int,
 	entry Entry,
-	seenMediaTypes map[codec.MediaType]int,
+	seenIDs map[EntryID]int,
 ) error {
-	for mediaTypeIndex, mediaType := range entry.info.MediaTypes {
-		if previous, ok := seenMediaTypes[mediaType]; ok {
-			return duplicateMediaTypeError(index, mediaTypeIndex, previous, mediaType)
-		}
-		seenMediaTypes[mediaType] = index
+	if previous, ok := seenIDs[entry.id]; ok {
+		return duplicateEntryIDError(index, previous, entry.id)
 	}
+	seenIDs[entry.id] = index
 
 	return nil
 }
 
-// duplicateMediaTypeError creates a stable duplicate media type diagnostic.
-func duplicateMediaTypeError(
+// duplicateEntryIDError creates a stable duplicate entry ID diagnostic.
+func duplicateEntryIDError(
 	index int,
-	mediaTypeIndex int,
 	previous int,
-	mediaType codec.MediaType,
+	id EntryID,
 ) error {
 	return errorfAt(
-		mediaTypePath(index, mediaTypeIndex),
-		ErrDuplicateMediaType,
-		ErrorReasonDuplicateMediaType,
-		"codec media type %q duplicates codecs[%d]",
-		mediaType,
+		registrationIDPath(index),
+		ErrDuplicateEntryID,
+		ErrorReasonDuplicateEntryID,
+		"entry ID %q duplicates registrations[%d]",
+		id,
 		previous,
 	)
 }

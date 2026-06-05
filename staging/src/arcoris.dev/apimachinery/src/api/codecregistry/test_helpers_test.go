@@ -33,6 +33,83 @@ func testInfo(format codec.Format, mediaType codec.MediaType, targets ...codec.T
 	}
 }
 
+func testRegistration(id string, c codec.BaseCodec) Registration {
+	return Register(MustEntryID(id), c)
+}
+
+func testRegistry(t *testing.T, registrations ...Registration) Registry {
+	t.Helper()
+
+	registry, err := New(registrations...)
+	requireNoError(t, err)
+
+	return registry
+}
+
+func testValueByteRegistration(
+	id string,
+	format codec.Format,
+	mediaType codec.MediaType,
+) Registration {
+	return testRegistration(id, newValueByteCodec(format, mediaType))
+}
+
+func testObjectByteRegistration(
+	id string,
+	format codec.Format,
+	mediaType codec.MediaType,
+) Registration {
+	return testRegistration(id, newObjectByteCodec(format, mediaType))
+}
+
+func testOwnershipByteRegistration(
+	id string,
+	format codec.Format,
+	mediaType codec.MediaType,
+) Registration {
+	return testRegistration(id, newOwnershipByteCodec(format, mediaType))
+}
+
+func testValueStreamRegistration(
+	id string,
+	format codec.Format,
+	mediaType codec.MediaType,
+) Registration {
+	return testRegistration(id, newValueStreamCodec(format, mediaType))
+}
+
+func testObjectStreamRegistration(
+	id string,
+	format codec.Format,
+	mediaType codec.MediaType,
+) Registration {
+	return testRegistration(id, newObjectStreamCodec(format, mediaType))
+}
+
+func testOwnershipStreamRegistration(
+	id string,
+	format codec.Format,
+	mediaType codec.MediaType,
+) Registration {
+	return testRegistration(id, newOwnershipStreamCodec(format, mediaType))
+}
+
+func testFullByteRegistration(
+	id string,
+	format codec.Format,
+	mediaType codec.MediaType,
+) Registration {
+	return testRegistration(id, newFullByteCodec(format, mediaType))
+}
+
+func testFullStreamRegistration(
+	id string,
+	format codec.Format,
+	mediaType codec.MediaType,
+) Registration {
+	return testRegistration(id, newFullStreamingCodec(format, mediaType))
+}
+
 type fakeBaseCodec struct {
 	info codec.Info
 }
