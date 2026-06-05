@@ -52,9 +52,22 @@ type TokenOptions struct {
 	// parsing in the lexical package.
 	AllowPlus bool
 
+	// AllowSlash allows "/".
+	//
+	// This is useful for owner-defined catalog identifiers that use path-like
+	// grouping without making the lexical package understand paths.
+	AllowSlash bool
+
 	// RequireAlnumEdges requires non-empty values to start and end with an
 	// ASCII letter or digit.
 	RequireAlnumEdges bool
+
+	// RejectAdjacentSeparators rejects adjacent allowed punctuation bytes.
+	//
+	// Separator bytes are "-", ".", "_", "+", and "/" when those bytes are
+	// enabled by this options value. Letter and digit bytes reset the separator
+	// run.
+	RejectAdjacentSeparators bool
 }
 
 // ValidateASCIIToken validates value against opts.
@@ -83,10 +96,17 @@ func ValidateASCIIToken(value string, opts TokenOptions) *Violation {
 	}
 
 	for i := 0; i < len(value); i++ {
-		if !tokenByteAllowed(value[i], opts) {
+		b := value[i]
+		if !tokenByteAllowed(b, opts) {
 			return violation(
 				ReasonInvalidCharacter,
-				fmt.Sprintf("ASCII token contains invalid byte %q at index %d", value[i], i),
+				fmt.Sprintf("ASCII token contains invalid byte %q at index %d", b, i),
+			)
+		}
+		if opts.RejectAdjacentSeparators && i > 0 && tokenByteSeparator(b, opts) && tokenByteSeparator(value[i-1], opts) {
+			return violation(
+				ReasonInvalidForm,
+				fmt.Sprintf("ASCII token contains adjacent separator bytes at index %d", i),
 			)
 		}
 	}
@@ -111,6 +131,26 @@ func tokenByteAllowed(b byte, opts TokenOptions) bool {
 		return true
 	case opts.AllowPlus && b == '+':
 		return true
+	case opts.AllowSlash && b == '/':
+		return true
+	default:
+		return false
+	}
+}
+
+// tokenByteSeparator reports whether b is an enabled punctuation separator.
+func tokenByteSeparator(b byte, opts TokenOptions) bool {
+	switch b {
+	case '-':
+		return opts.AllowHyphen
+	case '.':
+		return opts.AllowDot
+	case '_':
+		return opts.AllowUnderscore
+	case '+':
+		return opts.AllowPlus
+	case '/':
+		return opts.AllowSlash
 	default:
 		return false
 	}

@@ -14,7 +14,11 @@
 
 package codecregistry
 
-import "fmt"
+import (
+	"fmt"
+
+	"arcoris.dev/apimachinery/api/internal/lexical"
+)
 
 // EntryID is the stable registry identity of one configured codec candidate.
 //
@@ -50,62 +54,24 @@ func (id EntryID) String() string {
 
 // Normalize validates id and returns its canonical form.
 func (id EntryID) Normalize() (EntryID, error) {
-	value := string(id)
-	if value == "" {
-		return "", fmt.Errorf("%w: entry ID must be non-empty", ErrInvalidEntryID)
-	}
-
-	previousSeparator := false
-	for index, r := range value {
-		if r > 0x7f {
-			return "", fmt.Errorf("%w: entry ID contains non-ASCII character at byte %d", ErrInvalidEntryID, index)
-		}
-		if r <= 0x20 || r == 0x7f {
-			return "", fmt.Errorf("%w: entry ID contains whitespace or control character at byte %d", ErrInvalidEntryID, index)
-		}
-		if isEntryIDUppercase(r) {
-			return "", fmt.Errorf("%w: entry ID must be lowercase", ErrInvalidEntryID)
-		}
-
-		separator := isEntryIDSeparator(r)
-		switch {
-		case isEntryIDAlphaNumeric(r):
-			previousSeparator = false
-		case separator:
-			if index == 0 {
-				return "", fmt.Errorf("%w: entry ID must not start with a separator", ErrInvalidEntryID)
-			}
-			if previousSeparator {
-				return "", fmt.Errorf("%w: entry ID must not contain repeated separators", ErrInvalidEntryID)
-			}
-			previousSeparator = true
-		default:
-			return "", fmt.Errorf("%w: entry ID contains invalid character %q", ErrInvalidEntryID, r)
-		}
-	}
-	if previousSeparator {
-		return "", fmt.Errorf("%w: entry ID must not end with a separator", ErrInvalidEntryID)
+	if violation := lexical.ValidateASCIIToken(string(id), entryIDTokenOptions()); violation != nil {
+		return "", fmt.Errorf("%w: %s", ErrInvalidEntryID, violation.Detail)
 	}
 
 	return id, nil
 }
 
-// isEntryIDAlphaNumeric reports whether r is an allowed lowercase letter or digit.
-func isEntryIDAlphaNumeric(r rune) bool {
-	return r >= 'a' && r <= 'z' || r >= '0' && r <= '9'
-}
-
-// isEntryIDSeparator reports whether r separates EntryID path/token segments.
-func isEntryIDSeparator(r rune) bool {
-	switch r {
-	case '.', '-', '_', '/':
-		return true
-	default:
-		return false
+// entryIDTokenOptions returns the shared lexical grammar for registry entry IDs.
+func entryIDTokenOptions() lexical.TokenOptions {
+	return lexical.TokenOptions{
+		MinLength:                1,
+		AllowLower:               true,
+		AllowDigit:               true,
+		AllowHyphen:              true,
+		AllowDot:                 true,
+		AllowUnderscore:          true,
+		AllowSlash:               true,
+		RequireAlnumEdges:        true,
+		RejectAdjacentSeparators: true,
 	}
-}
-
-// isEntryIDUppercase reports whether r is an ASCII uppercase letter.
-func isEntryIDUppercase(r rune) bool {
-	return r >= 'A' && r <= 'Z'
 }

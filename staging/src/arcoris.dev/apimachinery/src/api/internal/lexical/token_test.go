@@ -51,3 +51,24 @@ func TestValidateASCIITokenOptionalCharacters(t *testing.T) {
 	requireViolation(t, ValidateASCIIToken("ab", opts), ReasonInvalidLength)
 	requireViolation(t, ValidateASCIIToken("work-main", opts), ReasonInvalidCharacter)
 }
+
+func TestValidateASCIITokenSlashAndAdjacentSeparators(t *testing.T) {
+	opts := TokenOptions{
+		MinLength:                1,
+		AllowLower:               true,
+		AllowDigit:               true,
+		AllowHyphen:              true,
+		AllowDot:                 true,
+		AllowUnderscore:          true,
+		AllowSlash:               true,
+		RequireAlnumEdges:        true,
+		RejectAdjacentSeparators: true,
+	}
+
+	requireValid(t, ValidateASCIIToken("codec/json-public_1", opts))
+	requireViolation(t, ValidateASCIIToken("/codec", opts), ReasonInvalidEdge)
+	requireViolation(t, ValidateASCIIToken("codec/", opts), ReasonInvalidEdge)
+	requireViolation(t, ValidateASCIIToken("codec//json", opts), ReasonInvalidForm)
+	requireViolation(t, ValidateASCIIToken("codec.-json", opts), ReasonInvalidForm)
+	requireViolation(t, ValidateASCIIToken("codec+json", opts), ReasonInvalidCharacter)
+}
