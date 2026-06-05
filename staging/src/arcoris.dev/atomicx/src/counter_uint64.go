@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
 // Uint64Counter is a padded monotonic uint64 lifetime counter.
@@ -34,20 +33,17 @@ package atomicx
 //   - failed state transitions.
 //
 // Uint64Counter is the default counter type for ARCORIS component accounting.
-// Prefer it over Uint32Counter unless a 32-bit counter is part of an explicit
-// bounded state model or external protocol boundary.
-//
 // Uint64Counter is not a gauge. It intentionally does not expose Store, Swap,
 // Sub, Dec, or CompareAndSwap methods. A lifetime counter should not be reset,
 // decremented, or conditionally rewritten by ordinary runtime code. Activity
 // windows, recent views, and reporting intervals should be built from separate
-// snapshot/delta value types instead of mutating the source counter.
+// sample/delta value types instead of mutating the source counter.
 //
 // Uint64Counter uses PaddedUint64 internally so it can be embedded in hot
 // component/runtime structs with reduced risk of false sharing.
 //
 // Counter arithmetic follows ordinary uint64 atomic arithmetic. If a long-lived
-// counter wraps from the largest uint64 value to zero, unsigned snapshot/delta
+// counter wraps from the largest uint64 value to zero, unsigned sample/delta
 // logic can account for one wrap between two samples. Multiple wraps between two
 // samples cannot be detected from two uint64 values alone and must be avoided by
 // reasonable sampling cadence.
@@ -66,12 +62,12 @@ type Uint64Counter struct {
 // Load atomically returns the current lifetime counter value.
 //
 // Load observes exactly one atomic value. It does not make a multi-field
-// accounting snapshot globally consistent. If a caller needs a consistent view
+// accounting sample globally consistent. If a caller needs a consistent view
 // of multiple counters or gauges, the caller must provide synchronization at the
 // owner level.
 //
 // Load is useful for diagnostics, direct assertions, and low-level reads. Use
-// snapshot/delta value types for windowed activity measurement.
+// sample/delta value types for windowed activity measurement.
 func (c *Uint64Counter) Load() uint64 {
 	return c.value.Load()
 }

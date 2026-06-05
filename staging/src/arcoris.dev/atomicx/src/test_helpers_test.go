@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
 import (
@@ -22,25 +21,15 @@ import (
 
 const (
 	// testMaxUint64 is the test-owned uint64 upper bound used outside gauge
-	// tests. Keeping it here avoids coupling raw primitive, counter, snapshot,
+	// tests. Keeping it here avoids coupling raw primitive, counter, sample,
 	// and delta tests to gauge-local production constants.
 	testMaxUint64 = ^uint64(0)
-
-	// testMaxUint32 is the test-owned uint32 upper bound used outside gauge
-	// tests. It keeps 32-bit counter and raw primitive boundary checks explicit.
-	testMaxUint32 = ^uint32(0)
 
 	// testMaxInt64 and testMinInt64 are test-owned signed int64 boundaries for
 	// raw primitive tests. Raw padded primitives wrap; gauge constants belong to
 	// checked gauge implementations.
 	testMaxInt64 = int64(1<<63 - 1)
 	testMinInt64 = -testMaxInt64 - 1
-
-	// testMaxInt32 and testMinInt32 are test-owned signed int32 boundaries for
-	// raw primitive tests. They keep raw atomic semantics separate from gauge
-	// invariant checks.
-	testMaxInt32 = int32(1<<31 - 1)
-	testMinInt32 = -testMaxInt32 - 1
 )
 
 // runConcurrent runs the same deterministic test body in several goroutines.
@@ -77,4 +66,24 @@ func runConcurrentIndexed(t *testing.T, goroutines int, fn func(index int)) {
 		}()
 	}
 	wg.Wait()
+}
+
+// requirePanicValue verifies fn panics with the exact value expected by tests.
+//
+// Gauge invariant panics are package-local contracts. Keeping this helper local
+// lets atomicx remain standard-library-only in both production code and tests.
+func requirePanicValue(t *testing.T, want any, fn func()) {
+	t.Helper()
+
+	defer func() {
+		got := recover()
+		if got == nil {
+			t.Fatalf("panic = nil, want %v", want)
+		}
+		if got != want {
+			t.Fatalf("panic = %v, want %v", got, want)
+		}
+	}()
+
+	fn()
 }

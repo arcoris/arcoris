@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
 const (
@@ -48,8 +47,7 @@ const (
 //   - capacity debt or surplus.
 //
 // Int64Gauge is not a lifetime event counter. For values that only move forward,
-// use Uint64Counter. For non-negative current quantities, use Uint64Gauge. For
-// deliberately small signed state, use Int32Gauge.
+// use Uint64Counter. For non-negative current quantities, use Uint64Gauge.
 //
 // Int64Gauge uses PaddedInt64 internally to reduce false sharing when the gauge
 // is stored near other hot fields in component/runtime state.
@@ -76,17 +74,17 @@ type Int64Gauge struct {
 // Load atomically returns the current signed gauge value.
 //
 // Load observes exactly one atomic value. It does not make a multi-field
-// accounting snapshot globally consistent.
+// accounting read globally consistent.
 func (g *Int64Gauge) Load() int64 {
 	return g.value.Load()
 }
 
-// Store atomically replaces the current signed gauge value.
+// Set atomically replaces the current signed gauge value.
 //
-// Store is appropriate for initialization, tests, owner-controlled publication,
-// or explicit state handoff. Ordinary runtime accounting should prefer Add and
-// Sub so overflow and underflow are detected at the update point.
-func (g *Int64Gauge) Store(val int64) {
+// Set is appropriate for initialization, tests, owner-controlled publication, or
+// explicit current-state handoff. Ordinary runtime accounting should prefer Add
+// and Sub so overflow and underflow are detected at the update point.
+func (g *Int64Gauge) Set(val int64) {
 	g.value.Store(val)
 }
 
@@ -204,23 +202,4 @@ func (g *Int64Gauge) Inc() int64 {
 // should be handled as a normal control-flow result.
 func (g *Int64Gauge) Dec() int64 {
 	return g.Sub(1)
-}
-
-// Swap atomically stores newValue and returns the previous value.
-//
-// Swap is useful for explicit owner-controlled handoff, reset-style transitions,
-// test setup, or state publication. It should not be used to hide accounting
-// bugs that should be expressed through Add or Sub.
-func (g *Int64Gauge) Swap(newValue int64) int64 {
-	return g.value.Swap(newValue)
-}
-
-// CompareAndSwap atomically replaces oldValue with newValue when the current
-// value still equals oldValue.
-//
-// CompareAndSwap is exposed for advanced internal state transitions where the
-// caller owns the expected-value protocol. Callers that need
-// invariant-preserving arithmetic should use Add, TryAdd, Sub, or TrySub.
-func (g *Int64Gauge) CompareAndSwap(oldValue, newValue int64) bool {
-	return g.value.CompareAndSwap(oldValue, newValue)
 }

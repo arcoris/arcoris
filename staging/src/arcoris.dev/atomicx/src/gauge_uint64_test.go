@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
 import (
+	"reflect"
 	"testing"
-
-	panicassert "arcoris.dev/testutil/panic"
 )
 
 // TestUint64GaugeZeroValueIsUsable verifies a gauge can be used without explicit initialization.
@@ -32,15 +30,15 @@ func TestUint64GaugeZeroValueIsUsable(t *testing.T) {
 	}
 }
 
-// TestUint64GaugeStoreAndLoad verifies owner-controlled publication through Store.
-func TestUint64GaugeStoreAndLoad(t *testing.T) {
+// TestUint64GaugeSetAndLoad verifies owner-controlled publication through Set.
+func TestUint64GaugeSetAndLoad(t *testing.T) {
 	t.Parallel()
 
 	var gauge Uint64Gauge
-	gauge.Store(42)
+	gauge.Set(42)
 
 	if got := gauge.Load(); got != 42 {
-		t.Fatalf("Uint64Gauge.Load() after Store(42) = %d, want 42", got)
+		t.Fatalf("Uint64Gauge.Load() after Set(42) = %d, want 42", got)
 	}
 }
 
@@ -75,7 +73,7 @@ func TestUint64GaugeTryAddSuccess(t *testing.T) {
 	t.Parallel()
 
 	var gauge Uint64Gauge
-	gauge.Store(10)
+	gauge.Set(10)
 
 	got, ok := gauge.TryAdd(5)
 	if !ok {
@@ -96,7 +94,7 @@ func TestUint64GaugeTryAddOverflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
 	var gauge Uint64Gauge
-	gauge.Store(maxUint64)
+	gauge.Set(maxUint64)
 
 	got, ok := gauge.TryAdd(1)
 	if ok {
@@ -115,7 +113,7 @@ func TestUint64GaugeTrySubSuccess(t *testing.T) {
 	t.Parallel()
 
 	var gauge Uint64Gauge
-	gauge.Store(10)
+	gauge.Set(10)
 
 	got, ok := gauge.TrySub(4)
 	if !ok {
@@ -135,7 +133,7 @@ func TestUint64GaugeTrySubUnderflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
 	var gauge Uint64Gauge
-	gauge.Store(3)
+	gauge.Set(3)
 
 	got, ok := gauge.TrySub(4)
 	if ok {
@@ -169,42 +167,6 @@ func TestUint64GaugeIncAndDec(t *testing.T) {
 	}
 }
 
-// TestUint64GaugeSwap verifies explicit owner-controlled replacement semantics.
-func TestUint64GaugeSwap(t *testing.T) {
-	t.Parallel()
-
-	var gauge Uint64Gauge
-	gauge.Store(10)
-
-	if old := gauge.Swap(25); old != 10 {
-		t.Fatalf("Uint64Gauge.Swap(25) old value = %d, want 10", old)
-	}
-	if got := gauge.Load(); got != 25 {
-		t.Fatalf("Uint64Gauge.Load() after Swap(25) = %d, want 25", got)
-	}
-}
-
-// TestUint64GaugeCompareAndSwap verifies conditional owner-controlled transitions.
-func TestUint64GaugeCompareAndSwap(t *testing.T) {
-	t.Parallel()
-
-	var gauge Uint64Gauge
-	gauge.Store(10)
-
-	if swapped := gauge.CompareAndSwap(9, 20); swapped {
-		t.Fatal("Uint64Gauge.CompareAndSwap(9, 20) = true, want false")
-	}
-	if got := gauge.Load(); got != 10 {
-		t.Fatalf("Uint64Gauge.Load() after failed CAS = %d, want 10", got)
-	}
-	if swapped := gauge.CompareAndSwap(10, 20); !swapped {
-		t.Fatal("Uint64Gauge.CompareAndSwap(10, 20) = false, want true")
-	}
-	if got := gauge.Load(); got != 20 {
-		t.Fatalf("Uint64Gauge.Load() after successful CAS = %d, want 20", got)
-	}
-}
-
 // TestUint64GaugeExactBoundaryOperations verifies that a gauge may legally
 // reach the numeric boundary. The invariant violation starts only when an
 // operation attempts to cross the boundary.
@@ -228,9 +190,9 @@ func TestUint64GaugePanicsOnOverflow(t *testing.T) {
 	t.Parallel()
 
 	var gauge Uint64Gauge
-	gauge.Store(maxUint64)
+	gauge.Set(maxUint64)
 
-	panicassert.RequireValue(t, errUint64GaugeOverflow, func() {
+	requirePanicValue(t, errUint64GaugeOverflow, func() {
 		_ = gauge.Add(1)
 	})
 }
@@ -241,9 +203,9 @@ func TestUint64GaugePanicsOnUnderflow(t *testing.T) {
 	t.Parallel()
 
 	var gauge Uint64Gauge
-	gauge.Store(10)
+	gauge.Set(10)
 
-	panicassert.RequireValue(t, errUint64GaugeUnderflow, func() {
+	requirePanicValue(t, errUint64GaugeUnderflow, func() {
 		_ = gauge.Sub(11)
 	})
 }
@@ -254,9 +216,9 @@ func TestUint64GaugeIncPanicsOnOverflow(t *testing.T) {
 	t.Parallel()
 
 	var gauge Uint64Gauge
-	gauge.Store(maxUint64)
+	gauge.Set(maxUint64)
 
-	panicassert.RequireValue(t, errUint64GaugeOverflow, func() {
+	requirePanicValue(t, errUint64GaugeOverflow, func() {
 		_ = gauge.Inc()
 	})
 }
@@ -268,9 +230,22 @@ func TestUint64GaugeDecPanicsOnUnderflow(t *testing.T) {
 
 	var gauge Uint64Gauge
 
-	panicassert.RequireValue(t, errUint64GaugeUnderflow, func() {
+	requirePanicValue(t, errUint64GaugeUnderflow, func() {
 		_ = gauge.Dec()
 	})
+}
+
+// TestUint64GaugeDoesNotExposeRawConditionalOperations verifies semantic gauges
+// do not publish low-level handoff operations that bypass accounting invariants.
+func TestUint64GaugeDoesNotExposeRawConditionalOperations(t *testing.T) {
+	t.Parallel()
+
+	typ := reflect.TypeOf((*Uint64Gauge)(nil))
+	for _, name := range []string{"Store", "Swap", "CompareAndSwap"} {
+		if _, ok := typ.MethodByName(name); ok {
+			t.Fatalf("Uint64Gauge exposes %s, want semantic gauge API only", name)
+		}
+	}
 }
 
 // TestUint64GaugeConcurrentBalancedAccounting verifies deterministic current

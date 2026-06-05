@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
 import "sync/atomic"
@@ -87,7 +86,7 @@ type PaddedUint64 struct {
 // observes exactly one atomic value. It does not make a larger multi-field
 // structure globally consistent.
 //
-// If a caller needs a consistent snapshot across multiple counters, gauges, or
+// If a caller needs a consistent read across multiple counters, gauges, or
 // state fields, the caller must provide additional synchronization at the owner
 // level.
 func (p *PaddedUint64) Load() uint64 {
@@ -145,7 +144,7 @@ func (p *PaddedUint64) Inc() uint64 {
 // Swap atomically stores newValue and returns the previous value.
 //
 // Swap is intended for explicit owner-controlled state handoff. Examples include
-// test setup, state publication, snapshot-and-reset algorithms, or runtime
+// test setup, state publication, sample-and-reset algorithms, or runtime
 // transitions where the caller deliberately owns reset semantics.
 //
 // Do not use Swap to hide accounting errors in counters or gauges. If the value

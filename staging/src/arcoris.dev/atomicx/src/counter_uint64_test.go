@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 // TestUint64CounterZeroValue verifies lifetime counters start at zero.
 func TestUint64CounterZeroValue(t *testing.T) {
@@ -127,5 +129,18 @@ func TestUint64CounterConcurrentAdd(t *testing.T) {
 	want := uint64(goroutines * additionsPerGoroutine * delta)
 	if got := counter.Load(); got != want {
 		t.Fatalf("Uint64Counter.Load() after concurrent Add = %d, want %d", got, want)
+	}
+}
+
+// TestUint64CounterDoesNotExposeMutableRewriteMethods verifies lifetime
+// counters keep reset and conditional rewrite behavior out of the semantic API.
+func TestUint64CounterDoesNotExposeMutableRewriteMethods(t *testing.T) {
+	t.Parallel()
+
+	typ := reflect.TypeOf((*Uint64Counter)(nil))
+	for _, name := range []string{"Store", "Set", "Swap", "CompareAndSwap", "Sub", "Dec", "Reset"} {
+		if _, ok := typ.MethodByName(name); ok {
+			t.Fatalf("Uint64Counter exposes %s, want monotonic lifetime API only", name)
+		}
 	}
 }

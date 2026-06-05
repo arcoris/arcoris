@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
 const (
@@ -45,23 +44,11 @@ const (
 	// PaddedUint64 value. Tests MUST verify this assumption with unsafe.Sizeof.
 	atomicUint64Size = 8
 
-	// atomicUint32Size is the expected size, in bytes, of sync/atomic.Uint32.
-	//
-	// The value is used to size the trailing line-completion pad after a
-	// PaddedUint32 value. Tests MUST verify this assumption with unsafe.Sizeof.
-	atomicUint32Size = 4
-
 	// atomicInt64Size is the expected size, in bytes, of sync/atomic.Int64.
 	//
 	// The value is used to size the trailing line-completion pad after a
 	// PaddedInt64 value. Tests MUST verify this assumption with unsafe.Sizeof.
 	atomicInt64Size = 8
-
-	// atomicInt32Size is the expected size, in bytes, of sync/atomic.Int32.
-	//
-	// The value is used to size the trailing line-completion pad after a
-	// PaddedInt32 value. Tests MUST verify this assumption with unsafe.Sizeof.
-	atomicInt32Size = 4
 
 	// atomicPointerSize is the expected size, in bytes, of sync/atomic.Pointer[T]
 	// on ARCORIS supported 64-bit targets.
@@ -79,10 +66,9 @@ const (
 // and are likely to contend through false sharing.
 //
 // Prefer the corresponding Padded* type when the hot field itself is an atomic
-// integer or pointer: PaddedUint64, PaddedUint32, PaddedInt64, PaddedInt32, or
-// PaddedPointer. Use CacheLinePad directly only when the caller intentionally
-// owns the surrounding struct layout and wants to separate larger groups of
-// fields.
+// integer or pointer: PaddedUint64, PaddedInt64, or PaddedPointer. Use
+// CacheLinePad directly only when the caller intentionally owns the surrounding
+// struct layout and wants to separate larger groups of fields.
 //
 // CacheLinePad has no behavior. Its only purpose is memory layout. It is safe to
 // copy because it does not contain synchronization state or mutable runtime

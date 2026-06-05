@@ -12,49 +12,47 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
-// Snapshot returns an immutable point-in-time sample of the counter.
+// Sample returns an immutable point-in-time observation of the counter.
 //
-// A snapshot is a plain value object. It does not retain a pointer to the
-// counter, so later counter updates cannot change the sample.
+// A sample is a plain value object. It does not retain a pointer to the counter,
+// so later counter updates cannot change the sampled value. Sample observes
+// exactly one atomic value and is safe to call concurrently with Load, Add, and
+// Inc.
 //
-// Snapshot observes exactly one atomic value. It is safe to call concurrently
-// with Load, Add, and Inc.
-//
-// The returned value is intentionally copyable. Snapshot and delta values do not
-// contain noCopy because they do not own atomic state and do not participate in
-// synchronization.
-func (c *Uint64Counter) Snapshot() Uint64CounterSnapshot {
-	return Uint64CounterSnapshot{
+// Counter samples and deltas are intentionally copyable. They do not contain
+// noCopy markers because they do not own mutable atomic state and do not
+// participate in synchronization.
+func (c *Uint64Counter) Sample() Uint64CounterSample {
+	return Uint64CounterSample{
 		Value: c.value.Load(),
 	}
 }
 
-// Uint64CounterSnapshot is an immutable point-in-time sample of a
+// Uint64CounterSample is an immutable point-in-time observation of a
 // Uint64Counter.
 //
-// Uint64CounterSnapshot belongs to the sampling layer, not to the mutable
-// counter state layer. It records one observed lifetime counter value and is
-// safe to copy, store, compare, and pass by value.
+// Uint64CounterSample belongs to the sampling layer, not to the mutable counter
+// state layer. It records one observed lifetime counter value and is safe to
+// copy, store, compare, and pass by value.
 //
-// Snapshots are used to compute activity over a window without resetting or
+// Samples are used to compute activity over a window without resetting or
 // mutating the source lifetime counter:
 //
-//	previous := counter.Snapshot()
+//	previous := counter.Sample()
 //	// Workload executes.
-//	current := counter.Snapshot()
+//	current := counter.Sample()
 //	delta := current.DeltaSince(previous)
 //
-// A snapshot records only one counter value. A group of snapshots taken from
-// several counters is not globally atomic unless the caller provides additional
+// A sample records only one counter value. A group of samples taken from several
+// counters is not globally atomic unless the caller provides additional
 // synchronization around the whole sampling operation.
 //
-// Uint64CounterSnapshot does not store wall-clock time or monotonic time. Time
+// Uint64CounterSample does not store wall-clock time or monotonic time. Time
 // windows, rates, and sampling cadence belong to the caller or to a higher-level
 // metrics/control package, not to atomicx.
-type Uint64CounterSnapshot struct {
+type Uint64CounterSample struct {
 	// Value is the observed lifetime counter value at sampling time.
 	Value uint64
 }
@@ -62,8 +60,8 @@ type Uint64CounterSnapshot struct {
 // DeltaSince returns the monotonic counter delta from previous to s.
 //
 // The receiver must be the newer sample. The previous argument must be the older
-// sample. The method cannot verify sample ordering because snapshots do not
-// carry time metadata.
+// sample. The method cannot verify sample ordering because samples do not carry
+// time metadata.
 //
 // The returned delta is wrap-aware for one uint64 wrap:
 //
@@ -74,6 +72,6 @@ type Uint64CounterSnapshot struct {
 // Multiple wraps between two samples cannot be detected from two uint64 values
 // alone. Callers that rely on accurate activity windows must sample frequently
 // enough to make multiple wraps impossible in practice.
-func (s Uint64CounterSnapshot) DeltaSince(prev Uint64CounterSnapshot) Uint64CounterDelta {
-	return NewUint64CounterDelta(prev.Value, s.Value)
+func (s Uint64CounterSample) DeltaSince(previous Uint64CounterSample) Uint64CounterDelta {
+	return NewUint64CounterDelta(previous.Value, s.Value)
 }

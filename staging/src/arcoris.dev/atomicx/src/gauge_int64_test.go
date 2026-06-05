@@ -15,9 +15,8 @@
 package atomicx
 
 import (
+	"reflect"
 	"testing"
-
-	panicassert "arcoris.dev/testutil/panic"
 )
 
 // TestInt64GaugeZeroValueIsUsable verifies signed gauges are ready for use without initialization.
@@ -31,15 +30,15 @@ func TestInt64GaugeZeroValueIsUsable(t *testing.T) {
 	}
 }
 
-// TestInt64GaugeStoreAndLoad verifies owner-controlled signed state publication.
-func TestInt64GaugeStoreAndLoad(t *testing.T) {
+// TestInt64GaugeSetAndLoad verifies owner-controlled signed state publication.
+func TestInt64GaugeSetAndLoad(t *testing.T) {
 	t.Parallel()
 
 	var gauge Int64Gauge
-	gauge.Store(-42)
+	gauge.Set(-42)
 
 	if got := gauge.Load(); got != -42 {
-		t.Fatalf("Int64Gauge.Load() after Store(-42) = %d, want -42", got)
+		t.Fatalf("Int64Gauge.Load() after Set(-42) = %d, want -42", got)
 	}
 }
 
@@ -74,7 +73,7 @@ func TestInt64GaugeTryAddSuccess(t *testing.T) {
 	t.Parallel()
 
 	var gauge Int64Gauge
-	gauge.Store(-10)
+	gauge.Set(-10)
 
 	got, ok := gauge.TryAdd(15)
 	if !ok {
@@ -95,7 +94,7 @@ func TestInt64GaugeTryAddOverflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
 	var gauge Int64Gauge
-	gauge.Store(maxInt64)
+	gauge.Set(maxInt64)
 
 	got, ok := gauge.TryAdd(1)
 	if ok {
@@ -116,7 +115,7 @@ func TestInt64GaugeTryAddUnderflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
 	var gauge Int64Gauge
-	gauge.Store(minInt64)
+	gauge.Set(minInt64)
 
 	got, ok := gauge.TryAdd(-1)
 	if ok {
@@ -154,7 +153,7 @@ func TestInt64GaugeTryAddHandlesMinInt64Delta(t *testing.T) {
 		t.Parallel()
 
 		var gauge Int64Gauge
-		gauge.Store(-1)
+		gauge.Set(-1)
 
 		got, ok := gauge.TryAdd(minInt64)
 		if ok {
@@ -174,7 +173,7 @@ func TestInt64GaugeTrySubSuccess(t *testing.T) {
 	t.Parallel()
 
 	var gauge Int64Gauge
-	gauge.Store(10)
+	gauge.Set(10)
 
 	got, ok := gauge.TrySub(15)
 	if !ok {
@@ -194,7 +193,7 @@ func TestInt64GaugeTrySubOverflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
 	var gauge Int64Gauge
-	gauge.Store(maxInt64)
+	gauge.Set(maxInt64)
 
 	got, ok := gauge.TrySub(-1)
 	if ok {
@@ -214,7 +213,7 @@ func TestInt64GaugeTrySubUnderflowLeavesStateUnchanged(t *testing.T) {
 	t.Parallel()
 
 	var gauge Int64Gauge
-	gauge.Store(minInt64)
+	gauge.Set(minInt64)
 
 	got, ok := gauge.TrySub(1)
 	if ok {
@@ -238,7 +237,7 @@ func TestInt64GaugeTrySubHandlesMinInt64DeltaBoundaries(t *testing.T) {
 		t.Parallel()
 
 		var gauge Int64Gauge
-		gauge.Store(-1)
+		gauge.Set(-1)
 
 		got, ok := gauge.TrySub(minInt64)
 		if !ok {
@@ -287,42 +286,6 @@ func TestInt64GaugeIncAndDec(t *testing.T) {
 	}
 }
 
-// TestInt64GaugeSwap verifies explicit owner-controlled replacement semantics.
-func TestInt64GaugeSwap(t *testing.T) {
-	t.Parallel()
-
-	var gauge Int64Gauge
-	gauge.Store(-10)
-
-	if old := gauge.Swap(25); old != -10 {
-		t.Fatalf("Int64Gauge.Swap(25) old value = %d, want -10", old)
-	}
-	if got := gauge.Load(); got != 25 {
-		t.Fatalf("Int64Gauge.Load() after Swap(25) = %d, want 25", got)
-	}
-}
-
-// TestInt64GaugeCompareAndSwap verifies conditional owner-controlled transitions.
-func TestInt64GaugeCompareAndSwap(t *testing.T) {
-	t.Parallel()
-
-	var gauge Int64Gauge
-	gauge.Store(25)
-
-	if swapped := gauge.CompareAndSwap(-10, 40); swapped {
-		t.Fatal("Int64Gauge.CompareAndSwap(-10, 40) = true, want false")
-	}
-	if got := gauge.Load(); got != 25 {
-		t.Fatalf("Int64Gauge.Load() after failed CAS = %d, want 25", got)
-	}
-	if swapped := gauge.CompareAndSwap(25, 40); !swapped {
-		t.Fatal("Int64Gauge.CompareAndSwap(25, 40) = false, want true")
-	}
-	if got := gauge.Load(); got != 40 {
-		t.Fatalf("Int64Gauge.Load() after successful CAS = %d, want 40", got)
-	}
-}
-
 // TestInt64GaugeExactBoundaryOperations verifies legal transitions at both
 // signed limits. Reaching min or max is valid; crossing either limit is the
 // invariant violation tested by panic and Try* failure cases.
@@ -346,7 +309,7 @@ func TestInt64GaugeExactBoundaryOperations(t *testing.T) {
 			t.Parallel()
 
 			var gauge Int64Gauge
-			gauge.Store(tc.start)
+			gauge.Set(tc.start)
 
 			if got := tc.op(&gauge); got != tc.want {
 				t.Fatalf("%s result = %d, want %d", tc.name, got, tc.want)
@@ -364,9 +327,9 @@ func TestInt64GaugePanicsOnAddOverflow(t *testing.T) {
 	t.Parallel()
 
 	var gauge Int64Gauge
-	gauge.Store(maxInt64)
+	gauge.Set(maxInt64)
 
-	panicassert.RequireValue(t, errInt64GaugeOverflow, func() {
+	requirePanicValue(t, errInt64GaugeOverflow, func() {
 		_ = gauge.Add(1)
 	})
 }
@@ -377,9 +340,9 @@ func TestInt64GaugePanicsOnAddUnderflow(t *testing.T) {
 	t.Parallel()
 
 	var gauge Int64Gauge
-	gauge.Store(minInt64)
+	gauge.Set(minInt64)
 
-	panicassert.RequireValue(t, errInt64GaugeUnderflow, func() {
+	requirePanicValue(t, errInt64GaugeUnderflow, func() {
 		_ = gauge.Add(-1)
 	})
 }
@@ -390,9 +353,9 @@ func TestInt64GaugePanicsOnSubOverflow(t *testing.T) {
 	t.Parallel()
 
 	var gauge Int64Gauge
-	gauge.Store(maxInt64)
+	gauge.Set(maxInt64)
 
-	panicassert.RequireValue(t, errInt64GaugeOverflow, func() {
+	requirePanicValue(t, errInt64GaugeOverflow, func() {
 		_ = gauge.Sub(-1)
 	})
 }
@@ -403,9 +366,9 @@ func TestInt64GaugePanicsOnSubUnderflow(t *testing.T) {
 	t.Parallel()
 
 	var gauge Int64Gauge
-	gauge.Store(minInt64)
+	gauge.Set(minInt64)
 
-	panicassert.RequireValue(t, errInt64GaugeUnderflow, func() {
+	requirePanicValue(t, errInt64GaugeUnderflow, func() {
 		_ = gauge.Sub(1)
 	})
 }
@@ -415,9 +378,9 @@ func TestInt64GaugeIncPanicsOnOverflow(t *testing.T) {
 	t.Parallel()
 
 	var gauge Int64Gauge
-	gauge.Store(maxInt64)
+	gauge.Set(maxInt64)
 
-	panicassert.RequireValue(t, errInt64GaugeOverflow, func() {
+	requirePanicValue(t, errInt64GaugeOverflow, func() {
 		_ = gauge.Inc()
 	})
 }
@@ -427,11 +390,24 @@ func TestInt64GaugeDecPanicsOnUnderflow(t *testing.T) {
 	t.Parallel()
 
 	var gauge Int64Gauge
-	gauge.Store(minInt64)
+	gauge.Set(minInt64)
 
-	panicassert.RequireValue(t, errInt64GaugeUnderflow, func() {
+	requirePanicValue(t, errInt64GaugeUnderflow, func() {
 		_ = gauge.Dec()
 	})
+}
+
+// TestInt64GaugeDoesNotExposeRawConditionalOperations verifies semantic gauges
+// do not publish low-level handoff operations that bypass accounting invariants.
+func TestInt64GaugeDoesNotExposeRawConditionalOperations(t *testing.T) {
+	t.Parallel()
+
+	typ := reflect.TypeOf((*Int64Gauge)(nil))
+	for _, name := range []string{"Store", "Swap", "CompareAndSwap"} {
+		if _, ok := typ.MethodByName(name); ok {
+			t.Fatalf("Int64Gauge exposes %s, want semantic gauge API only", name)
+		}
+	}
 }
 
 // TestInt64GaugeConcurrentSignedUpdates verifies deterministic signed accounting under contention.

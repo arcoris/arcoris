@@ -12,20 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
 import "fmt"
 
-// ExampleUint64Counter demonstrates snapshots and deltas for lifetime counters.
+// ExampleUint64Counter demonstrates samples and deltas for lifetime counters.
 func ExampleUint64Counter() {
 	var counter Uint64Counter
 
 	counter.Inc()
-	prev := counter.Snapshot()
+	prev := counter.Sample()
 
 	counter.Add(4)
-	cur := counter.Snapshot()
+	cur := counter.Sample()
 
 	delta := cur.DeltaSince(prev)
 
@@ -43,6 +42,7 @@ func ExampleUint64Counter() {
 func ExampleUint64Gauge() {
 	var gauge Uint64Gauge
 
+	gauge.Set(0)
 	gauge.Add(10)
 	gauge.Sub(3)
 
@@ -62,6 +62,7 @@ func ExampleUint64Gauge() {
 func ExampleInt64Gauge() {
 	var gauge Int64Gauge
 
+	gauge.Set(0)
 	gauge.Add(10)
 	gauge.Sub(15)
 
@@ -77,22 +78,34 @@ func ExampleInt64Gauge() {
 	// -2
 }
 
-// ExampleUint32Counter demonstrates explicitly bounded lifetime counter usage.
-func ExampleUint32Counter() {
-	var counter Uint32Counter
+// ExamplePaddedUint64 demonstrates raw padded arithmetic without gauge invariants.
+func ExamplePaddedUint64() {
+	var cell PaddedUint64
 
-	counter.Add(10)
-	prev := counter.Snapshot()
+	cell.Store(^uint64(0))
+	cell.Inc()
 
-	counter.Add(7)
-	cur := counter.Snapshot()
-
-	delta := cur.DeltaSince(prev)
-
-	fmt.Println(counter.Load())
-	fmt.Println(delta.Value)
+	fmt.Println(cell.Load())
 
 	// Output:
-	// 17
-	// 7
+	// 0
+}
+
+// ExamplePaddedPointer demonstrates raw pointer publication without ownership transfer.
+func ExamplePaddedPointer() {
+	type policy struct {
+		name string
+	}
+
+	var current PaddedPointer[policy]
+	published := &policy{name: "active"}
+
+	current.Store(published)
+
+	fmt.Println(current.Load() == published)
+	fmt.Println(current.Load().name)
+
+	// Output:
+	// true
+	// active
 }

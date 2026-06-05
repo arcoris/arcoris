@@ -62,19 +62,9 @@ func TestAtomicWrapperValueSizes(t *testing.T) {
 			want: uintptr(atomicUint64Size),
 		},
 		{
-			name: "atomic.Uint32",
-			got:  unsafe.Sizeof(atomic.Uint32{}),
-			want: uintptr(atomicUint32Size),
-		},
-		{
 			name: "atomic.Int64",
 			got:  unsafe.Sizeof(atomic.Int64{}),
 			want: uintptr(atomicInt64Size),
-		},
-		{
-			name: "atomic.Int32",
-			got:  unsafe.Sizeof(atomic.Int32{}),
-			want: uintptr(atomicInt32Size),
 		},
 		{
 			name: "atomic.Pointer",
@@ -112,22 +102,10 @@ func TestPaddedPrimitiveSizesIncludeLeadingPadAndValueSlot(t *testing.T) {
 				(CacheLinePadSize - atomicUint64Size)),
 		},
 		{
-			name: "PaddedUint32",
-			size: unsafe.Sizeof(PaddedUint32{}),
-			min: uintptr(CacheLinePadSize + atomicUint32Size +
-				(CacheLinePadSize - atomicUint32Size)),
-		},
-		{
 			name: "PaddedInt64",
 			size: unsafe.Sizeof(PaddedInt64{}),
 			min: uintptr(CacheLinePadSize + atomicInt64Size +
 				(CacheLinePadSize - atomicInt64Size)),
-		},
-		{
-			name: "PaddedInt32",
-			size: unsafe.Sizeof(PaddedInt32{}),
-			min: uintptr(CacheLinePadSize + atomicInt32Size +
-				(CacheLinePadSize - atomicInt32Size)),
 		},
 		{
 			name: "PaddedPointer",
@@ -159,9 +137,7 @@ func TestPaddedPrimitiveSizesAreCacheLineMultiples(t *testing.T) {
 		size uintptr
 	}{
 		{name: "PaddedUint64", size: unsafe.Sizeof(PaddedUint64{})},
-		{name: "PaddedUint32", size: unsafe.Sizeof(PaddedUint32{})},
 		{name: "PaddedInt64", size: unsafe.Sizeof(PaddedInt64{})},
-		{name: "PaddedInt32", size: unsafe.Sizeof(PaddedInt32{})},
 		{name: "PaddedPointer", size: unsafe.Sizeof(PaddedPointer[padTestValue]{})},
 	}
 
@@ -188,9 +164,7 @@ func TestPaddedPrimitiveValueOffsetsKeepLeadingPad(t *testing.T) {
 		offset uintptr
 	}{
 		{name: "PaddedUint64", offset: unsafe.Offsetof(PaddedUint64{}.value)},
-		{name: "PaddedUint32", offset: unsafe.Offsetof(PaddedUint32{}.value)},
 		{name: "PaddedInt64", offset: unsafe.Offsetof(PaddedInt64{}.value)},
-		{name: "PaddedInt32", offset: unsafe.Offsetof(PaddedInt32{}.value)},
 		{name: "PaddedPointer", offset: unsafe.Offsetof(PaddedPointer[padTestValue]{}.value)},
 	}
 
@@ -224,22 +198,10 @@ func TestPaddedPrimitiveTrailingCompletionPadsFillValueSlot(t *testing.T) {
 			trailWant: uintptr(CacheLinePadSize - atomicUint64Size),
 		},
 		{
-			name:      "PaddedUint32",
-			size:      unsafe.Sizeof(PaddedUint32{}),
-			valueEnd:  unsafe.Offsetof(PaddedUint32{}.value) + unsafe.Sizeof(PaddedUint32{}.value),
-			trailWant: uintptr(CacheLinePadSize - atomicUint32Size),
-		},
-		{
 			name:      "PaddedInt64",
 			size:      unsafe.Sizeof(PaddedInt64{}),
 			valueEnd:  unsafe.Offsetof(PaddedInt64{}.value) + unsafe.Sizeof(PaddedInt64{}.value),
 			trailWant: uintptr(CacheLinePadSize - atomicInt64Size),
-		},
-		{
-			name:      "PaddedInt32",
-			size:      unsafe.Sizeof(PaddedInt32{}),
-			valueEnd:  unsafe.Offsetof(PaddedInt32{}.value) + unsafe.Sizeof(PaddedInt32{}.value),
-			trailWant: uintptr(CacheLinePadSize - atomicInt32Size),
 		},
 		{
 			name: "PaddedPointer",
@@ -278,19 +240,9 @@ func TestPaddedPrimitiveAlignment(t *testing.T) {
 			alignment: unsafe.Alignof(PaddedUint64{}),
 		},
 		{
-			name:      "PaddedUint32",
-			size:      unsafe.Sizeof(PaddedUint32{}),
-			alignment: unsafe.Alignof(PaddedUint32{}),
-		},
-		{
 			name:      "PaddedInt64",
 			size:      unsafe.Sizeof(PaddedInt64{}),
 			alignment: unsafe.Alignof(PaddedInt64{}),
-		},
-		{
-			name:      "PaddedInt32",
-			size:      unsafe.Sizeof(PaddedInt32{}),
-			alignment: unsafe.Alignof(PaddedInt32{}),
 		},
 		{
 			name:      "PaddedPointer",

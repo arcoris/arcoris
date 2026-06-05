@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package atomicx
 
 // Uint64CounterDelta describes the difference between two Uint64Counter samples.

@@ -30,10 +30,9 @@ import "sync/atomic"
 // observe them and that published objects are not mutated unless the surrounding
 // ownership protocol explicitly permits that mutation.
 //
-// PaddedPointer is not a snapshot source, not a cache, not an RCU
-// implementation, not a hazard-pointer system, and not a replacement for
-// snapshot.Publisher. Use snapshot.Publisher when callers need revisioned
-// publication of immutable read models.
+// PaddedPointer is not a snapshot publisher, not a cache, not an RCU
+// implementation, and not a hazard-pointer system. Use a higher-level
+// publication package when callers need revisioned immutable read models.
 //
 // PaddedPointer is zero-value usable.
 //
@@ -50,7 +49,8 @@ type PaddedPointer[T any] struct {
 // Load atomically returns the pointer stored in p.
 //
 // Load observes only the pointer value. It does not make the pointed object
-// immutable and does not provide a component-level snapshot of related fields.
+// immutable and does not provide a component-level coherent read of related
+// fields.
 func (p *PaddedPointer[T]) Load() *T {
 	return p.value.Load()
 }

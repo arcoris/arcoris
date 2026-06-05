@@ -14,7 +14,10 @@
 
 package atomicx
 
-import "testing"
+import (
+	"sync/atomic"
+	"testing"
+)
 
 func BenchmarkPaddedUint64Load(b *testing.B) {
 	var val PaddedUint64
@@ -74,7 +77,7 @@ func BenchmarkUint64CounterAdd(b *testing.B) {
 	}
 }
 
-func BenchmarkUint64CounterSnapshot(b *testing.B) {
+func BenchmarkUint64CounterSample(b *testing.B) {
 	var counter Uint64Counter
 	counter.Add(42)
 
@@ -82,13 +85,13 @@ func BenchmarkUint64CounterSnapshot(b *testing.B) {
 	b.ResetTimer()
 
 	for range b.N {
-		_ = counter.Snapshot()
+		_ = counter.Sample()
 	}
 }
 
 func BenchmarkUint64CounterDeltaSince(b *testing.B) {
-	prev := Uint64CounterSnapshot{Value: 42}
-	cur := Uint64CounterSnapshot{Value: 84}
+	prev := Uint64CounterSample{Value: 42}
+	cur := Uint64CounterSample{Value: 84}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -122,7 +125,7 @@ func BenchmarkUint64GaugeTryAdd(b *testing.B) {
 
 func BenchmarkUint64GaugeSub(b *testing.B) {
 	var gauge Uint64Gauge
-	gauge.Store(uint64(b.N))
+	gauge.Set(uint64(b.N))
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -134,7 +137,7 @@ func BenchmarkUint64GaugeSub(b *testing.B) {
 
 func BenchmarkUint64GaugeTrySub(b *testing.B) {
 	var gauge Uint64Gauge
-	gauge.Store(uint64(b.N))
+	gauge.Set(uint64(b.N))
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -168,7 +171,7 @@ func BenchmarkInt64GaugeTryAdd(b *testing.B) {
 
 func BenchmarkInt64GaugeSub(b *testing.B) {
 	var gauge Int64Gauge
-	gauge.Store(int64(b.N))
+	gauge.Set(int64(b.N))
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -180,7 +183,7 @@ func BenchmarkInt64GaugeSub(b *testing.B) {
 
 func BenchmarkInt64GaugeTrySub(b *testing.B) {
 	var gauge Int64Gauge
-	gauge.Store(int64(b.N))
+	gauge.Set(int64(b.N))
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -251,6 +254,52 @@ func BenchmarkUint64GaugeAddSubParallel(b *testing.B) {
 		for pb.Next() {
 			gauge.Add(1)
 			gauge.Sub(1)
+		}
+	})
+}
+
+func BenchmarkPaddedUint64PairParallel(b *testing.B) {
+	var pair struct {
+		first  PaddedUint64
+		second PaddedUint64
+	}
+	var workers atomic.Uint64
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		id := workers.Add(1)
+		cell := &pair.first
+		if id%2 == 0 {
+			cell = &pair.second
+		}
+
+		for pb.Next() {
+			cell.Inc()
+		}
+	})
+}
+
+func BenchmarkAtomicUint64AdjacentPairParallel(b *testing.B) {
+	var pair struct {
+		first  atomic.Uint64
+		second atomic.Uint64
+	}
+	var workers atomic.Uint64
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		id := workers.Add(1)
+		cell := &pair.first
+		if id%2 == 0 {
+			cell = &pair.second
+		}
+
+		for pb.Next() {
+			cell.Add(1)
 		}
 	})
 }
