@@ -14,56 +14,62 @@
 
 package capacity
 
-import "arcoris.dev/snapshot"
-
-// TryReserve attempts to reserve amount from l.
+// TryReserve attempts to reserve demand from l.
 //
-// TryReserve is a non-blocking check-and-reserve operation. It does not wait,
-// enqueue callers, observe contexts, apply fairness policy, or retry.
-//
-// On success, TryReserve returns a live Reservation, the committed snapshot after
-// the reservation, and true.
-//
-// On failure, TryReserve returns nil, the current snapshot observed while
-// holding the ledger lock, and false. Failed reservation attempts do not
-// advance the ledger revision.
-func (l *Ledger) TryReserve(amount Amount) (*Reservation, snapshot.Snapshot[Snapshot], bool) {
+// The operation is non-blocking and all-or-nothing. On refusal it leaves ledger
+// state and revision unchanged and returns no Reservation.
+func (l *Ledger) TryReserve(demand Demand) ReserveResult {
 	l.requireNonNil()
+	if !demand.IsValid() {
+		panicAt(
+			"demand",
+			ErrInvalidDemand,
+			ErrorReasonInvalidDemand,
+			"demand must be non-empty and canonical",
+		)
+	}
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	l.requireInitializedLocked()
-	requirePositiveAmount(amount)
-	current := l.snapshotLocked()
-	if !current.Value.CanReserve(amount) {
-		return nil, current, false
-	}
-	nextReserved, ok := checkedReserveAmount(l.reserved, amount, l.limit)
-	if !ok {
-		return nil, current, false
+
+	// Check against the committed state before mutating anything. A refusal must
+	// leave both reserved amounts and revision unchanged.
+	check := l.state.Check(demand)
+	if check.Denied() {
+		return ReserveResult{
+			Status:   check.Status,
+			Snapshot: l.snapshotLocked(),
+			Missing:  check.Missing,
+			Debt:     check.Debt,
+		}
 	}
 
-	l.reserved = nextReserved
+	// Reserve on the pure value state first so the owner commit below is a
+	// single all-or-nothing assignment.
+	next, result := l.state.Reserve(demand)
+	if result.Denied() {
+		return ReserveResult{
+			Status:   result.Status,
+			Snapshot: l.snapshotLocked(),
+			Missing:  result.Missing,
+			Debt:     result.Debt,
+		}
+	}
+
+	l.state = next
 	l.revision = l.revision.Next()
 
-	res := &Reservation{
+	// The reservation is created only after the ledger state is committed.
+	reservation := &Reservation{
 		ledger: l,
-		amount: amount,
+		demand: demand,
 	}
 
-	return res, l.snapshotLocked(), true
-}
-
-func checkedReserveAmount(reserved, amount, limit Amount) (Amount, bool) {
-	if amount == 0 {
-		return reserved, false
+	return ReserveResult{
+		Status:      ReserveStatusReserved,
+		Snapshot:    l.snapshotLocked(),
+		Reservation: reservation,
 	}
-	if reserved > limit {
-		return reserved, false
-	}
-	if amount > limit-reserved {
-		return reserved, false
-	}
-	return reserved + amount, true
 }

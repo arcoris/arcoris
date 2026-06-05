@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package bulkhead
 
 import (
 	"testing"
 
+	"arcoris.dev/capacity"
 	panicassert "arcoris.dev/testutil/panic"
 )
 
@@ -73,7 +73,7 @@ func TestLeaseReleasePanicsAfterTryRelease(t *testing.T) {
 	}
 	_, _ = lease.TryRelease()
 
-	panicassert.RequireMessage(t, "capacity.Reservation: already released", func() {
+	panicassert.RequireErrorIs(t, capacity.ErrReservationReleased, func() {
 		_ = lease.Release()
 	})
 }

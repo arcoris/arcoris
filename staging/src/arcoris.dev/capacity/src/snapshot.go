@@ -12,57 +12,117 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package capacity
 
-// Snapshot is a copyable read model of one Ledger state.
+// Snapshot is a copyable multi-resource accounting read model.
 //
 // Snapshot contains no locks, pointers, reservations, waiters, or references
-// back to the ledger. It is safe to store, compare, publish, and pass across
-// component boundaries as a value.
-//
-// In normal state, Reserved is less than or equal to Limit, Available is
-// Limit-Reserved, and Debt is zero. If a ledger limit is reduced below already
-// reserved capacity, existing reservations remain valid. In that overcommitted
-// state, Reserved is greater than Limit, Available is zero, and Debt is
-// Reserved-Limit.
+// back to a ledger. Limits and Reserved are source accounting state. Available
+// and Debt are derived from their per-resource difference.
 type Snapshot struct {
-	// Limit is the current configured capacity limit.
-	Limit Amount
+	// Limits is the configured resource capacity.
+	Limits Vector
 
-	// Reserved is the amount currently held by live reservations.
-	Reserved Amount
+	// Reserved is capacity currently owned by live reservations.
+	Reserved Vector
 
-	// Available is the amount that may still be reserved immediately.
-	Available Amount
+	// Available is per-resource capacity that can be reserved immediately.
+	Available Vector
 
-	// Debt is the amount by which Reserved exceeds Limit after a limit reduction.
-	Debt Amount
+	// Debt is per-resource overcommit created when limits shrink below live
+	// reservations. Debt never revokes an existing reservation.
+	Debt Vector
 }
 
-// IsValid reports whether s is internally consistent.
+// NewSnapshot derives a read model from limits and reserved amounts.
+func NewSnapshot(limits Vector, reserved Vector) Snapshot {
+	available, debt := deriveCapacityVectors(limits.entries, reserved.entries)
+
+	return Snapshot{
+		Limits:    vectorFromSorted(limits.entries),
+		Reserved:  vectorFromSorted(reserved.entries),
+		Available: vectorFromSorted(available),
+		Debt:      vectorFromSorted(debt),
+	}
+}
+
+// IsValid reports whether s is internally consistent and canonical.
 func (s Snapshot) IsValid() bool {
-	if s.Reserved <= s.Limit {
-		return s.Available == s.Limit-s.Reserved && s.Debt == 0
+	if !s.Limits.IsValid() || !s.Reserved.IsValid() || !s.Available.IsValid() || !s.Debt.IsValid() {
+		return false
+	}
+	expected := NewSnapshot(s.Limits, s.Reserved)
+	return s.Available.Equal(expected.Available) && s.Debt.Equal(expected.Debt)
+}
+
+// IsZero reports whether s contains no limits, reservations, availability, or debt.
+func (s Snapshot) IsZero() bool {
+	return s.Limits.IsZero() && s.Reserved.IsZero() && s.Available.IsZero() && s.Debt.IsZero()
+}
+
+// HasDebt reports whether any resource is overcommitted.
+func (s Snapshot) HasDebt() bool {
+	return !s.Debt.IsZero()
+}
+
+// AvailableFor returns available capacity for resource, or zero when absent.
+func (s Snapshot) AvailableFor(resource Resource) Amount {
+	return s.Available.Amount(resource)
+}
+
+// DebtFor returns debt for resource, or zero when absent.
+func (s Snapshot) DebtFor(resource Resource) Amount {
+	return s.Debt.Amount(resource)
+}
+
+// deriveCapacityVectors compares canonical limit and reservation vectors and
+// returns the derived available and debt vectors.
+func deriveCapacityVectors(limits []Entry, reserved []Entry) ([]Entry, []Entry) {
+	available := make([]Entry, 0, len(limits))
+	debt := make([]Entry, 0, len(reserved))
+
+	limitIndex, reservedIndex := 0, 0
+	for limitIndex < len(limits) && reservedIndex < len(reserved) {
+		limit := limits[limitIndex]
+		held := reserved[reservedIndex]
+
+		switch {
+		case limit.Resource < held.Resource:
+			available = append(available, limit)
+			limitIndex++
+
+		case held.Resource < limit.Resource:
+			debt = append(debt, held)
+			reservedIndex++
+
+		default:
+			available, debt = appendResourceBalance(limit, held, available, debt)
+			limitIndex++
+			reservedIndex++
+		}
 	}
 
-	return s.Available == 0 && s.Debt == s.Reserved-s.Limit
+	available = append(available, limits[limitIndex:]...)
+	debt = append(debt, reserved[reservedIndex:]...)
+
+	return available, debt
 }
 
-// Exhausted reports whether no additional capacity can be reserved now.
-func (s Snapshot) Exhausted() bool {
-	return s.Available == 0
-}
+// appendResourceBalance appends the non-zero difference for one shared resource.
+func appendResourceBalance(limit Entry, held Entry, available []Entry, debt []Entry) ([]Entry, []Entry) {
+	switch limit.Amount.Compare(held.Amount) {
+	case 1:
+		available = append(available, Entry{
+			Resource: limit.Resource,
+			Amount:   limit.Amount - held.Amount,
+		})
 
-// Overcommitted reports whether the snapshot contains capacity debt.
-func (s Snapshot) Overcommitted() bool {
-	return s.Debt > 0
-}
+	case -1:
+		debt = append(debt, Entry{
+			Resource: held.Resource,
+			Amount:   held.Amount - limit.Amount,
+		})
+	}
 
-// CanReserve reports whether amount can be reserved from this snapshot.
-//
-// CanReserve is a read-model helper only. It does not reserve capacity and must
-// not be used as a substitute for Ledger.TryReserve in concurrent code.
-func (s Snapshot) CanReserve(amount Amount) bool {
-	return s.IsValid() && amount > 0 && s.Debt == 0 && s.Available >= amount
+	return available, debt
 }

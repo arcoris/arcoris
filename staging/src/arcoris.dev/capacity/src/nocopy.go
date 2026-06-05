@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package capacity
 
 // noCopy marks owner values as non-copyable for go vet's copylocks checker.

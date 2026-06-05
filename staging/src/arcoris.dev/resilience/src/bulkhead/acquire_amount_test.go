@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package bulkhead
 
 import (
 	"testing"
 
+	"arcoris.dev/capacity"
 	panicassert "arcoris.dev/testutil/panic"
 )
 
@@ -102,7 +102,7 @@ func TestTryAcquireAmountInvalidAmountPanics(t *testing.T) {
 	t.Parallel()
 
 	b := New(1)
-	panicassert.RequireMessage(t, "capacity: reservation amount must be positive", func() {
+	panicassert.RequireErrorIs(t, capacity.ErrZeroAmount, func() {
 		_, _, _ = b.TryAcquireAmount(0)
 	})
 }

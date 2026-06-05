@@ -12,45 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package capacity
 
-const (
-	// errNilLedger is the panic value used when a method is called on a nil
-	// Ledger.
-	errNilLedger = "capacity.Ledger: nil ledger"
-
-	// errUninitializedLedger is the panic value used when a method is called on a
-	// zero Ledger value instead of a value created by NewLedger.
-	errUninitializedLedger = "capacity.Ledger: uninitialized ledger"
-
-	// errZeroReservationAmount is the panic value used when a caller attempts to
-	// reserve zero capacity units.
-	errZeroReservationAmount = "capacity: reservation amount must be positive"
-)
-
-// requirePositiveAmount panics when amount cannot represent a reservation
-// request.
-func requirePositiveAmount(amount Amount) {
-	if amount == 0 {
-		panic(errZeroReservationAmount)
-	}
-}
-
-// requireNonNil panics when l is nil.
+// requireNonNil panics when l is a nil receiver.
 func (l *Ledger) requireNonNil() {
 	if l == nil {
-		panic(errNilLedger)
+		panicAt("ledger", ErrNilLedger, ErrorReasonNilLedger, "ledger receiver is nil")
 	}
 }
 
-// requireInitializedLocked panics when l is a zero Ledger value.
+// requireInitializedLocked panics when l is a zero-value Ledger.
 //
-// The caller must hold l.mu. Initialization is checked under the ledger lock so
-// ordinary concurrent operations observe a stable revision field while they
-// validate ledger ownership.
+// The caller must hold l.mu so revision is read from a stable owner state.
 func (l *Ledger) requireInitializedLocked() {
 	if l.revision.IsZero() {
-		panic(errUninitializedLedger)
+		panicAt(
+			"ledger",
+			ErrUninitializedLedger,
+			ErrorReasonUninitializedLedger,
+			"ledger must be created with NewLedger",
+		)
 	}
 }

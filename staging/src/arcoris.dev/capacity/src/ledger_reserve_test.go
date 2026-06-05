@@ -15,169 +15,126 @@
 package capacity_test
 
 import (
+	"sync"
 	"testing"
 
 	"arcoris.dev/capacity"
-	panicassert "arcoris.dev/testutil/panic"
 )
 
-func TestLedgerTryReserveSucceedsWhenCapacityIsAvailable(t *testing.T) {
+func TestLedgerReserveSuccess(t *testing.T) {
 	t.Parallel()
 
-	ledger := capacity.NewLedger(10)
-	initialRevision := ledger.Revision()
-
-	reservation, snap, ok := ledger.TryReserve(4)
-	if !ok {
-		t.Fatal("TryReserve returned ok=false, want true")
+	ledger := capacity.NewLedger(vector(t, entry("memory_bytes", 8), entry("worker_slots", 4)))
+	before := ledger.Revision()
+	result := ledger.TryReserve(demand(t, entry("memory_bytes", 3), entry("worker_slots", 2)))
+	if !result.Reserved() {
+		t.Fatalf("TryReserve() status = %s, want reserved", result.Status)
 	}
-	if reservation == nil {
-		t.Fatal("reservation is nil")
+	if result.Reservation == nil {
+		t.Fatal("successful reservation is nil")
 	}
-	if reservation.Amount() != 4 {
-		t.Fatalf("reservation amount = %d, want 4", reservation.Amount())
+	if result.Snapshot.Revision == before {
+		t.Fatal("successful reserve did not advance revision")
 	}
-	if !snap.Revision.ChangedSince(initialRevision) {
-		t.Fatalf("revision did not advance after successful reservation")
-	}
-	requireSnapshotValue(t, snap, 10, 4, 6, 0)
+	requireVector(t, result.Snapshot.Value.Reserved, entry("memory_bytes", 3), entry("worker_slots", 2))
 }
 
-func TestLedgerTryReserveSucceedsAtExactLimit(t *testing.T) {
+func TestLedgerReserveRefusalDoesNotMutateOrAdvance(t *testing.T) {
 	t.Parallel()
 
-	ledger := capacity.NewLedger(10)
-	reservation, snap, ok := ledger.TryReserve(10)
-	if !ok {
-		t.Fatal("TryReserve exact limit returned ok=false, want true")
+	ledger := capacity.NewLedger(vector(t, entry("memory_bytes", 8), entry("worker_slots", 4)))
+	first := ledger.TryReserve(demand(t, entry("memory_bytes", 3)))
+	if !first.Reserved() {
+		t.Fatalf("first reserve status = %s", first.Status)
 	}
-	if reservation == nil {
-		t.Fatal("reservation is nil")
+	before := ledger.Snapshot()
+
+	denied := ledger.TryReserve(demand(t, entry("memory_bytes", 1), entry("worker_slots", 5)))
+	if denied.Status != capacity.ReserveStatusInsufficient {
+		t.Fatalf("denied status = %s, want insufficient", denied.Status)
 	}
-	requireSnapshotValue(t, snap, 10, 10, 0, 0)
+	if denied.Reservation != nil {
+		t.Fatal("denied reservation is non-nil")
+	}
+	if denied.Snapshot.Revision != before.Revision {
+		t.Fatal("failed reserve advanced revision")
+	}
+	requireVector(t, denied.Snapshot.Value.Reserved, entry("memory_bytes", 3))
 }
 
-func TestLedgerTryReserveSucceedsAtMaxAmountLimit(t *testing.T) {
+func TestLedgerUnknownResourceDoesNotPartiallyReserve(t *testing.T) {
 	t.Parallel()
 
-	max := capacity.Amount(^uint64(0))
-	ledger := capacity.NewLedger(max)
-
-	reservation, snap, ok := ledger.TryReserve(max)
-	if !ok {
-		t.Fatal("TryReserve(max) returned ok=false, want true")
+	ledger := capacity.NewLedger(vector(t, entry("worker_slots", 4)))
+	denied := ledger.TryReserve(demand(t, entry("queue_slots", 1), entry("worker_slots", 2)))
+	if denied.Status != capacity.ReserveStatusUnknownResource {
+		t.Fatalf("status = %s, want unknown_resource", denied.Status)
 	}
-	if reservation == nil {
-		t.Fatal("reservation is nil")
-	}
-	requireSnapshotValue(t, snap, max, max, 0, 0)
+	requireVector(t, ledger.Snapshot().Value.Reserved)
 }
 
-func TestLedgerTryReserveReachesMaxAmountWithoutWrap(t *testing.T) {
+func TestLedgerDebtBlocksDemandedResourceOnly(t *testing.T) {
 	t.Parallel()
 
-	max := capacity.Amount(^uint64(0))
-	ledger := capacity.NewLedger(max)
+	ledger := capacity.NewLedger(vector(t, entry("memory_bytes", 8), entry("worker_slots", 4)))
+	memory := ledger.TryReserve(demand(t, entry("memory_bytes", 8)))
+	if !memory.Reserved() {
+		t.Fatalf("memory reserve status = %s", memory.Status)
+	}
+	overcommitted := ledger.SetLimits(vector(t, entry("memory_bytes", 4), entry("worker_slots", 4)))
+	requireVector(t, overcommitted.Value.Debt, entry("memory_bytes", 4))
 
-	_, _, ok := ledger.TryReserve(max - 1)
-	if !ok {
-		t.Fatal("TryReserve(max-1) returned ok=false, want true")
+	worker := ledger.TryReserve(demand(t, entry("worker_slots", 2)))
+	if !worker.Reserved() {
+		t.Fatalf("worker reserve status = %s, want reserved", worker.Status)
 	}
-	_, snap, ok := ledger.TryReserve(1)
-	if !ok {
-		t.Fatal("TryReserve(1) returned ok=false at remaining boundary")
-	}
-	requireSnapshotValue(t, snap, max, max, 0, 0)
-}
 
-func TestLedgerTryReserveFailsAfterMaxAmountIsReserved(t *testing.T) {
-	t.Parallel()
-
-	max := capacity.Amount(^uint64(0))
-	ledger := capacity.NewLedger(max)
-	_, snap, ok := ledger.TryReserve(max)
-	if !ok {
-		t.Fatal("TryReserve(max) returned ok=false, want true")
-	}
-	before := snap.Revision
-
-	reservation, denied, ok := ledger.TryReserve(1)
-	if ok {
-		t.Fatal("TryReserve(1) returned ok=true after max was reserved")
-	}
-	if reservation != nil {
-		t.Fatalf("reservation = %#v, want nil", reservation)
-	}
-	if denied.Revision != before {
-		t.Fatalf("denied revision = %d, want unchanged %d", denied.Revision, before)
-	}
-	requireSnapshotValue(t, denied, max, max, 0, 0)
-}
-
-func TestLedgerTryReserveFailsWhenCapacityIsInsufficient(t *testing.T) {
-	t.Parallel()
-
-	ledger := capacity.NewLedger(10)
-	_, snap, ok := ledger.TryReserve(7)
-	if !ok {
-		t.Fatal("initial reservation failed")
-	}
-	beforeDenied := snap.Revision
-
-	reservation, denied, ok := ledger.TryReserve(4)
-	if ok {
-		t.Fatal("TryReserve returned ok=true, want false")
-	}
-	if reservation != nil {
-		t.Fatalf("reservation = %#v, want nil", reservation)
-	}
-	if denied.Revision != beforeDenied {
-		t.Fatalf("denied revision = %d, want unchanged %d", denied.Revision, beforeDenied)
-	}
-	requireSnapshotValue(t, denied, 10, 7, 3, 0)
-	current := ledger.Snapshot()
-	if denied != current {
-		t.Fatalf("denied snapshot = %+v, want current snapshot %+v", denied, current)
+	denied := ledger.TryReserve(demand(t, entry("memory_bytes", 1)))
+	if denied.Status != capacity.ReserveStatusDebt {
+		t.Fatalf("memory reserve status = %s, want debt", denied.Status)
 	}
 }
 
-func TestLedgerTryReserveFailsWhenLimitIsZero(t *testing.T) {
+func TestLedgerReserveMatchesScalarForOneResource(t *testing.T) {
 	t.Parallel()
 
-	ledger := capacity.NewLedger(0)
-	reservation, snap, ok := ledger.TryReserve(1)
-	if ok {
-		t.Fatal("TryReserve returned ok=true, want false")
+	resource := capacity.MustResource("worker_slots")
+	multi := capacity.NewLedger(vector(t, entry("worker_slots", 4)))
+	scalar := capacity.NewScalarLedger(4)
+
+	multiResult := multi.TryReserve(demand(t, entry("worker_slots", 3)))
+	scalarResult := scalar.TryReserve(3)
+	if multiResult.Status != scalarResult.Status {
+		t.Fatalf("status multi=%s scalar=%s", multiResult.Status, scalarResult.Status)
 	}
-	if reservation != nil {
-		t.Fatalf("reservation = %#v, want nil", reservation)
+	if got := multiResult.Snapshot.Value.Reserved.Amount(resource); got != scalarResult.Snapshot.Value.Reserved {
+		t.Fatalf("reserved multi=%d scalar=%d", got, scalarResult.Snapshot.Value.Reserved)
 	}
-	requireSnapshotValue(t, snap, 0, 0, 0, 0)
+
+	_ = multi.SetLimits(vector(t, entry("worker_slots", 2)))
+	_ = scalar.SetLimit(2)
+	if got := multi.Snapshot().Value.Debt.Amount(resource); got != scalar.Snapshot().Value.Debt {
+		t.Fatalf("debt multi=%d scalar=%d", got, scalar.Snapshot().Value.Debt)
+	}
 }
 
-func TestLedgerTryReserveZeroAmountPanics(t *testing.T) {
+func TestLedgerConcurrentReserveDoesNotOverspend(t *testing.T) {
 	t.Parallel()
 
-	ledger := capacity.NewLedger(10)
-	panicassert.RequireMessage(t, "capacity: reservation amount must be positive", func() { _, _, _ = ledger.TryReserve(0) })
-}
-
-func TestLedgerTryReserveFailsWhileOvercommitted(t *testing.T) {
-	t.Parallel()
-
-	ledger := capacity.NewLedger(10)
-	_, _, ok := ledger.TryReserve(8)
-	if !ok {
-		t.Fatal("initial reservation failed")
+	ledger := capacity.NewLedger(vector(t, entry("worker_slots", 32)))
+	unit := demand(t, entry("worker_slots", 1))
+	var wg sync.WaitGroup
+	for i := 0; i < 128; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_ = ledger.TryReserve(unit)
+		}()
 	}
-	ledger.SetLimit(5)
+	wg.Wait()
 
-	reservation, snap, ok := ledger.TryReserve(1)
-	if ok {
-		t.Fatal("TryReserve returned ok=true while overcommitted")
+	snap := ledger.Snapshot()
+	if got := snap.Value.Reserved.Amount(capacity.MustResource("worker_slots")); got != 32 {
+		t.Fatalf("reserved = %d, want 32", got)
 	}
-	if reservation != nil {
-		t.Fatalf("reservation = %#v, want nil", reservation)
-	}
-	requireSnapshotValue(t, snap, 5, 8, 0, 3)
 }

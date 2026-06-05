@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package bulkhead
 
 const (
@@ -25,7 +24,7 @@ const (
 // requireReady panics when l is nil or was not returned by a Bulkhead acquisition
 // method.
 //
-// The check intentionally happens before delegating to capacity.Reservation so
+// The check intentionally happens before delegating to capacity.ScalarReservation so
 // bulkhead reports misuse of the resilience-domain lease boundary.
 func (l *Lease) requireReady() {
 	if l == nil || l.reservation == nil {

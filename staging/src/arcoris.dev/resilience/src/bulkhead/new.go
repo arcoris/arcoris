@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package bulkhead
 
 import "arcoris.dev/capacity"
@@ -20,10 +19,10 @@ import "arcoris.dev/capacity"
 // New creates a Bulkhead with the provided local in-flight limit.
 //
 // A zero limit is valid. It creates a closed bulkhead that rejects acquisition
-// until SetLimit raises the limit. This follows capacity.Ledger semantics and
+// until SetLimit raises the limit. This follows capacity.ScalarLedger semantics and
 // keeps "closed for now" distinct from an invalid object.
 func New(limit Amount) *Bulkhead {
 	return &Bulkhead{
-		ledger: capacity.NewLedger(capacity.Amount(limit)),
+		ledger: capacity.NewScalarLedger(capacity.Amount(limit)),
 	}
 }

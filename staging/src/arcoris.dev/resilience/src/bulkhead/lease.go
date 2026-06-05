@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package bulkhead
 
 import "arcoris.dev/capacity"
 
 // Lease owns in-flight bulkhead capacity until it is released.
 //
-// Lease is the bulkhead-domain name for a capacity.Reservation. The underlying
+// Lease is the bulkhead-domain name for a capacity.ScalarReservation. The underlying
 // reservation enforces release ownership and updates the owning ledger. Lease
 // adds no counters of its own and intentionally exposes only the operations that
 // are meaningful for protected in-flight work.
@@ -30,7 +29,7 @@ type Lease struct {
 	noCopy noCopy
 
 	// reservation owns the low-level capacity units.
-	reservation *capacity.Reservation
+	reservation *capacity.ScalarReservation
 }
 
 // Amount returns the number of in-flight capacity units owned by l.

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package bulkhead
 
 import "arcoris.dev/capacity"
@@ -23,10 +22,10 @@ import "arcoris.dev/capacity"
 // Bulkhead intentionally owns no admission queue, waiter lifecycle, fairness
 // policy, retry behavior, health integration, metrics hooks, logging hooks,
 // tracing hooks, or worker pool. It is a small resilience-domain wrapper around
-// capacity.Ledger: acquiring a Lease reserves local scalar capacity, and
+// capacity.ScalarLedger: acquiring a Lease reserves local scalar capacity, and
 // releasing that Lease returns the same amount.
 //
-// The wrapped capacity.Ledger owns all low-level scalar accounting, including
+// The wrapped capacity.ScalarLedger owns all low-level scalar accounting, including
 // revisioned snapshots, limit changes, release ownership, and debt semantics
 // after a limit is reduced below active leases. Bulkhead owns only the
 // execution-protection meaning of that accounting: bounded in-flight isolation.
@@ -47,5 +46,5 @@ type Bulkhead struct {
 	// checks are delegated to this ledger. Bulkhead methods do not maintain
 	// parallel counters; duplicating that state here would make the accounting
 	// easier to skew.
-	ledger *capacity.Ledger
+	ledger *capacity.ScalarLedger
 }

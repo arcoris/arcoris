@@ -21,6 +21,7 @@ import (
 
 	"arcoris.dev/admission"
 	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
+	"arcoris.dev/capacity"
 	"arcoris.dev/snapshot"
 	panicassert "arcoris.dev/testutil/panic"
 )
@@ -195,7 +196,7 @@ func TestBulkheadTryAdmitInvalidAmountPanics(t *testing.T) {
 	t.Parallel()
 
 	b := New(1)
-	panicassert.RequireMessage(t, "capacity: reservation amount must be positive", func() {
+	panicassert.RequireErrorIs(t, capacity.ErrZeroAmount, func() {
 		_ = b.TryAdmit(Request{Amount: 0})
 	})
 }

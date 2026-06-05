@@ -12,20 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package capacity
 
-// Amount is a scalar number of local capacity units.
+// Amount is an exact unsigned local capacity quantity.
 //
-// Amount intentionally does not define what one unit means. A component may map
-// one unit to one worker slot, one request-cost unit, one buffer class unit, or
-// another component-local resource model. Multi-resource accounting, request
-// cost estimation, tenant weighting, and scheduling policy belong to higher
-// layers.
+// Amount intentionally does not define what one unit means. A Resource or
+// higher-level package may map one unit to a worker slot, byte, request-cost
+// unit, retry-budget unit, or another local accounting dimension.
 //
-// The zero Amount is valid as a ledger limit. It is invalid as a reservation
-// request because reserving zero units would create ownership without resource
-// movement.
+// The zero Amount is representable and useful in snapshots. It is rejected in
+// vector and demand entries because canonical resource vectors omit zeroes.
 type Amount uint64
 
 // IsZero reports whether a is zero.
@@ -33,12 +29,46 @@ func (a Amount) IsZero() bool {
 	return a == 0
 }
 
-// IsPositive reports whether a can represent a reservation request.
+// IsPositive reports whether a is greater than zero.
 func (a Amount) IsPositive() bool {
 	return a > 0
 }
 
-// Uint64 returns a as uint64.
+// Uint64 returns a as its raw architecture-independent integer value.
 func (a Amount) Uint64() uint64 {
 	return uint64(a)
+}
+
+// Compare compares a and b.
+func (a Amount) Compare(b Amount) int {
+	switch {
+	case a < b:
+		return -1
+	case a > b:
+		return 1
+	default:
+		return 0
+	}
+}
+
+// CheckedAdd returns a+b and whether the sum fits in Amount.
+func (a Amount) CheckedAdd(b Amount) (Amount, bool) {
+	sum := a + b
+	return sum, sum >= a
+}
+
+// CheckedSub returns a-b and whether a covers b.
+func (a Amount) CheckedSub(b Amount) (Amount, bool) {
+	if a < b {
+		return 0, false
+	}
+	return a - b, true
+}
+
+// SaturatingSub returns a-b, clamped at zero.
+func (a Amount) SaturatingSub(b Amount) Amount {
+	if a < b {
+		return 0
+	}
+	return a - b
 }

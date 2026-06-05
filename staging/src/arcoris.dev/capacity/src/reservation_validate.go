@@ -12,25 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package capacity
-
-const (
-	// errNilReservation is the panic value used when a method is called on a nil
-	// Reservation.
-	errNilReservation = "capacity.Reservation: nil reservation"
-
-	// errInvalidReservation is the panic value used when a Reservation was not
-	// created by a Ledger or has lost its owning ledger.
-	errInvalidReservation = "capacity.Reservation: invalid reservation"
-)
 
 // requireNonNil panics when r is nil or detached from its ledger.
 func (r *Reservation) requireNonNil() {
 	if r == nil {
-		panic(errNilReservation)
+		panicAt("reservation", ErrNilReservation, ErrorReasonNilReservation, "reservation receiver is nil")
 	}
-	if r.ledger == nil {
-		panic(errInvalidReservation)
+	if r.ledger == nil || !r.demand.IsValid() {
+		panicAt(
+			"reservation",
+			ErrInvalidReservation,
+			ErrorReasonInvalidReservation,
+			"reservation must be created by Ledger.TryReserve",
+		)
 	}
 }

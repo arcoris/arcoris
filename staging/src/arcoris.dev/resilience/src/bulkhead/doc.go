@@ -15,7 +15,7 @@
 // Package bulkhead provides bounded in-flight isolation for ARCORIS component
 // internals.
 //
-// A Bulkhead is a small resilience-domain wrapper around capacity.Ledger. It
+// A Bulkhead is a small resilience-domain wrapper around capacity.ScalarLedger. It
 // reserves local capacity before protected work starts and returns that capacity
 // when the Lease is released. When no capacity is available, acquisition rejects
 // immediately.

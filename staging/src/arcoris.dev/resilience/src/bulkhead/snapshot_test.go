@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package bulkhead
 
 import (
@@ -24,7 +23,7 @@ import (
 func TestSnapshotMatchesCapacitySnapshot(t *testing.T) {
 	t.Parallel()
 
-	fromCapacity := capacity.Snapshot{
+	fromCapacity := capacity.ScalarSnapshot{
 		Limit:     2,
 		Reserved:  1,
 		Available: 1,

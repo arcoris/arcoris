@@ -12,42 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-// Package capacity provides local scalar capacity accounting primitives for
-// ARCORIS component internals.
+// Package capacity provides local resource-accounting foundations for ARCORIS.
 //
-// The package owns capacity limits, reserved capacity, available capacity,
-// capacity debt after limit reduction, reservation ownership, and consistent
-// revisioned snapshots of local capacity state. It is intentionally below
-// admission, scheduling, rate limiting, overload control, and worker-isolation
-// policy.
+// The package owns accounting truth: exact amounts, stable resource identities,
+// canonical resource vectors, non-empty demands, limits, reserved allocations,
+// available capacity, per-resource debt after limit shrink, all-or-nothing
+// reservation, reservation ownership, and revisioned snapshots.
 //
-// # Model
+// Ledger is the main multi-resource owner. ScalarLedger is an optimized
+// single-resource owner for hot paths such as bulkheads. Value types are
+// copy-safe and immutable through their public APIs; stateful ledgers and
+// reservations are constructor-created owners and must not be copied after first
+// use.
 //
-// A Ledger owns one local capacity limit and the amount currently reserved from
-// that limit. TryReserve is a non-blocking check-and-reserve operation. When it
-// succeeds, it returns a Reservation that owns the reserved amount until Release
-// or TryRelease returns that amount to the ledger.
-//
-// Limit changes never revoke existing reservations. If a limit is reduced below
-// already reserved capacity, the ledger reports capacity debt and refuses new
-// reservations until releases bring reserved capacity back under the current
-// limit.
-//
-// # Boundaries
-//
-// Capacity does not provide blocking Acquire operations, wait queues, context
-// cancellation, fairness policy, rate limiting, adaptive concurrency control,
-// admission decisions, worker pools, bulkheads, circuit breakers, health gates,
-// logging, metrics, tracing, distributed coordination, or multi-resource
-// scheduling.
-//
-// Higher-level packages may build those behaviors on top of Ledger,
-// Reservation, Amount, and Snapshot, but this package must remain a small local
-// accounting layer.
-//
-// # Dependency policy
-//
-// Production code in this package depends only on the Go standard library and
-// arcoris.dev/snapshot for source-local revisioned read models.
+// Capacity deliberately does not own catalogs, descriptors, admission decisions,
+// queues, schedulers, fairness policy, quotas, metrics, health, runtime
+// execution, or distributed coordination. Higher layers interpret the local
+// accounting facts returned by this package.
 package capacity

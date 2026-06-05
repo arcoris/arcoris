@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package bulkhead
 
 import "arcoris.dev/snapshot"
@@ -33,10 +32,10 @@ import "arcoris.dev/snapshot"
 func (b *Bulkhead) TryAcquireAmount(amount Amount) (*Lease, snapshot.Snapshot[Snapshot], bool) {
 	b.requireReady()
 
-	reservation, snap, ok := b.ledger.TryReserve(amount)
-	if !ok {
-		return nil, snap, false
+	result := b.ledger.TryReserve(amount)
+	if result.Denied() {
+		return nil, result.Snapshot, false
 	}
 
-	return &Lease{reservation: reservation}, snap, true
+	return &Lease{reservation: result.Reservation}, result.Snapshot, true
 }

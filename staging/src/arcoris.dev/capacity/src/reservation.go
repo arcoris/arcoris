@@ -14,26 +14,11 @@
 
 package capacity
 
-import "arcoris.dev/snapshot"
-
-const (
-	// errReservationAlreadyReleased is the panic value used when Release is
-	// called more than once for the same Reservation.
-	errReservationAlreadyReleased = "capacity.Reservation: already released"
-
-	// errLedgerReservedUnderflow is the panic value used when internal ledger
-	// accounting would subtract more reserved capacity than exists.
-	errLedgerReservedUnderflow = "capacity.Ledger: reserved capacity underflow"
-)
-
-// Reservation owns capacity reserved from a Ledger.
+// Reservation owns a multi-resource demand reserved from a Ledger.
 //
-// A Reservation is returned only by Ledger.TryReserve. It holds its amount until
-// Release or TryRelease returns that amount to the ledger.
-//
-// Reservation must not be copied after creation. Copying a live reservation
-// splits release ownership: each copy has its own released flag but points to
-// the same ledger and amount. Use the original pointer returned by TryReserve.
+// Reservation is returned only by a successful Ledger.TryReserve. It must not
+// be copied after creation. Demand remains observable after release for audit
+// and cleanup diagnostics.
 type Reservation struct {
 	// noCopy prevents accidental copies after first use.
 	noCopy noCopy
@@ -41,27 +26,21 @@ type Reservation struct {
 	// ledger is the owner that created this reservation.
 	ledger *Ledger
 
-	// amount is the immutable amount reserved from ledger.
-	amount Amount
+	// demand is the immutable resource demand owned by this reservation.
+	demand Demand
 
-	// released records whether this reservation has already returned its amount.
+	// released records whether this reservation has already returned demand.
 	// It is protected by ledger.mu.
 	released bool
 }
 
-// Amount returns the amount reserved by r.
-//
-// The amount is immutable for the lifetime of the reservation and remains
-// observable after release so callers can log or audit what was owned.
-func (r *Reservation) Amount() Amount {
+// Demand returns the immutable demand owned by r.
+func (r *Reservation) Demand() Demand {
 	r.requireNonNil()
-	return r.amount
+	return Demand{vector: r.demand.Vector()}
 }
 
 // Released reports whether r has already been released.
-//
-// Released is serialized by the owning ledger lock so concurrent callers see a
-// consistent ownership state.
 func (r *Reservation) Released() bool {
 	r.requireNonNil()
 
@@ -70,46 +49,4 @@ func (r *Reservation) Released() bool {
 
 	r.ledger.requireInitializedLocked()
 	return r.released
-}
-
-// Release returns r's capacity to its ledger.
-//
-// Release panics if r has already been released. Double release is an ownership
-// bug. Use TryRelease when idempotent cleanup is required.
-func (r *Reservation) Release() snapshot.Snapshot[Snapshot] {
-	snap, ok := r.TryRelease()
-	if !ok {
-		panic(errReservationAlreadyReleased)
-	}
-
-	return snap
-}
-
-// TryRelease returns r's capacity to its ledger if r is still live.
-//
-// On first release, TryRelease updates the ledger, advances the revision, and
-// returns the resulting snapshot with true.
-//
-// If r has already been released, TryRelease leaves the ledger unchanged and
-// returns the current snapshot with false.
-func (r *Reservation) TryRelease() (snapshot.Snapshot[Snapshot], bool) {
-	r.requireNonNil()
-
-	l := r.ledger
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	l.requireInitializedLocked()
-	if r.released {
-		return l.snapshotLocked(), false
-	}
-	if l.reserved < r.amount {
-		panic(errLedgerReservedUnderflow)
-	}
-
-	l.reserved -= r.amount
-	r.released = true
-	l.revision = l.revision.Next()
-
-	return l.snapshotLocked(), true
 }

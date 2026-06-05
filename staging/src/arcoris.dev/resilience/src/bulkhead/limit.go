@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package bulkhead
 
 import (
@@ -26,7 +25,7 @@ import (
 // capacity debt semantics: Available becomes zero, Debt reports the excess
 // active leases, and new acquisitions are denied until enough leases are
 // released. This package does not add extra drain, eviction, or cancellation
-// policy on top of capacity.Ledger.
+// policy on top of capacity.ScalarLedger.
 //
 // A zero limit is valid and closes the bulkhead until a later SetLimit raises
 // capacity again.
