@@ -70,6 +70,13 @@ const (
 // slice after construction does not change the chain. Each call to NewSequence
 // creates independent child sequences.
 //
+// NewSequence creates child sequences eagerly. This reports child Schedule
+// contract violations, such as returning a nil Sequence, before the owner starts
+// consuming delays. It also means later child sequences may be created even when
+// an earlier child sequence is infinite and those later values will never be
+// observed. Child schedules should therefore keep NewSequence side-effect-free
+// and cheap, as required by the package-wide Schedule ownership model.
+//
 // Chain does not sleep, create timers, observe context cancellation, execute
 // operations, classify errors, retry failed work, randomize delays, log, trace,
 // export metrics, rate limit callers, schedule queue items, or make domain

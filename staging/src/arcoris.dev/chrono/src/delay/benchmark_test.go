@@ -178,7 +178,9 @@ func BenchmarkFixedNext(b *testing.B) {
 	benchmarkNext(b, Fixed(time.Second).NewSequence())
 }
 
-func BenchmarkDelaysNext(b *testing.B) {
+// BenchmarkDelaysNextInternalCursor isolates the finite cursor hot path without
+// measuring public NewSequence allocation.
+func BenchmarkDelaysNextInternalCursor(b *testing.B) {
 	delays := benchmarkDelayList(256)
 	seq := &sequenceScheduleSequence{delays: delays}
 
@@ -189,6 +191,25 @@ func BenchmarkDelaysNext(b *testing.B) {
 		d, ok := seq.Next()
 		if !ok {
 			seq.next = 0
+			d, ok = seq.Next()
+		}
+
+		benchmarkDurationSink = d
+		benchmarkBoolSink = ok
+	}
+}
+
+func BenchmarkDelaysPublicNext(b *testing.B) {
+	schedule := Delays(benchmarkDelayList(256)...)
+	seq := schedule.NewSequence()
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		d, ok := seq.Next()
+		if !ok {
+			seq = schedule.NewSequence()
 			d, ok = seq.Next()
 		}
 
@@ -213,14 +234,24 @@ func BenchmarkCapNext(b *testing.B) {
 	benchmarkNext(b, Cap(Fixed(2*time.Second), time.Second).NewSequence())
 }
 
-func BenchmarkLimitNext(b *testing.B) {
+// BenchmarkLimitNextInternalRemaining isolates the limit counter hot path
+// without measuring public wrapper sequence allocation.
+func BenchmarkLimitNextInternalRemaining(b *testing.B) {
 	child := Fixed(time.Second).NewSequence()
 	seq := &limitSequence{child: child, remaining: b.N + 1}
 
 	benchmarkNext(b, seq)
 }
 
-func BenchmarkChainNextFinitePrefix(b *testing.B) {
+func BenchmarkLimitPublicNext(b *testing.B) {
+	schedule := Limit(Fixed(time.Second), b.N+1)
+
+	benchmarkNext(b, schedule.NewSequence())
+}
+
+// BenchmarkChainNextInternalFinitePrefix isolates the two-child chain cursor
+// while repeatedly exercising a finite prefix.
+func BenchmarkChainNextInternalFinitePrefix(b *testing.B) {
 	first := &sequenceScheduleSequence{delays: benchmarkDelayList(256)}
 	second := Fixed(time.Second).NewSequence()
 	seq := &pairChainSequence{
@@ -243,11 +274,11 @@ func BenchmarkChainNextFinitePrefix(b *testing.B) {
 	}
 }
 
-func BenchmarkChainNextInfiniteTail(b *testing.B) {
+func BenchmarkChainPublicNextInfiniteTail(b *testing.B) {
 	benchmarkNext(b, Chain(Delays(0), Fixed(time.Second)).NewSequence())
 }
 
-func BenchmarkNestedCompositionNext(b *testing.B) {
+func BenchmarkNestedCompositionPublicNext(b *testing.B) {
 	schedule := Limit(
 		Cap(
 			Chain(

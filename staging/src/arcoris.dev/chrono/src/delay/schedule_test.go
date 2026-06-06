@@ -95,21 +95,66 @@ func TestSchedulesCreateIndependentSequences(t *testing.T) {
 	}
 }
 
-func TestSchedulesAllowConcurrentNewSequence(t *testing.T) {
+func TestBuiltInSchedulesSupportConcurrentNewSequence(t *testing.T) {
 	tests := []struct {
 		name     string
 		schedule Schedule
-		want     time.Duration
+		want     []time.Duration
 	}{
-		{name: "immediate", schedule: Immediate(), want: 0},
-		{name: "fixed", schedule: Fixed(time.Second), want: time.Second},
-		{name: "delays", schedule: Delays(time.Second, 2*time.Second), want: time.Second},
-		{name: "linear", schedule: Linear(time.Second, time.Second), want: time.Second},
-		{name: "exponential", schedule: Exponential(time.Second, 2), want: time.Second},
-		{name: "fibonacci", schedule: Fibonacci(time.Second), want: time.Second},
-		{name: "cap", schedule: Cap(Fixed(2*time.Second), time.Second), want: time.Second},
-		{name: "limit", schedule: Limit(Fixed(time.Second), 2), want: time.Second},
-		{name: "chain", schedule: Chain(Delays(time.Second), Fixed(2*time.Second)), want: time.Second},
+		{
+			name:     "immediate",
+			schedule: Immediate(),
+			want:     []time.Duration{0, 0},
+		},
+		{
+			name:     "fixed",
+			schedule: Fixed(time.Second),
+			want:     []time.Duration{time.Second, time.Second},
+		},
+		{
+			name:     "delays",
+			schedule: Delays(0, time.Millisecond, time.Second),
+			want:     []time.Duration{0, time.Millisecond, time.Second},
+		},
+		{
+			name:     "linear",
+			schedule: Linear(0, time.Millisecond),
+			want:     []time.Duration{0, time.Millisecond, 2 * time.Millisecond},
+		},
+		{
+			name:     "exponential",
+			schedule: Exponential(time.Millisecond, 2),
+			want:     []time.Duration{time.Millisecond, 2 * time.Millisecond},
+		},
+		{
+			name:     "fibonacci",
+			schedule: Fibonacci(time.Millisecond),
+			want:     []time.Duration{time.Millisecond, time.Millisecond, 2 * time.Millisecond},
+		},
+		{
+			name:     "cap",
+			schedule: Cap(Exponential(time.Millisecond, 2), 2*time.Millisecond),
+			want:     []time.Duration{time.Millisecond, 2 * time.Millisecond, 2 * time.Millisecond},
+		},
+		{
+			name:     "limit",
+			schedule: Limit(Fixed(time.Second), 3),
+			want:     []time.Duration{time.Second, time.Second, time.Second},
+		},
+		{
+			name:     "chain",
+			schedule: Chain(Delays(0), Exponential(time.Millisecond, 2)),
+			want:     []time.Duration{0, time.Millisecond, 2 * time.Millisecond},
+		},
+		{
+			name: "large chain",
+			schedule: Chain(
+				Delays(0),
+				Delays(time.Millisecond),
+				Fixed(2*time.Millisecond),
+			),
+			want: []time.Duration{0, time.Millisecond, 2 * time.Millisecond},
+		},
 	}
 
 	for _, tc := range tests {
@@ -123,10 +168,12 @@ func TestSchedulesAllowConcurrentNewSequence(t *testing.T) {
 
 					for i := 0; i < 64; i++ {
 						seq := tc.schedule.NewSequence()
-						got, ok := seq.Next()
-						if !ok || got != tc.want {
-							t.Errorf("Next() = %s, %t; want %s, true", got, ok, tc.want)
-							return
+						for _, want := range tc.want {
+							got, ok := seq.Next()
+							if !ok || got != want {
+								t.Errorf("Next() = %s, %t; want %s, true", got, ok, want)
+								return
+							}
 						}
 					}
 				}()
