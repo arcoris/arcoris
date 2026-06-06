@@ -113,6 +113,10 @@ type FakeClock struct {
 // deterministic test output should usually pass an explicit time.Date value
 // instead of time.Now.
 //
+// If now carries Go's process-local monotonic reading, that reading is preserved
+// as part of the time.Time value. FakeClock does not strip or synthesize
+// monotonic information; fake time still changes only through Set and Step.
+//
 // NewFakeClock initializes the internal registries used by fake waiters, timers,
 // and tickers. The returned clock is ready for concurrent use by test code and
 // the component under test.

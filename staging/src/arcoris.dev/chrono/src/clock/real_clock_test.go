@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import (
@@ -51,6 +50,24 @@ func TestRealClockSinceReturnsNonNegativeElapsedDuration(t *testing.T) {
 
 	if elapsed < 0 {
 		t.Fatalf("RealClock.Since(start) = %s, want non-negative duration", elapsed)
+	}
+}
+
+// TestRealClockUntilReturnsDeadlineDuration verifies the basic deadline
+// calculation contract without asserting precise wall-clock timing.
+func TestRealClockUntilReturnsDeadlineDuration(t *testing.T) {
+	t.Parallel()
+
+	var clk RealClock
+
+	deadline := clk.Now().Add(time.Hour)
+	remaining := clk.Until(deadline)
+
+	if remaining <= 0 {
+		t.Fatalf("RealClock.Until(deadline) = %s, want positive duration", remaining)
+	}
+	if remaining > time.Hour {
+		t.Fatalf("RealClock.Until(deadline) = %s, want at most 1h", remaining)
 	}
 }
 

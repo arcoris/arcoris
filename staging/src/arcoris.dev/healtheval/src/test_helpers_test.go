@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package eval
 
 import (
@@ -68,6 +67,10 @@ func (clk *stepClock) Now() time.Time {
 
 func (clk *stepClock) Since(ts time.Time) time.Duration {
 	return clk.current.Sub(ts)
+}
+
+func (clk *stepClock) Until(ts time.Time) time.Duration {
+	return ts.Sub(clk.current)
 }
 
 func mustCheck(t *testing.T, name string, res health.Result) health.Checker {

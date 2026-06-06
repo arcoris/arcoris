@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import (
@@ -46,7 +45,9 @@ func TestFakeClockAfterDeliversWhenDeadlineIsReached(t *testing.T) {
 
 	clk.Step(10 * time.Second)
 
-	mustEqualTime(t, "After delivery", channelassert.RequireReceive(t, ch, clockTestTimeout), start.Add(10*time.Second))
+	got := channelassert.RequireReceive(t, ch, clockTestTimeout)
+	mustEqualTime(t, "After delivery", got, start.Add(10*time.Second))
+
 	channelassert.RequireNoReceive(t, ch)
 }
 
@@ -62,7 +63,9 @@ func TestFakeClockAfterDeliversWhenDeadlineIsPassed(t *testing.T) {
 
 	clk.Step(30 * time.Second)
 
-	mustEqualTime(t, "After delivery", channelassert.RequireReceive(t, ch, clockTestTimeout), start.Add(30*time.Second))
+	got := channelassert.RequireReceive(t, ch, clockTestTimeout)
+	mustEqualTime(t, "After delivery", got, start.Add(30*time.Second))
+
 	channelassert.RequireNoReceive(t, ch)
 }
 
@@ -96,7 +99,9 @@ func TestFakeClockAfterNonPositiveDurationIsImmediatelyReady(t *testing.T) {
 
 			ch := clk.After(tc.d)
 
-			mustEqualTime(t, "After immediate delivery", channelassert.RequireReceive(t, ch, clockTestTimeout), start)
+			got := channelassert.RequireReceive(t, ch, clockTestTimeout)
+			mustEqualTime(t, "After immediate delivery", got, start)
+
 			channelassert.RequireNoReceive(t, ch)
 		})
 	}

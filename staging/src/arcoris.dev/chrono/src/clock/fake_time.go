@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import "time"
@@ -63,6 +62,23 @@ func (c *FakeClock) Since(t time.Time) time.Duration {
 	defer c.mu.Unlock()
 
 	return c.now.Sub(t)
+}
+
+// Until returns the duration until t according to the fake clock.
+//
+// Until is computed as:
+//
+//	t.Sub(FakeClock.Now())
+//
+// Until does not observe real runtime time. If the fake clock has not advanced,
+// Until returns a duration based on the current fake time stored in the clock.
+//
+// Until is safe for concurrent use.
+func (c *FakeClock) Until(t time.Time) time.Duration {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return t.Sub(c.now)
 }
 
 // Set moves the fake clock to next.

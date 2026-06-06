@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package snapshot
 
 import (
@@ -46,6 +45,11 @@ func (c *testClock) Now() time.Time {
 // Since returns the elapsed duration since t according to the current test time.
 func (c *testClock) Since(t time.Time) time.Duration {
 	return c.Now().Sub(t)
+}
+
+// Until returns the duration until t according to the current test time.
+func (c *testClock) Until(t time.Time) time.Duration {
+	return t.Sub(c.Now())
 }
 
 // set replaces the current test time.

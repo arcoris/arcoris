@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import "time"
@@ -45,6 +44,10 @@ import "time"
 // A Ticker belongs to the Clock that created it. A Ticker created by RealClock is
 // driven by real runtime time. A Ticker created by FakeClock is driven only by
 // explicit fake-time advancement.
+//
+// FakeClock-backed tickers deliver the fake clock's current time for the
+// advancement that produces the tick. If fake time advances across several
+// intervals, the fake ticker still delivers at most one tick.
 //
 // Implementations must make Stop and Reset safe for ordinary ticker ownership
 // patterns where one goroutine owns the ticker lifecycle and another goroutine

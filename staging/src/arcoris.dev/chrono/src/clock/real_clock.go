@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import "time"
@@ -69,6 +68,22 @@ func (RealClock) Now() time.Time {
 // values are wall-clock values for API, audit, and interoperability purposes.
 func (RealClock) Since(t time.Time) time.Duration {
 	return time.Since(t)
+}
+
+// Until returns the duration until t.
+//
+// Until delegates directly to time.Until. When t was obtained from time.Now in
+// the same process and still carries a monotonic clock reading, the standard
+// library uses that monotonic reading for deadline calculation.
+//
+// Use Until for local deadline checks such as dispatch timeouts, retry
+// not-before checks, heartbeat freshness limits, and controller cooldowns.
+//
+// Do not rely on monotonic semantics for timestamps that were serialized,
+// persisted, loaded from an API object, or received from another process. Those
+// values are wall-clock values for API, audit, and interoperability purposes.
+func (RealClock) Until(t time.Time) time.Duration {
+	return time.Until(t)
 }
 
 // After waits for d to elapse and then delivers the current time on the returned

@@ -97,6 +97,9 @@ func TestFakeClockZeroValueReportsZeroTime(t *testing.T) {
 	if got := clk.Since(time.Time{}); got != 0 {
 		t.Fatalf("zero FakeClock.Since(zero) = %s, want 0", got)
 	}
+	if got := clk.Until(time.Time{}); got != 0 {
+		t.Fatalf("zero FakeClock.Until(zero) = %s, want 0", got)
+	}
 }
 
 // TestFakeClockZeroValueCanRegisterWaitersTimersAndTickers verifies that lazy
@@ -114,9 +117,14 @@ func TestFakeClockZeroValueCanRegisterWaitersTimersAndTickers(t *testing.T) {
 	clk.Step(time.Second)
 
 	want := time.Time{}.Add(time.Second)
-	mustEqualTime(t, "zero FakeClock After delivery", channelassert.RequireReceive(t, waiter, clockTestTimeout), want)
-	mustEqualTime(t, "zero FakeClock timer delivery", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), want)
-	mustEqualTime(t, "zero FakeClock ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), want)
+
+	gotWaiter := channelassert.RequireReceive(t, waiter, clockTestTimeout)
+	gotTimer := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	gotTicker := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+
+	mustEqualTime(t, "zero FakeClock After delivery", gotWaiter, want)
+	mustEqualTime(t, "zero FakeClock timer delivery", gotTimer, want)
+	mustEqualTime(t, "zero FakeClock ticker delivery", gotTicker, want)
 }
 
 // TestFakeClockConcurrentOperationsAreRaceSafe exercises the fake clock's core

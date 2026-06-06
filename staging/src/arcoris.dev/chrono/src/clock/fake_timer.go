@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import (
@@ -24,6 +23,10 @@ import (
 //
 // The timer does not observe real runtime time. It fires only when the owning
 // FakeClock is advanced far enough with Set or Step.
+//
+// Fake timers deliver the fake clock's current time when delivery is performed.
+// If fake time advances past the original deadline, the delivered value is the
+// new current fake time for that advancement.
 //
 // Non-positive durations are treated as immediately due, matching the useful
 // behavior of time.NewTimer for immediate timers. Immediate fake timers are

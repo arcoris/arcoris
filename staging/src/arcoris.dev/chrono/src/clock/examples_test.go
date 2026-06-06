@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import (
@@ -29,11 +28,15 @@ func observedAge(c PassiveClock, startedAt time.Time) time.Duration {
 	return c.Since(startedAt)
 }
 
+func remainingUntil(c PassiveClock, deadline time.Time) time.Duration {
+	return c.Until(deadline)
+}
+
 // ExamplePassiveClock shows the narrow read-only clock contract.
 //
-// Components that only need Now or Since should accept PassiveClock instead of
-// Clock. This keeps read-only code independent from timers, tickers, sleeps, and
-// runtime loop ownership.
+// Components that only need Now, Since, or Until should accept PassiveClock
+// instead of Clock. This keeps read-only code independent from timers, tickers,
+// sleeps, and runtime loop ownership.
 func ExamplePassiveClock() {
 	clk := NewFakeClock(exampleStartTime())
 
@@ -44,6 +47,19 @@ func ExamplePassiveClock() {
 
 	// Output:
 	// 250ms
+}
+
+// ExamplePassiveClock_until shows deadline-oriented read-only calculations.
+func ExamplePassiveClock_until() {
+	clk := NewFakeClock(exampleStartTime())
+
+	deadline := clk.Now().Add(750 * time.Millisecond)
+	clk.Step(250 * time.Millisecond)
+
+	fmt.Println(remainingUntil(clk, deadline))
+
+	// Output:
+	// 500ms
 }
 
 // ExampleClock_After shows a simple one-shot wait.
@@ -141,7 +157,7 @@ func ExampleFakeClock_Sleep() {
 		close(done)
 	}()
 
-	for !clk.HasWaiters() {
+	for clk.Pending().Waiters == 0 {
 		// The yield avoids a pure busy spin while waiting for the goroutine to
 		// register its fake-time waiter.
 		runtime.Gosched()

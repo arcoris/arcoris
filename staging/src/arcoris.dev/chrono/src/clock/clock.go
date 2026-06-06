@@ -19,9 +19,9 @@ import "time"
 // PassiveClock provides read-only access to runtime time.
 //
 // PassiveClock is the smallest clock contract in this package. Components should
-// depend on PassiveClock when they only need to read the current time or measure
-// elapsed duration and do not own timers, tickers, sleeps, retry loops, or
-// background control loops.
+// depend on PassiveClock when they only need to read the current time, measure
+// elapsed duration, or compute duration until a deadline and do not own timers,
+// tickers, sleeps, retry loops, or background control loops.
 //
 // Typical PassiveClock users include:
 //
@@ -60,6 +60,19 @@ type PassiveClock interface {
 	// reconstructed from an API object. Serialized timestamps are wall-clock
 	// values; process-local monotonic information is not a wire-format contract.
 	Since(t time.Time) time.Duration
+
+	// Until returns the duration until t according to this clock.
+	//
+	// Until is the deadline-oriented counterpart to Since. It is the preferred
+	// operation for local deadline checks because it lets real implementations
+	// preserve the standard library's monotonic behavior when t still carries a
+	// process-local monotonic reading.
+	//
+	// Callers must not rely on monotonic elapsed-time semantics after a time.Time
+	// value has been serialized, persisted, transmitted over the network, or
+	// reconstructed from an API object. Serialized timestamps are wall-clock
+	// values; process-local monotonic information is not a wire-format contract.
+	Until(t time.Time) time.Duration
 }
 
 // Clock provides runtime time reads and waiting primitives.
@@ -79,9 +92,9 @@ type PassiveClock interface {
 //   - lease reapers;
 //   - queue wake-up loops.
 //
-// Components that only need Now or Since should depend on PassiveClock instead
-// of Clock. Keeping the narrower interface makes ownership clearer and prevents
-// read-only code from depending on blocking or loop-driving primitives.
+// Components that only need Now, Since, or Until should depend on PassiveClock
+// instead of Clock. Keeping the narrower interface makes ownership clearer and
+// prevents read-only code from depending on blocking or loop-driving primitives.
 //
 // Clock is intentionally limited to physical/runtime time and raw clock-driven
 // primitives. Context-aware waiting, condition loops, wait-owned error

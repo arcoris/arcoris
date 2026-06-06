@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import (
@@ -25,6 +24,8 @@ import (
 //
 // After does not observe real runtime time. The returned channel becomes ready
 // only when the owning FakeClock is advanced far enough with Set or Step.
+// If fake time advances past the original deadline, the delivered value is the
+// new current fake time for that advancement.
 //
 // Non-positive durations are treated as immediately due. In that case, After
 // schedules delivery using the current fake time and returns a channel that is
@@ -65,12 +66,11 @@ func (c *FakeClock) Sleep(d time.Duration) {
 // fake-time wait.
 //
 // HasWaiters reports only pending fake waiters. It does not report active
-// timers or tickers.
+// timers or tickers. Use Pending when tests need all fake-clock registry counts.
+//
+// HasWaiters is not a distributed coordination primitive.
 func (c *FakeClock) HasWaiters() bool {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	return len(c.waiters) > 0
+	return c.Pending().Waiters > 0
 }
 
 // fakeWaiter is a one-shot fake-time waiter used by After and Sleep.

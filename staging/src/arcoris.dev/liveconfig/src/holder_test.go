@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package liveconfig
 
 import (
@@ -39,6 +38,10 @@ func (c testClock) Now() time.Time {
 
 func (c testClock) Since(t time.Time) time.Duration {
 	return c.now.Sub(t)
+}
+
+func (c testClock) Until(t time.Time) time.Duration {
+	return t.Sub(c.now)
 }
 
 func newTestClock() testClock {

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import "time"
@@ -44,6 +43,10 @@ import "time"
 // Timer does not define deadline, retry, lease, admission, or scheduling policy.
 // It is only a low-level waiting primitive. Higher-level packages own the
 // meaning of the timeout and the action taken when the timer fires.
+//
+// FakeClock-backed timers deliver the fake clock's current time when delivery
+// is performed. If fake time advances past the original deadline, the delivered
+// value is the new current fake time for that advancement.
 //
 // Implementations must be safe for ordinary timer ownership patterns where one
 // goroutine owns Stop and Reset while another goroutine may receive from C.

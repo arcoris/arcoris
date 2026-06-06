@@ -49,6 +49,10 @@ func (c *mutableClock) Since(t time.Time) time.Duration {
 	return c.now.Sub(t)
 }
 
+func (c *mutableClock) Until(t time.Time) time.Duration {
+	return t.Sub(c.now)
+}
+
 func cloneMutableConfig(v mutableConfig) mutableConfig {
 	out := mutableConfig{
 		Name:   v.Name,

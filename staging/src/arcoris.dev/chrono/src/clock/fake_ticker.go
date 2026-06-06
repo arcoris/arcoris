@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import (
@@ -41,6 +40,7 @@ const (
 // tick per fake-clock advancement operation, even if Set or Step moves fake time
 // across several ticker intervals. This avoids unbounded tick bursts in tests
 // and gives controller-loop tests deterministic one-wakeup-per-advance behavior.
+// The delivered value is the fake clock's current time for that advancement.
 //
 // A ticker created by FakeClock belongs to that FakeClock. It must not be moved
 // between fake clocks.

@@ -77,9 +77,9 @@
 //   - lease reapers;
 //   - background reconciliation loops.
 //
-// A component that only needs Now or Since should accept PassiveClock instead of
-// Clock. This keeps read-only code independent from timers, tickers, sleeps, and
-// runtime loop ownership.
+// A component that only needs Now, Since, or Until should accept PassiveClock
+// instead of Clock. This keeps read-only code independent from timers, tickers,
+// sleeps, and runtime loop ownership.
 //
 // # Wall time and elapsed time
 //
@@ -115,6 +115,11 @@
 // been serialized, persisted, transmitted over the network, loaded from an API
 // object, or reconstructed from text. Serialized timestamps are wall-clock
 // values, not process-local monotonic instants.
+//
+// NewFakeClock preserves the supplied time.Time exactly. If the value carries a
+// monotonic reading, that reading remains part of the stored time value. Tests
+// that need stable equality, serialization, or readable output should usually
+// pass explicit time.Date values.
 //
 // # RealClock
 //
@@ -155,6 +160,10 @@
 // FakeClock is safe for concurrent use by tests and by the component under test,
 // but it must not be copied after first use.
 //
+// Pending reports currently registered fake waiters, timers, and tickers for
+// deterministic test coordination. It does not wait, deliver, mutate state,
+// observe real time, or define a scheduler/runtime lifecycle protocol.
+//
 // # Timers and tickers
 //
 // Timer is a one-shot waiting primitive. Use Timer when a component needs
@@ -175,6 +184,12 @@
 // channel already contains an unread value, a later fake delivery may be
 // dropped. Tests that reuse timers or tickers and need to observe every firing
 // must coordinate receives before Reset or further fake-time advancement.
+//
+// Fake waiters, timers, and tickers deliver the fake clock's current time for
+// the advancement that performs delivery. If fake time advances past the
+// original scheduled deadline, the delivered value is the new current fake time,
+// not the original deadline. This is a deterministic testing policy, not a
+// distributed scheduling semantic.
 //
 // # Fake ticker delivery
 //
@@ -230,6 +245,7 @@
 // Deterministic fake-clock implementation lives in:
 //
 //   - fake_clock.go;
+//   - fake_pending.go;
 //   - fake_time.go;
 //   - fake_waiter.go;
 //   - fake_timer.go;
@@ -244,6 +260,7 @@
 //   - real_timer.go defines the time.Timer adapter only;
 //   - real_ticker.go defines the time.Ticker adapter only;
 //   - fake_clock.go defines FakeClock state and construction only;
+//   - fake_pending.go owns fake registry state inspection;
 //   - fake_time.go owns fake time reads and advancement;
 //   - fake_waiter.go owns After, Sleep, HasWaiters, and waiter lifecycle;
 //   - fake_timer.go owns fake Timer lifecycle;

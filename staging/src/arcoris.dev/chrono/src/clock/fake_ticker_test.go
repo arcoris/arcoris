@@ -16,6 +16,7 @@ package clock
 
 import (
 	channelassert "arcoris.dev/testutil/channel"
+	"sync"
 	"testing"
 	"time"
 
@@ -124,7 +125,9 @@ func TestFakeTickerTicksWhenIntervalIsReached(t *testing.T) {
 
 	clk.Step(10 * time.Second)
 
-	mustEqualTime(t, "ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(10*time.Second))
+	got := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "ticker delivery", got, start.Add(10*time.Second))
+
 	channelassert.RequireNoReceive(t, ticker.C())
 }
 
@@ -139,13 +142,16 @@ func TestFakeTickerTicksRepeatedlyAcrossAdvanceCalls(t *testing.T) {
 	defer ticker.Stop()
 
 	clk.Step(5 * time.Second)
-	mustEqualTime(t, "first ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(5*time.Second))
+	gotFirst := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "first ticker delivery", gotFirst, start.Add(5*time.Second))
 
 	clk.Step(5 * time.Second)
-	mustEqualTime(t, "second ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(10*time.Second))
+	gotSecond := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "second ticker delivery", gotSecond, start.Add(10*time.Second))
 
 	clk.Step(5 * time.Second)
-	mustEqualTime(t, "third ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(15*time.Second))
+	gotThird := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "third ticker delivery", gotThird, start.Add(15*time.Second))
 }
 
 // TestFakeTickerDeliversAtMostOneTickPerAdvance verifies the documented fake
@@ -161,11 +167,15 @@ func TestFakeTickerDeliversAtMostOneTickPerAdvance(t *testing.T) {
 
 	clk.Step(30 * time.Second)
 
-	mustEqualTime(t, "ticker delivery after large Step", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(30*time.Second))
+	gotLargeStep := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "ticker delivery after large Step", gotLargeStep, start.Add(30*time.Second))
+
 	channelassert.RequireNoReceive(t, ticker.C())
 
 	clk.Step(5 * time.Second)
-	mustEqualTime(t, "ticker delivery after next Step", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(35*time.Second))
+
+	gotNextStep := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "ticker delivery after next Step", gotNextStep, start.Add(35*time.Second))
 }
 
 // TestFakeTickerStopPreventsFutureTicks verifies that Stop removes the ticker
@@ -182,6 +192,26 @@ func TestFakeTickerStopPreventsFutureTicks(t *testing.T) {
 	channelassert.RequireNoReceive(t, ticker.C())
 
 	ticker.Stop()
+}
+
+// TestFakeTickerStopLeavesUnreadStaleTickButPreventsFutureTicks documents that
+// Stop removes the ticker from future scheduling without draining a tick already
+// buffered in the ticker channel.
+func TestFakeTickerStopLeavesUnreadStaleTickButPreventsFutureTicks(t *testing.T) {
+	t.Parallel()
+
+	start := fakeClockTestTime()
+	clk := NewFakeClock(start)
+	ticker := clk.NewTicker(5 * time.Second)
+
+	clk.Step(5 * time.Second)
+	ticker.Stop()
+
+	got := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "stale ticker delivery after Stop", got, start.Add(5*time.Second))
+
+	clk.Step(5 * time.Second)
+	channelassert.RequireNoReceive(t, ticker.C())
 }
 
 // TestFakeTickerStopDoesNotCloseChannel verifies that Stop is not a channel
@@ -221,7 +251,9 @@ func TestFakeTickerResetChangesInterval(t *testing.T) {
 	channelassert.RequireNoReceive(t, ticker.C())
 
 	clk.Step(time.Second)
-	mustEqualTime(t, "ticker delivery after Reset", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(7*time.Second))
+
+	got := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "ticker delivery after Reset", got, start.Add(7*time.Second))
 }
 
 // TestFakeTickerResetStoppedTickerReactivates verifies that Reset can reactivate
@@ -239,7 +271,8 @@ func TestFakeTickerResetStoppedTickerReactivates(t *testing.T) {
 
 	clk.Step(3 * time.Second)
 
-	mustEqualTime(t, "ticker delivery after Reset from stopped state", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(3*time.Second))
+	got := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "ticker delivery after Reset from stopped state", got, start.Add(3*time.Second))
 }
 
 // TestFakeTickerResetDropsDeliveryWhenChannelIsFull documents that Reset does
@@ -258,8 +291,61 @@ func TestFakeTickerResetDropsDeliveryWhenChannelIsFull(t *testing.T) {
 	ticker.Reset(3 * time.Second)
 	clk.Step(3 * time.Second)
 
-	mustEqualTime(t, "stale ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(5*time.Second))
+	got := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "stale ticker delivery", got, start.Add(5*time.Second))
+
 	channelassert.RequireNoReceive(t, ticker.C())
+}
+
+// TestFakeTickerResetWithUnreadTickDropsDueTickThenContinues verifies that
+// Reset does not drain stale channel contents. A due tick can be dropped while
+// the channel is full, and later ticks resume after the stale value is consumed.
+func TestFakeTickerResetWithUnreadTickDropsDueTickThenContinues(t *testing.T) {
+	t.Parallel()
+
+	start := fakeClockTestTime()
+	clk := NewFakeClock(start)
+	ticker := clk.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	clk.Step(5 * time.Second)
+
+	ticker.Reset(3 * time.Second)
+	clk.Step(3 * time.Second)
+
+	gotStale := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "stale ticker delivery", gotStale, start.Add(5*time.Second))
+
+	channelassert.RequireNoReceive(t, ticker.C())
+
+	clk.Step(3 * time.Second)
+
+	gotFuture := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "future ticker delivery", gotFuture, start.Add(11*time.Second))
+}
+
+// TestFakeTickerResetStoppedTickerKeepsUnreadStaleTickAndContinues verifies the
+// stopped-to-active transition when the old buffered tick has not yet been read.
+func TestFakeTickerResetStoppedTickerKeepsUnreadStaleTickAndContinues(t *testing.T) {
+	t.Parallel()
+
+	start := fakeClockTestTime()
+	clk := NewFakeClock(start)
+	ticker := clk.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	clk.Step(5 * time.Second)
+
+	ticker.Stop()
+	ticker.Reset(3 * time.Second)
+
+	gotStale := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "stale ticker delivery after Reset", gotStale, start.Add(5*time.Second))
+
+	clk.Step(3 * time.Second)
+
+	gotFuture := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "future ticker delivery after Reset", gotFuture, start.Add(8*time.Second))
 }
 
 // TestFakeTickerResetPanicsForNonPositiveInterval verifies Reset uses the same
@@ -308,7 +394,8 @@ func TestFakeTickerDropsDeliveryWhenChannelIsFull(t *testing.T) {
 	defer ticker.Stop()
 
 	clk.Step(5 * time.Second)
-	mustEqualTime(t, "first ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(5*time.Second))
+	gotFirst := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "first ticker delivery", gotFirst, start.Add(5*time.Second))
 
 	clk.Step(5 * time.Second)
 
@@ -319,6 +406,48 @@ func TestFakeTickerDropsDeliveryWhenChannelIsFull(t *testing.T) {
 	}()
 	channelassert.RequireSignal(t, done, clockTestTimeout)
 
-	mustEqualTime(t, "second ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), start.Add(10*time.Second))
+	gotSecond := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+	mustEqualTime(t, "second ticker delivery", gotSecond, start.Add(10*time.Second))
+
 	channelassert.RequireNoReceive(t, ticker.C())
+}
+
+// TestFakeTickerConcurrentStopResetAndStepIsRaceSafe is a lifecycle race smoke
+// test. Concurrent ownership operations intentionally have no deterministic
+// delivery-order assertion; the race detector is the useful oracle here.
+func TestFakeTickerConcurrentStopResetAndStepIsRaceSafe(t *testing.T) {
+	t.Parallel()
+
+	clk := NewFakeClock(fakeClockTestTime())
+	ticker := clk.NewTicker(time.Hour)
+	defer ticker.Stop()
+
+	var wg sync.WaitGroup
+	for worker := 0; worker < 4; worker++ {
+		wg.Add(1)
+		go func(worker int) {
+			defer wg.Done()
+
+			for i := 0; i < 50; i++ {
+				d := time.Duration(worker+i+1) * time.Nanosecond
+
+				ticker.Stop()
+				ticker.Reset(d)
+				clk.Step(time.Nanosecond)
+
+				select {
+				case <-ticker.C():
+				default:
+				}
+			}
+		}(worker)
+	}
+
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	channelassert.RequireSignal(t, done, clockTestTimeout)
 }

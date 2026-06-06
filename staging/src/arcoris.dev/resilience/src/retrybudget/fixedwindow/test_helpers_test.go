@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package fixedwindow
 
 import (
@@ -43,6 +42,10 @@ func (c *fakeClock) Now() time.Time {
 
 func (c *fakeClock) Since(t time.Time) time.Duration {
 	return c.Now().Sub(t)
+}
+
+func (c *fakeClock) Until(t time.Time) time.Duration {
+	return t.Sub(c.Now())
 }
 
 func (c *fakeClock) Set(now time.Time) {

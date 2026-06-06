@@ -16,6 +16,7 @@ package clock
 
 import (
 	channelassert "arcoris.dev/testutil/channel"
+	"sync"
 	"testing"
 	"time"
 )
@@ -85,7 +86,9 @@ func TestFakeTimerFiresWhenDeadlineIsReached(t *testing.T) {
 
 	clk.Step(10 * time.Second)
 
-	mustEqualTime(t, "timer delivery", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start.Add(10*time.Second))
+	got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	mustEqualTime(t, "timer delivery", got, start.Add(10*time.Second))
+
 	channelassert.RequireNoReceive(t, timer.C())
 }
 
@@ -100,7 +103,9 @@ func TestFakeTimerFiresWhenDeadlineIsPassed(t *testing.T) {
 
 	clk.Step(30 * time.Second)
 
-	mustEqualTime(t, "timer delivery", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start.Add(30*time.Second))
+	got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	mustEqualTime(t, "timer delivery", got, start.Add(30*time.Second))
+
 	channelassert.RequireNoReceive(t, timer.C())
 }
 
@@ -133,7 +138,9 @@ func TestFakeTimerNonPositiveDurationIsImmediatelyReady(t *testing.T) {
 			clk := NewFakeClock(start)
 			timer := clk.NewTimer(tc.d)
 
-			mustEqualTime(t, "timer immediate delivery", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start)
+			got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+			mustEqualTime(t, "timer immediate delivery", got, start)
+
 			channelassert.RequireNoReceive(t, timer.C())
 		})
 	}
@@ -212,7 +219,61 @@ func TestFakeTimerResetActiveTimerMovesDeadline(t *testing.T) {
 	channelassert.RequireNoReceive(t, timer.C())
 
 	clk.Step(time.Second)
-	mustEqualTime(t, "timer delivery after Reset", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start.Add(20*time.Second))
+
+	got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	mustEqualTime(t, "timer delivery after Reset", got, start.Add(20*time.Second))
+}
+
+// TestFakeTimerResetActiveTimerLaterAfterPartialAdvance verifies that Reset
+// reschedules an active timer relative to the current fake time, not relative to
+// the timer's original creation time.
+func TestFakeTimerResetActiveTimerLaterAfterPartialAdvance(t *testing.T) {
+	t.Parallel()
+
+	start := fakeClockTestTime()
+	clk := NewFakeClock(start)
+	timer := clk.NewTimer(10 * time.Second)
+
+	clk.Step(4 * time.Second)
+
+	if wasActive := timer.Reset(20 * time.Second); !wasActive {
+		t.Fatal("fakeTimer.Reset() for active timer = false, want true")
+	}
+
+	clk.Step(19 * time.Second)
+	channelassert.RequireNoReceive(t, timer.C())
+
+	clk.Step(time.Second)
+
+	want := start.Add(24 * time.Second)
+	got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	mustEqualTime(t, "timer delivery after later Reset", got, want)
+}
+
+// TestFakeTimerResetActiveTimerEarlierAfterPartialAdvance covers the opposite
+// reschedule direction: an active timer can be moved closer to the current fake
+// time after fake time has already advanced.
+func TestFakeTimerResetActiveTimerEarlierAfterPartialAdvance(t *testing.T) {
+	t.Parallel()
+
+	start := fakeClockTestTime()
+	clk := NewFakeClock(start)
+	timer := clk.NewTimer(30 * time.Second)
+
+	clk.Step(10 * time.Second)
+
+	if wasActive := timer.Reset(5 * time.Second); !wasActive {
+		t.Fatal("fakeTimer.Reset() for active timer = false, want true")
+	}
+
+	clk.Step(4 * time.Second)
+	channelassert.RequireNoReceive(t, timer.C())
+
+	clk.Step(time.Second)
+
+	want := start.Add(15 * time.Second)
+	got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	mustEqualTime(t, "timer delivery after earlier Reset", got, want)
 }
 
 // TestFakeTimerResetStoppedTimerReactivates verifies that Reset can reuse a
@@ -234,7 +295,8 @@ func TestFakeTimerResetStoppedTimerReactivates(t *testing.T) {
 
 	clk.Step(5 * time.Second)
 
-	mustEqualTime(t, "timer delivery after Reset from stopped state", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start.Add(5*time.Second))
+	got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	mustEqualTime(t, "timer delivery after Reset from stopped state", got, start.Add(5*time.Second))
 }
 
 // TestFakeTimerResetFiredTimerReactivates verifies timer reuse after an earlier
@@ -255,7 +317,8 @@ func TestFakeTimerResetFiredTimerReactivates(t *testing.T) {
 
 	clk.Step(3 * time.Second)
 
-	mustEqualTime(t, "timer delivery after Reset from fired state", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start.Add(8*time.Second))
+	got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	mustEqualTime(t, "timer delivery after Reset from fired state", got, start.Add(8*time.Second))
 }
 
 // TestFakeTimerResetNonPositiveDurationDeliversImmediately verifies immediate
@@ -291,10 +354,30 @@ func TestFakeTimerResetNonPositiveDurationDeliversImmediately(t *testing.T) {
 				t.Fatal("fakeTimer.Reset(non-positive) for active timer = false, want true")
 			}
 
-			mustEqualTime(t, "timer immediate delivery after Reset", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start)
+			got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+			mustEqualTime(t, "timer immediate delivery after Reset", got, start)
+
 			channelassert.RequireNoReceive(t, timer.C())
 		})
 	}
+}
+
+// TestFakeTimerResetZeroDeliversImmediatelyWithoutStep documents the direct
+// immediate-delivery path used by Reset(0). It does not require a following
+// Step(0) to make the timer ready.
+func TestFakeTimerResetZeroDeliversImmediatelyWithoutStep(t *testing.T) {
+	t.Parallel()
+
+	start := fakeClockTestTime()
+	clk := NewFakeClock(start)
+	timer := clk.NewTimer(time.Hour)
+
+	if wasActive := timer.Reset(0); !wasActive {
+		t.Fatal("fakeTimer.Reset(0) for active timer = false, want true")
+	}
+
+	got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	mustEqualTime(t, "timer delivery after Reset(0)", got, start)
 }
 
 // TestFakeTimerResetDropsImmediateDeliveryWhenChannelIsFull documents the
@@ -317,7 +400,9 @@ func TestFakeTimerResetDropsImmediateDeliveryWhenChannelIsFull(t *testing.T) {
 	}()
 	channelassert.RequireSignal(t, done, clockTestTimeout)
 
-	mustEqualTime(t, "stale timer delivery", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start.Add(5*time.Second))
+	got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	mustEqualTime(t, "stale timer delivery", got, start.Add(5*time.Second))
+
 	channelassert.RequireNoReceive(t, timer.C())
 }
 
@@ -343,6 +428,47 @@ func TestFakeTimerStepDropsDeliveryWhenChannelIsFull(t *testing.T) {
 	}()
 	channelassert.RequireSignal(t, done, clockTestTimeout)
 
-	mustEqualTime(t, "stale timer delivery", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), start.Add(5*time.Second))
+	got := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	mustEqualTime(t, "stale timer delivery", got, start.Add(5*time.Second))
+
 	channelassert.RequireNoReceive(t, timer.C())
+}
+
+// TestFakeTimerConcurrentStopResetAndStepIsRaceSafe is a lifecycle race smoke
+// test. It intentionally does not assert an ordering between concurrent owner
+// operations; the race detector is the useful oracle here.
+func TestFakeTimerConcurrentStopResetAndStepIsRaceSafe(t *testing.T) {
+	t.Parallel()
+
+	clk := NewFakeClock(fakeClockTestTime())
+	timer := clk.NewTimer(time.Hour)
+
+	var wg sync.WaitGroup
+	for worker := 0; worker < 4; worker++ {
+		wg.Add(1)
+		go func(worker int) {
+			defer wg.Done()
+
+			for i := 0; i < 50; i++ {
+				d := time.Duration(worker+i+1) * time.Nanosecond
+
+				_ = timer.Stop()
+				_ = timer.Reset(d)
+				clk.Step(time.Nanosecond)
+
+				select {
+				case <-timer.C():
+				default:
+				}
+			}
+		}(worker)
+	}
+
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	channelassert.RequireSignal(t, done, clockTestTimeout)
 }

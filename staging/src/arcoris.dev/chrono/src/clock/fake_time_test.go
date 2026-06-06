@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package clock
 
 import (
@@ -35,6 +34,22 @@ func TestFakeClockSinceUsesFakeTime(t *testing.T) {
 
 	if got := clk.Since(start); got != 10*time.Second {
 		t.Fatalf("FakeClock.Since(start) = %s, want %s", got, 10*time.Second)
+	}
+}
+
+// TestFakeClockUntilUsesFakeTime verifies that deadline duration is computed
+// from fake time, not from the real process clock.
+func TestFakeClockUntilUsesFakeTime(t *testing.T) {
+	t.Parallel()
+
+	start := fakeClockTestTime()
+	clk := NewFakeClock(start)
+
+	clk.Step(10 * time.Second)
+
+	deadline := start.Add(25 * time.Second)
+	if got := clk.Until(deadline); got != 15*time.Second {
+		t.Fatalf("FakeClock.Until(deadline) = %s, want %s", got, 15*time.Second)
 	}
 }
 
@@ -63,6 +78,33 @@ func TestFakeClockSetToCurrentTimeIsAllowed(t *testing.T) {
 	clk.Set(start)
 
 	mustEqualTime(t, "FakeClock.Now() after Set(current)", clk.Now(), start)
+}
+
+// TestFakeClockSetCurrentDeliversAlreadyDueSources verifies that Set(current)
+// runs the due-delivery path even when fake time does not move.
+func TestFakeClockSetCurrentDeliversAlreadyDueSources(t *testing.T) {
+	t.Parallel()
+
+	start := fakeClockTestTime()
+	clk := NewFakeClock(start)
+
+	waiter := registerDueWaiter(t, clk)
+	timer := clk.NewTimer(time.Hour)
+	ticker := clk.NewTicker(time.Hour)
+	defer ticker.Stop()
+
+	forceTimerDue(t, clk, timer)
+	forceTickerDue(t, clk, ticker)
+
+	clk.Set(start)
+
+	gotWaiter := channelassert.RequireReceive(t, waiter, clockTestTimeout)
+	gotTimer := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	gotTicker := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+
+	mustEqualTime(t, "waiter delivery", gotWaiter, start)
+	mustEqualTime(t, "timer delivery", gotTimer, start)
+	mustEqualTime(t, "ticker delivery", gotTicker, start)
 }
 
 // TestFakeClockSetBackwardsPanics verifies the monotonic fake-time invariant.
@@ -106,6 +148,33 @@ func TestFakeClockStepZeroIsAllowed(t *testing.T) {
 	clk.Step(0)
 
 	mustEqualTime(t, "FakeClock.Now() after Step(0)", clk.Now(), start)
+}
+
+// TestFakeClockStepZeroDeliversAlreadyDueSources verifies that Step(0) processes
+// due fake waiters, timers, and tickers without changing fake time.
+func TestFakeClockStepZeroDeliversAlreadyDueSources(t *testing.T) {
+	t.Parallel()
+
+	start := fakeClockTestTime()
+	clk := NewFakeClock(start)
+
+	waiter := registerDueWaiter(t, clk)
+	timer := clk.NewTimer(time.Hour)
+	ticker := clk.NewTicker(time.Hour)
+	defer ticker.Stop()
+
+	forceTimerDue(t, clk, timer)
+	forceTickerDue(t, clk, ticker)
+
+	clk.Step(0)
+
+	gotWaiter := channelassert.RequireReceive(t, waiter, clockTestTimeout)
+	gotTimer := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	gotTicker := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+
+	mustEqualTime(t, "waiter delivery", gotWaiter, start)
+	mustEqualTime(t, "timer delivery", gotTimer, start)
+	mustEqualTime(t, "ticker delivery", gotTicker, start)
 }
 
 // TestFakeClockStepNegativePanics verifies that fake time cannot move backwards
@@ -161,9 +230,13 @@ func TestFakeClockStepDeliversDueWaitersTimersAndTickers(t *testing.T) {
 
 	want := start.Add(10 * time.Second)
 
-	mustEqualTime(t, "waiter delivery", channelassert.RequireReceive(t, waiter, clockTestTimeout), want)
-	mustEqualTime(t, "timer delivery", channelassert.RequireReceive(t, timer.C(), clockTestTimeout), want)
-	mustEqualTime(t, "ticker delivery", channelassert.RequireReceive(t, ticker.C(), clockTestTimeout), want)
+	gotWaiter := channelassert.RequireReceive(t, waiter, clockTestTimeout)
+	gotTimer := channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	gotTicker := channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+
+	mustEqualTime(t, "waiter delivery", gotWaiter, want)
+	mustEqualTime(t, "timer delivery", gotTimer, want)
+	mustEqualTime(t, "ticker delivery", gotTicker, want)
 }
 
 // TestFakeClockCollectsDueDeliveriesInStableOrder verifies the documented fake
