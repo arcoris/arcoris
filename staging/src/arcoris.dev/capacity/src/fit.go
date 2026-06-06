@@ -18,6 +18,10 @@ package capacity
 //
 // Fit is pure accounting diagnostics. It does not grant ownership, enqueue
 // work, choose retry policy, or make an admission decision.
+//
+// Refusal is a single summary value. When several problems exist at once,
+// Refusal uses unknown resource, debt, then insufficient capacity precedence,
+// while Missing and Debt preserve every diagnostic vector.
 type Fit struct {
 	// Refusal classifies why the demand does not fit.
 	Refusal Refusal
@@ -51,10 +55,16 @@ func (f Fit) IsValid() bool {
 	switch f.Refusal {
 	case RefusalNone:
 		return f.Missing.IsZero() && f.Debt.IsZero()
-	case RefusalInsufficient, RefusalUnknownResource:
+
+	case RefusalInsufficient:
 		return !f.Missing.IsZero() && f.Debt.IsZero()
+
 	case RefusalDebt:
-		return f.Missing.IsZero() && !f.Debt.IsZero()
+		return !f.Debt.IsZero()
+
+	case RefusalUnknownResource:
+		return !f.Missing.IsZero()
+
 	default:
 		return false
 	}

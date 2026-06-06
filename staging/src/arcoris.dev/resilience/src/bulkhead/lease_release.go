@@ -23,7 +23,8 @@ import (
 //
 // Release panics if l has already been released. Double release is an ownership
 // bug because it means the caller lost track of the live protected section. Use
-// TryRelease when idempotent cleanup is required.
+// TryRelease when idempotent cleanup is required. The returned snapshot is read
+// after the release and is a diagnostic observation under concurrent mutation.
 func (l *Lease) Release() snapshot.Snapshot[Snapshot] {
 	l.requireReady()
 	if !l.release() {
@@ -37,7 +38,7 @@ func (l *Lease) Release() snapshot.Snapshot[Snapshot] {
 //
 // On first release, TryRelease returns the resulting snapshot with true. On
 // later calls, it leaves capacity unchanged and returns the current snapshot with
-// false.
+// false. Snapshots are observations, not global serialization barriers.
 func (l *Lease) TryRelease() (snapshot.Snapshot[Snapshot], bool) {
 	l.requireReady()
 	ok := l.release()

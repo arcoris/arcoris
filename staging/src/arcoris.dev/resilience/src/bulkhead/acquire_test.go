@@ -48,6 +48,7 @@ func TestTryAcquireDeniedWhenCapacityExhausted(t *testing.T) {
 	}
 	defer lease.Release()
 
+	beforeDenied := b.Revision()
 	deniedLease, snap, ok := b.TryAcquire()
 	if ok {
 		t.Fatal("second TryAcquire returned ok=true, want false")
@@ -58,6 +59,9 @@ func TestTryAcquireDeniedWhenCapacityExhausted(t *testing.T) {
 	requireSnapshotValue(t, snap, 1, 1, 0, 0)
 	if got := b.Snapshot(); got != snap {
 		t.Fatalf("denied snapshot = %+v, want current snapshot %+v", snap, got)
+	}
+	if got := b.Revision(); got != beforeDenied {
+		t.Fatalf("denied acquire advanced revision: got %d, want %d", got, beforeDenied)
 	}
 }
 

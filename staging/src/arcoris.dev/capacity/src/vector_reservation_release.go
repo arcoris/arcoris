@@ -21,22 +21,28 @@ import "arcoris.dev/snapshot"
 // Release panics on double release. Use TryRelease for idempotent cleanup.
 func (r *VectorReservation) Release() {
 	if !r.TryRelease() {
-		panicAt("vector_reservation", ErrReservationReleased, "vector reservation has already been released")
+		panicAt(
+			"vector_reservation",
+			ErrReservationReleased,
+			"vector reservation has already been released",
+		)
 	}
 }
 
 // TryRelease returns r's demand to its vector ledger if r is still live.
 func (r *VectorReservation) TryRelease() bool {
-	_, ok := r.release()
-
-	return ok
+	return r.release()
 }
 
 // ReleaseObserved releases r and returns the post-release vector snapshot.
 func (r *VectorReservation) ReleaseObserved() snapshot.Snapshot[VectorSnapshot] {
 	snap, ok := r.TryReleaseObserved()
 	if !ok {
-		panicAt("vector_reservation", ErrReservationReleased, "vector reservation has already been released")
+		panicAt(
+			"vector_reservation",
+			ErrReservationReleased,
+			"vector reservation has already been released",
+		)
 	}
 
 	return snap
@@ -44,13 +50,6 @@ func (r *VectorReservation) ReleaseObserved() snapshot.Snapshot[VectorSnapshot] 
 
 // TryReleaseObserved releases r and returns the current vector snapshot and outcome.
 func (r *VectorReservation) TryReleaseObserved() (snapshot.Snapshot[VectorSnapshot], bool) {
-	snap, ok := r.release()
-
-	return snap, ok
-}
-
-// release performs the idempotent vector ownership transition and subtraction.
-func (r *VectorReservation) release() (snapshot.Snapshot[VectorSnapshot], bool) {
 	r.requireValid()
 
 	l := r.ledger
@@ -58,10 +57,31 @@ func (r *VectorReservation) release() (snapshot.Snapshot[VectorSnapshot], bool) 
 	defer l.mu.Unlock()
 
 	l.requireInitializedLocked()
+	ok := r.releaseLocked()
+
+	return l.snapshotLocked(), ok
+}
+
+// release performs the idempotent vector ownership transition and subtraction.
+func (r *VectorReservation) release() bool {
+	r.requireValid()
+
+	l := r.ledger
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.requireInitializedLocked()
+
+	return r.releaseLocked()
+}
+
+// releaseLocked releases r while its ledger mutex is held.
+func (r *VectorReservation) releaseLocked() bool {
 	if r.released {
-		return l.snapshotLocked(), false
+		return false
 	}
 
+	l := r.ledger
 	next, ok := l.state.WithoutReserved(r.demand)
 	if !ok {
 		panicAt(
@@ -75,5 +95,5 @@ func (r *VectorReservation) release() (snapshot.Snapshot[VectorSnapshot], bool) 
 	r.released = true
 	l.revision = l.revision.Next()
 
-	return l.snapshotLocked(), true
+	return true
 }

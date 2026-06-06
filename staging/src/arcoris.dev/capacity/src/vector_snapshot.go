@@ -178,21 +178,42 @@ func appendVectorBalance(limit Entry, held Entry, available []Entry, debt []Entr
 }
 
 // fitFromVectors classifies demand diagnostics.
+//
+// Refusal precedence is unknown resource, debt, then ordinary insufficiency.
+// Missing and Debt are preserved together so callers can inspect every local
+// accounting problem even when one refusal value must summarize the fit.
 func fitFromVectors(missing []Entry, debt []Entry, limits Vector) Fit {
+	hasMissing := len(missing) > 0
+	hasDebt := len(debt) > 0
+	hasUnknown := false
+
+	for _, entry := range missing {
+		if !limits.Has(entry.Resource) {
+			hasUnknown = true
+			break
+		}
+	}
+
 	switch {
-	case len(missing) > 0:
-		refusal := RefusalInsufficient
-		for _, entry := range missing {
-			if !limits.Has(entry.Resource) {
-				refusal = RefusalUnknownResource
-				break
-			}
+	case hasUnknown:
+		return Fit{
+			Refusal: RefusalUnknownResource,
+			Missing: vectorFromSorted(missing),
+			Debt:    vectorFromSorted(debt),
 		}
 
-		return Fit{Refusal: refusal, Missing: vectorFromSorted(missing)}
+	case hasDebt:
+		return Fit{
+			Refusal: RefusalDebt,
+			Missing: vectorFromSorted(missing),
+			Debt:    vectorFromSorted(debt),
+		}
 
-	case len(debt) > 0:
-		return Fit{Refusal: RefusalDebt, Debt: vectorFromSorted(debt)}
+	case hasMissing:
+		return Fit{
+			Refusal: RefusalInsufficient,
+			Missing: vectorFromSorted(missing),
+		}
 
 	default:
 		return Fit{Refusal: RefusalNone}

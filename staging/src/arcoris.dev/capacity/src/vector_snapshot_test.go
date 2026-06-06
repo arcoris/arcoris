@@ -50,3 +50,49 @@ func TestVectorSnapshotFitDiagnostics(t *testing.T) {
 		t.Fatalf("unknown refusal = %s, want unknown_resource", unknown.Refusal)
 	}
 }
+
+func TestVectorSnapshotFitPreservesMixedUnknownAndDebtDiagnostics(t *testing.T) {
+	snap := capacity.NewVectorSnapshot(
+		vector(t, entry("memory_bytes", 4)),
+		vector(t, entry("memory_bytes", 6)),
+	)
+
+	fit := snap.Fit(demand(t, entry("memory_bytes", 1), entry("queue_slots", 1)))
+	if fit.Refusal != capacity.RefusalUnknownResource {
+		t.Fatalf("refusal = %s, want unknown_resource", fit.Refusal)
+	}
+	requireVector(t, fit.Missing, entry("queue_slots", 1))
+	requireVector(t, fit.Debt, entry("memory_bytes", 2))
+}
+
+func TestVectorSnapshotFitPreservesMixedInsufficientAndDebtDiagnostics(t *testing.T) {
+	snap := capacity.NewVectorSnapshot(
+		vector(t, entry("memory_bytes", 4), entry("worker_slots", 1)),
+		vector(t, entry("memory_bytes", 6)),
+	)
+
+	fit := snap.Fit(demand(t, entry("memory_bytes", 1), entry("worker_slots", 2)))
+	if fit.Refusal != capacity.RefusalDebt {
+		t.Fatalf("refusal = %s, want debt", fit.Refusal)
+	}
+	requireVector(t, fit.Missing, entry("worker_slots", 1))
+	requireVector(t, fit.Debt, entry("memory_bytes", 2))
+}
+
+func TestVectorSnapshotFitPreservesUnknownInsufficientAndDebtDiagnostics(t *testing.T) {
+	snap := capacity.NewVectorSnapshot(
+		vector(t, entry("memory_bytes", 4), entry("worker_slots", 1)),
+		vector(t, entry("memory_bytes", 6)),
+	)
+
+	fit := snap.Fit(demand(t,
+		entry("memory_bytes", 1),
+		entry("queue_slots", 1),
+		entry("worker_slots", 2),
+	))
+	if fit.Refusal != capacity.RefusalUnknownResource {
+		t.Fatalf("refusal = %s, want unknown_resource", fit.Refusal)
+	}
+	requireVector(t, fit.Missing, entry("queue_slots", 1), entry("worker_slots", 1))
+	requireVector(t, fit.Debt, entry("memory_bytes", 2))
+}

@@ -88,6 +88,7 @@ func TestBulkheadLeaseTryReleaseConcurrentWithReleasedIsRaceFree(t *testing.T) {
 	if !ok {
 		t.Fatal("TryAcquire failed")
 	}
+	beforeRelease := b.Revision()
 
 	var released atomic.Uint64
 	var wg sync.WaitGroup
@@ -112,4 +113,15 @@ func TestBulkheadLeaseTryReleaseConcurrentWithReleasedIsRaceFree(t *testing.T) {
 		t.Fatal("lease is not released")
 	}
 	requireSnapshotValue(t, b.Snapshot(), 1, 0, 1, 0)
+	afterRelease := b.Revision()
+	if afterRelease == beforeRelease {
+		t.Fatal("successful concurrent TryRelease did not advance revision")
+	}
+
+	if _, ok := lease.TryRelease(); ok {
+		t.Fatal("TryRelease after concurrent release returned ok=true")
+	}
+	if got := b.Revision(); got != afterRelease {
+		t.Fatalf("duplicate TryRelease advanced revision: got %d, want %d", got, afterRelease)
+	}
 }

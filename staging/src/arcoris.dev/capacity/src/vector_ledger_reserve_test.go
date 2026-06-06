@@ -22,48 +22,118 @@ import (
 )
 
 func TestVectorLedgerTryReserveObserved(t *testing.T) {
-	ledger := capacity.NewVectorLedger(vector(t, entry("memory_bytes", 8), entry("worker_slots", 4)))
+	ledger := capacity.NewVectorLedger(vector(t,
+		entry("memory_bytes", 8),
+		entry("worker_slots", 4),
+	))
 
-	reservation, observation, ok := ledger.TryReserveObserved(demand(t, entry("memory_bytes", 3), entry("worker_slots", 2)))
-	if !ok || reservation == nil || observation.Refusal != capacity.RefusalNone {
-		t.Fatalf("TryReserveObserved() reservation=%v observation=%#v ok=%v", reservation, observation, ok)
+	reservation, observation, ok := ledger.TryReserveObserved(demand(t,
+		entry("memory_bytes", 3),
+		entry("worker_slots", 2),
+	))
+	if !ok {
+		t.Fatalf("TryReserveObserved() refused: %#v", observation)
+	}
+	if reservation == nil {
+		t.Fatal("TryReserveObserved() returned nil reservation")
+	}
+	if observation.Refusal != capacity.RefusalNone {
+		t.Fatalf("Refusal = %s, want none", observation.Refusal)
 	}
 }
 
 func TestVectorLedgerTryReserveRefusalDoesNotMutate(t *testing.T) {
-	ledger := capacity.NewVectorLedger(vector(t, entry("memory_bytes", 8), entry("worker_slots", 4)))
-	reservation, ok := ledger.TryReserve(demand(t, entry("memory_bytes", 3), entry("worker_slots", 2)))
+	ledger := capacity.NewVectorLedger(vector(t,
+		entry("memory_bytes", 8),
+		entry("worker_slots", 4),
+	))
+
+	reservation, ok := ledger.TryReserve(demand(t,
+		entry("memory_bytes", 3),
+		entry("worker_slots", 2),
+	))
 	if !ok {
 		t.Fatal("initial reserve failed")
 	}
 	defer reservation.Release()
 
 	before := ledger.Snapshot()
-	_, refused, ok := ledger.TryReserveObserved(demand(t, entry("memory_bytes", 1), entry("worker_slots", 3)))
+	_, refused, ok := ledger.TryReserveObserved(demand(t,
+		entry("memory_bytes", 1),
+		entry("worker_slots", 3),
+	))
 	if ok || refused.Refusal != capacity.RefusalInsufficient {
 		t.Fatalf("refused = %#v ok=%v", refused, ok)
 	}
-	if !ledger.Snapshot().Value.Reserved.Equal(before.Value.Reserved) || ledger.Revision() != before.Revision {
-		t.Fatal("refused vector reservation mutated state or revision")
+
+	after := ledger.Snapshot()
+	if !after.Value.Reserved.Equal(before.Value.Reserved) {
+		t.Fatalf("reserved after refusal = %#v, want %#v", after.Value.Reserved, before.Value.Reserved)
+	}
+	if after.Revision != before.Revision {
+		t.Fatalf("revision after refusal = %d, want %d", after.Revision, before.Revision)
 	}
 }
 
+func TestVectorLedgerRawReserveAndReleaseRevision(t *testing.T) {
+	ledger := capacity.NewVectorLedger(vector(t,
+		entry("worker_slots", 2),
+	))
+	unit := demand(t, entry("worker_slots", 1))
+	initial := ledger.Revision()
+
+	reservation, ok := ledger.TryReserve(unit)
+	if !ok {
+		t.Fatal("TryReserve() failed")
+	}
+	afterReserve := ledger.Revision()
+	requireRevisionAdvanced(t, initial, afterReserve)
+
+	extra, ok := ledger.TryReserve(demand(t, entry("worker_slots", 2)))
+	if ok || extra != nil {
+		t.Fatalf("extra TryReserve() = %v, %v; want nil, false", extra, ok)
+	}
+	requireRevisionEqual(t, afterReserve, ledger.Revision(), "failed vector TryReserve")
+
+	if !reservation.TryRelease() {
+		t.Fatal("VectorReservation.TryRelease() failed")
+	}
+	afterRelease := ledger.Revision()
+	requireRevisionAdvanced(t, afterReserve, afterRelease)
+
+	if reservation.TryRelease() {
+		t.Fatal("second VectorReservation.TryRelease() succeeded")
+	}
+	requireRevisionEqual(t, afterRelease, ledger.Revision(), "second vector TryRelease")
+}
+
 func TestVectorLedgerDebtOnlyBlocksAffectedResources(t *testing.T) {
-	ledger := capacity.NewVectorLedger(vector(t, entry("memory_bytes", 8), entry("worker_slots", 4)))
+	ledger := capacity.NewVectorLedger(vector(t,
+		entry("memory_bytes", 8),
+		entry("worker_slots", 4),
+	))
 
 	memory, ok := ledger.TryReserve(demand(t, entry("memory_bytes", 8)))
 	if !ok {
 		t.Fatal("memory reserve failed")
 	}
-	ledger.SetLimits(vector(t, entry("memory_bytes", 4), entry("worker_slots", 4)))
+
+	ledger.SetLimits(vector(t,
+		entry("memory_bytes", 4),
+		entry("worker_slots", 4),
+	))
 
 	worker, ok := ledger.TryReserve(demand(t, entry("worker_slots", 2)))
 	if !ok {
 		t.Fatal("worker reserve was blocked by unrelated memory debt")
 	}
+
 	_, debt, ok := ledger.TryReserveObserved(demand(t, entry("memory_bytes", 1)))
-	if ok || debt.Refusal != capacity.RefusalDebt {
-		t.Fatalf("memory debt observation = %#v ok=%v", debt, ok)
+	if ok {
+		t.Fatalf("memory reserve succeeded despite debt: %#v", debt)
+	}
+	if debt.Refusal != capacity.RefusalDebt {
+		t.Fatalf("Refusal = %s, want debt", debt.Refusal)
 	}
 
 	worker.Release()
@@ -73,7 +143,9 @@ func TestVectorLedgerDebtOnlyBlocksAffectedResources(t *testing.T) {
 func TestVectorLedgerConcurrentReserveRelease(t *testing.T) {
 	const limit = 32
 
-	ledger := capacity.NewVectorLedger(vector(t, entry("worker_slots", limit)))
+	ledger := capacity.NewVectorLedger(vector(t,
+		entry("worker_slots", limit),
+	))
 	unit := demand(t, entry("worker_slots", 1))
 	var reservations sync.Map
 	var wg sync.WaitGroup
@@ -89,7 +161,8 @@ func TestVectorLedgerConcurrentReserveRelease(t *testing.T) {
 	}
 	wg.Wait()
 
-	if got := ledger.Snapshot().Value.Reserved.Amount(capacity.MustResource("worker_slots")); got != limit {
+	snapshot := ledger.Snapshot()
+	if got := snapshot.Value.Reserved.Amount(capacity.MustResource("worker_slots")); got != limit {
 		t.Fatalf("reserved = %d, want %d", got, limit)
 	}
 
@@ -104,7 +177,8 @@ func TestVectorLedgerConcurrentReserveRelease(t *testing.T) {
 	})
 	wg.Wait()
 
-	if !ledger.Snapshot().Value.Reserved.IsZero() {
-		t.Fatalf("reserved after releases = %#v", ledger.Snapshot().Value.Reserved)
+	snapshot = ledger.Snapshot()
+	if !snapshot.Value.Reserved.IsZero() {
+		t.Fatalf("reserved after releases = %#v", snapshot.Value.Reserved)
 	}
 }

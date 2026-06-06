@@ -74,14 +74,31 @@ func NewVectorLedger(limits Vector) *VectorLedger {
 //
 // Existing vector reservations are never revoked. Lower limits may create
 // per-resource debt. Setting identical limits is a no-op and does not advance
-// the revision.
+// the revision. SetLimits does not build a snapshot; use SetLimitsObserved when
+// the caller needs the post-change observation.
 func (l *VectorLedger) SetLimits(limits Vector) {
-	_ = l.setLimits(limits)
+	requireValidVector("limits", limits)
+	l.requireNonNil()
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.requireInitializedLocked()
+	l.setLimitsLocked(limits)
 }
 
 // SetLimitsObserved replaces vector limits and returns the resulting snapshot.
 func (l *VectorLedger) SetLimitsObserved(limits Vector) snapshot.Snapshot[VectorSnapshot] {
-	return l.setLimits(limits)
+	requireValidVector("limits", limits)
+	l.requireNonNil()
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.requireInitializedLocked()
+	l.setLimitsLocked(limits)
+
+	return l.snapshotLocked()
 }
 
 // Snapshot returns the current revisioned vector ledger snapshot.
@@ -108,23 +125,14 @@ func (l *VectorLedger) Revision() snapshot.Revision {
 	return l.revision
 }
 
-// setLimits commits new vector limits while holding l.mu.
-func (l *VectorLedger) setLimits(limits Vector) snapshot.Snapshot[VectorSnapshot] {
-	requireValidVector("limits", limits)
-	l.requireNonNil()
-
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	l.requireInitializedLocked()
+// setLimitsLocked commits limits when they differ from the current value.
+func (l *VectorLedger) setLimitsLocked(limits Vector) {
 	if l.state.Limits.Equal(limits) {
-		return l.snapshotLocked()
+		return
 	}
 
 	l.state.Limits = limits
 	l.revision = l.revision.Next()
-
-	return l.snapshotLocked()
 }
 
 // snapshotLocked derives a revisioned vector snapshot from protected state.
@@ -145,6 +153,10 @@ func (l *VectorLedger) requireNonNil() {
 // requireInitializedLocked panics when l is a zero-value VectorLedger.
 func (l *VectorLedger) requireInitializedLocked() {
 	if l.revision.IsZero() {
-		panicAt("vector_ledger", ErrUninitializedLedger, "vector ledger must be created with NewVectorLedger")
+		panicAt(
+			"vector_ledger",
+			ErrUninitializedLedger,
+			"vector ledger must be created with NewVectorLedger",
+		)
 	}
 }

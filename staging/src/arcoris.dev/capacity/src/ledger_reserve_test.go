@@ -223,3 +223,69 @@ func TestLedgerConcurrentRawReserveDoesNotOverspend(t *testing.T) {
 		t.Fatalf("snapshot after releases = %#v", got)
 	}
 }
+
+func TestLedgerConcurrentTryReleaseSucceedsOnce(t *testing.T) {
+	ledger := capacity.NewLedger(1)
+	if !ledger.TryReserve(1) {
+		t.Fatal("TryReserve(1) failed")
+	}
+
+	var successes atomic.Uint64
+	var wg sync.WaitGroup
+	for i := 0; i < 64; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if ledger.TryRelease(1) {
+				successes.Add(1)
+			}
+		}()
+	}
+	wg.Wait()
+
+	if got := successes.Load(); got != 1 {
+		t.Fatalf("successful releases = %d, want 1", got)
+	}
+	if got := ledger.Snapshot().Value.Reserved; got != 0 {
+		t.Fatalf("reserved = %d, want 0", got)
+	}
+}
+
+func TestLedgerConcurrentTryReleaseDoesNotUnderflowOrAdvanceOnFailures(t *testing.T) {
+	const reserved = 32
+
+	ledger := capacity.NewLedger(reserved)
+	if !ledger.TryReserve(reserved) {
+		t.Fatal("TryReserve(reserved) failed")
+	}
+	before := ledger.Revision()
+
+	var successes atomic.Uint64
+	var wg sync.WaitGroup
+	for i := 0; i < reserved*4; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if ledger.TryRelease(1) {
+				successes.Add(1)
+			}
+		}()
+	}
+	wg.Wait()
+
+	if got := successes.Load(); got != reserved {
+		t.Fatalf("successful releases = %d, want %d", got, reserved)
+	}
+	after := ledger.Revision()
+	if got := uint64(after - before); got != reserved {
+		t.Fatalf("revision advances = %d, want %d", got, reserved)
+	}
+	if got := ledger.Snapshot().Value.Reserved; got != 0 {
+		t.Fatalf("reserved = %d, want 0", got)
+	}
+
+	if ledger.TryRelease(1) {
+		t.Fatal("extra TryRelease(1) succeeded")
+	}
+	requireRevisionEqual(t, after, ledger.Revision(), "extra TryRelease")
+}

@@ -17,9 +17,17 @@ package capacity
 // TryReserve attempts to reserve demand from l.
 //
 // The operation is non-blocking and all-or-nothing. On refusal it leaves vector
-// state and revision unchanged and returns nil, false.
+// state and revision unchanged and returns nil, false. TryReserve does not build
+// a snapshot; use TryReserveObserved when diagnostics are required.
 func (l *VectorLedger) TryReserve(demand Demand) (*VectorReservation, bool) {
-	reservation, _, ok := l.TryReserveObserved(demand)
+	requireValidDemand("demand", demand)
+	l.requireNonNil()
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.requireInitializedLocked()
+	reservation, _, ok := l.tryReserveLocked(demand)
 
 	return reservation, ok
 }
@@ -33,9 +41,9 @@ func (l *VectorLedger) TryReserveObserved(demand Demand) (*VectorReservation, Ve
 	defer l.mu.Unlock()
 
 	l.requireInitializedLocked()
+	reservation, fit, ok := l.tryReserveLocked(demand)
 
-	next, fit := l.state.WithReserved(demand)
-	if fit.Refused() {
+	if !ok {
 		return nil, VectorObservation{
 			Snapshot: l.snapshotLocked(),
 			Refusal:  fit.Refusal,
@@ -44,16 +52,24 @@ func (l *VectorLedger) TryReserveObserved(demand Demand) (*VectorReservation, Ve
 		}, false
 	}
 
-	l.state = next
-	l.revision = l.revision.Next()
-
-	reservation := &VectorReservation{
-		ledger: l,
-		demand: demand,
-	}
-
 	return reservation, VectorObservation{
 		Snapshot: l.snapshotLocked(),
 		Refusal:  RefusalNone,
 	}, true
+}
+
+// tryReserveLocked reserves demand while l.mu is held.
+func (l *VectorLedger) tryReserveLocked(demand Demand) (*VectorReservation, Fit, bool) {
+	next, fit := l.state.WithReserved(demand)
+	if fit.Refused() {
+		return nil, fit, false
+	}
+
+	l.state = next
+	l.revision = l.revision.Next()
+
+	return &VectorReservation{
+		ledger: l,
+		demand: demand,
+	}, fit, true
 }

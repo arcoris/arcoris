@@ -20,7 +20,10 @@ import "arcoris.dev/snapshot"
 //
 // TryReserve is the allocation-free hot path for callers that already own their
 // own lifecycle token. It mutates only accounting counters and returns false for
-// ordinary capacity refusal. A zero amount is a programmer error and panics.
+// ordinary capacity refusal. A reserve racing with SetLimit may commit according
+// to the limit observed by that attempt; a concurrent shrink may therefore turn
+// the successful reservation into debt. A zero amount is a programmer error and
+// panics.
 func (l *Ledger) TryReserve(amount Amount) bool {
 	return l.reserveAmount(amount)
 }

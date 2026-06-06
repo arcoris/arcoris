@@ -20,10 +20,13 @@ import "arcoris.dev/snapshot"
 //
 // TryAcquireAmount is non-blocking and has the same ownership model as
 // TryAcquire: success returns a live Lease that owns exactly amount units until
-// Release or TryRelease returns them, while capacity exhaustion returns nil, the
-// observed snapshot, and false. The method intentionally does not wait, queue,
-// apply fairness, observe context cancellation, retry, or classify denial as an
-// error.
+// Release or TryRelease returns them, while capacity exhaustion returns nil, an
+// observed snapshot, and false. The snapshot is read after the accounting
+// attempt. Under concurrent acquire, release, or limit changes it is a
+// diagnostic observation, not an exclusive serialization point.
+//
+// The method intentionally does not wait, queue, apply fairness, observe context
+// cancellation, retry, or classify denial as an error.
 //
 // Invalid amounts are programming or configuration errors, not denied admission
 // decisions. Validation is delegated to the underlying capacity ledger after the

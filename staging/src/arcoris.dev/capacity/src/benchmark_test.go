@@ -15,6 +15,7 @@
 package capacity_test
 
 import (
+	"strconv"
 	"testing"
 
 	"arcoris.dev/capacity"
@@ -24,10 +25,31 @@ import (
 var (
 	benchmarkBoolSink           bool
 	benchmarkReservationSink    *capacity.Reservation
+	benchmarkVectorReserveSink  *capacity.VectorReservation
 	benchmarkObservationSink    capacity.Observation
+	benchmarkVectorObserveSink  capacity.VectorObservation
 	benchmarkScalarSnapshotSink snapshot.Snapshot[capacity.Snapshot]
 	benchmarkVectorSnapshotSink snapshot.Snapshot[capacity.VectorSnapshot]
 )
+
+var benchmarkResourceNames = []string{
+	"resource_00",
+	"resource_01",
+	"resource_02",
+	"resource_03",
+	"resource_04",
+	"resource_05",
+	"resource_06",
+	"resource_07",
+	"resource_08",
+	"resource_09",
+	"resource_10",
+	"resource_11",
+	"resource_12",
+	"resource_13",
+	"resource_14",
+	"resource_15",
+}
 
 func BenchmarkLedgerRawReserveRelease(b *testing.B) {
 	ledger := capacity.NewLedger(capacity.Amount(b.N + 1))
@@ -190,23 +212,38 @@ func BenchmarkLedgerParallelOwnedAcquireRelease(b *testing.B) {
 	})
 }
 
-func BenchmarkLedgerParallelMixedSnapshot(b *testing.B) {
+func BenchmarkLedgerParallel90Reserve10Snapshot(b *testing.B) {
+	benchmarkLedgerParallelReserveSnapshotRatio(b, 10)
+}
+
+func BenchmarkLedgerParallel50Reserve50Snapshot(b *testing.B) {
+	benchmarkLedgerParallelReserveSnapshotRatio(b, 2)
+}
+
+func benchmarkLedgerParallelReserveSnapshotRatio(b *testing.B, snapshotEvery int) {
 	ledger := capacity.NewLedger(1024)
 
 	b.ReportAllocs()
 	b.RunParallel(func(pb *testing.PB) {
+		i := 0
 		for pb.Next() {
-			if ledger.TryReserve(1) {
-				ledger.Release(1)
+			i++
+			if i%snapshotEvery == 0 {
+				benchmarkScalarSnapshotSink = ledger.Snapshot()
 				continue
 			}
-			benchmarkScalarSnapshotSink = ledger.Snapshot()
+			if ledger.TryReserve(1) {
+				ledger.Release(1)
+			}
 		}
 	})
 }
 
-func BenchmarkVectorLedgerReserveRelease(b *testing.B) {
-	ledger := capacity.NewVectorLedger(vector(b, entry("memory_bytes", uint64(b.N+1)), entry("worker_slots", uint64(b.N+1))))
+func BenchmarkVectorLedgerRawReserveRelease(b *testing.B) {
+	ledger := capacity.NewVectorLedger(vector(b,
+		entry("memory_bytes", uint64(b.N+1)),
+		entry("worker_slots", uint64(b.N+1)),
+	))
 	demand := demand(b, entry("memory_bytes", 1), entry("worker_slots", 1))
 
 	b.ReportAllocs()
@@ -218,6 +255,56 @@ func BenchmarkVectorLedgerReserveRelease(b *testing.B) {
 			b.Fatal("reserve refused")
 		}
 		reservation.Release()
+		benchmarkVectorReserveSink = reservation
+	}
+}
+
+func BenchmarkVectorLedgerObservedReserveRelease(b *testing.B) {
+	ledger := capacity.NewVectorLedger(vector(b,
+		entry("memory_bytes", uint64(b.N+1)),
+		entry("worker_slots", uint64(b.N+1)),
+	))
+	demand := demand(b, entry("memory_bytes", 1), entry("worker_slots", 1))
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		reservation, observation, ok := ledger.TryReserveObserved(demand)
+		if !ok {
+			b.Fatal("reserve refused")
+		}
+		benchmarkVectorObserveSink = observation
+		benchmarkVectorSnapshotSink = reservation.ReleaseObserved()
+		benchmarkVectorReserveSink = reservation
+	}
+}
+
+func BenchmarkVectorLedgerRawReserveReleaseBySize(b *testing.B) {
+	for _, size := range []int{1, 2, 4, 8, 16} {
+		b.Run("size_"+strconv.Itoa(size), func(b *testing.B) {
+			benchmarkVectorLedgerRawReserveReleaseSize(b, size)
+		})
+	}
+}
+
+func benchmarkVectorLedgerRawReserveReleaseSize(b *testing.B, size int) {
+	limits := benchmarkEntries(size, uint64(b.N+1))
+	request := benchmarkEntries(size, 1)
+
+	ledger := capacity.NewVectorLedger(vector(b, limits...))
+	demand := demand(b, request...)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		reservation, ok := ledger.TryReserve(demand)
+		if !ok {
+			b.Fatal("reserve refused")
+		}
+		reservation.Release()
+		benchmarkVectorReserveSink = reservation
 	}
 }
 
@@ -298,4 +385,13 @@ func BenchmarkManyLedgersDistributed(b *testing.B) {
 			}
 		}
 	})
+}
+
+func benchmarkEntries(size int, amount uint64) []capacity.Entry {
+	entries := make([]capacity.Entry, size)
+	for i := range entries {
+		entries[i] = entry(benchmarkResourceNames[i], amount)
+	}
+
+	return entries
 }

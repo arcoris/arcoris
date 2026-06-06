@@ -39,9 +39,24 @@ func TestNewVectorRejectsInvalidEntries(t *testing.T) {
 		entries []capacity.Entry
 		err     error
 	}{
-		{name: "invalid resource", entries: []capacity.Entry{{Resource: "bad-name", Amount: 1}}, err: capacity.ErrInvalidResource},
-		{name: "zero amount", entries: []capacity.Entry{{Resource: "worker_slots"}}, err: capacity.ErrZeroAmount},
-		{name: "duplicate resource", entries: []capacity.Entry{entry("worker_slots", 1), entry("worker_slots", 2)}, err: capacity.ErrDuplicateResource},
+		{
+			name:    "invalid resource",
+			entries: []capacity.Entry{{Resource: "bad-name", Amount: 1}},
+			err:     capacity.ErrInvalidResource,
+		},
+		{
+			name:    "zero amount",
+			entries: []capacity.Entry{{Resource: "worker_slots"}},
+			err:     capacity.ErrZeroAmount,
+		},
+		{
+			name: "duplicate resource",
+			entries: []capacity.Entry{
+				entry("worker_slots", 1),
+				entry("worker_slots", 2),
+			},
+			err: capacity.ErrDuplicateResource,
+		},
 	}
 
 	for _, tt := range tests {

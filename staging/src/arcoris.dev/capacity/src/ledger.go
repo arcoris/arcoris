@@ -29,10 +29,19 @@ import (
 // ownership can use TryAcquire, which returns a Reservation token.
 //
 // Ledger is safe for concurrent use. Successful mutations advance the source
-// revision once after the accounting counter has changed. Snapshot is an
-// explicit observation built from atomic values; under concurrent mutation it is
-// internally valid and monotonic enough for diagnostics, but it is not a global
-// serialization point for reserve and release operations.
+// revision once after the accounting counter has changed. Failed reserve and
+// release attempts do not advance the revision.
+//
+// Snapshot is an explicit observation built from atomic values. Under concurrent
+// mutation, the returned scalar value is internally valid but the revision and
+// value are not a mutex-protected transaction. Snapshot and Revision are useful
+// for diagnostics and source-local change checks; they are not distributed or
+// transactional ordering mechanisms.
+//
+// SetLimit is not a global serialization barrier for raw reserve and release
+// operations. A reserve racing with a limit change may commit against the limit
+// observed by that attempt. If a concurrent limit shrink lowers capacity below
+// committed reservations, the ledger records debt instead of revoking capacity.
 //
 // The zero Ledger is invalid. Use NewLedger. A Ledger must not be copied after
 // first use.
@@ -61,8 +70,10 @@ func NewLedger(limit Amount) *Ledger {
 
 // SetLimit replaces the scalar capacity limit.
 //
-// Existing reservations are never revoked. Lower limits may create debt. Setting
-// the same limit is a no-op and does not advance the revision.
+// Existing reservations are never revoked. Lower limits may create debt. A
+// reserve racing with SetLimit may commit according to the limit observed by
+// that reserve attempt; SetLimit does not globally serialize scalar hot-path
+// operations. Setting the same limit is a no-op and does not advance revision.
 func (l *Ledger) SetLimit(limit Amount) {
 	l.requireReady()
 	for {
@@ -84,7 +95,11 @@ func (l *Ledger) SetLimitObserved(limit Amount) snapshot.Snapshot[Snapshot] {
 	return l.Snapshot()
 }
 
-// Snapshot returns the current revisioned scalar ledger snapshot.
+// Snapshot returns an explicit revisioned scalar ledger observation.
+//
+// Snapshot is safe for concurrent use. The returned Snapshot value is internally
+// valid. Under concurrent mutation, revision, limit, and reserved are atomic
+// observations rather than one mutex-protected transaction.
 func (l *Ledger) Snapshot() snapshot.Snapshot[Snapshot] {
 	l.requireReady()
 
@@ -97,7 +112,11 @@ func (l *Ledger) Snapshot() snapshot.Snapshot[Snapshot] {
 	}
 }
 
-// Revision returns the latest committed ledger revision.
+// Revision returns the latest observed ledger revision.
+//
+// Revisions are source-local. They advance after successful accounting
+// mutations and are useful for diagnostics and change checks, not strict global
+// ordering.
 func (l *Ledger) Revision() snapshot.Revision {
 	l.requireReady()
 

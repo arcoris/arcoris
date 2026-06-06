@@ -25,7 +25,11 @@ func TestDemandValidationAndCopySafety(t *testing.T) {
 	if _, err := capacity.NewDemand(); !errors.Is(err, capacity.ErrEmptyDemand) {
 		t.Fatalf("NewDemand() error = %v, want ErrEmptyDemand", err)
 	}
-	if _, err := capacity.NewDemand(capacity.Entry{Resource: "bad-name", Amount: 1}); !errors.Is(err, capacity.ErrInvalidResource) {
+	_, err := capacity.NewDemand(capacity.Entry{
+		Resource: "bad-name",
+		Amount:   1,
+	})
+	if !errors.Is(err, capacity.ErrInvalidResource) {
 		t.Fatalf("NewDemand() error = %v, want ErrInvalidResource", err)
 	}
 

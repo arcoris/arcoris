@@ -42,3 +42,23 @@ func TestFitValidityAndPredicates(t *testing.T) {
 		t.Fatalf("debt fit predicates invalid: %#v", debt)
 	}
 }
+
+func TestFitValidityAllowsMixedDiagnostics(t *testing.T) {
+	debtWithMissing := capacity.Fit{
+		Refusal: capacity.RefusalDebt,
+		Missing: vector(t, entry("worker_slots", 1)),
+		Debt:    vector(t, entry("memory_bytes", 2)),
+	}
+	if !debtWithMissing.IsValid() {
+		t.Fatalf("debt with missing diagnostics is invalid: %#v", debtWithMissing)
+	}
+
+	unknownWithDebt := capacity.Fit{
+		Refusal: capacity.RefusalUnknownResource,
+		Missing: vector(t, entry("queue_slots", 1)),
+		Debt:    vector(t, entry("memory_bytes", 2)),
+	}
+	if !unknownWithDebt.IsValid() {
+		t.Fatalf("unknown with debt diagnostics is invalid: %#v", unknownWithDebt)
+	}
+}

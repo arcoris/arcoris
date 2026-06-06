@@ -25,7 +25,8 @@
 // counts. Its raw TryReserve and Release methods do not allocate or build
 // snapshots. TryAcquire returns a capacity-owned Reservation when callers want
 // ownership handled by this package. Observed methods and Snapshot build
-// diagnostics only when explicitly requested.
+// diagnostics only when explicitly requested. Scalar snapshots are safe
+// concurrent observations, not global serialization points for raw accounting.
 //
 // VectorLedger is the explicit strict owner for multi-resource all-or-nothing
 // accounting. Value types are copy-safe and immutable through their public APIs;
