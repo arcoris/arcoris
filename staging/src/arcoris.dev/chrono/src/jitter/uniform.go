@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package jitter
 
 import (
@@ -54,8 +53,10 @@ const (
 // Uniform returns a schedule that produces an infinite stream of random delays.
 //
 // Every sequence created by the returned Schedule reports delay values in the
-// closed interval [minDelay, maxDelay]. Both bounds are inclusive. A range with
-// equal bounds is valid and behaves like a fixed delay schedule with that value.
+// closed interval [minDelay, maxDelay]. Both bounds are inclusive. The draw is
+// uniform over integer nanosecond duration values, subject to the quality of the
+// configured non-cryptographic RandomGenerator. A range with equal bounds is
+// valid and behaves like a fixed delay schedule with that value.
 //
 // Example:
 //
@@ -79,10 +80,10 @@ const (
 // with jitter once those schedules are available.
 //
 // The returned Schedule is immutable and safe to reuse. Each call to NewSequence
-// returns an independent Sequence value. The concrete sequence is stateless apart
-// from the configured range and draw function, but callers should still follow
-// the package-wide single-owner Sequence model and avoid sharing one Sequence
-// across unrelated runtime loops.
+// returns an independent Sequence value. The concrete sequence has no cursor or
+// attempt counter, but it owns a RandomGenerator that may have mutable state.
+// Callers should follow the package-wide single-owner Sequence model and avoid
+// sharing one Sequence across unrelated runtime loops.
 //
 // By default Uniform uses the package default non-cryptographic source. Options
 // may provide deterministic or custom pseudo-random sources. The source is
@@ -152,6 +153,8 @@ type randomSchedule struct {
 // The returned sequence produces random values from the schedule's configured
 // range forever. Since randomSequence has no cursor and does not mutate the
 // schedule, many sequences can be created cheaply from the same randomSchedule.
+// The returned sequence still owns a RandomGenerator, which may have mutable
+// state.
 func (s randomSchedule) NewSequence() delay.Sequence {
 	random := s.source.NewRandom()
 	requireRandom(random, errNilRandom)

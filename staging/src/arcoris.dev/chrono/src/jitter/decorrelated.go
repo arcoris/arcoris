@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package jitter
 
 import (
@@ -86,33 +85,36 @@ const (
 //
 // If previous*multiplier would overflow time.Duration, the upper bound saturates
 // at maxDelay. Returned delays never exceed maxDelay.
+//
+// Multiplier arithmetic is computed in floating point and converted back to
+// integer nanosecond durations. Fractional nanoseconds are truncated.
 func Decorrelated(
 	initial time.Duration,
-	m time.Duration,
-	f float64,
+	maxDelay time.Duration,
+	multiplier float64,
 	opts ...RandomOption,
 ) delay.Schedule {
 	cfg := randomOptionsOf(opts...)
-	return decorrelatedJitterWithSource(initial, m, f, cfg.source)
+	return decorrelatedJitterWithSource(initial, maxDelay, multiplier, cfg.source)
 }
 
 // decorrelatedJitterWithSource returns a decorrelated-jitter schedule using
 // source for per-sequence random values.
 func decorrelatedJitterWithSource(
 	initial time.Duration,
-	m time.Duration,
-	f float64,
+	maxDelay time.Duration,
+	multiplier float64,
 	src RandomSource,
 ) delay.Schedule {
 	requirePositiveDuration(initial, errNonPositiveDecorrelatedInitialDelay)
-	requireDurationNotBefore(m, initial, errDecorrelatedMaxDelayBeforeInitialDelay)
-	requireFloatGreaterThanOne(f, errInvalidDecorrelatedMultiplier)
+	requireDurationNotBefore(maxDelay, initial, errDecorrelatedMaxDelayBeforeInitialDelay)
+	requireFloatGreaterThanOne(multiplier, errInvalidDecorrelatedMultiplier)
 	requireRandomSource(src, errNilDecorrelatedSource)
 
 	return decorrelatedJitterSchedule{
 		initial:    initial,
-		maxDelay:   m,
-		multiplier: f,
+		maxDelay:   maxDelay,
+		multiplier: multiplier,
 		source:     src,
 	}
 }

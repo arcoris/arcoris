@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package jitter
 
 import (
@@ -81,4 +80,12 @@ func TestProportionalTransformSaturates(t *testing.T) {
 	if got := transform(maxDuration, fixedRandom(int64(maxDuration))); got != maxDuration {
 		t.Fatalf("upper-bound proportional transform = %s, want %s", got, maxDuration)
 	}
+}
+
+func TestProportionalRatioTruncatesFractionalNanoseconds(t *testing.T) {
+	lower := Proportional(delay.Fixed(5*time.Nanosecond), 0.5, WithRandom(fixedRandom(0))).NewSequence()
+	upper := Proportional(delay.Fixed(5*time.Nanosecond), 0.5, WithRandom(fixedRandom(4))).NewSequence()
+
+	mustNext(t, lower, 3*time.Nanosecond)
+	mustNext(t, upper, 7*time.Nanosecond)
 }

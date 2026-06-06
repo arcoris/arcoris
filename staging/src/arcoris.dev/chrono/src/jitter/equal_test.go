@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package jitter
 
 import (
@@ -39,6 +38,12 @@ func TestEqualCanReturnLowerBound(t *testing.T) {
 	seq := Equal(delay.Fixed(10*time.Second), WithRandom(fixedRandom(0))).NewSequence()
 
 	mustNext(t, seq, 5*time.Second)
+}
+
+func TestEqualCanReturnUpperBound(t *testing.T) {
+	seq := Equal(delay.Fixed(10*time.Second), WithRandom(fixedRandom(5*time.Second))).NewSequence()
+
+	mustNext(t, seq, 10*time.Second)
 }
 
 func TestEqualLeavesZeroBaseDelayAtZero(t *testing.T) {

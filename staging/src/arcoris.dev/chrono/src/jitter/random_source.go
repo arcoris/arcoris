@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package jitter
 
 import "math/rand"
@@ -41,6 +40,14 @@ const (
 	// violates the RandomSource contract and would otherwise move a configuration
 	// error into a later retry, polling, reconnect, or cooldown path.
 	errNilRandom = "jitter: nil random"
+
+	// errRandomReturnedNegative is the stable diagnostic text used when a custom
+	// random generator violates the RandomGenerator.Int63 range contract.
+	//
+	// Negative random values are rejected instead of being converted through
+	// uint64, because silent conversion would hide broken deterministic tests or
+	// custom generator implementations.
+	errRandomReturnedNegative = "jitter: random returned negative value"
 
 	// errNilRandomFunc is the stable diagnostic text used when a RandomFunc method
 	// is called on a nil function value.

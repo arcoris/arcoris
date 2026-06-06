@@ -50,6 +50,12 @@ func TestPositiveCanReturnLowerBound(t *testing.T) {
 	mustNext(t, seq, 10*time.Second)
 }
 
+func TestPositiveCanReturnUpperBound(t *testing.T) {
+	seq := Positive(delay.Fixed(10*time.Second), 0.5, WithRandom(fixedRandom(5*time.Second))).NewSequence()
+
+	mustNext(t, seq, 15*time.Second)
+}
+
 func TestPositiveFactorZeroReturnsBaseDelay(t *testing.T) {
 	seq := Positive(delay.Fixed(10*time.Second), 0, WithRandom(fixedRandom(5*time.Second))).NewSequence()
 
@@ -74,6 +80,14 @@ func TestPositiveTransformSaturates(t *testing.T) {
 	if got := transform(maxDuration, fixedRandom(1)); got != maxDuration {
 		t.Fatalf("positiveJitterTransform() = %s, want %s", got, maxDuration)
 	}
+}
+
+func TestPositiveFactorTruncatesFractionalNanoseconds(t *testing.T) {
+	lower := Positive(delay.Fixed(5*time.Nanosecond), 0.5, WithRandom(fixedRandom(0))).NewSequence()
+	upper := Positive(delay.Fixed(5*time.Nanosecond), 0.5, WithRandom(fixedRandom(2))).NewSequence()
+
+	mustNext(t, lower, 5*time.Nanosecond)
+	mustNext(t, upper, 7*time.Nanosecond)
 }
 
 func TestCapProvidesHardBoundAroundPositiveJitter(t *testing.T) {

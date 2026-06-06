@@ -58,6 +58,12 @@ func TestRandomFuncReturnsFunctionValue(t *testing.T) {
 	}
 }
 
+func TestRandomUint63RejectsNegativeValue(t *testing.T) {
+	panicassert.RequireValue(t, errRandomReturnedNegative, func() {
+		_ = randomUint63(RandomFunc(func() int64 { return -1 }))
+	})
+}
+
 func TestDefaultRandomSourceReturnsGenerator(t *testing.T) {
 	random := defaultRandomSource().NewRandom()
 	if random == nil {
@@ -91,6 +97,19 @@ func TestRandomDurationInclusiveHandlesMaxDuration(t *testing.T) {
 
 	if got := randomDurationInclusive(fixedRandom(maxInt63), maxDuration); got != maxDuration {
 		t.Fatalf("randomDurationInclusive(maxInt63, maxDuration) = %s, want %s", got, maxDuration)
+	}
+}
+
+func TestRandomDurationInclusiveRetriesRejectedDraws(t *testing.T) {
+	random := &sequenceRandom{
+		values: []int64{int64(maxDuration), 5},
+	}
+
+	if got := randomDurationInclusive(random, 10*time.Nanosecond); got != 5*time.Nanosecond {
+		t.Fatalf("randomDurationInclusive() = %s, want 5ns", got)
+	}
+	if random.next != 2 {
+		t.Fatalf("Int63 calls = %d, want 2", random.next)
 	}
 }
 

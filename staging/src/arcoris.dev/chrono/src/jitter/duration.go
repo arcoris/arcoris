@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package jitter
 
 import (
@@ -33,6 +32,10 @@ const (
 	// caller-facing configuration. This constant provides the stable conversion
 	// boundary back into time.Duration.
 	maxDurationFloat = float64(maxDuration)
+
+	// int63Domain is the number of distinct values a valid Int63 draw can
+	// produce.
+	int63Domain = uint64(1) << 63
 )
 
 // saturatingDurationAdd returns l+r capped at maxDuration.
@@ -117,25 +120,49 @@ func minDuration(l, r time.Duration) time.Duration {
 	return r
 }
 
-// randomDurationInclusive returns a pseudo-random duration in [0, m].
+// randomUint63 returns a validated Int63 draw as uint64.
 //
-// The helper maps RandomGenerator.Int63 into a closed duration range with modulo
-// arithmetic. That is sufficient for non-cryptographic desynchronization and
-// deterministic tests. The caller owns range validation; m <= 0 returns zero.
-func randomDurationInclusive(r RandomGenerator, m time.Duration) time.Duration {
+// RandomGenerator implementations must match math/rand.Int63 and return values
+// in [0, 1<<63). Negative values are rejected instead of being converted through
+// uint64 because that would hide a broken custom generator.
+func randomUint63(r RandomGenerator) uint64 {
 	requireRandom(r, errNilRandom)
-	if m <= 0 {
+
+	v := r.Int63()
+	if v < 0 {
+		panic(errRandomReturnedNegative)
+	}
+
+	return uint64(v)
+}
+
+// randomDurationInclusive returns a pseudo-random duration in [0, maxOffset].
+//
+// The helper maps RandomGenerator.Int63 values to a closed integer-nanosecond
+// duration range. It uses rejection sampling to avoid modulo bias while
+// remaining non-cryptographic and deterministic for caller-supplied generators.
+// The caller owns range validation; maxOffset <= 0 returns zero without drawing.
+func randomDurationInclusive(r RandomGenerator, maxOffset time.Duration) time.Duration {
+	requireRandom(r, errNilRandom)
+	if maxOffset <= 0 {
 		return 0
 	}
 
-	bound := uint64(m) + 1
-	return time.Duration(uint64(r.Int63()) % bound)
+	bound := uint64(maxOffset) + 1
+	limit := int63Domain - int63Domain%bound
+
+	for {
+		v := randomUint63(r)
+		if v < limit {
+			return time.Duration(v % bound)
+		}
+	}
 }
 
 // randomOffsetInclusive returns a pseudo-random offset in [0, maxOffset].
 //
 // The helper is a semantic alias for randomDurationInclusive used by transforms
 // that add an offset to a non-zero lower bound.
-func randomOffsetInclusive(r RandomGenerator, m time.Duration) time.Duration {
-	return randomDurationInclusive(r, m)
+func randomOffsetInclusive(r RandomGenerator, maxOffset time.Duration) time.Duration {
+	return randomDurationInclusive(r, maxOffset)
 }

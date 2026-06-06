@@ -35,10 +35,16 @@ func TestDecorrelatedRejectsInvalidInput(t *testing.T) {
 		Decorrelated(time.Second, 2*time.Second, 1)
 	})
 	panicassert.RequireValue(t, errInvalidDecorrelatedMultiplier, func() {
+		Decorrelated(time.Second, 2*time.Second, 0.5)
+	})
+	panicassert.RequireValue(t, errInvalidDecorrelatedMultiplier, func() {
 		Decorrelated(time.Second, 2*time.Second, math.NaN())
 	})
 	panicassert.RequireValue(t, errInvalidDecorrelatedMultiplier, func() {
 		Decorrelated(time.Second, 2*time.Second, math.Inf(1))
+	})
+	panicassert.RequireValue(t, errInvalidDecorrelatedMultiplier, func() {
+		Decorrelated(time.Second, 2*time.Second, math.Inf(-1))
 	})
 	panicassert.RequireValue(t, errNilRandomOption, func() {
 		Decorrelated(time.Second, 2*time.Second, 2, nil)
@@ -83,6 +89,15 @@ func TestDecorrelatedCanReturnRangeBounds(t *testing.T) {
 	mustNext(t, seq, 2*time.Second)
 }
 
+func TestDecorrelatedEqualBoundsReturnInitialWithoutDrawing(t *testing.T) {
+	seq := Decorrelated(time.Second, time.Second, 2, WithRandomFunc(func() int64 {
+		return -1
+	})).NewSequence()
+
+	mustNext(t, seq, time.Second)
+	mustNext(t, seq, time.Second)
+}
+
 func TestDecorrelatedSequencesHaveIndependentPreviousState(t *testing.T) {
 	source := RandomSourceFunc(func() RandomGenerator {
 		return &sequenceRandom{values: []int64{int64(time.Second), int64(2 * time.Second)}}
@@ -122,5 +137,22 @@ func TestDecorrelatedUpperBoundSaturates(t *testing.T) {
 
 	if got := seq.upperBound(); got != maxDuration {
 		t.Fatalf("upperBound() = %s, want %s", got, maxDuration)
+	}
+}
+
+func TestDecorrelatedMultiplierTruncatesFractionalNanoseconds(t *testing.T) {
+	seq := Decorrelated(5*time.Nanosecond, 10*time.Nanosecond, 1.5, WithRandom(fixedRandom(2))).NewSequence()
+
+	mustNext(t, seq, 7*time.Nanosecond)
+}
+
+func TestDecorrelatedNeverReturnsAboveMaxDelay(t *testing.T) {
+	seq := Decorrelated(time.Second, 3*time.Second, 10, WithRandom(fixedRandom(2*time.Second))).NewSequence()
+
+	for i := 0; i < 16; i++ {
+		got := mustNextInRange(t, seq, time.Second, 3*time.Second)
+		if got > 3*time.Second {
+			t.Fatalf("Next() delay = %s, want <= 3s", got)
+		}
 	}
 }

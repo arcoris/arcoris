@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package jitter
 
 import (
@@ -31,6 +30,9 @@ import (
 //
 // The final value is capped by time.Duration's maximum representable value if
 // the computed upper bound would overflow.
+//
+// Factor arithmetic is computed in floating point and converted back to integer
+// nanosecond durations. Fractional nanoseconds are truncated.
 //
 // Positive is useful for conservative polling and cooldown paths where
 // waking earlier than the base cadence would violate caller policy. It spreads

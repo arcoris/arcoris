@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package jitter
 
 import (
@@ -32,6 +31,9 @@ import (
 // zero disables randomization and returns child delays unchanged. A ratio of one
 // allows the lower bound to reach zero and the upper bound to reach roughly
 // twice the base delay, subject to time.Duration saturation.
+//
+// Ratio arithmetic is computed in floating point and converted back to integer
+// nanosecond durations. Fractional nanoseconds are truncated.
 //
 // Proportional jitter is useful when Full is too aggressive but positive
 // one-sided jitter is too conservative. It desynchronizes owners while keeping
