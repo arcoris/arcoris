@@ -115,18 +115,18 @@ func BenchmarkFakeClockStepNoPending(b *testing.B) {
 	}
 }
 
-func BenchmarkFakeClockStepWaiters(b *testing.B) {
+func BenchmarkFakeClockWaiterRegistrationAndStep(b *testing.B) {
 	for _, n := range []int{1, 8, 64, 256} {
 		b.Run(fmt.Sprintf("N%d", n), func(b *testing.B) {
-			benchmarkFakeClockStepWaiters(b, n)
+			benchmarkFakeClockWaiterRegistrationAndStep(b, n)
 		})
 	}
 }
 
-// benchmarkFakeClockStepWaiters includes registration in each measured
+// benchmarkFakeClockWaiterRegistrationAndStep includes registration in each measured
 // iteration because one-shot waiters are consumed by the delivery being
 // benchmarked.
-func benchmarkFakeClockStepWaiters(b *testing.B, n int) {
+func benchmarkFakeClockWaiterRegistrationAndStep(b *testing.B, n int) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
@@ -142,17 +142,17 @@ func benchmarkFakeClockStepWaiters(b *testing.B, n int) {
 	}
 }
 
-func BenchmarkFakeClockStepTimers(b *testing.B) {
+func BenchmarkFakeClockTimerRegistrationAndStep(b *testing.B) {
 	for _, n := range []int{1, 8, 64, 256} {
 		b.Run(fmt.Sprintf("N%d", n), func(b *testing.B) {
-			benchmarkFakeClockStepTimers(b, n)
+			benchmarkFakeClockTimerRegistrationAndStep(b, n)
 		})
 	}
 }
 
-// benchmarkFakeClockStepTimers includes registration in each measured iteration
+// benchmarkFakeClockTimerRegistrationAndStep includes registration in each measured iteration
 // because one-shot timers leave the active registry after firing.
-func benchmarkFakeClockStepTimers(b *testing.B, n int) {
+func benchmarkFakeClockTimerRegistrationAndStep(b *testing.B, n int) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
@@ -179,6 +179,9 @@ func BenchmarkFakeClockStepTickers(b *testing.B) {
 	}
 }
 
+// benchmarkFakeClockStepTickers measures Step delivery for already registered
+// active tickers. Registration is outside the measured loop because tickers stay
+// active after delivery.
 func benchmarkFakeClockStepTickers(b *testing.B, n int) {
 	clk := NewFakeClock(fakeClockTestTime())
 	tickers := make([]Ticker, n)
@@ -203,17 +206,17 @@ func benchmarkFakeClockStepTickers(b *testing.B, n int) {
 	}
 }
 
-func BenchmarkFakeClockStepMixed(b *testing.B) {
+func BenchmarkFakeClockMixedRegistrationAndStep(b *testing.B) {
 	for _, n := range []int{1, 8, 64, 256} {
 		b.Run(fmt.Sprintf("N%d", n), func(b *testing.B) {
-			benchmarkFakeClockStepMixed(b, n)
+			benchmarkFakeClockMixedRegistrationAndStep(b, n)
 		})
 	}
 }
 
-// benchmarkFakeClockStepMixed measures the complete one-shot registration and
-// delivery cycle together with active ticker delivery.
-func benchmarkFakeClockStepMixed(b *testing.B, n int) {
+// benchmarkFakeClockMixedRegistrationAndStep measures the complete one-shot
+// registration and delivery cycle together with active ticker delivery.
+func benchmarkFakeClockMixedRegistrationAndStep(b *testing.B, n int) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {

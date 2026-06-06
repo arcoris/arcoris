@@ -21,6 +21,11 @@ package clock
 // remain counted until Set, Step, Stop, Reset, or a direct immediate-delivery
 // path removes them.
 //
+// Pending reports internal fake-clock registrations, not user-visible channel
+// contents. A waiter or timer can be absent from Pending even when its delivered
+// value is still unread. A ticker remains pending while it is active, even if a
+// previously delivered tick is still buffered in its channel.
+//
 // Pending is not a distributed coordination primitive and must not be used as a
 // scheduler, lease, or runtime lifecycle protocol.
 type Pending struct {
@@ -37,8 +42,9 @@ type Pending struct {
 // Pending reports the fake-clock registrations that currently remain pending.
 //
 // Pending is safe for concurrent use. It does not advance fake time, remove due
-// entries, or deliver channel values. Tests can use it to coordinate with
-// goroutines that register fake-time waits without introducing real sleeps.
+// entries, deliver channel values, or observe real runtime time. Tests can use
+// it to coordinate with goroutines that register fake-time waits without
+// introducing real sleeps.
 func (c *FakeClock) Pending() Pending {
 	c.mu.Lock()
 	defer c.mu.Unlock()

@@ -113,6 +113,36 @@ func TestFakeClockPendingDoesNotMutateOrDeliver(t *testing.T) {
 	requirePending(t, clk.Pending(), Pending{})
 }
 
+func TestFakeClockPendingDoesNotCountUnreadDeliveredValues(t *testing.T) {
+	t.Parallel()
+
+	clk := NewFakeClock(fakeClockTestTime())
+
+	waiter := clk.After(time.Second)
+	timer := clk.NewTimer(time.Second)
+	ticker := clk.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	requirePending(t, clk.Pending(), Pending{
+		Waiters: 1,
+		Timers:  1,
+		Tickers: 1,
+	})
+
+	clk.Step(time.Second)
+
+	requirePending(t, clk.Pending(), Pending{Tickers: 1})
+
+	_ = channelassert.RequireReceive(t, waiter, clockTestTimeout)
+	_ = channelassert.RequireReceive(t, timer.C(), clockTestTimeout)
+	_ = channelassert.RequireReceive(t, ticker.C(), clockTestTimeout)
+
+	requirePending(t, clk.Pending(), Pending{Tickers: 1})
+
+	ticker.Stop()
+	requirePending(t, clk.Pending(), Pending{})
+}
+
 func requirePending(t *testing.T, got Pending, want Pending) {
 	t.Helper()
 
