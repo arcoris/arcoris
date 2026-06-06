@@ -14,11 +14,13 @@
 
 package capacity
 
-// Reservation owns a multi-resource demand reserved from a Ledger.
+import "sync/atomic"
+
+// Reservation owns scalar capacity acquired from a Ledger.
 //
-// Reservation is returned only by a successful Ledger.TryReserve. It must not
-// be copied after creation. Demand remains observable after release for audit
-// and cleanup diagnostics.
+// Reservation is returned only by a successful Ledger.TryAcquire or
+// Ledger.TryAcquireObserved call. It must not be copied after creation. Amount
+// remains observable after release for cleanup diagnostics.
 type Reservation struct {
 	// noCopy prevents accidental copies after first use.
 	noCopy noCopy
@@ -26,27 +28,23 @@ type Reservation struct {
 	// ledger is the owner that created this reservation.
 	ledger *Ledger
 
-	// demand is the immutable resource demand owned by this reservation.
-	demand Demand
+	// amount is the immutable scalar amount owned by this reservation.
+	amount Amount
 
-	// released records whether this reservation has already returned demand.
-	// It is protected by ledger.mu.
-	released bool
+	// released records whether this reservation has already returned amount.
+	released atomic.Bool
 }
 
-// Demand returns the immutable demand owned by r.
-func (r *Reservation) Demand() Demand {
-	r.requireNonNil()
-	return Demand{vector: r.demand.Vector()}
+// Amount returns the amount reserved by r.
+func (r *Reservation) Amount() Amount {
+	r.requireValid()
+
+	return r.amount
 }
 
 // Released reports whether r has already been released.
 func (r *Reservation) Released() bool {
-	r.requireNonNil()
+	r.requireValid()
 
-	r.ledger.mu.Lock()
-	defer r.ledger.mu.Unlock()
-
-	r.ledger.requireInitializedLocked()
-	return r.released
+	return r.released.Load()
 }

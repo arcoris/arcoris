@@ -20,14 +20,25 @@ import (
 	"arcoris.dev/capacity"
 )
 
-func TestSnapshotDerivesAvailabilityAndDebt(t *testing.T) {
-	available := capacity.NewSnapshot(4, 3)
-	if available.Available != 1 || available.Debt != 0 || !available.CanReserve(1) {
-		t.Fatalf("available snapshot = %#v", available)
+func TestFitValidityAndPredicates(t *testing.T) {
+	fits := capacity.Fit{Refusal: capacity.RefusalNone}
+	if !fits.Fits() || fits.Refused() || !fits.IsValid() {
+		t.Fatalf("fit success predicates invalid: %#v", fits)
 	}
 
-	debt := capacity.NewSnapshot(2, 3)
-	if debt.Available != 0 || debt.Debt != 1 || !debt.HasDebt() || debt.CanReserve(1) {
-		t.Fatalf("debt snapshot = %#v", debt)
+	missing := capacity.Fit{
+		Refusal: capacity.RefusalInsufficient,
+		Missing: vector(t, entry("worker_slots", 1)),
+	}
+	if missing.Fits() || !missing.Refused() || !missing.IsValid() {
+		t.Fatalf("missing fit predicates invalid: %#v", missing)
+	}
+
+	debt := capacity.Fit{
+		Refusal: capacity.RefusalDebt,
+		Debt:    vector(t, entry("memory_bytes", 2)),
+	}
+	if debt.Fits() || !debt.Refused() || !debt.IsValid() {
+		t.Fatalf("debt fit predicates invalid: %#v", debt)
 	}
 }

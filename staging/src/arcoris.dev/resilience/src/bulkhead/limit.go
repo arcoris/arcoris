@@ -25,11 +25,11 @@ import (
 // capacity debt semantics: Available becomes zero, Debt reports the excess
 // active leases, and new acquisitions are denied until enough leases are
 // released. This package does not add extra drain, eviction, or cancellation
-// policy on top of capacity.ScalarLedger.
+// policy on top of capacity.Ledger.
 //
 // A zero limit is valid and closes the bulkhead until a later SetLimit raises
 // capacity again.
 func (b *Bulkhead) SetLimit(limit Amount) snapshot.Snapshot[Snapshot] {
 	b.requireReady()
-	return b.ledger.SetLimit(capacity.Amount(limit))
+	return b.ledger.SetLimitObserved(capacity.Amount(limit))
 }

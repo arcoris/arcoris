@@ -18,7 +18,7 @@ import "arcoris.dev/capacity"
 
 // Amount is the number of local in-flight capacity units managed by a Bulkhead.
 //
-// The alias is intentionally the same scalar type used by capacity.ScalarLedger.
+// The alias is intentionally the same scalar type used by capacity.Ledger.
 // Bulkhead gives the units execution-protection meaning but does not redefine
 // scalar accounting, validation, ordering, or overflow behavior.
 type Amount = capacity.Amount

@@ -22,7 +22,7 @@ import (
 	"arcoris.dev/capacity"
 )
 
-// entry builds one valid test entry from compact literals.
+// entry builds a valid test entry.
 func entry(resource string, amount uint64) capacity.Entry {
 	return capacity.Entry{
 		Resource: capacity.MustResource(resource),
@@ -30,61 +30,53 @@ func entry(resource string, amount uint64) capacity.Entry {
 	}
 }
 
-// vector builds a test vector and fails the current test on invalid fixtures.
-func vector(t *testing.T, entries ...capacity.Entry) capacity.Vector {
+// vector builds a valid test vector.
+func vector(t testing.TB, entries ...capacity.Entry) capacity.Vector {
 	t.Helper()
 
-	v, err := capacity.NewVector(entries...)
+	vector, err := capacity.NewVector(entries...)
 	if err != nil {
 		t.Fatalf("NewVector() error = %v", err)
 	}
 
-	return v
+	return vector
 }
 
-// demand builds a test demand and fails the current test on invalid fixtures.
-func demand(t *testing.T, entries ...capacity.Entry) capacity.Demand {
+// demand builds a valid test demand.
+func demand(t testing.TB, entries ...capacity.Entry) capacity.Demand {
 	t.Helper()
 
-	d, err := capacity.NewDemand(entries...)
+	demand, err := capacity.NewDemand(entries...)
 	if err != nil {
 		t.Fatalf("NewDemand() error = %v", err)
 	}
 
-	return d
+	return demand
 }
 
-// requireEntries compares canonical entries without hiding ordering mistakes.
-func requireEntries(t *testing.T, got []capacity.Entry, want ...capacity.Entry) {
+// requireVector checks a vector's canonical entries.
+func requireVector(t testing.TB, got capacity.Vector, want ...capacity.Entry) {
 	t.Helper()
 
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("entries = %#v, want %#v", got, want)
+	if !reflect.DeepEqual(got.Entries(), want) {
+		t.Fatalf("vector entries = %#v, want %#v", got.Entries(), want)
 	}
 }
 
-// requireVector compares a vector against expected canonical entries.
-func requireVector(t *testing.T, got capacity.Vector, want ...capacity.Entry) {
-	t.Helper()
-
-	requireEntries(t, got.Entries(), want...)
-}
-
-// requirePanicIs verifies that fn panics with an error wrapping sentinel.
+// requirePanicIs checks that fn panics with a matching sentinel error.
 func requirePanicIs(t *testing.T, sentinel error, fn func()) {
 	t.Helper()
 
 	defer func() {
 		recovered := recover()
 		if recovered == nil {
-			t.Fatalf("function did not panic")
+			t.Fatalf("panic = nil, want %v", sentinel)
 		}
 
 		err, ok := recovered.(error)
 		if !ok {
-			t.Fatalf("panic = %#v, want error", recovered)
+			t.Fatalf("panic = %T, want error", recovered)
 		}
-
 		if !errors.Is(err, sentinel) {
 			t.Fatalf("panic error = %v, want errors.Is(..., %v)", err, sentinel)
 		}

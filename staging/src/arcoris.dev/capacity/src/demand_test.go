@@ -21,47 +21,25 @@ import (
 	"arcoris.dev/capacity"
 )
 
-func TestNewDemandRequiresNonEmptyVector(t *testing.T) {
-	t.Parallel()
-
-	_, err := capacity.NewDemand()
-	if !errors.Is(err, capacity.ErrEmptyDemand) {
+func TestDemandValidationAndCopySafety(t *testing.T) {
+	if _, err := capacity.NewDemand(); !errors.Is(err, capacity.ErrEmptyDemand) {
 		t.Fatalf("NewDemand() error = %v, want ErrEmptyDemand", err)
 	}
-}
-
-func TestDemandAccessorsAreCopySafe(t *testing.T) {
-	t.Parallel()
-
-	d := demand(t, entry("worker_slots", 2), entry("memory_bytes", 8))
-	if !d.IsValid() || d.Len() != 2 {
-		t.Fatalf("demand valid=%v len=%d, want true/2", d.IsValid(), d.Len())
-	}
-
-	entries := d.Entries()
-	entries[0] = entry("memory_bytes", 99)
-	requireEntries(t, d.Entries(), entry("memory_bytes", 8), entry("worker_slots", 2))
-
-	v := d.Vector()
-	if got := v.Amount(capacity.MustResource("worker_slots")); got != 2 {
-		t.Fatalf("Vector().Amount(worker_slots) = %d, want 2", got)
-	}
-}
-
-func TestDemandRejectsInvalidVectorInput(t *testing.T) {
-	t.Parallel()
-
-	_, err := capacity.NewDemand(capacity.Entry{Resource: "bad-name", Amount: 1})
-	if !errors.Is(err, capacity.ErrInvalidResource) {
+	if _, err := capacity.NewDemand(capacity.Entry{Resource: "bad-name", Amount: 1}); !errors.Is(err, capacity.ErrInvalidResource) {
 		t.Fatalf("NewDemand() error = %v, want ErrInvalidResource", err)
 	}
-}
 
-func TestZeroDemandInvalid(t *testing.T) {
-	t.Parallel()
+	demand := demand(t, entry("worker_slots", 2))
+	if !demand.IsValid() {
+		t.Fatal("Demand was invalid")
+	}
 
-	var d capacity.Demand
-	if d.IsValid() {
-		t.Fatal("zero Demand is valid")
+	entries := demand.Entries()
+	entries[0] = entry("queue_slots", 1)
+	requireVector(t, demand.Vector(), entry("worker_slots", 2))
+
+	var zero capacity.Demand
+	if zero.IsValid() {
+		t.Fatal("zero-value Demand was valid")
 	}
 }

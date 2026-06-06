@@ -14,23 +14,26 @@
 
 package capacity
 
-// requireNonNil panics when l is a nil receiver.
-func (l *Ledger) requireNonNil() {
+import "arcoris.dev/snapshot"
+
+// requireReady panics when l is nil or was not created with NewLedger.
+func (l *Ledger) requireReady() {
 	if l == nil {
-		panicAt("ledger", ErrNilLedger, ErrorReasonNilLedger, "ledger receiver is nil")
+		panicAt("ledger", ErrNilLedger, "ledger receiver is nil")
+	}
+
+	if l.revision.Load() == 0 {
+		panicAt("ledger", ErrUninitializedLedger, "ledger must be created with NewLedger")
 	}
 }
 
-// requireInitializedLocked panics when l is a zero-value Ledger.
-//
-// The caller must hold l.mu so revision is read from a stable owner state.
-func (l *Ledger) requireInitializedLocked() {
-	if l.revision.IsZero() {
-		panicAt(
-			"ledger",
-			ErrUninitializedLedger,
-			ErrorReasonUninitializedLedger,
-			"ledger must be created with NewLedger",
-		)
+// advanceRevision records one completed scalar ledger mutation.
+func (l *Ledger) advanceRevision() {
+	for {
+		current := snapshot.Revision(l.revision.Load())
+		next := current.Next()
+		if l.revision.CompareAndSwap(uint64(current), uint64(next)) {
+			return
+		}
 	}
 }

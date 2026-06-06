@@ -14,16 +14,13 @@
 
 package capacity
 
-// errorAt builds one capacity diagnostic at path.
-func errorAt(path string, err error, detail string) error {
-	return &Error{
-		Path:   path,
-		Err:    err,
-		Detail: detail,
-	}
-}
+import "arcoris.dev/snapshot"
 
-// panicAt panics with one capacity diagnostic at path.
-func panicAt(path string, err error, detail string) {
-	panic(errorAt(path, err, detail))
+// Observation is the diagnostic read model returned by scalar observed methods.
+type Observation struct {
+	// Snapshot is read after the observed attempt.
+	Snapshot snapshot.Snapshot[Snapshot]
+
+	// Refusal classifies why an observed scalar attempt did not reserve capacity.
+	Refusal Refusal
 }

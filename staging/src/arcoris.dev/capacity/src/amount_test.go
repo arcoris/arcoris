@@ -21,9 +21,7 @@ import (
 	"arcoris.dev/capacity"
 )
 
-func TestAmountPredicatesAndConversion(t *testing.T) {
-	t.Parallel()
-
+func TestAmountArithmetic(t *testing.T) {
 	if !capacity.Amount(0).IsZero() {
 		t.Fatal("zero amount was not zero")
 	}
@@ -36,35 +34,15 @@ func TestAmountPredicatesAndConversion(t *testing.T) {
 	if got := capacity.Amount(42).Uint64(); got != 42 {
 		t.Fatalf("Uint64() = %d, want 42", got)
 	}
-}
-
-func TestAmountCompare(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name string
-		a    capacity.Amount
-		b    capacity.Amount
-		want int
-	}{
-		{name: "less", a: 1, b: 2, want: -1},
-		{name: "equal", a: 2, b: 2, want: 0},
-		{name: "greater", a: 3, b: 2, want: 1},
+	if got := capacity.Amount(1).Compare(2); got != -1 {
+		t.Fatalf("Compare less = %d, want -1", got)
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			if got := tt.a.Compare(tt.b); got != tt.want {
-				t.Fatalf("Compare() = %d, want %d", got, tt.want)
-			}
-		})
+	if got := capacity.Amount(2).Compare(2); got != 0 {
+		t.Fatalf("Compare equal = %d, want 0", got)
 	}
-}
-
-func TestAmountCheckedArithmetic(t *testing.T) {
-	t.Parallel()
-
+	if got := capacity.Amount(3).Compare(2); got != 1 {
+		t.Fatalf("Compare greater = %d, want 1", got)
+	}
 	if got, ok := capacity.Amount(2).CheckedAdd(3); !ok || got != 5 {
 		t.Fatalf("CheckedAdd() = %d, %v; want 5, true", got, ok)
 	}

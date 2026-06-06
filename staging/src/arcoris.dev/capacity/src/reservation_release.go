@@ -16,53 +16,56 @@ package capacity
 
 import "arcoris.dev/snapshot"
 
-// Release returns r's demand to its ledger.
+// Release returns r's amount to its ledger.
 //
 // Release panics on double release. Use TryRelease for idempotent cleanup.
-func (r *Reservation) Release() snapshot.Snapshot[Snapshot] {
-	snap, ok := r.TryRelease()
+func (r *Reservation) Release() {
+	if !r.TryRelease() {
+		panicAt("reservation", ErrReservationReleased, "reservation has already been released")
+	}
+}
+
+// TryRelease returns r's amount to its ledger if r is still live.
+//
+// A previously released reservation is an expected cleanup path and returns
+// false. Nil, detached, or internally corrupted reservations panic because they
+// violate owner-state invariants.
+func (r *Reservation) TryRelease() bool {
+	return r.release()
+}
+
+// ReleaseObserved releases r and returns the post-release snapshot.
+func (r *Reservation) ReleaseObserved() snapshot.Snapshot[Snapshot] {
+	snap, ok := r.TryReleaseObserved()
 	if !ok {
-		panicAt(
-			"reservation",
-			ErrReservationReleased,
-			ErrorReasonReservationReleased,
-			"reservation has already been released",
-		)
+		panicAt("reservation", ErrReservationReleased, "reservation has already been released")
 	}
 
 	return snap
 }
 
-// TryRelease returns r's demand to its ledger if r is still live.
-//
-// A previously released reservation is an expected cleanup path and returns the
-// current snapshot with false. Nil, detached, or internally corrupted
-// reservations panic because they violate owner-state invariants.
-func (r *Reservation) TryRelease() (snapshot.Snapshot[Snapshot], bool) {
-	r.requireNonNil()
+// TryReleaseObserved releases r and returns the current snapshot and outcome.
+func (r *Reservation) TryReleaseObserved() (snapshot.Snapshot[Snapshot], bool) {
+	ok := r.release()
 
-	l := r.ledger
-	l.mu.Lock()
-	defer l.mu.Unlock()
+	return r.ledger.Snapshot(), ok
+}
 
-	l.requireInitializedLocked()
-	if r.released {
-		return l.snapshotLocked(), false
+// release performs the idempotent ownership transition and ledger subtraction.
+func (r *Reservation) release() bool {
+	r.requireValid()
+
+	if !r.released.CompareAndSwap(false, true) {
+		return false
 	}
 
-	next, ok := l.state.Release(r.demand)
-	if !ok {
+	if !r.ledger.releaseAmount(r.amount) {
 		panicAt(
 			"ledger.reserved",
 			ErrReservedUnderflow,
-			ErrorReasonReservedUnderflow,
-			"reserved state no longer covers reservation demand",
+			"reserved amount no longer covers reservation",
 		)
 	}
 
-	l.state = next
-	r.released = true
-	l.revision = l.revision.Next()
-
-	return l.snapshotLocked(), true
+	return true
 }

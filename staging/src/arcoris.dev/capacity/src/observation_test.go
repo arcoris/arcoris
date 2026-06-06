@@ -12,18 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package capacity
+package capacity_test
 
-// errorAt builds one capacity diagnostic at path.
-func errorAt(path string, err error, detail string) error {
-	return &Error{
-		Path:   path,
-		Err:    err,
-		Detail: detail,
+import (
+	"testing"
+
+	"arcoris.dev/capacity"
+)
+
+func TestObservationReportsRefusalAndSnapshot(t *testing.T) {
+	ledger := capacity.NewLedger(1)
+
+	observation, ok := ledger.TryReserveObserved(2)
+	if ok {
+		t.Fatal("TryReserveObserved() unexpectedly succeeded")
 	}
-}
-
-// panicAt panics with one capacity diagnostic at path.
-func panicAt(path string, err error, detail string) {
-	panic(errorAt(path, err, detail))
+	if observation.Refusal != capacity.RefusalInsufficient {
+		t.Fatalf("Refusal = %s, want insufficient", observation.Refusal)
+	}
+	if observation.Snapshot.Value != capacity.NewSnapshot(1, 0) {
+		t.Fatalf("Snapshot = %#v", observation.Snapshot.Value)
+	}
 }

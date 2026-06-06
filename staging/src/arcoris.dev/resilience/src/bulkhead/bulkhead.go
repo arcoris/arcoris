@@ -22,13 +22,14 @@ import "arcoris.dev/capacity"
 // Bulkhead intentionally owns no admission queue, waiter lifecycle, fairness
 // policy, retry behavior, health integration, metrics hooks, logging hooks,
 // tracing hooks, or worker pool. It is a small resilience-domain wrapper around
-// capacity.ScalarLedger: acquiring a Lease reserves local scalar capacity, and
-// releasing that Lease returns the same amount.
+// capacity.Ledger: acquiring a Lease reserves local scalar capacity through the
+// raw accounting path, and releasing that Lease returns the same amount.
 //
-// The wrapped capacity.ScalarLedger owns all low-level scalar accounting, including
-// revisioned snapshots, limit changes, release ownership, and debt semantics
-// after a limit is reduced below active leases. Bulkhead owns only the
-// execution-protection meaning of that accounting: bounded in-flight isolation.
+// The wrapped capacity.Ledger owns all low-level scalar accounting, including
+// revisioned snapshots, limit changes, and debt semantics after a limit is
+// reduced below active leases. Lease owns exactly-once bulkhead release
+// semantics so acquisitions do not allocate an additional capacity reservation
+// token.
 //
 // Bulkhead is safe for concurrent use. A Bulkhead must be created with New and
 // must not be copied after first use.
@@ -42,9 +43,9 @@ type Bulkhead struct {
 
 	// ledger owns the low-level live capacity accounting.
 	//
-	// All mutation, synchronization, revisioning, and lease/release ownership
-	// checks are delegated to this ledger. Bulkhead methods do not maintain
-	// parallel counters; duplicating that state here would make the accounting
-	// easier to skew.
-	ledger *capacity.ScalarLedger
+	// All scalar accounting, synchronization, revisioning, and debt calculation
+	// are delegated to this ledger. Lease owns the bulkhead release-once state.
+	// Bulkhead methods do not maintain parallel counters; duplicating that state
+	// here would make the accounting easier to skew.
+	ledger *capacity.Ledger
 }

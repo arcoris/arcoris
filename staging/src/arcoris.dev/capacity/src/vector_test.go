@@ -20,35 +20,29 @@ import (
 	"arcoris.dev/capacity"
 )
 
-func TestVectorEntriesAreFreshCopies(t *testing.T) {
-	t.Parallel()
-
-	v := vector(t, entry("worker_slots", 2))
-	entries := v.Entries()
-	entries[0] = entry("worker_slots", 99)
-
-	if got := v.Amount(capacity.MustResource("worker_slots")); got != 2 {
-		t.Fatalf("Amount() = %d, want 2", got)
-	}
-}
-
-func TestVectorLookupAndEquality(t *testing.T) {
-	t.Parallel()
-
+func TestVectorAccessAndCopySafety(t *testing.T) {
 	v := vector(t, entry("worker_slots", 2), entry("memory_bytes", 8))
-	workerSlots := capacity.MustResource("worker_slots")
-	queueSlots := capacity.MustResource("queue_slots")
+	requireVector(t, v, entry("memory_bytes", 8), entry("worker_slots", 2))
 
-	if !v.Has(workerSlots) || v.Has(queueSlots) {
-		t.Fatalf("Has() mismatch")
+	entries := v.Entries()
+	entries[0] = entry("queue_slots", 1)
+	requireVector(t, v, entry("memory_bytes", 8), entry("worker_slots", 2))
+
+	if !v.Has(capacity.MustResource("worker_slots")) {
+		t.Fatal("Has(worker_slots) = false")
 	}
-	if got := v.Amount(workerSlots); got != 2 {
+	if got := v.Amount(capacity.MustResource("worker_slots")); got != 2 {
 		t.Fatalf("Amount(worker_slots) = %d, want 2", got)
 	}
-	if got := v.Amount(queueSlots); got != 0 {
-		t.Fatalf("Amount(queue_slots) = %d, want 0", got)
+	if v.Has(capacity.MustResource("queue_slots")) {
+		t.Fatal("Has(queue_slots) = true")
 	}
-	if !v.Equal(vector(t, entry("memory_bytes", 8), entry("worker_slots", 2))) {
-		t.Fatal("canonical vectors were not equal")
+	if got := v.Len(); got != 2 {
+		t.Fatalf("Len() = %d, want 2", got)
+	}
+
+	other := vector(t, entry("worker_slots", 2), entry("memory_bytes", 8))
+	if !v.Equal(other) {
+		t.Fatal("Equal() = false for matching canonical vectors")
 	}
 }

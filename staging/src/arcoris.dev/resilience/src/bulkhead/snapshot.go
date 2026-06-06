@@ -18,8 +18,8 @@ import "arcoris.dev/capacity"
 
 // Snapshot is the copyable state model of one Bulkhead's local capacity.
 //
-// Snapshot is an alias of capacity.ScalarSnapshot because bulkhead does not maintain
+// Snapshot is an alias of capacity.Snapshot because bulkhead does not maintain
 // parallel diagnostic counters. Limit, Reserved, Available, and Debt are exactly
 // the live in-flight capacity state owned by the underlying ledger. This keeps
 // debt semantics identical when a limit is reduced below active leases.
-type Snapshot = capacity.ScalarSnapshot
+type Snapshot = capacity.Snapshot

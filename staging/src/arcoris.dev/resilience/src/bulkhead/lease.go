@@ -14,22 +14,33 @@
 
 package bulkhead
 
-import "arcoris.dev/capacity"
+import (
+	"sync/atomic"
+
+	"arcoris.dev/capacity"
+)
 
 // Lease owns in-flight bulkhead capacity until it is released.
 //
-// Lease is the bulkhead-domain name for a capacity.ScalarReservation. The underlying
-// reservation enforces release ownership and updates the owning ledger. Lease
-// adds no counters of its own and intentionally exposes only the operations that
-// are meaningful for protected in-flight work.
+// Lease is the bulkhead-domain ownership token for protected in-flight work.
+//
+// Lease uses capacity.Ledger's raw accounting path and owns its own exactly-once
+// release state. That avoids allocating both a capacity reservation and a
+// bulkhead lease for one acquisition.
 //
 // Lease must not be copied after creation.
 type Lease struct {
 	// noCopy lets go vet report accidental Lease copies after first use.
 	noCopy noCopy
 
-	// reservation owns the low-level capacity units.
-	reservation *capacity.ScalarReservation
+	// ledger owns the low-level scalar capacity accounting.
+	ledger *capacity.Ledger
+
+	// amount is the immutable capacity amount owned by this lease.
+	amount Amount
+
+	// released records whether this lease has already returned amount.
+	released atomic.Bool
 }
 
 // Amount returns the number of in-flight capacity units owned by l.
@@ -39,7 +50,7 @@ type Lease struct {
 // observable before and after release.
 func (l *Lease) Amount() Amount {
 	l.requireReady()
-	return Amount(l.reservation.Amount())
+	return l.amount
 }
 
 // Released reports whether l has already returned its capacity to the Bulkhead.
@@ -49,5 +60,5 @@ func (l *Lease) Amount() Amount {
 // TryRelease.
 func (l *Lease) Released() bool {
 	l.requireReady()
-	return l.reservation.Released()
+	return l.released.Load()
 }

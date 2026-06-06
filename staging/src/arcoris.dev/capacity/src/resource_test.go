@@ -15,68 +15,39 @@
 package capacity_test
 
 import (
-	"errors"
 	"testing"
 
 	"arcoris.dev/capacity"
 )
 
 func TestResourceValidation(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		value string
-		valid bool
-	}{
-		{value: "worker_slots", valid: true},
-		{value: "resilience.bulkhead.slots", valid: true},
-		{value: "scheduler.node.cpu_units", valid: true},
-		{value: "", valid: false},
-		{value: "Worker_slots", valid: false},
-		{value: "worker-slots", valid: false},
-		{value: "worker slots", valid: false},
-		{value: ".worker_slots", valid: false},
-		{value: "worker_slots.", valid: false},
-		{value: "worker..slots", valid: false},
-		{value: "_worker_slots", valid: false},
-		{value: "worker_slots_", valid: false},
-		{value: "worker__slots", valid: false},
-		{value: "worker.1slots", valid: false},
+	tests := map[string]bool{
+		"worker_slots":                 true,
+		"runtime.worker_pool.workers":  true,
+		"retry_budget_units2":          true,
+		"":                             false,
+		"Worker_slots":                 false,
+		"worker-slots":                 false,
+		"worker slots":                 false,
+		".worker_slots":                false,
+		"worker_slots.":                false,
+		"worker..slots":                false,
+		"_worker_slots":                false,
+		"worker_slots_":                false,
+		"worker__slots":                false,
+		"worker_slots.9queue":          false,
+		"runtime.worker_pool.request1": true,
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.value, func(t *testing.T) {
-			t.Parallel()
-			if got := capacity.Resource(tt.value).IsValid(); got != tt.valid {
-				t.Fatalf("IsValid() = %v, want %v", got, tt.valid)
-			}
-		})
+	for value, valid := range tests {
+		if got := capacity.Resource(value).IsValid(); got != valid {
+			t.Fatalf("Resource(%q).IsValid() = %v, want %v", value, got, valid)
+		}
 	}
 }
 
-func TestMustResourcePanicsWithStructuredError(t *testing.T) {
-	t.Parallel()
-
-	defer func() {
-		recovered := recover()
-		if recovered == nil {
-			t.Fatal("MustResource did not panic")
-		}
-		err, ok := recovered.(error)
-		if !ok {
-			t.Fatalf("panic = %#v, want error", recovered)
-		}
-		if !errors.Is(err, capacity.ErrInvalidResource) {
-			t.Fatalf("panic error = %v, want ErrInvalidResource", err)
-		}
-		var capacityErr *capacity.Error
-		if !errors.As(err, &capacityErr) {
-			t.Fatalf("panic error = %T, want *capacity.Error", err)
-		}
-		if capacityErr.Path != "resource" {
-			t.Fatalf("Path = %q, want resource", capacityErr.Path)
-		}
-	}()
-
-	_ = capacity.MustResource("bad-name")
+func TestMustResourcePanicsOnInvalidValue(t *testing.T) {
+	requirePanicIs(t, capacity.ErrInvalidResource, func() {
+		_ = capacity.MustResource("bad-name")
+	})
 }

@@ -17,54 +17,38 @@ package capacity_test
 import (
 	"math"
 	"testing"
+
+	"arcoris.dev/capacity"
 )
 
-func TestVectorCheckedAdd(t *testing.T) {
-	t.Parallel()
-
+func TestVectorCheckedAddAndSub(t *testing.T) {
 	left := vector(t, entry("memory_bytes", 8), entry("worker_slots", 2))
-	right := vector(t, entry("queue_slots", 3), entry("worker_slots", 4))
+	right := vector(t, entry("queue_slots", 1), entry("worker_slots", 3))
 
-	got, ok := left.CheckedAdd(right)
+	sum, ok := left.CheckedAdd(right)
 	if !ok {
 		t.Fatal("CheckedAdd() returned ok=false")
 	}
-	requireVector(t, got, entry("memory_bytes", 8), entry("queue_slots", 3), entry("worker_slots", 6))
-	requireVector(t, left, entry("memory_bytes", 8), entry("worker_slots", 2))
-}
+	requireVector(t, sum, entry("memory_bytes", 8), entry("queue_slots", 1), entry("worker_slots", 5))
 
-func TestVectorCheckedAddOverflow(t *testing.T) {
-	t.Parallel()
-
-	left := vector(t, entry("worker_slots", math.MaxUint64))
-	right := vector(t, entry("worker_slots", 1))
-
-	if _, ok := left.CheckedAdd(right); ok {
-		t.Fatal("CheckedAdd() overflow returned ok=true")
-	}
-}
-
-func TestVectorCheckedSub(t *testing.T) {
-	t.Parallel()
-
-	left := vector(t, entry("memory_bytes", 8), entry("worker_slots", 6))
-	right := vector(t, entry("memory_bytes", 8), entry("worker_slots", 2))
-
-	got, ok := left.CheckedSub(right)
+	diff, ok := sum.CheckedSub(vector(t, entry("memory_bytes", 8), entry("worker_slots", 5)))
 	if !ok {
 		t.Fatal("CheckedSub() returned ok=false")
 	}
-	requireVector(t, got, entry("worker_slots", 4))
-	requireVector(t, left, entry("memory_bytes", 8), entry("worker_slots", 6))
+	requireVector(t, diff, entry("queue_slots", 1))
 }
 
-func TestVectorCheckedSubUnderflow(t *testing.T) {
-	t.Parallel()
+func TestVectorCheckedAddAndSubFailures(t *testing.T) {
+	overflow := vector(t, capacity.Entry{
+		Resource: capacity.MustResource("worker_slots"),
+		Amount:   capacity.Amount(math.MaxUint64),
+	})
+	if _, ok := overflow.CheckedAdd(vector(t, entry("worker_slots", 1))); ok {
+		t.Fatal("CheckedAdd() overflow returned ok=true")
+	}
 
-	left := vector(t, entry("worker_slots", 1))
-	right := vector(t, entry("memory_bytes", 1))
-
-	if _, ok := left.CheckedSub(right); ok {
+	diff := vector(t, entry("queue_slots", 1))
+	if _, ok := diff.CheckedSub(vector(t, entry("worker_slots", 1))); ok {
 		t.Fatal("CheckedSub() missing resource returned ok=true")
 	}
 }

@@ -16,7 +16,7 @@ package bulkhead
 
 import "testing"
 
-func TestLeaseAmountReflectsWeightedReservation(t *testing.T) {
+func TestLeaseAmountReflectsWeightedLease(t *testing.T) {
 	t.Parallel()
 
 	b := New(2)
@@ -34,7 +34,7 @@ func TestLeaseAmountReflectsWeightedReservation(t *testing.T) {
 	}
 }
 
-func TestLeaseReleasedReflectsReservationState(t *testing.T) {
+func TestLeaseReleasedReflectsLeaseState(t *testing.T) {
 	t.Parallel()
 
 	b := New(1)

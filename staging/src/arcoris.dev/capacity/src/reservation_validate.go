@@ -14,17 +14,14 @@
 
 package capacity
 
-// requireNonNil panics when r is nil or detached from its ledger.
-func (r *Reservation) requireNonNil() {
+// requireValid panics when r is nil, detached, or zero-valued.
+func (r *Reservation) requireValid() {
 	if r == nil {
-		panicAt("reservation", ErrNilReservation, ErrorReasonNilReservation, "reservation receiver is nil")
+		panicAt("reservation", ErrNilReservation, "reservation receiver is nil")
 	}
-	if r.ledger == nil || !r.demand.IsValid() {
-		panicAt(
-			"reservation",
-			ErrInvalidReservation,
-			ErrorReasonInvalidReservation,
-			"reservation must be created by Ledger.TryReserve",
-		)
+	if r.ledger == nil || r.amount.IsZero() {
+		panicAt("reservation", ErrInvalidReservation, "reservation must be created by Ledger.TryAcquire")
 	}
+
+	r.ledger.requireReady()
 }

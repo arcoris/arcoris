@@ -18,7 +18,7 @@ import "arcoris.dev/snapshot"
 
 // Snapshot returns the current revisioned capacity state.
 //
-// The returned value is the underlying capacity.ScalarLedger snapshot. It is safe to
+// The returned value is the underlying capacity.Ledger snapshot. It is safe to
 // store or compare as a value. It describes local in-flight capacity only; it
 // does not include health, routing, scheduling, metrics, or distributed state.
 func (b *Bulkhead) Snapshot() snapshot.Snapshot[Snapshot] {

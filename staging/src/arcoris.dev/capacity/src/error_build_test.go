@@ -19,19 +19,28 @@ import (
 	"testing"
 )
 
-func TestErrorAtBuildsStructuredDiagnostic(t *testing.T) {
-	t.Parallel()
+func TestErrorAtBuildsCapacityError(t *testing.T) {
+	err := errorAt("amount", ErrZeroAmount, "amount must be positive")
 
-	err := errorAt("path", ErrInvalidVector, ErrorReasonInvalidVector, "detail")
-	if !errors.Is(err, ErrInvalidVector) {
-		t.Fatalf("errorAt() = %v, want ErrInvalidVector", err)
-	}
-
-	capacityErr, ok := err.(*Error)
-	if !ok {
+	var capacityErr *Error
+	if !errors.As(err, &capacityErr) {
 		t.Fatalf("errorAt() = %T, want *Error", err)
 	}
-	if capacityErr.Path != "path" || capacityErr.Reason != ErrorReasonInvalidVector || capacityErr.Detail != "detail" {
-		t.Fatalf("record = %+v", capacityErr.Record)
+	if capacityErr.Path != "amount" || !errors.Is(capacityErr, ErrZeroAmount) {
+		t.Fatalf("capacity error = %#v", capacityErr)
 	}
+}
+
+func TestPanicAtPanicsWithCapacityError(t *testing.T) {
+	defer func() {
+		recovered := recover()
+		if recovered == nil {
+			t.Fatal("panicAt() did not panic")
+		}
+		if !errors.Is(recovered.(error), ErrZeroAmount) {
+			t.Fatalf("panic error = %v, want ErrZeroAmount", recovered)
+		}
+	}()
+
+	panicAt("amount", ErrZeroAmount, "amount must be positive")
 }

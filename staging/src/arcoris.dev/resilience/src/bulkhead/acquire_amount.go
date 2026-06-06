@@ -32,10 +32,14 @@ import "arcoris.dev/snapshot"
 func (b *Bulkhead) TryAcquireAmount(amount Amount) (*Lease, snapshot.Snapshot[Snapshot], bool) {
 	b.requireReady()
 
-	result := b.ledger.TryReserve(amount)
-	if result.Denied() {
-		return nil, result.Snapshot, false
+	ok := b.ledger.TryReserve(amount)
+	snap := b.ledger.Snapshot()
+	if !ok {
+		return nil, snap, false
 	}
 
-	return &Lease{reservation: result.Reservation}, result.Snapshot, true
+	return &Lease{
+		ledger: b.ledger,
+		amount: amount,
+	}, snap, true
 }

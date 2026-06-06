@@ -16,125 +16,210 @@ package capacity_test
 
 import (
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"arcoris.dev/capacity"
 )
 
-func TestLedgerReserveSuccess(t *testing.T) {
-	t.Parallel()
+func TestLedgerTryReserveUsesRawAccounting(t *testing.T) {
+	ledger := capacity.NewLedger(4)
 
-	ledger := capacity.NewLedger(vector(t, entry("memory_bytes", 8), entry("worker_slots", 4)))
-	before := ledger.Revision()
-	result := ledger.TryReserve(demand(t, entry("memory_bytes", 3), entry("worker_slots", 2)))
-	if !result.Reserved() {
-		t.Fatalf("TryReserve() status = %s, want reserved", result.Status)
+	if !ledger.TryReserve(3) {
+		t.Fatal("TryReserve(3) returned false")
 	}
-	if result.Reservation == nil {
-		t.Fatal("successful reservation is nil")
-	}
-	if result.Snapshot.Revision == before {
-		t.Fatal("successful reserve did not advance revision")
-	}
-	requireVector(t, result.Snapshot.Value.Reserved, entry("memory_bytes", 3), entry("worker_slots", 2))
-}
-
-func TestLedgerReserveRefusalDoesNotMutateOrAdvance(t *testing.T) {
-	t.Parallel()
-
-	ledger := capacity.NewLedger(vector(t, entry("memory_bytes", 8), entry("worker_slots", 4)))
-	first := ledger.TryReserve(demand(t, entry("memory_bytes", 3)))
-	if !first.Reserved() {
-		t.Fatalf("first reserve status = %s", first.Status)
-	}
-	before := ledger.Snapshot()
-
-	denied := ledger.TryReserve(demand(t, entry("memory_bytes", 1), entry("worker_slots", 5)))
-	if denied.Status != capacity.ReserveStatusInsufficient {
-		t.Fatalf("denied status = %s, want insufficient", denied.Status)
-	}
-	if denied.Reservation != nil {
-		t.Fatal("denied reservation is non-nil")
-	}
-	if denied.Snapshot.Revision != before.Revision {
-		t.Fatal("failed reserve advanced revision")
-	}
-	requireVector(t, denied.Snapshot.Value.Reserved, entry("memory_bytes", 3))
-}
-
-func TestLedgerUnknownResourceDoesNotPartiallyReserve(t *testing.T) {
-	t.Parallel()
-
-	ledger := capacity.NewLedger(vector(t, entry("worker_slots", 4)))
-	denied := ledger.TryReserve(demand(t, entry("queue_slots", 1), entry("worker_slots", 2)))
-	if denied.Status != capacity.ReserveStatusUnknownResource {
-		t.Fatalf("status = %s, want unknown_resource", denied.Status)
-	}
-	requireVector(t, ledger.Snapshot().Value.Reserved)
-}
-
-func TestLedgerDebtBlocksDemandedResourceOnly(t *testing.T) {
-	t.Parallel()
-
-	ledger := capacity.NewLedger(vector(t, entry("memory_bytes", 8), entry("worker_slots", 4)))
-	memory := ledger.TryReserve(demand(t, entry("memory_bytes", 8)))
-	if !memory.Reserved() {
-		t.Fatalf("memory reserve status = %s", memory.Status)
-	}
-	overcommitted := ledger.SetLimits(vector(t, entry("memory_bytes", 4), entry("worker_slots", 4)))
-	requireVector(t, overcommitted.Value.Debt, entry("memory_bytes", 4))
-
-	worker := ledger.TryReserve(demand(t, entry("worker_slots", 2)))
-	if !worker.Reserved() {
-		t.Fatalf("worker reserve status = %s, want reserved", worker.Status)
+	if got := ledger.Snapshot().Value; got != capacity.NewSnapshot(4, 3) {
+		t.Fatalf("snapshot after raw reserve = %#v", got)
 	}
 
-	denied := ledger.TryReserve(demand(t, entry("memory_bytes", 1)))
-	if denied.Status != capacity.ReserveStatusDebt {
-		t.Fatalf("memory reserve status = %s, want debt", denied.Status)
+	ledger.Release(3)
+	if got := ledger.Snapshot().Value; got != capacity.NewSnapshot(4, 0) {
+		t.Fatalf("snapshot after raw release = %#v", got)
 	}
 }
 
-func TestLedgerReserveMatchesScalarForOneResource(t *testing.T) {
-	t.Parallel()
+func TestLedgerTryReserveObservedReportsDiagnostics(t *testing.T) {
+	ledger := capacity.NewLedger(4)
 
-	resource := capacity.MustResource("worker_slots")
-	multi := capacity.NewLedger(vector(t, entry("worker_slots", 4)))
-	scalar := capacity.NewScalarLedger(4)
-
-	multiResult := multi.TryReserve(demand(t, entry("worker_slots", 3)))
-	scalarResult := scalar.TryReserve(3)
-	if multiResult.Status != scalarResult.Status {
-		t.Fatalf("status multi=%s scalar=%s", multiResult.Status, scalarResult.Status)
+	observation, ok := ledger.TryReserveObserved(3)
+	if !ok {
+		t.Fatal("TryReserveObserved(3) returned false")
 	}
-	if got := multiResult.Snapshot.Value.Reserved.Amount(resource); got != scalarResult.Snapshot.Value.Reserved {
-		t.Fatalf("reserved multi=%d scalar=%d", got, scalarResult.Snapshot.Value.Reserved)
+	if observation.Refusal != capacity.RefusalNone {
+		t.Fatalf("Refusal = %s, want none", observation.Refusal)
 	}
-
-	_ = multi.SetLimits(vector(t, entry("worker_slots", 2)))
-	_ = scalar.SetLimit(2)
-	if got := multi.Snapshot().Value.Debt.Amount(resource); got != scalar.Snapshot().Value.Debt {
-		t.Fatalf("debt multi=%d scalar=%d", got, scalar.Snapshot().Value.Debt)
+	if observation.Snapshot.Value != capacity.NewSnapshot(4, 3) {
+		t.Fatalf("snapshot = %#v", observation.Snapshot.Value)
 	}
 }
 
-func TestLedgerConcurrentReserveDoesNotOverspend(t *testing.T) {
-	t.Parallel()
+func TestLedgerTryAcquireReturnsOwnedReservation(t *testing.T) {
+	ledger := capacity.NewLedger(4)
 
-	ledger := capacity.NewLedger(vector(t, entry("worker_slots", 32)))
-	unit := demand(t, entry("worker_slots", 1))
+	reservation, ok := ledger.TryAcquire(3)
+	if !ok || reservation == nil {
+		t.Fatalf("TryAcquire(3) = %v, %v", reservation, ok)
+	}
+	if got := reservation.Amount(); got != 3 {
+		t.Fatalf("reservation amount = %d, want 3", got)
+	}
+
+	reservation.Release()
+	if got := ledger.Snapshot().Value; got != capacity.NewSnapshot(4, 0) {
+		t.Fatalf("snapshot after owned release = %#v", got)
+	}
+}
+
+func TestLedgerTryAcquireObservedReportsDiagnostics(t *testing.T) {
+	ledger := capacity.NewLedger(4)
+
+	reservation, observation, ok := ledger.TryAcquireObserved(2)
+	if !ok || reservation == nil {
+		t.Fatalf("TryAcquireObserved(2) = %v, %#v, %v", reservation, observation, ok)
+	}
+	defer reservation.Release()
+
+	if observation.Refusal != capacity.RefusalNone {
+		t.Fatalf("Refusal = %s, want none", observation.Refusal)
+	}
+	if observation.Snapshot.Value != capacity.NewSnapshot(4, 2) {
+		t.Fatalf("snapshot = %#v", observation.Snapshot.Value)
+	}
+}
+
+func TestLedgerTryAcquireFailureReturnsNilReservation(t *testing.T) {
+	ledger := capacity.NewLedger(1)
+
+	reservation, ok := ledger.TryAcquire(2)
+	if ok || reservation != nil {
+		t.Fatalf("TryAcquire(2) = %v, %v; want nil, false", reservation, ok)
+	}
+	if got := ledger.Snapshot().Value; got.Reserved != 0 {
+		t.Fatalf("reserved after failed acquire = %d, want 0", got.Reserved)
+	}
+}
+
+func TestLedgerRefusalsDoNotMutate(t *testing.T) {
+	ledger := capacity.NewLedger(2)
+
+	if ledger.TryReserve(3) {
+		t.Fatal("TryReserve(3) succeeded, want refusal")
+	}
+	if got := ledger.Snapshot().Value; got.Reserved != 0 {
+		t.Fatalf("reserved after refusal = %d, want 0", got.Reserved)
+	}
+
+	insufficient, ok := ledger.TryReserveObserved(3)
+	if ok || insufficient.Refusal != capacity.RefusalInsufficient {
+		t.Fatalf("insufficient observation = %#v ok=%v", insufficient, ok)
+	}
+
+	if !ledger.TryReserve(2) {
+		t.Fatal("TryReserve(2) failed")
+	}
+	ledger.SetLimit(1)
+
+	debt, ok := ledger.TryReserveObserved(1)
+	if ok || debt.Refusal != capacity.RefusalDebt || debt.Snapshot.Value.Debt != 1 {
+		t.Fatalf("debt observation = %#v ok=%v", debt, ok)
+	}
+
+	ledger.Release(2)
+}
+
+func TestLedgerRawReleaseObservedReturnsSnapshot(t *testing.T) {
+	ledger := capacity.NewLedger(2)
+	if !ledger.TryReserve(2) {
+		t.Fatal("TryReserve(2) failed")
+	}
+
+	snap := ledger.ReleaseObserved(1)
+	if snap.Value != capacity.NewSnapshot(2, 1) {
+		t.Fatalf("release snapshot = %#v", snap.Value)
+	}
+
+	ledger.Release(1)
+}
+
+func TestLedgerTryReleaseObservedReturnsOutcome(t *testing.T) {
+	ledger := capacity.NewLedger(1)
+
+	failed, ok := ledger.TryReleaseObserved(1)
+	if ok || failed.Value.Reserved != 0 {
+		t.Fatalf("failed TryReleaseObserved() = %#v, %v", failed.Value, ok)
+	}
+
+	if !ledger.TryReserve(1) {
+		t.Fatal("TryReserve(1) failed")
+	}
+	released, ok := ledger.TryReleaseObserved(1)
+	if !ok || released.Value.Reserved != 0 {
+		t.Fatalf("successful TryReleaseObserved() = %#v, %v", released.Value, ok)
+	}
+}
+
+func TestLedgerRawReleasePanicsOnUnderflow(t *testing.T) {
+	ledger := capacity.NewLedger(1)
+
+	requirePanicIs(t, capacity.ErrReservedUnderflow, func() {
+		ledger.Release(1)
+	})
+}
+
+func TestLedgerTryReleaseReportsUnderflow(t *testing.T) {
+	ledger := capacity.NewLedger(1)
+
+	if ledger.TryRelease(1) {
+		t.Fatal("TryRelease(1) returned true, want false")
+	}
+	if got := ledger.Snapshot().Value; got.Reserved != 0 {
+		t.Fatalf("reserved after failed TryRelease = %d, want 0", got.Reserved)
+	}
+}
+
+func TestLedgerReserveAndReleasePanicsOnZeroAmount(t *testing.T) {
+	ledger := capacity.NewLedger(1)
+
+	requirePanicIs(t, capacity.ErrZeroAmount, func() { _ = ledger.TryReserve(0) })
+	requirePanicIs(t, capacity.ErrZeroAmount, func() { ledger.Release(0) })
+	requirePanicIs(t, capacity.ErrZeroAmount, func() { _, _ = ledger.TryAcquire(0) })
+}
+
+func TestLedgerConcurrentRawReserveDoesNotOverspend(t *testing.T) {
+	const limit = 64
+
+	ledger := capacity.NewLedger(limit)
+	var successes atomic.Uint64
 	var wg sync.WaitGroup
-	for i := 0; i < 128; i++ {
+
+	for i := 0; i < limit*4; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_ = ledger.TryReserve(unit)
+			if ledger.TryReserve(1) {
+				successes.Add(1)
+			}
 		}()
 	}
 	wg.Wait()
 
-	snap := ledger.Snapshot()
-	if got := snap.Value.Reserved.Amount(capacity.MustResource("worker_slots")); got != 32 {
-		t.Fatalf("reserved = %d, want 32", got)
+	if got := successes.Load(); got != limit {
+		t.Fatalf("successful reserves = %d, want %d", got, limit)
+	}
+	if got := ledger.Snapshot().Value.Reserved; got != limit {
+		t.Fatalf("reserved = %d, want %d", got, limit)
+	}
+
+	for i := 0; i < limit; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ledger.Release(1)
+		}()
+	}
+	wg.Wait()
+
+	if got := ledger.Snapshot().Value; got.Reserved != 0 || !got.IsValid() {
+		t.Fatalf("snapshot after releases = %#v", got)
 	}
 }

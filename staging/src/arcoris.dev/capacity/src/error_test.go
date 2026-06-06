@@ -22,22 +22,16 @@ import (
 )
 
 func TestErrorFormatsAndUnwrapsSentinel(t *testing.T) {
-	t.Parallel()
-
-	err := func() (recovered error) {
-		defer func() {
-			if value := recover(); value != nil {
-				recovered, _ = value.(error)
-			}
-		}()
-		_ = capacity.MustResource("bad-name")
-		return nil
-	}()
+	err := &capacity.Error{
+		Path:   "entries[0].resource",
+		Err:    capacity.ErrInvalidResource,
+		Detail: "resource is invalid",
+	}
 
 	if !errors.Is(err, capacity.ErrInvalidResource) {
-		t.Fatalf("panic error = %v, want ErrInvalidResource", err)
+		t.Fatal("errors.Is() did not match sentinel")
 	}
 	if got := err.Error(); got == "" || got == "<nil>" {
-		t.Fatalf("Error() = %q, want formatted diagnostic", got)
+		t.Fatalf("Error() = %q", got)
 	}
 }

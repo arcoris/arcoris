@@ -21,13 +21,9 @@ const (
 	errInvalidLease = "bulkhead: invalid lease"
 )
 
-// requireReady panics when l is nil or was not returned by a Bulkhead acquisition
-// method.
-//
-// The check intentionally happens before delegating to capacity.ScalarReservation so
-// bulkhead reports misuse of the resilience-domain lease boundary.
+// requireReady panics when l is nil or was not returned by a Bulkhead acquisition method.
 func (l *Lease) requireReady() {
-	if l == nil || l.reservation == nil {
+	if l == nil || l.ledger == nil || l.amount.IsZero() {
 		panic(errInvalidLease)
 	}
 }

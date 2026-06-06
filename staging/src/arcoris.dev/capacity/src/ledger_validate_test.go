@@ -20,12 +20,14 @@ import (
 	"arcoris.dev/capacity"
 )
 
-func TestLedgerNilAndZeroReceiversPanic(t *testing.T) {
-	t.Parallel()
-
+func TestLedgerValidatePanics(t *testing.T) {
 	var nilLedger *capacity.Ledger
 	requirePanicIs(t, capacity.ErrNilLedger, func() { _ = nilLedger.Snapshot() })
+	requirePanicIs(t, capacity.ErrNilLedger, func() { _ = nilLedger.TryReserve(1) })
+	requirePanicIs(t, capacity.ErrNilLedger, func() { _, _ = nilLedger.TryAcquire(1) })
 
-	var zero capacity.Ledger
-	requirePanicIs(t, capacity.ErrUninitializedLedger, func() { _ = zero.Snapshot() })
+	var zeroLedger capacity.Ledger
+	requirePanicIs(t, capacity.ErrUninitializedLedger, func() { _ = zeroLedger.Snapshot() })
+	requirePanicIs(t, capacity.ErrUninitializedLedger, func() { _ = zeroLedger.TryReserve(1) })
+	requirePanicIs(t, capacity.ErrUninitializedLedger, func() { zeroLedger.Release(1) })
 }

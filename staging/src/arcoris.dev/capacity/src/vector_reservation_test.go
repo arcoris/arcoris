@@ -20,16 +20,14 @@ import (
 	"arcoris.dev/capacity"
 )
 
-func TestReservationAmountAndReleased(t *testing.T) {
-	ledger := capacity.NewLedger(4)
-	reservation, ok := ledger.TryAcquire(3)
+func TestVectorReservationDemandAndReleased(t *testing.T) {
+	ledger := capacity.NewVectorLedger(vector(t, entry("worker_slots", 4)))
+	reservation, ok := ledger.TryReserve(demand(t, entry("worker_slots", 3)))
 	if !ok {
-		t.Fatal("TryAcquire() failed")
+		t.Fatal("TryReserve() failed")
 	}
 
-	if reservation.Amount() != 3 {
-		t.Fatalf("Amount() = %d, want 3", reservation.Amount())
-	}
+	requireVector(t, reservation.Demand().Vector(), entry("worker_slots", 3))
 	if reservation.Released() {
 		t.Fatal("Released() before release = true")
 	}
@@ -39,4 +37,12 @@ func TestReservationAmountAndReleased(t *testing.T) {
 	if !reservation.Released() {
 		t.Fatal("Released() after release = false")
 	}
+}
+
+func TestVectorReservationValidatePanics(t *testing.T) {
+	var nilReservation *capacity.VectorReservation
+	requirePanicIs(t, capacity.ErrNilReservation, func() { _ = nilReservation.Demand() })
+
+	var zeroReservation capacity.VectorReservation
+	requirePanicIs(t, capacity.ErrInvalidReservation, func() { _ = zeroReservation.Demand() })
 }

@@ -22,7 +22,7 @@ package bulkhead
 // turning this package into a generic admission framework.
 //
 // Amount is the number of local in-flight capacity units to reserve. It uses the
-// same scalar type as capacity.ScalarLedger through the bulkhead.Amount alias. Request
+// same scalar type as capacity.Ledger through the bulkhead.Amount alias. Request
 // intentionally contains no context, priority, tenant, request class, metadata,
 // deadline, or queueing policy; those dimensions belong to higher-level
 // admission or policy layers.

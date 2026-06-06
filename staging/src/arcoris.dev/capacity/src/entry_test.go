@@ -14,15 +14,20 @@
 
 package capacity_test
 
-import "testing"
+import (
+	"testing"
 
-func TestEntryValidity(t *testing.T) {
-	t.Parallel()
+	"arcoris.dev/capacity"
+)
 
+func TestEntryIsValid(t *testing.T) {
 	if !entry("worker_slots", 1).IsValid() {
-		t.Fatal("positive resource entry is invalid")
+		t.Fatal("valid entry was invalid")
 	}
-	if entry("worker_slots", 0).IsValid() {
-		t.Fatal("zero amount entry is valid")
+	if (capacity.Entry{Resource: "bad-name", Amount: 1}).IsValid() {
+		t.Fatal("entry with invalid resource was valid")
+	}
+	if (capacity.Entry{Resource: capacity.MustResource("worker_slots")}).IsValid() {
+		t.Fatal("entry with zero amount was valid")
 	}
 }

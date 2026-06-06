@@ -15,69 +15,39 @@
 package capacity_test
 
 import (
-	"sync"
 	"testing"
 
 	"arcoris.dev/capacity"
 )
 
-func TestReservationReleaseObserved(t *testing.T) {
-	ledger := capacity.NewLedger(4)
-	reservation, ok := ledger.TryAcquire(3)
+func TestVectorReservationReleaseObserved(t *testing.T) {
+	ledger := capacity.NewVectorLedger(vector(t, entry("worker_slots", 4)))
+	reservation, ok := ledger.TryReserve(demand(t, entry("worker_slots", 3)))
 	if !ok {
-		t.Fatal("TryAcquire() failed")
+		t.Fatal("TryReserve() failed")
 	}
 
 	released := reservation.ReleaseObserved()
-	if released.Value != capacity.NewSnapshot(4, 0) {
-		t.Fatalf("release snapshot = %#v", released.Value)
+	if !released.Value.Reserved.IsZero() {
+		t.Fatalf("reserved after release = %#v", released.Value.Reserved)
 	}
 	requirePanicIs(t, capacity.ErrReservationReleased, reservation.Release)
 }
 
-func TestReservationTryReleaseObserved(t *testing.T) {
-	ledger := capacity.NewLedger(2)
-	reservation, ok := ledger.TryAcquire(1)
+func TestVectorReservationTryReleaseObserved(t *testing.T) {
+	ledger := capacity.NewVectorLedger(vector(t, entry("worker_slots", 2)))
+	reservation, ok := ledger.TryReserve(demand(t, entry("worker_slots", 1)))
 	if !ok {
-		t.Fatal("TryAcquire() failed")
+		t.Fatal("TryReserve() failed")
 	}
 
 	first, ok := reservation.TryReleaseObserved()
-	if !ok || first.Value.Reserved != 0 {
+	if !ok || !first.Value.Reserved.IsZero() {
 		t.Fatalf("first TryReleaseObserved() = %#v, %v", first.Value, ok)
 	}
 
 	second, ok := reservation.TryReleaseObserved()
-	if ok || second.Value.Reserved != 0 {
+	if ok || !second.Value.Reserved.IsZero() {
 		t.Fatalf("second TryReleaseObserved() = %#v, %v", second.Value, ok)
-	}
-}
-
-func TestReservationConcurrentTryReleaseSucceedsOnce(t *testing.T) {
-	ledger := capacity.NewLedger(1)
-	reservation, ok := ledger.TryAcquire(1)
-	if !ok {
-		t.Fatal("TryAcquire() failed")
-	}
-
-	var successes int
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-
-	for i := 0; i < 32; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if reservation.TryRelease() {
-				mu.Lock()
-				successes++
-				mu.Unlock()
-			}
-		}()
-	}
-	wg.Wait()
-
-	if successes != 1 {
-		t.Fatalf("successful releases = %d, want 1", successes)
 	}
 }

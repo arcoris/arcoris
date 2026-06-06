@@ -22,20 +22,31 @@ import (
 )
 
 func TestLedgerImplementsSnapshotSources(t *testing.T) {
-	t.Parallel()
-
 	var _ snapshot.Source[capacity.Snapshot] = (*capacity.Ledger)(nil)
 	var _ snapshot.RevisionSource = (*capacity.Ledger)(nil)
 }
 
-func TestLedgerSetSameLimitsDoesNotAdvanceRevision(t *testing.T) {
-	t.Parallel()
+func TestLedgerSnapshotRevisionAndSetLimit(t *testing.T) {
+	ledger := capacity.NewLedger(4)
+	initial := ledger.Snapshot()
 
-	limits := vector(t, entry("worker_slots", 4))
-	ledger := capacity.NewLedger(limits)
-	before := ledger.Revision()
-	after := ledger.SetLimits(limits)
-	if after.Revision != before {
-		t.Fatalf("revision = %d, want %d", after.Revision, before)
+	if initial.Value != capacity.NewSnapshot(4, 0) {
+		t.Fatalf("initial snapshot = %#v", initial.Value)
+	}
+
+	ledger.SetLimit(4)
+	noChange := ledger.Snapshot()
+
+	if noChange.Revision != initial.Revision {
+		t.Fatalf("same SetLimit advanced revision: %d -> %d", initial.Revision, noChange.Revision)
+	}
+
+	changed := ledger.SetLimitObserved(2)
+
+	if changed.Value != capacity.NewSnapshot(2, 0) {
+		t.Fatalf("changed snapshot = %#v", changed.Value)
+	}
+	if changed.Revision == initial.Revision {
+		t.Fatal("changed SetLimit did not advance revision")
 	}
 }

@@ -29,7 +29,6 @@ func NewDemand(entries ...Entry) (Demand, error) {
 		return Demand{}, errorAt(
 			"entries",
 			ErrEmptyDemand,
-			ErrorReasonEmptyDemand,
 			"demand must contain at least one resource",
 		)
 	}
@@ -41,7 +40,6 @@ func NewDemand(entries ...Entry) (Demand, error) {
 		return Demand{}, errorAt(
 			"entries",
 			ErrEmptyDemand,
-			ErrorReasonEmptyDemand,
 			"demand must contain at least one resource",
 		)
 	}

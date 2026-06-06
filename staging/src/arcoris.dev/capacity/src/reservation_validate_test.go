@@ -20,12 +20,10 @@ import (
 	"arcoris.dev/capacity"
 )
 
-func TestReservationNilAndZeroReceiversPanic(t *testing.T) {
-	t.Parallel()
-
+func TestReservationValidatePanics(t *testing.T) {
 	var nilReservation *capacity.Reservation
-	requirePanicIs(t, capacity.ErrNilReservation, func() { _ = nilReservation.Demand() })
+	requirePanicIs(t, capacity.ErrNilReservation, func() { _ = nilReservation.Amount() })
 
-	var zero capacity.Reservation
-	requirePanicIs(t, capacity.ErrInvalidReservation, func() { _ = zero.Demand() })
+	var zeroReservation capacity.Reservation
+	requirePanicIs(t, capacity.ErrInvalidReservation, func() { _ = zeroReservation.Amount() })
 }

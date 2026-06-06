@@ -17,13 +17,20 @@
 // The package owns accounting truth: exact amounts, stable resource identities,
 // canonical resource vectors, non-empty demands, limits, reserved allocations,
 // available capacity, per-resource debt after limit shrink, all-or-nothing
-// reservation, reservation ownership, and revisioned snapshots.
+// vector reservation, scalar raw accounting, reservation ownership, and
+// revisioned observations.
 //
-// Ledger is the main multi-resource owner. ScalarLedger is an optimized
-// single-resource owner for hot paths such as bulkheads. Value types are
-// copy-safe and immutable through their public APIs; stateful ledgers and
-// reservations are constructor-created owners and must not be copied after first
-// use.
+// Ledger is the optimized scalar hot-path owner for common single-resource
+// limits such as bulkhead slots, worker slots, queue slots, and active request
+// counts. Its raw TryReserve and Release methods do not allocate or build
+// snapshots. TryAcquire returns a capacity-owned Reservation when callers want
+// ownership handled by this package. Observed methods and Snapshot build
+// diagnostics only when explicitly requested.
+//
+// VectorLedger is the explicit strict owner for multi-resource all-or-nothing
+// accounting. Value types are copy-safe and immutable through their public APIs;
+// stateful ledgers and reservations are constructor-created owners and must not
+// be copied after first use.
 //
 // Capacity deliberately does not own catalogs, descriptors, admission decisions,
 // queues, schedulers, fairness policy, quotas, metrics, health, runtime

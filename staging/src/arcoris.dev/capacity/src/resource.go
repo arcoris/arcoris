@@ -14,16 +14,7 @@
 
 package capacity
 
-import (
-	"fmt"
-	"regexp"
-)
-
-// resourcePattern is the closed grammar for stable capacity resource names.
-//
-// Each segment starts with a lowercase letter and may then contain lowercase
-// letters, digits, or single underscores before another alphanumeric byte.
-var resourcePattern = regexp.MustCompile(`^[a-z](?:[a-z0-9]|_[a-z0-9])*(?:\.[a-z](?:[a-z0-9]|_[a-z0-9])*)*$`)
+import "fmt"
 
 // Resource is a stable accounting dimension.
 //
@@ -39,7 +30,6 @@ func MustResource(value string) Resource {
 		panic(errorAt(
 			"resource",
 			ErrInvalidResource,
-			ErrorReasonInvalidResource,
 			fmt.Sprintf("resource %q must be dot-separated lower_snake_case", resource),
 		))
 	}
@@ -48,10 +38,59 @@ func MustResource(value string) Resource {
 
 // IsValid reports whether r follows the capacity resource grammar.
 func (r Resource) IsValid() bool {
-	return resourcePattern.MatchString(string(r))
+	value := string(r)
+	if value == "" {
+		return false
+	}
+
+	startSegment := true
+	previousUnderscore := false
+	for i := 0; i < len(value); i++ {
+		c := value[i]
+
+		switch {
+		case c == '.':
+			if startSegment || previousUnderscore {
+				return false
+			}
+			startSegment = true
+			previousUnderscore = false
+
+		case isLowerASCII(c):
+			startSegment = false
+			previousUnderscore = false
+
+		case isDigitASCII(c):
+			if startSegment {
+				return false
+			}
+			previousUnderscore = false
+
+		case c == '_':
+			if startSegment || previousUnderscore {
+				return false
+			}
+			previousUnderscore = true
+
+		default:
+			return false
+		}
+	}
+
+	return !startSegment && !previousUnderscore
 }
 
 // String returns r as its stable identifier string.
 func (r Resource) String() string {
 	return string(r)
+}
+
+// isLowerASCII reports whether c is an ASCII lowercase letter.
+func isLowerASCII(c byte) bool {
+	return c >= 'a' && c <= 'z'
+}
+
+// isDigitASCII reports whether c is an ASCII decimal digit.
+func isDigitASCII(c byte) bool {
+	return c >= '0' && c <= '9'
 }

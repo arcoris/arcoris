@@ -15,17 +15,24 @@
 package capacity
 
 import (
-	"sync"
+	"sync/atomic"
 
 	"arcoris.dev/snapshot"
 )
 
-// Ledger owns local multi-resource capacity accounting state.
+// Ledger owns optimized scalar local capacity accounting.
 //
-// Ledger serializes limit changes, reservations, releases, and snapshot reads
-// with one mutex so every returned revisioned snapshot describes one committed
-// state. It performs all-or-nothing reservations and records debt instead of
-// revoking existing reservations when limits shrink.
+// Ledger is the default hot-path capacity owner for single-resource limits such
+// as bulkhead slots, active requests, queue slots, and worker slots. Raw reserve
+// and release methods update atomic counters directly and do not allocate, build
+// snapshots, or construct diagnostics. Callers that want capacity-owned release
+// ownership can use TryAcquire, which returns a Reservation token.
+//
+// Ledger is safe for concurrent use. Successful mutations advance the source
+// revision once after the accounting counter has changed. Snapshot is an
+// explicit observation built from atomic values; under concurrent mutation it is
+// internally valid and monotonic enough for diagnostics, but it is not a global
+// serialization point for reserve and release operations.
 //
 // The zero Ledger is invalid. Use NewLedger. A Ledger must not be copied after
 // first use.
@@ -33,80 +40,66 @@ type Ledger struct {
 	// noCopy prevents accidental copies after first use.
 	noCopy noCopy
 
-	// mu protects revision, state, and reservation release ownership.
-	mu sync.Mutex
+	// limit is the configured scalar capacity.
+	limit atomic.Uint64
 
-	// revision is the local version of the last committed state.
-	revision snapshot.Revision
+	// reserved is the amount currently held by raw or owned reservations.
+	reserved atomic.Uint64
 
-	// state is the committed accounting source state.
-	state State
+	// revision is the local version of the last completed mutation.
+	revision atomic.Uint64
 }
 
-// NewLedger returns a multi-resource ledger with initial limits.
-func NewLedger(limits Vector) *Ledger {
-	if !limits.IsValid() {
-		panicAt("limits", ErrInvalidVector, ErrorReasonInvalidVector, "limits vector must be canonical")
-	}
+// NewLedger returns a scalar ledger with initial limit.
+func NewLedger(limit Amount) *Ledger {
+	ledger := &Ledger{}
+	ledger.limit.Store(limit.Uint64())
+	ledger.revision.Store(uint64(snapshot.ZeroRevision.Next()))
 
-	return &Ledger{
-		revision: snapshot.ZeroRevision.Next(),
-		state: State{
-			Limits: limits,
-		},
-	}
+	return ledger
 }
 
-// SetLimits replaces the ledger's configured resource limits.
+// SetLimit replaces the scalar capacity limit.
 //
-// Existing reservations are never revoked. Lower limits may create per-resource
-// debt. Setting identical limits is a no-op and does not advance the revision.
-func (l *Ledger) SetLimits(limits Vector) snapshot.Snapshot[Snapshot] {
-	l.requireNonNil()
-	if !limits.IsValid() {
-		panicAt("limits", ErrInvalidVector, ErrorReasonInvalidVector, "limits vector must be canonical")
+// Existing reservations are never revoked. Lower limits may create debt. Setting
+// the same limit is a no-op and does not advance the revision.
+func (l *Ledger) SetLimit(limit Amount) {
+	l.requireReady()
+	for {
+		current := l.limit.Load()
+		if current == limit.Uint64() {
+			return
+		}
+		if l.limit.CompareAndSwap(current, limit.Uint64()) {
+			l.advanceRevision()
+			return
+		}
 	}
-
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	l.requireInitializedLocked()
-	if l.state.Limits.Equal(limits) {
-		return l.snapshotLocked()
-	}
-
-	l.state.Limits = limits
-	l.revision = l.revision.Next()
-	return l.snapshotLocked()
 }
 
-// Snapshot returns the current revisioned multi-resource ledger snapshot.
+// SetLimitObserved replaces the scalar capacity limit and then reads a snapshot.
+func (l *Ledger) SetLimitObserved(limit Amount) snapshot.Snapshot[Snapshot] {
+	l.SetLimit(limit)
+
+	return l.Snapshot()
+}
+
+// Snapshot returns the current revisioned scalar ledger snapshot.
 func (l *Ledger) Snapshot() snapshot.Snapshot[Snapshot] {
-	l.requireNonNil()
+	l.requireReady()
 
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	l.requireInitializedLocked()
-	return l.snapshotLocked()
+	return snapshot.Snapshot[Snapshot]{
+		Revision: l.Revision(),
+		Value: NewSnapshot(
+			Amount(l.limit.Load()),
+			Amount(l.reserved.Load()),
+		),
+	}
 }
 
 // Revision returns the latest committed ledger revision.
 func (l *Ledger) Revision() snapshot.Revision {
-	l.requireNonNil()
+	l.requireReady()
 
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	l.requireInitializedLocked()
-
-	return l.revision
-}
-
-// snapshotLocked derives a revisioned snapshot for state protected by l.mu.
-func (l *Ledger) snapshotLocked() snapshot.Snapshot[Snapshot] {
-	return snapshot.Snapshot[Snapshot]{
-		Revision: l.revision,
-		Value:    l.state.Snapshot(),
-	}
+	return snapshot.Revision(l.revision.Load())
 }

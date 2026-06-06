@@ -37,7 +37,6 @@ func NewVector(entries ...Entry) (Vector, error) {
 			return Vector{}, errorAt(
 				entryPath+".resource",
 				ErrInvalidResource,
-				ErrorReasonInvalidResource,
 				fmt.Sprintf("resource %q must be dot-separated lower_snake_case", entry.Resource),
 			)
 		}
@@ -46,7 +45,6 @@ func NewVector(entries ...Entry) (Vector, error) {
 			return Vector{}, errorAt(
 				entryPath+".amount",
 				ErrZeroAmount,
-				ErrorReasonZeroAmount,
 				"amount must be positive",
 			)
 		}
@@ -55,7 +53,6 @@ func NewVector(entries ...Entry) (Vector, error) {
 			return Vector{}, errorAt(
 				entryPath+".resource",
 				ErrDuplicateResource,
-				ErrorReasonDuplicateResource,
 				fmt.Sprintf("resource %q appears more than once", entry.Resource),
 			)
 		}

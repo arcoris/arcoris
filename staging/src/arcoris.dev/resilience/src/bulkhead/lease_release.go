@@ -14,7 +14,10 @@
 
 package bulkhead
 
-import "arcoris.dev/snapshot"
+import (
+	"arcoris.dev/capacity"
+	"arcoris.dev/snapshot"
+)
 
 // Release returns l's in-flight slot to the owning Bulkhead.
 //
@@ -23,7 +26,11 @@ import "arcoris.dev/snapshot"
 // TryRelease when idempotent cleanup is required.
 func (l *Lease) Release() snapshot.Snapshot[Snapshot] {
 	l.requireReady()
-	return l.reservation.Release()
+	if !l.release() {
+		panic(capacity.ErrReservationReleased)
+	}
+
+	return l.ledger.Snapshot()
 }
 
 // TryRelease returns l's in-flight slot if it is still live.
@@ -33,5 +40,17 @@ func (l *Lease) Release() snapshot.Snapshot[Snapshot] {
 // false.
 func (l *Lease) TryRelease() (snapshot.Snapshot[Snapshot], bool) {
 	l.requireReady()
-	return l.reservation.TryRelease()
+	ok := l.release()
+
+	return l.ledger.Snapshot(), ok
+}
+
+// release performs the lease ownership transition and raw capacity release.
+func (l *Lease) release() bool {
+	if !l.released.CompareAndSwap(false, true) {
+		return false
+	}
+
+	l.ledger.Release(capacity.Amount(l.amount))
+	return true
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bulkhead
+package capacity_test
 
 import (
 	"testing"
@@ -20,17 +20,26 @@ import (
 	"arcoris.dev/capacity"
 )
 
-func TestSnapshotMatchesCapacitySnapshot(t *testing.T) {
-	t.Parallel()
-
-	fromCapacity := capacity.Snapshot{
-		Limit:     2,
-		Reserved:  1,
-		Available: 1,
+func TestRefusalValidityAndPredicates(t *testing.T) {
+	valid := []capacity.Refusal{
+		capacity.RefusalNone,
+		capacity.RefusalInsufficient,
+		capacity.RefusalDebt,
+		capacity.RefusalUnknownResource,
 	}
-	var snap Snapshot = fromCapacity
+	for _, refusal := range valid {
+		if !refusal.IsValid() {
+			t.Fatalf("%s was invalid", refusal)
+		}
+	}
 
-	if snap != fromCapacity {
-		t.Fatalf("Snapshot alias = %+v, want %+v", snap, fromCapacity)
+	if capacity.RefusalNone.Refused() {
+		t.Fatal("RefusalNone.Refused() = true")
+	}
+	if !capacity.RefusalDebt.Refused() {
+		t.Fatal("RefusalDebt.Refused() = false")
+	}
+	if capacity.Refusal(99).IsValid() {
+		t.Fatal("unknown refusal was valid")
 	}
 }

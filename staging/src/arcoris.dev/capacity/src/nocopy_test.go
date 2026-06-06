@@ -14,13 +14,11 @@
 
 package capacity
 
-import (
-	"sync"
-	"testing"
-)
+import "testing"
 
-func TestNoCopyImplementsLocker(t *testing.T) {
-	t.Parallel()
+func TestNoCopyHasVetMarkerMethods(t *testing.T) {
+	var marker noCopy
 
-	var _ sync.Locker = (*noCopy)(nil)
+	marker.Lock()
+	marker.Unlock()
 }
