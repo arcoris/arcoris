@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package delay
 
 import (
@@ -64,6 +63,12 @@ func TestLinearSequencesHaveIndependentIndexes(t *testing.T) {
 }
 
 func TestLinearDelaySaturates(t *testing.T) {
+	if got := linearDelay(maxDuration-2, time.Nanosecond, 1); got != maxDuration-1 {
+		t.Fatalf("linearDelay() = %s, want %s", got, maxDuration-1)
+	}
+	if got := linearDelay(maxDuration-1, time.Nanosecond, 1); got != maxDuration {
+		t.Fatalf("linearDelay() = %s, want %s", got, maxDuration)
+	}
 	if got := linearDelay(maxDuration, time.Nanosecond, 1); got != maxDuration {
 		t.Fatalf("linearDelay() = %s, want %s", got, maxDuration)
 	}

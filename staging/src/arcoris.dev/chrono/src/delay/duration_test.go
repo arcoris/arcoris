@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package delay
 
 import (
@@ -27,8 +26,12 @@ func TestDurationHelpersSaturateInsteadOfWrapping(t *testing.T) {
 		got  time.Duration
 		want time.Duration
 	}{
+		{name: "add exact maximum", got: saturatingDurationAdd(maxDuration-1, time.Nanosecond), want: maxDuration},
+		{name: "add below maximum", got: saturatingDurationAdd(maxDuration-2, time.Nanosecond), want: maxDuration - 1},
 		{name: "add overflow", got: saturatingDurationAdd(maxDuration, time.Nanosecond), want: maxDuration},
+		{name: "subtract from maximum", got: saturatingDurationSub(maxDuration, time.Nanosecond), want: maxDuration - 1},
 		{name: "subtract floors at zero", got: saturatingDurationSub(time.Nanosecond, time.Second), want: 0},
+		{name: "multiply exact maximum", got: saturatingDurationMul(maxDuration/2, 2), want: maxDuration - 1},
 		{name: "multiply overflow", got: saturatingDurationMul(maxDuration, 2), want: maxDuration},
 		{name: "float conversion overflow", got: durationFromFloat(maxDurationFloat * 2), want: maxDuration},
 		{name: "float conversion infinity", got: durationFromFloat(math.Inf(1)), want: maxDuration},

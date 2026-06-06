@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package delay
 
 import (
@@ -39,7 +38,7 @@ import (
 //   - tests that need deterministic no-wait retry behavior;
 //   - local compare-and-swap or lock-acquisition loops with external bounds;
 //   - composing with Limit to allow a small number of immediate retries;
-//   - composing with Sequence when the first retry should be immediate and later
+//   - composing with Chain when the first retry should be immediate and later
 //     retries should use non-zero delays.
 //
 // Immediate does not provide overload protection by itself. An unbounded

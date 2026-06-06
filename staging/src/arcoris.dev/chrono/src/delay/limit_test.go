@@ -29,20 +29,26 @@ func TestLimitRejectsInvalidInput(t *testing.T) {
 	})
 }
 
-func TestLimitReturnsPointerSequence(t *testing.T) {
-	sched := Limit(Fixed(time.Second), 1)
-
-	if _, ok := sched.NewSequence().(*limitSequence); !ok {
-		t.Fatalf("NewSequence() = %T, want *limitSequence", sched.NewSequence())
-	}
-}
-
 func TestLimitExposesOnlyConfiguredNumberOfValues(t *testing.T) {
 	seq := Limit(Fixed(time.Second), 2).NewSequence()
 
 	mustNext(t, seq, time.Second)
 	mustNext(t, seq, time.Second)
 	mustExhausted(t, seq)
+}
+
+func TestLimitSequencesHaveIndependentRemainingCounts(t *testing.T) {
+	sched := Limit(Fixed(time.Second), 2)
+
+	left := sched.NewSequence()
+	right := sched.NewSequence()
+
+	mustNext(t, left, time.Second)
+	mustNext(t, left, time.Second)
+	mustExhausted(t, left)
+
+	mustNext(t, right, time.Second)
+	mustNext(t, right, time.Second)
 }
 
 func TestLimitPreservesEarlyChildExhaustion(t *testing.T) {

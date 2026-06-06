@@ -31,10 +31,11 @@
 // clocks, timers, retry orchestration, or waiting code.
 //
 // The package includes deterministic schedules such as Immediate, Fixed,
-// Delays, Linear, Exponential, and Fibonacci, plus deterministic wrappers such
-// as Cap and Limit. Arithmetic used by deterministic growth schedules saturates
-// at the largest representable time.Duration instead of wrapping into negative
-// values.
+// Delays, Linear, Exponential, and Fibonacci. Chain composes schedules
+// sequentially, while deterministic wrappers such as Cap and Limit transform or
+// bound another schedule. Arithmetic used by deterministic growth schedules
+// saturates at the largest representable time.Duration instead of wrapping into
+// negative values.
 //
 // Package delay does not sleep, create timers or tickers, observe contexts,
 // execute operations, classify errors, retry failed work, randomize delays,
