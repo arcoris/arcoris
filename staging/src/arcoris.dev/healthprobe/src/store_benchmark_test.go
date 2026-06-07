@@ -31,6 +31,20 @@ func BenchmarkStoreUpdate(b *testing.B) {
 	}
 }
 
+func BenchmarkStoreRejectedUpdate(b *testing.B) {
+	s := newStore([]health.Target{health.TargetReady}, newTestClock())
+	report := health.Report{
+		Target:   health.TargetReady,
+		Status:   health.StatusHealthy,
+		Observed: testNow,
+	}
+
+	b.ReportAllocs()
+	for b.Loop() {
+		_ = s.update(health.TargetReady, report)
+	}
+}
+
 func BenchmarkStoreSnapshot(b *testing.B) {
 	s := newStore([]health.Target{health.TargetReady}, newTestClock())
 	_ = s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady))

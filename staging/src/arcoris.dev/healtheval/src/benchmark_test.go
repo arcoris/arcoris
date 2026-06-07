@@ -76,6 +76,21 @@ func BenchmarkEvaluateTimeoutEnabled(b *testing.B) {
 	}
 }
 
+func BenchmarkEvaluateTimeoutEnabledFastCheck(b *testing.B) {
+	evaluator := newBenchmarkEvaluatorWithFunc(
+		b,
+		"fast_timeout_check",
+		func(context.Context) health.Result {
+			return health.Healthy("fast_timeout_check")
+		},
+		WithDefaultTimeout(time.Second),
+	)
+	b.ReportAllocs()
+	for b.Loop() {
+		_, _ = evaluator.Evaluate(context.Background(), health.TargetReady)
+	}
+}
+
 func BenchmarkEvaluatePanicRecovery(b *testing.B) {
 	evaluator := newBenchmarkEvaluatorWithFunc(
 		b,
@@ -85,6 +100,25 @@ func BenchmarkEvaluatePanicRecovery(b *testing.B) {
 		},
 		WithDefaultTimeout(0),
 	)
+	b.ReportAllocs()
+	for b.Loop() {
+		_, _ = evaluator.Evaluate(context.Background(), health.TargetReady)
+	}
+}
+
+func BenchmarkEvaluateResolverMismatch(b *testing.B) {
+	checker := health.MustCheck("wrong_target_check", func(context.Context) health.Result {
+		return health.Healthy("wrong_target_check")
+	})
+	wrongSet := health.MustCheckSet(health.TargetLive, checker)
+	resolver := health.CheckResolverFunc(func(health.Target) (health.CheckSet, error) {
+		return wrongSet, nil
+	})
+	evaluator, err := NewEvaluator(resolver, WithDefaultTimeout(0))
+	if err != nil {
+		b.Fatalf("NewEvaluator() = %v", err)
+	}
+
 	b.ReportAllocs()
 	for b.Loop() {
 		_, _ = evaluator.Evaluate(context.Background(), health.TargetReady)

@@ -35,3 +35,31 @@ func TestEvaluateCheckHandlesNilChecker(t *testing.T) {
 		t.Fatalf("nil checker cause = %v, want health.ErrNilChecker", res.Cause)
 	}
 }
+
+func TestEvaluateCheckHandlesTypedNilChecker(t *testing.T) {
+	t.Parallel()
+
+	var checker *typedNilChecker
+	evaluator := mustEvaluator(t, emptyRegistry(t), WithClock(newStepClock(testObserved, testObserved)))
+
+	res := evaluator.evaluateCheck(context.Background(), checker, 0)
+	if res.Status != health.StatusUnknown || res.Reason != health.ReasonNotObserved {
+		t.Fatalf("typed nil checker result = %+v, want unknown not_observed", res)
+	}
+	if !errors.Is(res.Cause, health.ErrNilChecker) {
+		t.Fatalf("typed nil checker cause = %v, want health.ErrNilChecker", res.Cause)
+	}
+	if !res.IsValid() {
+		t.Fatalf("typed nil checker result IsValid() = false: %+v", res)
+	}
+}
+
+type typedNilChecker struct{}
+
+func (*typedNilChecker) Name() string {
+	return "typed_nil"
+}
+
+func (*typedNilChecker) Check(context.Context) health.Result {
+	panic("typed nil checker must not execute")
+}

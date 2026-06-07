@@ -134,6 +134,43 @@ func TestStoreRejectsInvalidSnapshotInput(t *testing.T) {
 	}
 }
 
+func TestStoreRejectsInvalidReportWithoutAdvancingRevision(t *testing.T) {
+	t.Parallel()
+
+	s := newStore([]health.Target{health.TargetReady}, newTestClock())
+	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady)); !ok {
+		t.Fatal("initial update() = false, want true")
+	}
+
+	before, ok := s.snapshot(health.TargetReady)
+	if !ok {
+		t.Fatal("initial snapshot ok = false, want true")
+	}
+
+	invalid := health.Report{
+		Target:   health.TargetLive,
+		Status:   health.Status(255),
+		Observed: testNow,
+	}
+	if ok := s.update(health.TargetReady, invalid); ok {
+		t.Fatal("update(invalid report) = true, want false")
+	}
+
+	after, ok := s.snapshot(health.TargetReady)
+	if !ok {
+		t.Fatal("snapshot after rejected update ok = false, want true")
+	}
+	if after.Revision != before.Revision {
+		t.Fatalf("Revision after rejected update = %d, want %d", after.Revision, before.Revision)
+	}
+	if after.Updated != before.Updated {
+		t.Fatalf("Updated after rejected update = %v, want %v", after.Updated, before.Updated)
+	}
+	if after.Report.Status != before.Report.Status || after.Report.Target != before.Report.Target {
+		t.Fatalf("snapshot after rejected update = %+v, want previous report %+v", after.Report, before.Report)
+	}
+}
+
 func TestStoreRejectsInconsistentReportWithoutAdvancingRevision(t *testing.T) {
 	t.Parallel()
 
