@@ -1,0 +1,189 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package probe
+
+import (
+	"context"
+	"errors"
+	"sync"
+	"testing"
+	"time"
+
+	"arcoris.dev/health"
+	"arcoris.dev/healthtest"
+)
+
+func TestRunnerRunRejectsConcurrentRun(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	runner := newTestRunner(t, newTestClock())
+	done := make(chan error, 1)
+
+	go func() {
+		done <- runner.Run(ctx)
+	}()
+	waitForRunnerRunning(t, runner)
+
+	err := runner.Run(context.Background())
+	if !errors.Is(err, ErrRunnerRunning) {
+		t.Fatalf("concurrent Run() = %v, want ErrRunnerRunning", err)
+	}
+
+	cancel()
+	if err := waitForRunDone(t, done); err != nil {
+		t.Fatalf("Run() = %v, want nil", err)
+	}
+}
+
+func TestRunnerRunCanRestartAfterStop(t *testing.T) {
+	t.Parallel()
+
+	interval := time.Second
+	clk := newTestClock()
+	runner := newTestRunner(t, clk, WithInterval(interval), WithInitialProbe(false))
+
+	firstCtx, firstCancel := context.WithCancel(context.Background())
+	firstDone := make(chan error, 1)
+	go func() {
+		firstDone <- runner.Run(firstCtx)
+	}()
+	waitForRunnerRunning(t, runner)
+	firstCancel()
+	if err := waitForRunDone(t, firstDone); err != nil {
+		t.Fatalf("first Run() = %v, want nil", err)
+	}
+
+	secondCtx, secondCancel := context.WithCancel(context.Background())
+	defer secondCancel()
+	secondDone := make(chan error, 1)
+	go func() {
+		secondDone <- runner.Run(secondCtx)
+	}()
+	waitForRunnerRunning(t, runner)
+	snap := stepUntilRevision(t, clk, runner, health.TargetReady, 1, interval)
+	if snap.Revision != 1 {
+		t.Fatalf("Revision = %d, want 1", snap.Revision)
+	}
+
+	secondCancel()
+	if err := waitForRunDone(t, secondDone); err != nil {
+		t.Fatalf("second Run() = %v, want nil", err)
+	}
+}
+
+func TestRunnerRunWithAlreadyCanceledContextReturnsNilAndStoresNoSnapshot(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	runner := newTestRunner(t, newTestClock())
+
+	if err := runner.Run(ctx); err != nil {
+		t.Fatalf("Run(canceled ctx) = %v, want nil", err)
+	}
+	if _, ok := runner.Snapshot(health.TargetReady); ok {
+		t.Fatal("Snapshot() ok = true, want false")
+	}
+}
+
+func TestRunnerRunDoesNotStoreCancellationArtifacts(t *testing.T) {
+	t.Parallel()
+
+	started := make(chan struct{})
+	released := make(chan struct{})
+	evaluator := healthtest.NewEvaluatorForTarget(
+		t,
+		health.TargetReady,
+		healthtest.FuncChecker("ready_check", func(ctx context.Context) health.Result {
+			close(started)
+			<-ctx.Done()
+			close(released)
+			return health.Unknown("ready_check", health.ReasonCanceled, "canceled")
+		}),
+	)
+	runner, err := NewRunner(evaluator, WithClock(newTestClock()), WithTargets(health.TargetReady))
+	if err != nil {
+		t.Fatalf("NewRunner() = %v, want nil", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() {
+		done <- runner.Run(ctx)
+	}()
+
+	select {
+	case <-started:
+	case <-time.After(testTimeout):
+		t.Fatal("timed out waiting for health check to start")
+	}
+
+	cancel()
+
+	select {
+	case <-released:
+	case <-time.After(testTimeout):
+		t.Fatal("timed out waiting for health check to observe cancellation")
+	}
+	if err := waitForRunDone(t, done); err != nil {
+		t.Fatalf("Run() = %v, want nil", err)
+	}
+	if _, ok := runner.Snapshot(health.TargetReady); ok {
+		t.Fatal("Snapshot() ok = true, want false")
+	}
+}
+
+func TestRunnerConcurrentReadDuringRun(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	interval := time.Second
+	clk := newTestClock()
+	runner := newTestRunner(t, clk, WithInterval(interval), WithInitialProbe(false))
+	done := make(chan error, 1)
+	go func() {
+		done <- runner.Run(ctx)
+	}()
+	waitForRunnerRunning(t, runner)
+
+	var readers sync.WaitGroup
+	for i := 0; i < 4; i++ {
+		readers.Add(1)
+		go func() {
+			defer readers.Done()
+			for j := 0; j < 50; j++ {
+				_, _ = runner.Snapshot(health.TargetReady)
+				_ = runner.Snapshots()
+			}
+		}()
+	}
+
+	for i := 0; i < 50; i++ {
+		clk.Step(interval)
+	}
+	readers.Wait()
+	_ = stepUntilRevision(t, clk, runner, health.TargetReady, 1, interval)
+
+	cancel()
+	if err := waitForRunDone(t, done); err != nil {
+		t.Fatalf("Run() = %v, want nil", err)
+	}
+}

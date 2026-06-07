@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package probe
 
 import (
@@ -80,107 +79,4 @@ func newStore(targets []health.Target, clk clock.PassiveClock) *store {
 		configured: configured,
 		byTarget:   make(map[health.Target]*snapshot.Store[observation], len(copied)),
 	}
-}
-
-// update commits report as the latest observation for target.
-//
-// The per-target snapshot.Store assigns Revision and Updated. The return value
-// is false when target is not configured or report does not form a valid
-// observation for target.
-//
-// The method validates and clones the observation before taking store.mu. That
-// keeps the structural map lock focused on map ownership only. When the target
-// already has a snapshot.Store, Replace is called while store.mu is held so the
-// pointer cannot be removed or swapped between lookup and write. The per-target
-// store still owns its own value lock and revision advance.
-func (s *store) update(target health.Target, report health.Report) bool {
-	obs, ok := newObservation(target, report)
-	if !ok {
-		return false
-	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if _, ok := s.configured[target]; !ok {
-		return false
-	}
-
-	targetStore, ok := s.byTarget[target]
-	if !ok {
-		// NewStore commits the first observation immediately at revision 1 and
-		// records Updated using the configured clock.
-		s.byTarget[target] = snapshot.NewStore(
-			obs,
-			cloneObservation,
-			snapshot.WithClock(s.clock),
-		)
-		return true
-	}
-
-	targetStore.Replace(obs)
-	return true
-}
-
-// snapshot returns the latest observed snapshot for target.
-//
-// The returned snapshot is detached from internal store slices. The boolean is
-// false when target has not yet been observed or is not known to the store.
-//
-// store.mu is released before calling Stamped. The target store pointer is
-// stable after lookup, and snapshot.Store owns concurrent read/write safety for
-// the actual observation. Releasing store.mu avoids nesting the structural map
-// lock around clone work and per-target store locking.
-func (s *store) snapshot(target health.Target) (Snapshot, bool) {
-	s.mu.RLock()
-	if _, ok := s.configured[target]; !ok {
-		s.mu.RUnlock()
-		return Snapshot{}, false
-	}
-	targetStore := s.byTarget[target]
-	s.mu.RUnlock()
-
-	if targetStore == nil {
-		return Snapshot{}, false
-	}
-
-	snap := snapshotFromStamped(targetStore.Stamped())
-	if !snap.IsObserved() {
-		return Snapshot{}, false
-	}
-
-	return snap, true
-}
-
-// snapshots returns all observed snapshots in configured target order.
-//
-// Unobserved targets are omitted. Every returned snapshot is detached from
-// internal store slices.
-//
-// The method copies both configured order and target-store pointers while holding
-// store.mu, then performs stamped reads after unlocking. That preserves a
-// consistent order snapshot without blocking updates on report cloning.
-func (s *store) snapshots() []Snapshot {
-	s.mu.RLock()
-	targets := copyTargets(s.targets)
-	stores := make(map[health.Target]*snapshot.Store[observation], len(s.byTarget))
-	for target, targetStore := range s.byTarget {
-		stores[target] = targetStore
-	}
-	s.mu.RUnlock()
-
-	snapshots := make([]Snapshot, 0, len(stores))
-	for _, target := range targets {
-		targetStore := stores[target]
-		if targetStore == nil {
-			continue
-		}
-
-		snap := snapshotFromStamped(targetStore.Stamped())
-		if snap.IsObserved() {
-			snapshots = append(snapshots, snap)
-		}
-	}
-
-	return snapshots
 }
