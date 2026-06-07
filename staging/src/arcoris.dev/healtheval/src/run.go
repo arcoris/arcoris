@@ -17,7 +17,6 @@ package eval
 import (
 	"context"
 	"errors"
-	"reflect"
 	"runtime/debug"
 	"time"
 
@@ -28,12 +27,15 @@ import (
 func (e *Evaluator) evaluateCheck(ctx context.Context, check health.Checker, timeout time.Duration) health.Result {
 	started := e.clock.Now()
 
-	name := ""
-	if !nilChecker(check) {
-		name = check.Name()
+	name, err := health.CheckerName(check)
+	if err != nil {
+		finished := e.clock.Now()
+		d := nonNegativeDuration(e.clock.Since(started))
+
+		return invalidCheckerResult(name, err, finished, d)
 	}
 
-	res := e.runCheck(ctx, check, timeout)
+	res := e.runCheck(ctx, check, name, timeout)
 
 	finished := e.clock.Now()
 	d := nonNegativeDuration(e.clock.Since(started))
@@ -43,21 +45,17 @@ func (e *Evaluator) evaluateCheck(ctx context.Context, check health.Checker, tim
 
 // runCheck runs check and returns a raw health.Result.
 //
+// name is the already-validated checker identity read at the evaluation
+// boundary. Timeout and panic paths use this value instead of calling Name again
+// after Check has started.
+//
 // Timeout enforcement uses a goroutine so the evaluator can return when the
 // timeout or parent context expires. Checkers still MUST observe ctx. A checker
 // that ignores ctx may continue running after a timeout result has already been
 // returned.
-func (e *Evaluator) runCheck(ctx context.Context, check health.Checker, timeout time.Duration) health.Result {
-	if nilChecker(check) {
-		return health.Unknown(
-			"",
-			health.ReasonNotObserved,
-			"health checker is nil",
-		).WithCause(health.ErrNilChecker)
-	}
-
+func (e *Evaluator) runCheck(ctx context.Context, check health.Checker, name string, timeout time.Duration) health.Result {
 	if timeout == 0 {
-		return callCheck(ctx, check)
+		return callCheck(ctx, check, name)
 	}
 
 	checkCtx, cancel := context.WithTimeout(ctx, timeout)
@@ -66,7 +64,7 @@ func (e *Evaluator) runCheck(ctx context.Context, check health.Checker, timeout 
 	resultCh := make(chan health.Result, 1)
 
 	go func() {
-		resultCh <- callCheck(checkCtx, check)
+		resultCh <- callCheck(checkCtx, check, name)
 	}()
 
 	select {
@@ -74,16 +72,16 @@ func (e *Evaluator) runCheck(ctx context.Context, check health.Checker, timeout 
 		return res
 
 	case <-checkCtx.Done():
-		return interruptedResult(check.Name(), checkCtx)
+		return interruptedResult(name, checkCtx)
 	}
 }
 
 // callCheck invokes check and converts panics into health results.
-func callCheck(ctx context.Context, check health.Checker) (res health.Result) {
+func callCheck(ctx context.Context, check health.Checker, name string) (res health.Result) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			res = health.Unhealthy(
-				check.Name(),
+				name,
 				health.ReasonPanic,
 				"health check panicked",
 			).WithCause(PanicError{
@@ -94,6 +92,27 @@ func callCheck(ctx context.Context, check health.Checker) (res health.Result) {
 	}()
 
 	return check.Check(ctx)
+}
+
+// invalidCheckerResult converts a malformed checker contract into a conservative
+// result without executing Check.
+func invalidCheckerResult(name string, err error, observed time.Time, d time.Duration) health.Result {
+	resultName := ""
+	reason := health.ReasonMisconfigured
+	message := "health checker has invalid name"
+	if errors.Is(err, health.ErrNilChecker) {
+		reason = health.ReasonNotObserved
+		message = "health checker is nil"
+	}
+
+	if health.ValidCheckName(name) {
+		resultName = name
+	}
+
+	return health.Unknown(resultName, reason, message).
+		WithCause(err).
+		WithObserved(observed).
+		WithDuration(nonNegativeDuration(d))
 }
 
 // interruptedResult converts context interruption into an unknown health result.
@@ -173,19 +192,4 @@ func nonNegativeDuration(d time.Duration) time.Duration {
 	}
 
 	return d
-}
-
-// nilChecker reports whether chk is nil, including typed nil interface values.
-func nilChecker(chk health.Checker) bool {
-	if chk == nil {
-		return true
-	}
-
-	val := reflect.ValueOf(chk)
-	switch val.Kind() {
-	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
-		return val.IsNil()
-	default:
-		return false
-	}
 }

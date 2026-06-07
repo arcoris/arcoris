@@ -28,11 +28,14 @@ func TestEvaluatorErrorMessages(t *testing.T) {
 		err  error
 		want string
 	}{
-		{ErrNilResolver, "health: nil check resolver"},
-		{ErrNilEvaluatorOption, "health: nil evaluator option"},
-		{ErrNilClock, "health: nil clock"},
-		{ErrInvalidTimeout, "health: invalid timeout"},
+		{ErrNilResolver, "healtheval: nil check resolver"},
+		{ErrNilEvaluatorOption, "healtheval: nil evaluator option"},
+		{ErrNilClock, "healtheval: nil clock"},
+		{ErrInvalidTimeout, "healtheval: invalid timeout"},
+		{ErrInvalidCheckResult, "healtheval: invalid check result"},
+		{ErrMismatchedCheckResult, "healtheval: mismatched check result"},
 		{ErrMismatchedResolvedTarget, "healtheval: mismatched resolved target"},
+		{ErrInvalidExecutionPolicy, "healtheval: invalid execution policy"},
 	}
 
 	for _, tc := range tests {

@@ -111,6 +111,11 @@ func NewEvaluator(resolver health.CheckResolver, opts ...EvaluatorOption) (*Eval
 // report. Absence of checks is not treated as healthy because health requires an
 // affirmative observation.
 //
+// Evaluate is not fail-fast after checks are resolved. It attempts to produce
+// one result per resolved check. If ctx is already canceled, each check receives
+// that canceled context and should return quickly; evaluator-owned normalization
+// turns cooperative interruption into unknown canceled results.
+//
 // Evaluate is synchronous regardless of execution policy. Parallel execution
 // affects only how checks are scheduled inside this call; the caller still
 // receives one complete health.Report after all scheduled checks have produced

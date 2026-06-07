@@ -20,6 +20,15 @@
 // timeouts, and invalid results, applying sequential or bounded-parallel
 // execution policy, and returning a health.Report.
 //
+// Evaluation is not fail-fast. The evaluator attempts to produce one result for
+// each resolved check. If the caller's context is already canceled, checks still
+// receive that canceled context and should return quickly; cancellation is then
+// normalized into per-check unknown results.
+//
+// Configured timeouts bound caller-visible evaluation latency, but they do not
+// forcibly stop checker goroutines. A checker that ignores its context may keep
+// running after a timeout result has already been returned.
+//
 // The package depends inward on arcoris.dev/health. It does not define health
 // statuses, targets, reasons, results, reports, registries, gates, transport
 // adapters, periodic probes, metrics, logging, tracing, lifecycle transitions,

@@ -27,32 +27,32 @@ var (
 	// Evaluator requires a resolver owner. A nil resolver would make target
 	// evaluation ambiguous, so construction rejects it instead of producing an
 	// evaluator that fails later.
-	ErrNilResolver = errors.New("health: nil check resolver")
+	ErrNilResolver = errors.New("healtheval: nil check resolver")
 
 	// ErrNilEvaluatorOption identifies a nil option passed to NewEvaluator.
 	//
 	// Options are executed during evaluator construction. A nil option is a
 	// wiring error and is rejected explicitly.
-	ErrNilEvaluatorOption = errors.New("health: nil evaluator option")
+	ErrNilEvaluatorOption = errors.New("healtheval: nil evaluator option")
 
 	// ErrNilClock identifies a nil clock passed to WithClock.
 	//
 	// Evaluator uses clock.PassiveClock for observation timestamps and elapsed
 	// duration measurement. A nil clock would panic during evaluation.
-	ErrNilClock = errors.New("health: nil clock")
+	ErrNilClock = errors.New("healtheval: nil clock")
 
 	// ErrInvalidTimeout identifies a negative health check timeout.
 	//
 	// A zero timeout is valid and disables evaluator-enforced timeout. Negative
 	// values do not describe a meaningful evaluation budget.
-	ErrInvalidTimeout = errors.New("health: invalid timeout")
+	ErrInvalidTimeout = errors.New("healtheval: invalid timeout")
 
 	// ErrInvalidCheckResult identifies a structurally invalid health.Result
 	// returned by a checker during evaluator-owned normalization.
 	//
 	// Evaluator converts invalid checker output into an unknown misconfiguration
 	// result instead of returning an invalid health.Report to callers.
-	ErrInvalidCheckResult = errors.New("health: invalid check result")
+	ErrInvalidCheckResult = errors.New("healtheval: invalid check result")
 
 	// ErrMismatchedCheckResult identifies a health.Result whose non-empty name
 	// differs from the health.Checker name that produced it.
@@ -61,7 +61,7 @@ var (
 	// registration. Evaluator rejects mismatched result names so one checker
 	// cannot accidentally or intentionally publish another checker's identity in
 	// reports.
-	ErrMismatchedCheckResult = errors.New("health: mismatched check result")
+	ErrMismatchedCheckResult = errors.New("healtheval: mismatched check result")
 
 	// ErrMismatchedResolvedTarget identifies a resolver that returned a CheckSet
 	// for a different target than the target being evaluated.

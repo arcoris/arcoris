@@ -17,6 +17,7 @@ package eval
 import (
 	"context"
 	"errors"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -52,7 +53,7 @@ func TestRunCheckTimeout(t *testing.T) {
 	}
 	evaluator := mustEvaluator(t, emptyRegistry(t))
 
-	res := evaluator.runCheck(context.Background(), checker, time.Nanosecond)
+	res := evaluator.runCheck(context.Background(), checker, "blocked", time.Nanosecond)
 	if res.Status != health.StatusUnknown || res.Reason != health.ReasonTimeout {
 		t.Fatalf("timeout result = %+v, want unknown timeout", res)
 	}
@@ -72,7 +73,7 @@ func TestRunCheckReturnsResultBeforeTimeout(t *testing.T) {
 	}
 	evaluator := mustEvaluator(t, emptyRegistry(t))
 
-	res := evaluator.runCheck(context.Background(), checker, time.Second)
+	res := evaluator.runCheck(context.Background(), checker, "fast", time.Second)
 	if res.Status != health.StatusHealthy {
 		t.Fatalf("status = %s, want healthy", res.Status)
 	}
@@ -97,7 +98,7 @@ func TestRunCheckParentCancellation(t *testing.T) {
 	}
 	evaluator := mustEvaluator(t, emptyRegistry(t))
 
-	res := evaluator.runCheck(ctx, checker, time.Second)
+	res := evaluator.runCheck(ctx, checker, "blocked", time.Second)
 	if res.Status != health.StatusUnknown || res.Reason != health.ReasonCanceled {
 		t.Fatalf("cancel result = %+v, want unknown canceled", res)
 	}
@@ -119,7 +120,7 @@ func TestRunCheckWithZeroTimeoutRunsInline(t *testing.T) {
 	}
 	evaluator := mustEvaluator(t, emptyRegistry(t))
 
-	res := evaluator.runCheck(context.Background(), checker, 0)
+	res := evaluator.runCheck(context.Background(), checker, "inline", 0)
 	if !called {
 		t.Fatal("checker was not called")
 	}
@@ -138,7 +139,7 @@ func TestCallCheckRecoversPanic(t *testing.T) {
 		},
 	}
 
-	res := callCheck(context.Background(), checker)
+	res := callCheck(context.Background(), checker, "panic_check")
 	if res.Status != health.StatusUnhealthy || res.Reason != health.ReasonPanic {
 		t.Fatalf("panic result = %+v, want unhealthy panic", res)
 	}
@@ -149,6 +150,100 @@ func TestCallCheckRecoversPanic(t *testing.T) {
 	}
 	if panicErr.Value != "boom" || len(panicErr.Stack) == 0 {
 		t.Fatalf("panic details = %+v", panicErr)
+	}
+}
+
+func TestEvaluateCheckReadsCheckerNameOnce(t *testing.T) {
+	t.Parallel()
+
+	checker := &countingNameChecker{
+		name: "single_name",
+		fn: func(context.Context) health.Result {
+			return health.Healthy("")
+		},
+	}
+	evaluator := mustEvaluator(t, emptyRegistry(t), WithDefaultTimeout(0))
+
+	res := evaluator.evaluateCheck(context.Background(), checker, 0)
+
+	if got := checker.nameCalls.Load(); got != 1 {
+		t.Fatalf("Name() calls = %d, want 1", got)
+	}
+	if res.Name != "single_name" || res.Status != health.StatusHealthy {
+		t.Fatalf("result = %+v, want healthy single_name", res)
+	}
+}
+
+func TestEvaluateCheckUsesResolvedNameForPanicRecovery(t *testing.T) {
+	t.Parallel()
+
+	checker := &countingNameChecker{
+		name:            "panic_check",
+		panicAfterFirst: true,
+		fn: func(context.Context) health.Result {
+			panic("boom")
+		},
+	}
+	evaluator := mustEvaluator(t, emptyRegistry(t), WithDefaultTimeout(0))
+
+	res := evaluator.evaluateCheck(context.Background(), checker, 0)
+
+	if got := checker.nameCalls.Load(); got != 1 {
+		t.Fatalf("Name() calls = %d, want 1", got)
+	}
+	if res.Name != "panic_check" || res.Reason != health.ReasonPanic {
+		t.Fatalf("panic result = %+v, want panic_check panic", res)
+	}
+}
+
+func TestEvaluateCheckUsesResolvedNameForTimeout(t *testing.T) {
+	t.Parallel()
+
+	release := make(chan struct{})
+	defer close(release)
+
+	checker := &countingNameChecker{
+		name:            "timeout_check",
+		panicAfterFirst: true,
+		fn: func(context.Context) health.Result {
+			<-release
+			return health.Healthy("timeout_check")
+		},
+	}
+	evaluator := mustEvaluator(t, emptyRegistry(t))
+
+	res := evaluator.evaluateCheck(context.Background(), checker, time.Nanosecond)
+
+	if got := checker.nameCalls.Load(); got != 1 {
+		t.Fatalf("Name() calls = %d, want 1", got)
+	}
+	if res.Name != "timeout_check" || res.Reason != health.ReasonTimeout {
+		t.Fatalf("timeout result = %+v, want timeout_check timeout", res)
+	}
+}
+
+func TestEvaluateCheckInvalidCheckerNameStaysValid(t *testing.T) {
+	t.Parallel()
+
+	checker := checkerFunc{
+		name: "bad-name",
+		fn: func(context.Context) health.Result {
+			t.Fatal("checker with invalid name should not execute")
+			return health.Healthy("")
+		},
+	}
+	evaluator := mustEvaluator(t, emptyRegistry(t), WithClock(newStepClock(testObserved, testObserved)))
+
+	res := evaluator.evaluateCheck(context.Background(), checker, 0)
+
+	if res.Name != "" ||
+		res.Status != health.StatusUnknown ||
+		res.Reason != health.ReasonMisconfigured ||
+		!res.IsValid() {
+		t.Fatalf("invalid checker result = %+v, want valid unknown misconfigured unnamed result", res)
+	}
+	if !errors.Is(res.Cause, health.ErrInvalidCheckName) {
+		t.Fatalf("cause = %v, want health.ErrInvalidCheckName", res.Cause)
 	}
 }
 
@@ -241,4 +336,23 @@ func TestInterruptedResult(t *testing.T) {
 	if active.Reason != health.ReasonCanceled || active.Cause != nil {
 		t.Fatalf("active context result = %+v, want canceled reason with nil cause", active)
 	}
+}
+
+type countingNameChecker struct {
+	name            string
+	panicAfterFirst bool
+	nameCalls       atomic.Int64
+	fn              func(context.Context) health.Result
+}
+
+func (checker *countingNameChecker) Name() string {
+	if checker.nameCalls.Add(1) > 1 && checker.panicAfterFirst {
+		panic("Name called more than once")
+	}
+
+	return checker.name
+}
+
+func (checker *countingNameChecker) Check(ctx context.Context) health.Result {
+	return checker.fn(ctx)
 }

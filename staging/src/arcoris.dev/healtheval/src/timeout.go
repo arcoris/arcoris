@@ -26,6 +26,10 @@ import (
 // in-memory checks or for tests that want to avoid goroutine-based timeout
 // boundaries.
 //
+// A positive timeout protects the caller-visible evaluation boundary. It cannot
+// forcibly stop a checker that ignores context; such a checker may continue
+// running after Evaluator has returned a timeout result.
+//
 // A negative timeout returns ErrInvalidTimeout.
 //
 // health.Target-specific timeouts configured with WithTargetTimeout override the
@@ -49,9 +53,14 @@ func WithDefaultTimeout(timeout time.Duration) EvaluatorOption {
 // A zero timeout disables evaluator-enforced timeout for the target. A negative
 // timeout returns ErrInvalidTimeout.
 //
-// health.Target-specific timeouts are useful when startup, liveness, and readiness have
-// different evaluation budgets. For example, liveness checks should normally be
-// cheap and short, while startup checks may need a wider budget during bootstrap.
+// A positive timeout uses the same cooperative boundary as WithDefaultTimeout:
+// the evaluator can return on time, but checkers are still responsible for
+// observing context when they block or own external resources.
+//
+// health.Target-specific timeouts are useful when startup, liveness, and
+// readiness have different evaluation budgets. For example, liveness checks
+// should normally be cheap and short, while startup checks may need a wider
+// budget during bootstrap.
 func WithTargetTimeout(target health.Target, timeout time.Duration) EvaluatorOption {
 	return func(cfg *evaluatorConfig) error {
 		if !target.IsConcrete() {

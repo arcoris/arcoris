@@ -25,7 +25,7 @@ var (
 	//
 	// Execution policy is validated at Evaluator construction time so Evaluate
 	// never has to guess how to schedule checks for a target.
-	ErrInvalidExecutionPolicy = errors.New("health: invalid execution policy")
+	ErrInvalidExecutionPolicy = errors.New("healtheval: invalid execution policy")
 )
 
 // InvalidExecutionPolicyError describes an invalid evaluator execution policy.
