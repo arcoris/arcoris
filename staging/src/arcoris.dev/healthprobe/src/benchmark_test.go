@@ -16,12 +16,32 @@ package probe
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"arcoris.dev/health"
 	"arcoris.dev/healthtest"
 )
+
+func BenchmarkRunnerRunCycleOneTarget(b *testing.B) {
+	runner := newBenchmarkRunnerForTargets(b, []health.Target{health.TargetReady})
+	b.ReportAllocs()
+	for b.Loop() {
+		runner.runCycle(context.Background())
+	}
+}
+
+func BenchmarkRunnerRunCycleThreeTargets(b *testing.B) {
+	runner := newBenchmarkRunnerForTargets(
+		b,
+		[]health.Target{health.TargetStartup, health.TargetLive, health.TargetReady},
+	)
+	b.ReportAllocs()
+	for b.Loop() {
+		runner.runCycle(context.Background())
+	}
+}
 
 func BenchmarkRunnerSnapshot(b *testing.B) {
 	runner := newBenchmarkRunner(b)
@@ -39,6 +59,76 @@ func BenchmarkRunnerSnapshots(b *testing.B) {
 	}
 }
 
+func BenchmarkRunnerSnapshotFresh(b *testing.B) {
+	runner := newBenchmarkRunner(b, WithStaleAfter(time.Hour))
+	b.ReportAllocs()
+	for b.Loop() {
+		_, _ = runner.Snapshot(health.TargetReady)
+	}
+}
+
+func BenchmarkRunnerSnapshotStale(b *testing.B) {
+	clk := newTestClock()
+	runner := newBenchmarkRunner(b, WithClock(clk), WithStaleAfter(time.Nanosecond))
+	clk.Step(time.Second)
+
+	b.ReportAllocs()
+	for b.Loop() {
+		_, _ = runner.Snapshot(health.TargetReady)
+	}
+}
+
+func BenchmarkStoreUpdate(b *testing.B) {
+	s := newStore([]health.Target{health.TargetReady}, newTestClock())
+	report := healthtest.HealthyReport(health.TargetReady)
+
+	b.ReportAllocs()
+	for b.Loop() {
+		_ = s.update(health.TargetReady, report)
+	}
+}
+
+func BenchmarkStoreSnapshot(b *testing.B) {
+	s := newStore([]health.Target{health.TargetReady}, newTestClock())
+	_ = s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady))
+
+	b.ReportAllocs()
+	for b.Loop() {
+		_, _ = s.snapshot(health.TargetReady)
+	}
+}
+
+func BenchmarkStoreSnapshots(b *testing.B) {
+	s := newStore(
+		[]health.Target{health.TargetStartup, health.TargetLive, health.TargetReady},
+		newTestClock(),
+	)
+	_ = s.update(health.TargetStartup, healthtest.HealthyReport(health.TargetStartup))
+	_ = s.update(health.TargetLive, healthtest.HealthyReport(health.TargetLive))
+	_ = s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady))
+
+	b.ReportAllocs()
+	for b.Loop() {
+		_ = s.snapshots()
+	}
+}
+
+func BenchmarkSnapshotCloneSmallReport(b *testing.B) {
+	snap := benchmarkSnapshotWithChecks(1)
+	b.ReportAllocs()
+	for b.Loop() {
+		_ = cloneSnapshot(snap)
+	}
+}
+
+func BenchmarkSnapshotCloneLargeReport(b *testing.B) {
+	snap := benchmarkSnapshotWithChecks(64)
+	b.ReportAllocs()
+	for b.Loop() {
+		_ = cloneSnapshot(snap)
+	}
+}
+
 func BenchmarkStaleCalculation(b *testing.B) {
 	age := 2 * time.Second
 	staleAfter := time.Second
@@ -48,18 +138,59 @@ func BenchmarkStaleCalculation(b *testing.B) {
 	}
 }
 
-func newBenchmarkRunner(b *testing.B) *Runner {
+func newBenchmarkRunner(b *testing.B, opts ...Option) *Runner {
 	b.Helper()
 
-	evaluator := healthtest.NewEvaluatorWithReports(
-		healthtest.HealthyReport(health.TargetStartup),
-		healthtest.HealthyReport(health.TargetLive),
-		healthtest.HealthyReport(health.TargetReady),
+	runner := newBenchmarkRunnerForTargets(
+		b,
+		[]health.Target{health.TargetStartup, health.TargetLive, health.TargetReady},
+		opts...,
 	)
-	runner, err := NewRunner(evaluator, WithTargets(health.TargetStartup, health.TargetLive, health.TargetReady))
+	runner.runCycle(context.Background())
+	return runner
+}
+
+func newBenchmarkRunnerForTargets(
+	b *testing.B,
+	targets []health.Target,
+	opts ...Option,
+) *Runner {
+	b.Helper()
+
+	reports := make([]health.Report, 0, len(targets))
+	for _, target := range targets {
+		reports = append(reports, healthtest.HealthyReport(target))
+	}
+
+	evaluator := healthtest.NewEvaluatorWithReports(
+		reports...,
+	)
+
+	options := append([]Option{WithTargets(targets...)}, opts...)
+	runner, err := NewRunner(evaluator, options...)
 	if err != nil {
 		b.Fatalf("NewRunner() = %v", err)
 	}
-	runner.runCycle(context.Background())
+
 	return runner
+}
+
+func benchmarkSnapshotWithChecks(count int) Snapshot {
+	observed := testNow
+	checks := make([]health.Result, 0, count)
+	for i := 0; i < count; i++ {
+		checks = append(checks, health.Healthy(fmt.Sprintf("check_%d", i)).WithObserved(observed))
+	}
+
+	return Snapshot{
+		Target: health.TargetReady,
+		Report: health.Report{
+			Target:   health.TargetReady,
+			Status:   health.StatusHealthy,
+			Observed: observed,
+			Checks:   checks,
+		},
+		Revision: 1,
+		Updated:  observed,
+	}
 }

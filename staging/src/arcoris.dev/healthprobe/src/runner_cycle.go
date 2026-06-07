@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package probe
 
 import (
@@ -53,7 +52,8 @@ func (r *Runner) runCycle(ctx context.Context) {
 // cached snapshot with cancellation artifacts.
 //
 // Evaluator errors are converted into an unknown report because probe is a cache
-// layer over health reports, not an error-reporting transport. Context
+// layer over health reports, not an error-reporting transport. The raw error is
+// intentionally not stored as a Result.Cause in cached snapshots. Context
 // cancellation remains special: normal shutdown should not publish a synthetic
 // canceled observation.
 func (r *Runner) evaluateTarget(ctx context.Context, target health.Target) (health.Report, bool) {

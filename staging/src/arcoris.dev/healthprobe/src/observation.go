@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package probe
 
 import (
@@ -46,8 +45,8 @@ type observation struct {
 //
 // The clone happens before validation so later caller mutations cannot affect the
 // value that passed validation. The boolean keeps store.update small: false
-// means the report is not a valid observed value for target and must not advance
-// the per-target snapshot revision.
+// means the report is not a valid, aggregate-consistent observed value for
+// target and must not advance the per-target snapshot revision.
 func newObservation(target health.Target, report health.Report) (observation, bool) {
 	obs := observation{
 		Target: target,
@@ -65,11 +64,15 @@ func newObservation(target health.Target, report health.Report) (observation, bo
 // This predicate intentionally checks only payload invariants. It does not check
 // Revision, Updated, or Stale because those fields are not part of observation.
 // Public Snapshot performs the full read-model validation after snapshot.Store
-// has added its stamped metadata.
+// has added its stamped metadata. The probe cache rejects inconsistent reports
+// rather than repairing their aggregate status, because hiding evaluator bugs at
+// the cache boundary would make the source of stale aggregate data harder to
+// diagnose.
 func (o observation) isObserved() bool {
 	return o.Target.IsConcrete() &&
 		o.Report.Target == o.Target &&
-		o.Report.IsValid()
+		o.Report.IsValid() &&
+		o.Report.IsConsistent()
 }
 
 // snapshotFromStamped adapts the snapshot package read model to probe.Snapshot.

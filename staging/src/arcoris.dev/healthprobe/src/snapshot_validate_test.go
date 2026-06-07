@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package probe
 
 import (
@@ -28,12 +27,8 @@ func TestSnapshotObservedRequiresRevision(t *testing.T) {
 
 	observed := time.Unix(9, 0)
 	snap := Snapshot{
-		Target: health.TargetReady,
-		Report: health.Report{
-			Target:   health.TargetReady,
-			Status:   health.StatusHealthy,
-			Observed: observed,
-		},
+		Target:   health.TargetReady,
+		Report:   healthyProbeReport(health.TargetReady, observed),
 		Revision: snapshot.ZeroRevision,
 		Updated:  time.Unix(10, 0),
 	}
@@ -95,17 +90,26 @@ func TestSnapshotIsValid(t *testing.T) {
 		{
 			name: "valid stale snapshot",
 			snap: Snapshot{
-				Target: health.TargetLive,
-				Report: health.Report{
-					Target:   health.TargetLive,
-					Status:   health.StatusHealthy,
-					Observed: observed,
-				},
+				Target:   health.TargetLive,
+				Report:   healthyProbeReport(health.TargetLive, observed),
 				Updated:  updated,
 				Revision: 2,
 				Stale:    true,
 			},
 			want: true,
+		},
+		{
+			name: "inconsistent report",
+			snap: Snapshot{
+				Target: health.TargetReady,
+				Report: health.Report{
+					Target:   health.TargetReady,
+					Status:   health.StatusHealthy,
+					Observed: observed,
+				},
+				Updated:  updated,
+				Revision: 1,
+			},
 		},
 		{
 			name: "updated and revision without target and report",

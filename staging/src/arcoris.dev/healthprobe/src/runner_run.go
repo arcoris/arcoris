@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package probe
 
 import (
@@ -26,8 +25,9 @@ import (
 //
 // Run owns exactly one schedule sequence for the Runner. Concurrent Run calls
 // on the same Runner return ErrRunnerRunning. Context cancellation is treated as
-// normal loop shutdown and returns nil. Schedule exhaustion returns
-// ErrExhaustedSchedule. Calling Run on a nil Runner returns ErrNilRunner.
+// normal loop shutdown and returns nil. Finite schedule exhaustion before
+// context cancellation returns ErrExhaustedSchedule. Calling Run on a nil Runner
+// returns ErrNilRunner.
 //
 // Run panics when ctx is nil. A nil context would create an unowned background
 // loop and hide a caller wiring bug.

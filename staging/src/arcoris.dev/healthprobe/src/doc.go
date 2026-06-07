@@ -30,15 +30,19 @@
 // lifecycle transitions, implement retries or result-dependent backoff, restart
 // components, or make admission, routing, target-specific scheduling, or
 // workload-control decisions. Advanced schedules may provide jitter, capped
-// sequences, or finite sequences. Finite schedule exhaustion ends Run with an
-// error.
+// sequences, or finite sequences. Finite schedule exhaustion ends Run with
+// ErrExhaustedSchedule unless the runner context has already been canceled.
 //
 // # Relationship to health
 //
 // Package health owns the transport-neutral health contracts: Target, Result,
-// Report, Registry, Gate, TargetPolicy, and Evaluator. Package probe depends on
-// health.Evaluator instead of reading registries or executing checks itself.
-// Callers may provide any evaluator implementation that satisfies that contract.
+// Report, TargetPolicy, Checker, CheckResolver, and Evaluator. Package
+// healthregistry owns check registration and check resolution. Package
+// healthgate owns mutable owner-published checker state.
+//
+// Package probe depends on health.Evaluator instead of reading registries,
+// owning gates, or executing checks itself. Callers may provide any evaluator
+// implementation that satisfies that contract.
 //
 // # Transport adapters
 //
@@ -61,11 +65,13 @@
 //
 // Snapshot is the read model for one target's latest cached observation. The
 // zero Snapshot is valid and means no cached observation. Every observed
-// Snapshot has a concrete Target, a valid health.Report whose Target matches the
-// Snapshot Target, a non-zero Updated timestamp, and a positive per-target
-// Revision. Internally, store uses one snapshot.Store[observation] per observed
-// target; the underlying snapshot store assigns Revision and Updated, while
-// Stale remains read-boundary metadata computed by Runner.
+// Snapshot has a concrete Target, a structurally valid and aggregate-consistent
+// health.Report whose Target matches the Snapshot Target, a non-zero Updated
+// timestamp, and a positive per-target Revision. Inconsistent reports are not
+// repaired or cached; rejecting them keeps evaluator aggregate bugs visible.
+// Internally, store uses one snapshot.Store[observation] per observed target;
+// the underlying snapshot store assigns Revision and Updated, while Stale
+// remains read-boundary metadata computed by Runner.
 //
 // # Staleness
 //

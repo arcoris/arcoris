@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package probe
 
 import (
@@ -52,6 +51,19 @@ func newTestRunner(t *testing.T, clk clock.Clock, opts ...Option) *Runner {
 	}
 
 	return runner
+}
+
+func healthyProbeReport(target health.Target, observed time.Time) health.Report {
+	checkName := target.String() + "_check"
+
+	return health.Report{
+		Target:   target,
+		Status:   health.StatusHealthy,
+		Observed: observed,
+		Checks: []health.Result{
+			health.Healthy(checkName).WithObserved(observed),
+		},
+	}
 }
 
 func waitForSnapshot(t *testing.T, r *Runner, target health.Target) Snapshot {

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package probe
 
 import (
@@ -35,7 +34,9 @@ import (
 // scheduler decisions belong outside package probe.
 //
 // Snapshot is built from the stamped observation held by the internal per-target
-// snapshot.Store. It keeps the public cache surface report-oriented and does not
+// snapshot.Store. Stored reports must be structurally valid and aggregate
+// consistent; probe rejects stale aggregate reports instead of repairing them at
+// the cache boundary. The cache surface stays report-oriented and does not
 // expose evaluator execution errors. Transport adapters MUST still avoid
 // exposing health.Result.Cause unless they explicitly own a safe diagnostic
 // surface.
@@ -122,9 +123,10 @@ func (s Snapshot) IsFresh() bool {
 //
 // The zero Snapshot is valid and means that no cached observation exists. Any
 // non-zero Snapshot must be a complete observed cache value: Target is concrete,
-// Report is valid, Report.Target matches Target, Revision is non-zero, and
-// Updated is non-zero. Stale may be true only on an otherwise observed
-// Snapshot because stale is read-time cache metadata.
+// Report is structurally valid, Report is aggregate-consistent, Report.Target
+// matches Target, Revision is non-zero, and Updated is non-zero. Stale may be
+// true only on an otherwise observed Snapshot because stale is read-time cache
+// metadata.
 //
 // IsValid intentionally does not interpret health success or failure. A valid
 // Snapshot may contain a healthy, degraded, unhealthy, or unknown health.Report.
@@ -141,6 +143,9 @@ func (s Snapshot) IsValid() bool {
 		return false
 	}
 	if !s.Report.IsValid() {
+		return false
+	}
+	if !s.Report.IsConsistent() {
 		return false
 	}
 	if s.Revision == snapshot.ZeroRevision {

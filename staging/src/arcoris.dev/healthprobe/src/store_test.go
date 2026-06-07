@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package probe
 
 import (
@@ -179,6 +178,40 @@ func TestStoreRejectsInvalidSnapshotInput(t *testing.T) {
 	}
 	if _, ok := s.snapshot(health.TargetReady); ok {
 		t.Fatal("snapshot() ok = true, want false")
+	}
+}
+
+func TestStoreRejectsInconsistentReportWithoutAdvancingRevision(t *testing.T) {
+	t.Parallel()
+
+	s := newStore([]health.Target{health.TargetReady}, newTestClock())
+	if ok := s.update(health.TargetReady, healthtest.HealthyReport(health.TargetReady)); !ok {
+		t.Fatal("initial update() = false, want true")
+	}
+
+	before, ok := s.snapshot(health.TargetReady)
+	if !ok {
+		t.Fatal("initial snapshot ok = false, want true")
+	}
+
+	inconsistent := health.Report{
+		Target:   health.TargetReady,
+		Status:   health.StatusHealthy,
+		Observed: testNow,
+	}
+	if ok := s.update(health.TargetReady, inconsistent); ok {
+		t.Fatal("update(inconsistent report) = true, want false")
+	}
+
+	after, ok := s.snapshot(health.TargetReady)
+	if !ok {
+		t.Fatal("snapshot after rejected update ok = false, want true")
+	}
+	if after.Revision != before.Revision {
+		t.Fatalf("Revision after rejected update = %d, want %d", after.Revision, before.Revision)
+	}
+	if after.Report.Status != before.Report.Status || len(after.Report.Checks) != len(before.Report.Checks) {
+		t.Fatalf("snapshot after rejected update = %+v, want previous report %+v", after.Report, before.Report)
 	}
 }
 

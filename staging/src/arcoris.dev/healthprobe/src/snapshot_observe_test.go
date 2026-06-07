@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package probe
 
 import (
@@ -104,12 +103,8 @@ func TestSnapshotIsObserved(t *testing.T) {
 		{
 			name: "stale report can still be observed",
 			snap: Snapshot{
-				Target: health.TargetReady,
-				Report: health.Report{
-					Target:   health.TargetReady,
-					Status:   health.StatusHealthy,
-					Observed: observed,
-				},
+				Target:   health.TargetReady,
+				Report:   healthyProbeReport(health.TargetReady, observed),
 				Updated:  updated,
 				Revision: 1,
 				Stale:    true,
@@ -147,12 +142,8 @@ func TestSnapshotIsFresh(t *testing.T) {
 		{
 			name: "observed fresh",
 			snap: Snapshot{
-				Target: health.TargetReady,
-				Report: health.Report{
-					Target:   health.TargetReady,
-					Status:   health.StatusHealthy,
-					Observed: observed,
-				},
+				Target:   health.TargetReady,
+				Report:   healthyProbeReport(health.TargetReady, observed),
 				Updated:  updated,
 				Revision: 1,
 			},
@@ -161,12 +152,8 @@ func TestSnapshotIsFresh(t *testing.T) {
 		{
 			name: "observed stale",
 			snap: Snapshot{
-				Target: health.TargetReady,
-				Report: health.Report{
-					Target:   health.TargetReady,
-					Status:   health.StatusHealthy,
-					Observed: observed,
-				},
+				Target:   health.TargetReady,
+				Report:   healthyProbeReport(health.TargetReady, observed),
 				Updated:  updated,
 				Revision: 1,
 				Stale:    true,

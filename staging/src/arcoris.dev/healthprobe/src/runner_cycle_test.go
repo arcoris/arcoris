@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package probe
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"arcoris.dev/health"
@@ -68,6 +68,64 @@ func TestRunnerRunCycleDoesNotStoreAfterContextCanceled(t *testing.T) {
 
 	if _, ok := runner.Snapshot(health.TargetReady); ok {
 		t.Fatal("Snapshot() ok = true, want false")
+	}
+}
+
+func TestRunnerRunCycleDoesNotStoreInconsistentReport(t *testing.T) {
+	t.Parallel()
+
+	valid := healthtest.HealthyReport(health.TargetReady)
+	inconsistent := health.Report{
+		Target:   health.TargetReady,
+		Status:   health.StatusHealthy,
+		Observed: testNow,
+	}
+	evaluator := healthtest.NewSequenceEvaluator(health.TargetReady, valid, inconsistent)
+	runner, err := NewRunner(evaluator, WithClock(newTestClock()), WithTargets(health.TargetReady))
+	if err != nil {
+		t.Fatalf("NewRunner() = %v, want nil", err)
+	}
+
+	runner.runCycle(context.Background())
+	before, ok := runner.Snapshot(health.TargetReady)
+	if !ok {
+		t.Fatal("initial Snapshot() ok = false, want true")
+	}
+
+	runner.runCycle(context.Background())
+	after, ok := runner.Snapshot(health.TargetReady)
+	if !ok {
+		t.Fatal("Snapshot() after inconsistent report ok = false, want true")
+	}
+	if after.Revision != before.Revision {
+		t.Fatalf("Revision after inconsistent report = %d, want %d", after.Revision, before.Revision)
+	}
+}
+
+func TestRunnerRunCycleStoresUnknownReportForEvaluatorError(t *testing.T) {
+	t.Parallel()
+
+	rawErr := errors.New("source failed")
+	runner, err := NewRunner(
+		healthtest.NewErrorEvaluator(rawErr),
+		WithClock(newTestClock()),
+		WithTargets(health.TargetReady),
+	)
+	if err != nil {
+		t.Fatalf("NewRunner() = %v, want nil", err)
+	}
+
+	runner.runCycle(context.Background())
+
+	snap, ok := runner.Snapshot(health.TargetReady)
+	if !ok {
+		t.Fatal("Snapshot() ok = false, want true")
+	}
+	if snap.Report.Status != health.StatusUnknown || len(snap.Report.Checks) != 0 {
+		t.Fatalf("evaluator error report = %+v, want unknown without checks", snap.Report)
+	}
+	if !snap.Report.Observed.Equal(testNow) {
+		t.Fatalf("Observed = %v, want %v", snap.Report.Observed, testNow)
 	}
 }
 
