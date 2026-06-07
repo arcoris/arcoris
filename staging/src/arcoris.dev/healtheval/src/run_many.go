@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package eval
 
 import (
@@ -46,7 +45,7 @@ func (e *Evaluator) evaluateChecks(
 	}
 }
 
-// evaluateChecksSequential evaluates checks one by one in registry order.
+// evaluateChecksSequential evaluates checks one by one in resolver order.
 func (e *Evaluator) evaluateChecksSequential(
 	ctx context.Context,
 	checks []health.Checker,
@@ -61,7 +60,7 @@ func (e *Evaluator) evaluateChecksSequential(
 }
 
 // evaluateChecksParallel evaluates checks with bounded concurrency while
-// preserving registry order in the returned results.
+// preserving resolver order in the returned results.
 //
 // The implementation preallocates the result slice and assigns exactly one index
 // from exactly one goroutine. It never appends concurrently. This preserves
@@ -118,16 +117,5 @@ func (e *Evaluator) evaluateChecksParallel(
 // no-check case before calling this helper, but the defensive fallback keeps the
 // aggregation boundary conservative for tests and future internal callers.
 func aggregateStatus(results []health.Result) health.Status {
-	if len(results) == 0 {
-		return health.StatusUnknown
-	}
-
-	status := health.StatusHealthy
-	for _, res := range results {
-		if res.Status.MoreSevereThan(status) {
-			status = res.Status
-		}
-	}
-
-	return status
+	return health.AggregateStatus(results)
 }

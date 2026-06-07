@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"arcoris.dev/health"
+	"arcoris.dev/healthregistry"
 )
 
 func BenchmarkEvaluatorSequential(b *testing.B) {
@@ -40,7 +41,7 @@ func BenchmarkEvaluatorParallel(b *testing.B) {
 func newBenchmarkEvaluator(b *testing.B, opts ...EvaluatorOption) *Evaluator {
 	b.Helper()
 
-	registry := health.NewRegistry()
+	builder := healthregistry.NewBuilder()
 	for _, name := range []string{"storage", "queue", "cache", "database"} {
 		checkName := name
 		checker, err := health.NewCheck(checkName, func(context.Context) health.Result {
@@ -49,9 +50,14 @@ func newBenchmarkEvaluator(b *testing.B, opts ...EvaluatorOption) *Evaluator {
 		if err != nil {
 			b.Fatalf("NewCheck() = %v", err)
 		}
-		if err := registry.Register(health.TargetReady, checker); err != nil {
+		if err := builder.Register(health.TargetReady, checker); err != nil {
 			b.Fatalf("Register() = %v", err)
 		}
+	}
+
+	registry, err := builder.Build()
+	if err != nil {
+		b.Fatalf("Build() = %v", err)
 	}
 
 	evaluator, err := NewEvaluator(registry, opts...)

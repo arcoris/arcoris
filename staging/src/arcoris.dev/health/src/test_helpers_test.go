@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package health
 
 import (
@@ -89,15 +88,4 @@ func mustCheck(t *testing.T, name string, res Result) Checker {
 	}
 
 	return checker
-}
-
-func mustRegistry(t *testing.T, target Target, checks ...Checker) *Registry {
-	t.Helper()
-
-	registry := NewRegistry()
-	if err := registry.Register(target, checks...); err != nil {
-		t.Fatalf("Register() = %v, want nil", err)
-	}
-
-	return registry
 }

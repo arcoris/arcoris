@@ -332,7 +332,7 @@ func TestHandlerServeHTTPRejectsUnsupportedMethod(t *testing.T) {
 func TestHandlerServeHTTPNoChecksFails(t *testing.T) {
 	t.Parallel()
 
-	evaluator := healthtest.NewEvaluator(t, health.NewRegistry())
+	evaluator := healthtest.NewEvaluator(t, healthtest.NewRegistry(t))
 	handler := mustNewHandler(t, evaluator, health.TargetReady)
 
 	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)

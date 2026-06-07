@@ -11,9 +11,11 @@ use (
 	./staging/src/arcoris.dev/chrono/src
 	./staging/src/arcoris.dev/health/src
 	./staging/src/arcoris.dev/healtheval/src
+	./staging/src/arcoris.dev/healthgate/src
 	./staging/src/arcoris.dev/healthgrpc/src
 	./staging/src/arcoris.dev/healthhttp/src
 	./staging/src/arcoris.dev/healthprobe/src
+	./staging/src/arcoris.dev/healthregistry/src
 	./staging/src/arcoris.dev/healthtest/src
 	./staging/src/arcoris.dev/liveconfig/src
 	./staging/src/arcoris.dev/measure/src

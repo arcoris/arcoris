@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package eval
 
 import (
@@ -20,12 +19,13 @@ import (
 	"testing"
 
 	"arcoris.dev/health"
+	"arcoris.dev/healthregistry"
 )
 
 func TestEvaluateChecksSequential(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustExecutionEvaluator(t, health.NewRegistry(), WithDefaultTimeout(0))
+	evaluator := mustExecutionEvaluator(t, healthregistry.NewBuilder(), WithDefaultTimeout(0))
 	order := make([]string, 0, 2)
 	checks := []health.Checker{
 		health.MustCheck("first", func(context.Context) health.Result {
@@ -51,7 +51,7 @@ func TestEvaluateChecksSequential(t *testing.T) {
 func TestEvaluateChecksFallsBackToSequentialForParallelLimitOne(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustExecutionEvaluator(t, health.NewRegistry(), WithDefaultTimeout(0))
+	evaluator := mustExecutionEvaluator(t, healthregistry.NewBuilder(), WithDefaultTimeout(0))
 	blocked := false
 	checks := []health.Checker{
 		health.MustCheck("first", func(context.Context) health.Result {

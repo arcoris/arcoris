@@ -24,34 +24,39 @@ import (
 // EvaluatorFunc adapts a function to health.Evaluator.
 type EvaluatorFunc = SourceFunc
 
-// RegistryEvaluator evaluates checkers from a health.Registry.
+// RegistryEvaluator evaluates checkers from a health.CheckResolver.
 //
 // RegistryEvaluator is a deterministic test fixture. It does not own timeout,
 // parallelism, panic normalization, or execution-policy behavior.
 type RegistryEvaluator struct {
-	registry *health.Registry
+	resolver health.CheckResolver
 }
 
 var _ health.Evaluator = (*RegistryEvaluator)(nil)
 
 // NewEvaluator returns a deterministic registry-backed test evaluator.
-func NewEvaluator(t testing.TB, r *health.Registry) *RegistryEvaluator {
+func NewEvaluator(t testing.TB, resolver health.CheckResolver) *RegistryEvaluator {
 	t.Helper()
 
-	if r == nil {
-		t.Fatal("healthtest.NewEvaluator() received nil registry")
+	if resolver == nil {
+		t.Fatal("healthtest.NewEvaluator() received nil resolver")
 	}
 
-	return &RegistryEvaluator{registry: r}
+	return &RegistryEvaluator{resolver: resolver}
 }
 
-// Evaluate runs registered checks for target in registry order.
+// Evaluate runs resolved checks for target in resolver order.
 func (e *RegistryEvaluator) Evaluate(ctx context.Context, target health.Target) (health.Report, error) {
-	if e == nil || e.registry == nil {
+	if e == nil || e.resolver == nil {
 		return UnknownReport(target), nil
 	}
 
-	checks := e.registry.Checks(target)
+	set, err := e.resolver.ResolveChecks(target)
+	if err != nil {
+		return UnknownReport(target), err
+	}
+
+	checks := set.Checks()
 	results := make([]health.Result, 0, len(checks))
 	for _, checker := range checks {
 		results = append(results, checker.Check(ctx).Normalize(checker.Name(), ObservedTime))
@@ -132,16 +137,5 @@ func reportFromResults(target health.Target, results ...health.Result) health.Re
 }
 
 func aggregateStatus(results []health.Result) health.Status {
-	if len(results) == 0 {
-		return health.StatusUnknown
-	}
-
-	status := health.StatusHealthy
-	for _, result := range results {
-		if result.Status.MoreSevereThan(status) {
-			status = result.Status
-		}
-	}
-
-	return status
+	return health.AggregateStatus(results)
 }

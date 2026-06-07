@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package eval
 
 import (
@@ -29,13 +28,13 @@ var _ health.Evaluator = (*Evaluator)(nil)
 func TestNewEvaluatorRejectsInvalidInputs(t *testing.T) {
 	t.Parallel()
 
-	if _, err := NewEvaluator(nil); !errors.Is(err, ErrNilRegistry) {
-		t.Fatalf("NewEvaluator(nil) = %v, want ErrNilRegistry", err)
+	if _, err := NewEvaluator(nil); !errors.Is(err, ErrNilResolver) {
+		t.Fatalf("NewEvaluator(nil) = %v, want ErrNilResolver", err)
 	}
-	if _, err := NewEvaluator(health.NewRegistry(), nil); !errors.Is(err, ErrNilEvaluatorOption) {
+	if _, err := NewEvaluator(emptyRegistry(t), nil); !errors.Is(err, ErrNilEvaluatorOption) {
 		t.Fatalf("NewEvaluator(nil option) = %v, want ErrNilEvaluatorOption", err)
 	}
-	if _, err := NewEvaluator(health.NewRegistry(), WithDefaultTimeout(-time.Second)); !errors.Is(err, ErrInvalidTimeout) {
+	if _, err := NewEvaluator(emptyRegistry(t), WithDefaultTimeout(-time.Second)); !errors.Is(err, ErrInvalidTimeout) {
 		t.Fatalf("NewEvaluator(invalid option) = %v, want ErrInvalidTimeout", err)
 	}
 }
@@ -45,7 +44,7 @@ func TestEvaluatorTimeoutForUsesTargetOverride(t *testing.T) {
 
 	evaluator := mustEvaluator(
 		t,
-		health.NewRegistry(),
+		emptyRegistry(t),
 		WithDefaultTimeout(time.Second),
 		WithTargetTimeout(health.TargetReady, 2*time.Second),
 	)
@@ -61,7 +60,7 @@ func TestEvaluatorTimeoutForUsesTargetOverride(t *testing.T) {
 func TestEvaluateRejectsInvalidTarget(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustEvaluator(t, health.NewRegistry(), WithClock(newStepClock(testObserved)))
+	evaluator := mustEvaluator(t, emptyRegistry(t), WithClock(newStepClock(testObserved)))
 
 	report, err := evaluator.Evaluate(context.Background(), health.TargetUnknown)
 	if !errors.Is(err, health.ErrInvalidTarget) {
@@ -75,7 +74,7 @@ func TestEvaluateRejectsInvalidTarget(t *testing.T) {
 func TestEvaluateReturnsUnknownForTargetWithoutChecks(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustEvaluator(t, health.NewRegistry(), WithClock(newStepClock(testObserved)))
+	evaluator := mustEvaluator(t, emptyRegistry(t), WithClock(newStepClock(testObserved)))
 
 	report, err := evaluator.Evaluate(nil, health.TargetReady)
 	if err != nil {
@@ -86,7 +85,7 @@ func TestEvaluateReturnsUnknownForTargetWithoutChecks(t *testing.T) {
 	}
 }
 
-func TestEvaluateRunsChecksInRegistryOrderAndAggregatesSeverity(t *testing.T) {
+func TestEvaluateRunsChecksInResolverOrderAndAggregatesSeverity(t *testing.T) {
 	t.Parallel()
 
 	registry := mustRegistry(

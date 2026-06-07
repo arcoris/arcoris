@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package eval
 
 import "arcoris.dev/health"
@@ -21,7 +20,7 @@ import "arcoris.dev/health"
 // evaluation.
 //
 // ExecutionMode is evaluator-owned execution policy. It does not change checker
-// contracts, registry semantics, result normalization, report aggregation,
+// contracts, resolver semantics, result normalization, report aggregation,
 // target policy, transport mapping, periodic probing, logging, metrics, tracing,
 // retries, restart policy, admission policy, or scheduler behavior.
 //
@@ -31,8 +30,7 @@ import "arcoris.dev/health"
 type ExecutionMode uint8
 
 const (
-	// ExecutionSequential evaluates checks one by one in health.Registry
-	// registration order.
+	// ExecutionSequential evaluates checks one by one in resolver order.
 	//
 	// Sequential execution is the default because it has the simplest load
 	// profile, the smallest concurrency surface, and preserves the historical

@@ -1,0 +1,66 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package healthgate
+
+import (
+	"context"
+	"testing"
+
+	"arcoris.dev/health"
+)
+
+var (
+	benchmarkResult health.Result
+	benchmarkError  error
+)
+
+func BenchmarkGateCheck(b *testing.B) {
+	gate := benchmarkGate(b)
+
+	b.ReportAllocs()
+	for b.Loop() {
+		benchmarkResult = gate.Check(context.Background())
+	}
+}
+
+func BenchmarkGateSnapshot(b *testing.B) {
+	gate := benchmarkGate(b)
+
+	b.ReportAllocs()
+	for b.Loop() {
+		benchmarkResult = gate.Snapshot()
+	}
+}
+
+func BenchmarkGateSet(b *testing.B) {
+	gate := benchmarkGate(b)
+	result := health.Degraded("ready_gate", health.ReasonOverloaded, "overloaded")
+
+	b.ReportAllocs()
+	for b.Loop() {
+		benchmarkError = gate.Set(result)
+	}
+}
+
+func benchmarkGate(b *testing.B) *Gate {
+	b.Helper()
+
+	gate, err := New("ready_gate", health.Healthy("ready_gate"))
+	if err != nil {
+		b.Fatalf("New() = %v", err)
+	}
+
+	return gate
+}

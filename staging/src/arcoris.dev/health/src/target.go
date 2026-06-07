@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package health
 
 // Target identifies the health scope being evaluated.
@@ -24,14 +23,14 @@ package health
 //
 // The zero value is TargetUnknown. This makes Target safe to embed in larger
 // runtime structs before a concrete health scope is selected. TargetUnknown is a
-// valid sentinel value, but it is not an evaluable target. Registries,
-// evaluators, and adapters MUST reject TargetUnknown when a concrete health
-// evaluation target is required.
+// valid sentinel value, but it is not an evaluable target. Resolvers,
+// registries, evaluators, and adapters MUST reject TargetUnknown when a concrete
+// health evaluation target is required.
 //
-// Target values are suitable for in-memory runtime state, reports, registry
-// keys, tests, diagnostics, and policy selection. They are not a versioned wire
-// format. Transport packages MUST define their own compatibility contract when
-// exposing target names outside the process.
+// Target values are suitable for in-memory runtime state, reports, resolver
+// keys, registry keys, tests, diagnostics, and policy selection. They are not a
+// versioned wire format. Transport packages MUST define their own compatibility
+// contract when exposing target names outside the process.
 type Target uint8
 
 const (
@@ -70,6 +69,12 @@ const (
 	// the component should accept normal workload.
 	TargetReady
 )
+
+var concreteTargets = [...]Target{
+	TargetStartup,
+	TargetLive,
+	TargetReady,
+}
 
 // String returns the canonical lower-case name of t.
 //
@@ -157,9 +162,5 @@ func (t Target) IsReady() bool {
 // it without mutating package-level state. TargetUnknown is intentionally omitted
 // because it is a sentinel value, not an evaluable target.
 func ConcreteTargets() []Target {
-	return []Target{
-		TargetStartup,
-		TargetLive,
-		TargetReady,
-	}
+	return append([]Target(nil), concreteTargets[:]...)
 }

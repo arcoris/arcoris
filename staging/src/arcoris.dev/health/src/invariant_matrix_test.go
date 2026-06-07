@@ -15,11 +15,8 @@
 package health
 
 import (
-	"context"
 	"errors"
-	"fmt"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 )
@@ -173,6 +170,7 @@ func TestResultValidityMatrix(t *testing.T) {
 		{"invalid reason", Result{Status: StatusHealthy, Reason: Reason("bad-reason")}, false},
 		{"negative duration", Result{Status: StatusHealthy, Duration: -time.Nanosecond}, false},
 		{"named valid", Healthy("storage"), true},
+		{"named invalid", Healthy("bad-name"), false},
 		{"unnamed valid", Result{Status: StatusHealthy}, true},
 	}
 	for _, tc := range tests {
@@ -280,193 +278,6 @@ func TestReportStatusAggregationPolicy(t *testing.T) {
 	}
 	if status != StatusUnhealthy {
 		t.Fatalf("aggregated status = %s, want unhealthy", status)
-	}
-}
-
-func TestRegistryRegisterEmptyBatchNoop(t *testing.T) {
-	t.Parallel()
-
-	registry := NewRegistry()
-	if err := registry.Register(TargetReady); err != nil {
-		t.Fatalf("Register(empty) = %v, want nil", err)
-	}
-	if !registry.Empty() || registry.Len(TargetReady) != 0 {
-		t.Fatal("empty registration mutated registry")
-	}
-}
-
-func TestRegistryConcurrentRegisterAndReadRaceFree(t *testing.T) {
-	t.Parallel()
-
-	registry := NewRegistry()
-	var wg sync.WaitGroup
-	for i := 0; i < 16; i++ {
-		i := i
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			name := fmt.Sprintf("check_%d", i)
-			_ = registry.Register(TargetReady, mustCheck(t, name, Healthy(name)))
-			_ = registry.Checks(TargetReady)
-			_ = registry.Targets()
-		}()
-	}
-	wg.Wait()
-}
-
-func TestRegistryBatchDuplicateCarriesPreviousIndex(t *testing.T) {
-	t.Parallel()
-
-	registry := NewRegistry()
-	err := registry.Register(TargetReady, mustCheck(t, "dup", Healthy("dup")), mustCheck(t, "dup", Healthy("dup")))
-	var duplicate DuplicateCheckError
-	if !errors.As(err, &duplicate) {
-		t.Fatalf("Register() = %v, want DuplicateCheckError", err)
-	}
-	if duplicate.Index != 1 || duplicate.PreviousIndex != 0 {
-		t.Fatalf("duplicate = %+v, want index 1 previous 0", duplicate)
-	}
-}
-
-func TestRegistryExistingDuplicateCarriesPreviousIndexMinusOne(t *testing.T) {
-	t.Parallel()
-
-	registry := mustRegistry(t, TargetReady, mustCheck(t, "dup", Healthy("dup")))
-	err := registry.Register(TargetReady, mustCheck(t, "dup", Healthy("dup")))
-	var duplicate DuplicateCheckError
-	if !errors.As(err, &duplicate) {
-		t.Fatalf("Register() = %v, want DuplicateCheckError", err)
-	}
-	if duplicate.Index != 0 || duplicate.PreviousIndex != -1 {
-		t.Fatalf("duplicate = %+v, want index 0 previous -1", duplicate)
-	}
-}
-
-func TestRegistryFailedExistingConflictDoesNotRegisterNonConflictingChecks(t *testing.T) {
-	t.Parallel()
-
-	registry := mustRegistry(t, TargetReady, mustCheck(t, "existing", Healthy("existing")))
-	err := registry.Register(TargetReady, mustCheck(t, "existing", Healthy("existing")), mustCheck(t, "new_check", Healthy("new_check")))
-	if !errors.Is(err, ErrDuplicateCheck) {
-		t.Fatalf("Register() = %v, want ErrDuplicateCheck", err)
-	}
-	if registry.Has(TargetReady, "new_check") {
-		t.Fatal("conflicting batch registered non-conflicting check")
-	}
-}
-
-func TestRegistryRejectsTypedNilChecker(t *testing.T) {
-	t.Parallel()
-
-	var checker *typedNilChecker
-	err := NewRegistry().Register(TargetReady, checker)
-	if !errors.Is(err, ErrNilChecker) {
-		t.Fatalf("Register(typed nil) = %v, want ErrNilChecker", err)
-	}
-}
-
-func TestGateSetInvalidResultLeavesStateUnchanged(t *testing.T) {
-	t.Parallel()
-
-	gate, err := NewGate("ready_gate", Healthy("ready_gate"))
-	if err != nil {
-		t.Fatalf("NewGate() = %v, want nil", err)
-	}
-	if err := gate.Set(Result{Status: Status(99)}); !errors.Is(err, ErrInvalidGateResult) {
-		t.Fatalf("Set(invalid) = %v, want ErrInvalidGateResult", err)
-	}
-	if got := gate.Check(context.Background()).Status; got != StatusHealthy {
-		t.Fatalf("status after failed Set = %s, want healthy", got)
-	}
-}
-
-func TestGateSetMismatchedNameLeavesStateUnchanged(t *testing.T) {
-	t.Parallel()
-
-	gate, err := NewGate("ready_gate", Healthy("ready_gate"))
-	if err != nil {
-		t.Fatalf("NewGate() = %v, want nil", err)
-	}
-	if err := gate.Set(Healthy("other_gate")); !errors.Is(err, ErrMismatchedGateResult) {
-		t.Fatalf("Set(mismatch) = %v, want ErrMismatchedGateResult", err)
-	}
-	if got := gate.Check(context.Background()).Name; got != "ready_gate" {
-		t.Fatalf("name after failed Set = %q, want ready_gate", got)
-	}
-}
-
-func TestGateNilBehaviorMatrix(t *testing.T) {
-	t.Parallel()
-
-	var gate *Gate
-	mutations := []func() error{
-		func() error { return gate.Set(Healthy("ready_gate")) },
-		gate.Healthy,
-		func() error { return gate.Unknown(ReasonNotObserved, "unknown") },
-		func() error { return gate.Starting(ReasonStarting, "starting") },
-		func() error { return gate.Degraded(ReasonOverloaded, "degraded") },
-		func() error { return gate.Unhealthy(ReasonFatal, "fatal") },
-	}
-	for i, mutate := range mutations {
-		if err := mutate(); !errors.Is(err, ErrNilChecker) {
-			t.Fatalf("mutation %d = %v, want ErrNilChecker", i, err)
-		}
-	}
-	if res := gate.Check(context.Background()); !errors.Is(res.Cause, ErrNilChecker) || res.Status != StatusUnknown {
-		t.Fatalf("nil Check() = %+v, want unknown ErrNilChecker", res)
-	}
-}
-
-func TestGateConcurrentSetAndCheckRaceFree(t *testing.T) {
-	t.Parallel()
-
-	gate, err := NewUnknownGate("ready_gate")
-	if err != nil {
-		t.Fatalf("NewUnknownGate() = %v, want nil", err)
-	}
-	var wg sync.WaitGroup
-	for i := 0; i < 16; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			if i%2 == 0 {
-				_ = gate.Healthy()
-			} else {
-				_ = gate.Degraded(ReasonOverloaded, "overloaded")
-			}
-			_ = gate.Check(context.Background())
-		}(i)
-	}
-	wg.Wait()
-}
-
-func TestGateStatusHelpersPublishExpectedResults(t *testing.T) {
-	t.Parallel()
-
-	gate, err := NewUnknownGate("ready_gate")
-	if err != nil {
-		t.Fatalf("NewUnknownGate() = %v, want nil", err)
-	}
-	tests := []struct {
-		name   string
-		set    func() error
-		status Status
-		reason Reason
-	}{
-		{"healthy", gate.Healthy, StatusHealthy, ReasonNone},
-		{"unknown", func() error { return gate.Unknown(ReasonNotObserved, "unknown") }, StatusUnknown, ReasonNotObserved},
-		{"starting", func() error { return gate.Starting(ReasonStarting, "starting") }, StatusStarting, ReasonStarting},
-		{"degraded", func() error { return gate.Degraded(ReasonOverloaded, "degraded") }, StatusDegraded, ReasonOverloaded},
-		{"unhealthy", func() error { return gate.Unhealthy(ReasonFatal, "fatal") }, StatusUnhealthy, ReasonFatal},
-	}
-	for _, tc := range tests {
-		if err := tc.set(); err != nil {
-			t.Fatalf("%s set = %v, want nil", tc.name, err)
-		}
-		res := gate.Check(context.Background())
-		if res.Name != "ready_gate" || res.Status != tc.status || res.Reason != tc.reason {
-			t.Fatalf("%s result = %+v, want status %s reason %s", tc.name, res, tc.status, tc.reason)
-		}
 	}
 }
 

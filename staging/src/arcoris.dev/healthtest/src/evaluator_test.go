@@ -55,7 +55,7 @@ func TestHealthtestStaticEvaluator(t *testing.T) {
 	AssertCheckOrder(t, report, "storage", "queue")
 }
 
-func TestHealthtestRegistryEvaluatorPreservesRegistryOrder(t *testing.T) {
+func TestHealthtestRegistryEvaluatorPreservesResolverOrder(t *testing.T) {
 	t.Parallel()
 
 	evaluator := NewEvaluatorForTarget(

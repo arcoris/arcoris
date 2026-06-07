@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthtest
 
 import (
 	"testing"
 
 	"arcoris.dev/health"
+	"arcoris.dev/healthregistry"
 )
 
 // TargetChecks groups checkers under one health target.
@@ -44,34 +44,39 @@ func ForTarget(target health.Target, checks ...health.Checker) TargetChecks {
 	return TargetChecks{Target: target, Checks: copied}
 }
 
-// NewRegistry returns a registry populated with groups.
+// NewRegistry returns an immutable registry populated with groups.
 //
 // Registration failures fail the current test immediately because this helper is
 // for fixture setup. Tests that need to inspect registration errors should call
-// health.Registry.Register directly.
-func NewRegistry(t testing.TB, groups ...TargetChecks) *health.Registry {
+// healthregistry.Builder.Register directly.
+func NewRegistry(t testing.TB, groups ...TargetChecks) *healthregistry.Registry {
 	t.Helper()
 
-	registry := health.NewRegistry()
+	builder := healthregistry.NewBuilder()
 	for _, group := range groups {
-		Register(t, registry, group.Target, group.Checks...)
+		Register(t, builder, group.Target, group.Checks...)
+	}
+
+	registry, err := builder.Build()
+	if err != nil {
+		t.Fatalf("healthtest.NewRegistry() Build() = %v, want nil", err)
 	}
 
 	return registry
 }
 
-// Register adds checks to registry and fails the test on error.
+// Register adds checks to builder and fails the test on error.
 //
 // The helper is intentionally narrow: it owns only health-domain registration
 // setup. It does not provide generic error assertions or hide registry behavior
 // in production-style constructors.
-func Register(t testing.TB, r *health.Registry, target health.Target, checks ...health.Checker) {
+func Register(t testing.TB, builder *healthregistry.Builder, target health.Target, checks ...health.Checker) {
 	t.Helper()
 
-	if r == nil {
-		t.Fatalf("healthtest.Register(%s) registry = nil", target)
+	if builder == nil {
+		t.Fatalf("healthtest.Register(%s) builder = nil", target)
 	}
-	if err := r.Register(target, checks...); err != nil {
+	if err := builder.Register(target, checks...); err != nil {
 		t.Fatalf("healthtest.Register(%s) = %v, want nil", target, err)
 	}
 }

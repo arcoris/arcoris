@@ -12,28 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-package health
+package healthregistry
 
 import (
 	"errors"
 	"reflect"
+
+	"arcoris.dev/health"
 )
 
-// preparedCheck carries validated batch metadata until Register can atomically
-// publish the checker under the registry lock.
 type preparedCheck struct {
-	Index   int
-	Name    string
-	Checker Checker
+	// index is the caller-supplied batch position used in diagnostics.
+	index int
+
+	// name is the validated stable checker name.
+	name string
+
+	// checker is the validated non-nil checker.
+	checker health.Checker
 }
 
-// prepareChecks validates a registration batch before the registry is mutated.
+// prepareChecks validates one registration batch without mutating Builder.
 //
-// It collects all batch-local validation failures so callers can fix invalid
-// setup in one pass. Existing-registry conflicts are checked by Register while
-// holding the registry lock because those conflicts depend on current state.
-func prepareChecks(target Target, checks []Checker) ([]preparedCheck, error) {
+// The returned slice preserves caller order. All validation failures are joined
+// so callers can inspect multiple malformed entries while the batch still fails
+// atomically.
+func prepareChecks(target health.Target, checks []health.Checker) ([]preparedCheck, error) {
 	if len(checks) == 0 {
 		return nil, nil
 	}
@@ -42,8 +46,8 @@ func prepareChecks(target Target, checks []Checker) ([]preparedCheck, error) {
 	seen := make(map[string]int, len(checks))
 	var failures []error
 
-	for index, chk := range checks {
-		if nilChecker(chk) {
+	for index, checker := range checks {
+		if nilChecker(checker) {
 			failures = append(failures, NilCheckerError{
 				Target: target,
 				Index:  index,
@@ -51,8 +55,8 @@ func prepareChecks(target Target, checks []Checker) ([]preparedCheck, error) {
 			continue
 		}
 
-		name := chk.Name()
-		if err := ValidateCheckName(name); err != nil {
+		name := checker.Name()
+		if err := health.ValidateCheckName(name); err != nil {
 			failures = append(failures, InvalidCheckNameError{
 				Target: target,
 				Index:  index,
@@ -62,21 +66,21 @@ func prepareChecks(target Target, checks []Checker) ([]preparedCheck, error) {
 			continue
 		}
 
-		if prev, exists := seen[name]; exists {
+		if previous, ok := seen[name]; ok {
 			failures = append(failures, DuplicateCheckError{
 				Target:        target,
 				Name:          name,
 				Index:         index,
-				PreviousIndex: prev,
+				PreviousIndex: previous,
 			})
 			continue
 		}
 
 		seen[name] = index
 		prepared = append(prepared, preparedCheck{
-			Index:   index,
-			Name:    name,
-			Checker: chk,
+			index:   index,
+			name:    name,
+			checker: checker,
 		})
 	}
 
@@ -87,17 +91,14 @@ func prepareChecks(target Target, checks []Checker) ([]preparedCheck, error) {
 	return prepared, nil
 }
 
-// nilChecker reports whether chk is nil, including typed nil interface values.
-//
-// Typed nil values can occur when a nil pointer to a concrete checker type is
-// assigned to Checker. Register rejects them because method calls on such values
-// can panic later during evaluation.
-func nilChecker(chk Checker) bool {
-	if chk == nil {
+// nilChecker reports whether checker is nil, including typed nil interface
+// values.
+func nilChecker(checker health.Checker) bool {
+	if checker == nil {
 		return true
 	}
 
-	val := reflect.ValueOf(chk)
+	val := reflect.ValueOf(checker)
 	switch val.Kind() {
 	case reflect.Chan,
 		reflect.Func,

@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"arcoris.dev/health"
+	"arcoris.dev/healthregistry"
 )
 
 const testTimeout = time.Second
@@ -86,21 +87,37 @@ func mustCheck(t *testing.T, name string, res health.Result) health.Checker {
 	return checker
 }
 
-func mustRegistry(t *testing.T, target health.Target, checks ...health.Checker) *health.Registry {
+func mustRegistry(t *testing.T, target health.Target, checks ...health.Checker) *healthregistry.Registry {
 	t.Helper()
 
-	registry := health.NewRegistry()
-	if err := registry.Register(target, checks...); err != nil {
+	builder := healthregistry.NewBuilder()
+	if err := builder.Register(target, checks...); err != nil {
 		t.Fatalf("Register() = %v, want nil", err)
+	}
+
+	registry, err := builder.Build()
+	if err != nil {
+		t.Fatalf("Build() = %v, want nil", err)
 	}
 
 	return registry
 }
 
-func mustEvaluator(t *testing.T, r *health.Registry, opts ...EvaluatorOption) *Evaluator {
+func emptyRegistry(t *testing.T) *healthregistry.Registry {
 	t.Helper()
 
-	evaluator, err := NewEvaluator(r, opts...)
+	registry, err := healthregistry.NewBuilder().Build()
+	if err != nil {
+		t.Fatalf("Build(empty) = %v, want nil", err)
+	}
+
+	return registry
+}
+
+func mustEvaluator(t *testing.T, resolver health.CheckResolver, opts ...EvaluatorOption) *Evaluator {
+	t.Helper()
+
+	evaluator, err := NewEvaluator(resolver, opts...)
 	if err != nil {
 		t.Fatalf("NewEvaluator() = %v, want nil", err)
 	}

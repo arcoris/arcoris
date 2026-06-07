@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package health
 
 // Status identifies the observed operational health state of a component,

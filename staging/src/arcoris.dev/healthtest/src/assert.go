@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthtest
 
 import (
@@ -48,7 +47,7 @@ func AssertReportTarget(t testing.TB, report health.Report, want health.Target) 
 
 // AssertCheckOrder fails if report checks do not have names in order.
 //
-// Registry order is part of package health's public contract and many adapters
+// Resolver order is part of the health.CheckResolver contract and many adapters
 // preserve that order in their DTOs. This assertion keeps that intent explicit.
 func AssertCheckOrder(t testing.TB, report health.Report, names ...string) {
 	t.Helper()

@@ -14,10 +14,7 @@
 
 package health
 
-import (
-	"context"
-	"testing"
-)
+import "testing"
 
 func BenchmarkValidCheckName(b *testing.B) {
 	b.ReportAllocs()
@@ -34,34 +31,24 @@ func BenchmarkReasonIsValid(b *testing.B) {
 	}
 }
 
-func BenchmarkRegistryChecks(b *testing.B) {
-	registry := NewRegistry()
-	for _, name := range []string{"storage", "queue"} {
-		checkName := name
-		checker, err := NewCheck(checkName, func(context.Context) Result {
-			return Healthy(checkName)
-		})
-		if err != nil {
-			b.Fatalf("NewCheck() = %v", err)
-		}
-		if err := registry.Register(TargetReady, checker); err != nil {
-			b.Fatalf("Register() = %v", err)
-		}
-	}
+func BenchmarkResultIsValid(b *testing.B) {
+	result := Degraded("queue", ReasonOverloaded, "overloaded")
 	b.ReportAllocs()
 	for b.Loop() {
-		_ = registry.Checks(TargetReady)
+		_ = result.IsValid()
 	}
 }
 
-func BenchmarkGateCheck(b *testing.B) {
-	gate, err := NewGate("ready_gate", Healthy("ready_gate"))
-	if err != nil {
-		b.Fatalf("NewGate() = %v", err)
-	}
+func BenchmarkReportAggregateStatus(b *testing.B) {
+	report := Report{Target: TargetReady, Status: StatusUnhealthy, Checks: []Result{
+		Healthy("storage"),
+		Degraded("queue", ReasonOverloaded, "overloaded"),
+		Unknown("cache", ReasonNotObserved, "unknown"),
+		Unhealthy("database", ReasonFatal, "fatal"),
+	}}
 	b.ReportAllocs()
 	for b.Loop() {
-		_ = gate.Check(context.Background())
+		_ = report.AggregateStatus()
 	}
 }
 

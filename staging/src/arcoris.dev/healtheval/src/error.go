@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package eval
 
 import (
@@ -23,12 +22,12 @@ import (
 )
 
 var (
-	// ErrNilRegistry identifies a nil health.Registry passed to NewEvaluator.
+	// ErrNilResolver identifies a nil health.CheckResolver passed to NewEvaluator.
 	//
-	// Evaluator requires a registry owner. A nil registry would make target
+	// Evaluator requires a resolver owner. A nil resolver would make target
 	// evaluation ambiguous, so construction rejects it instead of producing an
 	// evaluator that fails later.
-	ErrNilRegistry = errors.New("health: nil registry")
+	ErrNilResolver = errors.New("health: nil check resolver")
 
 	// ErrNilEvaluatorOption identifies a nil option passed to NewEvaluator.
 	//

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package eval
 
 import (
@@ -22,13 +21,14 @@ import (
 	"time"
 
 	"arcoris.dev/health"
+	"arcoris.dev/healthregistry"
 )
 
 const executionTestTimeout = 5 * time.Second
 
 func mustRegisterExecutionCheck(
 	t *testing.T,
-	r *health.Registry,
+	builder *healthregistry.Builder,
 	target health.Target,
 	name string,
 	fn health.CheckFunc,
@@ -40,19 +40,24 @@ func mustRegisterExecutionCheck(
 		t.Fatalf("health.NewCheck(%q) = %v, want nil", name, err)
 	}
 
-	if err := r.Register(target, chk); err != nil {
+	if err := builder.Register(target, chk); err != nil {
 		t.Fatalf("Register(%s, %q) = %v, want nil", target, name, err)
 	}
 }
 
 func mustExecutionEvaluator(
 	t *testing.T,
-	r *health.Registry,
+	builder *healthregistry.Builder,
 	opts ...EvaluatorOption,
 ) *Evaluator {
 	t.Helper()
 
-	evaluator, err := NewEvaluator(r, opts...)
+	registry, err := builder.Build()
+	if err != nil {
+		t.Fatalf("Build() = %v, want nil", err)
+	}
+
+	evaluator, err := NewEvaluator(registry, opts...)
 	if err != nil {
 		t.Fatalf("NewEvaluator() = %v, want nil", err)
 	}

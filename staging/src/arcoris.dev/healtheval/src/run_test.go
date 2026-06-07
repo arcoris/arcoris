@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package eval
 
 import (
@@ -27,7 +26,7 @@ import (
 func TestEvaluateCheckHandlesNilChecker(t *testing.T) {
 	t.Parallel()
 
-	evaluator := mustEvaluator(t, health.NewRegistry(), WithClock(newStepClock(testObserved, testObserved)))
+	evaluator := mustEvaluator(t, emptyRegistry(t), WithClock(newStepClock(testObserved, testObserved)))
 
 	res := evaluator.evaluateCheck(context.Background(), nil, 0)
 	if res.Status != health.StatusUnknown || res.Reason != health.ReasonNotObserved {
@@ -51,7 +50,7 @@ func TestRunCheckTimeout(t *testing.T) {
 			return health.Healthy("blocked")
 		},
 	}
-	evaluator := mustEvaluator(t, health.NewRegistry())
+	evaluator := mustEvaluator(t, emptyRegistry(t))
 
 	res := evaluator.runCheck(context.Background(), checker, time.Nanosecond)
 	if res.Status != health.StatusUnknown || res.Reason != health.ReasonTimeout {
@@ -71,7 +70,7 @@ func TestRunCheckReturnsResultBeforeTimeout(t *testing.T) {
 			return health.Healthy("fast")
 		},
 	}
-	evaluator := mustEvaluator(t, health.NewRegistry())
+	evaluator := mustEvaluator(t, emptyRegistry(t))
 
 	res := evaluator.runCheck(context.Background(), checker, time.Second)
 	if res.Status != health.StatusHealthy {
@@ -96,7 +95,7 @@ func TestRunCheckParentCancellation(t *testing.T) {
 			return health.Healthy("blocked")
 		},
 	}
-	evaluator := mustEvaluator(t, health.NewRegistry())
+	evaluator := mustEvaluator(t, emptyRegistry(t))
 
 	res := evaluator.runCheck(ctx, checker, time.Second)
 	if res.Status != health.StatusUnknown || res.Reason != health.ReasonCanceled {
@@ -118,7 +117,7 @@ func TestRunCheckWithZeroTimeoutRunsInline(t *testing.T) {
 			return health.Healthy("inline")
 		},
 	}
-	evaluator := mustEvaluator(t, health.NewRegistry())
+	evaluator := mustEvaluator(t, emptyRegistry(t))
 
 	res := evaluator.runCheck(context.Background(), checker, 0)
 	if !called {

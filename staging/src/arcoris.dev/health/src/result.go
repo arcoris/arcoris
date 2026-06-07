@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package health
 
 import "time"
@@ -56,13 +55,31 @@ import "time"
 // default. Logs, tests, and owner-controlled diagnostics may inspect Cause when
 // they have permission to handle internal details.
 type Result struct {
-	Name     string
-	Status   Status
-	Reason   Reason
-	Message  string
+	// Name identifies the logical check that produced this result. Empty Name is
+	// allowed while a result is still detached from checker ownership.
+	Name string
+
+	// Status is the primary health state observed by the checker.
+	Status Status
+
+	// Reason is the stable machine-readable classification for Status.
+	Reason Reason
+
+	// Message is the safe human-readable explanation for diagnostics and
+	// transport adapters.
+	Message string
+
+	// Observed records when the result was produced or normalized. A zero value
+	// means no observation timestamp has been attached yet.
 	Observed time.Time
+
+	// Duration records how long the observation took. Negative durations are
+	// structurally invalid and should be normalized at ownership boundaries.
 	Duration time.Duration
-	Cause    error
+
+	// Cause preserves an internal lower-level cause for owner diagnostics. Public
+	// adapters must not expose Cause by default.
+	Cause error
 }
 
 // Healthy returns a healthy result for name.
@@ -132,164 +149,4 @@ func Unknown(name string, reason Reason, message string) Result {
 		Reason:  reason,
 		Message: message,
 	}
-}
-
-// WithCause returns a copy of r with cause attached as the internal lower-level
-// cause.
-//
-// Cause is preserved for logs, tests, diagnostics, and error classification. It
-// MUST NOT be exposed by public transport adapters by default.
-func (r Result) WithCause(cause error) Result {
-	r.Cause = cause
-	return r
-}
-
-// WithObserved returns a copy of r with observed set as the observation time.
-//
-// Observed should represent when the health state was produced or normalized,
-// not necessarily when it is later rendered by an adapter.
-func (r Result) WithObserved(observed time.Time) Result {
-	r.Observed = observed
-	return r
-}
-
-// WithDuration returns a copy of r with duration set as the observation
-// duration.
-//
-// The method does not reject negative values because Result is a plain value
-// type. Call Normalize to defensively repair invalid durations at ownership
-// boundaries.
-func (r Result) WithDuration(d time.Duration) Result {
-	r.Duration = d
-	return r
-}
-
-// WithMessage returns a copy of r with message set as the safe human-readable
-// message.
-//
-// The caller owns message safety. Message MUST remain suitable for the adapters
-// and diagnostics that will render it.
-func (r Result) WithMessage(message string) Result {
-	r.Message = message
-	return r
-}
-
-// WithReason returns a copy of r with reason set as the machine-readable reason.
-//
-// Reason should be stable enough for policy, diagnostics, and tests. It should
-// not contain caller-specific details, timestamps, resource identifiers, or raw
-// low-level error strings.
-func (r Result) WithReason(reason Reason) Result {
-	r.Reason = reason
-	return r
-}
-
-// Normalize returns a defensively normalized copy of r.
-//
-// Normalize is intended for checker, evaluator, registry, and report boundaries
-// where ownership of the result is known. It fills an empty Name with
-// defaultName, replaces invalid statuses with StatusUnknown, fills a zero
-// Observed value with observed, and clamps negative Duration to zero.
-//
-// Normalize does not rewrite Reason, Message, or Cause. Those fields preserve
-// checker-owned semantics and must be interpreted by the caller.
-func (r Result) Normalize(defaultName string, observed time.Time) Result {
-	if r.Name == "" {
-		r.Name = defaultName
-	}
-	if !r.Status.IsValid() {
-		r.Status = StatusUnknown
-	}
-	if r.Observed.IsZero() {
-		r.Observed = observed
-	}
-	if r.Duration < 0 {
-		r.Duration = 0
-	}
-
-	return r
-}
-
-// IsValid reports whether r is structurally valid as a health result.
-//
-// A valid result has a known Status value, a valid Reason value, and a
-// non-negative Duration. Name is not required for structural validity because the
-// zero value is an unnamed StatusUnknown result and aggregators may fill the name
-// from checker ownership.
-func (r Result) IsValid() bool {
-	return r.Status.IsValid() && r.Reason.IsValid() && r.Duration >= 0
-}
-
-// IsNamed reports whether r has a non-empty logical check name.
-//
-// Result names are used by registries, reports, tests, diagnostics, and adapters
-// that expose individual check output. Aggregators SHOULD normalize unnamed
-// checker results with the owning checker name.
-func (r Result) IsNamed() bool {
-	return r.Name != ""
-}
-
-// IsObserved reports whether r has an observation timestamp.
-//
-// A zero observation time means the result has not yet been timestamped by the
-// checker or evaluator that owns the observation boundary.
-func (r Result) IsObserved() bool {
-	return !r.Observed.IsZero()
-}
-
-// HasCause reports whether r preserves an internal lower-level cause.
-//
-// Cause is useful for owner-controlled diagnostics and tests. Public adapters
-// MUST NOT treat HasCause as permission to expose the cause.
-func (r Result) HasCause() bool {
-	return r.Cause != nil
-}
-
-// HasReason reports whether r has reason.
-//
-// HasReason performs exact reason matching. It intentionally does not interpret
-// reason categories or status severity. Use Reason category helpers when callers
-// need broader classification such as dependency, control, freshness, or
-// observation reasons.
-func (r Result) HasReason(reason Reason) bool {
-	return r.Reason == reason
-}
-
-// IsAffirmative reports whether r is a positive health observation.
-//
-// This is a convenience wrapper over Status.IsAffirmative.
-func (r Result) IsAffirmative() bool {
-	return r.Status.IsAffirmative()
-}
-
-// IsNegative reports whether r is a strictly negative health observation.
-//
-// This is a convenience wrapper over Status.IsNegative.
-func (r Result) IsNegative() bool {
-	return r.Status.IsNegative()
-}
-
-// IsKnown reports whether r represents a determined operational state.
-//
-// This is a convenience wrapper over Status.IsKnown.
-func (r Result) IsKnown() bool {
-	return r.Status.IsKnown()
-}
-
-// IsOperational reports whether r describes a component that is still operating
-// or making progress.
-//
-// This is a convenience wrapper over Status.IsOperational. Operational does not
-// mean ready, admitted, routable, or fully healthy.
-func (r Result) IsOperational() bool {
-	return r.Status.IsOperational()
-}
-
-// MoreSevereThan reports whether r has a more severe status than other.
-//
-// MoreSevereThan compares only Status severity. It intentionally ignores Reason,
-// Message, Duration, Observed, Cause, and Name because those fields do not define
-// the core status ordering.
-func (r Result) MoreSevereThan(other Result) bool {
-	return r.Status.MoreSevereThan(other.Status)
 }

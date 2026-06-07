@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package health
 
 // TargetPolicy defines how a Status is interpreted for one health target.

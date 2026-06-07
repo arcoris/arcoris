@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package health
 
 import (
@@ -36,6 +35,7 @@ var (
 // InvalidTargetError is classified as ErrInvalidTarget. Callers should classify
 // it with errors.Is and inspect Target only for diagnostics.
 type InvalidTargetError struct {
+	// Target is the invalid or non-concrete target rejected by the boundary.
 	Target Target
 }
 

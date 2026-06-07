@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package eval
 
 import "testing"
@@ -24,7 +23,7 @@ func TestEvaluatorErrorMessages(t *testing.T) {
 		err  error
 		want string
 	}{
-		{ErrNilRegistry, "health: nil registry"},
+		{ErrNilResolver, "health: nil check resolver"},
 		{ErrNilEvaluatorOption, "health: nil evaluator option"},
 		{ErrNilClock, "health: nil clock"},
 		{ErrInvalidTimeout, "health: invalid timeout"},

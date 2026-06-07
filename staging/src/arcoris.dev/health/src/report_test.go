@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package health
 
 import (
@@ -73,6 +72,37 @@ func TestReportPredicates(t *testing.T) {
 	}
 	if invalidCheck.IsValid() {
 		t.Fatal("report with invalid check reason should be invalid")
+	}
+}
+
+func TestReportAggregateStatusAndConsistency(t *testing.T) {
+	t.Parallel()
+
+	checks := []Result{
+		Healthy("storage"),
+		Degraded("queue", ReasonOverloaded, "queue overloaded"),
+		Unhealthy("database", ReasonFatal, "database failed"),
+	}
+
+	if got := AggregateStatus(nil); got != StatusUnknown {
+		t.Fatalf("AggregateStatus(nil) = %s, want unknown", got)
+	}
+	if got := AggregateStatus(checks); got != StatusUnhealthy {
+		t.Fatalf("AggregateStatus() = %s, want unhealthy", got)
+	}
+
+	report := Report{
+		Target: TargetReady,
+		Status: StatusHealthy,
+		Checks: checks,
+	}
+	if report.IsConsistent() {
+		t.Fatal("stale report should not be consistent")
+	}
+
+	consistent := report.WithAggregateStatus()
+	if consistent.Status != StatusUnhealthy || !consistent.IsConsistent() {
+		t.Fatalf("WithAggregateStatus() = %+v, want consistent unhealthy", consistent)
 	}
 }
 

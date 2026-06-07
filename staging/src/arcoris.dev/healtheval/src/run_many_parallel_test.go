@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package eval
 
 import (
@@ -23,12 +22,13 @@ import (
 	"time"
 
 	"arcoris.dev/health"
+	"arcoris.dev/healthregistry"
 )
 
-func TestEvaluatorParallelPreservesRegistryOrderWhenChecksFinishOutOfOrder(t *testing.T) {
+func TestEvaluatorParallelPreservesResolverOrderWhenChecksFinishOutOfOrder(t *testing.T) {
 	t.Parallel()
 
-	registry := health.NewRegistry()
+	registry := healthregistry.NewBuilder()
 	releaseFirst := make(chan struct{})
 	firstStarted := make(chan struct{})
 	secondDone := make(chan struct{})
@@ -90,7 +90,7 @@ func TestEvaluatorParallelRespectsMaxConcurrency(t *testing.T) {
 	const checkCount = 8
 	const limit = 3
 
-	registry := health.NewRegistry()
+	registry := healthregistry.NewBuilder()
 	release := make(chan struct{})
 	started := make(chan struct{}, checkCount)
 
@@ -155,7 +155,7 @@ func TestEvaluatorParallelRespectsMaxConcurrency(t *testing.T) {
 func TestEvaluatorParallelAggregatesMostSevereStatus(t *testing.T) {
 	t.Parallel()
 
-	registry := health.NewRegistry()
+	registry := healthregistry.NewBuilder()
 	mustRegisterExecutionCheck(t, registry, health.TargetReady, "healthy", func(context.Context) health.Result {
 		return health.Healthy("healthy")
 	})
@@ -230,7 +230,7 @@ func TestEvaluatorParallelPreservesNormalization(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			registry := health.NewRegistry()
+			registry := healthregistry.NewBuilder()
 			mustRegisterExecutionCheck(t, registry, health.TargetReady, tc.checkName, tc.fn)
 
 			evaluator := mustExecutionEvaluator(
@@ -296,7 +296,7 @@ func TestEvaluatorParallelTimeoutAndCancel(t *testing.T) {
 			release := make(chan struct{})
 			defer close(release)
 
-			registry := health.NewRegistry()
+			registry := healthregistry.NewBuilder()
 			mustRegisterExecutionCheck(t, registry, health.TargetReady, "blocking_one", blockingAfterContextDone(release))
 			mustRegisterExecutionCheck(t, registry, health.TargetReady, "blocking_two", blockingAfterContextDone(release))
 

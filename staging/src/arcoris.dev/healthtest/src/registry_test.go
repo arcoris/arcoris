@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthtest
 
 import (
 	"testing"
 
 	"arcoris.dev/health"
+	"arcoris.dev/healthregistry"
 )
 
 func TestRegistryHelpers(t *testing.T) {
@@ -43,9 +43,13 @@ func TestRegistryHelpers(t *testing.T) {
 func TestRegisterHelper(t *testing.T) {
 	t.Parallel()
 
-	registry := health.NewRegistry()
-	Register(t, registry, health.TargetLive, HealthyChecker("live"))
+	builder := healthregistry.NewBuilder()
+	Register(t, builder, health.TargetLive, HealthyChecker("live"))
 
+	registry, err := builder.Build()
+	if err != nil {
+		t.Fatalf("Build() = %v, want nil", err)
+	}
 	if !registry.Has(health.TargetLive, "live") {
 		t.Fatal("registry missing live check")
 	}

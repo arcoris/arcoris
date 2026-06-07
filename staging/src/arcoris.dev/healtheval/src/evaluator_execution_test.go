@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package eval
 
 import (
@@ -20,12 +19,13 @@ import (
 	"testing"
 
 	"arcoris.dev/health"
+	"arcoris.dev/healthregistry"
 )
 
 func TestEvaluatorDefaultExecutionIsSequential(t *testing.T) {
 	t.Parallel()
 
-	registry := health.NewRegistry()
+	registry := healthregistry.NewBuilder()
 	order := make(chan string, 2)
 
 	mustRegisterExecutionCheck(t, registry, health.TargetReady, "first", func(context.Context) health.Result {
@@ -60,7 +60,7 @@ func TestEvaluatorDefaultExecutionIsSequential(t *testing.T) {
 func TestEvaluatorTargetExecutionPolicyOverrideWins(t *testing.T) {
 	t.Parallel()
 
-	registry := health.NewRegistry()
+	registry := healthregistry.NewBuilder()
 	mustRegisterExecutionCheck(t, registry, health.TargetReady, "ready", func(context.Context) health.Result {
 		return health.Healthy("ready")
 	})
@@ -87,7 +87,7 @@ func TestEvaluatorTargetExecutionPolicyOverrideWins(t *testing.T) {
 func TestEvaluatorTargetExecutionPolicyAppliesOnlyToConfiguredTarget(t *testing.T) {
 	t.Parallel()
 
-	registry := health.NewRegistry()
+	registry := healthregistry.NewBuilder()
 	mustRegisterExecutionCheck(t, registry, health.TargetReady, "ready", func(context.Context) health.Result {
 		return health.Healthy("ready")
 	})

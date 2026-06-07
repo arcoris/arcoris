@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package health
 
 import (
@@ -130,8 +129,11 @@ func MustErrorCheck(name string, fn ErrorCheckFunc) Checker {
 // invariants. Callers should create function-backed checkers through NewCheck,
 // MustCheck, NewErrorCheck, or MustErrorCheck.
 type checkFunc struct {
+	// name is the validated stable check name returned by Name.
 	name string
-	fn   CheckFunc
+
+	// fn is the non-nil implementation supplied at construction time.
+	fn CheckFunc
 }
 
 // Name returns the stable check name.
