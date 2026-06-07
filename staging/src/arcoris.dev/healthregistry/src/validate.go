@@ -46,12 +46,12 @@ func prepareChecks(target health.Target, checks []health.Checker) ([]preparedChe
 	var failures []error
 
 	for index, checker := range checks {
-		if err := health.ValidateChecker(checker); err != nil {
-			failures = append(failures, registrationValidationError(target, index, checker, err))
+		name, err := health.CheckerName(checker)
+		if err != nil {
+			failures = append(failures, registrationValidationError(target, index, name, err))
 			continue
 		}
 
-		name := checker.Name()
 		if previous, ok := seen[name]; ok {
 			failures = append(failures, DuplicateCheckError{
 				Target:        target,
@@ -82,7 +82,7 @@ func prepareChecks(target health.Target, checks []health.Checker) ([]preparedChe
 func registrationValidationError(
 	target health.Target,
 	index int,
-	checker health.Checker,
+	name string,
 	err error,
 ) error {
 	if errors.Is(err, health.ErrNilChecker) {
@@ -95,7 +95,7 @@ func registrationValidationError(
 	return InvalidCheckNameError{
 		Target: target,
 		Index:  index,
-		Name:   checker.Name(),
+		Name:   name,
 		Err:    err,
 	}
 }

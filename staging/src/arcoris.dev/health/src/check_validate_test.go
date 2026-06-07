@@ -47,3 +47,40 @@ func TestValidateCheckerRejectsNilTypedNilAndInvalidNames(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckerNameReturnsValidatedName(t *testing.T) {
+	t.Parallel()
+
+	name, err := CheckerName(mustCheck(t, "storage", Healthy("storage")))
+	if err != nil {
+		t.Fatalf("CheckerName(valid) = %v, want nil", err)
+	}
+	if name != "storage" {
+		t.Fatalf("CheckerName(valid) name = %q, want storage", name)
+	}
+}
+
+func TestCheckerNameReturnsInvalidNameWithError(t *testing.T) {
+	t.Parallel()
+
+	name, err := CheckerName(checkerFunc{name: "bad-name"})
+	if !errors.Is(err, ErrInvalidCheckName) {
+		t.Fatalf("CheckerName(invalid) = %v, want ErrInvalidCheckName", err)
+	}
+	if name != "bad-name" {
+		t.Fatalf("CheckerName(invalid) name = %q, want bad-name", name)
+	}
+}
+
+func TestCheckerNameRejectsTypedNil(t *testing.T) {
+	t.Parallel()
+
+	var typed *typedNilChecker
+	name, err := CheckerName(typed)
+	if !errors.Is(err, ErrNilChecker) {
+		t.Fatalf("CheckerName(typed nil) = %v, want ErrNilChecker", err)
+	}
+	if name != "" {
+		t.Fatalf("CheckerName(typed nil) name = %q, want empty", name)
+	}
+}

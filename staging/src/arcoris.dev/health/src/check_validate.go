@@ -14,15 +14,36 @@
 
 package health
 
-// ValidateChecker validates the root Checker contract without executing Check.
+// CheckerName returns the validated stable name for checker.
 //
-// ValidateChecker rejects nil and typed-nil checkers with ErrNilChecker, then
-// validates Checker.Name with ValidateCheckName. It does not recover panics from
-// Name because an unstable checker identity is a checker implementation bug.
-func ValidateChecker(checker Checker) error {
+// CheckerName rejects nil and typed-nil checkers with ErrNilChecker, then reads
+// Checker.Name exactly once and validates it with ValidateCheckName. The
+// returned name is the checker identity that registries, check sets, and
+// evaluators should use for the rest of that validation or execution boundary.
+//
+// If the checker name is invalid, CheckerName returns the invalid name together
+// with the root check-name validation error. It does not execute Check and does
+// not recover panics from Name because an unstable checker identity is a checker
+// implementation bug.
+func CheckerName(checker Checker) (string, error) {
 	if nilChecker(checker) {
-		return ErrNilChecker
+		return "", ErrNilChecker
 	}
 
-	return ValidateCheckName(checker.Name())
+	name := checker.Name()
+	if err := ValidateCheckName(name); err != nil {
+		return name, err
+	}
+
+	return name, nil
+}
+
+// ValidateChecker validates the root Checker contract without executing Check.
+//
+// ValidateChecker is a convenience wrapper around CheckerName for callers that
+// only need the validation outcome. Callers that need to keep using the checked
+// name should call CheckerName so they do not read Checker.Name more than once.
+func ValidateChecker(checker Checker) error {
+	_, err := CheckerName(checker)
+	return err
 }

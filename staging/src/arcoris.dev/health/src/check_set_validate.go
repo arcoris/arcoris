@@ -32,19 +32,19 @@ func prepareCheckSet(checks []Checker) ([]Checker, map[string]struct{}, error) {
 	indexes := make(map[string]int, len(checks))
 
 	for index, checker := range checks {
-		if err := ValidateChecker(checker); err != nil {
+		name, err := CheckerName(checker)
+		if err != nil {
 			if errors.Is(err, ErrNilChecker) {
 				return nil, nil, NilCheckError{Index: index}
 			}
 
 			return nil, nil, InvalidCheckNameError{
 				Index: index,
-				Name:  checker.Name(),
+				Name:  name,
 				Err:   err,
 			}
 		}
 
-		name := checker.Name()
 		if previous, exists := indexes[name]; exists {
 			return nil, nil, DuplicateCheckNameError{
 				Name:          name,
