@@ -14,6 +14,8 @@
 
 package health
 
+import "errors"
+
 // prepareCheckSet validates checks and builds the immutable storage used by
 // CheckSet.
 //
@@ -30,15 +32,19 @@ func prepareCheckSet(checks []Checker) ([]Checker, map[string]struct{}, error) {
 	indexes := make(map[string]int, len(checks))
 
 	for index, checker := range checks {
-		if nilChecker(checker) {
-			return nil, nil, ErrNilChecker
+		if err := ValidateChecker(checker); err != nil {
+			if errors.Is(err, ErrNilChecker) {
+				return nil, nil, NilCheckError{Index: index}
+			}
+
+			return nil, nil, InvalidCheckNameError{
+				Index: index,
+				Name:  checker.Name(),
+				Err:   err,
+			}
 		}
 
 		name := checker.Name()
-		if err := ValidateCheckName(name); err != nil {
-			return nil, nil, err
-		}
-
 		if previous, exists := indexes[name]; exists {
 			return nil, nil, DuplicateCheckNameError{
 				Name:          name,

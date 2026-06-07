@@ -116,6 +116,25 @@ func TestCheckSetRejectsInvalidInputs(t *testing.T) {
 	}
 }
 
+func TestCheckSetRejectsInvalidInputsWithTypedDiagnostics(t *testing.T) {
+	t.Parallel()
+
+	_, nilErr := NewCheckSet(TargetReady, nil)
+	var nilCheck NilCheckError
+	if !errors.As(nilErr, &nilCheck) || nilCheck.Index != 0 {
+		t.Fatalf("nil checker error = %v, want NilCheckError index 0", nilErr)
+	}
+
+	_, nameErr := NewCheckSet(TargetReady, checkerFunc{name: "bad-name"})
+	var invalidName InvalidCheckNameError
+	if !errors.As(nameErr, &invalidName) ||
+		invalidName.Index != 0 ||
+		invalidName.Name != "bad-name" ||
+		!errors.Is(invalidName.Err, ErrInvalidCheckName) {
+		t.Fatalf("invalid name error = %v, want InvalidCheckNameError", nameErr)
+	}
+}
+
 func TestCheckSetDuplicateCarriesIndexes(t *testing.T) {
 	t.Parallel()
 

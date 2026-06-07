@@ -62,6 +62,14 @@ var (
 	// cannot accidentally or intentionally publish another checker's identity in
 	// reports.
 	ErrMismatchedCheckResult = errors.New("health: mismatched check result")
+
+	// ErrMismatchedResolvedTarget identifies a resolver that returned a CheckSet
+	// for a different target than the target being evaluated.
+	//
+	// This is an evaluator-owned resolver contract violation. Evaluator returns
+	// an unknown report for the requested target and does not execute checks from
+	// the mismatched set.
+	ErrMismatchedResolvedTarget = errors.New("healtheval: mismatched resolved target")
 )
 
 // InvalidCheckResultError describes an invalid health.Result returned by a
@@ -115,4 +123,34 @@ func (e MismatchedCheckResultError) Error() string {
 // Is reports whether target matches the mismatched check result classification.
 func (e MismatchedCheckResultError) Is(target error) bool {
 	return target == ErrMismatchedCheckResult
+}
+
+// MismatchedResolvedTargetError describes a resolver result that belongs to a
+// different target than the target requested by Evaluator.
+//
+// MismatchedResolvedTargetError is classified as ErrMismatchedResolvedTarget.
+// Callers should use errors.Is for classification and inspect fields only for
+// diagnostics.
+type MismatchedResolvedTargetError struct {
+	// Requested is the concrete target passed to Evaluator.Evaluate.
+	Requested health.Target
+
+	// Resolved is the target carried by the returned health.CheckSet.
+	Resolved health.Target
+}
+
+// Error returns the mismatched resolved target message.
+func (e MismatchedResolvedTargetError) Error() string {
+	return fmt.Sprintf(
+		"%v: requested=%s resolved=%s",
+		ErrMismatchedResolvedTarget,
+		e.Requested.String(),
+		e.Resolved.String(),
+	)
+}
+
+// Is reports whether target matches the mismatched resolved target
+// classification.
+func (e MismatchedResolvedTargetError) Is(target error) bool {
+	return target == ErrMismatchedResolvedTarget
 }

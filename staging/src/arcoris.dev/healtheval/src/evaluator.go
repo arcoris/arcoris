@@ -27,7 +27,8 @@ import (
 // Evaluator is transport-neutral. It does not expose HTTP handlers, map gRPC
 // serving states, log diagnostics, emit metrics, perform retries, run periodic
 // probes, or decide restart, admission, routing, or scheduling behavior. It only
-// owns the synchronous evaluation boundary for checks returned by a health.CheckResolver.
+// owns the synchronous evaluation boundary for checks returned by a
+// health.CheckResolver.
 //
 // Evaluation is deterministic with respect to resolver order. The default
 // execution policy is sequential. Component owners may configure bounded
@@ -38,12 +39,13 @@ import (
 // Evaluator applies a cooperative context to every check and, when a timeout is
 // configured, also enforces a caller-visible result boundary. A checker that
 // ignores its context may continue running after the evaluator has returned a
-// timeout result. health.Checker implementations SHOULD observe ctx whenever they can
-// block, perform I/O, wait on another goroutine, or acquire external resources.
+// timeout result. health.Checker implementations SHOULD observe ctx whenever
+// they can block, perform I/O, wait on another goroutine, or acquire external
+// resources.
 //
 // Evaluator recovers checker panics and converts them into unhealthy results
-// with health.ReasonPanic. Panic details are preserved only in health.Result.Cause and MUST
-// NOT be exposed by public adapters by default.
+// with health.ReasonPanic. Panic details are preserved only in
+// health.Result.Cause and MUST NOT be exposed by public adapters by default.
 type Evaluator struct {
 	resolver health.CheckResolver
 
@@ -99,14 +101,14 @@ func NewEvaluator(resolver health.CheckResolver, opts ...EvaluatorOption) (*Eval
 // Evaluate runs all checks registered for target and returns an aggregated
 // report.
 //
-// target MUST be concrete. Invalid or non-concrete targets return a health.StatusUnknown
-// report and an error classified as health.ErrInvalidTarget.
+// target MUST be concrete. Invalid or non-concrete targets return a
+// health.StatusUnknown report and an error classified as health.ErrInvalidTarget.
 //
 // A nil ctx is treated as context.Background. This mirrors defensive boundaries
 // in other adjacent ARCORIS packages and avoids panics in diagnostics and tests.
 //
-// If target has no registered checks, Evaluate returns a health.StatusUnknown report.
-// Absence of checks is not treated as healthy because health requires an
+// If target has no registered checks, Evaluate returns a health.StatusUnknown
+// report. Absence of checks is not treated as healthy because health requires an
 // affirmative observation.
 //
 // Evaluate is synchronous regardless of execution policy. Parallel execution
@@ -117,11 +119,7 @@ func (e *Evaluator) Evaluate(ctx context.Context, target health.Target) (health.
 	started := e.clock.Now()
 
 	if !target.IsConcrete() {
-		return health.Report{
-			Target:   target,
-			Status:   health.StatusUnknown,
-			Observed: started,
-		}, health.InvalidTargetError{Target: target}
+		return unknownReport(target, started), health.InvalidTargetError{Target: target}
 	}
 
 	if ctx == nil {
@@ -130,20 +128,18 @@ func (e *Evaluator) Evaluate(ctx context.Context, target health.Target) (health.
 
 	set, err := e.resolver.ResolveChecks(target)
 	if err != nil {
-		return health.Report{
-			Target:   target,
-			Status:   health.StatusUnknown,
-			Observed: started,
-		}, err
+		return unknownReport(target, started), err
+	}
+	if set.Target() != target {
+		return unknownReport(target, started), MismatchedResolvedTargetError{
+			Requested: target,
+			Resolved:  set.Target(),
+		}
 	}
 
 	checks := set.Checks()
 	if len(checks) == 0 {
-		return health.Report{
-			Target:   target,
-			Status:   health.StatusUnknown,
-			Observed: started,
-		}, nil
+		return unknownReport(target, started), nil
 	}
 
 	timeout := e.timeoutFor(target)
@@ -160,6 +156,16 @@ func (e *Evaluator) Evaluate(ctx context.Context, target health.Target) (health.
 		Duration: nonNegativeDuration(e.clock.Since(started)),
 		Checks:   results,
 	}, nil
+}
+
+// unknownReport returns a conservative report for evaluation boundaries that
+// could not produce affirmative check observations.
+func unknownReport(target health.Target, observed time.Time) health.Report {
+	return health.Report{
+		Target:   target,
+		Status:   health.StatusUnknown,
+		Observed: observed,
+	}
 }
 
 // timeoutFor returns the effective check timeout for target.

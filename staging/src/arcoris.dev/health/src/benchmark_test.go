@@ -14,7 +14,10 @@
 
 package health
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func BenchmarkValidCheckName(b *testing.B) {
 	b.ReportAllocs()
@@ -36,6 +39,67 @@ func BenchmarkResultIsValid(b *testing.B) {
 	b.ReportAllocs()
 	for b.Loop() {
 		_ = result.IsValid()
+	}
+}
+
+func BenchmarkNewCheckSet(b *testing.B) {
+	checks := []Checker{
+		MustCheck("storage", func(ctx context.Context) Result { return Healthy("storage") }),
+		MustCheck("queue", func(ctx context.Context) Result { return Healthy("queue") }),
+		MustCheck("database", func(ctx context.Context) Result { return Healthy("database") }),
+	}
+
+	b.ReportAllocs()
+	for b.Loop() {
+		set, err := NewCheckSet(TargetReady, checks...)
+		if err != nil {
+			b.Fatalf("NewCheckSet() = %v", err)
+		}
+		_ = set
+	}
+}
+
+func BenchmarkCheckSetChecks(b *testing.B) {
+	set := MustCheckSet(
+		TargetReady,
+		MustCheck("storage", func(ctx context.Context) Result { return Healthy("storage") }),
+		MustCheck("queue", func(ctx context.Context) Result { return Healthy("queue") }),
+		MustCheck("database", func(ctx context.Context) Result { return Healthy("database") }),
+	)
+
+	b.ReportAllocs()
+	for b.Loop() {
+		_ = set.Checks()
+	}
+}
+
+func BenchmarkCheckSetRange(b *testing.B) {
+	set := MustCheckSet(
+		TargetReady,
+		MustCheck("storage", func(ctx context.Context) Result { return Healthy("storage") }),
+		MustCheck("queue", func(ctx context.Context) Result { return Healthy("queue") }),
+		MustCheck("database", func(ctx context.Context) Result { return Healthy("database") }),
+	)
+
+	b.ReportAllocs()
+	for b.Loop() {
+		set.Range(func(Checker) bool {
+			return true
+		})
+	}
+}
+
+func BenchmarkCheckSetHas(b *testing.B) {
+	set := MustCheckSet(
+		TargetReady,
+		MustCheck("storage", func(ctx context.Context) Result { return Healthy("storage") }),
+		MustCheck("queue", func(ctx context.Context) Result { return Healthy("queue") }),
+		MustCheck("database", func(ctx context.Context) Result { return Healthy("database") }),
+	)
+
+	b.ReportAllocs()
+	for b.Loop() {
+		_ = set.Has("database")
 	}
 }
 

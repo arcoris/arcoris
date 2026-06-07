@@ -26,6 +26,51 @@ import (
 // used by separate targets when each target owns different health semantics.
 var ErrDuplicateCheckName = errors.New("health: duplicate check name")
 
+// NilCheckError describes a nil checker in a CheckSet constructor input.
+//
+// NilCheckError is classified as ErrNilChecker. Index identifies the rejected
+// checker position in the caller-supplied input.
+type NilCheckError struct {
+	// Index is the checker position in the constructor input.
+	Index int
+}
+
+// Error returns the nil check message.
+func (e NilCheckError) Error() string {
+	return fmt.Sprintf("%v: index=%d", ErrNilChecker, e.Index)
+}
+
+// Is reports whether target matches ErrNilChecker.
+func (e NilCheckError) Is(target error) bool {
+	return target == ErrNilChecker
+}
+
+// InvalidCheckNameError describes an invalid checker name in a CheckSet
+// constructor input.
+//
+// InvalidCheckNameError unwraps ErrEmptyCheckName or ErrInvalidCheckName. Index
+// identifies the rejected checker position in the caller-supplied input.
+type InvalidCheckNameError struct {
+	// Index is the checker position in the constructor input.
+	Index int
+
+	// Name is the invalid checker name returned by Checker.Name.
+	Name string
+
+	// Err is the root check-name validation error.
+	Err error
+}
+
+// Error returns the invalid check-name message.
+func (e InvalidCheckNameError) Error() string {
+	return fmt.Sprintf("%v: index=%d name=%q", e.Err, e.Index, e.Name)
+}
+
+// Unwrap returns the root check-name validation error.
+func (e InvalidCheckNameError) Unwrap() error {
+	return e.Err
+}
+
 // DuplicateCheckNameError describes a duplicate checker name in a CheckSet.
 //
 // The error is classified as ErrDuplicateCheckName. Index identifies the later

@@ -38,3 +38,45 @@ func TestReportAggregateHelpersRepairStaleStatus(t *testing.T) {
 		t.Fatalf("WithAggregateStatus() = %+v, want consistent", repaired)
 	}
 }
+
+func TestAggregateStatusSeverityEdges(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		checks []Result
+		want   Status
+	}{
+		{name: "empty", checks: nil, want: StatusUnknown},
+		{name: "healthy", checks: []Result{Healthy("storage")}, want: StatusHealthy},
+		{name: "starting", checks: []Result{Healthy("storage"), Starting("boot", ReasonStarting, "starting")}, want: StatusStarting},
+		{name: "degraded", checks: []Result{Starting("boot", ReasonStarting, "starting"), Degraded("queue", ReasonOverloaded, "overloaded")}, want: StatusDegraded},
+		{name: "unknown", checks: []Result{Degraded("queue", ReasonOverloaded, "overloaded"), Unknown("cache", ReasonNotObserved, "unknown")}, want: StatusUnknown},
+		{name: "unhealthy", checks: []Result{Unknown("cache", ReasonNotObserved, "unknown"), Unhealthy("db", ReasonFatal, "fatal")}, want: StatusUnhealthy},
+		{name: "invalid", checks: []Result{Unhealthy("db", ReasonFatal, "fatal"), {Name: "bad", Status: Status(99)}}, want: Status(99)},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := AggregateStatus(tc.checks); got != tc.want {
+				t.Fatalf("AggregateStatus() = %s, want %s", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestReportConsistencyEdges(t *testing.T) {
+	t.Parallel()
+
+	if !(Report{}).IsConsistent() {
+		t.Fatal("zero report should be consistent")
+	}
+	if !(Report{Target: TargetReady, Status: StatusUnknown}).IsConsistent() {
+		t.Fatal("empty concrete unknown report should be consistent")
+	}
+	if (Report{Target: TargetReady, Status: StatusHealthy}).IsConsistent() {
+		t.Fatal("empty concrete healthy report should be inconsistent")
+	}
+}

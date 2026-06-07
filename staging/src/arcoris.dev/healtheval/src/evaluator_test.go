@@ -85,6 +85,35 @@ func TestEvaluateReturnsUnknownForTargetWithoutChecks(t *testing.T) {
 	}
 }
 
+func TestEvaluateRejectsMismatchedResolvedTargetWithoutExecutingChecks(t *testing.T) {
+	t.Parallel()
+
+	checker := mustCheck(t, "wrong_target_check", health.Unhealthy("wrong_target_check", health.ReasonFatal, "should not run"))
+	wrongSet := health.MustCheckSet(health.TargetLive, checker)
+	resolver := health.CheckResolverFunc(func(health.Target) (health.CheckSet, error) {
+		return wrongSet, nil
+	})
+	evaluator := mustEvaluator(t, resolver, WithClock(newStepClock(testObserved)))
+
+	report, err := evaluator.Evaluate(context.Background(), health.TargetReady)
+	if !errors.Is(err, ErrMismatchedResolvedTarget) {
+		t.Fatalf("Evaluate() = %v, want ErrMismatchedResolvedTarget", err)
+	}
+
+	var mismatch MismatchedResolvedTargetError
+	if !errors.As(err, &mismatch) ||
+		mismatch.Requested != health.TargetReady ||
+		mismatch.Resolved != health.TargetLive {
+		t.Fatalf("mismatch = %+v, want requested ready resolved live", mismatch)
+	}
+	if report.Target != health.TargetReady ||
+		report.Status != health.StatusUnknown ||
+		report.Observed != testObserved ||
+		len(report.Checks) != 0 {
+		t.Fatalf("mismatched resolver report = %+v", report)
+	}
+}
+
 func TestEvaluateRunsChecksInResolverOrderAndAggregatesSeverity(t *testing.T) {
 	t.Parallel()
 

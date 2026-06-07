@@ -16,7 +16,6 @@ package healthregistry
 
 import (
 	"errors"
-	"reflect"
 
 	"arcoris.dev/health"
 )
@@ -47,25 +46,12 @@ func prepareChecks(target health.Target, checks []health.Checker) ([]preparedChe
 	var failures []error
 
 	for index, checker := range checks {
-		if nilChecker(checker) {
-			failures = append(failures, NilCheckerError{
-				Target: target,
-				Index:  index,
-			})
+		if err := health.ValidateChecker(checker); err != nil {
+			failures = append(failures, registrationValidationError(target, index, checker, err))
 			continue
 		}
 
 		name := checker.Name()
-		if err := health.ValidateCheckName(name); err != nil {
-			failures = append(failures, InvalidCheckNameError{
-				Target: target,
-				Index:  index,
-				Name:   name,
-				Err:    err,
-			})
-			continue
-		}
-
 		if previous, ok := seen[name]; ok {
 			failures = append(failures, DuplicateCheckError{
 				Target:        target,
@@ -91,23 +77,25 @@ func prepareChecks(target health.Target, checks []health.Checker) ([]preparedChe
 	return prepared, nil
 }
 
-// nilChecker reports whether checker is nil, including typed nil interface
-// values.
-func nilChecker(checker health.Checker) bool {
-	if checker == nil {
-		return true
+// registrationValidationError converts root checker validation into
+// registry-owned target/index diagnostics.
+func registrationValidationError(
+	target health.Target,
+	index int,
+	checker health.Checker,
+	err error,
+) error {
+	if errors.Is(err, health.ErrNilChecker) {
+		return NilCheckerError{
+			Target: target,
+			Index:  index,
+		}
 	}
 
-	val := reflect.ValueOf(checker)
-	switch val.Kind() {
-	case reflect.Chan,
-		reflect.Func,
-		reflect.Interface,
-		reflect.Map,
-		reflect.Pointer,
-		reflect.Slice:
-		return val.IsNil()
-	default:
-		return false
+	return InvalidCheckNameError{
+		Target: target,
+		Index:  index,
+		Name:   checker.Name(),
+		Err:    err,
 	}
 }

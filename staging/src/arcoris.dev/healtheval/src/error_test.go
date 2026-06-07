@@ -14,7 +14,12 @@
 
 package eval
 
-import "testing"
+import (
+	"errors"
+	"testing"
+
+	"arcoris.dev/health"
+)
 
 func TestEvaluatorErrorMessages(t *testing.T) {
 	t.Parallel()
@@ -27,6 +32,7 @@ func TestEvaluatorErrorMessages(t *testing.T) {
 		{ErrNilEvaluatorOption, "health: nil evaluator option"},
 		{ErrNilClock, "health: nil clock"},
 		{ErrInvalidTimeout, "health: invalid timeout"},
+		{ErrMismatchedResolvedTarget, "healtheval: mismatched resolved target"},
 	}
 
 	for _, tc := range tests {
@@ -37,5 +43,18 @@ func TestEvaluatorErrorMessages(t *testing.T) {
 				t.Fatalf("Error() = %q, want %q", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestMismatchedResolvedTargetErrorClassification(t *testing.T) {
+	t.Parallel()
+
+	err := MismatchedResolvedTargetError{
+		Requested: health.TargetReady,
+		Resolved:  health.TargetLive,
+	}
+
+	if !errors.Is(err, ErrMismatchedResolvedTarget) {
+		t.Fatal("MismatchedResolvedTargetError should match ErrMismatchedResolvedTarget")
 	}
 }

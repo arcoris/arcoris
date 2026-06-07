@@ -26,6 +26,11 @@
 //   - TargetPolicy helpers for interpreting target status;
 //   - shared identifier validation for stable health names and reasons.
 //
+// The root package also includes tiny shutdown and drain checker adapters. They
+// remain root-owned because they only adapt standard-library channel/context
+// signals into Checker values. They must stay small and must not grow into a
+// lifecycle controller, scheduler, probe loop, or runtime framework.
+//
 // It does not store checkers, own mutable gates, execute checks, publish
 // metrics, expose transports, run periodic probes, perform service discovery,
 // drive lifecycle transitions, or make restart, admission, routing, scheduling,

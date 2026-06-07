@@ -37,11 +37,11 @@ import (
 // NewUnknown to construct a gate with explicit ownership. A Gate must not be
 // copied after first use.
 type Gate struct {
-	// mu protects name and result. The name is immutable after construction, but
-	// reading it under the same ownership model keeps future changes simple.
+	// mu protects the mutable result field.
 	mu sync.RWMutex
 
-	// name is the stable health check name owned by the gate.
+	// name is the stable health check name owned by the gate. It is immutable
+	// after construction, so Name reads it without locking.
 	name string
 
 	// result is the latest owner-published health observation.
