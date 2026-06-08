@@ -14,16 +14,14 @@
 
 package liveconfig
 
-import "arcoris.dev/snapshot"
+import (
+	"testing"
 
-// contractValue anchors Holder interface assertions without exposing a public
-// test-only type.
-//
-// These assertions keep the read-side API aligned with package snapshot. Holder
-// is intentionally a source, not a publisher; consumers can read snapshots and
-// revisions, but they cannot publish around Apply.
-type contractValue struct{}
+	"arcoris.dev/snapshot"
+)
 
-var _ snapshot.Source[contractValue] = (*Holder[contractValue])(nil)
-var _ snapshot.StampedSource[contractValue] = (*Holder[contractValue])(nil)
-var _ snapshot.RevisionSource = (*Holder[contractValue])(nil)
+func TestHolderImplementsSnapshotContracts(t *testing.T) {
+	var _ snapshot.Source[testConfig] = (*Holder[testConfig])(nil)
+	var _ snapshot.StampedSource[testConfig] = (*Holder[testConfig])(nil)
+	var _ snapshot.RevisionSource = (*Holder[testConfig])(nil)
+}

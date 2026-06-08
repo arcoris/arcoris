@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package liveconfig
 
 import (
@@ -106,5 +105,36 @@ func TestNormalizerErrorRejectsCandidate(t *testing.T) {
 	}
 	if got := h.LastError(); got != boom {
 		t.Fatalf("LastError() = %v, want %v", got, boom)
+	}
+}
+
+func TestNormalizerFailureDoesNotCallValidator(t *testing.T) {
+	errNormalize := errors.New("normalize failed")
+	validatorCalled := false
+	h := newTestHolder(
+		t,
+		testConfig{Name: "initial"},
+		WithNormalizer(func(cfg testConfig) (testConfig, error) {
+			if cfg.Name == "bad" {
+				return testConfig{}, errNormalize
+			}
+			return cfg, nil
+		}),
+		WithValidator(func(testConfig) error {
+			validatorCalled = true
+			return nil
+		}),
+	)
+	validatorCalled = false
+
+	_, err := h.Apply(testConfig{Name: "bad"})
+	if err != errNormalize {
+		t.Fatalf("Apply() error = %v, want %v", err, errNormalize)
+	}
+	if validatorCalled {
+		t.Fatal("validator was called after normalize failure")
+	}
+	if got := h.LastError(); got != errNormalize {
+		t.Fatalf("LastError() = %v, want %v", got, errNormalize)
 	}
 }

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package liveconfig
 
 // Validator checks a normalized candidate configuration before publication.
@@ -24,7 +23,13 @@ package liveconfig
 // Validators should check semantic invariants of the final candidate: bounds,
 // required fields, mutually exclusive fields, and relationships between values.
 // They should not read external sources or perform side effects, because Apply
-// holds the holder write mutex while validation runs.
+// holds the holder write mutex while validation runs. They must not block
+// indefinitely, start goroutines, or call back into the same holder.
+//
+// If a validator returns an error, Apply returns ChangeReasonValidateFailed,
+// preserves the previous last-good value, records LastError, and does not
+// advance Revision. If a validator panics, the panic propagates and the previous
+// last-good value and LastError remain visible.
 type Validator[T any] func(T) error
 
 // validateValue applies cfg's validator when one is configured.

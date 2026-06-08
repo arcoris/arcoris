@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package liveconfig
 
 // CloneFunc copies a configuration value across the Holder ownership boundary.
@@ -24,8 +23,13 @@ package liveconfig
 // publication.
 //
 // A clone function should return a value that is fully owned by the holder. For
-// nested mutable state, that usually means copying every map, slice, and pointer
-// target that remains reachable from the published configuration.
+// nested mutable state, that usually means copying every map, slice, buffer, and
+// pointer target that remains reachable from the published configuration.
+//
+// CloneFunc runs as part of the serialized Apply transaction. It should be
+// fast, deterministic, and side-effect-free; it must not perform external I/O,
+// block indefinitely, start goroutines, or call back into the same Holder. If it
+// panics, the panic propagates and the previous last-good value remains visible.
 type CloneFunc[T any] func(T) T
 
 // identityClone returns val unchanged.

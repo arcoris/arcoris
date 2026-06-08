@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package liveconfig
 
 import (
@@ -100,5 +99,35 @@ func TestValidatorRejectsInvalidInitialConfig(t *testing.T) {
 	}
 	if h != nil {
 		t.Fatalf("New() holder = %#v, want nil", h)
+	}
+}
+
+func TestValidatorFailureDoesNotCallEqual(t *testing.T) {
+	errValidate := errors.New("validate failed")
+	equalCalled := false
+	h := newTestHolder(
+		t,
+		testConfig{Name: "initial"},
+		WithValidator(func(cfg testConfig) error {
+			if cfg.Name == "bad" {
+				return errValidate
+			}
+			return nil
+		}),
+		WithEqual(func(testConfig, testConfig) bool {
+			equalCalled = true
+			return false
+		}),
+	)
+
+	_, err := h.Apply(testConfig{Name: "bad"})
+	if err != errValidate {
+		t.Fatalf("Apply() error = %v, want %v", err, errValidate)
+	}
+	if equalCalled {
+		t.Fatal("equal was called after validate failure")
+	}
+	if got := h.LastError(); got != errValidate {
+		t.Fatalf("LastError() = %v, want %v", got, errValidate)
 	}
 }

@@ -28,6 +28,10 @@ package liveconfig
 // Apply holds the holder write mutex and should be pure: they must not mutate
 // inputs, perform external I/O, block indefinitely, start goroutines, or call
 // back into the same holder.
+//
+// If EqualFunc panics, the panic propagates and the previous last-good value and
+// LastError remain visible. EqualFunc is not a notification hook; callers that
+// need reload fan-out should layer that behavior outside liveconfig.
 type EqualFunc[T any] func(a, b T) bool
 
 // equalValue reports whether cfg's equality function considers a and b equal.

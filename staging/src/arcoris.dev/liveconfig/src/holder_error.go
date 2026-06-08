@@ -14,16 +14,19 @@
 
 package liveconfig
 
-import "arcoris.dev/snapshot"
+import "errors"
 
-// contractValue anchors Holder interface assertions without exposing a public
-// test-only type.
+// ErrNilHolder reports a method call on a nil or unconstructed Holder receiver.
 //
-// These assertions keep the read-side API aligned with package snapshot. Holder
-// is intentionally a source, not a publisher; consumers can read snapshots and
-// revisions, but they cannot publish around Apply.
-type contractValue struct{}
+// Holder methods panic with this value instead of returning zero snapshots from
+// a nil or zero-value receiver. Such a Holder has no publisher, no last-good
+// value, and no meaningful revision, so treating it as a programming error
+// keeps failures explicit.
+var ErrNilHolder = errors.New("liveconfig: nil holder")
 
-var _ snapshot.Source[contractValue] = (*Holder[contractValue])(nil)
-var _ snapshot.StampedSource[contractValue] = (*Holder[contractValue])(nil)
-var _ snapshot.RevisionSource = (*Holder[contractValue])(nil)
+// requireHolder panics when h is nil or was not constructed with New.
+func requireHolder[T any](h *Holder[T]) {
+	if h == nil || h.pub == nil {
+		panic(ErrNilHolder)
+	}
+}

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package liveconfig
 
 import (
 	"errors"
+	"slices"
 	"testing"
 )
 
@@ -145,5 +145,91 @@ func TestEqualEvaluatesAfterCandidatePipeline(t *testing.T) {
 	}
 	if len(equalCandidate.Tags) != 2 || equalCandidate.Tags[0] != "cloned" || equalCandidate.Tags[1] != "normalized" {
 		t.Fatalf("equal candidate tags = %#v, want cloned normalized", equalCandidate.Tags)
+	}
+}
+
+func TestEqualSeesPreparedCandidateAndCurrentPublishedValue(t *testing.T) {
+	var current, candidate testConfig
+	h := newTestHolder(
+		t,
+		testConfig{Name: "current", Tags: []string{"published"}},
+		WithNormalizer(func(cfg testConfig) (testConfig, error) {
+			cfg.Tags = append(cfg.Tags, "prepared")
+			return cfg, nil
+		}),
+		WithEqual(func(a, b testConfig) bool {
+			current = a
+			candidate = b
+			return false
+		}),
+	)
+
+	_, err := h.Apply(testConfig{Name: "next", Tags: []string{"candidate"}})
+	if err != nil {
+		t.Fatalf("Apply() error = %v", err)
+	}
+	if got, want := current.Name, "current"; got != want {
+		t.Fatalf("equal current name = %q, want %q", got, want)
+	}
+	if got, want := candidate.Tags, []string{"candidate", "prepared"}; !slices.Equal(got, want) {
+		t.Fatalf("equal candidate tags = %#v, want %#v", got, want)
+	}
+}
+
+func TestApplyEqualNoopDoesNotAdvanceRevision(t *testing.T) {
+	h := newTestHolder(t, testConfig{Name: "initial", Limit: 1}, WithEqual(equalTestConfig))
+	prev := h.Revision()
+
+	change, err := h.Apply(testConfig{Name: "initial", Limit: 1})
+	if err != nil {
+		t.Fatalf("Apply() error = %v", err)
+	}
+	if change.Current.Revision != prev {
+		t.Fatalf("Current.Revision = %d, want %d", change.Current.Revision, prev)
+	}
+	if got := h.Revision(); got != prev {
+		t.Fatalf("Revision() = %d, want %d", got, prev)
+	}
+}
+
+func TestApplyEqualNoopDoesNotChangeStampedUpdated(t *testing.T) {
+	clk := &mutableClock{now: newTestClock().now}
+	h, err := New(testConfig{Name: "initial"}, WithClock[testConfig](clk), WithEqual(equalTestConfig))
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	prev := h.Stamped()
+
+	clk.now = clk.now.Add(10)
+	_, err = h.Apply(testConfig{Name: "initial"})
+	if err != nil {
+		t.Fatalf("Apply() error = %v", err)
+	}
+	if got := h.Stamped().Updated; !got.Equal(prev.Updated) {
+		t.Fatalf("Stamped().Updated = %s, want %s", got, prev.Updated)
+	}
+}
+
+func TestApplyEqualNoopReturnsPreviousAsCurrent(t *testing.T) {
+	h := newTestHolder(t, testConfig{Name: "initial", Limit: 1}, WithEqual(equalTestConfig))
+	prev := h.Snapshot()
+
+	change, err := h.Apply(testConfig{Name: "initial", Limit: 1})
+	if err != nil {
+		t.Fatalf("Apply() error = %v", err)
+	}
+	assertTestSnapshot(t, change.Current, prev)
+}
+
+func TestConcurrentEqualApplyDoesNotAdvanceRevision(t *testing.T) {
+	h := newTestHolder(t, testConfig{Name: "initial", Limit: 1}, WithEqual(equalTestConfig))
+	prev := h.Revision()
+
+	runConcurrent(32, func(int) {
+		_, _ = h.Apply(testConfig{Name: "initial", Limit: 1})
+	})
+
+	if got := h.Revision(); got != prev {
+		t.Fatalf("Revision() = %d, want %d", got, prev)
 	}
 }

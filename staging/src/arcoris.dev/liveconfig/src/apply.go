@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package liveconfig
 
 // Apply evaluates next as a candidate live configuration value.
@@ -78,30 +77,4 @@ func (h *Holder[T]) Apply(next T) (Change[T], error) {
 		Changed:  true,
 		Reason:   ChangeReasonPublished,
 	}, nil
-}
-
-// prepare applies Holder's clone, normalization, and validation pipeline to a
-// candidate before it can be compared or published.
-//
-// New and Apply share this helper so the initial configuration and later
-// updates obey identical ownership, canonicalization, and validation rules.
-// prepare returns the zero value on error because rejected candidates must not
-// leak into holder state. On success the reason is unknown because Apply makes
-// the final published-versus-equal classification after it compares with the
-// current snapshot.
-func (h *Holder[T]) prepare(next T) (T, ChangeReason, error) {
-	candidate := cloneValue(h.cfg, next)
-
-	normalized, err := normalizeValue(h.cfg, candidate)
-	if err != nil {
-		var zero T
-		return zero, ChangeReasonNormalizeFailed, err
-	}
-
-	if err := validateValue(h.cfg, normalized); err != nil {
-		var zero T
-		return zero, ChangeReasonValidateFailed, err
-	}
-
-	return normalized, ChangeReasonUnknown, nil
 }

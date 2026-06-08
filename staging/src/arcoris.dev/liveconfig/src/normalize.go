@@ -18,7 +18,8 @@ package liveconfig
 //
 // A normalizer may apply defaults, canonicalize names, normalize nil and empty
 // collections, derive fields, or reject a candidate that cannot be normalized.
-// It runs after cloning and before validation.
+// It runs after cloning and before validation. If it creates or reuses mutable
+// nested state, the returned value must still be owned by the holder.
 //
 // Normalization is part of the candidate transaction. If it returns an error,
 // Holder keeps the previous last-good value, records the error as LastError for
@@ -26,7 +27,8 @@ package liveconfig
 //
 // Normalizers run while Apply holds the holder write mutex. They should not
 // perform external I/O, block indefinitely, start goroutines, or call back into
-// the same holder.
+// the same holder. If a normalizer panics, the panic propagates and the previous
+// last-good value and LastError remain visible.
 type Normalizer[T any] func(T) (T, error)
 
 // normalizeValue applies cfg's normalizer when one is configured.

@@ -16,6 +16,10 @@ package liveconfig
 
 import (
 	"errors"
+	"maps"
+	"slices"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -32,6 +36,21 @@ type testClock struct {
 	now time.Time
 }
 
+type mutableClock struct {
+	now time.Time
+}
+
+type mutableConfig struct {
+	Name   string
+	Tags   []string
+	Labels map[string]string
+	Nested *nestedConfig
+}
+
+type nestedConfig struct {
+	Values []string
+}
+
 func (c testClock) Now() time.Time {
 	return c.now
 }
@@ -41,6 +60,18 @@ func (c testClock) Since(t time.Time) time.Duration {
 }
 
 func (c testClock) Until(t time.Time) time.Duration {
+	return t.Sub(c.now)
+}
+
+func (c *mutableClock) Now() time.Time {
+	return c.now
+}
+
+func (c *mutableClock) Since(t time.Time) time.Duration {
+	return c.now.Sub(t)
+}
+
+func (c *mutableClock) Until(t time.Time) time.Duration {
 	return t.Sub(c.now)
 }
 
@@ -72,6 +103,36 @@ func equalTestConfig(a, b testConfig) bool {
 	return true
 }
 
+func cloneMutableConfig(v mutableConfig) mutableConfig {
+	out := mutableConfig{
+		Name:   v.Name,
+		Tags:   slices.Clone(v.Tags),
+		Labels: maps.Clone(v.Labels),
+	}
+	if v.Nested != nil {
+		out.Nested = &nestedConfig{
+			Values: slices.Clone(v.Nested.Values),
+		}
+	}
+	return out
+}
+
+func equalMutableConfig(a, b mutableConfig) bool {
+	return a.Name == b.Name &&
+		slices.Equal(a.Tags, b.Tags) &&
+		maps.Equal(a.Labels, b.Labels) &&
+		equalNestedConfig(a.Nested, b.Nested)
+}
+
+func equalNestedConfig(a, b *nestedConfig) bool {
+	switch {
+	case a == nil || b == nil:
+		return a == b
+	default:
+		return slices.Equal(a.Values, b.Values)
+	}
+}
+
 func newTestHolder(t *testing.T, initial testConfig, opts ...Option[testConfig]) *Holder[testConfig] {
 	t.Helper()
 
@@ -89,148 +150,182 @@ func newTestHolder(t *testing.T, initial testConfig, opts ...Option[testConfig])
 	return h
 }
 
-func TestNewPublishesInitialConfig(t *testing.T) {
-	h := newTestHolder(t, testConfig{Name: "initial", Limit: 3, Tags: []string{"a"}})
+var (
+	benchmarkSnapshotSink snapshot.Snapshot[testConfig]
+	benchmarkStampedSink  snapshot.Stamped[testConfig]
+	benchmarkRevisionSink snapshot.Revision
+	benchmarkChangeSink   Change[testConfig]
+	benchmarkErrorSink    error
+	benchmarkSinkMu       sync.Mutex
+)
 
-	snap := h.Snapshot()
-	if snap.IsZeroRevision() {
-		t.Fatal("Snapshot revision is zero")
-	}
-	if got, want := snap.Revision, snapshot.ZeroRevision.Next(); got != want {
-		t.Fatalf("Snapshot revision = %d, want %d", got, want)
-	}
-	if got, want := snap.Value.Name, "initial"; got != want {
-		t.Fatalf("Snapshot value name = %q, want %q", got, want)
-	}
-	if got, want := snap.Value.Limit, 3; got != want {
-		t.Fatalf("Snapshot value limit = %d, want %d", got, want)
-	}
-	if err := h.LastError(); err != nil {
-		t.Fatalf("LastError() = %v, want nil", err)
-	}
+type benchmarkError struct{}
+
+func (benchmarkError) Error() string {
+	return "benchmark error"
 }
 
-func TestSnapshotReturnsCurrentValue(t *testing.T) {
-	h := newTestHolder(t, testConfig{Name: "initial", Limit: 1})
+func newBenchmarkHolder(b *testing.B, opts ...Option[testConfig]) *Holder[testConfig] {
+	b.Helper()
 
-	_, err := h.Apply(testConfig{Name: "current", Limit: 2})
-	if err != nil {
-		t.Fatalf("Apply() error = %v", err)
-	}
-
-	snap := h.Snapshot()
-	if got, want := snap.Value.Name, "current"; got != want {
-		t.Fatalf("Snapshot().Value.Name = %q, want %q", got, want)
-	}
-	if got, want := snap.Value.Limit, 2; got != want {
-		t.Fatalf("Snapshot().Value.Limit = %d, want %d", got, want)
-	}
-}
-
-func TestNewRejectsInvalidInitialConfig(t *testing.T) {
-	h, err := New(
-		testConfig{Name: "invalid", Limit: -1},
+	base := []Option[testConfig]{
+		WithClock[testConfig](newTestClock()),
+		WithClone(cloneTestConfig),
 		WithValidator(validTestConfig),
-	)
-	if err == nil {
-		t.Fatal("New() error = nil, want validation error")
 	}
-	if h != nil {
-		t.Fatalf("New() holder = %#v, want nil", h)
-	}
-}
+	base = append(base, opts...)
 
-func TestStampedReturnsPublishedTimestamp(t *testing.T) {
-	clk := newTestClock()
-	h, err := New(
-		testConfig{Name: "initial"},
-		WithClock[testConfig](clk),
-		WithValidator(validTestConfig),
-	)
+	h, err := New(testConfig{Name: "initial", Limit: 1}, base...)
 	if err != nil {
-		t.Fatalf("New() error = %v", err)
+		b.Fatalf("New() error = %v", err)
+	}
+	return h
+}
+
+func benchmarkConfigWithTags(n int) testConfig {
+	tags := make([]string, n)
+	for i := range tags {
+		tags[i] = "tag"
 	}
 
-	stamped := h.Stamped()
-	if stamped.IsZeroRevision() {
-		t.Fatal("Stamped().Revision is zero")
-	}
-	if stamped.Updated.IsZero() {
-		t.Fatal("Stamped().Updated is zero")
-	}
-	if !stamped.Updated.Equal(clk.now) {
-		t.Fatalf("Stamped().Updated = %s, want %s", stamped.Updated, clk.now)
-	}
-	if got, want := stamped.Value.Name, "initial"; got != want {
-		t.Fatalf("Stamped value name = %q, want %q", got, want)
+	return testConfig{
+		Name:  "tagged",
+		Limit: n,
+		Tags:  tags,
 	}
 }
 
-func TestRevisionReturnsCurrentRevision(t *testing.T) {
-	h := newTestHolder(t, testConfig{Name: "initial"})
+type snapshotLocal struct {
+	snapshot snapshot.Snapshot[testConfig]
+}
 
-	if got, want := h.Revision(), h.Snapshot().Revision; got != want {
-		t.Fatalf("Revision() = %d, want %d", got, want)
+func (l snapshotLocal) keep() {
+	benchmarkSinkMu.Lock()
+	benchmarkSnapshotSink = l.snapshot
+	benchmarkSinkMu.Unlock()
+}
+
+type stampedLocal struct {
+	stamped snapshot.Stamped[testConfig]
+}
+
+func (l stampedLocal) keep() {
+	benchmarkSinkMu.Lock()
+	benchmarkStampedSink = l.stamped
+	benchmarkSinkMu.Unlock()
+}
+
+type revisionLocal struct {
+	revision snapshot.Revision
+}
+
+func (l revisionLocal) keep() {
+	benchmarkSinkMu.Lock()
+	benchmarkRevisionSink = l.revision
+	benchmarkSinkMu.Unlock()
+}
+
+type errorLocal struct {
+	err error
+}
+
+func (l errorLocal) keep() {
+	benchmarkSinkMu.Lock()
+	benchmarkErrorSink = l.err
+	benchmarkSinkMu.Unlock()
+}
+
+type changeLocal struct {
+	change Change[testConfig]
+	err    error
+}
+
+func (l changeLocal) keep() {
+	benchmarkSinkMu.Lock()
+	benchmarkChangeSink = l.change
+	benchmarkErrorSink = l.err
+	benchmarkSinkMu.Unlock()
+}
+
+func startBenchmarkApplier(h *Holder[testConfig]) func() {
+	done := make(chan struct{})
+	var next atomic.Int64
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-done:
+				return
+			default:
+				limit := int(next.Add(1))
+				_, _ = h.Apply(testConfig{Name: "next", Limit: limit})
+			}
+		}
+	}()
+
+	return func() {
+		close(done)
+		wg.Wait()
 	}
 }
 
-func TestHolderImplementsSnapshotContracts(t *testing.T) {
-	var _ snapshot.Source[testConfig] = (*Holder[testConfig])(nil)
-	var _ snapshot.StampedSource[testConfig] = (*Holder[testConfig])(nil)
-	var _ snapshot.RevisionSource = (*Holder[testConfig])(nil)
+func runConcurrent(n int, fn func(int)) {
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		i := i
+		go func() {
+			defer wg.Done()
+			<-start
+			fn(i)
+		}()
+	}
+	close(start)
+	wg.Wait()
 }
 
-func TestNilHolderPanics(t *testing.T) {
-	tests := []struct {
-		name string
-		call func()
-	}{
-		{
-			name: "Snapshot",
-			call: func() {
-				var h *Holder[testConfig]
-				_ = h.Snapshot()
-			},
-		},
-		{
-			name: "Stamped",
-			call: func() {
-				var h *Holder[testConfig]
-				_ = h.Stamped()
-			},
-		},
-		{
-			name: "Revision",
-			call: func() {
-				var h *Holder[testConfig]
-				_ = h.Revision()
-			},
-		},
-		{
-			name: "LastError",
-			call: func() {
-				var h *Holder[testConfig]
-				_ = h.LastError()
-			},
-		},
-		{
-			name: "Apply",
-			call: func() {
-				var h *Holder[testConfig]
-				_, _ = h.Apply(testConfig{})
-			},
-		},
+func runConcurrentErrors(t *testing.T, n int, fn func(int) error) {
+	t.Helper()
+
+	errs := make(chan error, n)
+	runConcurrent(n, func(i int) {
+		errs <- fn(i)
+	})
+	close(errs)
+
+	for err := range errs {
+		if err != nil {
+			t.Fatalf("concurrent operation error = %v", err)
+		}
 	}
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			defer func() {
-				if got := recover(); got != ErrNilHolder {
-					t.Fatalf("panic = %v, want %v", got, ErrNilHolder)
-				}
-			}()
+func requirePanic(t *testing.T, fn func()) {
+	t.Helper()
 
-			tt.call()
-		})
+	defer func() {
+		if recover() == nil {
+			t.Fatal("panic = nil, want panic")
+		}
+	}()
+
+	fn()
+}
+
+func assertTestSnapshot(t *testing.T, got, want snapshot.Snapshot[testConfig]) {
+	t.Helper()
+	if got.Revision != want.Revision || !equalTestConfig(got.Value, want.Value) {
+		t.Fatalf("Snapshot() = %#v, want %#v", got, want)
+	}
+}
+
+func assertMutableConfig(t *testing.T, got, want mutableConfig) {
+	t.Helper()
+	if !equalMutableConfig(got, want) {
+		t.Fatalf("mutable config = %#v, want %#v", got, want)
 	}
 }

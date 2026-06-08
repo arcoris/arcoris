@@ -15,7 +15,6 @@
 package liveconfig
 
 import (
-	"errors"
 	"sync"
 
 	"arcoris.dev/snapshot"
@@ -62,86 +61,4 @@ type Holder[T any] struct {
 	// lastErr is the last rejected Apply error. Successful changed and no-op
 	// applies clear it.
 	lastErr error
-}
-
-// ErrNilHolder reports a method call on a nil or unconstructed Holder receiver.
-//
-// Holder methods panic with this value instead of returning zero snapshots from
-// a nil or zero-value receiver. Such a Holder has no publisher, no last-good
-// value, and no meaningful revision, so treating it as a programming error
-// keeps failures explicit.
-var ErrNilHolder = errors.New("liveconfig: nil holder")
-
-// New creates a Holder containing initial as its first last-good value.
-//
-// New applies the same candidate pipeline used by Apply: clone, normalize,
-// validate, and publish. If the initial value is rejected, New returns an error
-// and no Holder. A successful New always publishes initial at a non-zero
-// revision so readers never observe an uninitialized holder.
-func New[T any](initial T, opts ...Option[T]) (*Holder[T], error) {
-	cfg := newConfig(opts...)
-	h := &Holder[T]{
-		cfg: cfg,
-		pub: snapshot.NewPublisher[T](
-			snapshot.WithClock(cfg.clock),
-		),
-	}
-
-	cur, _, err := h.prepare(initial)
-	if err != nil {
-		return nil, err
-	}
-
-	h.pub.Publish(cur)
-	return h, nil
-}
-
-// Snapshot returns the current lightweight live configuration snapshot.
-//
-// Snapshot delegates to the internal snapshot.Publisher. It does not take the
-// Holder write mutex, does not clone the value, and does not update LastError.
-// The returned Value must be treated as immutable.
-func (h *Holder[T]) Snapshot() snapshot.Snapshot[T] {
-	requireHolder(h)
-	return h.pub.Snapshot()
-}
-
-// Stamped returns the current stamped live configuration snapshot.
-//
-// Stamped includes the local publication time assigned when the current value
-// was accepted. It has the same immutability and read-side behavior as Snapshot.
-func (h *Holder[T]) Stamped() snapshot.Stamped[T] {
-	requireHolder(h)
-	return h.pub.Stamped()
-}
-
-// Revision returns the current source-local configuration revision.
-//
-// Revision is a cheap read-side change check for consumers that do not need the
-// value itself. The revision is local to this holder.
-func (h *Holder[T]) Revision() snapshot.Revision {
-	requireHolder(h)
-	return h.pub.Revision()
-}
-
-// LastError returns the most recent rejected Apply error.
-//
-// LastError is diagnostic state for reload loops and operators. It is set only
-// when Apply rejects a candidate after clone, normalization, or validation. It
-// is cleared after any successful Apply attempt, including an EqualFunc no-op,
-// because the most recent candidate was accepted.
-func (h *Holder[T]) LastError() error {
-	requireHolder(h)
-
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	return h.lastErr
-}
-
-// requireHolder panics when h is nil or was not constructed with New.
-func requireHolder[T any](h *Holder[T]) {
-	if h == nil || h.pub == nil {
-		panic(ErrNilHolder)
-	}
 }

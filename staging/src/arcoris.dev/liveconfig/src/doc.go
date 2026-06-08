@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package liveconfig provides validated, revisioned holders for last-good
 // runtime configuration.
 //
@@ -26,8 +25,9 @@
 // Last-good means readers continue to observe the most recent accepted
 // configuration after a failed Apply. A failed candidate is still reported to
 // the caller and recorded by LastError, but it never becomes visible through
-// Snapshot or Stamped. This lets reload loops keep trying new input while the
-// component continues running on a coherent configuration snapshot.
+// Snapshot or Stamped, and it does not advance Revision. This lets reload loops
+// keep trying new input while the component continues running on a coherent
+// configuration snapshot.
 //
 // Published values are immutable by contract. Holder does not clone values on
 // reads; Snapshot, Stamped, and Revision expose the value published by the
@@ -46,6 +46,11 @@
 // to the current value is a successful no-op: the revision does not advance and
 // LastError is cleared. Without an EqualFunc, every valid candidate is treated
 // as changed and published.
+//
+// LastError is diagnostic state for the most recent returned normalization or
+// validation error. It is not a source-loading error channel, not a panic
+// channel, and not sanitized for transport exposure. Pipeline panics propagate
+// to the caller; the previous last-good value remains visible.
 //
 // Revisions are source-local publication versions inherited from package
 // snapshot. They are useful for cheap change detection by consumers of the same

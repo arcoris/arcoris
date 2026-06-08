@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package liveconfig
 
 // ChangeReason classifies the outcome of one Holder.Apply attempt.
