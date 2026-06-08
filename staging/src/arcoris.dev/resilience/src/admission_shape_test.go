@@ -23,8 +23,8 @@ import (
 	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
 	"arcoris.dev/resilience/bulkhead"
 	"arcoris.dev/resilience/bulkheadadmission"
-	"arcoris.dev/resilience/deadline"
-	"arcoris.dev/resilience/retrybudget"
+	"arcoris.dev/resilience/deadlineadmission"
+	"arcoris.dev/resilience/retrybudgetadmission"
 )
 
 func TestBulkheadAdmissionResultShape(t *testing.T) {
@@ -68,7 +68,8 @@ func TestRetryBudgetAdmissionResultShape(t *testing.T) {
 	t.Parallel()
 
 	allowedLimiter := newRetryBudget(t, 1)
-	success := allowedLimiter.TryAdmit(retrybudget.Request{})
+	success := retrybudgetadmission.New(allowedLimiter).
+		TryAdmit(retrybudgetadmission.Request{})
 	if !success.IsValid() || !success.Decision().IsAdmitted() {
 		t.Fatalf("retrybudget success = %+v, want valid admitted", success.Decision())
 	}
@@ -78,12 +79,13 @@ func TestRetryBudgetAdmissionResultShape(t *testing.T) {
 	if success.HasGrant() || !success.HasMetadata() {
 		t.Fatalf("success grant=%t metadata=%t, want false,true", success.HasGrant(), success.HasMetadata())
 	}
-	if metadata, ok := success.Metadata(); !ok || metadata.Value.Attempts.Retry != 1 {
+	if metadata, ok := success.Metadata(); !ok || metadata.Snapshot.Value.Attempts.Retry != 1 {
 		t.Fatalf("success metadata = (%+v,%t), want retry spent", metadata, ok)
 	}
 
 	deniedLimiter := newRetryBudget(t, 0)
-	denied := deniedLimiter.TryAdmit(retrybudget.Request{})
+	denied := retrybudgetadmission.New(deniedLimiter).
+		TryAdmit(retrybudgetadmission.Request{})
 	if !denied.IsValid() || !denied.Decision().IsDenied() {
 		t.Fatalf("retrybudget denial = %+v, want valid denied", denied.Decision())
 	}
@@ -93,7 +95,7 @@ func TestRetryBudgetAdmissionResultShape(t *testing.T) {
 	if denied.HasGrant() || !denied.HasMetadata() {
 		t.Fatalf("denied grant=%t metadata=%t, want false,true", denied.HasGrant(), denied.HasMetadata())
 	}
-	if metadata, ok := denied.Metadata(); !ok || metadata.Value.Attempts.Retry != 0 {
+	if metadata, ok := denied.Metadata(); !ok || metadata.Snapshot.Value.Attempts.Retry != 0 {
 		t.Fatalf("denied metadata = (%+v,%t), want no retry spent", metadata, ok)
 	}
 }
@@ -101,7 +103,7 @@ func TestRetryBudgetAdmissionResultShape(t *testing.T) {
 func TestDeadlineAdmissionResultShape(t *testing.T) {
 	t.Parallel()
 
-	allowed := deadline.TryAdmit(deadline.Request{
+	allowed := deadlineadmission.TryAdmit(deadlineadmission.Request{
 		Context: context.Background(),
 		Now:     compositionNow,
 		Min:     time.Second,
@@ -116,7 +118,7 @@ func TestDeadlineAdmissionResultShape(t *testing.T) {
 		t.Fatalf("allowed grant=%t metadata=%t, want false,true", allowed.HasGrant(), allowed.HasMetadata())
 	}
 
-	denied := deadline.TryAdmit(deadline.Request{
+	denied := deadlineadmission.TryAdmit(deadlineadmission.Request{
 		Context: contextWithDeadline(t, compositionNow.Add(-time.Second)),
 		Now:     compositionNow,
 		Min:     time.Second,
@@ -137,8 +139,9 @@ func TestResilienceAdmissionSurfacesUseDistinctEffectSemantics(t *testing.T) {
 
 	bulkheadResult := bulkheadadmission.New(bulkhead.New(1)).
 		TryAdmit(bulkheadadmission.Request{Amount: 1})
-	budgetResult := newRetryBudget(t, 1).TryAdmit(retrybudget.Request{})
-	deadlineResult := deadline.TryAdmit(deadline.Request{
+	budgetResult := retrybudgetadmission.New(newRetryBudget(t, 1)).
+		TryAdmit(retrybudgetadmission.Request{})
+	deadlineResult := deadlineadmission.TryAdmit(deadlineadmission.Request{
 		Context: context.Background(),
 		Now:     compositionNow,
 	})

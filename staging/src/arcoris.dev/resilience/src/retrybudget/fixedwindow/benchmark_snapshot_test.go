@@ -12,19 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+package fixedwindow
 
-package retrybudget
+import "testing"
 
-import (
-	"reflect"
-	"testing"
-)
+func BenchmarkLimiterSnapshot(b *testing.B) {
+	limiter, _ := newBenchmarkLimiter(b)
+	b.ReportAllocs()
+	for b.Loop() {
+		benchmarkSnapshot = limiter.Snapshot()
+	}
+}
 
-func TestRequestIsEmptyDomainRequest(t *testing.T) {
-	t.Parallel()
-
-	var req Request
-	if fields := reflect.TypeOf(req).NumField(); fields != 0 {
-		t.Fatalf("Request field count = %d, want 0", fields)
+func BenchmarkLimiterRevision(b *testing.B) {
+	limiter, _ := newBenchmarkLimiter(b)
+	b.ReportAllocs()
+	for b.Loop() {
+		benchmarkRevision = limiter.Revision()
 	}
 }

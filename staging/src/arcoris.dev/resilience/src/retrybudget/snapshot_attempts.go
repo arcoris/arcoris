@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retrybudget
 
 import "math"
@@ -27,6 +26,15 @@ type AttemptsSnapshot struct {
 	// Retry is the number of retry attempts admitted or observed by the
 	// implementation in the scope represented by the snapshot.
 	Retry uint64
+}
+
+// IsValid reports whether s is structurally valid.
+//
+// All uint64 attempt counts are valid today. The method still exists so
+// Snapshot validation has one explicit check for every sub-value and future
+// attempt fields can add invariants without changing caller code.
+func (s AttemptsSnapshot) IsValid() bool {
+	return true
 }
 
 // Total returns Original + Retry, saturating at math.MaxUint64 on overflow.

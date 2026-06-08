@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package fixedwindow provides a local fixed-window retry budget implementation.
 //
 // The limiter admits retry attempts according to a simple traffic-ratio budget
@@ -23,11 +22,8 @@
 // Original attempts are recorded with RecordOriginal. Retry attempts are admitted
 // with TryAdmitRetry, which is an atomic check-and-spend operation. A successful
 // admission records the retry attempt before returning to the caller.
-// Limiter also implements retrybudget.AdmissionAdmitter: TryAdmit delegates to
-// the same atomic check-and-spend path and returns an admission.Result with a
-// committed no-grant effect for admitted retries.
 // A Limiter must be created with New. Nil or uninitialized Limiter receivers
-// panic with stable receiver-validation messages.
+// panic with package-owned receiver-validation errors.
 //
 // Fixed windows are local and observation-aligned. The first window starts when
 // the limiter is created, and subsequent windows start when a write path observes
@@ -37,6 +33,19 @@
 // Snapshot reads do not rotate windows. A quiet limiter may keep publishing the
 // last observed window until RecordOriginal or TryAdmitRetry observes time
 // advancement.
+//
+// Default retry capacity uses floating-point ratio configuration:
+//
+//	allowed = minRetries + floor(originalAttempts * ratio)
+//
+// The result saturates instead of wrapping. The ratio is intentionally bounded to
+// the conservative range [0, 1]. For very large original-attempt counters, the
+// floating-point multiplication is approximate; implementations and tests treat
+// saturation and conservative validation as the stable contract.
+//
+// Minimum retry allowance is available at the start of each window, even before
+// RecordOriginal observes traffic. Set minRetries to zero for strict
+// traffic-proportional behavior.
 //
 // Limiter is local to one process. It does not coordinate distributed budgets,
 // smooth window boundaries, execute retries, classify errors, compute delays,

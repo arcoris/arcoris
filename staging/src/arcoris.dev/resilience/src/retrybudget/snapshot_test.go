@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retrybudget
 
 import "testing"
@@ -34,6 +33,7 @@ func TestSnapshotIsValid(t *testing.T) {
 	}{
 		{name: "valid", val: valid, want: true},
 		{name: "invalid kind", val: invalidKind, want: false},
+		{name: "valid attempts", val: valid, want: true},
 		{name: "invalid capacity", val: invalidCapacity, want: false},
 		{name: "invalid window", val: invalidWindow, want: false},
 		{name: "invalid policy", val: invalidPolicy, want: false},

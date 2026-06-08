@@ -12,18 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-// Package retrybudget defines contracts and shared value types for limiting
+// Package retrybudget defines domain contracts and value types for limiting
 // retry amplification.
 //
 // A retry budget limits retry attempts relative to a budget signal such as
 // original traffic, active work, or adaptive runtime capacity. This root package
-// defines common recording, admission, decision, reason, kind, and snapshot
-// contracts. Concrete accounting strategies live in implementation subpackages.
-// Implementations expose retry admission through two compatible surfaces:
-// TryAdmitRetry returns the retry-budget Decision for direct callers, while
-// TryAdmit(Request) may return an admission.Result for generic
-// admission-compatible callers.
+// defines common recording, retry-admission, decision, reason, kind, and
+// snapshot contracts. Concrete accounting strategies live in implementation
+// subpackages.
 //
 // Allowed retry-budget decisions are spend-only committed effects: the retry has
 // already been accounted for, no grant is returned, and there is no release path.
@@ -31,6 +27,10 @@
 // does not use arcoris.dev/capacity because retry attempts are spent into a
 // budget and remain accounted until the implementation's own policy window or
 // accounting state changes.
+//
+// Generic admission mapping lives in arcoris.dev/resilience/retrybudgetadmission.
+// Keeping that mapping outside this root package leaves retrybudget independent
+// from admission result shapes and admission reason catalogs.
 //
 // Snapshots in this package are domain values. Revisioned publication and
 // read-only access use arcoris.dev/snapshot. Implementations should expose
@@ -40,6 +40,7 @@
 //
 // The package does not execute retries, classify operation errors, compute
 // delays, apply jitter, enforce deadlines, limit general request rate, provide
-// circuit breaking, provide bulkheads, export metrics, integrate with health, or
-// coordinate distributed/global budgets.
+// circuit breaking, provide bulkheads, export metrics, log, trace, integrate
+// with health, schedule workers, queue requests, or coordinate
+// distributed/global budgets.
 package retrybudget

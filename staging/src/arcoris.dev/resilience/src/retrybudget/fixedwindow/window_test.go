@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package fixedwindow
 
 import (
@@ -48,6 +47,21 @@ func TestLimiterRotateLocked(t *testing.T) {
 	}
 	if limiter.original != 0 || limiter.retries != 0 || !limiter.windowStart.Equal(next) {
 		t.Fatalf("state after rotation: original=%d retries=%d start=%s", limiter.original, limiter.retries, limiter.windowStart)
+	}
+	limiter.mu.Unlock()
+}
+
+func TestLimiterRotateLockedLargeForwardJumpStartsAtObservation(t *testing.T) {
+	limiter, _ := newTestLimiter(t, WithWindow(time.Minute), WithMinRetries(0))
+
+	limiter.mu.Lock()
+	start := limiter.windowStart
+	observed := start.Add(24 * time.Hour)
+	if got := limiter.rotateLocked(observed); !got {
+		t.Fatal("rotate after large forward jump returned false")
+	}
+	if !limiter.windowStart.Equal(observed) {
+		t.Fatalf("windowStart = %s, want observed time %s", limiter.windowStart, observed)
 	}
 	limiter.mu.Unlock()
 }

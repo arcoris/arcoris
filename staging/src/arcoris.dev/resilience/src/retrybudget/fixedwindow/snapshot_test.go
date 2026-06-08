@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package fixedwindow
 
 import (
@@ -63,6 +62,25 @@ func TestLimiterSnapshotAndRevision(t *testing.T) {
 	}
 	if snap.Value.Kind != retrybudget.KindFixedWindow {
 		t.Fatalf("Kind = %s, want %s", snap.Value.Kind, retrybudget.KindFixedWindow)
+	}
+}
+
+func TestLimiterSnapshotDoesNotRotateQuietExpiredWindow(t *testing.T) {
+	limiter, clk := newTestLimiter(t, WithWindow(time.Second), WithRatio(1), WithMinRetries(0))
+	limiter.RecordOriginal()
+	before := limiter.Snapshot()
+
+	clk.Add(time.Hour)
+	after := limiter.Snapshot()
+
+	if after.Revision != before.Revision {
+		t.Fatalf("quiet Snapshot revision = %d, want %d", after.Revision, before.Revision)
+	}
+	if !after.Value.Window.StartedAt.Equal(before.Value.Window.StartedAt) {
+		t.Fatalf("quiet Snapshot window start = %s, want %s", after.Value.Window.StartedAt, before.Value.Window.StartedAt)
+	}
+	if got := after.Value.Attempts.Original; got != before.Value.Attempts.Original {
+		t.Fatalf("quiet Snapshot original attempts = %d, want %d", got, before.Value.Attempts.Original)
 	}
 }
 

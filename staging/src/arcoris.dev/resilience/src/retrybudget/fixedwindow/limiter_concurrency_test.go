@@ -15,7 +15,6 @@
 package fixedwindow
 
 import (
-	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -69,73 +68,6 @@ func TestLimiterConcurrentRetryAdmissionDoesNotOverspend(t *testing.T) {
 
 	if got := allowed.Load(); got != 25 {
 		t.Fatalf("allowed retries = %d, want 25", got)
-	}
-	if got := denied.Load(); got != 75 {
-		t.Fatalf("denied retries = %d, want 75", got)
-	}
-
-	snap := limiter.Snapshot()
-	if snap.Value.Attempts.Retry != 25 {
-		t.Fatalf("snapshot retry attempts = %d, want 25", snap.Value.Attempts.Retry)
-	}
-	if !snap.Value.Capacity.Exhausted {
-		t.Fatalf("capacity = %+v, want exhausted", snap.Value.Capacity)
-	}
-}
-
-func TestLimiterConcurrentTryAdmitDoesNotOverspend(t *testing.T) {
-	limiter, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(25))
-
-	var allowed atomic.Uint64
-	var denied atomic.Uint64
-	var wg sync.WaitGroup
-	errCh := make(chan error, 100)
-
-	for range 100 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			result := limiter.TryAdmit(retrybudget.Request{})
-			if !result.IsValid() {
-				errCh <- fmt.Errorf("invalid result: %+v", result.Decision())
-				return
-			}
-			switch {
-			case result.Decision().IsAdmitted():
-				if result.HasGrant() {
-					errCh <- fmt.Errorf("admitted result has grant: %+v", result.Decision())
-					return
-				}
-				allowed.Add(1)
-
-			case result.Decision().IsDenied():
-				if result.Decision().HasSideEffect() {
-					errCh <- fmt.Errorf("denied result has side effect: %+v", result.Decision())
-					return
-				}
-				if result.HasGrant() {
-					errCh <- fmt.Errorf("denied result has grant: %+v", result.Decision())
-					return
-				}
-				denied.Add(1)
-
-			default:
-				errCh <- fmt.Errorf("unexpected result outcome: %+v", result.Decision())
-			}
-		}()
-	}
-	wg.Wait()
-	close(errCh)
-
-	for err := range errCh {
-		if err != nil {
-			t.Fatalf("unexpected concurrent TryAdmit error: %v", err)
-		}
-	}
-
-	if got := allowed.Load(); got != 25 {
-		t.Fatalf("admitted retries = %d, want 25", got)
 	}
 	if got := denied.Load(); got != 75 {
 		t.Fatalf("denied retries = %d, want 75", got)

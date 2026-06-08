@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package fixedwindow
 
 // WithMinRetries sets the minimum retry allowance available in every window.

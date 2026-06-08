@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package fixedwindow
 
 import (
@@ -63,9 +62,9 @@ func TestNewConfigAppliesOptions(t *testing.T) {
 	}
 }
 
-func TestNewConfigIgnoresNilOption(t *testing.T) {
-	if _, err := newConfig(nil); err != nil {
-		t.Fatalf("newConfig(nil) error = %v", err)
+func TestNewConfigRejectsNilOption(t *testing.T) {
+	if _, err := newConfig(nil); !errors.Is(err, ErrNilOption) {
+		t.Fatalf("newConfig(nil) error = %v, want %v", err, ErrNilOption)
 	}
 }
 
@@ -75,6 +74,7 @@ func TestNewConfigValidationErrors(t *testing.T) {
 		opts []Option
 		want error
 	}{
+		{name: "nil option", opts: []Option{nil}, want: ErrNilOption},
 		{name: "nil clock", opts: []Option{WithClock(nil)}, want: ErrNilClock},
 		{name: "zero window", opts: []Option{WithWindow(0)}, want: ErrInvalidWindow},
 		{name: "negative window", opts: []Option{WithWindow(-time.Second)}, want: ErrInvalidWindow},
@@ -92,5 +92,28 @@ func TestNewConfigValidationErrors(t *testing.T) {
 				t.Fatalf("newConfig() error = %v, want %v", err, tt.want)
 			}
 		})
+	}
+}
+
+func TestNewConfigOptionsApplyInOrder(t *testing.T) {
+	cfg, err := newConfig(
+		WithWindow(time.Second),
+		WithWindow(2*time.Second),
+		WithRatio(0.25),
+		WithRatio(0.75),
+		WithMinRetries(1),
+		WithMinRetries(3),
+	)
+	if err != nil {
+		t.Fatalf("newConfig() error = %v", err)
+	}
+	if cfg.window != 2*time.Second {
+		t.Fatalf("window = %s, want 2s", cfg.window)
+	}
+	if cfg.ratio != 0.75 {
+		t.Fatalf("ratio = %v, want 0.75", cfg.ratio)
+	}
+	if cfg.minRetries != 3 {
+		t.Fatalf("minRetries = %d, want 3", cfg.minRetries)
 	}
 }

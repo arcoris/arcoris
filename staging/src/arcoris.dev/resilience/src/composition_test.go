@@ -24,8 +24,10 @@ import (
 	"arcoris.dev/resilience/bulkhead"
 	"arcoris.dev/resilience/bulkheadadmission"
 	"arcoris.dev/resilience/deadline"
+	"arcoris.dev/resilience/deadlineadmission"
 	"arcoris.dev/resilience/retrybudget"
 	"arcoris.dev/resilience/retrybudget/fixedwindow"
+	"arcoris.dev/resilience/retrybudgetadmission"
 	"arcoris.dev/snapshot"
 )
 
@@ -57,7 +59,7 @@ func TestManualCompositionReleasesBulkheadLeaseWhenDeadlineDenies(t *testing.T) 
 
 	b := bulkhead.New(1)
 	budget := newRetryBudget(t, 1)
-	req := deadline.Request{
+	req := deadlineadmission.Request{
 		Context: contextWithDeadline(t, compositionNow.Add(-time.Second)),
 		Now:     compositionNow,
 	}
@@ -83,12 +85,12 @@ func TestManualCompositionDeniedBeforeBulkheadDoesNotAcquireLease(t *testing.T) 
 	t.Parallel()
 
 	b := bulkhead.New(1)
-	req := deadline.Request{
+	req := deadlineadmission.Request{
 		Context: contextWithDeadline(t, compositionNow.Add(-time.Second)),
 		Now:     compositionNow,
 	}
 
-	deadlineResult := deadline.TryAdmit(req)
+	deadlineResult := deadlineadmission.TryAdmit(req)
 	if !deadlineResult.IsValid() || !deadlineResult.Decision().IsDenied() {
 		t.Fatalf("deadline result = %+v, want valid denial", deadlineResult.Decision())
 	}
@@ -177,7 +179,8 @@ func Example_manualAdmissionComposition_releaseOnLaterDeny() {
 		}
 	}()
 
-	budgetResult := budget.TryAdmit(retrybudget.Request{})
+	budgetResult := retrybudgetadmission.New(budget).
+		TryAdmit(retrybudgetadmission.Request{})
 	if !budgetResult.Decision().IsAdmitted() {
 		fmt.Println("released after later denial")
 		return
@@ -208,7 +211,8 @@ func Example_manualAdmissionComposition_returnOwnedLease() {
 		}
 	}()
 
-	budgetResult := budget.TryAdmit(retrybudget.Request{})
+	budgetResult := retrybudgetadmission.New(budget).
+		TryAdmit(retrybudgetadmission.Request{})
 	if !budgetResult.Decision().IsAdmitted() {
 		fmt.Println("budget denied")
 		return
@@ -225,7 +229,7 @@ func Example_manualAdmissionComposition_returnOwnedLease() {
 
 type composedAdmission struct {
 	BulkheadResult admission.Result[*bulkhead.Lease, bulkhead.Observation]
-	BudgetResult   admission.Result[admission.NoGrant, snapshot.Snapshot[retrybudget.Snapshot]]
+	BudgetResult   admission.Result[admission.NoGrant, retrybudget.Decision]
 	DeadlineResult admission.Result[admission.NoGrant, deadline.Decision]
 	Lease          *bulkhead.Lease
 }
@@ -236,14 +240,14 @@ func manuallyCompose(
 	t *testing.T,
 	b *bulkhead.Bulkhead,
 	budget *fixedwindow.Limiter,
-	deadlineReq deadline.Request,
+	deadlineReq deadlineadmission.Request,
 	budgetAfterBulkhead bool,
 ) composedAdmission {
 	t.Helper()
 
 	var out composedAdmission
 
-	out.DeadlineResult = deadline.TryAdmit(deadlineReq)
+	out.DeadlineResult = deadlineadmission.TryAdmit(deadlineReq)
 	if !out.DeadlineResult.IsValid() || out.DeadlineResult.Decision().IsDenied() {
 		return out
 	}
@@ -268,7 +272,8 @@ func manuallyCompose(
 	}()
 
 	if budgetAfterBulkhead {
-		out.BudgetResult = budget.TryAdmit(retrybudget.Request{})
+		out.BudgetResult = retrybudgetadmission.New(budget).
+			TryAdmit(retrybudgetadmission.Request{})
 		if !out.BudgetResult.IsValid() || out.BudgetResult.Decision().IsDenied() {
 			return out
 		}
@@ -278,8 +283,8 @@ func manuallyCompose(
 	return out
 }
 
-func allowingDeadlineRequest() deadline.Request {
-	return deadline.Request{
+func allowingDeadlineRequest() deadlineadmission.Request {
+	return deadlineadmission.Request{
 		Context: context.Background(),
 		Now:     compositionNow,
 		Min:     time.Second,

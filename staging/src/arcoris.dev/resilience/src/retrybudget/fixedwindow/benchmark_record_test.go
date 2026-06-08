@@ -12,38 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+package fixedwindow
 
-package fixedwindow_test
+import "testing"
 
-import (
-	"fmt"
-
-	"arcoris.dev/resilience/retrybudget/fixedwindow"
-)
-
-func Example() {
-	budget, err := fixedwindow.New(
-		fixedwindow.WithRatio(1),
-		fixedwindow.WithMinRetries(0),
-	)
-	if err != nil {
-		panic(err)
+func BenchmarkLimiterRecordOriginal(b *testing.B) {
+	limiter, _ := newBenchmarkLimiter(b, WithRatio(1), WithMinRetries(0))
+	b.ReportAllocs()
+	for b.Loop() {
+		limiter.RecordOriginal()
 	}
-
-	budget.RecordOriginal()
-	decision := budget.TryAdmitRetry()
-	snap := decision.Snapshot
-
-	fmt.Println(decision.Allowed)
-	fmt.Println(decision.Reason)
-	fmt.Println(snap.Value.Kind)
-	fmt.Println(snap.Value.Attempts.Original)
-	fmt.Println(snap.Value.Attempts.Retry)
-
-	// Output:
-	// true
-	// allowed
-	// fixed_window
-	// 1
-	// 1
 }

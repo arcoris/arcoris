@@ -15,17 +15,10 @@
 package fixedwindow
 
 import (
-	"arcoris.dev/admission"
 	"arcoris.dev/resilience/retrybudget"
 	"arcoris.dev/snapshot"
 )
 
 var _ retrybudget.Budget = (*Limiter)(nil)
-var _ retrybudget.AdmissionAdmitter = (*Limiter)(nil)
-var _ admission.Admitter[
-	retrybudget.Request,
-	admission.NoGrant,
-	snapshot.Snapshot[retrybudget.Snapshot],
-] = (*Limiter)(nil)
 var _ snapshot.Source[retrybudget.Snapshot] = (*Limiter)(nil)
 var _ snapshot.RevisionSource = (*Limiter)(nil)

@@ -12,14 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package fixedwindow
 
 import (
-	"fmt"
+	"errors"
 	"testing"
-
-	"arcoris.dev/resilience/retrybudget"
 )
 
 func TestLimiterNilReceiverPanics(t *testing.T) {
@@ -32,14 +29,13 @@ func TestLimiterNilReceiverPanics(t *testing.T) {
 	}{
 		{name: "RecordOriginal", call: func() { limiter.RecordOriginal() }},
 		{name: "TryAdmitRetry", call: func() { _ = limiter.TryAdmitRetry() }},
-		{name: "TryAdmit", call: func() { _ = limiter.TryAdmit(retrybudget.Request{}) }},
 		{name: "Snapshot", call: func() { _ = limiter.Snapshot() }},
 		{name: "Revision", call: func() { _ = limiter.Revision() }},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			requirePanicString(t, nilLimiterPanic, tt.call)
+			requirePanicError(t, ErrNilLimiter, tt.call)
 		})
 	}
 }
@@ -54,14 +50,13 @@ func TestLimiterZeroValueReceiverPanics(t *testing.T) {
 	}{
 		{name: "RecordOriginal", call: func() { limiter.RecordOriginal() }},
 		{name: "TryAdmitRetry", call: func() { _ = limiter.TryAdmitRetry() }},
-		{name: "TryAdmit", call: func() { _ = limiter.TryAdmit(retrybudget.Request{}) }},
 		{name: "Snapshot", call: func() { _ = limiter.Snapshot() }},
 		{name: "Revision", call: func() { _ = limiter.Revision() }},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			requirePanicString(t, uninitializedLimiterPanic, tt.call)
+			requirePanicError(t, ErrUninitializedLimiter, tt.call)
 		})
 	}
 }
@@ -74,19 +69,22 @@ func TestLimiterReadyReceiverDoesNotPanic(t *testing.T) {
 	_ = limiter.Snapshot()
 	_ = limiter.Revision()
 	_ = limiter.TryAdmitRetry()
-	_ = limiter.TryAdmit(retrybudget.Request{})
 }
 
-func requirePanicString(t *testing.T, want string, fn func()) {
+func requirePanicError(t *testing.T, want error, fn func()) {
 	t.Helper()
 
 	defer func() {
 		recovered := recover()
 		if recovered == nil {
-			t.Fatalf("panic = nil, want %q", want)
+			t.Fatalf("panic = nil, want %v", want)
 		}
-		if got := fmt.Sprint(recovered); got != want {
-			t.Fatalf("panic = %q, want %q", got, want)
+		err, ok := recovered.(error)
+		if !ok {
+			t.Fatalf("panic = %T(%v), want error %v", recovered, recovered, want)
+		}
+		if !errors.Is(err, want) {
+			t.Fatalf("panic = %v, want %v", err, want)
 		}
 	}()
 

@@ -12,18 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package fixedwindow
-
-const (
-	// nilLimiterPanic is the stable panic value for methods called on nil
-	// *Limiter receivers.
-	nilLimiterPanic = "retrybudget.fixedwindow.Limiter: nil limiter"
-
-	// uninitializedLimiterPanic is the stable panic value for methods called on
-	// zero or otherwise not-New-created Limiter values.
-	uninitializedLimiterPanic = "retrybudget.fixedwindow.Limiter: uninitialized limiter"
-)
 
 // requireReady validates receiver ownership before public methods touch mutable
 // limiter state.
@@ -32,9 +21,9 @@ const (
 // detects nil receivers and Limiter values that were not initialized by New.
 func (l *Limiter) requireReady() {
 	if l == nil {
-		panic(nilLimiterPanic)
+		panic(ErrNilLimiter)
 	}
 	if l.published == nil || l.cfg.clock == nil {
-		panic(uninitializedLimiterPanic)
+		panic(ErrUninitializedLimiter)
 	}
 }

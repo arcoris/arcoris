@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package fixedwindow
 
 import "math"
@@ -23,7 +22,10 @@ import "math"
 //
 //	min + floor(original * ratio)
 //
-// The result saturates at math.MaxUint64 instead of wrapping.
+// The result saturates at math.MaxUint64 instead of wrapping. The ratio is
+// already configuration-validated to the range [0, 1]. Floating-point
+// multiplication can approximate very large original counts; saturation keeps
+// the published capacity conservative at the upper boundary.
 func allowedRetries(original uint64, ratio float64, min uint64) uint64 {
 	if ratio <= 0 || original == 0 {
 		return min

@@ -43,6 +43,30 @@ func TestLimiterTryAdmitRetryAllowed(t *testing.T) {
 	}
 }
 
+func TestLimiterTryAdmitRetryMinimumAvailableBeforeOriginalTraffic(t *testing.T) {
+	l, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(1))
+
+	decision := l.TryAdmitRetry()
+	requireDecision(t, decision, true, retrybudget.ReasonAllowed)
+	if got := decision.Snapshot.Value.Attempts.Original; got != 0 {
+		t.Fatalf("Original attempts = %d, want 0", got)
+	}
+	if got := decision.Snapshot.Value.Attempts.Retry; got != 1 {
+		t.Fatalf("Retry attempts = %d, want 1", got)
+	}
+}
+
+func TestLimiterTryAdmitRetryZeroMinimumRequiresTrafficAllowance(t *testing.T) {
+	l, _ := newTestLimiter(t, WithRatio(1), WithMinRetries(0))
+
+	denied := l.TryAdmitRetry()
+	requireDecision(t, denied, false, retrybudget.ReasonExhausted)
+
+	l.RecordOriginal()
+	allowed := l.TryAdmitRetry()
+	requireDecision(t, allowed, true, retrybudget.ReasonAllowed)
+}
+
 func TestLimiterTryAdmitRetryDenied(t *testing.T) {
 	l, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(1))
 

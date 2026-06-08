@@ -12,25 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-package noop
+package fixedwindow_test
 
 import (
-	"arcoris.dev/admission"
-	"arcoris.dev/resilience/retrybudget"
-	"arcoris.dev/snapshot"
+	"fmt"
+
+	"arcoris.dev/resilience/retrybudget/fixedwindow"
 )
 
-// TryAdmit exposes Budget through admission's generic result contract.
-//
-// Budget is unlimited, so TryAdmit always returns a valid admitted committed
-// result with no grant. The method delegates through TryAdmitRetry so direct and
-// admission-compatible callers observe the same stable snapshot semantics.
-func (b Budget) TryAdmit(
-	retrybudget.Request,
-) admission.Result[
-	admission.NoGrant,
-	snapshot.Snapshot[retrybudget.Snapshot],
-] {
-	return b.TryAdmitRetry().AdmissionResult()
+func Example() {
+	budget, err := fixedwindow.New(
+		fixedwindow.WithRatio(1),
+		fixedwindow.WithMinRetries(0),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	budget.RecordOriginal()
+	decision := budget.TryAdmitRetry()
+	snap := decision.Snapshot
+
+	fmt.Println(decision.Allowed)
+	fmt.Println(decision.Reason)
+	fmt.Println(snap.Value.Kind)
+	fmt.Println(snap.Value.Attempts.Original)
+	fmt.Println(snap.Value.Attempts.Retry)
+
+	// Output:
+	// true
+	// allowed
+	// fixed_window
+	// 1
+	// 1
 }

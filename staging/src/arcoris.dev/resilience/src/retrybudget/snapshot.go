@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retrybudget
 
 // Snapshot is the domain state published by a retry budget implementation.
@@ -44,6 +43,7 @@ type Snapshot struct {
 // IsValid reports whether s is an internally consistent retry-budget snapshot.
 func (s Snapshot) IsValid() bool {
 	return s.Kind.IsValid() &&
+		s.Attempts.IsValid() &&
 		s.Capacity.IsValid() &&
 		s.Window.IsValid() &&
 		s.Policy.IsValid()

@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package noop provides an unlimited retry-budget implementation.
 //
 // A noop Budget admits every retry attempt and does not record original or retry
 // traffic. It is useful when retry-budget enforcement is intentionally disabled
 // but callers still want to depend on the retrybudget.Budget contract without
 // nil checks or special cases.
-// Budget also implements retrybudget.AdmissionAdmitter; TryAdmit always returns
-// a committed no-grant admission result with the stable unlimited snapshot.
+// Generic admission mapping for Budget lives in
+// arcoris.dev/resilience/retrybudgetadmission. Keeping Budget itself free of
+// admission dependencies preserves its role as a small unlimited retry-budget
+// implementation.
 //
 // The implementation is stateless, concurrency-safe, zero-value usable, and
 // allocation-free on the read path. Snapshot returns a stable revisioned snapshot

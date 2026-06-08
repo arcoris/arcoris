@@ -12,58 +12,54 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package retrybudget
+package retrybudgetadmission
 
 import (
 	"arcoris.dev/admission"
 	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
-	"arcoris.dev/snapshot"
+	"arcoris.dev/resilience/retrybudget"
 )
 
 // invalidAdmissionReason preserves invalid retry-budget decisions during
 // conversion to admission.Result.
 //
-// Produced Decision values should be valid. When callers manually construct an
-// invalid Decision, AdmissionResult must not hide that invalidity by returning a
-// valid generic admission result.
+// Produced retrybudget.Decision values should be valid. If callers manually
+// construct an invalid Decision, AdmissionResult must not hide that invalidity
+// by returning a normal generic admission result.
 const invalidAdmissionReason admission.Reason = ""
 
 // AdmissionResult converts d into the generic admission result contract.
 //
-// Allowed retry-budget decisions are committed spend-only effects: the retry has
-// already been accounted for and no caller-owned grant or release path exists.
-// Denied decisions are no-effect budget back-pressure. In both cases the
-// retry-budget snapshot is carried as admission metadata.
-//
-// Invalid retry-budget decisions convert to invalid admission results instead of
-// being normalized. This keeps hand-built invalid Decision values visible to
-// tests and defensive callers.
-func (d Decision) AdmissionResult() admission.Result[
+// Retry-budget admission is committed and grant-free. Allowed decisions have
+// already spent one retry attempt. Denied decisions have not spent a retry. The
+// complete retrybudget.Decision is carried as metadata so callers can inspect
+// precise budget state without reverse-engineering generic admission reasons.
+func AdmissionResult(d retrybudget.Decision) admission.Result[
 	admission.NoGrant,
-	snapshot.Snapshot[Snapshot],
+	retrybudget.Decision,
 ] {
 	if !d.IsValid() {
-		if d.Allowed {
+		if d.IsAllowed() {
 			return admission.CommittedResult(
 				invalidAdmissionReason,
-				d.Snapshot,
+				d,
 			)
 		}
 		return admission.DeniedResult(
 			invalidAdmissionReason,
-			d.Snapshot,
+			d,
 		)
 	}
 
 	if d.IsAllowed() {
 		return admission.CommittedResult(
 			admission.ReasonAdmitted,
-			d.Snapshot,
+			d,
 		)
 	}
 
 	return admission.DeniedResult(
 		admissionbuiltin.ReasonBudgetExhausted,
-		d.Snapshot,
+		d,
 	)
 }

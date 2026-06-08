@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package fixedwindow
 
 import (
@@ -64,9 +63,10 @@ func defaultConfig() config {
 func newConfig(opts ...Option) (config, error) {
 	cfg := defaultConfig()
 	for _, opt := range opts {
-		if opt != nil {
-			opt(&cfg)
+		if opt == nil {
+			return config{}, ErrNilOption
 		}
+		opt(&cfg)
 	}
 	if err := validateConfig(cfg); err != nil {
 		return config{}, err
