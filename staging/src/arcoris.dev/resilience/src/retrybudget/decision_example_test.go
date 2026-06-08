@@ -46,7 +46,7 @@ func ExampleDecision() {
 					Bounded:   true,
 				},
 				Policy: retrybudget.PolicySnapshot{
-					Ratio:   0.2,
+					Ratio:   retrybudget.MustRatio(1, 5),
 					Minimum: 1,
 					Bounded: true,
 				},

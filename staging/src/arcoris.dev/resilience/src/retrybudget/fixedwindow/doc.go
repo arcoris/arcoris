@@ -34,14 +34,13 @@
 // last observed window until RecordOriginal or TryAdmitRetry observes time
 // advancement.
 //
-// Default retry capacity uses floating-point ratio configuration:
+// Default retry capacity uses exact ratio configuration:
 //
-//	allowed = minRetries + floor(originalAttempts * ratio)
+//	allowed = minRetries + floor(originalAttempts * ratio.Numerator / ratio.Denominator)
 //
 // The result saturates instead of wrapping. The ratio is intentionally bounded to
-// the conservative range [0, 1]. For very large original-attempt counters, the
-// floating-point multiplication is approximate; implementations and tests treat
-// saturation and conservative validation as the stable contract.
+// the conservative range [0, 1]. Ratio math is integer-only and remains exact
+// for the full uint64 original-attempt range.
 //
 // Minimum retry allowance is available at the start of each window, even before
 // RecordOriginal observes traffic. Set minRetries to zero for strict

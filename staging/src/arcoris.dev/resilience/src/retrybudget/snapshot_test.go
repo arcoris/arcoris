@@ -25,7 +25,7 @@ func TestSnapshotIsValid(t *testing.T) {
 	invalidWindow := valid
 	invalidWindow.Window.Duration = 0
 	invalidPolicy := valid
-	invalidPolicy.Policy.Ratio = 2
+	invalidPolicy.Policy.Ratio = Ratio{}
 	tests := []struct {
 		name string
 		val  Snapshot

@@ -14,13 +14,11 @@
 
 package retrybudget
 
-import "math"
-
 // PolicySnapshot reports public retry-budget policy parameters when an
 // implementation exposes ratio/minimum style capacity settings.
 type PolicySnapshot struct {
-	// Ratio is the retry allowance ratio exposed by the implementation.
-	Ratio float64
+	// Ratio is the exact retry allowance ratio exposed by the implementation.
+	Ratio Ratio
 
 	// Minimum is the minimum retry allowance exposed by the implementation.
 	Minimum uint64
@@ -32,9 +30,9 @@ type PolicySnapshot struct {
 // IsValid reports whether s is internally consistent.
 func (s PolicySnapshot) IsValid() bool {
 	if !s.Bounded {
-		return s.Ratio == 0 && s.Minimum == 0
+		return s.Ratio == (Ratio{}) && s.Minimum == 0
 	}
-	return !math.IsNaN(s.Ratio) && !math.IsInf(s.Ratio, 0) && s.Ratio >= 0 && s.Ratio <= 1
+	return s.Ratio.IsValid()
 }
 
 // IsBounded reports whether s exposes finite retry-budget policy parameters.

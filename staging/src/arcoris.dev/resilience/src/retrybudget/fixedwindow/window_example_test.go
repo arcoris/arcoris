@@ -27,7 +27,7 @@ func ExampleLimiter_windowRotation() {
 	budget, err := fixedwindow.New(
 		fixedwindow.WithClock(clk),
 		fixedwindow.WithWindow(time.Second),
-		fixedwindow.WithRatio(1),
+		fixedwindow.WithRatio(fixedwindow.RatioOne),
 		fixedwindow.WithMinRetries(0),
 	)
 	if err != nil {

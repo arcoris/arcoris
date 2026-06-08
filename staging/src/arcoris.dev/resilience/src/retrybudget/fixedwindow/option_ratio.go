@@ -14,11 +14,13 @@
 
 package fixedwindow
 
+import "arcoris.dev/resilience/retrybudget"
+
 // WithRatio sets the retry allowance ratio applied to original attempts.
 //
-// The ratio must be finite and in the inclusive range [0, 1]. New validates the
-// final configuration.
-func WithRatio(ratio float64) Option {
+// The ratio must be an exact retrybudget.Ratio in the inclusive range [0, 1].
+// New validates the final configuration.
+func WithRatio(ratio retrybudget.Ratio) Option {
 	return func(cfg *config) {
 		cfg.ratio = ratio
 	}

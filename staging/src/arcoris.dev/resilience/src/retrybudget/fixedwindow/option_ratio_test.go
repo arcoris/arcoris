@@ -19,9 +19,9 @@ import "testing"
 func TestWithRatio(t *testing.T) {
 	cfg := defaultConfig()
 
-	WithRatio(0.75)(&cfg)
+	WithRatio(MustRatio(3, 4))(&cfg)
 
-	if cfg.ratio != 0.75 {
-		t.Fatalf("WithRatio set %v, want 0.75", cfg.ratio)
+	if cfg.ratio != MustRatio(3, 4) {
+		t.Fatalf("WithRatio set %v, want 3/4", cfg.ratio)
 	}
 }

@@ -22,7 +22,7 @@ import (
 )
 
 func TestLimiterSnapshotValueLocked(t *testing.T) {
-	limiter, _ := newTestLimiter(t, WithWindow(time.Minute), WithRatio(0.5), WithMinRetries(2))
+	limiter, _ := newTestLimiter(t, WithWindow(time.Minute), WithRatio(MustRatio(1, 2)), WithMinRetries(2))
 
 	limiter.mu.Lock()
 	limiter.original = 5
@@ -45,8 +45,8 @@ func TestLimiterSnapshotValueLocked(t *testing.T) {
 	if !val.Window.Bounded || val.Window.Duration != time.Minute {
 		t.Fatalf("Window = %+v, want bounded 1m", val.Window)
 	}
-	if !val.Policy.Bounded || val.Policy.Ratio != 0.5 || val.Policy.Minimum != 2 {
-		t.Fatalf("Policy = %+v, want ratio=0.5 minimum=2", val.Policy)
+	if !val.Policy.Bounded || val.Policy.Ratio != MustRatio(1, 2) || val.Policy.Minimum != 2 {
+		t.Fatalf("Policy = %+v, want ratio=1/2 minimum=2", val.Policy)
 	}
 }
 
@@ -66,7 +66,7 @@ func TestLimiterSnapshotAndRevision(t *testing.T) {
 }
 
 func TestLimiterSnapshotDoesNotRotateQuietExpiredWindow(t *testing.T) {
-	limiter, clk := newTestLimiter(t, WithWindow(time.Second), WithRatio(1), WithMinRetries(0))
+	limiter, clk := newTestLimiter(t, WithWindow(time.Second), WithRatio(RatioOne), WithMinRetries(0))
 	limiter.RecordOriginal()
 	before := limiter.Snapshot()
 

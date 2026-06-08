@@ -23,19 +23,19 @@ func TestAllowedRetries(t *testing.T) {
 	tests := []struct {
 		name     string
 		original uint64
-		ratio    float64
+		ratio    Ratio
 		min      uint64
 		want     uint64
 	}{
-		{name: "no original", original: 0, ratio: 0.2, min: 10, want: 10},
-		{name: "minimum with zero original", original: 0, ratio: 1, min: 3, want: 3},
-		{name: "strict proportional without traffic", original: 0, ratio: 1, min: 0, want: 0},
-		{name: "zero ratio", original: 100, ratio: 0, min: 7, want: 7},
-		{name: "floor", original: 9, ratio: 0.2, min: 1, want: 2},
-		{name: "exact", original: 10, ratio: 0.2, min: 1, want: 3},
-		{name: "one ratio", original: 10, ratio: 1, min: 1, want: 11},
-		{name: "saturates", original: math.MaxUint64, ratio: 1, min: 1, want: math.MaxUint64},
-		{name: "saturates with large approximate product", original: math.MaxUint64, ratio: 0.75, min: math.MaxUint64 / 2, want: math.MaxUint64},
+		{name: "no original", original: 0, ratio: MustRatio(1, 5), min: 10, want: 10},
+		{name: "minimum with zero original", original: 0, ratio: RatioOne, min: 3, want: 3},
+		{name: "strict proportional without traffic", original: 0, ratio: RatioOne, min: 0, want: 0},
+		{name: "zero ratio", original: 100, ratio: RatioZero, min: 7, want: 7},
+		{name: "floor", original: 9, ratio: MustRatio(1, 5), min: 1, want: 2},
+		{name: "exact", original: 10, ratio: MustRatio(1, 5), min: 1, want: 3},
+		{name: "one ratio", original: 10, ratio: RatioOne, min: 1, want: 11},
+		{name: "saturates", original: math.MaxUint64, ratio: RatioOne, min: 1, want: math.MaxUint64},
+		{name: "saturates with large exact product", original: math.MaxUint64, ratio: MustRatio(3, 4), min: math.MaxUint64 / 2, want: math.MaxUint64},
 	}
 
 	for _, tt := range tests {

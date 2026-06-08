@@ -22,7 +22,7 @@ import (
 
 func ExampleLimiter_TryAdmitRetry() {
 	budget, err := fixedwindow.New(
-		fixedwindow.WithRatio(0),
+		fixedwindow.WithRatio(fixedwindow.RatioZero),
 		fixedwindow.WithMinRetries(1),
 	)
 	if err != nil {
@@ -41,7 +41,7 @@ func ExampleLimiter_TryAdmitRetry() {
 
 func ExampleLimiter_minimumAllowance() {
 	budget, err := fixedwindow.New(
-		fixedwindow.WithRatio(0),
+		fixedwindow.WithRatio(fixedwindow.RatioZero),
 		fixedwindow.WithMinRetries(1),
 	)
 	if err != nil {

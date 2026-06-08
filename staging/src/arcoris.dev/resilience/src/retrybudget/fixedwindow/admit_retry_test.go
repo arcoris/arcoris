@@ -22,7 +22,7 @@ import (
 )
 
 func TestLimiterTryAdmitRetryAllowed(t *testing.T) {
-	l, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(2))
+	l, _ := newTestLimiter(t, WithRatio(RatioZero), WithMinRetries(2))
 
 	first := l.TryAdmitRetry()
 	requireDecision(t, first, true, retrybudget.ReasonAllowed)
@@ -44,7 +44,7 @@ func TestLimiterTryAdmitRetryAllowed(t *testing.T) {
 }
 
 func TestLimiterTryAdmitRetryMinimumAvailableBeforeOriginalTraffic(t *testing.T) {
-	l, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(1))
+	l, _ := newTestLimiter(t, WithRatio(RatioZero), WithMinRetries(1))
 
 	decision := l.TryAdmitRetry()
 	requireDecision(t, decision, true, retrybudget.ReasonAllowed)
@@ -57,7 +57,7 @@ func TestLimiterTryAdmitRetryMinimumAvailableBeforeOriginalTraffic(t *testing.T)
 }
 
 func TestLimiterTryAdmitRetryZeroMinimumRequiresTrafficAllowance(t *testing.T) {
-	l, _ := newTestLimiter(t, WithRatio(1), WithMinRetries(0))
+	l, _ := newTestLimiter(t, WithRatio(RatioOne), WithMinRetries(0))
 
 	denied := l.TryAdmitRetry()
 	requireDecision(t, denied, false, retrybudget.ReasonExhausted)
@@ -68,7 +68,7 @@ func TestLimiterTryAdmitRetryZeroMinimumRequiresTrafficAllowance(t *testing.T) {
 }
 
 func TestLimiterTryAdmitRetryDenied(t *testing.T) {
-	l, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(1))
+	l, _ := newTestLimiter(t, WithRatio(RatioZero), WithMinRetries(1))
 
 	allowed := l.TryAdmitRetry()
 	requireDecision(t, allowed, true, retrybudget.ReasonAllowed)
@@ -88,7 +88,7 @@ func TestLimiterTryAdmitRetryDenied(t *testing.T) {
 }
 
 func TestFixedWindowTryAdmitRetryDeniedDoesNotSpendRetry(t *testing.T) {
-	l, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(1))
+	l, _ := newTestLimiter(t, WithRatio(RatioZero), WithMinRetries(1))
 
 	allowed := l.TryAdmitRetry()
 	requireDecision(t, allowed, true, retrybudget.ReasonAllowed)
@@ -104,7 +104,7 @@ func TestFixedWindowTryAdmitRetryDeniedDoesNotSpendRetry(t *testing.T) {
 }
 
 func TestFixedWindowTryAdmitRetryAllowedSpendsBeforeReturning(t *testing.T) {
-	l, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(1))
+	l, _ := newTestLimiter(t, WithRatio(RatioZero), WithMinRetries(1))
 
 	decision := l.TryAdmitRetry()
 	requireDecision(t, decision, true, retrybudget.ReasonAllowed)
@@ -117,7 +117,7 @@ func TestFixedWindowTryAdmitRetryAllowedSpendsBeforeReturning(t *testing.T) {
 }
 
 func TestLimiterTryAdmitRetryDeniedAfterRotationPublishesRotatedSnapshot(t *testing.T) {
-	l, clk := newTestLimiter(t, WithWindow(time.Second), WithRatio(0), WithMinRetries(1))
+	l, clk := newTestLimiter(t, WithWindow(time.Second), WithRatio(RatioZero), WithMinRetries(1))
 
 	allowed := l.TryAdmitRetry()
 	requireDecision(t, allowed, true, retrybudget.ReasonAllowed)
@@ -142,7 +142,7 @@ func TestLimiterTryAdmitRetryDeniedAfterRotationPublishesRotatedSnapshot(t *test
 }
 
 func TestLimiterTryAdmitRetryDeniedAfterRotationWithZeroMinimum(t *testing.T) {
-	l, clk := newTestLimiter(t, WithWindow(time.Second), WithRatio(0), WithMinRetries(0))
+	l, clk := newTestLimiter(t, WithWindow(time.Second), WithRatio(RatioZero), WithMinRetries(0))
 	prev := l.Revision()
 
 	clk.Add(time.Second)

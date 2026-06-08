@@ -23,7 +23,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	l, _ := newTestLimiter(t, WithWindow(30*time.Second), WithRatio(0.25), WithMinRetries(4))
+	l, _ := newTestLimiter(t, WithWindow(30*time.Second), WithRatio(MustRatio(1, 4)), WithMinRetries(4))
 
 	snap := l.Snapshot()
 	requireValidSnapshot(t, snap)
@@ -33,13 +33,13 @@ func TestNew(t *testing.T) {
 	if !snap.Value.Window.StartedAt.Equal(fixedWindowTestNow) {
 		t.Fatalf("Window.StartedAt = %s, want %s", snap.Value.Window.StartedAt, fixedWindowTestNow)
 	}
-	if snap.Value.Policy.Ratio != 0.25 || snap.Value.Policy.Minimum != 4 {
-		t.Fatalf("Policy = %+v, want ratio=0.25 minimum=4", snap.Value.Policy)
+	if snap.Value.Policy.Ratio != MustRatio(1, 4) || snap.Value.Policy.Minimum != 4 {
+		t.Fatalf("Policy = %+v, want ratio=1/4 minimum=4", snap.Value.Policy)
 	}
 }
 
 func TestNewPublishesValidInitialSnapshotWithZeroMinimum(t *testing.T) {
-	l, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(0))
+	l, _ := newTestLimiter(t, WithRatio(RatioZero), WithMinRetries(0))
 
 	snap := l.Snapshot()
 	requireValidSnapshot(t, snap)

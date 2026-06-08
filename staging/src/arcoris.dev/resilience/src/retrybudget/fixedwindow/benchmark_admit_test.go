@@ -20,7 +20,7 @@ import (
 )
 
 func BenchmarkLimiterTryAdmitRetryAllowed(b *testing.B) {
-	limiter, _ := newBenchmarkLimiter(b, WithRatio(0), WithMinRetries(^uint64(0)))
+	limiter, _ := newBenchmarkLimiter(b, WithRatio(RatioZero), WithMinRetries(^uint64(0)))
 	b.ReportAllocs()
 	for b.Loop() {
 		benchmarkDecision = limiter.TryAdmitRetry()
@@ -28,7 +28,7 @@ func BenchmarkLimiterTryAdmitRetryAllowed(b *testing.B) {
 }
 
 func BenchmarkLimiterTryAdmitRetryDenied(b *testing.B) {
-	limiter, _ := newBenchmarkLimiter(b, WithRatio(0), WithMinRetries(0))
+	limiter, _ := newBenchmarkLimiter(b, WithRatio(RatioZero), WithMinRetries(0))
 	b.ReportAllocs()
 	for b.Loop() {
 		benchmarkDecision = limiter.TryAdmitRetry()
@@ -36,7 +36,7 @@ func BenchmarkLimiterTryAdmitRetryDenied(b *testing.B) {
 }
 
 func BenchmarkLimiterTryAdmitRetryRotate(b *testing.B) {
-	limiter, clk := newBenchmarkLimiter(b, WithWindow(time.Nanosecond), WithRatio(0), WithMinRetries(1))
+	limiter, clk := newBenchmarkLimiter(b, WithWindow(time.Nanosecond), WithRatio(RatioZero), WithMinRetries(1))
 	b.ReportAllocs()
 	for b.Loop() {
 		advanceBenchmarkWindow(clk)

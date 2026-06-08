@@ -16,24 +16,19 @@ package fixedwindow
 
 import (
 	"errors"
-	"math"
 	"testing"
 )
 
 func TestValidateRatio(t *testing.T) {
 	tests := []struct {
 		name  string
-		ratio float64
+		ratio Ratio
 		want  error
 	}{
-		{name: "zero", ratio: 0},
-		{name: "fraction", ratio: 0.2},
-		{name: "one", ratio: 1},
-		{name: "negative", ratio: -0.1, want: ErrInvalidRatio},
-		{name: "greater than one", ratio: 1.1, want: ErrInvalidRatio},
-		{name: "nan", ratio: math.NaN(), want: ErrInvalidRatio},
-		{name: "positive infinity", ratio: math.Inf(1), want: ErrInvalidRatio},
-		{name: "negative infinity", ratio: math.Inf(-1), want: ErrInvalidRatio},
+		{name: "zero", ratio: RatioZero},
+		{name: "fraction", ratio: MustRatio(1, 5)},
+		{name: "one", ratio: RatioOne},
+		{name: "unset", ratio: Ratio{}, want: ErrInvalidRatio},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -17,8 +17,9 @@ package fixedwindow
 import "testing"
 
 func BenchmarkAllowedRetries(b *testing.B) {
+	ratio := MustRatio(1, 5)
 	b.ReportAllocs()
 	for b.Loop() {
-		benchmarkAllowed = allowedRetries(10_000, 0.2, 10)
+		benchmarkAllowed = allowedRetries(10_000, ratio, 10)
 	}
 }

@@ -64,7 +64,7 @@ func validSnapshot(exhausted bool, retry uint64) snapshot.Snapshot[retrybudget.S
 				Bounded:   true,
 			},
 			Policy: retrybudget.PolicySnapshot{
-				Ratio:   1,
+				Ratio:   retrybudget.RatioOne,
 				Minimum: 0,
 				Bounded: true,
 			},

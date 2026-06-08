@@ -64,7 +64,7 @@ func TestLimiterZeroValueReceiverPanics(t *testing.T) {
 func TestLimiterReadyReceiverDoesNotPanic(t *testing.T) {
 	t.Parallel()
 
-	limiter, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(2))
+	limiter, _ := newTestLimiter(t, WithRatio(RatioZero), WithMinRetries(2))
 	limiter.RecordOriginal()
 	_ = limiter.Snapshot()
 	_ = limiter.Revision()

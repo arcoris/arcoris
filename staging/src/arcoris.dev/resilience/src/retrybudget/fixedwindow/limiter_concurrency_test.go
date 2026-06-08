@@ -23,7 +23,7 @@ import (
 )
 
 func TestLimiterConcurrentUseIsRaceFree(t *testing.T) {
-	limiter, _ := newTestLimiter(t, WithRatio(1), WithMinRetries(100))
+	limiter, _ := newTestLimiter(t, WithRatio(RatioOne), WithMinRetries(100))
 
 	var wg sync.WaitGroup
 	for range 16 {
@@ -45,7 +45,7 @@ func TestLimiterConcurrentUseIsRaceFree(t *testing.T) {
 }
 
 func TestLimiterConcurrentRetryAdmissionDoesNotOverspend(t *testing.T) {
-	limiter, _ := newTestLimiter(t, WithRatio(0), WithMinRetries(25))
+	limiter, _ := newTestLimiter(t, WithRatio(RatioZero), WithMinRetries(25))
 
 	var allowed atomic.Uint64
 	var denied atomic.Uint64

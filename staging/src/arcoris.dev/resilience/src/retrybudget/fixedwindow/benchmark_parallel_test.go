@@ -17,7 +17,7 @@ package fixedwindow
 import "testing"
 
 func BenchmarkLimiterParallelRecordOriginal(b *testing.B) {
-	limiter, _ := newBenchmarkLimiter(b, WithRatio(1), WithMinRetries(0))
+	limiter, _ := newBenchmarkLimiter(b, WithRatio(RatioOne), WithMinRetries(0))
 	b.ReportAllocs()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -27,7 +27,7 @@ func BenchmarkLimiterParallelRecordOriginal(b *testing.B) {
 }
 
 func BenchmarkLimiterParallelTryAdmitRetry(b *testing.B) {
-	limiter, _ := newBenchmarkLimiter(b, WithRatio(0), WithMinRetries(^uint64(0)))
+	limiter, _ := newBenchmarkLimiter(b, WithRatio(RatioZero), WithMinRetries(^uint64(0)))
 	b.ReportAllocs()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -37,7 +37,7 @@ func BenchmarkLimiterParallelTryAdmitRetry(b *testing.B) {
 }
 
 func BenchmarkLimiterParallelMixedRecordAndAdmit(b *testing.B) {
-	limiter, _ := newBenchmarkLimiter(b, WithRatio(1), WithMinRetries(100))
+	limiter, _ := newBenchmarkLimiter(b, WithRatio(RatioOne), WithMinRetries(100))
 	b.ReportAllocs()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {

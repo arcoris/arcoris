@@ -14,34 +14,36 @@
 
 package fixedwindow
 
-import "math"
+import (
+	"math"
+
+	"arcoris.dev/resilience/retrybudget"
+)
 
 // allowedRetries returns the retry capacity for original attempts.
 //
 // The formula is:
 //
-//	min + floor(original * ratio)
+//	min + floor(original * ratio.Numerator / ratio.Denominator)
 //
-// The result saturates at math.MaxUint64 instead of wrapping. The ratio is
-// already configuration-validated to the range [0, 1]. Floating-point
-// multiplication can approximate very large original counts; saturation keeps
-// the published capacity conservative at the upper boundary.
-func allowedRetries(original uint64, ratio float64, min uint64) uint64 {
-	if ratio <= 0 || original == 0 {
+// The result saturates at math.MaxUint64 instead of wrapping. The ratio is exact
+// and already configuration-validated to the range [0, 1].
+func allowedRetries(original uint64, ratio retrybudget.Ratio, min uint64) uint64 {
+	if original == 0 || ratio.IsZero() {
 		return min
 	}
 
-	extra := math.Floor(float64(original) * ratio)
-	if extra <= 0 {
+	extra := ratio.ScaleFloor(original)
+	if extra == 0 {
 		return min
 	}
 
 	remaining := math.MaxUint64 - min
-	if extra >= float64(remaining) {
+	if extra > remaining {
 		return math.MaxUint64
 	}
 
-	return min + uint64(extra)
+	return min + extra
 }
 
 // availableRetries returns allowed - used, saturating at zero.

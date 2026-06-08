@@ -16,7 +16,6 @@ package fixedwindow
 
 import (
 	"errors"
-	"math"
 	"testing"
 	"time"
 )
@@ -42,7 +41,7 @@ func TestNewConfigAppliesOptions(t *testing.T) {
 	cfg, err := newConfig(
 		WithClock(clk),
 		WithWindow(30*time.Second),
-		WithRatio(0.5),
+		WithRatio(MustRatio(1, 2)),
 		WithMinRetries(3),
 	)
 	if err != nil {
@@ -54,8 +53,8 @@ func TestNewConfigAppliesOptions(t *testing.T) {
 	if cfg.window != 30*time.Second {
 		t.Fatalf("window = %s, want 30s", cfg.window)
 	}
-	if cfg.ratio != 0.5 {
-		t.Fatalf("ratio = %v, want 0.5", cfg.ratio)
+	if cfg.ratio != MustRatio(1, 2) {
+		t.Fatalf("ratio = %v, want 1/2", cfg.ratio)
 	}
 	if cfg.minRetries != 3 {
 		t.Fatalf("minRetries = %d, want 3", cfg.minRetries)
@@ -78,11 +77,7 @@ func TestNewConfigValidationErrors(t *testing.T) {
 		{name: "nil clock", opts: []Option{WithClock(nil)}, want: ErrNilClock},
 		{name: "zero window", opts: []Option{WithWindow(0)}, want: ErrInvalidWindow},
 		{name: "negative window", opts: []Option{WithWindow(-time.Second)}, want: ErrInvalidWindow},
-		{name: "negative ratio", opts: []Option{WithRatio(-0.1)}, want: ErrInvalidRatio},
-		{name: "ratio greater than one", opts: []Option{WithRatio(1.1)}, want: ErrInvalidRatio},
-		{name: "ratio NaN", opts: []Option{WithRatio(math.NaN())}, want: ErrInvalidRatio},
-		{name: "ratio positive infinity", opts: []Option{WithRatio(math.Inf(1))}, want: ErrInvalidRatio},
-		{name: "ratio negative infinity", opts: []Option{WithRatio(math.Inf(-1))}, want: ErrInvalidRatio},
+		{name: "invalid ratio", opts: []Option{WithRatio(Ratio{})}, want: ErrInvalidRatio},
 	}
 
 	for _, tt := range tests {
@@ -99,8 +94,8 @@ func TestNewConfigOptionsApplyInOrder(t *testing.T) {
 	cfg, err := newConfig(
 		WithWindow(time.Second),
 		WithWindow(2*time.Second),
-		WithRatio(0.25),
-		WithRatio(0.75),
+		WithRatio(MustRatio(1, 4)),
+		WithRatio(MustRatio(3, 4)),
 		WithMinRetries(1),
 		WithMinRetries(3),
 	)
@@ -110,8 +105,8 @@ func TestNewConfigOptionsApplyInOrder(t *testing.T) {
 	if cfg.window != 2*time.Second {
 		t.Fatalf("window = %s, want 2s", cfg.window)
 	}
-	if cfg.ratio != 0.75 {
-		t.Fatalf("ratio = %v, want 0.75", cfg.ratio)
+	if cfg.ratio != MustRatio(3, 4) {
+		t.Fatalf("ratio = %v, want 3/4", cfg.ratio)
 	}
 	if cfg.minRetries != 3 {
 		t.Fatalf("minRetries = %d, want 3", cfg.minRetries)

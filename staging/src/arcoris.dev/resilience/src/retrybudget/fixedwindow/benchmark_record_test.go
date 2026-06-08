@@ -17,7 +17,7 @@ package fixedwindow
 import "testing"
 
 func BenchmarkLimiterRecordOriginal(b *testing.B) {
-	limiter, _ := newBenchmarkLimiter(b, WithRatio(1), WithMinRetries(0))
+	limiter, _ := newBenchmarkLimiter(b, WithRatio(RatioOne), WithMinRetries(0))
 	b.ReportAllocs()
 	for b.Loop() {
 		limiter.RecordOriginal()

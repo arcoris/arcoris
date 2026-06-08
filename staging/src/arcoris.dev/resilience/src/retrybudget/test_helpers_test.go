@@ -41,7 +41,7 @@ func validSnapshotValue() Snapshot {
 			Bounded:   true,
 		},
 		Policy: PolicySnapshot{
-			Ratio:   0.2,
+			Ratio:   MustRatio(1, 5),
 			Minimum: 2,
 			Bounded: true,
 		},

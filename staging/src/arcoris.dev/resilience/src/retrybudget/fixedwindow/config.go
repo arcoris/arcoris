@@ -18,21 +18,22 @@ import (
 	"time"
 
 	"arcoris.dev/chrono/clock"
+	"arcoris.dev/resilience/retrybudget"
 )
 
 const (
 	// DefaultWindow is the default local retry-budget accounting window.
 	DefaultWindow = time.Minute
 
-	// DefaultRatio is the default retry allowance ratio.
-	//
-	// A ratio of 0.2 permits one retry attempt for every five original attempts,
-	// before applying DefaultMinRetries.
-	DefaultRatio = 0.2
-
 	// DefaultMinRetries is the default minimum retry allowance per window.
 	DefaultMinRetries uint64 = 10
 )
+
+// DefaultRatio is the default retry allowance ratio.
+//
+// A ratio of 1/5 permits one retry attempt for every five original attempts,
+// before applying DefaultMinRetries.
+var DefaultRatio = retrybudget.MustRatio(1, 5)
 
 // config contains the validated runtime policy used by Limiter.
 type config struct {
@@ -42,8 +43,8 @@ type config struct {
 	// window is the fixed local accounting window duration.
 	window time.Duration
 
-	// ratio is the retry allowance multiplier applied to original attempts.
-	ratio float64
+	// ratio is the exact retry allowance multiplier applied to original attempts.
+	ratio retrybudget.Ratio
 
 	// minRetries is the minimum retry allowance available in every window.
 	minRetries uint64

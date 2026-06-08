@@ -14,11 +14,11 @@
 
 package fixedwindow
 
-import "math"
+import "arcoris.dev/resilience/retrybudget"
 
 // validateRatio reports whether ratio is a conservative retry-budget multiplier.
-func validateRatio(ratio float64) error {
-	if math.IsNaN(ratio) || math.IsInf(ratio, 0) || ratio < 0 || ratio > 1 {
+func validateRatio(ratio retrybudget.Ratio) error {
+	if !ratio.IsValid() {
 		return ErrInvalidRatio
 	}
 	return nil

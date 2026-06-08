@@ -20,7 +20,7 @@ import (
 )
 
 func TestLimiterRecordOriginal(t *testing.T) {
-	l, _ := newTestLimiter(t, WithRatio(0.5), WithMinRetries(0))
+	l, _ := newTestLimiter(t, WithRatio(MustRatio(1, 2)), WithMinRetries(0))
 	prev := l.Revision()
 
 	l.RecordOriginal()
@@ -47,7 +47,7 @@ func TestLimiterRecordOriginal(t *testing.T) {
 }
 
 func TestLimiterRecordOriginalRotatesWindow(t *testing.T) {
-	l, clk := newTestLimiter(t, WithWindow(time.Second), WithRatio(1), WithMinRetries(0))
+	l, clk := newTestLimiter(t, WithWindow(time.Second), WithRatio(RatioOne), WithMinRetries(0))
 	l.RecordOriginal()
 	prev := l.Revision()
 

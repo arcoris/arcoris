@@ -22,7 +22,7 @@ import (
 
 func ExampleLimiter_RecordOriginal() {
 	budget, err := fixedwindow.New(
-		fixedwindow.WithRatio(1),
+		fixedwindow.WithRatio(fixedwindow.RatioOne),
 		fixedwindow.WithMinRetries(0),
 	)
 	if err != nil {

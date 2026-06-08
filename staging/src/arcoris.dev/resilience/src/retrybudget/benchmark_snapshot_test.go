@@ -66,7 +66,7 @@ func BenchmarkWindowContains(b *testing.B) {
 }
 
 func BenchmarkPolicyIsValid(b *testing.B) {
-	policy := PolicySnapshot{Ratio: 0.2, Minimum: 10, Bounded: true}
+	policy := PolicySnapshot{Ratio: MustRatio(1, 5), Minimum: 10, Bounded: true}
 	b.ReportAllocs()
 	for b.Loop() {
 		benchmarkValid = policy.IsValid()

@@ -23,7 +23,7 @@ import (
 
 func ExampleAdmitter_TryAdmit() {
 	budget, err := fixedwindow.New(
-		fixedwindow.WithRatio(0),
+		fixedwindow.WithRatio(fixedwindow.RatioZero),
 		fixedwindow.WithMinRetries(1),
 	)
 	if err != nil {

@@ -14,10 +14,7 @@
 
 package retrybudget
 
-import (
-	"math"
-	"testing"
-)
+import "testing"
 
 func TestPolicySnapshotIsValid(t *testing.T) {
 	tests := []struct {
@@ -26,14 +23,11 @@ func TestPolicySnapshotIsValid(t *testing.T) {
 		want bool
 	}{
 		{name: "unbounded", val: PolicySnapshot{}, want: true},
-		{name: "bounded zero", val: PolicySnapshot{Ratio: 0, Bounded: true}, want: true},
-		{name: "bounded one", val: PolicySnapshot{Ratio: 1, Minimum: 10, Bounded: true}, want: true},
-		{name: "bounded fraction", val: PolicySnapshot{Ratio: 0.2, Minimum: 3, Bounded: true}, want: true},
-		{name: "negative", val: PolicySnapshot{Ratio: -0.1, Bounded: true}, want: false},
-		{name: "greater than one", val: PolicySnapshot{Ratio: 1.1, Bounded: true}, want: false},
-		{name: "nan", val: PolicySnapshot{Ratio: math.NaN(), Bounded: true}, want: false},
-		{name: "inf", val: PolicySnapshot{Ratio: math.Inf(1), Bounded: true}, want: false},
-		{name: "unbounded with ratio", val: PolicySnapshot{Ratio: 0.2}, want: false},
+		{name: "bounded zero", val: PolicySnapshot{Ratio: RatioZero, Bounded: true}, want: true},
+		{name: "bounded one", val: PolicySnapshot{Ratio: RatioOne, Minimum: 10, Bounded: true}, want: true},
+		{name: "bounded fraction", val: PolicySnapshot{Ratio: MustRatio(1, 5), Minimum: 3, Bounded: true}, want: true},
+		{name: "bounded unset ratio", val: PolicySnapshot{Bounded: true}, want: false},
+		{name: "unbounded with ratio", val: PolicySnapshot{Ratio: MustRatio(1, 5)}, want: false},
 		{name: "unbounded with minimum", val: PolicySnapshot{Minimum: 1}, want: false},
 	}
 	for _, tt := range tests {
@@ -46,7 +40,7 @@ func TestPolicySnapshotIsValid(t *testing.T) {
 }
 
 func TestPolicySnapshotHasMinimum(t *testing.T) {
-	if !(PolicySnapshot{Ratio: 0.2, Minimum: 1, Bounded: true}).HasMinimum() {
+	if !(PolicySnapshot{Ratio: MustRatio(1, 5), Minimum: 1, Bounded: true}).HasMinimum() {
 		t.Fatal("HasMinimum returned false")
 	}
 	if (PolicySnapshot{Minimum: 1}).HasMinimum() {
@@ -61,7 +55,7 @@ func TestPolicySnapshotIsBounded(t *testing.T) {
 		want bool
 	}{
 		{name: "unbounded", val: PolicySnapshot{}, want: false},
-		{name: "bounded", val: PolicySnapshot{Ratio: 0.2, Minimum: 1, Bounded: true}, want: true},
+		{name: "bounded", val: PolicySnapshot{Ratio: MustRatio(1, 5), Minimum: 1, Bounded: true}, want: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

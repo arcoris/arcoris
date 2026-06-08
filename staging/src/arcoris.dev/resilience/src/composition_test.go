@@ -163,7 +163,7 @@ func TestManualCompositionReleasesLeaseWhenLaterStageReturnsInvalidResult(t *tes
 
 func Example_manualAdmissionComposition_releaseOnLaterDeny() {
 	b := bulkhead.New(1)
-	budget, _ := fixedwindow.New(fixedwindow.WithRatio(0), fixedwindow.WithMinRetries(0))
+	budget, _ := fixedwindow.New(fixedwindow.WithRatio(fixedwindow.RatioZero), fixedwindow.WithMinRetries(0))
 
 	result := bulkheadadmission.New(b).TryAdmit(bulkheadadmission.Request{Amount: 1})
 	lease, ok := result.Grant()
@@ -195,7 +195,7 @@ func Example_manualAdmissionComposition_releaseOnLaterDeny() {
 
 func Example_manualAdmissionComposition_returnOwnedLease() {
 	b := bulkhead.New(1)
-	budget, _ := fixedwindow.New(fixedwindow.WithRatio(0), fixedwindow.WithMinRetries(1))
+	budget, _ := fixedwindow.New(fixedwindow.WithRatio(fixedwindow.RatioZero), fixedwindow.WithMinRetries(1))
 
 	result := bulkheadadmission.New(b).TryAdmit(bulkheadadmission.Request{Amount: 1})
 	lease, ok := result.Grant()
@@ -301,7 +301,7 @@ func newRetryBudget(t *testing.T, minRetries uint64) *fixedwindow.Limiter {
 	t.Helper()
 
 	limiter, err := fixedwindow.New(
-		fixedwindow.WithRatio(0),
+		fixedwindow.WithRatio(fixedwindow.RatioZero),
 		fixedwindow.WithMinRetries(minRetries),
 	)
 	if err != nil {
