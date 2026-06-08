@@ -12,23 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package liveconfigtest_test
+package liveconfigtest
 
-import (
-	"fmt"
+import "testing"
 
-	"arcoris.dev/liveconfig/liveconfigtest"
-)
+func TestMutatedConfigLeavesOriginalUnchanged(t *testing.T) {
+	orig := NewConfig()
+	mutated := MutatedConfig(orig)
 
-func ExampleControlledSource() {
-	src := liveconfigtest.NewControlledSource(liveconfigtest.NewConfigVersion(1))
-	src.Publish(liveconfigtest.NewConfigVersion(2))
-
-	snap := src.Snapshot()
-	fmt.Println(snap.Revision)
-	fmt.Println(snap.Value.Version)
-
-	// Output:
-	// 2
-	// 2
+	if !EqualConfig(orig, NewConfig()) {
+		t.Fatal("MutatedConfig changed original config")
+	}
+	if EqualConfig(orig, mutated) {
+		t.Fatal("MutatedConfig returned equal config, want changed")
+	}
 }

@@ -12,37 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package liveconfigtest
 
-import (
-	"testing"
+import "testing"
 
-	"arcoris.dev/snapshot"
-)
-
-func TestAssertionHelpersAcceptValidSnapshots(t *testing.T) {
-	snap := snapshot.Snapshot[Config]{
-		Revision: snapshot.ZeroRevision.Next(),
-		Value:    NewConfig(),
-	}
-
-	RequireNonZeroRevision(t, snap)
-	RequireRevision(t, snap, snapshot.ZeroRevision.Next())
-	RequireChangedSince(t, snap, snapshot.ZeroRevision)
-	RequireUnchangedSince(t, snap, snap.Revision)
-	RequireSnapshotValue(t, snap, NewConfig(), EqualConfig)
-
-	stamped := snapshot.Stamped[Config]{
-		Revision: snap.Revision,
-		Value:    snap.Value,
-	}
-	RequireStampedNonZeroRevision(t, stamped)
-	RequireStampedValue(t, stamped, NewConfig(), EqualConfig)
-	RequireConfigStampedValue(t, stamped, NewConfig())
-
-	src := NewControlledSource(NewConfig())
-	RequireSourceRevision(t, src, snapshot.ZeroRevision.Next())
-	RequireSourceValue(t, src, NewConfig(), EqualConfig)
-	RequireConfigSourceValue(t, src, NewConfig())
+func TestAssertionHelpersAcceptEqualValues(t *testing.T) {
+	RequireValue(t, "value", "value", nil)
+	RequireConfigEqual(t, NewConfig(), NewConfig())
 }

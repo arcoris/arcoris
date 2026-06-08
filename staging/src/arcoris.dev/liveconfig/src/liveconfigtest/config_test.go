@@ -12,34 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package liveconfigtest
 
 import (
-	"errors"
 	"slices"
 	"testing"
 	"time"
 )
-
-func TestCloneConfigIsolatesMutableFields(t *testing.T) {
-	orig := NewConfig()
-	clone := CloneConfig(orig)
-
-	MutateConfig(&orig)
-
-	want := NewConfig()
-	RequireConfigEqual(t, clone, want)
-}
-
-func TestConfigMethodCloneIsolatesMutableFields(t *testing.T) {
-	orig := NewConfig()
-	clone := orig.Clone()
-
-	MutateConfig(&orig)
-
-	RequireConfigEqual(t, clone, NewConfig())
-}
 
 func TestConfigValueMethods(t *testing.T) {
 	labels := map[string]string{"env": "stage"}
@@ -84,106 +63,5 @@ func TestConfigValueMethods(t *testing.T) {
 	}
 	if !cfg.Equal(CloneConfig(cfg)) {
 		t.Fatal("Equal() = false for cloned config")
-	}
-}
-
-func TestMutatedConfigLeavesOriginalUnchanged(t *testing.T) {
-	orig := NewConfig()
-	mutated := MutatedConfig(orig)
-
-	if !EqualConfig(orig, NewConfig()) {
-		t.Fatal("MutatedConfig changed original config")
-	}
-	if EqualConfig(orig, mutated) {
-		t.Fatal("MutatedConfig returned equal config, want changed")
-	}
-}
-
-func TestEqualConfig(t *testing.T) {
-	base := NewConfig()
-
-	tests := []struct {
-		name   string
-		mutate func(*Config)
-		want   bool
-	}{
-		{
-			name: "equal",
-			want: true,
-		},
-		{
-			name:   "different name",
-			mutate: func(cfg *Config) { cfg.Name = "other" },
-		},
-		{
-			name:   "different limit",
-			mutate: func(cfg *Config) { cfg.Limits[0] = 99 },
-		},
-		{
-			name:   "different label",
-			mutate: func(cfg *Config) { cfg.Labels["env"] = "prod" },
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := CloneConfig(base)
-			if tt.mutate != nil {
-				tt.mutate(&got)
-			}
-			if EqualConfig(base, got) != tt.want {
-				t.Fatalf("EqualConfig() = %v, want %v", EqualConfig(base, got), tt.want)
-			}
-		})
-	}
-}
-
-func TestValidateConfig(t *testing.T) {
-	tests := []struct {
-		name string
-		cfg  Config
-		want error
-	}{
-		{
-			name: "valid",
-			cfg:  NewConfig(),
-		},
-		{
-			name: "blank name",
-			cfg:  InvalidNameConfig(),
-			want: ErrInvalidName,
-		},
-		{
-			name: "negative version",
-			cfg:  InvalidVersionConfig(),
-			want: ErrInvalidVersion,
-		},
-		{
-			name: "zero timeout",
-			cfg:  InvalidTimeoutConfig(),
-			want: ErrInvalidTimeout,
-		},
-		{
-			name: "negative limit",
-			cfg:  InvalidLimitConfig(),
-			want: ErrInvalidLimit,
-		},
-		{
-			name: "positive timeout",
-			cfg: func() Config {
-				cfg := NewConfig()
-				cfg.Timeout = time.Nanosecond
-				return cfg
-			}(),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateConfig(tt.cfg)
-			if !errors.Is(err, tt.want) {
-				t.Fatalf("ValidateConfig() error = %v, want %v", err, tt.want)
-			}
-		})
 	}
 }

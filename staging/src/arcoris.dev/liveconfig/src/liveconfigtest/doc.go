@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package liveconfigtest provides deterministic fixtures for tests built around
 // package liveconfig and the snapshot source contracts it exposes.
 //

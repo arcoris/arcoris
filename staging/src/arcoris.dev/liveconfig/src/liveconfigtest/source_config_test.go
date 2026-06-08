@@ -14,12 +14,26 @@
 
 package liveconfigtest
 
-import "arcoris.dev/snapshot"
+import "testing"
 
-// ControlledSource intentionally implements the same read contracts as
-// liveconfig.Holder. Keeping the assertions in their own file makes the package
-// boundary explicit: tests can depend on snapshot.Source interfaces instead of a
-// concrete helper when they only need read behavior.
-var _ snapshot.Source[Config] = (*ControlledSource[Config])(nil)
-var _ snapshot.StampedSource[Config] = (*ControlledSource[Config])(nil)
-var _ snapshot.RevisionSource = (*ControlledSource[Config])(nil)
+func TestConfigSourceClonesPublishedValues(t *testing.T) {
+	cfg := NewConfig()
+	src := NewConfigSource(cfg)
+
+	MutateConfig(&cfg)
+	RequireConfigEqual(t, src.Current(), NewConfig())
+
+	next := NewConfigVersion(2)
+	PublishConfig(src, next)
+	MutateConfig(&next)
+	RequireConfigEqual(t, src.Current(), NewConfigVersion(2))
+}
+
+func TestConfigSourceStampedPublication(t *testing.T) {
+	src := NewEmptyConfigSource()
+
+	stamped := PublishConfigStamped(src, NewConfigVersion(1))
+
+	RequireStampedNonZeroRevision(t, stamped)
+	RequireConfigStampedValue(t, stamped, NewConfigVersion(1))
+}

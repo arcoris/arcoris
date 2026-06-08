@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package liveconfigtest
 
 import (
@@ -83,28 +82,6 @@ func TestZeroValueControlledSource(t *testing.T) {
 	snap := src.Publish(NewConfigVersion(1))
 	RequireNonZeroRevision(t, snap)
 	RequireConfigEqual(t, src.Current(), NewConfigVersion(1))
-}
-
-func TestConfigSourceClonesPublishedValues(t *testing.T) {
-	cfg := NewConfig()
-	src := NewConfigSource(cfg)
-
-	MutateConfig(&cfg)
-	RequireConfigEqual(t, src.Current(), NewConfig())
-
-	next := NewConfigVersion(2)
-	PublishConfig(src, next)
-	MutateConfig(&next)
-	RequireConfigEqual(t, src.Current(), NewConfigVersion(2))
-}
-
-func TestConfigSourceStampedPublication(t *testing.T) {
-	src := NewEmptyConfigSource()
-
-	stamped := PublishConfigStamped(src, NewConfigVersion(1))
-
-	RequireStampedNonZeroRevision(t, stamped)
-	RequireConfigStampedValue(t, stamped, NewConfigVersion(1))
 }
 
 func TestControlledSourceSerializesConcurrentPublications(t *testing.T) {

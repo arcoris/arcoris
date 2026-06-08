@@ -12,23 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package liveconfigtest_test
+package liveconfigtest
 
 import (
-	"fmt"
+	"testing"
 
-	"arcoris.dev/liveconfig/liveconfigtest"
+	"arcoris.dev/snapshot"
 )
 
-func ExampleControlledSource() {
-	src := liveconfigtest.NewControlledSource(liveconfigtest.NewConfigVersion(1))
-	src.Publish(liveconfigtest.NewConfigVersion(2))
+func TestSourceAssertionHelpersAcceptValidSources(t *testing.T) {
+	stamped := snapshot.Stamped[Config]{
+		Revision: snapshot.ZeroRevision.Next(),
+		Value:    NewConfig(),
+	}
+	RequireStampedNonZeroRevision(t, stamped)
+	RequireStampedValue(t, stamped, NewConfig(), EqualConfig)
+	RequireConfigStampedValue(t, stamped, NewConfig())
 
-	snap := src.Snapshot()
-	fmt.Println(snap.Revision)
-	fmt.Println(snap.Value.Version)
-
-	// Output:
-	// 2
-	// 2
+	src := NewControlledSource(NewConfig())
+	RequireSourceRevision(t, src, snapshot.ZeroRevision.Next())
+	RequireSourceValue(t, src, NewConfig(), EqualConfig)
+	RequireConfigSourceValue(t, src, NewConfig())
 }

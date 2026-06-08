@@ -12,23 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package liveconfigtest_test
+package liveconfigtest
 
 import (
-	"fmt"
-
-	"arcoris.dev/liveconfig/liveconfigtest"
+	"context"
+	"testing"
 )
 
-func ExampleControlledSource() {
-	src := liveconfigtest.NewControlledSource(liveconfigtest.NewConfigVersion(1))
-	src.Publish(liveconfigtest.NewConfigVersion(2))
+func TestLoaderAssertionHelpersAcceptExpectedState(t *testing.T) {
+	loader := NewLoader(Loaded(NewConfig()), Loaded(NewConfigVersion(2)))
 
-	snap := src.Snapshot()
-	fmt.Println(snap.Revision)
-	fmt.Println(snap.Value.Version)
+	_, err := loader.Load(context.Background())
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
 
-	// Output:
-	// 2
-	// 2
+	RequireLoadCalls(t, loader, 1)
+	RequireLoadRemaining(t, loader, 1)
+
+	_, err = loader.Load(context.Background())
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	RequireLoaderExhausted(t, loader)
 }

@@ -12,23 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package liveconfigtest_test
+package liveconfigtest
 
-import (
-	"fmt"
+import "testing"
 
-	"arcoris.dev/liveconfig/liveconfigtest"
-)
+func TestCloneConfigIsolatesMutableFields(t *testing.T) {
+	orig := NewConfig()
+	clone := CloneConfig(orig)
 
-func ExampleControlledSource() {
-	src := liveconfigtest.NewControlledSource(liveconfigtest.NewConfigVersion(1))
-	src.Publish(liveconfigtest.NewConfigVersion(2))
+	MutateConfig(&orig)
 
-	snap := src.Snapshot()
-	fmt.Println(snap.Revision)
-	fmt.Println(snap.Value.Version)
+	want := NewConfig()
+	RequireConfigEqual(t, clone, want)
+}
 
-	// Output:
-	// 2
-	// 2
+func TestConfigMethodCloneIsolatesMutableFields(t *testing.T) {
+	orig := NewConfig()
+	clone := orig.Clone()
+
+	MutateConfig(&orig)
+
+	RequireConfigEqual(t, clone, NewConfig())
 }

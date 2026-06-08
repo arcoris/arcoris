@@ -12,23 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package liveconfigtest_test
+package liveconfigtest
 
 import (
-	"fmt"
+	"testing"
 
-	"arcoris.dev/liveconfig/liveconfigtest"
+	"arcoris.dev/snapshot"
 )
 
-func ExampleControlledSource() {
-	src := liveconfigtest.NewControlledSource(liveconfigtest.NewConfigVersion(1))
-	src.Publish(liveconfigtest.NewConfigVersion(2))
-
-	snap := src.Snapshot()
-	fmt.Println(snap.Revision)
-	fmt.Println(snap.Value.Version)
-
-	// Output:
-	// 2
-	// 2
+func TestControlledSourceImplementsSnapshotContracts(t *testing.T) {
+	var _ snapshot.Source[Config] = (*ControlledSource[Config])(nil)
+	var _ snapshot.StampedSource[Config] = (*ControlledSource[Config])(nil)
+	var _ snapshot.RevisionSource = (*ControlledSource[Config])(nil)
 }
