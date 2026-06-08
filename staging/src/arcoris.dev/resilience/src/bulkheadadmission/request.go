@@ -12,12 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bulkhead
+package bulkheadadmission
 
-import "arcoris.dev/snapshot"
+import "arcoris.dev/resilience/bulkhead"
 
-var (
-	// Compile-time contract checks for Bulkhead's read-facing snapshot APIs.
-	_ snapshot.Source[Snapshot] = (*Bulkhead)(nil)
-	_ snapshot.RevisionSource   = (*Bulkhead)(nil)
-)
+// Request is the admission adapter request for one bulkhead acquisition.
+//
+// Amount is the number of local in-flight capacity units to reserve. The request
+// intentionally contains no context, priority, tenant, deadline, queueing
+// policy, or metadata; those dimensions belong above the local bulkhead
+// primitive.
+type Request struct {
+	// Amount is the number of in-flight capacity units requested.
+	Amount bulkhead.Amount
+}

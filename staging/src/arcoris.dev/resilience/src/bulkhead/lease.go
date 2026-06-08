@@ -28,7 +28,10 @@ import (
 // release state. That avoids allocating both a capacity reservation and a
 // bulkhead lease for one acquisition.
 //
-// Lease must not be copied after creation.
+// Lease must not be copied after creation. Copying a live Lease would copy the
+// release flag and could create two values that both appear to own the same
+// capacity. Use the pointer returned by TryAcquire or TryAcquireAmount as the
+// single release authority.
 type Lease struct {
 	// noCopy lets go vet report accidental Lease copies after first use.
 	noCopy noCopy
@@ -45,9 +48,9 @@ type Lease struct {
 
 // Amount returns the number of in-flight capacity units owned by l.
 //
-// TryAcquire creates one-unit leases, while TryAcquireAmount and TryAdmit may
-// create weighted leases. The amount is immutable after acquisition and remains
-// observable before and after release.
+// TryAcquire creates one-unit leases, while TryAcquireAmount may create weighted
+// leases. The amount is immutable after acquisition and remains observable
+// before and after release.
 func (l *Lease) Amount() Amount {
 	l.requireReady()
 	return l.amount

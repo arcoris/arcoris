@@ -20,25 +20,30 @@
 // when the Lease is released. When no capacity is available, acquisition rejects
 // immediately.
 //
-// The package exposes two equivalent API surfaces. TryAcquire and
-// TryAcquireAmount are the direct bulkhead APIs for callers that want a Lease and
-// an observed capacity snapshot. TryAdmit accepts a typed Request and returns an
-// admission.Result so generic admission-compatible code can consume the same
-// non-blocking operation. TryAdmit maps success to admission.Granted with
-// admission.ReasonAdmitted, and capacity exhaustion to
-// admission.DeniedFor with
-// admissioncatalog/builtin.ReasonCapacityExhausted. Successful admission still
-// transfers Lease ownership to the caller; the caller must release the Lease.
+// TryAcquire and TryAcquireAmount are the direct APIs. A successful acquisition
+// returns a Lease and an Observation with RefusalNone. A denied acquisition
+// returns no lease and an Observation that preserves both the observed capacity
+// snapshot and the precise capacity refusal. Successful direct acquisition
+// allocates only the bulkhead Lease token; it does not also allocate a
+// capacity.Reservation object.
 //
 // The package is local and non-blocking. It does not wait, queue callers,
 // observe contexts, implement fairness, rate-limit throughput, retry work,
 // classify operation failures, integrate with health, export metrics, log, trace,
-// schedule work, use admission metadata catalogs in the hot path, or manage
-// worker pools. Those policies belong above this primitive.
+// schedule work, map admission reasons, use admission metadata catalogs, or
+// manage worker pools. Those policies belong above this primitive.
 //
-// capacity owns scalar accounting and lease/release semantics. bulkhead owns the
-// resilience meaning: bounded in-flight isolation around protected execution.
-// admission owns the generic result contract used by TryAdmit. The public state
-// model is intentionally the capacity snapshot itself so callers see the same
-// Limit, Reserved, Available, and Debt semantics at both layers.
+// capacity owns scalar accounting, limits, debt, revisions, and refusal
+// taxonomy. bulkhead owns the resilience meaning: protected in-flight work,
+// release-once Lease ownership, and direct Observation metadata. Snapshots are
+// capacity-only and intentionally do not include queues, waiters, fairness,
+// metrics, or historical counters.
+//
+// SetLimit never revokes active leases. Lowering the limit below active leases
+// creates debt in the underlying capacity snapshot; new acquisitions are denied
+// until releases or a later limit increase restore availability.
+//
+// Package arcoris.dev/resilience/bulkheadadmission maps direct bulkhead
+// observations into admission.Result values for callers that need the generic
+// admission surface.
 package bulkhead

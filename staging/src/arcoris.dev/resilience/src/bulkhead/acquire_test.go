@@ -21,7 +21,7 @@ func TestTryAcquireSucceedsUnderLimit(t *testing.T) {
 
 	b := New(2)
 	before := b.Revision()
-	lease, snap, ok := b.TryAcquire()
+	lease, observation, ok := b.TryAcquire()
 	if !ok {
 		t.Fatal("TryAcquire returned ok=false, want true")
 	}
@@ -32,10 +32,13 @@ func TestTryAcquireSucceedsUnderLimit(t *testing.T) {
 	if lease.Amount() != 1 {
 		t.Fatalf("lease amount = %d, want 1", lease.Amount())
 	}
-	if snap.Revision == before {
+	if observation.Refusal != RefusalNone {
+		t.Fatalf("refusal = %s, want none", observation.Refusal)
+	}
+	if observation.Snapshot.Revision == before {
 		t.Fatal("successful acquire did not advance revision")
 	}
-	requireSnapshotValue(t, snap, 2, 1, 1, 0)
+	requireObservationValue(t, observation, RefusalNone, 2, 1, 1, 0)
 }
 
 func TestTryAcquireDeniedWhenCapacityExhausted(t *testing.T) {
@@ -49,16 +52,16 @@ func TestTryAcquireDeniedWhenCapacityExhausted(t *testing.T) {
 	defer lease.Release()
 
 	beforeDenied := b.Revision()
-	deniedLease, snap, ok := b.TryAcquire()
+	deniedLease, observation, ok := b.TryAcquire()
 	if ok {
 		t.Fatal("second TryAcquire returned ok=true, want false")
 	}
 	if deniedLease != nil {
 		t.Fatalf("denied lease = %#v, want nil", deniedLease)
 	}
-	requireSnapshotValue(t, snap, 1, 1, 0, 0)
-	if got := b.Snapshot(); got != snap {
-		t.Fatalf("denied snapshot = %+v, want current snapshot %+v", snap, got)
+	requireObservationValue(t, observation, RefusalInsufficient, 1, 1, 0, 0)
+	if got := b.Snapshot(); got != observation.Snapshot {
+		t.Fatalf("denied snapshot = %+v, want current snapshot %+v", observation.Snapshot, got)
 	}
 	if got := b.Revision(); got != beforeDenied {
 		t.Fatalf("denied acquire advanced revision: got %d, want %d", got, beforeDenied)
@@ -69,12 +72,12 @@ func TestTryAcquireDeniedWhenLimitIsZero(t *testing.T) {
 	t.Parallel()
 
 	b := New(0)
-	lease, snap, ok := b.TryAcquire()
+	lease, observation, ok := b.TryAcquire()
 	if ok {
 		t.Fatal("TryAcquire returned ok=true, want false")
 	}
 	if lease != nil {
 		t.Fatalf("lease = %#v, want nil", lease)
 	}
-	requireSnapshotValue(t, snap, 0, 0, 0, 0)
+	requireObservationValue(t, observation, RefusalInsufficient, 0, 0, 0, 0)
 }

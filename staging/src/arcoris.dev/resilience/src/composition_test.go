@@ -22,6 +22,7 @@ import (
 
 	"arcoris.dev/admission"
 	"arcoris.dev/resilience/bulkhead"
+	"arcoris.dev/resilience/bulkheadadmission"
 	"arcoris.dev/resilience/deadline"
 	"arcoris.dev/resilience/retrybudget"
 	"arcoris.dev/resilience/retrybudget/fixedwindow"
@@ -94,7 +95,8 @@ func TestManualCompositionDeniedBeforeBulkheadDoesNotAcquireLease(t *testing.T) 
 
 	var lease *bulkhead.Lease
 	if deadlineResult.Decision().IsAdmitted() {
-		bulkheadResult := b.TryAdmit(bulkhead.Request{Amount: 1})
+		bulkheadResult := bulkheadadmission.New(b).
+			TryAdmit(bulkheadadmission.Request{Amount: 1})
 		lease, _ = bulkheadResult.Grant()
 	}
 
@@ -128,7 +130,8 @@ func TestManualCompositionReleasesLeaseWhenLaterStageReturnsInvalidResult(t *tes
 	t.Parallel()
 
 	b := bulkhead.New(1)
-	bulkheadResult := b.TryAdmit(bulkhead.Request{Amount: 1})
+	bulkheadResult := bulkheadadmission.New(b).
+		TryAdmit(bulkheadadmission.Request{Amount: 1})
 	lease, ok := bulkheadResult.Grant()
 	if !ok || lease == nil {
 		t.Fatal("bulkhead did not return a live lease")
@@ -160,7 +163,7 @@ func Example_manualAdmissionComposition_releaseOnLaterDeny() {
 	b := bulkhead.New(1)
 	budget, _ := fixedwindow.New(fixedwindow.WithRatio(0), fixedwindow.WithMinRetries(0))
 
-	result := b.TryAdmit(bulkhead.Request{Amount: 1})
+	result := bulkheadadmission.New(b).TryAdmit(bulkheadadmission.Request{Amount: 1})
 	lease, ok := result.Grant()
 	if !ok {
 		fmt.Println("bulkhead denied")
@@ -191,7 +194,7 @@ func Example_manualAdmissionComposition_returnOwnedLease() {
 	b := bulkhead.New(1)
 	budget, _ := fixedwindow.New(fixedwindow.WithRatio(0), fixedwindow.WithMinRetries(1))
 
-	result := b.TryAdmit(bulkhead.Request{Amount: 1})
+	result := bulkheadadmission.New(b).TryAdmit(bulkheadadmission.Request{Amount: 1})
 	lease, ok := result.Grant()
 	if !ok {
 		fmt.Println("bulkhead denied")
@@ -221,7 +224,7 @@ func Example_manualAdmissionComposition_returnOwnedLease() {
 }
 
 type composedAdmission struct {
-	BulkheadResult admission.Result[*bulkhead.Lease, snapshot.Snapshot[bulkhead.Snapshot]]
+	BulkheadResult admission.Result[*bulkhead.Lease, bulkhead.Observation]
 	BudgetResult   admission.Result[admission.NoGrant, snapshot.Snapshot[retrybudget.Snapshot]]
 	DeadlineResult admission.Result[admission.NoGrant, deadline.Decision]
 	Lease          *bulkhead.Lease
@@ -245,7 +248,8 @@ func manuallyCompose(
 		return out
 	}
 
-	out.BulkheadResult = b.TryAdmit(bulkhead.Request{Amount: 1})
+	out.BulkheadResult = bulkheadadmission.New(b).
+		TryAdmit(bulkheadadmission.Request{Amount: 1})
 	if !out.BulkheadResult.IsValid() || out.BulkheadResult.Decision().IsDenied() {
 		return out
 	}

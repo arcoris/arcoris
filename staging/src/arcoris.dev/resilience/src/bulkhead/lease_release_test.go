@@ -17,7 +17,6 @@ package bulkhead
 import (
 	"testing"
 
-	"arcoris.dev/capacity"
 	panicassert "arcoris.dev/testutil/panic"
 )
 
@@ -73,7 +72,7 @@ func TestLeaseReleasePanicsAfterTryRelease(t *testing.T) {
 	}
 	_, _ = lease.TryRelease()
 
-	panicassert.RequireErrorIs(t, capacity.ErrReservationReleased, func() {
+	panicassert.RequireErrorIs(t, ErrLeaseReleased, func() {
 		_ = lease.Release()
 	})
 }

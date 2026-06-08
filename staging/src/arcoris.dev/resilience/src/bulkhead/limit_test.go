@@ -39,6 +39,75 @@ func TestSetLimitBelowActiveLeasesCreatesDebt(t *testing.T) {
 	requireSnapshotValue(t, snap, 1, 2, 0, 1)
 }
 
+func TestTryAcquireDeniedWhileDebtExists(t *testing.T) {
+	t.Parallel()
+
+	b := New(2)
+	first, _, ok := b.TryAcquire()
+	if !ok {
+		t.Fatal("first TryAcquire failed")
+	}
+	defer first.TryRelease()
+	second, _, ok := b.TryAcquire()
+	if !ok {
+		t.Fatal("second TryAcquire failed")
+	}
+	defer second.TryRelease()
+
+	b.SetLimit(1)
+	lease, observation, ok := b.TryAcquire()
+	if ok {
+		t.Fatal("TryAcquire under debt returned ok=true, want false")
+	}
+	if lease != nil {
+		t.Fatalf("denied lease = %#v, want nil", lease)
+	}
+	requireObservationValue(t, observation, RefusalDebt, 1, 2, 0, 1)
+}
+
+func TestTryAcquireAmountDeniedWhileDebtExists(t *testing.T) {
+	t.Parallel()
+
+	b := New(2)
+	held, _, ok := b.TryAcquireAmount(2)
+	if !ok {
+		t.Fatal("TryAcquireAmount failed")
+	}
+	defer held.TryRelease()
+
+	b.SetLimit(1)
+	lease, observation, ok := b.TryAcquireAmount(1)
+	if ok {
+		t.Fatal("TryAcquireAmount under debt returned ok=true, want false")
+	}
+	if lease != nil {
+		t.Fatalf("denied lease = %#v, want nil", lease)
+	}
+	requireObservationValue(t, observation, RefusalDebt, 1, 2, 0, 1)
+}
+
+func TestIncreasingLimitWhileDebtExistsRestoresAvailability(t *testing.T) {
+	t.Parallel()
+
+	b := New(2)
+	held, _, ok := b.TryAcquireAmount(2)
+	if !ok {
+		t.Fatal("TryAcquireAmount failed")
+	}
+	defer held.TryRelease()
+
+	b.SetLimit(1)
+	opened := b.SetLimit(3)
+	requireSnapshotValue(t, opened, 3, 2, 1, 0)
+
+	next, observation, ok := b.TryAcquire()
+	if !ok {
+		t.Fatal("TryAcquire after limit increase failed")
+	}
+	defer next.TryRelease()
+	requireObservationValue(t, observation, RefusalNone, 3, 3, 0, 0)
+}
+
 func TestSetLimitSameValueDoesNotAdvanceRevision(t *testing.T) {
 	t.Parallel()
 
@@ -79,12 +148,12 @@ func TestSetLimitRaisesClosedBulkhead(t *testing.T) {
 	opened := b.SetLimit(1)
 	requireSnapshotValue(t, opened, 1, 0, 1, 0)
 
-	lease, snap, ok := b.TryAcquire()
+	lease, observation, ok := b.TryAcquire()
 	if !ok {
 		t.Fatal("TryAcquire after SetLimit failed")
 	}
 	defer lease.Release()
-	requireSnapshotValue(t, snap, 1, 1, 0, 0)
+	requireObservationValue(t, observation, RefusalNone, 1, 1, 0, 0)
 }
 
 func TestSetLimitToZeroKeepsActiveLeases(t *testing.T) {

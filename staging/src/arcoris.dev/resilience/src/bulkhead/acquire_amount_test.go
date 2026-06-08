@@ -25,7 +25,7 @@ func TestTryAcquireAmountReservesWeightedCapacity(t *testing.T) {
 	t.Parallel()
 
 	b := New(3)
-	lease, snap, ok := b.TryAcquireAmount(2)
+	lease, observation, ok := b.TryAcquireAmount(2)
 	if !ok {
 		t.Fatal("TryAcquireAmount returned ok=false, want true")
 	}
@@ -36,28 +36,28 @@ func TestTryAcquireAmountReservesWeightedCapacity(t *testing.T) {
 	if lease.Amount() != 2 {
 		t.Fatalf("lease amount = %d, want 2", lease.Amount())
 	}
-	requireSnapshotValue(t, snap, 3, 2, 1, 0)
+	requireObservationValue(t, observation, RefusalNone, 3, 2, 1, 0)
 }
 
 func TestTryAcquireAmountOneMatchesTryAcquireBehavior(t *testing.T) {
 	t.Parallel()
 
 	b := New(1)
-	lease, snap, ok := b.TryAcquireAmount(1)
+	lease, observation, ok := b.TryAcquireAmount(1)
 	if !ok {
 		t.Fatal("TryAcquireAmount(1) returned ok=false, want true")
 	}
 	defer lease.Release()
-	requireSnapshotValue(t, snap, 1, 1, 0, 0)
+	requireObservationValue(t, observation, RefusalNone, 1, 1, 0, 0)
 
-	deniedLease, deniedSnap, ok := b.TryAcquire()
+	deniedLease, deniedObservation, ok := b.TryAcquire()
 	if ok {
 		t.Fatal("TryAcquire returned ok=true, want false")
 	}
 	if deniedLease != nil {
 		t.Fatalf("denied lease = %#v, want nil", deniedLease)
 	}
-	requireSnapshotValue(t, deniedSnap, 1, 1, 0, 0)
+	requireObservationValue(t, deniedObservation, RefusalInsufficient, 1, 1, 0, 0)
 }
 
 func TestTryAcquireAmountDeniedWhenCapacityIsInsufficient(t *testing.T) {
@@ -70,14 +70,14 @@ func TestTryAcquireAmountDeniedWhenCapacityIsInsufficient(t *testing.T) {
 	}
 	defer lease.Release()
 
-	deniedLease, snap, ok := b.TryAcquireAmount(2)
+	deniedLease, observation, ok := b.TryAcquireAmount(2)
 	if ok {
 		t.Fatal("second TryAcquireAmount returned ok=true, want false")
 	}
 	if deniedLease != nil {
 		t.Fatalf("denied lease = %#v, want nil", deniedLease)
 	}
-	requireSnapshotValue(t, snap, 3, 2, 1, 0)
+	requireObservationValue(t, observation, RefusalInsufficient, 3, 2, 1, 0)
 }
 
 func TestTryAcquireAmountReleaseRestoresCapacity(t *testing.T) {
@@ -90,12 +90,12 @@ func TestTryAcquireAmountReleaseRestoresCapacity(t *testing.T) {
 	}
 	lease.Release()
 
-	next, snap, ok := b.TryAcquireAmount(3)
+	next, observation, ok := b.TryAcquireAmount(3)
 	if !ok {
 		t.Fatal("TryAcquireAmount after release returned ok=false, want true")
 	}
 	defer next.Release()
-	requireSnapshotValue(t, snap, 3, 3, 0, 0)
+	requireObservationValue(t, observation, RefusalNone, 3, 3, 0, 0)
 }
 
 func TestTryAcquireAmountInvalidAmountPanics(t *testing.T) {
@@ -111,12 +111,12 @@ func TestTryAcquireAmountValidatesReceiverBeforeAmount(t *testing.T) {
 	t.Parallel()
 
 	var nilBulkhead *Bulkhead
-	panicassert.RequireMessage(t, errNilBulkhead, func() {
+	panicassert.RequireErrorIs(t, ErrNilBulkhead, func() {
 		_, _, _ = nilBulkhead.TryAcquireAmount(0)
 	})
 
 	var zero Bulkhead
-	panicassert.RequireMessage(t, errUninitializedBulkhead, func() {
+	panicassert.RequireErrorIs(t, ErrUninitializedBulkhead, func() {
 		_, _, _ = zero.TryAcquireAmount(0)
 	})
 }

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bulkhead
+package bulkheadadmission
 
-import "arcoris.dev/snapshot"
-
-var (
-	// Compile-time contract checks for Bulkhead's read-facing snapshot APIs.
-	_ snapshot.Source[Snapshot] = (*Bulkhead)(nil)
-	_ snapshot.RevisionSource   = (*Bulkhead)(nil)
+import (
+	"arcoris.dev/admission"
+	"arcoris.dev/resilience/bulkhead"
 )
+
+// Compile-time contract check for the generic admission adapter surface.
+var _ admission.Admitter[Request, *bulkhead.Lease, bulkhead.Observation] = Admitter{}

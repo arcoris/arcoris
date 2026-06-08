@@ -23,32 +23,50 @@ import (
 func ExampleBulkhead_TryAcquire() {
 	b := bulkhead.New(1)
 
-	lease, _, ok := b.TryAcquire()
-	fmt.Println(ok)
+	lease, observation, ok := b.TryAcquire()
+	fmt.Println(ok, observation.Refusal, observation.Snapshot.Value.Available)
 
-	denied, snap, ok := b.TryAcquire()
-	fmt.Println(denied == nil, ok, snap.Value.Available)
+	denied, observation, ok := b.TryAcquire()
+	fmt.Println(denied == nil, ok, observation.Refusal, observation.Snapshot.Value.Available)
 
 	lease.Release()
-	_, snap, ok = b.TryAcquire()
-	fmt.Println(ok, snap.Value.Available)
+	_, observation, ok = b.TryAcquire()
+	fmt.Println(ok, observation.Refusal, observation.Snapshot.Value.Available)
 
 	// Output:
-	// true
-	// true false 0
-	// true 0
+	// true none 0
+	// true false insufficient 0
+	// true none 0
 }
 
-func ExampleBulkhead_TryAdmit() {
-	b := bulkhead.New(1)
+func ExampleBulkhead_TryAcquireAmount() {
+	b := bulkhead.New(3)
 
-	result := b.TryAdmit(bulkhead.Request{Amount: 1})
-	fmt.Println(result.Decision().IsAdmitted(), result.HasGrant())
+	lease, observation, ok := b.TryAcquireAmount(2)
+	fmt.Println(ok, lease.Amount(), observation.Snapshot.Value.Available)
 
-	if lease, ok := result.Grant(); ok {
-		lease.Release()
-	}
+	lease.Release()
 
 	// Output:
-	// true true
+	// true 2 1
+}
+
+func ExampleBulkhead_SetLimit_debt() {
+	b := bulkhead.New(2)
+
+	first, _, _ := b.TryAcquire()
+	second, _, _ := b.TryAcquire()
+
+	debt := b.SetLimit(1)
+	fmt.Println(debt.Value.Reserved, debt.Value.Debt)
+
+	_, denied, ok := b.TryAcquire()
+	fmt.Println(ok, denied.Refusal)
+
+	first.Release()
+	second.Release()
+
+	// Output:
+	// 2 1
+	// false debt
 }

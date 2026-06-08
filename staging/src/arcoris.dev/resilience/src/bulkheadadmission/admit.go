@@ -12,37 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bulkhead
+package bulkheadadmission
 
 import (
 	"arcoris.dev/admission"
 	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
-	"arcoris.dev/snapshot"
+	"arcoris.dev/resilience/bulkhead"
 )
 
 // TryAdmit attempts to admit a bulkhead request without waiting.
 //
-// TryAdmit is the admission-compatible surface for the same capacity operation
-// used by TryAcquireAmount. A successful result is admitted with EffectOwned and
-// carries a Lease grant that the caller must release. Capacity exhaustion is a
-// valid denied result with the observed capacity snapshot as metadata.
+// A successful result is admitted with EffectOwned and carries a live
+// *bulkhead.Lease grant that the caller must release. A denied result carries no
+// grant and preserves the exact bulkhead.Observation in metadata.
 //
-// The method deliberately performs no catalog lookup, policy evaluation, retry,
-// queueing, context observation, or error classification. Bulkhead remains a
-// local bounded in-flight primitive; admission only supplies the generic Result
-// shape.
-func (b *Bulkhead) TryAdmit(req Request) admission.Result[*Lease, snapshot.Snapshot[Snapshot]] {
-	lease, snap, ok := b.TryAcquireAmount(req.Amount)
+// Invalid request amounts and invalid bulkhead receivers are programmer or
+// configuration errors. They panic through the core bulkhead path instead of
+// being converted into denied admission results.
+func (a Admitter) TryAdmit(req Request) admission.Result[*bulkhead.Lease, bulkhead.Observation] {
+	lease, observation, ok := a.bulkhead.TryAcquireAmount(req.Amount)
 	if !ok {
-		return admission.DeniedForResult[*Lease](
+		return admission.DeniedForResult[*bulkhead.Lease](
 			admissionbuiltin.ReasonCapacityExhausted,
-			snap,
+			observation,
 		)
 	}
 
 	return admission.GrantedResult(
 		admission.ReasonAdmitted,
 		lease,
-		snap,
+		observation,
 	)
 }

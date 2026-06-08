@@ -14,35 +14,38 @@
 
 package bulkhead
 
-import "arcoris.dev/snapshot"
-
 // TryAcquireAmount attempts to reserve amount in-flight capacity units.
 //
 // TryAcquireAmount is non-blocking and has the same ownership model as
 // TryAcquire: success returns a live Lease that owns exactly amount units until
 // Release or TryRelease returns them, while capacity exhaustion returns nil, an
-// observed snapshot, and false. The snapshot is read after the accounting
-// attempt. Under concurrent acquire, release, or limit changes it is a
-// diagnostic observation, not an exclusive serialization point.
+// observed capacity state, and false. Observation.Refusal classifies the direct
+// accounting outcome. The observation is produced through the underlying
+// capacity ledger's explicit observed raw-reserve path. Under concurrent
+// acquire, release, or limit changes its snapshot remains diagnostic rather
+// than an exclusive serialization point.
+//
+// The successful path allocates the returned Lease token and uses raw ledger
+// accounting underneath. It intentionally avoids creating a separate
+// capacity.Reservation object for the same ownership event.
 //
 // The method intentionally does not wait, queue, apply fairness, observe context
 // cancellation, retry, or classify denial as an error.
 //
-// Invalid amounts are programming or configuration errors, not denied admission
-// decisions. Validation is delegated to the underlying capacity ledger after the
-// Bulkhead receiver has been validated, preserving the package's existing panic
-// behavior for nil or uninitialized receivers.
-func (b *Bulkhead) TryAcquireAmount(amount Amount) (*Lease, snapshot.Snapshot[Snapshot], bool) {
+// Invalid amounts are programming or configuration errors, not denied
+// acquisition results. Validation is delegated to the underlying capacity ledger
+// after the Bulkhead receiver has been validated, preserving the package's
+// existing panic behavior for nil or uninitialized receivers.
+func (b *Bulkhead) TryAcquireAmount(amount Amount) (*Lease, Observation, bool) {
 	b.requireReady()
 
-	ok := b.ledger.TryReserve(amount)
-	snap := b.ledger.Snapshot()
+	observation, ok := b.ledger.TryReserveObserved(amount)
 	if !ok {
-		return nil, snap, false
+		return nil, Observation(observation), false
 	}
 
 	return &Lease{
 		ledger: b.ledger,
 		amount: amount,
-	}, snap, true
+	}, Observation(observation), true
 }

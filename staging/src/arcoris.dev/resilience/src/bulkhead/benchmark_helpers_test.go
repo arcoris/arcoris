@@ -17,7 +17,9 @@ package bulkhead
 import "arcoris.dev/snapshot"
 
 var (
-	// Compile-time contract checks for Bulkhead's read-facing snapshot APIs.
-	_ snapshot.Source[Snapshot] = (*Bulkhead)(nil)
-	_ snapshot.RevisionSource   = (*Bulkhead)(nil)
+	benchmarkLease       *Lease
+	benchmarkObservation Observation
+	benchmarkSnapshot    snapshot.Snapshot[Snapshot]
+	benchmarkRevision    snapshot.Revision
+	benchmarkOK          bool
 )

@@ -14,22 +14,16 @@
 
 package bulkhead
 
-const (
-	// errNilBulkhead is the panic value used when a method is called on a nil
-	// Bulkhead receiver.
-	errNilBulkhead = "bulkhead: nil bulkhead"
-
-	// errUninitializedBulkhead is the panic value used when a zero Bulkhead value
-	// is used instead of a value created by New.
-	errUninitializedBulkhead = "bulkhead: uninitialized bulkhead"
-)
-
 // requireReady panics when b is nil or was not created by New.
+//
+// Public methods call requireReady before delegating to capacity validation.
+// That makes receiver misuse consistently report bulkhead-owned errors even
+// when the same call also passes an invalid amount.
 func (b *Bulkhead) requireReady() {
 	if b == nil {
-		panic(errNilBulkhead)
+		panic(ErrNilBulkhead)
 	}
 	if b.ledger == nil {
-		panic(errUninitializedBulkhead)
+		panic(ErrUninitializedBulkhead)
 	}
 }

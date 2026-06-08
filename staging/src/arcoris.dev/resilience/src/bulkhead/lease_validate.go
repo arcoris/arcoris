@@ -14,16 +14,14 @@
 
 package bulkhead
 
-const (
-	// errInvalidLease is the panic value used when a Lease method is called on a
-	// nil or zero Lease instead of a value returned by a Bulkhead acquisition
-	// method.
-	errInvalidLease = "bulkhead: invalid lease"
-)
-
-// requireReady panics when l is nil or was not returned by a Bulkhead acquisition method.
+// requireReady panics when l is nil or was not returned by a Bulkhead
+// acquisition method.
+//
+// A valid Lease always has an owning ledger and a positive amount. Zero values
+// are invalid because they do not represent live capacity ownership and cannot
+// be released safely.
 func (l *Lease) requireReady() {
 	if l == nil || l.ledger == nil || l.amount.IsZero() {
-		panic(errInvalidLease)
+		panic(ErrInvalidLease)
 	}
 }

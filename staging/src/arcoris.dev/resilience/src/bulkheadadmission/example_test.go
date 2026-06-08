@@ -12,12 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bulkhead
+package bulkheadadmission_test
 
-import "arcoris.dev/snapshot"
+import (
+	"fmt"
 
-var (
-	// Compile-time contract checks for Bulkhead's read-facing snapshot APIs.
-	_ snapshot.Source[Snapshot] = (*Bulkhead)(nil)
-	_ snapshot.RevisionSource   = (*Bulkhead)(nil)
+	"arcoris.dev/resilience/bulkhead"
+	"arcoris.dev/resilience/bulkheadadmission"
 )
+
+func ExampleAdmitter_TryAdmit() {
+	b := bulkhead.New(1)
+	admitter := bulkheadadmission.New(b)
+
+	result := admitter.TryAdmit(bulkheadadmission.Request{Amount: 1})
+	fmt.Println(result.Decision().IsAdmitted(), result.HasGrant())
+
+	if lease, ok := result.Grant(); ok {
+		lease.Release()
+	}
+
+	// Output:
+	// true true
+}

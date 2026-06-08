@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bulkhead
+package bulkheadadmission
 
 import (
 	"fmt"
@@ -22,15 +22,15 @@ import (
 	"arcoris.dev/admission"
 	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
 	"arcoris.dev/capacity"
-	"arcoris.dev/snapshot"
+	"arcoris.dev/resilience/bulkhead"
 	panicassert "arcoris.dev/testutil/panic"
 )
 
-func TestBulkheadTryAdmitGrantsLease(t *testing.T) {
+func TestAdmitterTryAdmitGrantsLease(t *testing.T) {
 	t.Parallel()
 
-	b := New(2)
-	result := b.TryAdmit(Request{Amount: 1})
+	b := bulkhead.New(2)
+	result := New(b).TryAdmit(Request{Amount: 1})
 	if !result.IsValid() {
 		t.Fatalf("result is invalid: %+v", result.Decision())
 	}
@@ -65,17 +65,18 @@ func TestBulkheadTryAdmitGrantsLease(t *testing.T) {
 	if !ok {
 		t.Fatal("Metadata returned ok=false, want true")
 	}
-	requireSnapshotValue(t, metadata, 2, 1, 1, 0)
+	requireObservationValue(t, metadata, bulkhead.RefusalNone, 2, 1, 1, 0)
 
 	lease.Release()
 	requireSnapshotValue(t, b.Snapshot(), 2, 0, 2, 0)
 }
 
-func TestBulkheadTryAdmitDeniesWhenCapacityExhausted(t *testing.T) {
+func TestAdmitterTryAdmitDeniesWhenCapacityExhausted(t *testing.T) {
 	t.Parallel()
 
-	b := New(1)
-	held := b.TryAdmit(Request{Amount: 1})
+	b := bulkhead.New(1)
+	admitter := New(b)
+	held := admitter.TryAdmit(Request{Amount: 1})
 	if !held.IsValid() {
 		t.Fatalf("first TryAdmit result is invalid: %+v", held.Decision())
 	}
@@ -88,7 +89,7 @@ func TestBulkheadTryAdmitDeniesWhenCapacityExhausted(t *testing.T) {
 	}
 	defer lease.Release()
 
-	result := b.TryAdmit(Request{Amount: 1})
+	result := admitter.TryAdmit(Request{Amount: 1})
 	if !result.IsValid() {
 		t.Fatalf("denied result is invalid: %+v", result.Decision())
 	}
@@ -115,16 +116,47 @@ func TestBulkheadTryAdmitDeniesWhenCapacityExhausted(t *testing.T) {
 	if !ok {
 		t.Fatal("Metadata returned ok=false, want true")
 	}
-	requireSnapshotValue(t, metadata, 1, 1, 0, 0)
+	requireObservationValue(t, metadata, bulkhead.RefusalInsufficient, 1, 1, 0, 0)
 }
 
-func TestBulkheadTryAdmitDeniedCreatesNoLease(t *testing.T) {
+func TestAdmitterTryAdmitDebtDenialKeepsPreciseRefusal(t *testing.T) {
 	t.Parallel()
 
-	b := New(0)
+	b := bulkhead.New(2)
+	admitter := New(b)
+	held := admitter.TryAdmit(Request{Amount: 2})
+	lease, ok := held.Grant()
+	if !ok || lease == nil {
+		t.Fatal("first TryAdmit returned no live lease")
+	}
+	defer lease.Release()
+
+	b.SetLimit(1)
+	result := admitter.TryAdmit(Request{Amount: 1})
+	if !result.IsValid() {
+		t.Fatalf("debt denial result is invalid: %+v", result.Decision())
+	}
+	if !result.Decision().IsDenied() {
+		t.Fatalf("decision = %+v, want denied", result.Decision())
+	}
+	if got, want := result.Decision(), admission.DenyDecision(admissionbuiltin.ReasonCapacityExhausted); got != want {
+		t.Fatalf("decision = %+v, want %+v", got, want)
+	}
+
+	metadata, ok := result.Metadata()
+	if !ok {
+		t.Fatal("Metadata returned ok=false, want true")
+	}
+	requireObservationValue(t, metadata, bulkhead.RefusalDebt, 1, 2, 0, 1)
+}
+
+func TestAdmitterTryAdmitDeniedCreatesNoLease(t *testing.T) {
+	t.Parallel()
+
+	b := bulkhead.New(0)
 	before := b.Snapshot()
 
-	result := b.TryAdmit(Request{Amount: 1})
+	result := New(b).TryAdmit(Request{Amount: 1})
 	if !result.IsValid() {
 		t.Fatalf("denied result is invalid: %+v", result.Decision())
 	}
@@ -144,11 +176,12 @@ func TestBulkheadTryAdmitDeniedCreatesNoLease(t *testing.T) {
 	}
 }
 
-func TestBulkheadTryAdmitWeighted(t *testing.T) {
+func TestAdmitterTryAdmitWeighted(t *testing.T) {
 	t.Parallel()
 
-	b := New(3)
-	first := b.TryAdmit(Request{Amount: 2})
+	b := bulkhead.New(3)
+	admitter := New(b)
+	first := admitter.TryAdmit(Request{Amount: 2})
 	if !first.IsValid() {
 		t.Fatalf("first result is invalid: %+v", first.Decision())
 	}
@@ -166,7 +199,7 @@ func TestBulkheadTryAdmitWeighted(t *testing.T) {
 		t.Fatalf("first lease amount = %d, want 2", lease.Amount())
 	}
 
-	denied := b.TryAdmit(Request{Amount: 2})
+	denied := admitter.TryAdmit(Request{Amount: 2})
 	if !denied.IsValid() {
 		t.Fatalf("denied weighted result is invalid: %+v", denied.Decision())
 	}
@@ -175,7 +208,7 @@ func TestBulkheadTryAdmitWeighted(t *testing.T) {
 	}
 
 	lease.Release()
-	third := b.TryAdmit(Request{Amount: 3})
+	third := admitter.TryAdmit(Request{Amount: 3})
 	if !third.IsValid() {
 		t.Fatalf("third result is invalid: %+v", third.Decision())
 	}
@@ -192,20 +225,34 @@ func TestBulkheadTryAdmitWeighted(t *testing.T) {
 	}
 }
 
-func TestBulkheadTryAdmitInvalidAmountPanics(t *testing.T) {
+func TestAdmitterTryAdmitInvalidAmountPanics(t *testing.T) {
 	t.Parallel()
 
-	b := New(1)
+	b := bulkhead.New(1)
 	panicassert.RequireErrorIs(t, capacity.ErrZeroAmount, func() {
-		_ = b.TryAdmit(Request{Amount: 0})
+		_ = New(b).TryAdmit(Request{Amount: 0})
 	})
 }
 
-func TestBulkheadTryAdmitThroughAdmitterInterface(t *testing.T) {
+func TestAdmitterTryAdmitPanicsThroughCoreReceiverValidation(t *testing.T) {
 	t.Parallel()
 
-	b := New(1)
-	var admitter admission.Admitter[Request, *Lease, snapshot.Snapshot[Snapshot]] = b
+	var nilBulkhead *bulkhead.Bulkhead
+	panicassert.RequireErrorIs(t, bulkhead.ErrNilBulkhead, func() {
+		_ = New(nilBulkhead).TryAdmit(Request{Amount: 0})
+	})
+
+	var zero bulkhead.Bulkhead
+	panicassert.RequireErrorIs(t, bulkhead.ErrUninitializedBulkhead, func() {
+		_ = New(&zero).TryAdmit(Request{Amount: 0})
+	})
+}
+
+func TestAdmitterTryAdmitThroughAdmitterInterface(t *testing.T) {
+	t.Parallel()
+
+	b := bulkhead.New(1)
+	var admitter admission.Admitter[Request, *bulkhead.Lease, bulkhead.Observation] = New(b)
 
 	result := admitter.TryAdmit(Request{Amount: 1})
 	if !result.IsValid() {
@@ -221,14 +268,15 @@ func TestBulkheadTryAdmitThroughAdmitterInterface(t *testing.T) {
 	defer lease.Release()
 }
 
-func TestBulkheadTryAdmitConcurrentDoesNotOverspend(t *testing.T) {
-	b := New(8)
+func TestAdmitterTryAdmitConcurrentDoesNotOverspend(t *testing.T) {
+	b := bulkhead.New(8)
+	admitter := New(b)
 
 	const workers = 64
 	var wg sync.WaitGroup
 	start := make(chan struct{})
 	errCh := make(chan error, workers)
-	leases := make(chan *Lease, workers)
+	leases := make(chan *bulkhead.Lease, workers)
 
 	for range workers {
 		wg.Add(1)
@@ -236,7 +284,7 @@ func TestBulkheadTryAdmitConcurrentDoesNotOverspend(t *testing.T) {
 			defer wg.Done()
 			<-start
 
-			result := b.TryAdmit(Request{Amount: 1})
+			result := admitter.TryAdmit(Request{Amount: 1})
 			if !result.IsValid() {
 				errCh <- fmt.Errorf("invalid result: %+v", result.Decision())
 				return
@@ -282,7 +330,7 @@ func TestBulkheadTryAdmitConcurrentDoesNotOverspend(t *testing.T) {
 		}
 	}
 
-	admittedLeases := make([]*Lease, 0, 8)
+	admittedLeases := make([]*bulkhead.Lease, 0, 8)
 	for lease := range leases {
 		admittedLeases = append(admittedLeases, lease)
 	}

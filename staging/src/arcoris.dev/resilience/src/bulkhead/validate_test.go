@@ -24,38 +24,34 @@ func TestBulkheadPanicsOnNilOrUninitializedReceiver(t *testing.T) {
 	t.Parallel()
 
 	var nilBulkhead *Bulkhead
-	panicassert.RequireMessage(t, errNilBulkhead, func() { _ = nilBulkhead.Snapshot() })
-	panicassert.RequireMessage(t, errNilBulkhead, func() { _ = nilBulkhead.Revision() })
-	panicassert.RequireMessage(t, errNilBulkhead, func() { _ = nilBulkhead.SetLimit(1) })
-	panicassert.RequireMessage(t, errNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquire() })
-	panicassert.RequireMessage(t, errNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquireAmount(1) })
-	panicassert.RequireMessage(t, errNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquireAmount(0) })
-	panicassert.RequireMessage(t, errNilBulkhead, func() { _ = nilBulkhead.TryAdmit(Request{Amount: 1}) })
-	panicassert.RequireMessage(t, errNilBulkhead, func() { _ = nilBulkhead.TryAdmit(Request{Amount: 0}) })
+	panicassert.RequireErrorIs(t, ErrNilBulkhead, func() { _ = nilBulkhead.Snapshot() })
+	panicassert.RequireErrorIs(t, ErrNilBulkhead, func() { _ = nilBulkhead.Revision() })
+	panicassert.RequireErrorIs(t, ErrNilBulkhead, func() { _ = nilBulkhead.SetLimit(1) })
+	panicassert.RequireErrorIs(t, ErrNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquire() })
+	panicassert.RequireErrorIs(t, ErrNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquireAmount(1) })
+	panicassert.RequireErrorIs(t, ErrNilBulkhead, func() { _, _, _ = nilBulkhead.TryAcquireAmount(0) })
 
 	var zero Bulkhead
-	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _ = zero.Snapshot() })
-	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _ = zero.Revision() })
-	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _ = zero.SetLimit(1) })
-	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _, _, _ = zero.TryAcquire() })
-	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _, _, _ = zero.TryAcquireAmount(1) })
-	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _, _, _ = zero.TryAcquireAmount(0) })
-	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _ = zero.TryAdmit(Request{Amount: 1}) })
-	panicassert.RequireMessage(t, errUninitializedBulkhead, func() { _ = zero.TryAdmit(Request{Amount: 0}) })
+	panicassert.RequireErrorIs(t, ErrUninitializedBulkhead, func() { _ = zero.Snapshot() })
+	panicassert.RequireErrorIs(t, ErrUninitializedBulkhead, func() { _ = zero.Revision() })
+	panicassert.RequireErrorIs(t, ErrUninitializedBulkhead, func() { _ = zero.SetLimit(1) })
+	panicassert.RequireErrorIs(t, ErrUninitializedBulkhead, func() { _, _, _ = zero.TryAcquire() })
+	panicassert.RequireErrorIs(t, ErrUninitializedBulkhead, func() { _, _, _ = zero.TryAcquireAmount(1) })
+	panicassert.RequireErrorIs(t, ErrUninitializedBulkhead, func() { _, _, _ = zero.TryAcquireAmount(0) })
 }
 
 func TestLeasePanicsOnNilOrUninitializedReceiver(t *testing.T) {
 	t.Parallel()
 
 	var nilLease *Lease
-	panicassert.RequireMessage(t, errInvalidLease, func() { _ = nilLease.Amount() })
-	panicassert.RequireMessage(t, errInvalidLease, func() { _ = nilLease.Released() })
-	panicassert.RequireMessage(t, errInvalidLease, func() { _ = nilLease.Release() })
-	panicassert.RequireMessage(t, errInvalidLease, func() { _, _ = nilLease.TryRelease() })
+	panicassert.RequireErrorIs(t, ErrInvalidLease, func() { _ = nilLease.Amount() })
+	panicassert.RequireErrorIs(t, ErrInvalidLease, func() { _ = nilLease.Released() })
+	panicassert.RequireErrorIs(t, ErrInvalidLease, func() { _ = nilLease.Release() })
+	panicassert.RequireErrorIs(t, ErrInvalidLease, func() { _, _ = nilLease.TryRelease() })
 
 	var zero Lease
-	panicassert.RequireMessage(t, errInvalidLease, func() { _ = zero.Amount() })
-	panicassert.RequireMessage(t, errInvalidLease, func() { _ = zero.Released() })
-	panicassert.RequireMessage(t, errInvalidLease, func() { _ = zero.Release() })
-	panicassert.RequireMessage(t, errInvalidLease, func() { _, _ = zero.TryRelease() })
+	panicassert.RequireErrorIs(t, ErrInvalidLease, func() { _ = zero.Amount() })
+	panicassert.RequireErrorIs(t, ErrInvalidLease, func() { _ = zero.Released() })
+	panicassert.RequireErrorIs(t, ErrInvalidLease, func() { _ = zero.Release() })
+	panicassert.RequireErrorIs(t, ErrInvalidLease, func() { _, _ = zero.TryRelease() })
 }

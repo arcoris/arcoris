@@ -22,6 +22,7 @@ import (
 	"arcoris.dev/admission"
 	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
 	"arcoris.dev/resilience/bulkhead"
+	"arcoris.dev/resilience/bulkheadadmission"
 	"arcoris.dev/resilience/deadline"
 	"arcoris.dev/resilience/retrybudget"
 )
@@ -30,7 +31,8 @@ func TestBulkheadAdmissionResultShape(t *testing.T) {
 	t.Parallel()
 
 	b := bulkhead.New(1)
-	success := b.TryAdmit(bulkhead.Request{Amount: 1})
+	admitter := bulkheadadmission.New(b)
+	success := admitter.TryAdmit(bulkheadadmission.Request{Amount: 1})
 	if !success.IsValid() || !success.Decision().IsAdmitted() {
 		t.Fatalf("bulkhead success = %+v, want valid admitted", success.Decision())
 	}
@@ -45,7 +47,7 @@ func TestBulkheadAdmissionResultShape(t *testing.T) {
 		t.Fatal("bulkhead success did not carry a live lease")
 	}
 
-	denied := b.TryAdmit(bulkhead.Request{Amount: 1})
+	denied := admitter.TryAdmit(bulkheadadmission.Request{Amount: 1})
 	if !denied.IsValid() || !denied.Decision().IsDenied() {
 		t.Fatalf("bulkhead denial = %+v, want valid denied", denied.Decision())
 	}
@@ -133,7 +135,8 @@ func TestDeadlineAdmissionResultShape(t *testing.T) {
 func TestResilienceAdmissionSurfacesUseDistinctEffectSemantics(t *testing.T) {
 	t.Parallel()
 
-	bulkheadResult := bulkhead.New(1).TryAdmit(bulkhead.Request{Amount: 1})
+	bulkheadResult := bulkheadadmission.New(bulkhead.New(1)).
+		TryAdmit(bulkheadadmission.Request{Amount: 1})
 	budgetResult := newRetryBudget(t, 1).TryAdmit(retrybudget.Request{})
 	deadlineResult := deadline.TryAdmit(deadline.Request{
 		Context: context.Background(),

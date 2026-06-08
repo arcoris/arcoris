@@ -14,10 +14,7 @@
 
 package bulkhead
 
-import (
-	"arcoris.dev/capacity"
-	"arcoris.dev/snapshot"
-)
+import "arcoris.dev/snapshot"
 
 // Release returns l's in-flight slot to the owning Bulkhead.
 //
@@ -28,7 +25,7 @@ import (
 func (l *Lease) Release() snapshot.Snapshot[Snapshot] {
 	l.requireReady()
 	if !l.release() {
-		panic(capacity.ErrReservationReleased)
+		panic(ErrLeaseReleased)
 	}
 
 	return l.ledger.Snapshot()
@@ -47,11 +44,15 @@ func (l *Lease) TryRelease() (snapshot.Snapshot[Snapshot], bool) {
 }
 
 // release performs the lease ownership transition and raw capacity release.
+//
+// The CompareAndSwap is the ownership boundary. Exactly one goroutine may move
+// the lease from live to released and return capacity to the ledger. Later calls
+// observe the already-released state and must not touch capacity again.
 func (l *Lease) release() bool {
 	if !l.released.CompareAndSwap(false, true) {
 		return false
 	}
 
-	l.ledger.Release(capacity.Amount(l.amount))
+	l.ledger.Release(l.amount)
 	return true
 }

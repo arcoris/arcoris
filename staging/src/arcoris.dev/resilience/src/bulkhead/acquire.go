@@ -14,19 +14,17 @@
 
 package bulkhead
 
-import "arcoris.dev/snapshot"
-
 // TryAcquire attempts to reserve one in-flight slot without waiting.
 //
 // TryAcquire is the ergonomic one-slot API. It delegates to TryAcquireAmount(1),
-// so direct callers and admission-compatible callers share the same
-// check-and-reserve path. It does not block, create waiters, observe context
-// cancellation, retry, classify operation errors, or schedule work.
+// so all direct and adapter callers share the same check-and-reserve path. It
+// does not block, create waiters, observe context cancellation, retry, classify
+// operation errors, or schedule work.
 //
 // Rejected acquisition is not an error in this layer. It is ordinary bulkhead
 // back-pressure and is represented by ok=false plus the observed snapshot. The
 // rejected branch does not create a Lease because there is no capacity ownership
 // to release.
-func (b *Bulkhead) TryAcquire() (*Lease, snapshot.Snapshot[Snapshot], bool) {
+func (b *Bulkhead) TryAcquire() (*Lease, Observation, bool) {
 	return b.TryAcquireAmount(1)
 }

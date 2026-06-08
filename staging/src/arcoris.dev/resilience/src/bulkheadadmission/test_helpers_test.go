@@ -12,21 +12,42 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bulkhead
+package bulkheadadmission
 
 import (
 	"testing"
 
+	"arcoris.dev/resilience/bulkhead"
 	"arcoris.dev/snapshot"
 )
 
+func requireObservationValue(
+	t *testing.T,
+	observation bulkhead.Observation,
+	refusal bulkhead.Refusal,
+	limit bulkhead.Amount,
+	reserved bulkhead.Amount,
+	available bulkhead.Amount,
+	debt bulkhead.Amount,
+) {
+	t.Helper()
+
+	if !observation.IsValid() {
+		t.Fatalf("observation is invalid: %+v", observation)
+	}
+	if observation.Refusal != refusal {
+		t.Fatalf("observation refusal = %s, want %s", observation.Refusal, refusal)
+	}
+	requireSnapshotValue(t, observation.Snapshot, limit, reserved, available, debt)
+}
+
 func requireSnapshotValue(
 	t *testing.T,
-	snap snapshot.Snapshot[Snapshot],
-	limit Amount,
-	reserved Amount,
-	available Amount,
-	debt Amount,
+	snap snapshot.Snapshot[bulkhead.Snapshot],
+	limit bulkhead.Amount,
+	reserved bulkhead.Amount,
+	available bulkhead.Amount,
+	debt bulkhead.Amount,
 ) {
 	t.Helper()
 
@@ -52,24 +73,4 @@ func requireSnapshotValue(
 			debt,
 		)
 	}
-}
-
-func requireObservationValue(
-	t *testing.T,
-	observation Observation,
-	refusal Refusal,
-	limit Amount,
-	reserved Amount,
-	available Amount,
-	debt Amount,
-) {
-	t.Helper()
-
-	if !observation.IsValid() {
-		t.Fatalf("observation is invalid: %+v", observation)
-	}
-	if observation.Refusal != refusal {
-		t.Fatalf("observation refusal = %s, want %s", observation.Refusal, refusal)
-	}
-	requireSnapshotValue(t, observation.Snapshot, limit, reserved, available, debt)
 }
