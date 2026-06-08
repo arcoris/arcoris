@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthhttp
 
 // DetailLevel controls how much check-level information health HTTP renderers
 // may include in a response body.
 //
-// The zero value is DetailNone. Renderers must never use detail levels to expose
-// health.Result.Cause, panic stacks, raw errors, credentials, or private
-// diagnostic data.
+// The zero value is DetailNone. Renderers may emit health.Result.Message when a
+// selected check is included, so check implementations must treat Message as
+// public-safe if HTTP details can be enabled. Renderers must never use detail
+// levels to expose health.Result.Cause, panic stacks, raw errors, credentials,
+// or private diagnostic data.
 //
 // DetailLevel affects exposure only. It does not change how package health
 // evaluates checks or aggregates report status.

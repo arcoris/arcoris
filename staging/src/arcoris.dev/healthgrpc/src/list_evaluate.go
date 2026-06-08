@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthgrpc
 
 import (
@@ -36,11 +35,15 @@ type targetEvaluation struct {
 
 // evaluateTarget evaluates target for List and normalizes failures.
 //
-// An evaluator error is intentionally reduced to failed=true. List maps affected
-// service responses to gRPC UNKNOWN and never exposes the raw error text.
+// Evaluator errors and malformed reports are intentionally reduced to
+// failed=true. List maps affected service responses to gRPC UNKNOWN and never
+// exposes raw error text or malformed report contents.
 func (s *Server) evaluateTarget(ctx context.Context, target health.Target) targetEvaluation {
 	report, err := s.source.Evaluate(ctx, target)
 	if err != nil {
+		return targetEvaluation{failed: true}
+	}
+	if !validReportForTarget(report, target) {
 		return targetEvaluation{failed: true}
 	}
 

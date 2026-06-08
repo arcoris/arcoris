@@ -23,7 +23,7 @@ import (
 	"arcoris.dev/healthtest"
 )
 
-func BenchmarkHTTPHandlerServeHealthy(b *testing.B) {
+func BenchmarkHTTPHandlerServeTextHealthy(b *testing.B) {
 	handler, err := NewHandler(
 		healthtest.NewEvaluatorWithReport(healthtest.HealthyReport(health.TargetReady)),
 		health.TargetReady,
@@ -39,7 +39,65 @@ func BenchmarkHTTPHandlerServeHealthy(b *testing.B) {
 	}
 }
 
-func BenchmarkHTTPRenderJSON(b *testing.B) {
+func BenchmarkHTTPHandlerServeJSONMixedDetailAll(b *testing.B) {
+	handler, err := NewHandler(
+		healthtest.NewEvaluatorWithReport(healthtest.MixedReport(health.TargetReady)),
+		health.TargetReady,
+		WithFormat(FormatJSON),
+		WithDetailLevel(DetailAll),
+	)
+	if err != nil {
+		b.Fatalf("NewHandler() = %v", err)
+	}
+	req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+	b.ReportAllocs()
+	for b.Loop() {
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, req)
+	}
+}
+
+func BenchmarkHTTPHandlerServeJSONMalformedReport(b *testing.B) {
+	tests := []struct {
+		name   string
+		report health.Report
+	}{
+		{
+			name:   "WrongTarget",
+			report: healthtest.HealthyReport(health.TargetLive),
+		},
+		{
+			name:   "Invalid",
+			report: httpInvalidReport(health.TargetReady),
+		},
+		{
+			name:   "Inconsistent",
+			report: httpInconsistentReport(health.TargetReady),
+		},
+	}
+
+	for _, tc := range tests {
+		b.Run(tc.name, func(b *testing.B) {
+			handler, err := NewHandler(
+				healthtest.NewEvaluatorWithReport(tc.report),
+				health.TargetReady,
+				WithFormat(FormatJSON),
+			)
+			if err != nil {
+				b.Fatalf("NewHandler() = %v", err)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, DefaultReadyPath, nil)
+			b.ReportAllocs()
+			for b.Loop() {
+				recorder := httptest.NewRecorder()
+				handler.ServeHTTP(recorder, req)
+			}
+		})
+	}
+}
+
+func BenchmarkHTTPRenderJSONMixedDetailAll(b *testing.B) {
 	report := healthtest.MixedReport(health.TargetReady)
 	cfg := defaultConfig(health.TargetReady)
 	cfg.format = FormatJSON

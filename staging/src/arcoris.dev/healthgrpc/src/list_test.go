@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthgrpc
 
 import (
@@ -146,5 +145,58 @@ func TestListEvaluationErrorMapsAffectedServicesToUnknown(t *testing.T) {
 	}
 	if calls := source.Calls(health.TargetReady); calls != 1 {
 		t.Fatalf("ready calls = %d, want 1", calls)
+	}
+}
+
+func TestListMalformedReportsMapAffectedServicesToUnknown(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		report health.Report
+	}{
+		{
+			name:   "wrong target",
+			report: healthtest.HealthyReport(health.TargetLive),
+		},
+		{
+			name:   "invalid",
+			report: grpcInvalidReport(health.TargetReady),
+		},
+		{
+			name:   "inconsistent",
+			report: grpcInconsistentReport(health.TargetReady),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			source := healthtest.NewCountingSource(map[health.Target]health.Report{
+				health.TargetReady: tc.report,
+				health.TargetLive:  healthtest.HealthyReport(health.TargetLive),
+			})
+			server := mustNewServer(t, source, WithTargetServices())
+
+			resp, err := server.List(context.Background(), &healthpb.HealthListRequest{})
+			if err != nil {
+				t.Fatalf("List() = %v, want nil", err)
+			}
+
+			statuses := resp.GetStatuses()
+			if statuses[""].GetStatus() != healthpb.HealthCheckResponse_UNKNOWN {
+				t.Fatalf("default status = %s, want UNKNOWN", statuses[""].GetStatus())
+			}
+			if statuses["ready"].GetStatus() != healthpb.HealthCheckResponse_UNKNOWN {
+				t.Fatalf("ready status = %s, want UNKNOWN", statuses["ready"].GetStatus())
+			}
+			if statuses["live"].GetStatus() != healthpb.HealthCheckResponse_SERVING {
+				t.Fatalf("live status = %s, want SERVING", statuses["live"].GetStatus())
+			}
+			if calls := source.Calls(health.TargetReady); calls != 1 {
+				t.Fatalf("ready calls = %d, want 1", calls)
+			}
+		})
 	}
 }

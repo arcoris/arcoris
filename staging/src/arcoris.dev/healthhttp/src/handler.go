@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthhttp
 
 import (
@@ -80,6 +79,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	report, err := h.evaluator.Evaluate(r.Context(), h.target)
 	if err != nil {
+		renderHandlerError(w, r, h.config)
+		return
+	}
+
+	if !validReportForTarget(report, h.target) {
 		renderHandlerError(w, r, h.config)
 		return
 	}

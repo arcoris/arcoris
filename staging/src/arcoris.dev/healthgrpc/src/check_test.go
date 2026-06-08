@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthgrpc
 
 import (
@@ -132,5 +131,48 @@ func TestCheckSourceErrorIsGeneric(t *testing.T) {
 	}
 	if strings.Contains(message, "password=secret") {
 		t.Fatalf("message leaked raw source error: %q", message)
+	}
+}
+
+func TestCheckRejectsMalformedReports(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		report health.Report
+	}{
+		{
+			name:   "wrong target",
+			report: healthtest.HealthyReport(health.TargetLive),
+		},
+		{
+			name:   "invalid",
+			report: grpcInvalidReport(health.TargetReady),
+		},
+		{
+			name:   "inconsistent",
+			report: grpcInconsistentReport(health.TargetReady),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := mustNewServer(t, healthtest.NewStaticSource(tc.report))
+
+			_, err := server.Check(context.Background(), &healthpb.HealthCheckRequest{})
+			if grpcCode(err) != codes.Internal {
+				t.Fatalf("Check() code = %s, want Internal", grpcCode(err))
+			}
+
+			message := status.Convert(err).Message()
+			if message != healthEvaluationFailedMessage {
+				t.Fatalf("message = %q, want %q", message, healthEvaluationFailedMessage)
+			}
+			if strings.Contains(message, "database") {
+				t.Fatalf("Check() leaked malformed report detail: %q", message)
+			}
+		})
 	}
 }

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthgrpc
 
 import (
@@ -26,10 +25,11 @@ import (
 // Check implements grpc.health.v1.Health.Check for one configured service.
 //
 // The method evaluates exactly one mapped package-health target through
-// health.Evaluator and converts the resulting report status through the mapping
-// policy. Unknown services and evaluator failures are returned as generic gRPC
-// errors so raw health causes, panic details, credentials, or infrastructure
-// addresses cannot leak through the transport boundary.
+// health.Evaluator and converts a valid, aggregate-consistent report status
+// through the mapping policy. Unknown services, evaluator failures, and
+// malformed reports are returned as generic gRPC errors so raw health causes,
+// panic details, credentials, or infrastructure addresses cannot leak through
+// the transport boundary.
 func (s *Server) Check(
 	ctx context.Context,
 	req *healthpb.HealthCheckRequest,
@@ -52,6 +52,9 @@ func (s *Server) Check(
 
 	report, err := s.source.Evaluate(ctx, mapping.Target)
 	if err != nil {
+		return nil, status.Error(codes.Internal, healthEvaluationFailedMessage)
+	}
+	if !validReportForTarget(report, mapping.Target) {
 		return nil, status.Error(codes.Internal, healthEvaluationFailedMessage)
 	}
 

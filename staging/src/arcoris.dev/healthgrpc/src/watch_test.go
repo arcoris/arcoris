@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthgrpc
 
 import (
@@ -198,6 +197,60 @@ func TestWatchSourceErrorMapsToUnknown(t *testing.T) {
 	}
 	if strings.Contains(err.Error(), "password=secret") {
 		t.Fatalf("Watch() leaked raw source error: %v", err)
+	}
+}
+
+func TestWatchMalformedReportsMapToUnknownAndContinue(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		report health.Report
+	}{
+		{
+			name:   "wrong target",
+			report: healthtest.HealthyReport(health.TargetLive),
+		},
+		{
+			name:   "invalid",
+			report: grpcInvalidReport(health.TargetReady),
+		},
+		{
+			name:   "inconsistent",
+			report: grpcInconsistentReport(health.TargetReady),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			clk := testClock()
+			source := healthtest.NewSequenceSource(
+				health.TargetReady,
+				tc.report,
+				healthtest.HealthyReport(health.TargetReady),
+			)
+			server := mustNewServer(t, source, WithClock(clk), WithWatchInterval(time.Second))
+			stream := newWatchStream()
+			done := make(chan error, 1)
+
+			go func() {
+				done <- server.Watch(&healthpb.HealthCheckRequest{}, stream)
+			}()
+
+			if got := mustReceiveStatus(t, stream); got != healthpb.HealthCheckResponse_UNKNOWN {
+				t.Fatalf("initial status = %s, want UNKNOWN", got)
+			}
+			if got := stepClockUntilStatus(t, clk, stream, time.Second); got != healthpb.HealthCheckResponse_SERVING {
+				t.Fatalf("status after valid report = %s, want SERVING", got)
+			}
+
+			stream.cancel()
+			if err := waitForWatchDone(t, done); grpcCode(err) != codes.Canceled {
+				t.Fatalf("Watch() code = %s, want Canceled", grpcCode(err))
+			}
+		})
 	}
 }
 

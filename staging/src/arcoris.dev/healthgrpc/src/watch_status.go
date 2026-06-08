@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package healthgrpc
 
 import (
@@ -26,15 +25,18 @@ import (
 
 // watchServingStatus evaluates mapping and returns the gRPC Watch status.
 //
-// Evaluator failures are reported as UNKNOWN instead of stream errors. This keeps
-// Watch alive across transient evaluation failures and avoids exposing raw
-// errors to clients.
+// Evaluator failures and malformed reports are reported as UNKNOWN instead of
+// stream errors. This keeps Watch alive across transient evaluation failures and
+// avoids exposing raw errors or malformed report contents to clients.
 func (s *Server) watchServingStatus(
 	ctx context.Context,
 	mapping ServiceMapping,
 ) healthpb.HealthCheckResponse_ServingStatus {
 	report, err := s.source.Evaluate(ctx, mapping.Target)
 	if err != nil {
+		return healthpb.HealthCheckResponse_UNKNOWN
+	}
+	if !validReportForTarget(report, mapping.Target) {
 		return healthpb.HealthCheckResponse_UNKNOWN
 	}
 

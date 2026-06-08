@@ -31,11 +31,14 @@
 //
 // # Relationship to health
 //
-// Package health owns the transport-neutral health model: Target, Status,
-// TargetPolicy, Report, Registry, and Evaluator. healthgrpc depends only on
-// health.Evaluator. Applications may provide synchronous evaluators, cached
-// evaluators, fakes, or application-owned sources without coupling this adapter
-// to a concrete evaluator implementation.
+// Package health owns the transport-neutral health contracts and values:
+// Target, Status, TargetPolicy, Result, Report, Checker, CheckResolver, and
+// Evaluator. Package healthregistry owns concrete check registration and
+// resolution. Package healthgate owns mutable owner-published checker state.
+// healthgrpc depends only on health.Evaluator. Applications may provide
+// synchronous evaluators, cached evaluators, fakes, or application-owned sources
+// without coupling this adapter to a concrete registry, gate, probe, or
+// evaluator implementation.
 //
 // # Service names
 //
@@ -61,10 +64,12 @@
 // # Watch model
 //
 // Watch is implemented as a per-stream polling adapter over health.Evaluator.
-// Each stream owns its ticker and sends an initial status followed by changes
-// only. The package does not create a global background runner, does not retain
-// stream references after Watch returns, and does not depend on
-// arcoris.dev/healthprobe.
+// Each stream owns its ticker, polls the evaluator independently, and sends an
+// initial status followed by changes only. Large numbers of concurrent Watch
+// streams can therefore multiply evaluation load. If evaluation is expensive,
+// callers should provide a cached evaluator from another layer. The package does
+// not create a global background runner, does not retain stream references after
+// Watch returns, and does not depend on arcoris.dev/healthprobe.
 //
 // # Concurrency
 //
@@ -87,6 +92,7 @@
 //   - service_validate.go owns service mapping validation and normalization;
 //   - service_error.go owns service mapping errors;
 //   - status.go owns health-to-gRPC status conversion;
+//   - report_validate.go owns evaluated report boundary validation;
 //   - rpc_error.go owns stable public gRPC error messages;
 //   - option.go owns the Option contract and application order;
 //   - config.go owns normalized adapter configuration;

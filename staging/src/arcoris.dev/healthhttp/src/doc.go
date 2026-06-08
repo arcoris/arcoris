@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package healthhttp adapts package health reports to safe HTTP health endpoints.
 //
 // # Package scope
 //
 // healthhttp is a transport adapter over package health. It turns evaluator
 // reports into HTTP handlers, endpoint paths, status-code mappings, and safe
-// text or JSON responses.
+// text or JSON responses. It depends on health.Evaluator instead of concrete
+// registry, gate, evaluator, or probe implementations.
 //
 // The package intentionally does not define health checks, own a registry,
 // execute checks on a schedule, choose evaluator timeouts, manage lifecycle
@@ -31,10 +31,12 @@
 //
 // Public responses are safe by construction. healthhttp never exposes
 // health.Result.Cause, panic stacks, raw errors, context causes, credentials,
-// connection strings, tenant identifiers, or internal network addresses. JSON
-// responses use dedicated DTOs instead of embedding package health values
-// directly so future additions to health.Report or health.Result cannot leak
-// into the adapter surface accidentally.
+// connection strings, tenant identifiers, or internal network addresses. Result
+// Message values may be emitted when check-level details are enabled, so check
+// implementations must treat Message as public-safe when HTTP details can be
+// enabled. JSON responses use dedicated DTOs instead of embedding package health
+// values directly so future additions to health.Report or health.Result cannot
+// leak into the adapter surface accidentally.
 //
 // # Default endpoints
 //

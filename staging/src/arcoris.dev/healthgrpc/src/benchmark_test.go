@@ -16,6 +16,7 @@ package healthgrpc
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"arcoris.dev/health"
@@ -32,6 +33,73 @@ func BenchmarkGRPCCheckHealthy(b *testing.B) {
 	b.ReportAllocs()
 	for b.Loop() {
 		_, _ = server.Check(context.Background(), req)
+	}
+}
+
+func BenchmarkGRPCCheckMalformedReport(b *testing.B) {
+	tests := []struct {
+		name   string
+		report health.Report
+	}{
+		{
+			name:   "WrongTarget",
+			report: healthtest.HealthyReport(health.TargetLive),
+		},
+		{
+			name:   "Invalid",
+			report: grpcInvalidReport(health.TargetReady),
+		},
+		{
+			name:   "Inconsistent",
+			report: grpcInconsistentReport(health.TargetReady),
+		},
+	}
+
+	for _, tc := range tests {
+		b.Run(tc.name, func(b *testing.B) {
+			server, err := NewServer(healthtest.NewEvaluatorWithReport(tc.report))
+			if err != nil {
+				b.Fatalf("NewServer() = %v", err)
+			}
+
+			req := &healthpb.HealthCheckRequest{}
+			b.ReportAllocs()
+			for b.Loop() {
+				_, _ = server.Check(context.Background(), req)
+			}
+		})
+	}
+}
+
+func BenchmarkGRPCListOneService(b *testing.B) {
+	server, err := NewServer(healthtest.NewEvaluatorWithReport(healthtest.HealthyReport(health.TargetReady)))
+	if err != nil {
+		b.Fatalf("NewServer() = %v", err)
+	}
+	req := &healthpb.HealthListRequest{}
+	b.ReportAllocs()
+	for b.Loop() {
+		_, _ = server.List(context.Background(), req)
+	}
+}
+
+func BenchmarkGRPCListDefaultPlus16ServicesOneTarget(b *testing.B) {
+	opts := make([]Option, 0, 16)
+	for i := 0; i < 16; i++ {
+		opts = append(opts, WithService(fmt.Sprintf("ready_%d", i), health.TargetReady))
+	}
+
+	server, err := NewServer(
+		healthtest.NewEvaluatorWithReport(healthtest.HealthyReport(health.TargetReady)),
+		opts...,
+	)
+	if err != nil {
+		b.Fatalf("NewServer() = %v", err)
+	}
+	req := &healthpb.HealthListRequest{}
+	b.ReportAllocs()
+	for b.Loop() {
+		_, _ = server.List(context.Background(), req)
 	}
 }
 
