@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
 import "testing"
@@ -39,6 +38,41 @@ func TestReasonString(t *testing.T) {
 
 			if got := tt.reason.String(); got != tt.want {
 				t.Fatalf("String() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestReasonValidationHelpers(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		reason  Reason
+		valid   bool
+		allowed bool
+		denied  bool
+	}{
+		{name: "allowed", reason: ReasonAllowed, valid: true, allowed: true},
+		{name: "context done", reason: ReasonContextDone, valid: true, denied: true},
+		{name: "no deadline", reason: ReasonNoDeadline, valid: true, allowed: true},
+		{name: "expired", reason: ReasonExpired, valid: true, denied: true},
+		{name: "insufficient budget", reason: ReasonInsufficientBudget, valid: true, denied: true},
+		{name: "unknown", reason: Reason(255)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := tt.reason.IsValid(); got != tt.valid {
+				t.Fatalf("IsValid() = %v, want %v", got, tt.valid)
+			}
+			if got := tt.reason.IsAllowedReason(); got != tt.allowed {
+				t.Fatalf("IsAllowedReason() = %v, want %v", got, tt.allowed)
+			}
+			if got := tt.reason.IsDeniedReason(); got != tt.denied {
+				t.Fatalf("IsDeniedReason() = %v, want %v", got, tt.denied)
 			}
 		})
 	}

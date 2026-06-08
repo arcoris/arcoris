@@ -15,19 +15,18 @@
 package deadline
 
 import (
-	"context"
-	"time"
+	"errors"
+	"testing"
 )
 
-// Remaining returns the non-negative duration until ctx's deadline at now.
-//
-// The boolean result reports whether ctx had a deadline. When ctx has no
-// deadline, Remaining returns zero, false. When the deadline has expired,
-// Remaining returns zero, true.
-func Remaining(ctx context.Context, now time.Time) (time.Duration, bool) {
-	budget := Inspect(ctx, now)
-	if !budget.HasDeadline {
-		return 0, false
+func TestNegativeDurationErrorClassifiesAsSentinel(t *testing.T) {
+	t.Parallel()
+
+	err := NegativeDurationError{Name: "min"}
+	if !errors.Is(err, ErrNegativeDuration) {
+		t.Fatalf("errors.Is(%v, ErrNegativeDuration) = false", err)
 	}
-	return budget.Remaining, true
+	if got, want := err.Error(), "deadline: negative min"; got != want {
+		t.Fatalf("Error() = %q, want %q", got, want)
+	}
 }

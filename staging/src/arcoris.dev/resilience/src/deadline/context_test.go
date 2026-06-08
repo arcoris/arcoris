@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
 import (
@@ -26,10 +25,10 @@ import (
 func TestWithBoundedTimeoutPanicsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	panicassert.RequireMessage(t, panicNilContext, func() {
+	panicassert.RequireErrorIs(t, ErrNilContext, func() {
 		_, _ = WithBoundedTimeout(nil, time.Now(), time.Second)
 	})
-	panicassert.RequireMessage(t, panicNegativeDuration("timeout"), func() {
+	panicassert.RequireErrorIs(t, ErrNegativeDuration, func() {
 		_, _ = WithBoundedTimeout(context.Background(), time.Now(), -time.Nanosecond)
 	})
 }

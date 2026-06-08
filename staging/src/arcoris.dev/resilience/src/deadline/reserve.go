@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
 import (
@@ -43,21 +42,58 @@ import (
 // that require a finite child budget must apply their own timeout policy when
 // bounded is false.
 func Reserve(ctx context.Context, now time.Time, reserve time.Duration) (duration time.Duration, bounded bool, ok bool) {
+	result := ReserveBudget(ctx, now, reserve)
+	return result.Duration, result.Bounded, result.OK
+}
+
+// ReserveBudget subtracts reserve from ctx's remaining deadline budget at now.
+//
+// ReserveBudget is the named-result form of Reserve. It preserves the inspected
+// Budget and local Reason so callers can branch without relying on tuple
+// position. It does not choose fallback timeouts for unbounded contexts and does
+// not create child contexts, timers, goroutines, waits, or retries.
+func ReserveBudget(ctx context.Context, now time.Time, reserve time.Duration) ReserveResult {
 	requireContext(ctx)
 	requireNonNegativeDuration("reserve", reserve)
 
-	budget, active := activeBudget(ctx, now)
-	if !active {
-		return 0, budget.HasDeadline, false
+	budget := Inspect(ctx, now)
+	if budget.Expired {
+		return ReserveResult{
+			Bounded: true,
+			Reason:  ReasonExpired,
+			Budget:  budget,
+		}
+	}
+
+	if ctx.Err() != nil {
+		return ReserveResult{
+			Bounded: budget.HasDeadline,
+			Reason:  ReasonContextDone,
+			Budget:  budget,
+		}
 	}
 
 	if !budget.HasDeadline {
-		return 0, false, true
+		return ReserveResult{
+			OK:     true,
+			Reason: ReasonNoDeadline,
+			Budget: budget,
+		}
 	}
 
 	if budget.Remaining <= reserve {
-		return 0, true, false
+		return ReserveResult{
+			Bounded: true,
+			Reason:  ReasonInsufficientBudget,
+			Budget:  budget,
+		}
 	}
 
-	return budget.Remaining - reserve, true, true
+	return ReserveResult{
+		Duration: budget.Remaining - reserve,
+		Bounded:  true,
+		OK:       true,
+		Reason:   ReasonAllowed,
+		Budget:   budget,
+	}
 }

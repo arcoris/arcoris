@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
 import (
@@ -26,10 +25,10 @@ import (
 func TestCanStartPanicsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	panicassert.RequireMessage(t, panicNilContext, func() {
+	panicassert.RequireErrorIs(t, ErrNilContext, func() {
 		_ = CanStart(nil, time.Now(), 0)
 	})
-	panicassert.RequireMessage(t, panicNegativeDuration("min"), func() {
+	panicassert.RequireErrorIs(t, ErrNegativeDuration, func() {
 		_ = CanStart(context.Background(), time.Now(), -time.Nanosecond)
 	})
 }

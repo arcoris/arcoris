@@ -12,22 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package deadline
+package deadlineadmission
 
 import (
-	"context"
-	"time"
+	"arcoris.dev/admission"
+	"arcoris.dev/resilience/deadline"
 )
 
-// Remaining returns the non-negative duration until ctx's deadline at now.
-//
-// The boolean result reports whether ctx had a deadline. When ctx has no
-// deadline, Remaining returns zero, false. When the deadline has expired,
-// Remaining returns zero, true.
-func Remaining(ctx context.Context, now time.Time) (time.Duration, bool) {
-	budget := Inspect(ctx, now)
-	if !budget.HasDeadline {
-		return 0, false
-	}
-	return budget.Remaining, true
-}
+var benchmarkResult admission.Result[admission.NoGrant, deadline.Decision]

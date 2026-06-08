@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package deadline
+package deadlineadmission
 
 import (
 	"arcoris.dev/admission"
 	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
+	"arcoris.dev/resilience/deadline"
 )
 
 // invalidAdmissionReason preserves invalid deadline decisions during conversion
 // to admission.Result.
 //
-// Produced Decision values should be valid. If callers manually construct an
-// invalid Decision, AdmissionResult must not hide that invalidity by returning a
-// valid generic admission result.
+// Produced deadline.Decision values should be valid. If callers manually
+// construct an invalid Decision, AdmissionResult must not hide that invalidity by
+// returning a valid generic admission result.
 const invalidAdmissionReason admission.Reason = ""
 
 // AdmissionResult converts d into the generic admission result contract.
@@ -32,16 +33,10 @@ const invalidAdmissionReason admission.Reason = ""
 // Deadline admission is pure start-decision metadata. Allowed decisions become
 // admitted no-side-effect results. Denied decisions remain no-side-effect
 // denials. No grant is returned, no release or rollback path exists, and the
-// deadline Decision itself is carried as metadata.
-//
-// ReasonInsufficientBudget maps to builtin.ReasonDeadlineExceeded because the
-// remaining execution budget cannot satisfy the required minimum at this
-// boundary. ReasonContextDone maps to builtin.ReasonCanceled because Decision
-// records that the parent context was already done, not whether the original
-// cause was context.Canceled or context.DeadlineExceeded.
-func (d Decision) AdmissionResult() admission.Result[
+// deadline.Decision itself is carried as metadata.
+func AdmissionResult(d deadline.Decision) admission.Result[
 	admission.NoGrant,
-	Decision,
+	deadline.Decision,
 ] {
 	if !d.IsValid() {
 		if d.IsAllowed() {
@@ -64,12 +59,12 @@ func (d Decision) AdmissionResult() admission.Result[
 	}
 
 	switch d.Reason {
-	case ReasonContextDone:
+	case deadline.ReasonContextDone:
 		return admission.DeniedResult(
 			admissionbuiltin.ReasonCanceled,
 			d,
 		)
-	case ReasonExpired, ReasonInsufficientBudget:
+	case deadline.ReasonExpired, deadline.ReasonInsufficientBudget:
 		return admission.DeniedResult(
 			admissionbuiltin.ReasonDeadlineExceeded,
 			d,

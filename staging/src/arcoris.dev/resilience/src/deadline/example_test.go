@@ -23,7 +23,7 @@ import (
 )
 
 func ExampleInspect() {
-	now := time.Now().Add(time.Hour)
+	now := time.Date(2099, 6, 8, 12, 0, 0, 0, time.UTC)
 	ctx, cancel := context.WithDeadline(context.Background(), now.Add(250*time.Millisecond))
 	defer cancel()
 
@@ -37,7 +37,7 @@ func ExampleInspect() {
 }
 
 func ExampleCanStart() {
-	now := time.Now().Add(time.Hour)
+	now := time.Date(2099, 6, 8, 12, 0, 0, 0, time.UTC)
 	ctx, cancel := context.WithDeadline(context.Background(), now.Add(50*time.Millisecond))
 	defer cancel()
 
@@ -50,24 +50,8 @@ func ExampleCanStart() {
 	// insufficient_budget
 }
 
-func ExampleTryAdmit() {
-	now := time.Now().Add(time.Hour)
-	result := deadline.TryAdmit(deadline.Request{
-		Context: context.Background(),
-		Now:     now,
-		Min:     time.Second,
-	})
-
-	fmt.Println(result.Decision().IsAdmitted())
-	fmt.Println(result.HasGrant())
-
-	// Output:
-	// true
-	// false
-}
-
 func ExampleClamp() {
-	now := time.Now().Add(time.Hour)
+	now := time.Date(2099, 6, 8, 12, 0, 0, 0, time.UTC)
 	ctx, cancel := context.WithDeadline(context.Background(), now.Add(75*time.Millisecond))
 	defer cancel()
 
@@ -81,7 +65,7 @@ func ExampleClamp() {
 }
 
 func ExampleReserve() {
-	now := time.Now().Add(time.Hour)
+	now := time.Date(2099, 6, 8, 12, 0, 0, 0, time.UTC)
 	ctx, cancel := context.WithDeadline(context.Background(), now.Add(200*time.Millisecond))
 	defer cancel()
 
@@ -96,8 +80,40 @@ func ExampleReserve() {
 	// 150ms
 }
 
+func ExampleReserveBudget() {
+	now := time.Date(2099, 6, 8, 12, 0, 0, 0, time.UTC)
+	ctx, cancel := context.WithDeadline(context.Background(), now.Add(200*time.Millisecond))
+	defer cancel()
+
+	result := deadline.ReserveBudget(ctx, now, 50*time.Millisecond)
+	fmt.Println(result.OK)
+	fmt.Println(result.Bounded)
+	fmt.Println(result.Duration)
+	fmt.Println(result.Reason)
+
+	// Output:
+	// true
+	// true
+	// 150ms
+	// allowed
+}
+
+func ExampleReserveBudget_noDeadlineFallback() {
+	now := time.Date(2099, 6, 8, 12, 0, 0, 0, time.UTC)
+	result := deadline.ReserveBudget(context.Background(), now, 50*time.Millisecond)
+
+	fmt.Println(result.OK)
+	fmt.Println(result.Bounded)
+	fmt.Println(result.Reason)
+
+	// Output:
+	// true
+	// false
+	// no_deadline
+}
+
 func ExampleWithBoundedTimeout() {
-	now := time.Now().Add(time.Hour)
+	now := time.Date(2099, 6, 8, 12, 0, 0, 0, time.UTC)
 	parent, cancelParent := context.WithDeadline(context.Background(), now.Add(100*time.Millisecond))
 	defer cancelParent()
 

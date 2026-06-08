@@ -12,26 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
 import (
 	"context"
-	"fmt"
 	"time"
 )
-
-const panicNilContext = "deadline: nil context"
-
-// panicNegativeDuration formats a panic message for negative duration inputs.
-func panicNegativeDuration(name string) string {
-	return fmt.Sprintf("deadline: negative %s", name)
-}
 
 // requireContext rejects nil contexts at public API boundaries.
 func requireContext(ctx context.Context) {
 	if ctx == nil {
-		panic(panicNilContext)
+		panic(ErrNilContext)
 	}
 }
 
@@ -39,6 +30,6 @@ func requireContext(ctx context.Context) {
 // boundaries.
 func requireNonNegativeDuration(name string, d time.Duration) {
 	if d < 0 {
-		panic(panicNegativeDuration(name))
+		panic(NegativeDurationError{Name: name})
 	}
 }

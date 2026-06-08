@@ -16,34 +16,34 @@ package deadline
 
 import (
 	"context"
+	"testing"
 	"time"
 )
 
-// Inspect derives a Budget from ctx at now.
-//
-// Inspect only inspects deadline math. It does not treat an already-canceled
-// context without a deadline as an expired budget. Operational decisions that
-// should reject canceled contexts are provided by CanStart, Clamp, and Reserve.
-func Inspect(ctx context.Context, now time.Time) Budget {
-	requireContext(ctx)
+func BenchmarkWithBoundedTimeoutNoParentDeadline(b *testing.B) {
+	b.ReportAllocs()
 
-	dl, ok := ctx.Deadline()
-	if !ok {
-		return Budget{}
+	parent := context.Background()
+	now := testNow()
+	for b.Loop() {
+		ctx, cancel := WithBoundedTimeout(parent, now, time.Second)
+		cancel()
+		benchmarkContext = ctx
+		benchmarkCancel = cancel
 	}
+}
 
-	remaining := dl.Sub(now)
-	if remaining <= 0 {
-		return Budget{
-			Deadline:    dl,
-			HasDeadline: true,
-			Expired:     true,
-		}
-	}
+func BenchmarkWithBoundedTimeoutParentDeadline(b *testing.B) {
+	b.ReportAllocs()
 
-	return Budget{
-		Deadline:    dl,
-		Remaining:   remaining,
-		HasDeadline: true,
+	now := testNow()
+	parent, parentCancel := context.WithDeadline(context.Background(), now.Add(time.Second))
+	defer parentCancel()
+
+	for b.Loop() {
+		ctx, cancel := WithBoundedTimeout(parent, now, time.Hour)
+		cancel()
+		benchmarkContext = ctx
+		benchmarkCancel = cancel
 	}
 }

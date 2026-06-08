@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
 import (
@@ -26,7 +25,7 @@ import (
 func TestRemainingPanicsOnNilContext(t *testing.T) {
 	t.Parallel()
 
-	panicassert.RequireMessage(t, panicNilContext, func() {
+	panicassert.RequireErrorIs(t, ErrNilContext, func() {
 		_, _ = Remaining(nil, time.Now())
 	})
 }

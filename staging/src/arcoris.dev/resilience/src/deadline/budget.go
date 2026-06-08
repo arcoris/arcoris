@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
 import "time"
@@ -21,8 +20,9 @@ import "time"
 // observation time.
 //
 // Budget is a read model. It does not observe future context cancellation, does
-// not reserve time, and does not create child contexts. Callers that need an
-// operational allow/deny decision should use CanStart.
+// not inspect ctx.Err, does not reserve time, and does not create child
+// contexts. Callers that need an operational allow/deny decision should use
+// CanStart.
 type Budget struct {
 	// Deadline is the parent context deadline when HasDeadline is true.
 	//

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package deadline
+package deadlineadmission
 
 import (
 	"context"
@@ -21,6 +21,7 @@ import (
 
 	"arcoris.dev/admission"
 	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
+	"arcoris.dev/resilience/deadline"
 	panicassert "arcoris.dev/testutil/panic"
 )
 
@@ -44,7 +45,7 @@ func TestTryAdmit(t *testing.T) {
 		want     admission.Decision
 		admitted bool
 		denied   bool
-		metadata Decision
+		metadata deadline.Decision
 	}{
 		{
 			name: "no deadline",
@@ -55,9 +56,9 @@ func TestTryAdmit(t *testing.T) {
 			},
 			want:     admission.AdmitDecision(admission.ReasonAdmitted),
 			admitted: true,
-			metadata: Decision{
+			metadata: deadline.Decision{
 				Allowed: true,
-				Reason:  ReasonNoDeadline,
+				Reason:  deadline.ReasonNoDeadline,
 			},
 		},
 		{
@@ -69,10 +70,10 @@ func TestTryAdmit(t *testing.T) {
 			},
 			want:     admission.AdmitDecision(admission.ReasonAdmitted),
 			admitted: true,
-			metadata: Decision{
+			metadata: deadline.Decision{
 				Allowed:   true,
 				Remaining: 10 * time.Second,
-				Reason:    ReasonAllowed,
+				Reason:    deadline.ReasonAllowed,
 			},
 		},
 		{
@@ -83,8 +84,8 @@ func TestTryAdmit(t *testing.T) {
 			},
 			want:   admission.DenyDecision(admissionbuiltin.ReasonDeadlineExceeded),
 			denied: true,
-			metadata: Decision{
-				Reason: ReasonExpired,
+			metadata: deadline.Decision{
+				Reason: deadline.ReasonExpired,
 			},
 		},
 		{
@@ -96,9 +97,9 @@ func TestTryAdmit(t *testing.T) {
 			},
 			want:   admission.DenyDecision(admissionbuiltin.ReasonDeadlineExceeded),
 			denied: true,
-			metadata: Decision{
+			metadata: deadline.Decision{
 				Remaining: time.Second,
-				Reason:    ReasonInsufficientBudget,
+				Reason:    deadline.ReasonInsufficientBudget,
 			},
 		},
 		{
@@ -109,8 +110,8 @@ func TestTryAdmit(t *testing.T) {
 			},
 			want:   admission.DenyDecision(admissionbuiltin.ReasonCanceled),
 			denied: true,
-			metadata: Decision{
-				Reason: ReasonContextDone,
+			metadata: deadline.Decision{
+				Reason: deadline.ReasonContextDone,
 			},
 		},
 		{
@@ -122,9 +123,9 @@ func TestTryAdmit(t *testing.T) {
 			},
 			want:   admission.DenyDecision(admissionbuiltin.ReasonCanceled),
 			denied: true,
-			metadata: Decision{
+			metadata: deadline.Decision{
 				Remaining: 10 * time.Second,
-				Reason:    ReasonContextDone,
+				Reason:    deadline.ReasonContextDone,
 			},
 		},
 	}
@@ -170,16 +171,16 @@ func TestTryAdmit(t *testing.T) {
 func TestTryAdmitPanicsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	panicassert.RequireMessage(t, panicNilContext, func() {
+	panicassert.RequireErrorIs(t, deadline.ErrNilContext, func() {
 		_ = TryAdmit(Request{})
 	})
-	panicassert.RequireMessage(t, panicNegativeDuration("min"), func() {
+	panicassert.RequireErrorIs(t, deadline.ErrNegativeDuration, func() {
 		_ = TryAdmit(Request{
 			Context: context.Background(),
 			Min:     -time.Nanosecond,
 		})
 	})
-	panicassert.RequireMessage(t, panicNilContext, func() {
+	panicassert.RequireErrorIs(t, deadline.ErrNilContext, func() {
 		_ = TryAdmit(Request{
 			Min: -time.Nanosecond,
 		})

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
 import (
@@ -26,10 +25,10 @@ import (
 func TestReservePanicsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	panicassert.RequireMessage(t, panicNilContext, func() {
+	panicassert.RequireErrorIs(t, ErrNilContext, func() {
 		_, _, _ = Reserve(nil, time.Now(), 0)
 	})
-	panicassert.RequireMessage(t, panicNegativeDuration("reserve"), func() {
+	panicassert.RequireErrorIs(t, ErrNegativeDuration, func() {
 		_, _, _ = Reserve(context.Background(), time.Now(), -time.Nanosecond)
 	})
 }
@@ -131,6 +130,164 @@ func TestReserveSubtractsTailBudget(t *testing.T) {
 					tt.wantBounded,
 					tt.wantOK,
 				)
+			}
+		})
+	}
+}
+
+func TestReserveBudgetBuildsNamedResult(t *testing.T) {
+	t.Parallel()
+
+	now := testNow()
+
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	tests := []struct {
+		name string
+		ctx  context.Context
+		res  time.Duration
+		want ReserveResult
+	}{
+		{
+			name: "no deadline",
+			ctx:  context.Background(),
+			want: ReserveResult{
+				OK:     true,
+				Reason: ReasonNoDeadline,
+			},
+		},
+		{
+			name: "context done",
+			ctx:  canceled,
+			want: ReserveResult{
+				Reason: ReasonContextDone,
+			},
+		},
+		{
+			name: "expired deadline",
+			ctx:  contextWithDeadline(t, now.Add(-time.Second)),
+			res:  time.Second,
+			want: ReserveResult{
+				Bounded: true,
+				Reason:  ReasonExpired,
+				Budget: Budget{
+					Deadline:    now.Add(-time.Second),
+					HasDeadline: true,
+					Expired:     true,
+				},
+			},
+		},
+		{
+			name: "insufficient budget",
+			ctx:  contextWithDeadline(t, now.Add(time.Second)),
+			res:  time.Second,
+			want: ReserveResult{
+				Bounded: true,
+				Reason:  ReasonInsufficientBudget,
+				Budget: Budget{
+					Deadline:    now.Add(time.Second),
+					Remaining:   time.Second,
+					HasDeadline: true,
+				},
+			},
+		},
+		{
+			name: "allowed bounded",
+			ctx:  contextWithDeadline(t, now.Add(5*time.Second)),
+			res:  time.Second,
+			want: ReserveResult{
+				Duration: 4 * time.Second,
+				Bounded:  true,
+				OK:       true,
+				Reason:   ReasonAllowed,
+				Budget: Budget{
+					Deadline:    now.Add(5 * time.Second),
+					Remaining:   5 * time.Second,
+					HasDeadline: true,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := ReserveBudget(tt.ctx, now, tt.res)
+			if got != tt.want {
+				t.Fatalf("ReserveBudget() = %+v, want %+v", got, tt.want)
+			}
+			if !got.IsValid() {
+				t.Fatalf("ReserveBudget result is invalid: %+v", got)
+			}
+		})
+	}
+}
+
+func TestReserveResultIsValidRejectsInvalidShapes(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		result ReserveResult
+	}{
+		{name: "zero", result: ReserveResult{}},
+		{
+			name: "negative duration",
+			result: ReserveResult{
+				Duration: -time.Nanosecond,
+				Bounded:  true,
+				OK:       true,
+				Reason:   ReasonAllowed,
+			},
+		},
+		{
+			name: "allowed unbounded with duration",
+			result: ReserveResult{
+				Duration: time.Second,
+				OK:       true,
+				Reason:   ReasonNoDeadline,
+			},
+		},
+		{
+			name: "denied with allowed reason",
+			result: ReserveResult{
+				Reason: ReasonAllowed,
+			},
+		},
+		{
+			name: "context done bounded without deadline",
+			result: ReserveResult{
+				Bounded: true,
+				Reason:  ReasonContextDone,
+			},
+		},
+		{
+			name: "context done with expired budget",
+			result: ReserveResult{
+				Bounded: true,
+				Reason:  ReasonContextDone,
+				Budget: Budget{
+					HasDeadline: true,
+					Expired:     true,
+				},
+			},
+		},
+		{
+			name: "unknown reason",
+			result: ReserveResult{
+				Reason: Reason(255),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if tt.result.IsValid() {
+				t.Fatalf("IsValid() = true, want false for %+v", tt.result)
 			}
 		})
 	}

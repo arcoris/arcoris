@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
 import (
@@ -25,6 +24,10 @@ import (
 // CanStart is an operational decision, not a pure deadline inspection. It denies
 // work when ctx is already done, when the observed deadline is expired, or when
 // the remaining budget is smaller than min.
+//
+// Observed deadline expiration takes precedence over ctx.Err(). That keeps
+// deterministic deadline math stable when a context is both runtime-done and
+// already expired at the caller-supplied observation time.
 func CanStart(ctx context.Context, now time.Time, min time.Duration) Decision {
 	requireContext(ctx)
 	requireNonNegativeDuration("min", min)

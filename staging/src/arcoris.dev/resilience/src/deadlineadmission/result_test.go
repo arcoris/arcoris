@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package deadline
+package deadlineadmission
 
 import (
 	"testing"
@@ -20,93 +20,94 @@ import (
 
 	"arcoris.dev/admission"
 	admissionbuiltin "arcoris.dev/admissioncatalog/builtin"
+	"arcoris.dev/resilience/deadline"
 )
 
-func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
+func TestAdmissionResultMapsValidDecisions(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name     string
-		decision Decision
+		decision deadline.Decision
 		want     admission.Decision
 		admitted bool
 		denied   bool
-		metadata Decision
+		metadata deadline.Decision
 	}{
 		{
 			name: "allowed budget",
-			decision: Decision{
+			decision: deadline.Decision{
 				Allowed:   true,
 				Remaining: time.Second,
-				Reason:    ReasonAllowed,
+				Reason:    deadline.ReasonAllowed,
 			},
 			want:     admission.AdmitDecision(admission.ReasonAdmitted),
 			admitted: true,
-			metadata: Decision{
+			metadata: deadline.Decision{
 				Allowed:   true,
 				Remaining: time.Second,
-				Reason:    ReasonAllowed,
+				Reason:    deadline.ReasonAllowed,
 			},
 		},
 		{
 			name: "allowed no deadline",
-			decision: Decision{
+			decision: deadline.Decision{
 				Allowed: true,
-				Reason:  ReasonNoDeadline,
+				Reason:  deadline.ReasonNoDeadline,
 			},
 			want:     admission.AdmitDecision(admission.ReasonAdmitted),
 			admitted: true,
-			metadata: Decision{
+			metadata: deadline.Decision{
 				Allowed: true,
-				Reason:  ReasonNoDeadline,
+				Reason:  deadline.ReasonNoDeadline,
 			},
 		},
 		{
 			name: "expired",
-			decision: Decision{
-				Reason: ReasonExpired,
+			decision: deadline.Decision{
+				Reason: deadline.ReasonExpired,
 			},
 			want:   admission.DenyDecision(admissionbuiltin.ReasonDeadlineExceeded),
 			denied: true,
-			metadata: Decision{
-				Reason: ReasonExpired,
+			metadata: deadline.Decision{
+				Reason: deadline.ReasonExpired,
 			},
 		},
 		{
 			name: "insufficient budget",
-			decision: Decision{
+			decision: deadline.Decision{
 				Remaining: time.Second,
-				Reason:    ReasonInsufficientBudget,
+				Reason:    deadline.ReasonInsufficientBudget,
 			},
 			want:   admission.DenyDecision(admissionbuiltin.ReasonDeadlineExceeded),
 			denied: true,
-			metadata: Decision{
+			metadata: deadline.Decision{
 				Remaining: time.Second,
-				Reason:    ReasonInsufficientBudget,
+				Reason:    deadline.ReasonInsufficientBudget,
 			},
 		},
 		{
 			name: "context done without deadline budget",
-			decision: Decision{
-				Reason: ReasonContextDone,
+			decision: deadline.Decision{
+				Reason: deadline.ReasonContextDone,
 			},
 			want:   admission.DenyDecision(admissionbuiltin.ReasonCanceled),
 			denied: true,
-			metadata: Decision{
-				Reason: ReasonContextDone,
+			metadata: deadline.Decision{
+				Reason: deadline.ReasonContextDone,
 			},
 		},
 		{
 			name: "context done with future deadline budget",
-			decision: Decision{
+			decision: deadline.Decision{
 				Remaining: time.Second,
-				Reason:    ReasonContextDone,
+				Reason:    deadline.ReasonContextDone,
 			},
 			want:   admission.DenyDecision(admissionbuiltin.ReasonCanceled),
 			denied: true,
-			metadata: Decision{
+			metadata: deadline.Decision{
 				Remaining: time.Second,
-				Reason:    ReasonContextDone,
+				Reason:    deadline.ReasonContextDone,
 			},
 		},
 	}
@@ -115,7 +116,7 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			result := test.decision.AdmissionResult()
+			result := AdmissionResult(test.decision)
 			if !result.IsValid() {
 				t.Fatalf("AdmissionResult is invalid: %+v", result.Decision())
 			}
@@ -147,55 +148,55 @@ func TestDecisionAdmissionResultMapsValidDecisions(t *testing.T) {
 	}
 }
 
-func TestDecisionAdmissionResultInvalidDecisionStaysInvalid(t *testing.T) {
+func TestAdmissionResultInvalidDecisionStaysInvalid(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name     string
-		decision Decision
+		decision deadline.Decision
 	}{
 		{
 			name:     "zero",
-			decision: Decision{},
+			decision: deadline.Decision{},
 		},
 		{
 			name: "invalid allowed",
-			decision: Decision{
+			decision: deadline.Decision{
 				Allowed:   true,
 				Remaining: time.Second,
-				Reason:    ReasonExpired,
+				Reason:    deadline.ReasonExpired,
 			},
 		},
 		{
 			name: "invalid denied",
-			decision: Decision{
-				Reason: ReasonAllowed,
+			decision: deadline.Decision{
+				Reason: deadline.ReasonAllowed,
 			},
 		},
 		{
 			name: "expired with remaining budget",
-			decision: Decision{
+			decision: deadline.Decision{
 				Remaining: time.Second,
-				Reason:    ReasonExpired,
+				Reason:    deadline.ReasonExpired,
 			},
 		},
 		{
 			name: "insufficient budget without remaining budget",
-			decision: Decision{
-				Reason: ReasonInsufficientBudget,
+			decision: deadline.Decision{
+				Reason: deadline.ReasonInsufficientBudget,
 			},
 		},
 		{
 			name: "insufficient budget with negative remaining",
-			decision: Decision{
+			decision: deadline.Decision{
 				Remaining: -time.Nanosecond,
-				Reason:    ReasonInsufficientBudget,
+				Reason:    deadline.ReasonInsufficientBudget,
 			},
 		},
 		{
 			name: "unknown reason",
-			decision: Decision{
-				Reason: Reason(255),
+			decision: deadline.Decision{
+				Reason: deadline.Reason(255),
 			},
 		},
 	}
@@ -204,7 +205,7 @@ func TestDecisionAdmissionResultInvalidDecisionStaysInvalid(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			result := test.decision.AdmissionResult()
+			result := AdmissionResult(test.decision)
 			if result.IsValid() {
 				t.Fatalf("AdmissionResult().IsValid() = true, want false: %+v", result.Decision())
 			}

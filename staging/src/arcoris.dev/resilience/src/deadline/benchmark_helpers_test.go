@@ -19,31 +19,13 @@ import (
 	"time"
 )
 
-// Inspect derives a Budget from ctx at now.
-//
-// Inspect only inspects deadline math. It does not treat an already-canceled
-// context without a deadline as an expired budget. Operational decisions that
-// should reject canceled contexts are provided by CanStart, Clamp, and Reserve.
-func Inspect(ctx context.Context, now time.Time) Budget {
-	requireContext(ctx)
-
-	dl, ok := ctx.Deadline()
-	if !ok {
-		return Budget{}
-	}
-
-	remaining := dl.Sub(now)
-	if remaining <= 0 {
-		return Budget{
-			Deadline:    dl,
-			HasDeadline: true,
-			Expired:     true,
-		}
-	}
-
-	return Budget{
-		Deadline:    dl,
-		Remaining:   remaining,
-		HasDeadline: true,
-	}
-}
+var (
+	benchmarkBudget        Budget
+	benchmarkDecision      Decision
+	benchmarkDuration      time.Duration
+	benchmarkDurationOK    bool
+	benchmarkReserveResult ReserveResult
+	benchmarkReasonString  string
+	benchmarkContext       context.Context
+	benchmarkCancel        context.CancelFunc
+)

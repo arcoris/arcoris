@@ -12,28 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+package deadlineadmission
 
-package deadline
+import (
+	"arcoris.dev/admission"
+	"arcoris.dev/resilience/deadline"
+)
 
-import "arcoris.dev/admission"
-
-// TryAdmit returns an admission-compatible start decision.
+// TryAdmit returns an admission-compatible deadline start decision.
 //
-// TryAdmit is a thin, stateless adapter over CanStart. It preserves CanStart's
-// validation behavior: nil contexts and negative minimum budgets panic at the
-// API boundary instead of being converted into denied admission results.
-//
-// The result has no side effect and carries no grant. Admission metadata is the
-// original deadline Decision so callers can inspect the deadline-specific reason
-// and remaining budget without a catalog lookup, timer, goroutine, or stateful
-// checker object.
+// TryAdmit delegates to deadline.CanStart. Nil contexts and negative minimum
+// budgets preserve core deadline panic behavior instead of being converted into
+// denied admission results. The returned result has no side effect and carries no
+// grant.
 func TryAdmit(req Request) admission.Result[
 	admission.NoGrant,
-	Decision,
+	deadline.Decision,
 ] {
-	return CanStart(
+	return AdmissionResult(deadline.CanStart(
 		req.Context,
 		req.Now,
 		req.Min,
-	).AdmissionResult()
+	))
 }

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
 import (
@@ -33,6 +32,12 @@ import (
 // cancellation timing deterministic by itself. Tests that need deterministic
 // cancellation should assert the selected deadline or use higher-level fake-clock
 // code instead of waiting on real time.
+//
+// WithBoundedTimeout does not decide whether work should start. It may return an
+// already-expired child context when timeout is zero, now is after the parent
+// deadline, or the parent deadline has already expired according to the runtime.
+// Use CanStart or ReserveBudget before deriving work contexts when start
+// admission matters.
 func WithBoundedTimeout(ctx context.Context, now time.Time, timeout time.Duration) (context.Context, context.CancelFunc) {
 	requireContext(ctx)
 	requireNonNegativeDuration("timeout", timeout)

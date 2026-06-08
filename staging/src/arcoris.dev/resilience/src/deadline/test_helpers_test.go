@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
 import (
@@ -22,7 +21,7 @@ import (
 )
 
 func testNow() time.Time {
-	return time.Now().UTC().Add(24 * time.Hour)
+	return time.Date(2099, 6, 8, 12, 0, 0, 0, time.UTC)
 }
 
 func contextWithDeadline(t *testing.T, dl time.Time) context.Context {

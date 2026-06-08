@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package deadline provides local execution-budget helpers for resilience
 // components.
 //
@@ -21,7 +20,8 @@
 // budget, reserves tail budget for caller-owned cleanup, and derives child
 // contexts whose deadlines do not exceed their parent deadline.
 //
-// Reserve returns three values:
+// ReserveBudget returns a named result that preserves the inspected Budget and
+// local Reason. Reserve is the compact tuple helper over the same decision:
 //   - duration: a finite derived duration, meaningful only when bounded and ok
 //     are both true;
 //   - bounded: whether duration comes from a parent context deadline;
@@ -37,11 +37,10 @@
 // checks can use this package to avoid starting work that cannot complete inside
 // the caller's remaining execution budget.
 //
-// CanStart is the direct deadline decision API. TryAdmit(Request) is the
-// admission-compatible surface for generic callers and delegates to CanStart.
-// Deadline admission is no-side-effect: admitted and denied results carry no
-// grant and require no release. The admission metadata is the deadline Decision
-// itself, and no admission catalog lookup is performed in the hot path.
+// CanStart is the direct deadline decision API. Package
+// arcoris.dev/resilience/deadlineadmission maps CanStart decisions into
+// admission.Result values for generic admission callers. Core deadline logic does
+// not import admission packages or own admission reasons.
 //
 // The package does not execute operations, retry failed work, sleep, create
 // timers, randomize delays, classify errors, propagate deadlines across HTTP or
@@ -53,6 +52,7 @@
 // owning a clock, timer, ticker, goroutine, or runtime loop.
 //
 // Nil contexts and negative durations are programming errors. The package
-// panics at the API boundary for those inputs instead of returning values that
-// fail later inside retry, waiting, or admission code.
+// panics with structured package-owned errors at the API boundary for those
+// inputs instead of returning values that fail later inside retry, waiting, or
+// admission code.
 package deadline

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package deadline
 
 import (
@@ -26,7 +25,7 @@ import (
 func TestInspectPanicsOnNilContext(t *testing.T) {
 	t.Parallel()
 
-	panicassert.RequireMessage(t, panicNilContext, func() {
+	panicassert.RequireErrorIs(t, ErrNilContext, func() {
 		_ = Inspect(nil, time.Now())
 	})
 }
@@ -37,6 +36,10 @@ func TestInspectBuildsBudget(t *testing.T) {
 	now := testNow()
 	future := now.Add(5 * time.Second)
 	past := now.Add(-time.Second)
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+	canceledDeadline, cancelDeadline := context.WithDeadline(context.Background(), future)
+	cancelDeadline()
 
 	tests := []struct {
 		name string
@@ -49,8 +52,22 @@ func TestInspectBuildsBudget(t *testing.T) {
 			want: Budget{},
 		},
 		{
+			name: "canceled no deadline",
+			ctx:  canceled,
+			want: Budget{},
+		},
+		{
 			name: "future deadline",
 			ctx:  contextWithDeadline(t, future),
+			want: Budget{
+				Deadline:    future,
+				Remaining:   5 * time.Second,
+				HasDeadline: true,
+			},
+		},
+		{
+			name: "canceled future deadline",
+			ctx:  canceledDeadline,
 			want: Budget{
 				Deadline:    future,
 				Remaining:   5 * time.Second,
