@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package lifecycle
 
 import "context"
 
 // WaitTerminal blocks until the lifecycle reaches a terminal state or ctx is
 // cancelled.
+//
+// A nil context is a programmer error and panics; callers that want an
+// uncancelable wait must pass context.Background explicitly.
 //
 // Terminal states are StateStopped and StateFailed. The returned Snapshot lets
 // callers distinguish successful shutdown from failure:

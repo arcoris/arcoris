@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package lifecycle
 
 import "context"
@@ -37,10 +36,11 @@ import "context"
 // table-reachable transition from committing. In that case WaitState keeps
 // waiting until the target is reached, the lifecycle becomes terminal or
 // unreachable, or ctx ends.
+//
+// A nil context is a programmer error and panics; callers that want an
+// uncancelable wait must pass context.Background explicitly.
 func (c *Controller) WaitState(ctx context.Context, target State) (Snapshot, error) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	requireContext(ctx)
 
 	snap, changed, done := c.waitSnapshot()
 

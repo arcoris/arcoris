@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package lifecycle
 
 // State identifies the externally observable lifecycle phase of a component.

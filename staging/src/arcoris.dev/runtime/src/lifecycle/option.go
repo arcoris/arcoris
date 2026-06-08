@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package lifecycle
 
 import "time"
@@ -29,7 +28,7 @@ type TimeSource interface {
 //
 // Options are applied to an internal controllerConfig before Controller is
 // created. They do not mutate an already constructed Controller and are not
-// retained after construction.
+// retained after construction. A nil Option is a programmer error and panics.
 //
 // This separation keeps the public construction API stable while allowing the
 // Controller implementation to evolve internally. Options should configure
@@ -81,8 +80,8 @@ func defaultControllerConfig() controllerConfig {
 
 // newControllerConfig applies options to a fresh default controllerConfig.
 //
-// Nil options are ignored. This makes option composition safe for callers that
-// build option lists conditionally.
+// Nil options panic so conditional option assembly fails at the call site
+// instead of silently changing the controller construction contract.
 //
 // The returned config is independent from the variadic options slice. Guards and
 // observers are stored as interface values; the lifecycle package does not clone
@@ -91,10 +90,7 @@ func newControllerConfig(opts ...Option) controllerConfig {
 	cfg := defaultControllerConfig()
 
 	for _, opt := range opts {
-		if opt == nil {
-			continue
-		}
-
+		requireOption(opt)
 		opt(&cfg)
 	}
 

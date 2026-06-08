@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package lifecycle
 
 import (
+	panicassert "arcoris.dev/testutil/panic"
 	"testing"
 	"time"
 )
@@ -34,13 +34,12 @@ func TestDefaultControllerConfigUsesNonNilClock(t *testing.T) {
 	}
 }
 
-func TestNewControllerConfigIgnoresNilOptions(t *testing.T) {
+func TestNewControllerConfigPanicsOnNilOption(t *testing.T) {
 	t.Parallel()
 
-	cfg := newControllerConfig(nil)
-	if cfg.now == nil {
-		t.Fatal("config now = nil, want default")
-	}
+	panicassert.RequireMessage(t, errNilOption, func() {
+		newControllerConfig(nil)
+	})
 }
 
 func TestNewControllerConfigAppliesOptionsInOrder(t *testing.T) {

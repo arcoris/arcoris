@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package signals
 
 const (
@@ -29,7 +28,8 @@ const (
 //
 // Options are applied to an internal subscribeConfig before the Subscription is
 // registered. They do not mutate an already constructed Subscription and are not
-// retained after construction except through normalized configuration values.
+// retained after construction except through normalized configuration values. A
+// nil SubscriptionOption is a programmer error and panics.
 type SubscriptionOption func(*subscribeConfig)
 
 // WithSubscriptionBuffer configures the signal delivery channel buffer size.

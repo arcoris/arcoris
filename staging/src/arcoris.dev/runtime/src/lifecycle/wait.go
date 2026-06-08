@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package lifecycle
 
 import "context"
@@ -41,15 +40,12 @@ type Predicate func(Snapshot) bool
 // that case Wait returns ErrWaitTargetUnreachable wrapped in WaitError.
 //
 // A nil predicate is invalid and returns ErrInvalidWaitPredicate. A nil context
-// is treated as context.Background. This avoids panics in defensive paths while
-// preserving the usual Go convention that callers should pass a real context
-// when they need cancellation or deadlines.
+// is a programmer error and panics; callers that want an uncancelable wait must
+// pass context.Background explicitly.
 //
 // Wait is safe to call concurrently with transition methods.
 func (c *Controller) Wait(ctx context.Context, predicate Predicate) (Snapshot, error) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	requireContext(ctx)
 
 	snap, changed, done := c.waitSnapshot()
 

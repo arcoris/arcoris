@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package lifecycle
-
-import "strconv"
 
 // Snapshot is an immutable point-in-time view of a lifecycle controller.
 //
@@ -44,7 +41,7 @@ type Snapshot struct {
 	// Revision is zero before the first committed transition. After each committed
 	// transition, Controller increments Revision and stores the same value in the
 	// committed Transition.
-	Revision uint64
+	Revision Revision
 
 	// LastTransition is the most recent committed lifecycle transition.
 	//
@@ -67,7 +64,7 @@ type Snapshot struct {
 // The returned value is intended for logs, tests, diagnostics, and error
 // messages. It is not a stable serialization format.
 func (s Snapshot) String() string {
-	return s.State.String() + "@" + strconv.FormatUint(s.Revision, 10)
+	return s.State.String() + "@" + s.Revision.String()
 }
 
 // IsValid reports whether s satisfies the lifecycle snapshot invariants.
@@ -79,7 +76,7 @@ func (s Snapshot) IsValid() bool {
 		return false
 	}
 
-	if s.Revision == 0 {
+	if s.Revision.IsZero() {
 		return s.State == StateNew &&
 			s.FailureCause == nil &&
 			s.LastTransition.IsZero()
@@ -129,7 +126,7 @@ func (s Snapshot) IsValid() bool {
 // with a non-zero Revision represents a lifecycle that has committed at least one
 // transition.
 func (s Snapshot) HasTransition() bool {
-	return s.Revision != 0
+	return !s.Revision.IsZero()
 }
 
 // IsTerminal reports whether the snapshot state ends the lifecycle instance.

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package signals
 
 import "os"
@@ -20,7 +19,8 @@ import "os"
 // ShutdownOption configures a ShutdownController during construction.
 //
 // Options are applied to an internal shutdownConfig before the controller starts
-// its signal loop. They do not mutate an already constructed controller.
+// its signal loop. They do not mutate an already constructed controller. A nil
+// ShutdownOption is a programmer error and panics.
 type ShutdownOption func(*shutdownConfig)
 
 // WithShutdownSignals replaces the signal set that starts graceful shutdown.
@@ -80,6 +80,9 @@ func WithNoEscalation() ShutdownOption {
 // a fake notifier while production callers keep the standard os/signal seam.
 func withShutdownSubscriptionOptions(opts ...SubscriptionOption) ShutdownOption {
 	return func(cfg *shutdownConfig) {
-		cfg.subscribeOptions = append(cfg.subscribeOptions, opts...)
+		for _, opt := range opts {
+			requireSubscriptionOption(opt)
+			cfg.subscribeOptions = append(cfg.subscribeOptions, opt)
+		}
 	}
 }

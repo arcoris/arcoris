@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package signals
 
 // subscribeConfig contains construction-time settings for Subscription.
@@ -38,14 +37,13 @@ func defaultSubscribeConfig() subscribeConfig {
 
 // newSubscribeConfig applies opts to a fresh default subscribeConfig.
 //
-// Nil options are ignored to keep conditional option lists easy to compose.
+// Nil options are programmer errors and panic so construction cannot silently
+// drop caller intent.
 func newSubscribeConfig(opts ...SubscriptionOption) subscribeConfig {
 	cfg := defaultSubscribeConfig()
 
 	for _, opt := range opts {
-		if opt == nil {
-			continue
-		}
+		requireSubscriptionOption(opt)
 		opt(&cfg)
 	}
 

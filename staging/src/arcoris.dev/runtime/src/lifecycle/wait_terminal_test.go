@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package lifecycle
 
 import (
 	channelassert "arcoris.dev/testutil/channel"
 	errorassert "arcoris.dev/testutil/errors"
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"errors"
 	"testing"
@@ -102,4 +102,12 @@ func TestWaitTerminalContextCancellationAndDeadline(t *testing.T) {
 		t.Fatal("WaitTerminal deadline err = nil, want deadline exceeded")
 	}
 	errorassert.RequireIs(t, deadlineErr, context.DeadlineExceeded)
+}
+
+func TestWaitTerminalPanicsOnNilContext(t *testing.T) {
+	t.Parallel()
+
+	panicassert.RequireMessage(t, errNilContext, func() {
+		_, _ = NewController().WaitTerminal(nil)
+	})
 }

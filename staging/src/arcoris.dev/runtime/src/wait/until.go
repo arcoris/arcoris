@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package wait
 
 import (
@@ -25,8 +24,8 @@ import (
 // Until is a small fixed-interval wait loop. It owns only loop mechanics:
 // condition evaluation, sleeping between unsuccessful evaluations, and mapping
 // wait-owned context stops into wait-owned errors. It does not implement retry
-// policy, backoff growth, rate limiting, metrics, panic recovery, or scheduler
-// policy. Interval jitter is available only as an explicit mechanical option.
+// policy, backoff growth, randomized cadence, rate limiting, metrics, panic
+// recovery, or scheduler policy.
 //
 // Evaluation is immediate: Until checks ctx and evaluates condition once before
 // sleeping. If condition is already satisfied, Until returns nil without waiting
@@ -58,18 +57,11 @@ import (
 // Until does not recover panics raised by condition. Panic recovery, if required,
 // belongs to a higher-level runtime owner or to an explicit wrapper.
 //
-// Optional behavior is supplied with Option values. The current option domain is
-// deliberately small: jitter may spread fixed delays to avoid synchronized loop
-// wake-ups. Options do not add retry policy, backoff growth, metrics, or
-// condition semantics.
-//
-// Until panics when ctx is nil, interval is not positive, condition is nil, or
-// any supplied option is nil.
-func Until(ctx context.Context, interval time.Duration, condition ConditionFunc, opts ...Option) error {
+// Until panics when ctx is nil, interval is not positive, or condition is nil.
+func Until(ctx context.Context, interval time.Duration, condition ConditionFunc) error {
 	requireContext(ctx)
 	requirePositiveInterval(interval)
 	requireCondition(condition)
-	cfg := optionsOf(opts...)
 
 	done, err := evaluateUntilCondition(ctx, condition)
 	if err != nil {
@@ -79,7 +71,7 @@ func Until(ctx context.Context, interval time.Duration, condition ConditionFunc,
 		return nil
 	}
 
-	timer := NewTimer(cfg.interval(interval))
+	timer := NewTimer(interval)
 	defer timer.StopAndDrain()
 
 	for {
@@ -95,7 +87,7 @@ func Until(ctx context.Context, interval time.Duration, condition ConditionFunc,
 			return nil
 		}
 
-		timer.Reset(cfg.interval(interval))
+		timer.Reset(interval)
 	}
 }
 

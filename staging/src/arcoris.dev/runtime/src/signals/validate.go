@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package signals
 
 import (
@@ -27,6 +26,14 @@ const (
 	// Validation helpers are package-local and should always be called with the
 	// stable diagnostic text owned by the feature file that rejects the input.
 	errNilValidationMessage = "signals: nil validation message"
+
+	// errNilSubscriptionOption is the stable diagnostic text used when
+	// Subscription construction receives a nil functional option.
+	errNilSubscriptionOption = "signals: nil subscription option"
+
+	// errNilShutdownOption is the stable diagnostic text used when
+	// ShutdownController construction receives a nil functional option.
+	errNilShutdownOption = "signals: nil shutdown option"
 )
 
 // requireValidationMessage panics when message is empty.
@@ -41,6 +48,20 @@ func requireContext(ctx context.Context, message string) {
 	requireValidationMessage(message)
 	if ctx == nil {
 		panic(message)
+	}
+}
+
+// requireSubscriptionOption panics when opt is nil.
+func requireSubscriptionOption(opt SubscriptionOption) {
+	if opt == nil {
+		panic(errNilSubscriptionOption)
+	}
+}
+
+// requireShutdownOption panics when opt is nil.
+func requireShutdownOption(opt ShutdownOption) {
+	if opt == nil {
+		panic(errNilShutdownOption)
 	}
 }
 

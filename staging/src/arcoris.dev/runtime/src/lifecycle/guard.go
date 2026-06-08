@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package lifecycle
 
 // TransitionGuard decides whether a candidate lifecycle transition may be

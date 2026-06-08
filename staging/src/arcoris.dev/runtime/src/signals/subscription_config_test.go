@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package signals
 
 import (
@@ -34,11 +33,11 @@ func TestSubscriptionConfigDefaults(t *testing.T) {
 	}
 }
 
-func TestSubscriptionConfigAppliesOptionsAndIgnoresNil(t *testing.T) {
+func TestSubscriptionConfigAppliesOptions(t *testing.T) {
 	t.Parallel()
 
 	n := &fakeNotifier{}
-	cfg := newSubscribeConfig(nil, WithSubscriptionBuffer(4), withNotifier(n))
+	cfg := newSubscribeConfig(WithSubscriptionBuffer(4), withNotifier(n))
 
 	if cfg.buffer != 4 {
 		t.Fatalf("buffer = %d, want 4", cfg.buffer)
@@ -46,6 +45,14 @@ func TestSubscriptionConfigAppliesOptionsAndIgnoresNil(t *testing.T) {
 	if cfg.notifier != n {
 		t.Fatal("notifier option was not applied")
 	}
+}
+
+func TestSubscriptionConfigPanicsOnNilOption(t *testing.T) {
+	t.Parallel()
+
+	panicassert.RequireMessage(t, errNilSubscriptionOption, func() {
+		newSubscribeConfig(nil)
+	})
 }
 
 func TestSubscriptionConfigAppliesBufferOptionsInOrder(t *testing.T) {

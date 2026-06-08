@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package signals
 
 import "os"
@@ -52,14 +51,13 @@ func defaultShutdownConfig() shutdownConfig {
 
 // newShutdownConfig applies opts to a fresh default shutdownConfig.
 //
-// Nil options are ignored to keep conditional option lists easy to compose.
+// Nil options are programmer errors and panic so construction cannot silently
+// drop caller intent.
 func newShutdownConfig(opts ...ShutdownOption) shutdownConfig {
 	cfg := defaultShutdownConfig()
 
 	for _, opt := range opts {
-		if opt == nil {
-			continue
-		}
+		requireShutdownOption(opt)
 		opt(&cfg)
 	}
 

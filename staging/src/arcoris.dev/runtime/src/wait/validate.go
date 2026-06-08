@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package wait
 
 import (
 	"context"
-	"math"
 	"time"
 )
 
@@ -38,30 +36,6 @@ const (
 	// interval would either produce a busy loop or define surprising immediate
 	// re-evaluation semantics, so it is rejected at the loop API boundary.
 	errNonPositiveInterval = "wait: non-positive interval"
-
-	// errNegativeJitterFactor is the panic value used when jitter receives a
-	// negative factor.
-	//
-	// This package models jitter as positive extra delay only. A negative factor
-	// would shorten the base duration and silently change caller-owned cadence
-	// policy, so it is rejected as invalid configuration.
-	errNegativeJitterFactor = "wait: negative jitter factor"
-
-	// errNonFiniteJitterFactor is the panic value used when jitter receives NaN or
-	// an infinite factor.
-	//
-	// Jitter factors participate in duration arithmetic. Non-finite values do not
-	// describe a bounded runtime delay and are rejected before any calculation is
-	// attempted.
-	errNonFiniteJitterFactor = "wait: non-finite jitter factor"
-
-	// errNilOption is the panic value used when a public wait primitive receives a
-	// nil functional option.
-	//
-	// Nil options are programming errors. Accepting them silently would hide a
-	// broken option construction path and make the final wait configuration depend
-	// on accidental nil values.
-	errNilOption = "wait: nil option"
 
 	// errNilTimer is the panic value used when a Timer method is called on a nil
 	// receiver or on a zero-value Timer.
@@ -92,31 +66,6 @@ func requireContext(ctx context.Context) {
 func requirePositiveInterval(interval time.Duration) {
 	if interval <= 0 {
 		panic(errNonPositiveInterval)
-	}
-}
-
-// requireJitterFactor panics when factor is not a valid positive-jitter factor.
-//
-// A valid jitter factor is finite and non-negative. The value may be zero, which
-// means that no extra jitter is applied and the base duration is returned
-// unchanged.
-func requireJitterFactor(factor float64) {
-	if math.IsNaN(factor) || math.IsInf(factor, 0) {
-		panic(errNonFiniteJitterFactor)
-	}
-	if factor < 0 {
-		panic(errNegativeJitterFactor)
-	}
-}
-
-// requireOption panics when opt is nil.
-//
-// Nil options are rejected before any condition evaluation, delay, timer
-// allocation, or runtime loop side effect occurs. This makes invalid option
-// construction fail at the wait API boundary rather than inside loop execution.
-func requireOption(opt Option) {
-	if opt == nil {
-		panic(errNilOption)
 	}
 }
 

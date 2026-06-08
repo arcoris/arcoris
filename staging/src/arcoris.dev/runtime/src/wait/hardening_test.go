@@ -18,17 +18,7 @@ import (
 	"context"
 	"testing"
 	"time"
-
-	panicassert "arcoris.dev/testutil/panic"
 )
-
-func TestUntilRejectsNilOption(t *testing.T) {
-	t.Parallel()
-
-	panicassert.RequireValue(t, errNilOption, func() {
-		_ = Until(context.Background(), time.Second, Satisfied, nil)
-	})
-}
 
 func TestTimerStopDoesNotCloseChannel(t *testing.T) {
 	t.Parallel()
@@ -98,28 +88,5 @@ func TestTimerWaitContextStopDrainsTimer(t *testing.T) {
 	case val := <-timer.C():
 		t.Fatalf("received timer value %v after context-stopped Wait", val)
 	default:
-	}
-}
-
-func TestJitterNeverShortensInterval(t *testing.T) {
-	t.Parallel()
-
-	base := time.Second
-	for i := 0; i < 128; i++ {
-		if got := Jitter(base, 0.5); got < base {
-			t.Fatalf("Jitter(%v, 0.5) = %v, want >= base", base, got)
-		}
-	}
-}
-
-func TestJitterBounds(t *testing.T) {
-	t.Parallel()
-
-	base := 20 * time.Millisecond
-	got := jitterWithDraw(base, 0.25, func(maxDelta time.Duration) time.Duration {
-		return maxDelta
-	})
-	if want := 25 * time.Millisecond; got != want {
-		t.Fatalf("jitter upper bound = %v, want %v", got, want)
 	}
 }

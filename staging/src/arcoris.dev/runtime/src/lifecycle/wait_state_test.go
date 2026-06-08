@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package lifecycle
 
 import (
 	channelassert "arcoris.dev/testutil/channel"
 	errorassert "arcoris.dev/testutil/errors"
+	panicassert "arcoris.dev/testutil/panic"
 	"context"
 	"testing"
 	"time"
@@ -144,14 +144,10 @@ func TestWaitStateContextCancellationAndDeadline(t *testing.T) {
 	errorassert.RequireIs(t, deadlineErr, context.DeadlineExceeded)
 }
 
-func TestWaitStateNilContextBehavesAsBackground(t *testing.T) {
+func TestWaitStatePanicsOnNilContext(t *testing.T) {
 	t.Parallel()
 
-	snap, err := NewController().WaitState(nil, StateNew)
-	if err != nil {
-		t.Fatalf("WaitState nil context = %v, want nil", err)
-	}
-	if snap.State != StateNew {
-		t.Fatalf("snapshot.State = %s, want new", snap.State)
-	}
+	panicassert.RequireMessage(t, errNilContext, func() {
+		_, _ = NewController().WaitState(nil, StateNew)
+	})
 }

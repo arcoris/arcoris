@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package signals
 
 import (
@@ -160,23 +159,29 @@ func TestShutdownConfigRejectsInvalidOptions(t *testing.T) {
 	}
 }
 
-func TestShutdownConfigIgnoresNilOptions(t *testing.T) {
+func TestShutdownConfigPanicsOnNilOption(t *testing.T) {
 	t.Parallel()
 
-	cfg := newShutdownConfig(nil)
+	panicassert.RequireMessage(t, errNilShutdownOption, func() {
+		newShutdownConfig(nil)
+	})
+}
 
-	if len(cfg.shutdownSignals) == 0 {
-		t.Fatal("nil option broke default config")
-	}
+func TestShutdownConfigPanicsOnNilSubscriptionOption(t *testing.T) {
+	t.Parallel()
+
+	panicassert.RequireMessage(t, errNilSubscriptionOption, func() {
+		newShutdownConfig(withShutdownSubscriptionOptions(nil))
+	})
 }
 
 func TestShutdownConfigCollectsSubscriptionOptions(t *testing.T) {
 	t.Parallel()
 
 	opt := withNotifier(&fakeNotifier{})
-	cfg := newShutdownConfig(withShutdownSubscriptionOptions(opt, nil))
+	cfg := newShutdownConfig(withShutdownSubscriptionOptions(opt))
 
-	if len(cfg.subscribeOptions) != 2 {
-		t.Fatalf("subscribe options len = %d, want 2", len(cfg.subscribeOptions))
+	if len(cfg.subscribeOptions) != 1 {
+		t.Fatalf("subscribe options len = %d, want 1", len(cfg.subscribeOptions))
 	}
 }

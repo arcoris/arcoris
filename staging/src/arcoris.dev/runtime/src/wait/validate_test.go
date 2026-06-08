@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package wait
 
 import (
 	"context"
-	"math"
 	"testing"
 	"time"
 
@@ -77,99 +75,6 @@ func TestRequirePositiveIntervalPanicsOnNonPositiveDuration(t *testing.T) {
 			})
 		})
 	}
-}
-
-// TestRequireJitterFactorAcceptsValidFactors verifies valid positive-jitter
-// factor validation.
-func TestRequireJitterFactorAcceptsValidFactors(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name   string
-		factor float64
-	}{
-		{
-			name:   "zero",
-			factor: 0,
-		},
-		{
-			name:   "fraction",
-			factor: 0.25,
-		},
-		{
-			name:   "large finite",
-			factor: math.MaxFloat64,
-		},
-	}
-
-	for _, tc := range tests {
-
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			requireJitterFactor(tc.factor)
-		})
-	}
-}
-
-// TestRequireJitterFactorPanicsOnInvalidFactors verifies invalid jitter-factor
-// validation.
-func TestRequireJitterFactorPanicsOnInvalidFactors(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name   string
-		factor float64
-		panic  string
-	}{
-		{
-			name:   "negative",
-			factor: -0.1,
-			panic:  errNegativeJitterFactor,
-		},
-		{
-			name:   "nan",
-			factor: math.NaN(),
-			panic:  errNonFiniteJitterFactor,
-		},
-		{
-			name:   "positive infinity",
-			factor: math.Inf(1),
-			panic:  errNonFiniteJitterFactor,
-		},
-		{
-			name:   "negative infinity",
-			factor: math.Inf(-1),
-			panic:  errNonFiniteJitterFactor,
-		},
-	}
-
-	for _, tc := range tests {
-
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			panicassert.RequireValue(t, tc.panic, func() {
-				requireJitterFactor(tc.factor)
-			})
-		})
-	}
-}
-
-// TestRequireOptionAcceptsNonNilOption verifies valid option validation.
-func TestRequireOptionAcceptsNonNilOption(t *testing.T) {
-	t.Parallel()
-
-	requireOption(WithJitter(0))
-}
-
-// TestRequireOptionPanicsOnNilOption verifies nil-option validation.
-func TestRequireOptionPanicsOnNilOption(t *testing.T) {
-	t.Parallel()
-
-	panicassert.RequireValue(t, errNilOption, func() {
-		requireOption(nil)
-	})
 }
 
 // TestTimerRequireUsableAcceptsNewTimer verifies valid Timer receiver

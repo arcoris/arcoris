@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package lifecycle
 
 import (
@@ -37,7 +36,7 @@ type Controller struct {
 	mu sync.Mutex
 
 	state          State
-	revision       uint64
+	revision       Revision
 	lastTransition Transition
 	failureCause   error
 
@@ -53,7 +52,8 @@ type Controller struct {
 //
 // The returned controller starts in StateNew with revision zero and no committed
 // LastTransition. Options configure construction-time dependencies such as the
-// time source, transition guards, and observers.
+// time source, transition guards, and observers. A nil Option is a programmer
+// error and panics.
 func NewController(opts ...Option) *Controller {
 	cfg := newControllerConfig(opts...)
 

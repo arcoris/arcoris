@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package lifecycle provides a small lifecycle state owner for ARCORIS
 // component internals.
 //
@@ -79,10 +78,11 @@
 // observe snapshots and controller-owned signal channels. Wait predicates must
 // be fast and must not call transition methods on the same Controller.
 //
-// Wait accepts a nil context as context.Background. A nil predicate is a
-// lifecycle wait error, not a panic. WaitState rejects invalid target states and
-// uses static graph reachability to fail early when a requested state can no
-// longer be observed.
+// Nil contexts passed to wait APIs are programmer errors and panic. Callers that
+// want an uncancelable wait must pass context.Background explicitly. A nil
+// predicate is a lifecycle wait error, not a panic. WaitState rejects invalid
+// target states and uses static graph reachability to fail early when a
+// requested state can no longer be observed.
 //
 // # Zero values and concurrency
 //

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package lifecycle
 
 // BeginStart records that the component owner has begun startup.
@@ -98,7 +97,7 @@ func (c *Controller) apply(event Event, cause error) (Transition, error) {
 // The caller must hold c.mu. The transition must already be table-valid, carry
 // required runtime payload, and pass all configured guards.
 func (c *Controller) commitLocked(transition Transition) Transition {
-	c.revision++
+	c.revision = c.revision.Next()
 
 	transition = transition.withCommitMetadata(c.revision, c.commitTimeLocked())
 

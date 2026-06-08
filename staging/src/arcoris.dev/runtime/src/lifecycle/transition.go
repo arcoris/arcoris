@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package lifecycle
 
 import "time"
@@ -59,7 +58,7 @@ type Transition struct {
 	// yet. Candidate transitions produced during validation may have zero
 	// Revision. Committed transitions SHOULD use one-based revisions so the zero
 	// value remains reserved for "not committed".
-	Revision uint64
+	Revision Revision
 
 	// At is the time at which Controller committed the transition.
 	//
@@ -119,7 +118,7 @@ func (t Transition) IsZero() bool {
 	return t.From == 0 &&
 		t.To == 0 &&
 		t.Event == 0 &&
-		t.Revision == 0 &&
+		t.Revision.IsZero() &&
 		t.At.IsZero() &&
 		t.Cause == nil
 }
@@ -145,7 +144,7 @@ func (t Transition) IsTableValid() bool {
 // committed. A committed transition SHOULD have a non-zero Revision and a
 // non-zero commit time.
 func (t Transition) IsCommitted() bool {
-	return t.Revision != 0 && !t.At.IsZero()
+	return !t.Revision.IsZero() && !t.At.IsZero()
 }
 
 // IsTerminal reports whether t moves the lifecycle into a terminal state.
@@ -193,7 +192,7 @@ func (t Transition) IsShutdown() bool {
 // validation, failure-cause validation, and guard validation. The method is
 // intentionally package-local so ordinary callers cannot fabricate committed
 // transitions.
-func (t Transition) withCommitMetadata(rev uint64, at time.Time) Transition {
+func (t Transition) withCommitMetadata(rev Revision, at time.Time) Transition {
 	t.Revision = rev
 	t.At = at
 	return t

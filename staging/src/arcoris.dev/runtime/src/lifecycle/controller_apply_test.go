@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package lifecycle
 
 import (
@@ -209,7 +208,7 @@ func TestControllerApplyRevisionIncrementsMonotonically(t *testing.T) {
 	first, _ := controller.BeginStart()
 	second, _ := controller.MarkRunning()
 	third, _ := controller.BeginStop()
-	if got, want := []uint64{first.Revision, second.Revision, third.Revision}, []uint64{1, 2, 3}; !equalUint64s(got, want) {
+	if got, want := []Revision{first.Revision, second.Revision, third.Revision}, []Revision{1, 2, 3}; !equalRevisions(got, want) {
 		t.Fatalf("revisions = %v, want %v", got, want)
 	}
 }
@@ -292,7 +291,7 @@ func TestControllerApplyConcurrentReadsDuringTransitions(t *testing.T) {
 	wg.Wait()
 }
 
-func equalUint64s(got, want []uint64) bool {
+func equalRevisions(got, want []Revision) bool {
 	if len(got) != len(want) {
 		return false
 	}

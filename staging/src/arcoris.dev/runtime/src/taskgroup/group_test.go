@@ -1,0 +1,503 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package taskgroup
+
+import (
+	channelassert "arcoris.dev/testutil/channel"
+	panicassert "arcoris.dev/testutil/panic"
+	"context"
+	"errors"
+	"testing"
+	"time"
+)
+
+func TestNewRejectsNilParent(t *testing.T) {
+	t.Parallel()
+
+	panicassert.RequireMessage(t, errNilGroupParent, func() {
+		New(nil)
+	})
+}
+
+func TestGroupContextAndDoneAreStable(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background())
+	first := group.Context()
+
+	if first == nil {
+		t.Fatal("Context returned nil")
+	}
+	if group.Context() != first {
+		t.Fatal("Context did not return a stable context")
+	}
+	if group.Done() != first.Done() {
+		t.Fatal("Done did not return Context().Done()")
+	}
+}
+
+func TestNewCreatesChildContext(t *testing.T) {
+	t.Parallel()
+
+	parent, cancel := context.WithCancelCause(context.Background())
+	group := New(parent)
+
+	if group.Context() == parent {
+		t.Fatal("New returned parent context directly")
+	}
+
+	want := errors.New("parent stop")
+	cancel(want)
+	channelassert.RequireClosed(t, group.Done(), testTimeout)
+
+	if !errors.Is(context.Cause(group.Context()), want) {
+		t.Fatalf("context cause = %v, want %v", context.Cause(group.Context()), want)
+	}
+}
+
+func TestGroupGoStartsTaskAndWaitReturnsNil(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background())
+	called := make(chan struct{})
+
+	group.Go("worker", func(ctx context.Context) error {
+		close(called)
+		return nil
+	})
+
+	if err := group.Wait(); err != nil {
+		t.Fatalf("Wait error = %v", err)
+	}
+	channelassert.RequireClosed(t, called, testTimeout)
+}
+
+func TestGroupTaskReceivesGroupContext(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background())
+
+	group.Go("worker", func(ctx context.Context) error {
+		if ctx != group.Context() {
+			t.Fatal("task received a different context")
+		}
+		return nil
+	})
+
+	if err := group.Wait(); err != nil {
+		t.Fatalf("Wait error = %v", err)
+	}
+}
+
+func TestGroupTaskErrorCancelsContextByDefault(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background())
+	want := errors.New("boom")
+
+	group.Go("worker", func(ctx context.Context) error {
+		return want
+	})
+
+	err := group.Wait()
+	if !errors.Is(err, want) {
+		t.Fatalf("Wait error = %v, want %v", err, want)
+	}
+	if !errors.Is(context.Cause(group.Context()), want) {
+		t.Fatalf("context cause = %v, want %v", context.Cause(group.Context()), want)
+	}
+
+	var taskErr TaskError
+	if !errors.As(err, &taskErr) {
+		t.Fatal("Wait error does not contain TaskError")
+	}
+	if taskErr.Name != "worker" {
+		t.Fatalf("TaskError name = %q, want worker", taskErr.Name)
+	}
+}
+
+func TestGroupWithCancelOnErrorDisabledDoesNotCancelOnTaskError(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background(), WithCancelOnError(false))
+	want := errors.New("boom")
+
+	group.Go("failing", func(ctx context.Context) error {
+		return want
+	})
+
+	waitGroupTaskErrorCount(t, group, 1)
+	channelassert.RequireNoReceive(t, group.Done())
+
+	if err := group.Wait(); !errors.Is(err, want) {
+		t.Fatalf("Wait error = %v, want %v", err, want)
+	}
+}
+
+func TestGroupCancelCancelsContextWithoutTaskError(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background())
+
+	group.Go("worker", func(ctx context.Context) error {
+		<-ctx.Done()
+		return nil
+	})
+
+	group.Cancel(nil)
+
+	if err := group.Wait(); err != nil {
+		t.Fatalf("Wait error = %v, want nil", err)
+	}
+	if taskErrs := TaskErrors(group.Wait()); len(taskErrs) != 0 {
+		t.Fatalf("Cancel recorded task errors: %+v", taskErrs)
+	}
+	if !errors.Is(context.Cause(group.Context()), context.Canceled) {
+		t.Fatalf("context cause = %v, want context.Canceled", context.Cause(group.Context()))
+	}
+}
+
+func TestGroupCancelNilWithoutTasksReturnsNil(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background())
+
+	group.Cancel(nil)
+
+	if err := group.Wait(); err != nil {
+		t.Fatalf("Wait error = %v, want nil", err)
+	}
+	if !errors.Is(context.Cause(group.Context()), context.Canceled) {
+		t.Fatalf("context cause = %v, want context.Canceled", context.Cause(group.Context()))
+	}
+}
+
+func TestGroupCancelWithCause(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background())
+	want := errors.New("owner stop")
+
+	group.Cancel(want)
+	if err := group.Wait(); err != nil {
+		t.Fatalf("Wait error = %v, want nil", err)
+	}
+	if !errors.Is(context.Cause(group.Context()), want) {
+		t.Fatalf("context cause = %v, want %v", context.Cause(group.Context()), want)
+	}
+}
+
+func TestGroupTaskErrorCausePrecedesLaterCancel(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		cause error
+	}{
+		{name: "nil", cause: nil},
+		{name: "custom", cause: errors.New("owner stop")},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			group := New(context.Background())
+			taskErr := errors.New("task failed")
+
+			group.Go("worker", func(ctx context.Context) error {
+				return taskErr
+			})
+
+			// The task error claims fail-fast cancellation before the owner calls
+			// Cancel. Later owner cancellation, including Cancel(nil), must not
+			// replace the TaskError cause.
+			channelassert.RequireClosed(t, group.Done(), testTimeout)
+			group.Cancel(tc.cause)
+
+			var cause TaskError
+			if !errors.As(context.Cause(group.Context()), &cause) {
+				t.Fatalf("context cause = %v, want TaskError", context.Cause(group.Context()))
+			}
+			if !errors.Is(cause, taskErr) {
+				t.Fatalf("context cause = %v, want %v", cause, taskErr)
+			}
+
+			if err := group.Wait(); !errors.Is(err, taskErr) {
+				t.Fatalf("Wait error = %v, want %v", err, taskErr)
+			}
+		})
+	}
+}
+
+func TestGroupOwnerCancelCausePrecedesLaterTaskError(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background())
+	release := make(chan struct{})
+	ownerErr := errors.New("owner stop")
+	taskErr := errors.New("task failed")
+
+	group.Go("worker", func(ctx context.Context) error {
+		<-release
+		return taskErr
+	})
+
+	group.Cancel(ownerErr)
+	channelassert.RequireClosed(t, group.Done(), testTimeout)
+	close(release)
+
+	err := group.Wait()
+	if !errors.Is(err, taskErr) {
+		t.Fatalf("Wait error = %v, want %v", err, taskErr)
+	}
+	if !errors.Is(context.Cause(group.Context()), ownerErr) {
+		t.Fatalf("context cause = %v, want %v", context.Cause(group.Context()), ownerErr)
+	}
+}
+
+func TestGroupParentCancelCausePrecedesLaterTaskError(t *testing.T) {
+	t.Parallel()
+
+	parent, cancelParent := context.WithCancelCause(context.Background())
+	group := New(parent)
+	release := make(chan struct{})
+	parentErr := errors.New("parent stop")
+	taskErr := errors.New("task failed")
+
+	group.Go("worker", func(ctx context.Context) error {
+		<-release
+		return taskErr
+	})
+
+	cancelParent(parentErr)
+	channelassert.RequireClosed(t, group.Done(), testTimeout)
+	close(release)
+
+	err := group.Wait()
+	if !errors.Is(err, taskErr) {
+		t.Fatalf("Wait error = %v, want %v", err, taskErr)
+	}
+	if !errors.Is(context.Cause(group.Context()), parentErr) {
+		t.Fatalf("context cause = %v, want %v", context.Cause(group.Context()), parentErr)
+	}
+}
+
+func TestGroupParentCancelBeforeTasksDoesNotCreateTaskError(t *testing.T) {
+	t.Parallel()
+
+	parent, cancelParent := context.WithCancelCause(context.Background())
+	group := New(parent)
+	parentErr := errors.New("parent stop")
+
+	cancelParent(parentErr)
+	channelassert.RequireClosed(t, group.Done(), testTimeout)
+
+	err := group.Wait()
+	if err != nil {
+		t.Fatalf("Wait error = %v, want nil", err)
+	}
+	if taskErrs := TaskErrors(err); len(taskErrs) != 0 {
+		t.Fatalf("parent cancellation recorded task errors: %+v", taskErrs)
+	}
+	if !errors.Is(context.Cause(group.Context()), parentErr) {
+		t.Fatalf("context cause = %v, want %v", context.Cause(group.Context()), parentErr)
+	}
+}
+
+func TestGroupParentCancelWhileTaskReturnsNilDoesNotCreateTaskError(t *testing.T) {
+	t.Parallel()
+
+	parent, cancelParent := context.WithCancelCause(context.Background())
+	group := New(parent)
+	release := make(chan struct{})
+	parentErr := errors.New("parent stop")
+
+	group.Go("worker", func(ctx context.Context) error {
+		<-release
+		return nil
+	})
+
+	cancelParent(parentErr)
+	channelassert.RequireClosed(t, group.Done(), testTimeout)
+	close(release)
+
+	err := group.Wait()
+	if err != nil {
+		t.Fatalf("Wait error = %v, want nil", err)
+	}
+	if taskErrs := TaskErrors(err); len(taskErrs) != 0 {
+		t.Fatalf("parent cancellation recorded task errors: %+v", taskErrs)
+	}
+	if !errors.Is(context.Cause(group.Context()), parentErr) {
+		t.Fatalf("context cause = %v, want %v", context.Cause(group.Context()), parentErr)
+	}
+}
+
+func TestGroupWaitIsIdempotent(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background())
+	want := errors.New("boom")
+
+	group.Go("worker", func(ctx context.Context) error {
+		return want
+	})
+
+	first := group.Wait()
+	second := group.Wait()
+
+	if first == nil || second == nil {
+		t.Fatal("Wait returned nil, want error")
+	}
+	if first != second {
+		t.Fatalf("Wait did not return cached error: first=%p second=%p", first, second)
+	}
+}
+
+func TestGroupWaitWaitsForAllTasksAfterFirstError(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background())
+	fail := make(chan struct{})
+	release := make(chan struct{})
+	secondDone := make(chan struct{})
+	want := errors.New("boom")
+
+	group.Go("failing", func(ctx context.Context) error {
+		<-fail
+		return want
+	})
+	group.Go("cleanup", func(ctx context.Context) error {
+		<-release
+		close(secondDone)
+		return nil
+	})
+
+	waitDone := make(chan error, 1)
+	go func() {
+		waitDone <- group.Wait()
+	}()
+
+	close(fail)
+	channelassert.RequireClosed(t, group.Done(), testTimeout)
+	channelassert.RequireNoReceive(t, waitDone)
+
+	close(release)
+	channelassert.RequireClosed(t, secondDone, testTimeout)
+
+	select {
+	case err := <-waitDone:
+		if !errors.Is(err, want) {
+			t.Fatalf("Wait error = %v, want %v", err, want)
+		}
+	case <-time.After(testTimeout):
+		t.Fatal("timed out waiting for Wait")
+	}
+}
+
+func TestGroupRejectsInvalidGoInputs(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background())
+
+	panicassert.RequireMessage(t, errEmptyTaskName, func() {
+		group.Go("", func(ctx context.Context) error { return nil })
+	})
+	panicassert.RequireMessage(t, errUntrimmedTaskName, func() {
+		group.Go(" worker", func(ctx context.Context) error { return nil })
+	})
+	panicassert.RequireMessage(t, errNilTask, func() {
+		group.Go("worker", nil)
+	})
+}
+
+func TestGroupRejectsDuplicateTaskName(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background())
+	release := make(chan struct{})
+
+	group.Go("worker", func(ctx context.Context) error {
+		<-release
+		return nil
+	})
+
+	panicassert.RequireMessage(t, errDuplicateTaskName, func() {
+		group.Go("worker", func(ctx context.Context) error { return nil })
+	})
+
+	close(release)
+	if err := group.Wait(); err != nil {
+		t.Fatalf("Wait error = %v", err)
+	}
+}
+
+func TestGroupRejectsGoAfterWait(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background())
+	if err := group.Wait(); err != nil {
+		t.Fatalf("Wait error = %v", err)
+	}
+
+	panicassert.RequireMessage(t, errGroupClosed, func() {
+		group.Go("worker", func(ctx context.Context) error { return nil })
+	})
+}
+
+func TestGroupRejectsGoAfterCancel(t *testing.T) {
+	t.Parallel()
+
+	group := New(context.Background())
+	group.Cancel(nil)
+
+	panicassert.RequireMessage(t, errGroupClosed, func() {
+		group.Go("worker", func(ctx context.Context) error { return nil })
+	})
+}
+
+func TestGroupRejectsNilAndUninitializedReceiver(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		fn   func(*Group)
+	}{
+		{name: "Go", fn: func(g *Group) { g.Go("task", func(ctx context.Context) error { return nil }) }},
+		{name: "Context", fn: func(g *Group) { g.Context() }},
+		{name: "Done", fn: func(g *Group) { g.Done() }},
+		{name: "Cancel", fn: func(g *Group) { g.Cancel(nil) }},
+		{name: "Wait", fn: func(g *Group) { g.Wait() }},
+	}
+
+	for _, tc := range tests {
+		t.Run("nil "+tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			panicassert.RequireMessage(t, errNilGroup, func() {
+				tc.fn(nil)
+			})
+		})
+		t.Run("zero "+tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			panicassert.RequireMessage(t, errUninitializedGroup, func() {
+				var group Group
+				tc.fn(&group)
+			})
+		})
+	}
+}

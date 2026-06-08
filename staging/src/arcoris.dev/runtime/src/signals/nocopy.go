@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package signals
 
 // noCopy marks a signal owner as unsafe to copy after first use.
