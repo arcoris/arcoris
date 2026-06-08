@@ -14,18 +14,24 @@
 
 package memory
 
-import "testing"
+import (
+	"testing"
 
-func TestNewRejectsInvalidShardCount(t *testing.T) {
-	for _, count := range []uint{0, 3} {
-		t.Run("count", func(t *testing.T) {
-			_, err := New(WithShardCount(count))
-			requireErrorIs(t, err, ErrInvalidShardCount)
-		})
+	"arcoris.dev/apimachinery/api/objectstore"
+)
+
+func TestRecordCarriesLiveOrTombstoneState(t *testing.T) {
+	live := record{state: objectstore.AssignRevision(testState("live"), 1)}
+	if live.deleted || live.deleteRevision != 0 {
+		t.Fatalf("live record = %#v; want non-deleted", live)
 	}
-}
 
-func TestNewAcceptsPowerOfTwoShardCount(t *testing.T) {
-	_, err := New(WithShardCount(2))
-	requireNoError(t, err)
+	tombstone := record{
+		state:          objectstore.AssignRevision(testState("deleted"), 2),
+		deleteRevision: 3,
+		deleted:        true,
+	}
+	if !tombstone.deleted || tombstone.deleteRevision != 3 {
+		t.Fatalf("tombstone record = %#v; want deleted at revision 3", tombstone)
+	}
 }

@@ -12,31 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package objectstore
+package memory
 
-import (
-	"errors"
-	"testing"
-)
+import "testing"
 
-func TestSentinelErrorsAreDistinctAndClassifiable(t *testing.T) {
-	sentinels := []error{
-		ErrNotFound,
-		ErrAlreadyExists,
-		ErrConflict,
-		ErrStaleRevision,
-		ErrInvalidKey,
-		ErrInvalidState,
-		ErrInvalidRevision,
-		ErrUninitializedStore,
+func TestSlotCompareAndSwapPublishesRecord(t *testing.T) {
+	var slot slot
+	next := liveRecord(testState("next"), 1)
+
+	if got := slot.load(); got != nil {
+		t.Fatalf("load() = %p; want nil", got)
 	}
-
-	for i, sentinel := range sentinels {
-		if sentinel == nil {
-			t.Fatalf("sentinel %d is nil", i)
-		}
-		if !errors.Is(sentinel, sentinel) {
-			t.Fatalf("sentinel %d does not classify itself", i)
-		}
+	if !slot.compareAndSwap(nil, next) {
+		t.Fatalf("compareAndSwap failed")
+	}
+	if got := slot.load(); got != next {
+		t.Fatalf("load() = %p; want %p", got, next)
 	}
 }

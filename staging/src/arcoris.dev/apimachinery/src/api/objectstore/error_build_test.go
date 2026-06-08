@@ -19,24 +19,18 @@ import (
 	"testing"
 )
 
-func TestSentinelErrorsAreDistinctAndClassifiable(t *testing.T) {
-	sentinels := []error{
-		ErrNotFound,
-		ErrAlreadyExists,
-		ErrConflict,
-		ErrStaleRevision,
-		ErrInvalidKey,
-		ErrInvalidState,
-		ErrInvalidRevision,
-		ErrUninitializedStore,
-	}
+func TestErrorForBuildsStructuredError(t *testing.T) {
+	err := errorFor(ErrorReasonInvalidKey, validKey(), 1, 2, ErrInvalidKey)
 
-	for i, sentinel := range sentinels {
-		if sentinel == nil {
-			t.Fatalf("sentinel %d is nil", i)
-		}
-		if !errors.Is(sentinel, sentinel) {
-			t.Fatalf("sentinel %d does not classify itself", i)
-		}
+	var storeErr *Error
+	if !errors.As(err, &storeErr) {
+		t.Fatalf("errors.As failed")
 	}
+	if storeErr.Reason != ErrorReasonInvalidKey {
+		t.Fatalf("Reason = %v; want %v", storeErr.Reason, ErrorReasonInvalidKey)
+	}
+	if storeErr.Expected != 1 || storeErr.Actual != 2 {
+		t.Fatalf("revisions = expected %v actual %v; want 1 and 2", storeErr.Expected, storeErr.Actual)
+	}
+	requireErrorIs(t, err, ErrInvalidKey)
 }

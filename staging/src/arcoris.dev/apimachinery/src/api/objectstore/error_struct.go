@@ -22,7 +22,7 @@ import (
 // Error is a structured objectstore diagnostic.
 type Error struct {
 	// Reason gives stable machine-readable detail.
-	Reason Reason
+	Reason ErrorReason
 	// Key is the object key involved in the error, when available.
 	Key Key
 	// Expected is the expected revision for optimistic concurrency errors.

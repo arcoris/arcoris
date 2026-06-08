@@ -16,16 +16,30 @@ package memory
 
 import "testing"
 
-func TestApplyOptionsRejectsNilOption(t *testing.T) {
-	_, err := applyOptions([]Option{nil})
-	requireErrorIs(t, err, ErrNilOption)
+func TestShardGetOrCreateReturnsStableSlot(t *testing.T) {
+	var shard shard
+	shard.init()
+	key := testKey(1)
+
+	first := shard.getOrCreate(key)
+	second := shard.getOrCreate(key)
+
+	if first == nil {
+		t.Fatalf("getOrCreate returned nil")
+	}
+	if first != second {
+		t.Fatalf("getOrCreate returned different slots for same key")
+	}
+	if got := shard.get(key); got != first {
+		t.Fatalf("get returned %p; want %p", got, first)
+	}
 }
 
-func TestApplyOptionsAcceptsValidOptions(t *testing.T) {
-	cfg, err := applyOptions([]Option{WithShardCount(2)})
-	requireNoError(t, err)
+func TestStoreShardForIsDeterministic(t *testing.T) {
+	store := testStore(t, WithShardCount(4))
+	key := testKey(1)
 
-	if cfg.shardCount != 2 {
-		t.Fatalf("shardCount = %d; want 2", cfg.shardCount)
+	if store.shardFor(key) != store.shardFor(key) {
+		t.Fatalf("shardFor changed for same key")
 	}
 }

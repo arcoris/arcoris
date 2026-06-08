@@ -24,10 +24,10 @@ func (k Key) IsValid() bool {
 // ValidateKey checks only the structural key shape required for storage.
 func ValidateKey(key Key) error {
 	if err := key.Resource.Validate(); err != nil {
-		return errorFor(ReasonInvalidKey, key, 0, 0, errors.Join(ErrInvalidKey, err))
+		return errorFor(ErrorReasonInvalidKey, key, 0, 0, errors.Join(ErrInvalidKey, err))
 	}
 	if err := key.Object.Validate(); err != nil {
-		return errorFor(ReasonInvalidKey, key, 0, 0, errors.Join(ErrInvalidKey, err))
+		return errorFor(ErrorReasonInvalidKey, key, 0, 0, errors.Join(ErrInvalidKey, err))
 	}
 
 	return nil

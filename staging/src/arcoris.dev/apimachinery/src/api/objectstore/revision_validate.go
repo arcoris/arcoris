@@ -17,7 +17,7 @@ package objectstore
 // ValidateExpectedRevision checks optimistic-concurrency revision input.
 func ValidateExpectedRevision(key Key, expected Revision) error {
 	if expected.IsZero() {
-		return errorFor(ReasonInvalidRevision, key, expected, 0, ErrInvalidRevision)
+		return errorFor(ErrorReasonInvalidRevision, key, expected, 0, ErrInvalidRevision)
 	}
 
 	return nil

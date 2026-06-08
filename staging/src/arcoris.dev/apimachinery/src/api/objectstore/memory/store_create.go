@@ -22,26 +22,17 @@ import (
 
 // Create commits state for a missing or tombstoned key.
 func (s *Store) Create(ctx context.Context, key objectstore.Key, state objectstore.State) (objectstore.State, error) {
-	if err := requireStore(s); err != nil {
-		return objectstore.State{}, err
-	}
-	if err := checkContext(ctx); err != nil {
-		return objectstore.State{}, err
-	}
-	if err := validateKey(key); err != nil {
-		return objectstore.State{}, err
-	}
-	prepared, err := prepareInputState(state)
+	prepared, err := s.prepareCreate(ctx, key, state)
 	if err != nil {
 		return objectstore.State{}, err
 	}
 
-	slot := s.shardFor(key).getOrCreate(key)
+	st := s.shardFor(key).getOrCreate(key)
 	for {
-		current := slot.load()
+		current := st.load()
 		if current != nil && !current.deleted {
 			return objectstore.State{}, objectstoreError(
-				objectstore.ReasonAlreadyExists,
+				objectstore.ErrorReasonAlreadyExists,
 				key,
 				0,
 				current.state.Revision,
@@ -50,7 +41,7 @@ func (s *Store) Create(ctx context.Context, key objectstore.Key, state objectsto
 		}
 
 		next := liveRecord(prepared, s.nextRevision())
-		if slot.compareAndSwap(current, next) {
+		if st.compareAndSwap(current, next) {
 			return next.visibleState(), nil
 		}
 	}

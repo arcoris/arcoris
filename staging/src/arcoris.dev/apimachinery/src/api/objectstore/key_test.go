@@ -14,29 +14,15 @@
 
 package objectstore
 
-import (
-	"errors"
-	"testing"
-)
+import "testing"
 
-func TestSentinelErrorsAreDistinctAndClassifiable(t *testing.T) {
-	sentinels := []error{
-		ErrNotFound,
-		ErrAlreadyExists,
-		ErrConflict,
-		ErrStaleRevision,
-		ErrInvalidKey,
-		ErrInvalidState,
-		ErrInvalidRevision,
-		ErrUninitializedStore,
+func TestKeyCarriesResourceAndObjectIdentity(t *testing.T) {
+	key := validKey()
+
+	if key.Resource.Resource != "workers" {
+		t.Fatalf("Resource = %q; want %q", key.Resource.Resource, "workers")
 	}
-
-	for i, sentinel := range sentinels {
-		if sentinel == nil {
-			t.Fatalf("sentinel %d is nil", i)
-		}
-		if !errors.Is(sentinel, sentinel) {
-			t.Fatalf("sentinel %d does not classify itself", i)
-		}
+	if key.Object.Namespace != "system" || key.Object.Name != "main" {
+		t.Fatalf("Object = %s/%s; want system/main", key.Object.Namespace, key.Object.Name)
 	}
 }

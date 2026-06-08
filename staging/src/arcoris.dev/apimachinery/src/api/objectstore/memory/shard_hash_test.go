@@ -12,31 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package objectstore
+package memory
 
-import (
-	"errors"
-	"testing"
-)
+import "testing"
 
-func TestSentinelErrorsAreDistinctAndClassifiable(t *testing.T) {
-	sentinels := []error{
-		ErrNotFound,
-		ErrAlreadyExists,
-		ErrConflict,
-		ErrStaleRevision,
-		ErrInvalidKey,
-		ErrInvalidState,
-		ErrInvalidRevision,
-		ErrUninitializedStore,
-	}
+func TestHashKeyIsDeterministic(t *testing.T) {
+	key := testKey(1)
 
-	for i, sentinel := range sentinels {
-		if sentinel == nil {
-			t.Fatalf("sentinel %d is nil", i)
-		}
-		if !errors.Is(sentinel, sentinel) {
-			t.Fatalf("sentinel %d does not classify itself", i)
-		}
+	if first, second := hashKey(key), hashKey(key); first != second {
+		t.Fatalf("hashKey changed for same key: %d != %d", first, second)
 	}
 }

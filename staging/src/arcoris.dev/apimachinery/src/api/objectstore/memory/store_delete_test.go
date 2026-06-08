@@ -48,7 +48,7 @@ func TestDeleteRejectsStaleRevision(t *testing.T) {
 	if !errors.As(err, &storeErr) {
 		t.Fatalf("error type = %T; want *objectstore.Error", err)
 	}
-	if storeErr.Reason != objectstore.ReasonStaleRevision || storeErr.Actual != created.Revision {
+	if storeErr.Reason != objectstore.ErrorReasonStaleRevision || storeErr.Actual != created.Revision {
 		t.Fatalf("structured error = %#v", storeErr)
 	}
 }

@@ -41,23 +41,23 @@ func ValidateInputState(state State) error {
 // validateState applies storage-level object and ownership checks.
 func validateState(state State, committed bool) error {
 	if committed && !state.Revision.IsValid() {
-		return errorFor(ReasonInvalidRevision, Key{}, state.Revision, 0, ErrInvalidRevision)
+		return errorFor(ErrorReasonInvalidRevision, Key{}, state.Revision, 0, ErrInvalidRevision)
 	}
 	if !committed && !state.Revision.IsZero() {
-		return errorFor(ReasonInvalidRevision, Key{}, state.Revision, 0, ErrInvalidRevision)
+		return errorFor(ErrorReasonInvalidRevision, Key{}, state.Revision, 0, ErrInvalidRevision)
 	}
 
 	if err := state.Object.ValidateMeta(); err != nil {
-		return errorFor(ReasonInvalidState, Key{}, 0, 0, errors.Join(ErrInvalidState, err))
+		return errorFor(ErrorReasonInvalidState, Key{}, 0, 0, errors.Join(ErrInvalidState, err))
 	}
 	if state.Object.Desired.IsZero() {
-		return errorFor(ReasonInvalidState, Key{}, 0, 0, ErrInvalidState)
+		return errorFor(ErrorReasonInvalidState, Key{}, 0, 0, ErrInvalidState)
 	}
 	if state.Object.Observed != nil && state.Object.Observed.IsZero() {
-		return errorFor(ReasonInvalidState, Key{}, 0, 0, ErrInvalidState)
+		return errorFor(ErrorReasonInvalidState, Key{}, 0, 0, ErrInvalidState)
 	}
 	if err := objectownership.Validate(state.Ownership); err != nil {
-		return errorFor(ReasonInvalidState, Key{}, 0, 0, errors.Join(ErrInvalidState, err))
+		return errorFor(ErrorReasonInvalidState, Key{}, 0, 0, errors.Join(ErrInvalidState, err))
 	}
 
 	return nil

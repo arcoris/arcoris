@@ -69,7 +69,7 @@ func TestCreateExistingReturnsAlreadyExists(t *testing.T) {
 	if !errors.As(err, &storeErr) {
 		t.Fatalf("error type = %T; want *objectstore.Error", err)
 	}
-	if storeErr.Reason != objectstore.ReasonAlreadyExists || !storeErr.Key.Equal(key) {
+	if storeErr.Reason != objectstore.ErrorReasonAlreadyExists || !storeErr.Key.Equal(key) {
 		t.Fatalf("structured error = %#v", storeErr)
 	}
 }

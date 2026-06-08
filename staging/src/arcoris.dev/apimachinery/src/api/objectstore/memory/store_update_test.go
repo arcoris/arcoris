@@ -39,8 +39,8 @@ func TestUpdateMissingReturnsNotFound(t *testing.T) {
 	if !errors.As(err, &storeErr) {
 		t.Fatalf("error type = %T; want *objectstore.Error", err)
 	}
-	if storeErr.Reason != objectstore.ReasonNotFound {
-		t.Fatalf("Reason = %v; want %v", storeErr.Reason, objectstore.ReasonNotFound)
+	if storeErr.Reason != objectstore.ErrorReasonNotFound {
+		t.Fatalf("Reason = %v; want %v", storeErr.Reason, objectstore.ErrorReasonNotFound)
 	}
 }
 

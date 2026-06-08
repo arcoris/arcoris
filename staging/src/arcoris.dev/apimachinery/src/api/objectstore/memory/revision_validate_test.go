@@ -12,31 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package objectstore
+package memory
 
 import (
-	"errors"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-func TestSentinelErrorsAreDistinctAndClassifiable(t *testing.T) {
-	sentinels := []error{
-		ErrNotFound,
-		ErrAlreadyExists,
-		ErrConflict,
-		ErrStaleRevision,
-		ErrInvalidKey,
-		ErrInvalidState,
-		ErrInvalidRevision,
-		ErrUninitializedStore,
-	}
+func TestValidateExpectedRevisionRejectsZero(t *testing.T) {
+	requireErrorIs(t, validateExpectedRevision(testKey(1), 0), objectstore.ErrInvalidRevision)
+}
 
-	for i, sentinel := range sentinels {
-		if sentinel == nil {
-			t.Fatalf("sentinel %d is nil", i)
-		}
-		if !errors.Is(sentinel, sentinel) {
-			t.Fatalf("sentinel %d does not classify itself", i)
-		}
-	}
+func TestValidateExpectedRevisionAcceptsCommittedRevision(t *testing.T) {
+	requireNoError(t, validateExpectedRevision(testKey(1), 1))
 }

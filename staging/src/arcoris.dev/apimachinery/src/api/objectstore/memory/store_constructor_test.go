@@ -12,31 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package objectstore
+package memory
 
-import (
-	"errors"
-	"testing"
-)
+import "testing"
 
-func TestSentinelErrorsAreDistinctAndClassifiable(t *testing.T) {
-	sentinels := []error{
-		ErrNotFound,
-		ErrAlreadyExists,
-		ErrConflict,
-		ErrStaleRevision,
-		ErrInvalidKey,
-		ErrInvalidState,
-		ErrInvalidRevision,
-		ErrUninitializedStore,
+func TestNewBuildsInitializedStore(t *testing.T) {
+	store, err := New()
+	requireNoError(t, err)
+
+	if store == nil {
+		t.Fatalf("New() returned nil store")
 	}
-
-	for i, sentinel := range sentinels {
-		if sentinel == nil {
-			t.Fatalf("sentinel %d is nil", i)
-		}
-		if !errors.Is(sentinel, sentinel) {
-			t.Fatalf("sentinel %d does not classify itself", i)
+	if len(store.shards) != int(defaultShardCount) {
+		t.Fatalf("shards = %d; want %d", len(store.shards), defaultShardCount)
+	}
+	if store.mask != uint64(defaultShardCount-1) {
+		t.Fatalf("mask = %d; want %d", store.mask, defaultShardCount-1)
+	}
+	for i := range store.shards {
+		if store.shards[i].slots == nil {
+			t.Fatalf("shard %d was not initialized", i)
 		}
 	}
 }

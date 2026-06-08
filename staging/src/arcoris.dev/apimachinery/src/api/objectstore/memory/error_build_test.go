@@ -15,32 +15,25 @@
 package memory
 
 import (
-	"context"
+	"errors"
+	"testing"
 
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-// Get reads the latest live state for key.
-func (s *Store) Get(ctx context.Context, key objectstore.Key) (objectstore.State, bool, error) {
-	if err := requireStore(s); err != nil {
-		return objectstore.State{}, false, err
-	}
-	if err := checkContext(ctx); err != nil {
-		return objectstore.State{}, false, err
-	}
-	if err := validateKey(key); err != nil {
-		return objectstore.State{}, false, err
-	}
+func TestObjectstoreErrorBuildsStructuredError(t *testing.T) {
+	key := testKey(1)
+	err := objectstoreError(objectstore.ErrorReasonConflict, key, 1, 2, objectstore.ErrConflict)
 
-	slot := s.shardFor(key).get(key)
-	if slot == nil {
-		return objectstore.State{}, false, nil
+	var storeErr *objectstore.Error
+	if !errors.As(err, &storeErr) {
+		t.Fatalf("errors.As failed")
 	}
-
-	current := slot.load()
-	if current == nil || current.deleted {
-		return objectstore.State{}, false, nil
+	if storeErr.Reason != objectstore.ErrorReasonConflict || !storeErr.Key.Equal(key) {
+		t.Fatalf("structured error = %#v", storeErr)
 	}
-
-	return current.visibleState(), true, nil
+	if storeErr.Expected != 1 || storeErr.Actual != 2 {
+		t.Fatalf("revisions = expected %v actual %v; want 1 and 2", storeErr.Expected, storeErr.Actual)
+	}
+	requireErrorIs(t, err, objectstore.ErrConflict)
 }

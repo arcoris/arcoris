@@ -12,31 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package objectstore
+package memory
 
 import (
-	"errors"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-func TestSentinelErrorsAreDistinctAndClassifiable(t *testing.T) {
-	sentinels := []error{
-		ErrNotFound,
-		ErrAlreadyExists,
-		ErrConflict,
-		ErrStaleRevision,
-		ErrInvalidKey,
-		ErrInvalidState,
-		ErrInvalidRevision,
-		ErrUninitializedStore,
-	}
+func TestPrepareInputStateRejectsInvalidState(t *testing.T) {
+	state := testState("invalid")
+	state.Revision = 1
 
-	for i, sentinel := range sentinels {
-		if sentinel == nil {
-			t.Fatalf("sentinel %d is nil", i)
-		}
-		if !errors.Is(sentinel, sentinel) {
-			t.Fatalf("sentinel %d does not classify itself", i)
-		}
+	_, err := prepareInputState(state)
+	requireErrorIs(t, err, objectstore.ErrInvalidRevision)
+}
+
+func TestPrepareInputStateReturnsDetachedState(t *testing.T) {
+	state := testState("prepared")
+
+	prepared, err := prepareInputState(state)
+	requireNoError(t, err)
+
+	state.Ownership.Desired.Entries[0].Owner = "mutated"
+	if prepared.Ownership.Desired.Entries[0].Owner != "manager" {
+		t.Fatalf("prepareInputState retained caller mutation")
 	}
 }

@@ -14,29 +14,12 @@
 
 package objectstore
 
-import (
-	"errors"
-	"testing"
-)
+import "testing"
 
-func TestSentinelErrorsAreDistinctAndClassifiable(t *testing.T) {
-	sentinels := []error{
-		ErrNotFound,
-		ErrAlreadyExists,
-		ErrConflict,
-		ErrStaleRevision,
-		ErrInvalidKey,
-		ErrInvalidState,
-		ErrInvalidRevision,
-		ErrUninitializedStore,
-	}
+func TestValidateExpectedRevisionRejectsZero(t *testing.T) {
+	requireErrorIs(t, ValidateExpectedRevision(validKey(), 0), ErrInvalidRevision)
+}
 
-	for i, sentinel := range sentinels {
-		if sentinel == nil {
-			t.Fatalf("sentinel %d is nil", i)
-		}
-		if !errors.Is(sentinel, sentinel) {
-			t.Fatalf("sentinel %d does not classify itself", i)
-		}
-	}
+func TestValidateExpectedRevisionAcceptsCommittedRevision(t *testing.T) {
+	requireNoError(t, ValidateExpectedRevision(validKey(), 1))
 }

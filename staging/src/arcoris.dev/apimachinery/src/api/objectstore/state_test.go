@@ -14,29 +14,19 @@
 
 package objectstore
 
-import (
-	"errors"
-	"testing"
-)
+import "testing"
 
-func TestSentinelErrorsAreDistinctAndClassifiable(t *testing.T) {
-	sentinels := []error{
-		ErrNotFound,
-		ErrAlreadyExists,
-		ErrConflict,
-		ErrStaleRevision,
-		ErrInvalidKey,
-		ErrInvalidState,
-		ErrInvalidRevision,
-		ErrUninitializedStore,
+func TestStateCarriesObjectOwnershipAndRevision(t *testing.T) {
+	state := validCommittedState()
+	state.Ownership = ownershipWithEntry()
+
+	if string(state.Object.ObjectMeta.Name) != "main" {
+		t.Fatalf("object name = %q; want %q", state.Object.ObjectMeta.Name, "main")
 	}
-
-	for i, sentinel := range sentinels {
-		if sentinel == nil {
-			t.Fatalf("sentinel %d is nil", i)
-		}
-		if !errors.Is(sentinel, sentinel) {
-			t.Fatalf("sentinel %d does not classify itself", i)
-		}
+	if len(state.Ownership.Desired.Entries) != 1 {
+		t.Fatalf("ownership entries = %d; want 1", len(state.Ownership.Desired.Entries))
+	}
+	if state.Revision != 1 {
+		t.Fatalf("Revision = %v; want 1", state.Revision)
 	}
 }

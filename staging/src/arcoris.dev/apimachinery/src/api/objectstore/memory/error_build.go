@@ -17,7 +17,7 @@ package memory
 import "arcoris.dev/apimachinery/api/objectstore"
 
 // objectstoreError builds a structured objectstore error from memory paths.
-func objectstoreError(reason objectstore.Reason, key objectstore.Key, expected objectstore.Revision, actual objectstore.Revision, err error) error {
+func objectstoreError(reason objectstore.ErrorReason, key objectstore.Key, expected objectstore.Revision, actual objectstore.Revision, err error) error {
 	return &objectstore.Error{
 		Reason:   reason,
 		Key:      key,

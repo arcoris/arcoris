@@ -15,7 +15,7 @@
 package objectstore
 
 // errorFor builds a structured objectstore diagnostic.
-func errorFor(reason Reason, key Key, expected Revision, actual Revision, err error) error {
+func errorFor(reason ErrorReason, key Key, expected Revision, actual Revision, err error) error {
 	return &Error{
 		Reason:   reason,
 		Key:      key,

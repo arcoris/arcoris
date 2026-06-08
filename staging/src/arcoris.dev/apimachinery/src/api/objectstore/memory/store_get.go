@@ -12,31 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package objectstore
+package memory
 
 import (
-	"errors"
-	"testing"
+	"context"
+
+	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-func TestSentinelErrorsAreDistinctAndClassifiable(t *testing.T) {
-	sentinels := []error{
-		ErrNotFound,
-		ErrAlreadyExists,
-		ErrConflict,
-		ErrStaleRevision,
-		ErrInvalidKey,
-		ErrInvalidState,
-		ErrInvalidRevision,
-		ErrUninitializedStore,
+// Get reads the latest live state for key.
+func (s *Store) Get(ctx context.Context, key objectstore.Key) (objectstore.State, bool, error) {
+	if err := s.prepareGet(ctx, key); err != nil {
+		return objectstore.State{}, false, err
 	}
 
-	for i, sentinel := range sentinels {
-		if sentinel == nil {
-			t.Fatalf("sentinel %d is nil", i)
-		}
-		if !errors.Is(sentinel, sentinel) {
-			t.Fatalf("sentinel %d does not classify itself", i)
-		}
+	st := s.shardFor(key).get(key)
+	if st == nil {
+		return objectstore.State{}, false, nil
 	}
+
+	current := st.load()
+	if current == nil || current.deleted {
+		return objectstore.State{}, false, nil
+	}
+
+	return current.visibleState(), true, nil
 }

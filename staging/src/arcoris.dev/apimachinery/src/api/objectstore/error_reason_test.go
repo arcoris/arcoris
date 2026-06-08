@@ -16,21 +16,21 @@ package objectstore
 
 import "testing"
 
-func TestReasonStringAndValidity(t *testing.T) {
+func TestErrorReasonStringAndValidity(t *testing.T) {
 	tests := []struct {
 		name  string
-		in    Reason
+		in    ErrorReason
 		text  string
 		valid bool
 	}{
-		{name: "not found", in: ReasonNotFound, text: "not_found", valid: true},
-		{name: "already exists", in: ReasonAlreadyExists, text: "already_exists", valid: true},
-		{name: "conflict", in: ReasonConflict, text: "conflict", valid: true},
-		{name: "stale revision", in: ReasonStaleRevision, text: "stale_revision", valid: true},
-		{name: "invalid key", in: ReasonInvalidKey, text: "invalid_key", valid: true},
-		{name: "invalid state", in: ReasonInvalidState, text: "invalid_state", valid: true},
-		{name: "invalid revision", in: ReasonInvalidRevision, text: "invalid_revision", valid: true},
-		{name: "uninitialized store", in: ReasonUninitializedStore, text: "uninitialized_store", valid: true},
+		{name: "not found", in: ErrorReasonNotFound, text: "not_found", valid: true},
+		{name: "already exists", in: ErrorReasonAlreadyExists, text: "already_exists", valid: true},
+		{name: "conflict", in: ErrorReasonConflict, text: "conflict", valid: true},
+		{name: "stale revision", in: ErrorReasonStaleRevision, text: "stale_revision", valid: true},
+		{name: "invalid key", in: ErrorReasonInvalidKey, text: "invalid_key", valid: true},
+		{name: "invalid state", in: ErrorReasonInvalidState, text: "invalid_state", valid: true},
+		{name: "invalid revision", in: ErrorReasonInvalidRevision, text: "invalid_revision", valid: true},
+		{name: "uninitialized store", in: ErrorReasonUninitializedStore, text: "uninitialized_store", valid: true},
 		{name: "unknown", in: 0, text: "unknown", valid: false},
 	}
 

@@ -22,27 +22,15 @@ import (
 
 // Update replaces live state when expected matches the current revision.
 func (s *Store) Update(ctx context.Context, key objectstore.Key, expected objectstore.Revision, state objectstore.State) (objectstore.State, error) {
-	if err := requireStore(s); err != nil {
-		return objectstore.State{}, err
-	}
-	if err := checkContext(ctx); err != nil {
-		return objectstore.State{}, err
-	}
-	if err := validateKey(key); err != nil {
-		return objectstore.State{}, err
-	}
-	if err := validateExpectedRevision(key, expected); err != nil {
-		return objectstore.State{}, err
-	}
-	prepared, err := prepareInputState(state)
+	prepared, err := s.prepareUpdate(ctx, key, expected, state)
 	if err != nil {
 		return objectstore.State{}, err
 	}
 
-	slot := s.shardFor(key).get(key)
-	if slot == nil {
+	st := s.shardFor(key).get(key)
+	if st == nil {
 		return objectstore.State{}, objectstoreError(
-			objectstore.ReasonNotFound,
+			objectstore.ErrorReasonNotFound,
 			key,
 			expected,
 			0,
@@ -51,10 +39,10 @@ func (s *Store) Update(ctx context.Context, key objectstore.Key, expected object
 	}
 
 	for {
-		current := slot.load()
+		current := st.load()
 		if current == nil || current.deleted {
 			return objectstore.State{}, objectstoreError(
-				objectstore.ReasonNotFound,
+				objectstore.ErrorReasonNotFound,
 				key,
 				expected,
 				0,
@@ -63,7 +51,7 @@ func (s *Store) Update(ctx context.Context, key objectstore.Key, expected object
 		}
 		if current.state.Revision != expected {
 			return objectstore.State{}, objectstoreError(
-				objectstore.ReasonStaleRevision,
+				objectstore.ErrorReasonStaleRevision,
 				key,
 				expected,
 				current.state.Revision,
@@ -72,13 +60,13 @@ func (s *Store) Update(ctx context.Context, key objectstore.Key, expected object
 		}
 
 		next := liveRecord(prepared, s.nextRevision())
-		if slot.compareAndSwap(current, next) {
+		if st.compareAndSwap(current, next) {
 			return next.visibleState(), nil
 		}
 
-		if latest := slot.load(); latest != nil && latest.state.Revision != expected {
+		if latest := st.load(); latest != nil && latest.state.Revision != expected {
 			return objectstore.State{}, objectstoreError(
-				objectstore.ReasonConflict,
+				objectstore.ErrorReasonConflict,
 				key,
 				expected,
 				latest.state.Revision,
