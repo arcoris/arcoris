@@ -12,15 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import "errors"
-
-const (
-	panicInvalidExhaustedOutcome   = "retry: invalid exhausted outcome"
-	panicNonExhaustedOutcomeReason = "retry: non-exhausted outcome reason"
-)
 
 // ErrExhausted identifies retry execution that stopped because a retry-owned
 // exhaustion boundary was reached.
@@ -64,10 +58,10 @@ func Exhausted(err error) bool {
 // error that caused retry execution to continue until exhaustion.
 func NewExhaustedError(outcome Outcome) error {
 	if !outcome.IsValid() {
-		panic(panicInvalidExhaustedOutcome)
+		panic(ErrInvalidExhaustedOutcome)
 	}
 	if !outcome.Exhausted() {
-		panic(panicNonExhaustedOutcomeReason)
+		panic(ErrNonExhaustedOutcomeReason)
 	}
 
 	return exhaustedError{outcome: outcome}

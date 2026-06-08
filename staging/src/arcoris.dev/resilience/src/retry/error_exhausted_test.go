@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
 	"errors"
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestErrExhaustedSentinel(t *testing.T) {
@@ -131,17 +132,9 @@ func TestNewExhaustedErrorDeadlineUnwrapsLastError(t *testing.T) {
 }
 
 func TestNewExhaustedErrorPanicsOnInvalidOutcome(t *testing.T) {
-	defer func() {
-		recovered := recover()
-		if recovered == nil {
-			t.Fatalf("NewExhaustedError did not panic")
-		}
-		if recovered != panicInvalidExhaustedOutcome {
-			t.Fatalf("panic = %v, want %q", recovered, panicInvalidExhaustedOutcome)
-		}
-	}()
-
-	_ = NewExhaustedError(Outcome{})
+	panicassert.RequireErrorIs(t, ErrInvalidExhaustedOutcome, func() {
+		_ = NewExhaustedError(Outcome{})
+	})
 }
 
 func TestNewExhaustedErrorPanicsOnNonExhaustedReason(t *testing.T) {
@@ -152,17 +145,9 @@ func TestNewExhaustedErrorPanicsOnNonExhaustedReason(t *testing.T) {
 		Reason:     StopReasonSucceeded,
 	}
 
-	defer func() {
-		recovered := recover()
-		if recovered == nil {
-			t.Fatalf("NewExhaustedError did not panic")
-		}
-		if recovered != panicNonExhaustedOutcomeReason {
-			t.Fatalf("panic = %v, want %q", recovered, panicNonExhaustedOutcomeReason)
-		}
-	}()
-
-	_ = NewExhaustedError(outcome)
+	panicassert.RequireErrorIs(t, ErrNonExhaustedOutcomeReason, func() {
+		_ = NewExhaustedError(outcome)
+	})
 }
 
 func TestExhaustedOutcome(t *testing.T) {

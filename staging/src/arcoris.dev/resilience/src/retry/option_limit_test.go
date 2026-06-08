@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
@@ -41,7 +40,7 @@ func TestWithMaxAttemptsLastWins(t *testing.T) {
 }
 
 func TestWithMaxAttemptsPanicsOnZero(t *testing.T) {
-	panicassert.RequireValue(t, panicZeroMaxAttempts, func() {
+	panicassert.RequireErrorIs(t, ErrZeroMaxAttempts, func() {
 		_ = WithMaxAttempts(0)
 	})
 }
@@ -74,7 +73,7 @@ func TestWithMaxElapsedLastWins(t *testing.T) {
 }
 
 func TestWithMaxElapsedPanicsOnNegative(t *testing.T) {
-	panicassert.RequireValue(t, panicNegativeMaxElapsed, func() {
+	panicassert.RequireErrorIs(t, ErrNegativeMaxElapsed, func() {
 		_ = WithMaxElapsed(-time.Nanosecond)
 	})
 }

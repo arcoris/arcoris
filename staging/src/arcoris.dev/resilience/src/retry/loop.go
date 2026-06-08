@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import "context"
@@ -30,13 +29,15 @@ import "context"
 // retry budgets, circuit breakers, hedging, metrics exporters, tracing exporters,
 // or logging backends.
 //
-// The returned value is meaningful only when err is nil. On failure, run returns
-// the zero value of T and an error describing the terminal retry decision.
+// The returned value is meaningful only when err is nil. Every non-panic
+// terminal path returns a valid Outcome that matches the terminal stop event.
+// On failure, run returns the zero value of T, the terminal Outcome, and an
+// error describing the terminal retry decision.
 func run[T any](
 	ctx context.Context,
 	op ValueOperation[T],
 	cfg config,
-) (T, error) {
+) (T, Outcome, error) {
 	requireContext(ctx)
 	requireValueOperation(op)
 
@@ -46,48 +47,56 @@ func run[T any](
 
 	for {
 		if err := execution.contextStop(ctx); err != nil {
-			return zero, execution.interrupted(ctx, err)
+			outcome, err := execution.interrupted(ctx, err)
+			return zero, outcome, err
 		}
 
 		attempt := execution.nextAttempt(ctx)
 
 		val, err := op(ctx)
 		if err == nil {
-			execution.succeeded(ctx)
-			return val, nil
+			outcome := execution.succeeded(ctx)
+			return val, outcome, nil
 		}
 
 		execution.recordFailure(ctx, attempt, err)
 
 		if !execution.retryable(err) {
-			return zero, execution.nonRetryable(ctx, err)
+			outcome, err := execution.nonRetryable(ctx, err)
+			return zero, outcome, err
 		}
 
 		if execution.maxAttemptsReached() {
-			return zero, execution.exhausted(ctx, StopReasonMaxAttempts)
+			outcome, err := execution.exhausted(ctx, StopReasonMaxAttempts)
+			return zero, outcome, err
 		}
 
 		if err := execution.contextStop(ctx); err != nil {
-			return zero, execution.interrupted(ctx, err)
+			outcome, err := execution.interrupted(ctx, err)
+			return zero, outcome, err
 		}
 
 		delay, ok := execution.nextDelay()
 		if !ok {
-			return zero, execution.exhausted(ctx, StopReasonDelayExhausted)
+			outcome, err := execution.exhausted(ctx, StopReasonDelayExhausted)
+			return zero, outcome, err
 		}
 
 		if execution.contextDeadlineWouldBeExceeded(ctx, delay) {
-			return zero, execution.exhausted(ctx, StopReasonDeadline)
+			outcome, err := execution.exhausted(ctx, StopReasonDeadline)
+			return zero, outcome, err
 		}
 
 		if execution.maxElapsedWouldBeExceeded(delay) {
-			return zero, execution.exhausted(ctx, StopReasonMaxElapsed)
+			outcome, err := execution.exhausted(ctx, StopReasonMaxElapsed)
+			return zero, outcome, err
 		}
 
 		execution.retryDelay(ctx, delay)
 
 		if err := execution.waitDelay(ctx, delay); err != nil {
-			return zero, execution.interrupted(ctx, err)
+			outcome, err := execution.interrupted(ctx, err)
+			return zero, outcome, err
 		}
 	}
 }

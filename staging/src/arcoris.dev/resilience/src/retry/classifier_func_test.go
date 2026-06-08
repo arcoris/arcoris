@@ -12,28 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
 	"errors"
 	"testing"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestClassifierFuncPanicsWhenNil(t *testing.T) {
 	var classifier ClassifierFunc
 
-	defer func() {
-		recovered := recover()
-		if recovered == nil {
-			t.Fatalf("ClassifierFunc.Retryable did not panic")
-		}
-		if recovered != panicNilClassifierFunc {
-			t.Fatalf("panic = %v, want %q", recovered, panicNilClassifierFunc)
-		}
-	}()
-
-	_ = classifier.Retryable(errors.New("boom"))
+	panicassert.RequireErrorIs(t, ErrNilClassifierFunc, func() {
+		_ = classifier.Retryable(errors.New("boom"))
+	})
 }
 
 func TestClassifierFuncRejectsNilWithoutCallingWrappedFunction(t *testing.T) {

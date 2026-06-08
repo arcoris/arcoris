@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
-
-const panicNilClassifierFunc = "retry: nil classifier function"
 
 // ClassifierFunc adapts a function to the Classifier interface.
 //
@@ -38,7 +35,7 @@ type ClassifierFunc func(err error) bool
 // calling f. For non-nil errors, it delegates classification to f.
 func (f ClassifierFunc) Retryable(err error) bool {
 	if f == nil {
-		panic(panicNilClassifierFunc)
+		panic(ErrNilClassifierFunc)
 	}
 	if err == nil {
 		return false

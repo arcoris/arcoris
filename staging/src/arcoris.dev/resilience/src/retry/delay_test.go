@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
@@ -33,7 +32,7 @@ func TestWaitDelayReturnsImmediatelyForZeroDelay(t *testing.T) {
 }
 
 func TestWaitDelayPanicsOnNegativeDelay(t *testing.T) {
-	panicassert.RequireValue(t, panicNegativeDelay, func() {
+	panicassert.RequireErrorIs(t, ErrNegativeDelay, func() {
 		_ = waitDelay(context.Background(), clock.RealClock{}, -time.Nanosecond)
 	})
 }

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import "context"
@@ -21,9 +20,8 @@ import "context"
 // produced by the successful attempt.
 //
 // DoValue is the public entry point for operations that return a value and an
-// error. It applies options, delegates retry execution to the package-private
-// runtime engine, and returns either the successful attempt value or the zero
-// value of T with the terminal error.
+// error. It is the compact convenience wrapper around DoValueObserved for
+// callers that do not need direct terminal Outcome metadata.
 //
 // The returned value is meaningful only when err is nil. When retry execution
 // fails, DoValue returns the zero value of T. Values returned by failed attempts
@@ -63,8 +61,6 @@ func DoValue[T any](
 	op ValueOperation[T],
 	opts ...Option,
 ) (T, error) {
-	requireContext(ctx)
-	requireValueOperation(op)
-
-	return run(ctx, op, configOf(opts...))
+	value, _, err := DoValueObserved(ctx, op, opts...)
+	return value, err
 }

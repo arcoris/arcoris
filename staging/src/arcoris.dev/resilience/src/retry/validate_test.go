@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
@@ -28,7 +27,7 @@ import (
 func TestRequireContext(t *testing.T) {
 	requireContext(context.Background())
 
-	panicassert.RequireValue(t, panicNilContext, func() {
+	panicassert.RequireErrorIs(t, ErrNilContext, func() {
 		requireContext(nil)
 	})
 }
@@ -38,7 +37,7 @@ func TestRequireOperation(t *testing.T) {
 		return nil
 	})
 
-	panicassert.RequireValue(t, panicNilOperation, func() {
+	panicassert.RequireErrorIs(t, ErrNilOperation, func() {
 		requireOperation(nil)
 	})
 }
@@ -48,7 +47,7 @@ func TestRequireValueOperation(t *testing.T) {
 		return 0, nil
 	})
 
-	panicassert.RequireValue(t, panicNilValueOperation, func() {
+	panicassert.RequireErrorIs(t, ErrNilValueOperation, func() {
 		requireValueOperation[int](nil)
 	})
 }
@@ -56,7 +55,7 @@ func TestRequireValueOperation(t *testing.T) {
 func TestRequireClock(t *testing.T) {
 	requireClock(clock.RealClock{})
 
-	panicassert.RequireValue(t, panicNilClock, func() {
+	panicassert.RequireErrorIs(t, ErrNilClock, func() {
 		requireClock(nil)
 	})
 }
@@ -64,7 +63,7 @@ func TestRequireClock(t *testing.T) {
 func TestRequireDelaySchedule(t *testing.T) {
 	requireDelaySchedule(delay.Immediate())
 
-	panicassert.RequireValue(t, panicNilDelaySchedule, func() {
+	panicassert.RequireErrorIs(t, ErrNilDelaySchedule, func() {
 		requireDelaySchedule(nil)
 	})
 }
@@ -72,7 +71,7 @@ func TestRequireDelaySchedule(t *testing.T) {
 func TestRequireDelayScheduleSequence(t *testing.T) {
 	requireDelaySequence(delay.Immediate().NewSequence())
 
-	panicassert.RequireValue(t, panicNilDelaySequence, func() {
+	panicassert.RequireErrorIs(t, ErrNilDelaySequence, func() {
 		requireDelaySequence(nil)
 	})
 }
@@ -82,7 +81,7 @@ func TestRequireDelayScheduleDelay(t *testing.T) {
 	requireDelay(time.Nanosecond, true)
 	requireDelay(-time.Nanosecond, false)
 
-	panicassert.RequireValue(t, panicNegativeDelay, func() {
+	panicassert.RequireErrorIs(t, ErrNegativeDelay, func() {
 		requireDelay(-time.Nanosecond, true)
 	})
 }
@@ -90,7 +89,7 @@ func TestRequireDelayScheduleDelay(t *testing.T) {
 func TestRequireClassifier(t *testing.T) {
 	requireClassifier(NeverRetry())
 
-	panicassert.RequireValue(t, panicNilClassifier, func() {
+	panicassert.RequireErrorIs(t, ErrNilClassifier, func() {
 		requireClassifier(nil)
 	})
 }
@@ -100,7 +99,7 @@ func TestRequireRetryableFunc(t *testing.T) {
 		return false
 	})
 
-	panicassert.RequireValue(t, panicNilClassifierFunc, func() {
+	panicassert.RequireErrorIs(t, ErrNilClassifierFunc, func() {
 		requireRetryableFunc(nil)
 	})
 }
@@ -109,7 +108,7 @@ func TestRequireMaxAttempts(t *testing.T) {
 	requireMaxAttempts(1)
 	requireMaxAttempts(10)
 
-	panicassert.RequireValue(t, panicZeroMaxAttempts, func() {
+	panicassert.RequireErrorIs(t, ErrZeroMaxAttempts, func() {
 		requireMaxAttempts(0)
 	})
 }
@@ -118,7 +117,7 @@ func TestRequireMaxElapsed(t *testing.T) {
 	requireMaxElapsed(0)
 	requireMaxElapsed(time.Nanosecond)
 
-	panicassert.RequireValue(t, panicNegativeMaxElapsed, func() {
+	panicassert.RequireErrorIs(t, ErrNegativeMaxElapsed, func() {
 		requireMaxElapsed(-time.Nanosecond)
 	})
 }
@@ -126,7 +125,7 @@ func TestRequireMaxElapsed(t *testing.T) {
 func TestRequireObserver(t *testing.T) {
 	requireObserver(ObserverFunc(func(context.Context, Event) {}))
 
-	panicassert.RequireValue(t, panicNilObserver, func() {
+	panicassert.RequireErrorIs(t, ErrNilObserver, func() {
 		requireObserver(nil)
 	})
 }
@@ -134,7 +133,7 @@ func TestRequireObserver(t *testing.T) {
 func TestRequireObserverFunc(t *testing.T) {
 	requireObserverFunc(func(context.Context, Event) {})
 
-	panicassert.RequireValue(t, panicNilObserverFunc, func() {
+	panicassert.RequireErrorIs(t, ErrNilObserverFunc, func() {
 		requireObserverFunc(nil)
 	})
 }
@@ -142,7 +141,7 @@ func TestRequireObserverFunc(t *testing.T) {
 func TestRequireOption(t *testing.T) {
 	requireOption(func(*config) {})
 
-	panicassert.RequireValue(t, panicNilOption, func() {
+	panicassert.RequireErrorIs(t, ErrNilOption, func() {
 		requireOption(nil)
 	})
 }

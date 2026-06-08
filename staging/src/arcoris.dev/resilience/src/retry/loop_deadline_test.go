@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
@@ -114,7 +113,7 @@ func TestRunAllowsZeroDelayWithPositiveRemainingDeadlineBudget(t *testing.T) {
 	)
 
 	calls := 0
-	_, err := run(ctx, func(context.Context) (int, error) {
+	_, _, err := run(ctx, func(context.Context) (int, error) {
 		calls++
 		if calls == 1 {
 			return 0, errBoom
@@ -153,7 +152,7 @@ func TestRunStopsWhenDelayExceedsContextDeadlineBudget(t *testing.T) {
 	)
 
 	calls := 0
-	_, err := run(ctx, func(context.Context) (int, error) {
+	_, _, err := run(ctx, func(context.Context) (int, error) {
 		calls++
 		return 0, errBoom
 	}, cfg)
@@ -206,7 +205,7 @@ func TestRunStopsWhenDelayEqualsContextDeadlineBudget(t *testing.T) {
 	)
 
 	calls := 0
-	_, err := run(ctx, func(context.Context) (int, error) {
+	_, _, err := run(ctx, func(context.Context) (int, error) {
 		calls++
 		return 0, errBoom
 	}, cfg)
@@ -248,7 +247,7 @@ func TestRunAllowsDelayBelowContextDeadlineBudget(t *testing.T) {
 	calls := 0
 	done := make(chan error, 1)
 	go func() {
-		_, err := run(ctx, func(context.Context) (int, error) {
+		_, _, err := run(ctx, func(context.Context) (int, error) {
 			calls++
 			if calls == 1 {
 				return 0, errBoom
@@ -295,7 +294,7 @@ func TestRunWithoutContextDeadlineDoesNotRestrictDelay(t *testing.T) {
 	calls := 0
 	done := make(chan error, 1)
 	go func() {
-		_, err := run(context.Background(), func(context.Context) (int, error) {
+		_, _, err := run(context.Background(), func(context.Context) (int, error) {
 			calls++
 			if calls == 1 {
 				return 0, errBoom

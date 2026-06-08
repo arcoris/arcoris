@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
@@ -106,7 +105,7 @@ func TestRunContextDeadlineWinsOverMaxElapsed(t *testing.T) {
 		WithMaxElapsed(75*time.Millisecond),
 	)
 
-	_, err := run(ctx, func(context.Context) (int, error) {
+	_, _, err := run(ctx, func(context.Context) (int, error) {
 		return 0, errBoom
 	}, cfg)
 

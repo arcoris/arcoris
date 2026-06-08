@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import "context"
@@ -20,8 +19,8 @@ import "context"
 // Do executes op with bounded retry orchestration.
 //
 // Do is the public entry point for operations that return only an error. It
-// applies options, delegates retry execution to the package-private runtime
-// engine, and returns the terminal error produced by that execution.
+// is the compact convenience wrapper around DoObserved for callers that do not
+// need direct terminal Outcome metadata.
 //
 // The default configuration is conservative: Do calls op at most once, uses
 // NeverRetry as the classifier, has no elapsed-time limit, and registers no
@@ -52,12 +51,6 @@ import "context"
 // Do panics when ctx is nil, op is nil, or any supplied option is nil or
 // otherwise invalid.
 func Do(ctx context.Context, op Operation, opts ...Option) error {
-	requireContext(ctx)
-	requireOperation(op)
-
-	_, err := run(ctx, func(ctx context.Context) (struct{}, error) {
-		return struct{}{}, op(ctx)
-	}, configOf(opts...))
-
+	_, err := DoObserved(ctx, op, opts...)
 	return err
 }

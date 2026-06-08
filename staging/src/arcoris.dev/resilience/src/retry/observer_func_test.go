@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
 	"context"
 	"testing"
 	"time"
+
+	panicassert "arcoris.dev/testutil/panic"
 )
 
 func TestObserverFuncImplementsObserver(t *testing.T) {
@@ -28,17 +29,9 @@ func TestObserverFuncImplementsObserver(t *testing.T) {
 func TestObserverFuncPanicsWhenNil(t *testing.T) {
 	var observer ObserverFunc
 
-	defer func() {
-		recovered := recover()
-		if recovered == nil {
-			t.Fatalf("ObserverFunc.ObserveRetry did not panic")
-		}
-		if recovered != panicNilObserverFunc {
-			t.Fatalf("panic = %v, want %q", recovered, panicNilObserverFunc)
-		}
-	}()
-
-	observer.ObserveRetry(context.Background(), Event{})
+	panicassert.RequireErrorIs(t, ErrNilObserverFunc, func() {
+		observer.ObserveRetry(context.Background(), Event{})
+	})
 }
 
 func TestObserverFuncDelegatesContextAndEvent(t *testing.T) {

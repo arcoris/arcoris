@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
@@ -62,12 +61,15 @@ func TestRetryExecutionSucceededClearsLastError(t *testing.T) {
 	execution := retryOutcomeTestExecution(recorder)
 	execution.lastErr = errBoom
 
-	execution.succeeded(context.Background())
+	returned := execution.succeeded(context.Background())
 
 	if len(recorder.events) != 1 {
 		t.Fatalf("events len = %d, want 1", len(recorder.events))
 	}
 	outcome := recorder.events[0].Outcome
+	if returned != outcome {
+		t.Fatalf("returned outcome = %+v, want event outcome %+v", returned, outcome)
+	}
 	if outcome.Reason != StopReasonSucceeded {
 		t.Fatalf("outcome.Reason = %s, want %s", outcome.Reason, StopReasonSucceeded)
 	}
@@ -80,10 +82,13 @@ func TestRetryExecutionNonRetryableReturnsOriginalError(t *testing.T) {
 	errBoom := errors.New("boom")
 	execution := retryOutcomeTestExecution()
 
-	err := execution.nonRetryable(context.Background(), errBoom)
+	outcome, err := execution.nonRetryable(context.Background(), errBoom)
 
 	if !errors.Is(err, errBoom) {
 		t.Fatalf("nonRetryable error = %v, want %v", err, errBoom)
+	}
+	if outcome != retryTestFailureOutcome(1, StopReasonNonRetryable, errBoom) {
+		t.Fatalf("outcome = %+v, want %+v", outcome, retryTestFailureOutcome(1, StopReasonNonRetryable, errBoom))
 	}
 }
 
@@ -92,7 +97,7 @@ func TestRetryExecutionExhaustedReturnsExhaustedError(t *testing.T) {
 	execution := retryOutcomeTestExecution()
 	execution.lastErr = errBoom
 
-	err := execution.exhausted(context.Background(), StopReasonMaxAttempts)
+	outcome, err := execution.exhausted(context.Background(), StopReasonMaxAttempts)
 
 	if !errors.Is(err, ErrExhausted) {
 		t.Fatalf("exhausted error = %v, want ErrExhausted", err)
@@ -101,9 +106,12 @@ func TestRetryExecutionExhaustedReturnsExhaustedError(t *testing.T) {
 		t.Fatalf("exhausted error = %v, want %v", err, errBoom)
 	}
 
-	outcome, ok := ExhaustedOutcome(err)
+	exhausted, ok := ExhaustedOutcome(err)
 	if !ok {
 		t.Fatalf("ExhaustedOutcome returned ok=false")
+	}
+	if exhausted != outcome {
+		t.Fatalf("ExhaustedOutcome = %+v, want returned %+v", exhausted, outcome)
 	}
 	if outcome != retryTestFailureOutcome(1, StopReasonMaxAttempts, errBoom) {
 		t.Fatalf("outcome = %+v, want %+v", outcome, retryTestFailureOutcome(1, StopReasonMaxAttempts, errBoom))
@@ -117,13 +125,16 @@ func TestRetryExecutionInterruptedReturnsOriginalError(t *testing.T) {
 	execution := retryOutcomeTestExecution(recorder)
 	execution.lastErr = errBoom
 
-	err := execution.interrupted(context.Background(), ctxErr)
+	outcome, err := execution.interrupted(context.Background(), ctxErr)
 
 	if err != ctxErr {
 		t.Fatalf("interrupted error = %v, want %v", err, ctxErr)
 	}
 	if len(recorder.events) != 1 {
 		t.Fatalf("events len = %d, want 1", len(recorder.events))
+	}
+	if recorder.events[0].Outcome != outcome {
+		t.Fatalf("event outcome = %+v, want returned %+v", recorder.events[0].Outcome, outcome)
 	}
 	if recorder.events[0].Outcome.LastErr != errBoom {
 		t.Fatalf("outcome.LastErr = %v, want %v", recorder.events[0].Outcome.LastErr, errBoom)

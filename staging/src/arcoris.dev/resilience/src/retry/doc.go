@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package retry provides bounded retry orchestration for ARCORIS component
 // internals.
 //
@@ -30,9 +29,13 @@
 //
 // # Execution model
 //
-// A retry execution is started by Do or DoValue. Do executes an Operation that
-// returns only an error. DoValue executes a ValueOperation that returns a value
-// and an error.
+// A retry execution is started by Do, DoObserved, DoValue, or DoValueObserved.
+// Do and DoObserved execute an Operation that returns only an error. DoValue and
+// DoValueObserved execute a ValueOperation that returns a value and an error.
+//
+// The observed APIs return terminal Outcome directly. The compact Do and
+// DoValue APIs are convenience wrappers for callers that only need the terminal
+// error or successful value.
 //
 // A retry execution may call the operation zero, one, or many times:
 //
@@ -137,8 +140,11 @@
 //
 // A zero max elapsed duration disables elapsed-time limiting. A positive max
 // elapsed duration bounds one retry execution according to the configured clock.
-// Retry should stop before sleeping for a delay that would consume or exceed the
-// remaining elapsed-time budget.
+// Retry checks max elapsed after a failed attempt and before sleeping for the
+// next retry delay. Max elapsed is a scheduling boundary, not an operation
+// timeout. It does not interrupt an in-flight operation; an operation may run
+// longer than MaxElapsed if it does not observe context or another caller-owned
+// timeout.
 //
 // Retry also checks the owning context deadline budget before sleeping for a
 // retry delay. A selected delay equal to or greater than the remaining deadline
@@ -173,8 +179,9 @@
 // Outcome records terminal retry metadata: number of operation calls, start time,
 // finish time, last operation-owned error, and StopReason.
 //
-// Outcome is metadata, not an error wrapper and not a retry decision. It is used
-// by terminal observer events and retry-owned errors such as ErrExhausted.
+// Outcome is metadata, not an error wrapper and not a retry decision. It is
+// returned directly by DoObserved and DoValueObserved, used by terminal observer
+// events, and preserved by retry-owned errors such as ErrExhausted.
 //
 // The zero Outcome is invalid. This prevents empty completion metadata from
 // accidentally looking like a successful retry execution.
@@ -228,10 +235,10 @@
 //
 // # Panic policy
 //
-// Package retry panics on programming errors such as nil context, nil operation,
-// nil option, nil clock, nil delay schedule, nil classifier, nil observer,
-// zero max attempts, negative max elapsed duration, or a negative delay
-// returned with ok=true.
+// Package retry panics with package-owned error values on programming errors
+// such as nil context, nil operation, nil option, nil clock, nil delay schedule,
+// nil classifier, nil observer, zero max attempts, negative max elapsed
+// duration, or a negative delay returned with ok=true.
 //
 // Package retry does not recover panics raised by operations, observers, clocks,
 // delay schedules, or classifiers. Panic recovery, if required, belongs to the
@@ -257,7 +264,9 @@
 //   - loop_deadline.go owns context deadline budget checks for retry delay
 //     scheduling;
 //   - loop.go defines the private execution engine;
-//   - do.go and do_value.go define public entry points.
+//   - do_observed.go and do_value_observed.go define observed public entry
+//     points;
+//   - do.go and do_value.go define compact convenience entry points.
 //
 // # Non-goals
 //

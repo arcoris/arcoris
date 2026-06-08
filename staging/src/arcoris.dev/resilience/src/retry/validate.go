@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
@@ -23,97 +22,6 @@ import (
 	"arcoris.dev/chrono/delay"
 )
 
-const (
-	// panicNilContext is the stable diagnostic text used when retry execution is
-	// started without a context.
-	//
-	// A retry execution owns context observation at retry boundaries. A nil
-	// context would fail later in cancellation checks or delay waits, so public
-	// entry points reject it immediately.
-	panicNilContext = "retry: nil context"
-
-	// panicNilOperation is the stable diagnostic text used when Do receives a nil
-	// Operation.
-	//
-	// A nil operation cannot be executed and indicates invalid caller wiring, not
-	// a retryable runtime failure.
-	panicNilOperation = "retry: nil operation"
-
-	// panicNilValueOperation is the stable diagnostic text used when DoValue
-	// receives a nil ValueOperation.
-	//
-	// A nil value operation cannot be executed and indicates invalid caller
-	// wiring, not a retryable runtime failure.
-	panicNilValueOperation = "retry: nil value operation"
-
-	// panicNilClock is the stable diagnostic text used when retry configuration
-	// receives a nil clock.
-	//
-	// Retry execution needs a clock for attempt timestamps, elapsed-time checks,
-	// and retry delay timers. A nil clock would fail inside the runtime loop, so
-	// it is rejected at configuration boundaries.
-	panicNilClock = "retry: nil clock"
-
-	// panicNilDelaySchedule is the stable diagnostic text used when retry
-	// configuration receives a nil delay schedule.
-	//
-	// Retry stores a reusable delay.Schedule and creates a fresh Sequence for
-	// each execution. A nil schedule cannot produce per-execution delay streams.
-	panicNilDelaySchedule = "retry: nil delay schedule"
-
-	// panicNilDelaySequence is the stable diagnostic text used when a configured
-	// delay schedule returns a nil sequence.
-	//
-	// Schedule.NewSequence must return a usable Sequence. Returning nil violates
-	// the delay.Schedule contract and is reported at the retry boundary that
-	// observes it.
-	panicNilDelaySequence = "retry: delay schedule returned nil Sequence"
-
-	// panicNegativeDelay is the stable diagnostic text used when a delay
-	// sequence returns a negative delay while reporting ok=true.
-	//
-	// A zero delay is valid and means immediate retry. A negative delay violates
-	// the delay.Sequence contract and would make retry waiting semantics
-	// ambiguous.
-	panicNegativeDelay = "retry: delay sequence returned negative delay"
-
-	// panicNilClassifier is the stable diagnostic text used when retry
-	// configuration receives a nil Classifier.
-	//
-	// Retryability classification is required after operation-owned failures. A
-	// nil classifier would fail later in the runtime loop and is rejected at
-	// configuration boundaries.
-	panicNilClassifier = "retry: nil classifier"
-
-	// panicZeroMaxAttempts is the stable diagnostic text used when a caller
-	// configures zero max attempts.
-	//
-	// Max attempts includes the initial operation call. A value of zero cannot
-	// describe a valid retry execution policy; callers that want no retries
-	// should use one attempt.
-	panicZeroMaxAttempts = "retry: zero max attempts"
-
-	// panicNegativeMaxElapsed is the stable diagnostic text used when a caller
-	// configures a negative max elapsed duration.
-	//
-	// A zero max elapsed duration disables elapsed-time limiting. A negative
-	// duration cannot describe a stable retry boundary.
-	panicNegativeMaxElapsed = "retry: negative max elapsed"
-
-	// panicNilObserver is the stable diagnostic text used when retry
-	// configuration receives a nil Observer.
-	//
-	// Observers are optional, but configured observers must be callable.
-	panicNilObserver = "retry: nil observer"
-
-	// panicNilOption is the stable diagnostic text used when retry configuration
-	// receives a nil Option.
-	//
-	// Nil options usually indicate invalid conditional option composition. Retry
-	// rejects them immediately instead of silently ignoring caller mistakes.
-	panicNilOption = "retry: nil option"
-)
-
 // requireContext panics when ctx is nil.
 //
 // Public retry entry points must call requireContext before observing context
@@ -121,7 +29,7 @@ const (
 // context.Background when no narrower cancellation scope is available.
 func requireContext(ctx context.Context) {
 	if ctx == nil {
-		panic(panicNilContext)
+		panic(ErrNilContext)
 	}
 }
 
@@ -131,7 +39,7 @@ func requireContext(ctx context.Context) {
 // and must not be represented as a retryable operation failure.
 func requireOperation(op Operation) {
 	if op == nil {
-		panic(panicNilOperation)
+		panic(ErrNilOperation)
 	}
 }
 
@@ -141,7 +49,7 @@ func requireOperation(op Operation) {
 // programming error and must not be represented as a retryable operation failure.
 func requireValueOperation[T any](op ValueOperation[T]) {
 	if op == nil {
-		panic(panicNilValueOperation)
+		panic(ErrNilValueOperation)
 	}
 }
 
@@ -152,7 +60,7 @@ func requireValueOperation[T any](op ValueOperation[T]) {
 // invalid configuration.
 func requireClock(c clock.Clock) {
 	if c == nil {
-		panic(panicNilClock)
+		panic(ErrNilClock)
 	}
 }
 
@@ -162,7 +70,7 @@ func requireClock(c clock.Clock) {
 // Do/DoValue execution can create and own its own independent sequence.
 func requireDelaySchedule(sched delay.Schedule) {
 	if sched == nil {
-		panic(panicNilDelaySchedule)
+		panic(ErrNilDelaySchedule)
 	}
 }
 
@@ -172,7 +80,7 @@ func requireDelaySchedule(sched delay.Schedule) {
 // Retry reports this as a programming error at the schedule boundary.
 func requireDelaySequence(seq delay.Sequence) {
 	if seq == nil {
-		panic(panicNilDelaySequence)
+		panic(ErrNilDelaySequence)
 	}
 }
 
@@ -183,7 +91,7 @@ func requireDelaySequence(seq delay.Sequence) {
 // StopReasonDelayExhausted and must not be treated as a validation failure.
 func requireDelay(d time.Duration, ok bool) {
 	if ok && d < 0 {
-		panic(panicNegativeDelay)
+		panic(ErrNegativeDelay)
 	}
 }
 
@@ -193,7 +101,7 @@ func requireDelay(d time.Duration, ok bool) {
 // classifier would make retry behavior undefined after the first failed attempt.
 func requireClassifier(classifier Classifier) {
 	if classifier == nil {
-		panic(panicNilClassifier)
+		panic(ErrNilClassifier)
 	}
 }
 
@@ -204,7 +112,7 @@ func requireClassifier(classifier Classifier) {
 // ClassifierFunc directly or supplied through a future WithRetryable option.
 func requireRetryableFunc(fn func(error) bool) {
 	if fn == nil {
-		panic(panicNilClassifierFunc)
+		panic(ErrNilClassifierFunc)
 	}
 }
 
@@ -215,7 +123,7 @@ func requireRetryableFunc(fn func(error) bool) {
 // execution.
 func requireMaxAttempts(n uint) {
 	if n == 0 {
-		panic(panicZeroMaxAttempts)
+		panic(ErrZeroMaxAttempts)
 	}
 }
 
@@ -225,7 +133,7 @@ func requireMaxAttempts(n uint) {
 // total runtime of one retry execution.
 func requireMaxElapsed(d time.Duration) {
 	if d < 0 {
-		panic(panicNegativeMaxElapsed)
+		panic(ErrNegativeMaxElapsed)
 	}
 }
 
@@ -234,7 +142,7 @@ func requireMaxElapsed(d time.Duration) {
 // Observers are optional, but once configured they must be callable.
 func requireObserver(observer Observer) {
 	if observer == nil {
-		panic(panicNilObserver)
+		panic(ErrNilObserver)
 	}
 }
 
@@ -245,7 +153,7 @@ func requireObserver(observer Observer) {
 // ObserverFunc directly or supplied through a future WithObserverFunc option.
 func requireObserverFunc(fn func(context.Context, Event)) {
 	if fn == nil {
-		panic(panicNilObserverFunc)
+		panic(ErrNilObserverFunc)
 	}
 }
 
@@ -255,6 +163,6 @@ func requireObserverFunc(fn func(context.Context, Event)) {
 // errors visible at configuration time and keeps retry defaults explicit.
 func requireOption(opt Option) {
 	if opt == nil {
-		panic(panicNilOption)
+		panic(ErrNilOption)
 	}
 }

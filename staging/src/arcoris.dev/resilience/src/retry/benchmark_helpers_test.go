@@ -15,13 +15,22 @@
 package retry
 
 import (
-	panicassert "arcoris.dev/testutil/panic"
-
-	"testing"
+	"errors"
+	"time"
 )
 
-func TestConfigApplyPanicsOnNilOption(t *testing.T) {
-	panicassert.RequireErrorIs(t, ErrNilOption, func() {
-		_ = configOf(nil)
-	})
+var (
+	benchmarkBoolSink    bool
+	benchmarkErrorSink   error
+	benchmarkEventSink   Event
+	benchmarkIntSink     int
+	benchmarkOutcomeSink Outcome
+	benchmarkReasonSink  StopReason
+	benchmarkStringSink  string
+)
+
+var benchmarkErrBoom = errors.New("boom")
+
+func benchmarkNow() time.Time {
+	return time.Date(2099, 6, 8, 12, 0, 0, 0, time.UTC)
 }

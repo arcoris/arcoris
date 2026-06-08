@@ -12,12 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import "context"
-
-const panicNilObserverFunc = "retry: nil observer function"
 
 // ObserverFunc adapts a function to the Observer interface.
 //
@@ -41,7 +38,7 @@ type ObserverFunc func(ctx context.Context, event Event)
 // unchanged to the wrapped function.
 func (f ObserverFunc) ObserveRetry(ctx context.Context, event Event) {
 	if f == nil {
-		panic(panicNilObserverFunc)
+		panic(ErrNilObserverFunc)
 	}
 
 	f(ctx, event)

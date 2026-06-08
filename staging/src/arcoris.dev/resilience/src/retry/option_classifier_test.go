@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
@@ -43,7 +42,7 @@ func TestWithClassifierLastWins(t *testing.T) {
 }
 
 func TestWithClassifierPanicsOnNilClassifier(t *testing.T) {
-	panicassert.RequireValue(t, panicNilClassifier, func() {
+	panicassert.RequireErrorIs(t, ErrNilClassifier, func() {
 		_ = WithClassifier(nil)
 	})
 }
@@ -64,7 +63,7 @@ func TestWithRetryable(t *testing.T) {
 }
 
 func TestWithRetryablePanicsOnNilFunction(t *testing.T) {
-	panicassert.RequireValue(t, panicNilClassifierFunc, func() {
+	panicassert.RequireErrorIs(t, ErrNilClassifierFunc, func() {
 		_ = WithRetryable(nil)
 	})
 }

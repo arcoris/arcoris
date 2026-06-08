@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
@@ -167,7 +166,7 @@ func TestDoValueReturnsInterruptedAndZeroValueWhenContextAlreadyStopped(t *testi
 }
 
 func TestDoValuePanicsOnNilContext(t *testing.T) {
-	panicassert.RequireValue(t, panicNilContext, func() {
+	panicassert.RequireErrorIs(t, ErrNilContext, func() {
 		_, _ = DoValue(nil, func(context.Context) (int, error) {
 			return 0, nil
 		})
@@ -175,13 +174,13 @@ func TestDoValuePanicsOnNilContext(t *testing.T) {
 }
 
 func TestDoValuePanicsOnNilOperation(t *testing.T) {
-	panicassert.RequireValue(t, panicNilValueOperation, func() {
+	panicassert.RequireErrorIs(t, ErrNilValueOperation, func() {
 		_, _ = DoValue[int](context.Background(), nil)
 	})
 }
 
 func TestDoValuePanicsOnNilOption(t *testing.T) {
-	panicassert.RequireValue(t, panicNilOption, func() {
+	panicassert.RequireErrorIs(t, ErrNilOption, func() {
 		_, _ = DoValue(
 			context.Background(),
 			func(context.Context) (int, error) {

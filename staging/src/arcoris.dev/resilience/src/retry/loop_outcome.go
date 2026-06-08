@@ -12,46 +12,47 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import "context"
 
-// succeeded emits the terminal success event.
+// succeeded emits the terminal success event and returns its Outcome.
 //
 // Success must not preserve earlier operation errors after a later retry attempt
 // succeeds, so LastErr is always nil for StopReasonSucceeded.
-func (e *retryExecution) succeeded(ctx context.Context) {
-	e.stop(ctx, StopReasonSucceeded, nil)
+func (e *retryExecution) succeeded(ctx context.Context) Outcome {
+	return e.stop(ctx, StopReasonSucceeded, nil)
 }
 
-// nonRetryable emits the terminal event and returns the original operation error.
+// nonRetryable emits the terminal event and returns the original operation error
+// with its Outcome.
 //
 // Non-retryable errors are operation-owned results, so retry must not wrap them
 // as ErrExhausted or ErrInterrupted.
-func (e *retryExecution) nonRetryable(ctx context.Context, err error) error {
-	e.stop(ctx, StopReasonNonRetryable, err)
-	return err
+func (e *retryExecution) nonRetryable(ctx context.Context, err error) (Outcome, error) {
+	outcome := e.stop(ctx, StopReasonNonRetryable, err)
+	return outcome, err
 }
 
-// exhausted emits a retry-owned exhaustion outcome.
+// exhausted emits a retry-owned exhaustion outcome and returns ErrExhausted.
 //
 // Callers must pass only exhausted StopReason values so NewExhaustedError
 // preserves the package invariant that ErrExhausted belongs to retry-owned
 // attempt, elapsed, context deadline budget, or delay exhaustion.
-func (e *retryExecution) exhausted(ctx context.Context, reason StopReason) error {
+func (e *retryExecution) exhausted(ctx context.Context, reason StopReason) (Outcome, error) {
 	outcome := e.stop(ctx, reason, e.lastErr)
-	return NewExhaustedError(outcome)
+	return outcome, NewExhaustedError(outcome)
 }
 
-// interrupted emits a retry-owned interruption outcome and returns err unchanged.
+// interrupted emits a retry-owned interruption outcome and returns err unchanged
+// with its Outcome.
 //
 // The interruption cause is not stored in Outcome.LastErr. LastErr is reserved
 // for the last operation-owned error, if an operation attempt happened before
 // retry observed context cancellation.
-func (e *retryExecution) interrupted(ctx context.Context, err error) error {
-	e.stop(ctx, StopReasonInterrupted, e.lastErr)
-	return err
+func (e *retryExecution) interrupted(ctx context.Context, err error) (Outcome, error) {
+	outcome := e.stop(ctx, StopReasonInterrupted, e.lastErr)
+	return outcome, err
 }
 
 // stop centralizes terminal Outcome construction and EventRetryStop emission.

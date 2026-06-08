@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
@@ -42,7 +41,7 @@ func TestWithObserverAppendsObservers(t *testing.T) {
 }
 
 func TestWithObserverPanicsOnNilObserver(t *testing.T) {
-	panicassert.RequireValue(t, panicNilObserver, func() {
+	panicassert.RequireErrorIs(t, ErrNilObserver, func() {
 		_ = WithObserver(nil)
 	})
 }
@@ -66,7 +65,7 @@ func TestWithObserverFunc(t *testing.T) {
 }
 
 func TestWithObserverFuncPanicsOnNilFunction(t *testing.T) {
-	panicassert.RequireValue(t, panicNilObserverFunc, func() {
+	panicassert.RequireErrorIs(t, ErrNilObserverFunc, func() {
 		_ = WithObserverFunc(nil)
 	})
 }

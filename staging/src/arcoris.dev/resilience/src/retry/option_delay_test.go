@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
@@ -54,7 +53,7 @@ func TestWithDelayScheduleLastWins(t *testing.T) {
 }
 
 func TestWithDelaySchedulePanicsOnNilSchedule(t *testing.T) {
-	panicassert.RequireValue(t, panicNilDelaySchedule, func() {
+	panicassert.RequireErrorIs(t, ErrNilDelaySchedule, func() {
 		_ = WithDelaySchedule(nil)
 	})
 }

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import "time"
@@ -42,9 +41,13 @@ func WithMaxAttempts(n uint) Option {
 // A zero duration disables elapsed-time limiting. A positive duration limits the
 // total elapsed runtime measured by the configured retry clock.
 //
-// Retry should check this boundary before sleeping for a delay that would exceed
-// the configured elapsed limit. Max-elapsed exhaustion is retry-owned exhaustion
-// and is represented by ErrExhausted with StopReasonMaxElapsed.
+// Retry checks this boundary after a failed attempt and before sleeping for the
+// next retry delay. MaxElapsed is not an operation timeout and does not interrupt
+// an in-flight operation. An operation may run longer than MaxElapsed if the
+// operation itself does not observe context or another caller-owned timeout.
+//
+// Max-elapsed exhaustion is retry-owned exhaustion and is represented by
+// ErrExhausted with StopReasonMaxElapsed.
 //
 // WithMaxElapsed panics when d is negative.
 func WithMaxElapsed(d time.Duration) Option {

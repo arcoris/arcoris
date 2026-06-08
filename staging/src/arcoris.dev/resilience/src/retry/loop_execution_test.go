@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
@@ -53,7 +52,7 @@ func TestNewRetryExecutionPanicsWhenDelayScheduleReturnsNilSequence(t *testing.T
 	cfg := configOf()
 	cfg.delay = retryTestSchedule{}
 
-	panicassert.RequireValue(t, panicNilDelaySequence, func() {
+	panicassert.RequireErrorIs(t, ErrNilDelaySequence, func() {
 		_ = newRetryExecution(cfg)
 	})
 }
@@ -126,7 +125,7 @@ func TestRetryExecutionNextDelayPanicsOnNegativeDelay(t *testing.T) {
 		sequence: &retryTestSequence{delays: []time.Duration{-time.Nanosecond}},
 	}
 
-	panicassert.RequireValue(t, panicNegativeDelay, func() {
+	panicassert.RequireErrorIs(t, ErrNegativeDelay, func() {
 		_, _ = execution.nextDelay()
 	})
 }

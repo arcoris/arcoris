@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
@@ -152,7 +151,7 @@ func TestDoReturnsInterruptedWhenContextAlreadyStopped(t *testing.T) {
 }
 
 func TestDoPanicsOnNilContext(t *testing.T) {
-	panicassert.RequireValue(t, panicNilContext, func() {
+	panicassert.RequireErrorIs(t, ErrNilContext, func() {
 		_ = Do(nil, func(context.Context) error {
 			return nil
 		})
@@ -160,13 +159,13 @@ func TestDoPanicsOnNilContext(t *testing.T) {
 }
 
 func TestDoPanicsOnNilOperation(t *testing.T) {
-	panicassert.RequireValue(t, panicNilOperation, func() {
+	panicassert.RequireErrorIs(t, ErrNilOperation, func() {
 		_ = Do(context.Background(), nil)
 	})
 }
 
 func TestDoPanicsOnNilOption(t *testing.T) {
-	panicassert.RequireValue(t, panicNilOption, func() {
+	panicassert.RequireErrorIs(t, ErrNilOption, func() {
 		_ = Do(
 			context.Background(),
 			func(context.Context) error {

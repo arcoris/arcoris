@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package retry
 
 import (
@@ -29,7 +28,7 @@ func TestRunSucceedsOnFirstAttempt(t *testing.T) {
 	cfg := configOf()
 	calls := 0
 
-	val, err := run(context.Background(), func(context.Context) (int, error) {
+	val, _, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 42, nil
 	}, cfg)
@@ -50,7 +49,7 @@ func TestRunDefaultDoesNotRetry(t *testing.T) {
 	errBoom := errors.New("boom")
 	calls := 0
 
-	val, err := run(context.Background(), func(context.Context) (int, error) {
+	val, _, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 99, errBoom
 	}, cfg)
@@ -76,7 +75,7 @@ func TestRunRetriesRetryableErrors(t *testing.T) {
 	errBoom := errors.New("boom")
 	calls := 0
 
-	val, err := run(context.Background(), func(context.Context) (int, error) {
+	val, _, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		if calls < 3 {
 			return 0, errBoom
@@ -105,7 +104,7 @@ func TestRunStopsAtMaxAttempts(t *testing.T) {
 	errBoom := errors.New("boom")
 	calls := 0
 
-	_, err := run(context.Background(), func(context.Context) (int, error) {
+	_, _, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 0, errBoom
 	}, cfg)
@@ -142,7 +141,7 @@ func TestRunReturnsOriginalNonRetryableError(t *testing.T) {
 	errBoom := errors.New("boom")
 	calls := 0
 
-	_, err := run(context.Background(), func(context.Context) (int, error) {
+	_, _, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 0, errBoom
 	}, cfg)
@@ -168,7 +167,7 @@ func TestRunStopsWhenDelaySequenceIsExhausted(t *testing.T) {
 	errBoom := errors.New("boom")
 	calls := 0
 
-	_, err := run(context.Background(), func(context.Context) (int, error) {
+	_, _, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 0, errBoom
 	}, cfg)
@@ -200,7 +199,7 @@ func TestRunStopsAtMaxElapsed(t *testing.T) {
 	errBoom := errors.New("boom")
 	calls := 0
 
-	_, err := run(context.Background(), func(context.Context) (int, error) {
+	_, _, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 0, errBoom
 	}, cfg)
@@ -236,7 +235,7 @@ func TestRunStopsAtContextDeadlineBudget(t *testing.T) {
 	)
 
 	calls := 0
-	_, err := run(ctx, func(context.Context) (int, error) {
+	_, _, err := run(ctx, func(context.Context) (int, error) {
 		calls++
 		return 0, errBoom
 	}, cfg)
@@ -278,7 +277,7 @@ func TestRunReturnsInterruptedWhenContextAlreadyStopped(t *testing.T) {
 
 	calls := 0
 
-	_, err := run(ctx, func(context.Context) (int, error) {
+	_, _, err := run(ctx, func(context.Context) (int, error) {
 		calls++
 		return 0, errors.New("boom")
 	}, cfg)
@@ -324,7 +323,7 @@ func TestRunEmitsObserverEvents(t *testing.T) {
 	errBoom := errors.New("boom")
 	calls := 0
 
-	_, err := run(context.Background(), func(context.Context) (int, error) {
+	_, _, err := run(context.Background(), func(context.Context) (int, error) {
 		calls++
 		return 0, errBoom
 	}, cfg)
@@ -365,7 +364,7 @@ func TestRunOperationOwnedContextErrorIsNotInterrupted(t *testing.T) {
 		}
 	}))
 
-	_, err := run(context.Background(), func(context.Context) (int, error) {
+	_, _, err := run(context.Background(), func(context.Context) (int, error) {
 		return 0, context.Canceled
 	}, cfg)
 
@@ -408,7 +407,7 @@ func TestRunReturnsInterruptedWhenContextStopsDuringDelay(t *testing.T) {
 
 	errs := make(chan error, 1)
 	go func() {
-		_, err := run(ctx, func(context.Context) (int, error) {
+		_, _, err := run(ctx, func(context.Context) (int, error) {
 			return 0, errBoom
 		}, cfg)
 		errs <- err
@@ -590,7 +589,7 @@ func TestRunStopEventsAreValidForTerminalReasons(t *testing.T) {
 				stop = event
 			}))
 
-			_, err := run(ctx, tc.op, cfg)
+			_, _, err := run(ctx, tc.op, cfg)
 			if tc.wantErr == nil {
 				if err != nil {
 					t.Fatalf("run error = %v, want nil", err)
