@@ -14,16 +14,17 @@
 
 package snapshot
 
-// noCopy marks holder values as non-copyable for go vet's copylocks checker.
+import "arcoris.dev/chrono/clock"
+
+// passiveClock returns the Publisher clock.
 //
-// Store contains a sync.RWMutex and Publisher contains atomic state. Copying
-// either holder after first use would split synchronization ownership and can
-// produce subtle data races or stale publications. noCopy is unexported because
-// it is an implementation detail, not a public helper type.
-type noCopy struct{}
+// A zero-value Publisher has no configured clock, so it lazily falls back to
+// clock.RealClock. NewPublisher should be used when deterministic timestamps are
+// required in tests.
+func (p *Publisher[T]) passiveClock() clock.PassiveClock {
+	if p.clock != nil {
+		return p.clock
+	}
 
-// Lock is a marker method recognized by go vet's copylocks analyzer.
-func (*noCopy) Lock() {}
-
-// Unlock is a marker method recognized by go vet's copylocks analyzer.
-func (*noCopy) Unlock() {}
+	return clock.RealClock{}
+}

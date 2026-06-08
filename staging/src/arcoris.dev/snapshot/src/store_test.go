@@ -89,6 +89,18 @@ func TestStoreSnapshotClonesValue(t *testing.T) {
 	}
 }
 
+func TestStoreStampedClonesValue(t *testing.T) {
+	store := NewStore([]string{"a", "b"}, cloneStrings)
+
+	stamped := store.Stamped()
+	stamped.Value[0] = "changed"
+
+	next := store.Stamped()
+	if got, want := next.Value[0], "a"; got != want {
+		t.Fatalf("internal value changed through stamped snapshot: got %q, want %q", got, want)
+	}
+}
+
 func TestStoreStampedUsesClock(t *testing.T) {
 	clk := newTestClock()
 	clk.set(time.Unix(100, 0))
@@ -161,7 +173,27 @@ func TestStoreReplacePanicsOnRevisionOverflowWithoutCommit(t *testing.T) {
 	}
 }
 
-func TestStoreReplaceClonePanicLeavesValueUnchanged(t *testing.T) {
+func TestStoreReplaceStoredClonePanicLeavesValueUnchanged(t *testing.T) {
+	cloner := &clonePanicAfter[string]{
+		after: 2,
+		clone: Identity[string],
+	}
+	store := NewStore("initial", cloner.Clone)
+
+	panicassert.RequireMessage(t, "clone failed", func() {
+		_ = store.Replace("next")
+	})
+
+	snap := store.Snapshot()
+	if got, want := snap.Revision, Revision(1); got != want {
+		t.Fatalf("revision = %d, want %d", got, want)
+	}
+	if got, want := snap.Value, "initial"; got != want {
+		t.Fatalf("value = %q, want %q", got, want)
+	}
+}
+
+func TestStoreReplaceReturnedClonePanicLeavesValueUnchanged(t *testing.T) {
 	cloner := &clonePanicAfter[string]{
 		after: 3,
 		clone: Identity[string],

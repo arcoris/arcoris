@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Package snapshot provides typed, revisioned publication primitives for
 // component read models.
 //
@@ -20,14 +19,19 @@
 // package when they own mutable internal state but need to expose a stable value
 // to readers, diagnostics, health probes, observers, or tests.
 //
-// Store is the safe baseline for mutable values. It owns one always-present value,
-// protects it with a mutex, isolates readers and writers with an explicit
-// CloneFunc, and advances a local Revision when the value changes.
+// Store is the safe baseline for mutable values. It owns one always-present
+// value, protects it with a mutex, isolates readers and writers with an explicit
+// CloneFunc, and advances a local Revision when the value changes. Store starts
+// at revision 1 because construction commits the initial value. The zero-value
+// Store is invalid and must not be used; construct Store values with NewStore.
 //
-// Publisher is the fast baseline for immutable copy-on-write values. It publishes
-// immutable records through an atomic pointer so readers can load the latest
-// snapshot without locking or cloning. Values passed to Publisher must not be
-// mutated after publication.
+// Publisher is the fast baseline for immutable copy-on-write values. It
+// publishes immutable records through an atomic pointer so readers can load the
+// latest snapshot without locking or cloning. Values passed to Publisher must
+// not be mutated after publication. The zero-value Publisher is usable: before
+// the first publication it returns zero snapshots, and when publishing it lazily
+// uses clock.RealClock for Stamped timestamps. Use NewPublisher with WithClock
+// when deterministic publication timestamps are required.
 //
 // Snapshot is intentionally lightweight and contains only a Revision and a value.
 // Stamped adds the local update timestamp for components that need publication

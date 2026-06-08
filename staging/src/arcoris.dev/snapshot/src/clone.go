@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package snapshot
 
 // CloneFunc copies a value across a snapshot ownership boundary.
@@ -21,6 +20,19 @@ package snapshot
 // arbitrary values. Structs containing slices, maps, pointers, or mutable nested
 // state usually need a domain-specific clone function. Immutable or copy-safe
 // values may use Identity.
+//
+// A CloneFunc should behave like a pure ownership copy. It should not depend on
+// call count, mutate unrelated external state, or retain aliases that break Store
+// isolation. Tests may intentionally use stateful clone functions to inject
+// failures, but production clone functions should be deterministic and cheap
+// enough for the Store operation they protect.
+//
+// Store may call CloneFunc multiple times for one public operation. NewStore
+// clones the initial value before storing it. Snapshot and Stamped clone on read.
+// ReplaceStamped clones the replacement for storage and clones again for the
+// returned stamped snapshot. UpdateStamped clones the current value before
+// calling the update function, clones the update result for storage, and clones
+// again for the returned stamped snapshot.
 type CloneFunc[T any] func(T) T
 
 // Identity returns value unchanged.

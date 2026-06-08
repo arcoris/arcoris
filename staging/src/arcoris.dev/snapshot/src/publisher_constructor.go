@@ -14,16 +14,13 @@
 
 package snapshot
 
-// noCopy marks holder values as non-copyable for go vet's copylocks checker.
+// NewPublisher creates a Publisher configured with opts.
 //
-// Store contains a sync.RWMutex and Publisher contains atomic state. Copying
-// either holder after first use would split synchronization ownership and can
-// produce subtle data races or stale publications. noCopy is unexported because
-// it is an implementation detail, not a public helper type.
-type noCopy struct{}
-
-// Lock is a marker method recognized by go vet's copylocks analyzer.
-func (*noCopy) Lock() {}
-
-// Unlock is a marker method recognized by go vet's copylocks analyzer.
-func (*noCopy) Unlock() {}
+// The returned Publisher has no published value. Snapshot returns a zero
+// snapshot until Publish is called.
+func NewPublisher[T any](opts ...Option) *Publisher[T] {
+	cfg := newConfig(opts...)
+	return &Publisher[T]{
+		clock: cfg.clock,
+	}
+}

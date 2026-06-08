@@ -14,16 +14,20 @@
 
 package snapshot
 
-// noCopy marks holder values as non-copyable for go vet's copylocks checker.
+// NewStore creates a Store containing initial.
 //
-// Store contains a sync.RWMutex and Publisher contains atomic state. Copying
-// either holder after first use would split synchronization ownership and can
-// produce subtle data races or stale publications. noCopy is unexported because
-// it is an implementation detail, not a public helper type.
-type noCopy struct{}
+// NewStore clones initial before storing it and commits that initial value at
+// revision 1. The clone function must be non-nil and must provide the ownership
+// isolation required by T.
+func NewStore[T any](initial T, clone CloneFunc[T], opts ...Option) *Store[T] {
+	clone = requireClone(clone)
+	cfg := newConfig(opts...)
 
-// Lock is a marker method recognized by go vet's copylocks analyzer.
-func (*noCopy) Lock() {}
-
-// Unlock is a marker method recognized by go vet's copylocks analyzer.
-func (*noCopy) Unlock() {}
+	return &Store[T]{
+		clone:    clone,
+		clock:    cfg.clock,
+		value:    clone(initial),
+		revision: ZeroRevision.Next(),
+		updated:  cfg.clock.Now(),
+	}
+}

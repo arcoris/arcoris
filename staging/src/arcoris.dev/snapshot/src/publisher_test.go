@@ -90,6 +90,27 @@ func TestPublisherStampedReturnsLatestPublishedStampedValue(t *testing.T) {
 	}
 }
 
+func TestPublisherRevisionAdvancesWhenClockMovesBackward(t *testing.T) {
+	clk := newTestClock()
+	clk.set(time.Unix(20, 0))
+	publisher := NewPublisher[string](WithClock(clk))
+
+	first := publisher.PublishStamped("first")
+
+	clk.set(time.Unix(10, 0))
+	second := publisher.PublishStamped("second")
+
+	if got, want := first.Revision, Revision(1); got != want {
+		t.Fatalf("first revision = %d, want %d", got, want)
+	}
+	if got, want := second.Revision, Revision(2); got != want {
+		t.Fatalf("second revision = %d, want %d", got, want)
+	}
+	if !second.Updated.Equal(time.Unix(10, 0)) {
+		t.Fatalf("second updated = %s, want %s", second.Updated, time.Unix(10, 0))
+	}
+}
+
 func TestPublisherRevision(t *testing.T) {
 	publisher := NewPublisher[string]()
 

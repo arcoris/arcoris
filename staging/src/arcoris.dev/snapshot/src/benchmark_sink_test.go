@@ -14,16 +14,13 @@
 
 package snapshot
 
-// noCopy marks holder values as non-copyable for go vet's copylocks checker.
-//
-// Store contains a sync.RWMutex and Publisher contains atomic state. Copying
-// either holder after first use would split synchronization ownership and can
-// produce subtle data races or stale publications. noCopy is unexported because
-// it is an implementation detail, not a public helper type.
-type noCopy struct{}
+import "sync"
 
-// Lock is a marker method recognized by go vet's copylocks analyzer.
-func (*noCopy) Lock() {}
-
-// Unlock is a marker method recognized by go vet's copylocks analyzer.
-func (*noCopy) Unlock() {}
+var (
+	benchmarkSinkMu            sync.Mutex
+	benchmarkIntSnapshotSink   Snapshot[int]
+	benchmarkIntStampedSink    Stamped[int]
+	benchmarkSliceSnapshotSink Snapshot[[]string]
+	benchmarkSliceStampedSink  Stamped[[]string]
+	benchmarkRevisionSink      Revision
+)

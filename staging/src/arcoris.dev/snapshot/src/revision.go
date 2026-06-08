@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package snapshot
 
 // Revision is a local logical version of one snapshot source.

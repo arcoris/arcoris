@@ -12,13 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package snapshot
 
 import (
 	"testing"
 	"time"
 )
+
+func TestStampedZeroValue(t *testing.T) {
+	var stamped Stamped[string]
+
+	if !stamped.IsZeroRevision() {
+		t.Fatalf("zero Stamped revision = %d, want zero", stamped.Revision)
+	}
+	if !stamped.Updated.IsZero() {
+		t.Fatalf("zero Stamped updated = %s, want zero", stamped.Updated)
+	}
+	if got, want := stamped.Value, ""; got != want {
+		t.Fatalf("zero Stamped value = %q, want %q", got, want)
+	}
+}
 
 func TestStampedRevisionHelpers(t *testing.T) {
 	stamped := Stamped[string]{Revision: Revision(3), Updated: time.Unix(1, 0), Value: "value"}

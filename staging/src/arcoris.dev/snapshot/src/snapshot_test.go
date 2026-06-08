@@ -12,10 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package snapshot
 
 import "testing"
+
+func TestSnapshotZeroValue(t *testing.T) {
+	var snap Snapshot[string]
+
+	if !snap.IsZeroRevision() {
+		t.Fatalf("zero Snapshot revision = %d, want zero", snap.Revision)
+	}
+	if got, want := snap.Value, ""; got != want {
+		t.Fatalf("zero Snapshot value = %q, want %q", got, want)
+	}
+	if !snap.ChangedSince(Revision(1)) {
+		t.Fatal("zero Snapshot should differ from a committed revision")
+	}
+}
 
 func TestSnapshotRevisionHelpers(t *testing.T) {
 	snap := Snapshot[string]{Revision: Revision(2), Value: "value"}
