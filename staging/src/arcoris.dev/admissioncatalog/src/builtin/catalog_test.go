@@ -54,3 +54,40 @@ func TestBuiltinComponentKindsAreDeclared(t *testing.T) {
 		}
 	}
 }
+
+func TestBuiltinCatalogDescriptorsAreValidMetadata(t *testing.T) {
+	catalog := NewCatalog()
+	for _, descriptor := range catalog.Reasons() {
+		if !descriptor.IsValid() {
+			t.Fatalf("invalid reason descriptor: %+v", descriptor)
+		}
+		if descriptor.Summary == "" {
+			t.Fatalf("reason descriptor has empty summary: %+v", descriptor)
+		}
+		if !descriptor.DeclaredCapabilities.IsValid() {
+			t.Fatalf("reason descriptor has invalid capabilities: %+v", descriptor)
+		}
+	}
+	for _, descriptor := range catalog.Kinds() {
+		if !descriptor.IsValid() {
+			t.Fatalf("invalid kind descriptor: %+v", descriptor)
+		}
+		if descriptor.Summary == "" {
+			t.Fatalf("kind descriptor has empty summary: %+v", descriptor)
+		}
+		if !descriptor.DeclaredCapabilities.IsValid() {
+			t.Fatalf("kind descriptor has invalid capabilities: %+v", descriptor)
+		}
+	}
+	for _, descriptor := range catalog.Components() {
+		if !descriptor.IsValid() {
+			t.Fatalf("invalid component descriptor: %+v", descriptor)
+		}
+		if descriptor.Summary == "" {
+			t.Fatalf("component descriptor has empty summary: %+v", descriptor)
+		}
+		if !descriptor.DeclaredCapabilities.IsValid() {
+			t.Fatalf("component descriptor has invalid capabilities: %+v", descriptor)
+		}
+	}
+}

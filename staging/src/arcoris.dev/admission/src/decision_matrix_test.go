@@ -52,14 +52,6 @@ func TestDecisionOutcomeEffectMatrix(t *testing.T) {
 	}
 }
 
-func TestDecisionZeroValueIsInvalid(t *testing.T) {
-	t.Parallel()
-
-	if (Decision{}).IsValid() {
-		t.Fatal("zero-value Decision is valid, want invalid")
-	}
-}
-
 func TestDecisionInvalidReasonIsInvalidForEveryOutcomeEffect(t *testing.T) {
 	t.Parallel()
 

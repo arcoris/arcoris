@@ -178,12 +178,65 @@ func TestMustBuildPanicsOnInvalidInput(t *testing.T) {
 }
 
 func TestBuildErrorPaths(t *testing.T) {
-	_, err := Build(Input{Reasons: []ReasonDescriptor{{Reason: admission.Reason("bad-reason")}}})
-	if err == nil {
-		t.Fatal("Build returned nil error")
+	tests := []struct {
+		name  string
+		input Input
+		want  error
+		path  string
+	}{
+		{
+			name:  "reason",
+			input: Input{Reasons: []ReasonDescriptor{{Reason: admission.Reason("bad-reason")}}},
+			want:  ErrInvalidReasonDescriptor,
+			path:  "input.reasons[0]",
+		},
+		{
+			name:  "kind",
+			input: Input{Kinds: []ComponentKindDescriptor{{Kind: admission.ComponentKind("bad-kind")}}},
+			want:  ErrInvalidComponentKindDescriptor,
+			path:  "input.kinds[0]",
+		},
+		{
+			name:  "component",
+			input: Input{Components: []ComponentDescriptor{{ID: admission.ComponentID("bad id"), Kind: testKind}}},
+			want:  ErrInvalidComponentDescriptor,
+			path:  "input.components[0]",
+		},
+		{
+			name:  "unknown component kind",
+			input: Input{Components: []ComponentDescriptor{componentDescriptor(testComponent, testKind)}},
+			want:  ErrUnknownComponentKind,
+			path:  "input.components[0]",
+		},
 	}
-	typed := requireErrorIs[InvalidReasonDescriptorError](t, err, ErrInvalidReasonDescriptor)
-	if got, want := typed.Path, "input.reasons[0]"; got != want {
-		t.Fatalf("Path = %q, want %q", got, want)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := Build(tt.input)
+			if err == nil {
+				t.Fatal("Build returned nil error")
+			}
+			switch tt.want {
+			case ErrInvalidReasonDescriptor:
+				typed := requireErrorIs[InvalidReasonDescriptorError](t, err, tt.want)
+				if typed.Path != tt.path {
+					t.Fatalf("Path = %q, want %q", typed.Path, tt.path)
+				}
+			case ErrInvalidComponentKindDescriptor:
+				typed := requireErrorIs[InvalidComponentKindDescriptorError](t, err, tt.want)
+				if typed.Path != tt.path {
+					t.Fatalf("Path = %q, want %q", typed.Path, tt.path)
+				}
+			case ErrInvalidComponentDescriptor:
+				typed := requireErrorIs[InvalidComponentDescriptorError](t, err, tt.want)
+				if typed.Path != tt.path {
+					t.Fatalf("Path = %q, want %q", typed.Path, tt.path)
+				}
+			case ErrUnknownComponentKind:
+				typed := requireErrorIs[UnknownComponentKindError](t, err, tt.want)
+				if typed.Path != tt.path {
+					t.Fatalf("Path = %q, want %q", typed.Path, tt.path)
+				}
+			}
+		})
 	}
 }

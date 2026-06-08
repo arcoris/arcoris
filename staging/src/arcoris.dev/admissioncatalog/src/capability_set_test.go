@@ -75,3 +75,21 @@ func TestCapabilitySetDoesNotEnforceAdmissionResultValidity(t *testing.T) {
 		t.Fatal("descriptive capability combination should remain valid metadata")
 	}
 }
+
+func TestCapabilitySetDimensionsAreIndependent(t *testing.T) {
+	outcomeOnly := NewCapabilitySet(NewOutcomeSet(OutcomeCapabilityQueue), NewEffectSet())
+	if !outcomeOnly.HasOutcome(OutcomeCapabilityQueue) {
+		t.Fatal("outcome capability is missing")
+	}
+	if outcomeOnly.HasEffect(EffectCapabilityQueued) {
+		t.Fatal("outcome capability leaked into effect dimension")
+	}
+
+	effectOnly := NewCapabilitySet(NewOutcomeSet(), NewEffectSet(EffectCapabilityQueued))
+	if !effectOnly.HasEffect(EffectCapabilityQueued) {
+		t.Fatal("effect capability is missing")
+	}
+	if effectOnly.HasOutcome(OutcomeCapabilityQueue) {
+		t.Fatal("effect capability leaked into outcome dimension")
+	}
+}

@@ -14,6 +14,8 @@
 
 package admissioncatalog
 
+import "fmt"
+
 // Merge composes immutable catalogs into a new immutable catalog.
 //
 // Duplicate declarations are rejected. Nil catalogs are rejected. Components
@@ -24,29 +26,40 @@ func Merge(catalogs ...*Catalog) (*Catalog, error) {
 
 	for i, catalog := range catalogs {
 		if catalog == nil {
-			return nil, NilCatalogError{Operation: "merge", Index: i}
+			return nil, NilCatalogError{Operation: "merge", Index: i, Path: catalogArgumentPath(i)}
 		}
-		for _, descriptor := range catalog.Reasons() {
-			if err := builder.declareReason(descriptor, "catalogs.reasons"); err != nil {
+		for j, descriptor := range catalog.Reasons() {
+			if err := builder.declareReason(descriptor, descriptorPath(catalogPath(i, "reasons"), j)); err != nil {
 				return nil, err
 			}
 		}
-		for _, descriptor := range catalog.Kinds() {
-			if err := builder.declareKind(descriptor, "catalogs.kinds"); err != nil {
+		for j, descriptor := range catalog.Kinds() {
+			if err := builder.declareKind(descriptor, descriptorPath(catalogPath(i, "kinds"), j)); err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	for _, catalog := range catalogs {
-		for _, descriptor := range catalog.Components() {
-			if err := builder.declareComponent(descriptor, "catalogs.components"); err != nil {
+	for i, catalog := range catalogs {
+		for j, descriptor := range catalog.Components() {
+			if err := builder.declareComponent(descriptor, descriptorPath(catalogPath(i, "components"), j)); err != nil {
 				return nil, err
 			}
 		}
 	}
 
 	return builder.Build()
+}
+
+// catalogPath returns the diagnostic prefix for descriptors sourced from a
+// specific catalog argument.
+func catalogPath(catalogIndex int, descriptorKind string) string {
+	return catalogArgumentPath(catalogIndex) + "." + descriptorKind
+}
+
+// catalogArgumentPath returns the diagnostic path for a catalog argument.
+func catalogArgumentPath(catalogIndex int) string {
+	return fmt.Sprintf("catalogs[%d]", catalogIndex)
 }
 
 // MustMerge returns Merge(catalogs...) or panics when composition is invalid.

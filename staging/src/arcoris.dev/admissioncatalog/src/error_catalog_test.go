@@ -20,7 +20,7 @@ import (
 )
 
 func TestCatalogErrorsSupportIsAndAs(t *testing.T) {
-	err := NilCatalogError{Operation: "merge", Index: 0}
+	err := NilCatalogError{Operation: "merge", Index: 0, Path: "catalogs[0]"}
 	if !errors.Is(err, ErrNilCatalog) {
 		t.Fatal("nil catalog error does not match sentinel")
 	}
@@ -31,8 +31,15 @@ func TestCatalogErrorsSupportIsAndAs(t *testing.T) {
 }
 
 func TestCatalogErrorsExposeDetails(t *testing.T) {
-	err := NilCatalogError{Operation: "merge", Index: 3}
-	if err.Operation != "merge" || err.Index != 3 {
+	err := NilCatalogError{Operation: "merge", Index: 3, Path: "catalogs[3]"}
+	if err.Operation != "merge" || err.Index != 3 || err.Path != "catalogs[3]" {
 		t.Fatalf("NilCatalogError = %+v", err)
+	}
+}
+
+func TestNilCatalogErrorUsesPathInMessage(t *testing.T) {
+	err := NilCatalogError{Operation: "merge", Index: 2, Path: "catalogs[2]"}
+	if got, want := err.Error(), "admissioncatalog: nil catalog at catalogs[2]"; got != want {
+		t.Fatalf("Error = %q, want %q", got, want)
 	}
 }

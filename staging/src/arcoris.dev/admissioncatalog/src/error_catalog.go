@@ -32,10 +32,16 @@ type NilCatalogError struct {
 	// Index identifies the nil catalog position when the operation receives a
 	// slice of catalogs. A negative value means no index applies.
 	Index int
+
+	// Path identifies the nil catalog input location when known.
+	Path string
 }
 
 // Error returns a concise diagnostic for the nil catalog input.
 func (e NilCatalogError) Error() string {
+	if e.Path != "" {
+		return formatPathError("nil catalog", e.Path, "")
+	}
 	if e.Index >= 0 {
 		return fmt.Sprintf("admissioncatalog: %s catalog[%d]: nil catalog", e.Operation, e.Index)
 	}

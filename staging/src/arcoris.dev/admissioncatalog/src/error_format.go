@@ -30,3 +30,9 @@ func formatPathError(kind, path, detail string) string {
 	}
 	return "admissioncatalog: " + kind
 }
+
+// descriptorPath returns the stable diagnostic location for a descriptor inside
+// a declaration slice.
+func descriptorPath(prefix string, index int) string {
+	return fmt.Sprintf("%s[%d]", prefix, index)
+}

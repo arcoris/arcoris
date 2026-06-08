@@ -24,8 +24,10 @@ func TestValidSummary(t *testing.T) {
 	}{
 		{name: "empty", summary: "", want: true},
 		{name: "plain", summary: "Static catalog documentation.", want: true},
+		{name: "punctuation", summary: "Static, human-facing metadata: ok!", want: true},
 		{name: "newline", summary: "dynamic\nlog", want: false},
 		{name: "tab", summary: "dynamic\tlog", want: false},
+		{name: "nul", summary: string(rune(0)), want: false},
 		{name: "delete", summary: string(rune(0x7f)), want: false},
 		{name: "invalid utf8", summary: string([]byte{0xff}), want: false},
 	}

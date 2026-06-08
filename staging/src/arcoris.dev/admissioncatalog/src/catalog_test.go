@@ -33,6 +33,15 @@ func TestCatalogZeroValueIsEmpty(t *testing.T) {
 	if _, ok := catalog.Component(testComponent); ok {
 		t.Fatal("zero catalog returned component")
 	}
+	if reasons := catalog.Reasons(); len(reasons) != 0 {
+		t.Fatalf("zero catalog Reasons length = %d, want 0", len(reasons))
+	}
+	if kinds := catalog.Kinds(); len(kinds) != 0 {
+		t.Fatalf("zero catalog Kinds length = %d, want 0", len(kinds))
+	}
+	if components := catalog.Components(); len(components) != 0 {
+		t.Fatalf("zero catalog Components length = %d, want 0", len(components))
+	}
 }
 
 func TestCatalogConcurrentReads(t *testing.T) {

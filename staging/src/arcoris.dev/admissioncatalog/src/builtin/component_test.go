@@ -55,7 +55,4 @@ func TestRetryBudgetComponentIDUsesSnakeCase(t *testing.T) {
 	if got, want := ComponentResilienceRetryBudget, admission.ComponentID("resilience.retry_budget"); got != want {
 		t.Fatalf("ComponentResilienceRetryBudget = %s, want %s", got, want)
 	}
-	if ComponentResilienceRetryBudget == admission.ComponentID("resilience.retrybudget") {
-		t.Fatal("retry budget component ID still uses package-name spelling")
-	}
 }

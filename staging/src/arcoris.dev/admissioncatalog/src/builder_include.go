@@ -22,7 +22,7 @@ func (b *Builder) Include(catalog *Catalog) error {
 	b.requireNonNil()
 	b.init()
 	if catalog == nil {
-		return NilCatalogError{Operation: "include", Index: -1}
+		return NilCatalogError{Operation: "include", Index: -1, Path: "include"}
 	}
 
 	next := Builder{
@@ -31,18 +31,18 @@ func (b *Builder) Include(catalog *Catalog) error {
 		components: b.components.clone(),
 	}
 
-	for _, descriptor := range catalog.Reasons() {
-		if err := next.declareReason(descriptor, "catalog.reasons"); err != nil {
+	for i, descriptor := range catalog.Reasons() {
+		if err := next.declareReason(descriptor, descriptorPath("include.reasons", i)); err != nil {
 			return err
 		}
 	}
-	for _, descriptor := range catalog.Kinds() {
-		if err := next.declareKind(descriptor, "catalog.kinds"); err != nil {
+	for i, descriptor := range catalog.Kinds() {
+		if err := next.declareKind(descriptor, descriptorPath("include.kinds", i)); err != nil {
 			return err
 		}
 	}
-	for _, descriptor := range catalog.Components() {
-		if err := next.declareComponent(descriptor, "catalog.components"); err != nil {
+	for i, descriptor := range catalog.Components() {
+		if err := next.declareComponent(descriptor, descriptorPath("include.components", i)); err != nil {
 			return err
 		}
 	}

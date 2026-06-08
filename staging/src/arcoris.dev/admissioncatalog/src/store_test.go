@@ -28,8 +28,13 @@ func TestDescriptorStoreDeclareLookupListAndClone(t *testing.T) {
 	if !store.declare(reasonDescriptor(testReason)) {
 		t.Fatal("declare returned false for second descriptor")
 	}
-	if store.declare(reasonDescriptor(testReason)) {
+	duplicate := reasonDescriptor(testReason)
+	duplicate.Summary = "duplicate summary"
+	if store.declare(duplicate) {
 		t.Fatal("declare returned true for duplicate descriptor")
+	}
+	if descriptor, _ := store.get(testReason); descriptor.Summary != reasonDescriptor(testReason).Summary {
+		t.Fatal("duplicate declaration overwrote existing descriptor")
 	}
 
 	if !store.has(testReason) {
@@ -52,6 +57,9 @@ func TestDescriptorStoreDeclareLookupListAndClone(t *testing.T) {
 	if descriptor, _ := clone.get(testReason); descriptor.Reason != testReason {
 		t.Fatal("clone changed after source mutation")
 	}
+	if got := clone.list(); got[0].Reason != testReason {
+		t.Fatal("clone did not preserve deterministic ordering")
+	}
 }
 
 func TestDescriptorStoreZeroValueReadsEmpty(t *testing.T) {
@@ -64,5 +72,44 @@ func TestDescriptorStoreZeroValueReadsEmpty(t *testing.T) {
 	}
 	if list := store.list(); len(list) != 0 {
 		t.Fatalf("list length = %d, want 0", len(list))
+	}
+}
+
+func TestDescriptorStoreInitPreservesBehaviorAndDeclarations(t *testing.T) {
+	store := newReasonStore()
+	if !store.declare(reasonDescriptor(testReason)) {
+		t.Fatal("declare returned false for first descriptor")
+	}
+
+	originalKey := store.key
+	originalLess := store.less
+	store.init(
+		func(ReasonDescriptor) admission.Reason { return admission.Reason("wrong_reason") },
+		func(ReasonDescriptor, ReasonDescriptor) bool { return false },
+	)
+
+	if store.key == nil || store.less == nil {
+		t.Fatal("init cleared store behavior")
+	}
+	if store.key(reasonDescriptor(testOtherReason)) != originalKey(reasonDescriptor(testOtherReason)) {
+		t.Fatal("init replaced key function")
+	}
+	if originalLess(reasonDescriptor(testReason), reasonDescriptor(testOtherReason)) !=
+		store.less(reasonDescriptor(testReason), reasonDescriptor(testOtherReason)) {
+		t.Fatal("init replaced less function")
+	}
+	if !store.has(testReason) {
+		t.Fatal("init dropped existing descriptor")
+	}
+}
+
+func TestDescriptorStoreCloneDetachesMapStorage(t *testing.T) {
+	store := newReasonStore()
+	store.declare(reasonDescriptor(testReason))
+	clone := store.clone()
+
+	clone.byKey[testOtherReason] = reasonDescriptor(testOtherReason)
+	if store.has(testOtherReason) {
+		t.Fatal("mutating clone changed source store")
 	}
 }

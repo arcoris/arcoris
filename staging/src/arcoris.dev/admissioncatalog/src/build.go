@@ -14,8 +14,6 @@
 
 package admissioncatalog
 
-import "fmt"
-
 // Build validates input and returns an immutable catalog.
 //
 // Build is all-or-nothing. It rejects invalid descriptors, duplicate
@@ -25,17 +23,17 @@ func Build(input Input) (*Catalog, error) {
 	builder := newInitializedBuilder()
 
 	for i, descriptor := range input.Reasons {
-		if err := builder.declareReason(descriptor, fmt.Sprintf("input.reasons[%d]", i)); err != nil {
+		if err := builder.declareReason(descriptor, descriptorPath("input.reasons", i)); err != nil {
 			return nil, err
 		}
 	}
 	for i, descriptor := range input.Kinds {
-		if err := builder.declareKind(descriptor, fmt.Sprintf("input.kinds[%d]", i)); err != nil {
+		if err := builder.declareKind(descriptor, descriptorPath("input.kinds", i)); err != nil {
 			return nil, err
 		}
 	}
 	for i, descriptor := range input.Components {
-		if err := builder.declareComponent(descriptor, fmt.Sprintf("input.components[%d]", i)); err != nil {
+		if err := builder.declareComponent(descriptor, descriptorPath("input.components", i)); err != nil {
 			return nil, err
 		}
 	}

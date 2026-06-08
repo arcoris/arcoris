@@ -12,14 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package builtin provides standard ARCORIS admission catalog metadata.
-//
-// The package contains stable descriptors for core admission reasons,
-// cross-component reasons, standard component kinds, and established ARCORIS
-// components. It returns fresh slices and fresh immutable catalogs on demand.
-//
-// Builtin metadata is not a global mutable catalog, does not install live
-// admitters, and does not perform runtime admission. Component packages can
-// expose their own descriptors and compose them with NewCatalog through
-// admissioncatalog.Merge.
-package builtin
+package admission
+
+import "testing"
+
+func TestDecisionIsCopyableValue(t *testing.T) {
+	t.Parallel()
+
+	original := Decision{
+		Outcome: OutcomeAdmitted,
+		Reason:  ReasonAdmitted,
+		Effect:  EffectOwned,
+	}
+	copied := original
+
+	if copied != original {
+		t.Fatalf("copied decision = %+v, want %+v", copied, original)
+	}
+}
+
+func TestDecisionZeroValueIsInvalid(t *testing.T) {
+	t.Parallel()
+
+	var decision Decision
+	if decision.IsValid() {
+		t.Fatal("zero-value Decision is valid, want invalid")
+	}
+}

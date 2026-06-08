@@ -31,6 +31,9 @@ func TestBuilderNilReceiverPanics(t *testing.T) {
 		_, _ = builder.Build()
 	})
 	requirePanicMessage(t, nilBuilderPanic, func() {
+		_ = builder.MustBuild()
+	})
+	requirePanicMessage(t, nilBuilderPanic, func() {
 		_ = builder.Include(&Catalog{})
 	})
 }
@@ -42,5 +45,35 @@ func TestCatalogNilReceiverPanics(t *testing.T) {
 	})
 	requirePanicMessage(t, nilCatalogPanic, func() {
 		_, _ = catalog.Reason(testReason)
+	})
+	requirePanicMessage(t, nilCatalogPanic, func() {
+		_ = catalog.HasReason(testReason)
+	})
+	requirePanicMessage(t, nilCatalogPanic, func() {
+		_ = catalog.Reasons()
+	})
+	requirePanicMessage(t, nilCatalogPanic, func() {
+		_ = catalog.LenKinds()
+	})
+	requirePanicMessage(t, nilCatalogPanic, func() {
+		_, _ = catalog.Kind(testKind)
+	})
+	requirePanicMessage(t, nilCatalogPanic, func() {
+		_ = catalog.HasKind(testKind)
+	})
+	requirePanicMessage(t, nilCatalogPanic, func() {
+		_ = catalog.Kinds()
+	})
+	requirePanicMessage(t, nilCatalogPanic, func() {
+		_ = catalog.LenComponents()
+	})
+	requirePanicMessage(t, nilCatalogPanic, func() {
+		_, _ = catalog.Component(testComponent)
+	})
+	requirePanicMessage(t, nilCatalogPanic, func() {
+		_ = catalog.HasComponent(testComponent)
+	})
+	requirePanicMessage(t, nilCatalogPanic, func() {
+		_ = catalog.Components()
 	})
 }

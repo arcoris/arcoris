@@ -46,11 +46,24 @@ func TestOutcomeSetZeroIsValidAndUnspecified(t *testing.T) {
 	if set.Has(0) {
 		t.Fatal("zero capability reported present")
 	}
+	if set.Has(OutcomeCapability(1 << 7)) {
+		t.Fatal("unknown capability reported present in zero set")
+	}
 }
 
 func TestOutcomeSetRejectsUnknownBits(t *testing.T) {
-	set := OutcomeSet(1 << 7)
+	set := NewOutcomeSet(OutcomeCapability(1 << 7))
 	if set.IsValid() {
 		t.Fatal("unknown outcome bits were accepted")
+	}
+	if OutcomeSet(1<<7)&set == 0 {
+		t.Fatal("constructor dropped unknown outcome bits")
+	}
+}
+
+func TestOutcomeSetWithPreservesExistingBits(t *testing.T) {
+	set := NewOutcomeSet(OutcomeCapabilityAdmit).With(OutcomeCapabilityQueue)
+	if !set.Has(OutcomeCapabilityAdmit) || !set.Has(OutcomeCapabilityQueue) {
+		t.Fatal("With did not preserve existing outcome bits")
 	}
 }

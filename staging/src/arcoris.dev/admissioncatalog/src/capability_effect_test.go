@@ -46,11 +46,24 @@ func TestEffectSetZeroIsValidAndUnspecified(t *testing.T) {
 	if set.Has(0) {
 		t.Fatal("zero capability reported present")
 	}
+	if set.Has(EffectCapability(1 << 7)) {
+		t.Fatal("unknown capability reported present in zero set")
+	}
 }
 
 func TestEffectSetRejectsUnknownBits(t *testing.T) {
-	set := EffectSet(1 << 7)
+	set := NewEffectSet(EffectCapability(1 << 7))
 	if set.IsValid() {
 		t.Fatal("unknown effect bits were accepted")
+	}
+	if EffectSet(1<<7)&set == 0 {
+		t.Fatal("constructor dropped unknown effect bits")
+	}
+}
+
+func TestEffectSetWithPreservesExistingBits(t *testing.T) {
+	set := NewEffectSet(EffectCapabilityNone).With(EffectCapabilityOwned)
+	if !set.Has(EffectCapabilityNone) || !set.Has(EffectCapabilityOwned) {
+		t.Fatal("With did not preserve existing effect bits")
 	}
 }

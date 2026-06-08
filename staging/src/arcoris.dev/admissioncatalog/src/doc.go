@@ -28,5 +28,5 @@
 // Declared capabilities are descriptive metadata only. They do not validate or
 // execute admission results, configure admitters, enforce capacity, run policy
 // engines, record metrics, perform logging or tracing, discover live runtime
-// components, or provide process-wide registration.
+// components, or mutate process-wide catalog state.
 package admissioncatalog

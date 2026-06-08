@@ -57,3 +57,9 @@ func TestFormatPathError(t *testing.T) {
 		})
 	}
 }
+
+func TestDescriptorPath(t *testing.T) {
+	if got, want := descriptorPath("catalogs[2].components", 4), "catalogs[2].components[4]"; got != want {
+		t.Fatalf("descriptorPath = %q, want %q", got, want)
+	}
+}
