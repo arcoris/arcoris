@@ -26,4 +26,7 @@
 // changes, or stamp object metadata resourceVersion/generation fields. Those
 // responsibilities belong to higher API operation, codec, request-flow,
 // server, and future watch layers.
+//
+// This package defines contracts only. The in-memory implementation lives in
+// the sibling package arcoris.dev/apimachinery/api/objectmemorystore.
 package objectstore
