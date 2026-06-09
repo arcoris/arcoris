@@ -22,20 +22,20 @@ import (
 
 func TestNamesReturnsStableRegistrationOrder(t *testing.T) {
 	var catalog Catalog
-	requireNoError(t, catalog.Register(types.Define("example.Name", types.String())))
-	requireNoError(t, catalog.Register(types.Define("example.Count", types.Int64())))
+	requireNoError(t, catalog.Register(types.Define("example.dev.Name", types.String())))
+	requireNoError(t, catalog.Register(types.Define("example.dev.Count", types.Int64())))
 
-	requireNames(t, &catalog, "example.Name", "example.Count")
+	requireNames(t, &catalog, "example.dev.Name", "example.dev.Count")
 }
 
 func TestNamesReturnsDetachedSlice(t *testing.T) {
 	var catalog Catalog
-	requireNoError(t, catalog.Register(types.Define("example.Name", types.String())))
+	requireNoError(t, catalog.Register(types.Define("example.dev.Name", types.String())))
 
 	names := catalog.Names()
-	names[0] = "example.Changed"
+	names[0] = "example.dev.Changed"
 
-	requireNames(t, &catalog, "example.Name")
+	requireNames(t, &catalog, "example.dev.Name")
 }
 
 func TestNamesNilCatalogReturnsEmptySlice(t *testing.T) {

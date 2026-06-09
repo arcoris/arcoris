@@ -19,7 +19,7 @@ import (
 	"testing"
 )
 
-func TestValidateTypeBroadInvariantMatrix(t *testing.T) {
+func TestValidateDescriptorBroadInvariantMatrix(t *testing.T) {
 	validObject := Object(
 		Field("spec").Object(
 			Field("name").String().Required().MinBytes(1),
@@ -59,15 +59,15 @@ func TestValidateDescriptorErrorWrappingAndPath(t *testing.T) {
 func TestValidateDefinitionRejectsInvalidNameAndCycles(t *testing.T) {
 	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
-		case "example.Name":
-			return Define("example.Name", String()), true
-		case "example.Self":
-			return Define("example.Self", Ref("example.Self")), true
+		case "example.dev.Name":
+			return Define("example.dev.Name", String()), true
+		case "example.dev.Self":
+			return Define("example.dev.Self", Ref("example.dev.Self")), true
 		default:
 			return Definition{}, false
 		}
 	})
 
 	requireErrorIs(t, ValidateDefinitionResolved(Define("bad", String()), resolver), ErrInvalidDescriptorReference)
-	requireErrorIs(t, ValidateDefinitionResolved(Define("example.Self", Ref("example.Self")), resolver), ErrInvalidDescriptorReference)
+	requireErrorIs(t, ValidateDefinitionResolved(Define("example.dev.Self", Ref("example.dev.Self")), resolver), ErrInvalidDescriptorReference)
 }

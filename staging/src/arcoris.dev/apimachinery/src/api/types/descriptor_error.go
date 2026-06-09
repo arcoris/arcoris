@@ -38,7 +38,7 @@ var (
 // DescriptorError attaches structured descriptor diagnostics to a classified error.
 //
 // Path is a descriptor path such as object.fields[spec].type, list.elem, or
-// ref(arcoris.meta.Name). It is not a path into a future concrete API object.
+// ref(meta.arcoris.dev.Name). It is not a path into a future concrete API object.
 type DescriptorError struct {
 	// Record stores the shared path, sentinel, reason, and detail fields.
 	diagnostic.Record[DescriptorErrorReason]

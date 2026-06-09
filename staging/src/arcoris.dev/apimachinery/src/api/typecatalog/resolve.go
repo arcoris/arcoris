@@ -24,7 +24,7 @@ import "arcoris.dev/apimachinery/api/types"
 //
 // Typical resolver use:
 //
-//	desc := types.Ref("arcoris.meta.Name").
+//	desc := types.Ref("meta.arcoris.dev.Name").
 //		Descriptor()
 //
 //	err := types.ValidateResolved(

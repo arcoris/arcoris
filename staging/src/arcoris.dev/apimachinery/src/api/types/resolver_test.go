@@ -25,7 +25,11 @@ func (f resolverFunc) Resolve(name TypeName) (Definition, bool) {
 }
 
 func TestResolverValidationNilResolverAcceptsValidRefName(t *testing.T) {
-	requireNoError(t, ValidateLocal(Ref("example.Name").Descriptor()))
+	requireNoError(t, ValidateLocal(Ref("example.dev.Name").Descriptor()))
+}
+
+func TestResolverValidationResolvedRequiresResolver(t *testing.T) {
+	requireErrorIs(t, ValidateResolved(Ref("example.dev.Name").Descriptor(), nil), ErrInvalidDescriptorReference)
 }
 
 func TestResolverValidationRejectsUnresolvedRef(t *testing.T) {
@@ -33,72 +37,72 @@ func TestResolverValidationRejectsUnresolvedRef(t *testing.T) {
 		return Definition{}, false
 	})
 
-	requireErrorIs(t, ValidateResolved(Ref("example.Name").Descriptor(), resolver), ErrUnresolvedDescriptorReference)
+	requireErrorIs(t, ValidateResolved(Ref("example.dev.Name").Descriptor(), resolver), ErrUnresolvedDescriptorReference)
 }
 
 func TestResolverValidationAcceptsResolvedRef(t *testing.T) {
 	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
-		if name == "example.Name" {
-			return Define("example.Name", String().MinBytes(1)), true
+		if name == "example.dev.Name" {
+			return Define("example.dev.Name", String().MinBytes(1)), true
 		}
 		return Definition{}, false
 	})
 
-	requireNoError(t, ValidateResolved(Ref("example.Name").Descriptor(), resolver))
+	requireNoError(t, ValidateResolved(Ref("example.dev.Name").Descriptor(), resolver))
 }
 
 func TestResolverValidationRejectsResolvedInvalidDefinition(t *testing.T) {
 	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
-		if name == "example.Bad" {
-			return Define("example.Bad", ListOf(DescriptorExpr(nil))), true
+		if name == "example.dev.Bad" {
+			return Define("example.dev.Bad", ListOf(DescriptorExpr(nil))), true
 		}
 		return Definition{}, false
 	})
 
-	requireErrorIs(t, ValidateResolved(Ref("example.Bad").Descriptor(), resolver), ErrInvalidDescriptor)
+	requireErrorIs(t, ValidateResolved(Ref("example.dev.Bad").Descriptor(), resolver), ErrInvalidDescriptor)
 }
 
 func TestResolverValidationRejectsReferenceCycle(t *testing.T) {
 	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
-		case "example.A":
-			return Define("example.A", Ref("example.B")), true
-		case "example.B":
-			return Define("example.B", Ref("example.A")), true
+		case "example.dev.A":
+			return Define("example.dev.A", Ref("example.dev.B")), true
+		case "example.dev.B":
+			return Define("example.dev.B", Ref("example.dev.A")), true
 		default:
 			return Definition{}, false
 		}
 	})
 
-	requireErrorIs(t, ValidateResolved(Ref("example.A").Descriptor(), resolver), ErrInvalidDescriptorReference)
+	requireErrorIs(t, ValidateResolved(Ref("example.dev.A").Descriptor(), resolver), ErrInvalidDescriptorReference)
 }
 
 func TestResolverValidationRejectsDirectDefinitionCycle(t *testing.T) {
 	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
-		if name == "example.A" {
-			return Define("example.A", Ref("example.A")), true
+		if name == "example.dev.A" {
+			return Define("example.dev.A", Ref("example.dev.A")), true
 		}
 		return Definition{}, false
 	})
 
-	requireErrorIs(t, ValidateDefinitionResolved(Define("example.A", Ref("example.A")), resolver), ErrInvalidDescriptorReference)
+	requireErrorIs(t, ValidateDefinitionResolved(Define("example.dev.A", Ref("example.dev.A")), resolver), ErrInvalidDescriptorReference)
 }
 
 func TestResolverValidationSiblingRefsDoNotShareResolvingState(t *testing.T) {
 	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
-		case "example.A":
-			return Define("example.A", String().MinBytes(1)), true
-		case "example.B":
-			return Define("example.B", String().MinBytes(1)), true
+		case "example.dev.A":
+			return Define("example.dev.A", String().MinBytes(1)), true
+		case "example.dev.B":
+			return Define("example.dev.B", String().MinBytes(1)), true
 		default:
 			return Definition{}, false
 		}
 	})
 
 	desc := Object(
-		Field("a").Ref("example.A").Required(),
-		Field("b").Ref("example.B").Required(),
+		Field("a").Ref("example.dev.A").Required(),
+		Field("b").Ref("example.dev.B").Required(),
 	).Descriptor()
 
 	requireValidDescriptor(t, desc, resolver)

@@ -17,11 +17,11 @@ package types
 import "testing"
 
 func TestDefinitionAccessorsAndDetach(t *testing.T) {
-	def := Define("example.Name", String().Enum("alpha")).WithDescription("Name")
+	def := Define("example.dev.Name", String().Enum("alpha")).WithDescription("Name")
 	desc := def.Descriptor()
 	desc.string.enum[0] = "changed"
 
-	requireEqual(t, def.Name(), TypeName("example.Name"))
+	requireEqual(t, def.Name(), TypeName("example.dev.Name"))
 	requireEqual(t, def.Description(), "Name")
 	view, _ := def.Descriptor().AsString()
 	requireEqual(t, view.Enum()[0], "alpha")

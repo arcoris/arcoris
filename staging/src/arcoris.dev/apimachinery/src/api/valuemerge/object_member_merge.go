@@ -110,7 +110,7 @@ func (m *merger) mergeObjectMember(
 	selection := selectAt(fields, path)
 	if !selection.selected() {
 		switch {
-		case known || unknown == types.UnknownPreserve:
+		case known || unknown == types.UnknownPreserveOpaque:
 			return base.Clone(), nil
 		case unknown == types.UnknownReject:
 			return operand{}, errorAt(

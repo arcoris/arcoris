@@ -29,7 +29,7 @@ func FuzzParseFieldName(f *testing.F) {
 }
 
 func FuzzParseTypeName(f *testing.F) {
-	for _, seed := range []string{"arcoris.meta.Name", "example.CronExpression", "", "bad", "example.name"} {
+	for _, seed := range []string{"meta.arcoris.dev.Name", "example.dev.CronExpression", "", "bad", "example.dev.name"} {
 		f.Add(seed)
 	}
 	f.Fuzz(func(t *testing.T, s string) {
@@ -40,7 +40,7 @@ func FuzzParseTypeName(f *testing.F) {
 	})
 }
 
-func FuzzValidateTypeDoesNotPanic(f *testing.F) {
+func FuzzValidateDescriptorDoesNotPanic(f *testing.F) {
 	for _, seed := range []uint8{0, 1, 2, 23, 255} {
 		f.Add(seed)
 	}

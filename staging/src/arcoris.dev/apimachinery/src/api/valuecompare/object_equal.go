@@ -89,7 +89,7 @@ func (c *comparer) equalUnknownObjectMembers(
 	case types.UnknownReject:
 		_, err := c.rejectUnknownObjectMembers(path, oldObject, newObject, declared)
 		return err == nil, err
-	case types.UnknownPreserve:
+	case types.UnknownPreserveOpaque:
 		return c.equalPreservedUnknownObjectMembers(path, oldObject, newObject, declared)
 	case types.UnknownPrune:
 		return true, nil

@@ -69,3 +69,62 @@ func TestMapValidateRejectsKeyReferenceToNonStringDescriptor(t *testing.T) {
 		return Definition{}, false
 	})), ErrInvalidField)
 }
+
+func TestMapValidateRejectsInvalidKeyStringRulesAtKeyPath(t *testing.T) {
+	desc := MapOf(String()).Keys(String().MinBytes(2).MaxBytes(1)).Descriptor()
+
+	requireDescriptorError(
+		t,
+		ValidateLocal(desc),
+		ErrInvalidDescriptor,
+		"descriptor.key.bytes",
+		DescriptorErrorReasonInvalidRange,
+		"min=2 max=1",
+	)
+}
+
+func TestMapValidateRejectsKeyReferenceCycle(t *testing.T) {
+	desc := MapOf(String()).Keys(Ref("example.dev.A")).Descriptor()
+	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
+		switch name {
+		case "example.dev.A":
+			return Define("example.dev.A", Ref("example.dev.B")), true
+		case "example.dev.B":
+			return Define("example.dev.B", Ref("example.dev.A")), true
+		default:
+			return Definition{}, false
+		}
+	})
+
+	requireDescriptorError(
+		t,
+		ValidateResolved(desc, resolver),
+		ErrInvalidDescriptorReference,
+		"descriptor.key",
+		DescriptorErrorReasonReferenceCycle,
+		"recursive",
+	)
+}
+
+func TestMapValidateRejectsValueReferenceCycle(t *testing.T) {
+	desc := MapOf(Ref("example.dev.A")).Descriptor()
+	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
+		switch name {
+		case "example.dev.A":
+			return Define("example.dev.A", Ref("example.dev.B")), true
+		case "example.dev.B":
+			return Define("example.dev.B", Ref("example.dev.A")), true
+		default:
+			return Definition{}, false
+		}
+	})
+
+	requireDescriptorError(
+		t,
+		ValidateResolved(desc, resolver),
+		ErrInvalidDescriptorReference,
+		"descriptor.value",
+		DescriptorErrorReasonReferenceCycle,
+		"recursive",
+	)
+}

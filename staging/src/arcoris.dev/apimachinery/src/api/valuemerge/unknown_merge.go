@@ -38,7 +38,7 @@ func mergeUnknownObjectMember(
 		)
 	case types.UnknownPrune:
 		return valuepresence.Absent(), nil
-	case types.UnknownPreserve:
+	case types.UnknownPreserveOpaque:
 		return mergePreservedUnknownMember(path, base, overlay, selection)
 	default:
 		return operand{}, errorAt(

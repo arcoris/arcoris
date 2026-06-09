@@ -26,7 +26,7 @@ import (
 // compareObject compares fixed object fields with field-path semantics.
 //
 // Declared fields use path.Field(name). Undeclared members are handled after
-// declared fields so UnknownReject, UnknownPreserve, and UnknownPrune match the
+// declared fields so UnknownReject, UnknownPreserveOpaque, and UnknownPrune match the
 // descriptor policy without affecting known-field traversal.
 func (c *comparer) compareObject(
 	path fieldpath.Path,
@@ -107,7 +107,7 @@ func objectFieldsByName(fields []types.FieldDescriptor) map[string]types.FieldDe
 
 // compareUnknownObjectMembers applies the descriptor's undeclared-member policy.
 //
-// UnknownReject fails fast, UnknownPreserve compares each unknown member as one
+// UnknownReject fails fast, UnknownPreserveOpaque compares each unknown member as one
 // opaque leaf, and UnknownPrune ignores unknown members completely.
 func (c *comparer) compareUnknownObjectMembers(
 	path fieldpath.Path,
@@ -119,7 +119,7 @@ func (c *comparer) compareUnknownObjectMembers(
 	switch policy {
 	case types.UnknownReject:
 		return c.rejectUnknownObjectMembers(path, oldObject, newObject, declared)
-	case types.UnknownPreserve:
+	case types.UnknownPreserveOpaque:
 		return c.comparePreservedUnknownObjectMembers(path, oldObject, newObject, declared)
 	case types.UnknownPrune:
 		return EmptyResult(), nil

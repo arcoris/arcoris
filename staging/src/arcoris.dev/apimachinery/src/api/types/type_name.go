@@ -23,9 +23,10 @@ import (
 // TypeName is a dot-separated name for an owner-defined reusable structural descriptor.
 //
 // Descriptor names identify descriptor definitions, not Go packages or concrete Go
-// types. Prefix segments are lower-case API namespaces. The final segment
-// starts with an upper-case ASCII letter so named semantic types stand out from
-// field names and namespace segments.
+// types. Prefix segments are lower-case API namespaces; ARCORIS examples use
+// reverse-DNS-like prefixes such as meta.arcoris.dev. The final segment starts
+// with an upper-case ASCII letter so named semantic types stand out from field
+// names and namespace segments.
 type TypeName string
 
 // ParseTypeName validates s and returns it as a TypeName.

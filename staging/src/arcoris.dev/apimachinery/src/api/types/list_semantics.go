@@ -27,8 +27,7 @@ const (
 	// ListOrdered treats physical item indexes as part of the API contract.
 	ListOrdered
 
-	// ListSet treats the complete list as one field until a stable value-based
-	// set identity model exists.
+	// ListSet treats non-nullable stable scalar elements as set members.
 	ListSet
 
 	// ListMap treats object elements as keyed by one or more required fields.

@@ -34,20 +34,20 @@ func TestListMapKeyValidationAcceptsStableIdentityScalars(t *testing.T) {
 		{name: "uint64", field: Field("key").Uint64().Required()},
 		{
 			name:  "string ref",
-			field: Field("key").Ref("example.StringKey").Required(),
+			field: Field("key").Ref("example.dev.StringKey").Required(),
 			resolver: resolverFunc(func(name TypeName) (Definition, bool) {
-				if name == "example.StringKey" {
-					return Define("example.StringKey", String().MinBytes(1)), true
+				if name == "example.dev.StringKey" {
+					return Define("example.dev.StringKey", String().MinBytes(1)), true
 				}
 				return Definition{}, false
 			}),
 		},
 		{
 			name:  "uint64 ref",
-			field: Field("key").Ref("example.Uint64Key").Required(),
+			field: Field("key").Ref("example.dev.Uint64Key").Required(),
 			resolver: resolverFunc(func(name TypeName) (Definition, bool) {
-				if name == "example.Uint64Key" {
-					return Define("example.Uint64Key", Uint64()), true
+				if name == "example.dev.Uint64Key" {
+					return Define("example.dev.Uint64Key", Uint64()), true
 				}
 				return Definition{}, false
 			}),
@@ -98,10 +98,10 @@ func TestListMapKeyValidationRejectsUnsupportedIdentityDescriptors(t *testing.T)
 		},
 		{
 			name:  "object ref",
-			field: Field("key").Ref("example.ObjectKey").Required(),
+			field: Field("key").Ref("example.dev.ObjectKey").Required(),
 			resolver: resolverFunc(func(name TypeName) (Definition, bool) {
-				if name == "example.ObjectKey" {
-					return Define("example.ObjectKey", Object(
+				if name == "example.dev.ObjectKey" {
+					return Define("example.dev.ObjectKey", Object(
 						Field("part").String().Required(),
 					)), true
 				}
@@ -111,10 +111,10 @@ func TestListMapKeyValidationRejectsUnsupportedIdentityDescriptors(t *testing.T)
 		},
 		{
 			name:  "bytes ref",
-			field: Field("key").Ref("example.BytesKey").Required(),
+			field: Field("key").Ref("example.dev.BytesKey").Required(),
 			resolver: resolverFunc(func(name TypeName) (Definition, bool) {
-				if name == "example.BytesKey" {
-					return Define("example.BytesKey", Bytes()), true
+				if name == "example.dev.BytesKey" {
+					return Define("example.dev.BytesKey", Bytes()), true
 				}
 				return Definition{}, false
 			}),
@@ -127,10 +127,10 @@ func TestListMapKeyValidationRejectsUnsupportedIdentityDescriptors(t *testing.T)
 		},
 		{
 			name:  "nullable ref",
-			field: Field("key").Ref("example.StringKey").Nullable().Required(),
+			field: Field("key").Ref("example.dev.StringKey").Nullable().Required(),
 			resolver: resolverFunc(func(name TypeName) (Definition, bool) {
-				if name == "example.StringKey" {
-					return Define("example.StringKey", String()), true
+				if name == "example.dev.StringKey" {
+					return Define("example.dev.StringKey", String()), true
 				}
 				return Definition{}, false
 			}),
@@ -138,10 +138,10 @@ func TestListMapKeyValidationRejectsUnsupportedIdentityDescriptors(t *testing.T)
 		},
 		{
 			name:  "ref to nullable string",
-			field: Field("key").Ref("example.NullableStringKey").Required(),
+			field: Field("key").Ref("example.dev.NullableStringKey").Required(),
 			resolver: resolverFunc(func(name TypeName) (Definition, bool) {
-				if name == "example.NullableStringKey" {
-					return Define("example.NullableStringKey", String().Nullable()), true
+				if name == "example.dev.NullableStringKey" {
+					return Define("example.dev.NullableStringKey", String().Nullable()), true
 				}
 				return Definition{}, false
 			}),
@@ -170,7 +170,7 @@ func TestListMapKeyValidationRejectsUnresolvedKeyRefWithoutResolver(t *testing.T
 		return Definition{}, false
 	})
 	err := ValidateResolved(
-		listMapWithKeyField(Field("key").Ref("example.Key").Required()),
+		listMapWithKeyField(Field("key").Ref("example.dev.Key").Required()),
 		missing,
 	)
 
@@ -187,15 +187,15 @@ func TestListMapKeyValidationRejectsUnresolvedKeyRefWithoutResolver(t *testing.T
 func TestListMapKeyValidationRejectsReferenceCycle(t *testing.T) {
 	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
-		case "example.A":
-			return Define("example.A", Ref("example.B")), true
-		case "example.B":
-			return Define("example.B", Ref("example.A")), true
+		case "example.dev.A":
+			return Define("example.dev.A", Ref("example.dev.B")), true
+		case "example.dev.B":
+			return Define("example.dev.B", Ref("example.dev.A")), true
 		default:
 			return Definition{}, false
 		}
 	})
-	field := Field("key").Ref("example.A").Required().Field()
+	field := Field("key").Ref("example.dev.A").Required().Field()
 
 	err := validateListMapKeyIdentityDescriptor(
 		field,

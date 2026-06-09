@@ -19,6 +19,6 @@ import "testing"
 func TestUnknownFieldPolicyValidity(t *testing.T) {
 	requireEqual(t, UnknownReject.IsValid(), true)
 	requireEqual(t, UnknownPrune.IsValid(), true)
-	requireEqual(t, UnknownPreserve.IsValid(), true)
+	requireEqual(t, UnknownPreserveOpaque.IsValid(), true)
 	requireEqual(t, UnknownFieldPolicy(99).IsValid(), false)
 }

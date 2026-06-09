@@ -108,7 +108,7 @@ func (e *extractor) extractUnknownObjectMember(
 			"field %q is rejected by the object descriptor",
 			name,
 		)
-	case types.UnknownPreserve:
+	case types.UnknownPreserveOpaque:
 		return setAt(path)
 	case types.UnknownPrune:
 		return fieldpath.EmptySet(), nil

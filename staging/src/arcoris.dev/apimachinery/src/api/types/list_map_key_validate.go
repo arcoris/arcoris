@@ -91,13 +91,7 @@ func validateListMapKeyRef(
 	}
 
 	if resolver == nil {
-		return descriptorErrorf(
-			path,
-			ErrUnresolvedDescriptorReference,
-			DescriptorErrorReasonUnknownReference,
-			"reference %q cannot be resolved without a resolver",
-			name,
-		)
+		return nil
 	}
 
 	if resolving[name] {

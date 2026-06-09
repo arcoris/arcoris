@@ -20,10 +20,10 @@ import (
 )
 
 func TestCatalogErrorPreservesIdentityAndPath(t *testing.T) {
-	err := catalogError("definitions[example.Name]", ErrDefinitionExists)
+	err := catalogError("definitions[example.dev.Name]", ErrDefinitionExists)
 
 	requireErrorIs(t, err, ErrDefinitionExists)
-	if !strings.Contains(err.Error(), "definitions[example.Name]") {
+	if !strings.Contains(err.Error(), "definitions[example.dev.Name]") {
 		t.Fatalf("error = %q, want catalog path", err)
 	}
 }

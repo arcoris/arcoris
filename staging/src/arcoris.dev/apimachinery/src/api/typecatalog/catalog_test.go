@@ -25,14 +25,14 @@ import (
 func TestCatalogZeroValueUsable(t *testing.T) {
 	var catalog Catalog
 
-	requireNoError(t, catalog.Register(types.Define("example.Name", types.String().MinBytes(1))))
+	requireNoError(t, catalog.Register(types.Define("example.dev.Name", types.String().MinBytes(1))))
 
-	requireDefinition(t, &catalog, "example.Name")
+	requireDefinition(t, &catalog, "example.dev.Name")
 }
 
 func TestCatalogConcurrentAccessRaceFree(t *testing.T) {
 	var catalog Catalog
-	requireNoError(t, catalog.Register(types.Define("example.Name", types.String())))
+	requireNoError(t, catalog.Register(types.Define("example.dev.Name", types.String())))
 
 	var wg sync.WaitGroup
 	for i := 0; i < 8; i++ {
@@ -40,7 +40,7 @@ func TestCatalogConcurrentAccessRaceFree(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for j := 0; j < 100; j++ {
-				catalog.Resolve("example.Name")
+				catalog.Resolve("example.dev.Name")
 				catalog.Names()
 				catalog.Definitions()
 			}
@@ -51,7 +51,7 @@ func TestCatalogConcurrentAccessRaceFree(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		for j := 0; j < 100; j++ {
-			name := types.TypeName(fmt.Sprintf("example.Generated%d", j))
+			name := types.TypeName(fmt.Sprintf("example.dev.Generated%d", j))
 			_ = catalog.Register(types.Define(name, types.String()))
 		}
 	}()

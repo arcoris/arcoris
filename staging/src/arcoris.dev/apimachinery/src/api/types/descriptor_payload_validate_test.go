@@ -16,7 +16,7 @@ package types
 
 import "testing"
 
-func TestValidateTypeRejectsInactivePayloads(t *testing.T) {
+func TestValidateDescriptorRejectsInactivePayloads(t *testing.T) {
 	tests := []Descriptor{
 		func() Descriptor {
 			desc := String().Descriptor()
@@ -95,7 +95,7 @@ func TestValidateTypeRejectsInactivePayloads(t *testing.T) {
 			desc.mapType.value = &value
 			return desc
 		}(),
-		func() Descriptor { desc := String().Descriptor(); desc.ref.name = "example.Name"; return desc }(),
+		func() Descriptor { desc := String().Descriptor(); desc.ref.name = "example.dev.Name"; return desc }(),
 		func() Descriptor {
 			desc := Int8().Descriptor()
 			desc.int16.min = limit[int16]{value: 1, set: true}
@@ -116,9 +116,9 @@ func TestValidateTypeRejectsInactivePayloads(t *testing.T) {
 			desc.float64.min = limit[float64]{value: 1, set: true}
 			return desc
 		}(),
-		func() Descriptor { desc := Object().Descriptor(); desc.ref.name = "example.Name"; return desc }(),
+		func() Descriptor { desc := Object().Descriptor(); desc.ref.name = "example.dev.Name"; return desc }(),
 		func() Descriptor {
-			desc := Ref("example.Name").Descriptor()
+			desc := Ref("example.dev.Name").Descriptor()
 			desc.object.fields = []FieldDescriptor{Field("name").String().Required().Field()}
 			return desc
 		}(),

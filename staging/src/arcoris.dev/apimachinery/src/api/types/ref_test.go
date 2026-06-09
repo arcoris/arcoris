@@ -17,17 +17,17 @@ package types
 import "testing"
 
 func TestRefConstructorAndView(t *testing.T) {
-	desc := Ref("arcoris.meta.Name").Nullable().Descriptor()
+	desc := Ref("meta.arcoris.dev.Name").Nullable().Descriptor()
 
 	requireEqual(t, desc.Code(), DescriptorRef)
 	requireEqual(t, desc.Nullable(), true)
 	view, ok := desc.AsRef()
 	requireEqual(t, ok, true)
-	requireEqual(t, view.Name(), TypeName("arcoris.meta.Name"))
+	requireEqual(t, view.Name(), TypeName("meta.arcoris.dev.Name"))
 }
 
 func TestRefValidationWithAndWithoutResolver(t *testing.T) {
-	desc := Ref("arcoris.meta.Name").Descriptor()
+	desc := Ref("meta.arcoris.dev.Name").Descriptor()
 	requireNoError(t, ValidateLocal(desc))
 
 	missing := resolverFunc(func(TypeName) (Definition, bool) {
@@ -36,8 +36,8 @@ func TestRefValidationWithAndWithoutResolver(t *testing.T) {
 	requireErrorIs(t, ValidateResolved(desc, missing), ErrUnresolvedDescriptorReference)
 
 	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
-		if name == "arcoris.meta.Name" {
-			return Define("arcoris.meta.Name", String().MinBytes(1)), true
+		if name == "meta.arcoris.dev.Name" {
+			return Define("meta.arcoris.dev.Name", String().MinBytes(1)), true
 		}
 		return Definition{}, false
 	})
@@ -49,17 +49,17 @@ func TestRefInvalidNameAndCycleRejected(t *testing.T) {
 
 	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
-		case "example.A":
-			return Define("example.A", Ref("example.B")), true
-		case "example.B":
-			return Define("example.B", Ref("example.A")), true
+		case "example.dev.A":
+			return Define("example.dev.A", Ref("example.dev.B")), true
+		case "example.dev.B":
+			return Define("example.dev.B", Ref("example.dev.A")), true
 		default:
 			return Definition{}, false
 		}
 	})
-	requireErrorIs(t, ValidateResolved(Ref("example.A").Descriptor(), resolver), ErrInvalidDescriptorReference)
+	requireErrorIs(t, ValidateResolved(Ref("example.dev.A").Descriptor(), resolver), ErrInvalidDescriptorReference)
 }
 
 func TestRefDescriptorExprMarker(t *testing.T) {
-	Ref("example.Name").descriptorExpr()
+	Ref("example.dev.Name").descriptorExpr()
 }

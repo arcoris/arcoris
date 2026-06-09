@@ -34,7 +34,7 @@ type RefDescriptor struct {
 //
 // Typical reusable declaration:
 //
-//	nameRef := Ref("arcoris.meta.Name").
+//	nameRef := Ref("meta.arcoris.dev.Name").
 //		Nullable()
 func Ref[N ~string](name N) RefDescriptor {
 	return RefDescriptor{

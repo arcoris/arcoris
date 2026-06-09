@@ -17,7 +17,7 @@ package types
 import "testing"
 
 func TestRefFieldWrapper(t *testing.T) {
-	field := Field("value").Ref("example.Name").Required().Nullable().Description("value").Field()
+	field := Field("value").Ref("example.dev.Name").Required().Nullable().Description("value").Field()
 
 	requireEqual(t, field.Descriptor().Code(), DescriptorRef)
 	requireEqual(t, field.Descriptor().Nullable(), true)
@@ -25,11 +25,11 @@ func TestRefFieldWrapper(t *testing.T) {
 }
 
 func TestRefFieldExprMarker(t *testing.T) {
-	Field("value").Ref("example.Name").fieldExpr()
+	Field("value").Ref("example.dev.Name").fieldExpr()
 }
 
 func TestRefFieldOptionalPath(t *testing.T) {
-	field := Field("value").Ref("example.Name").Optional().Field()
+	field := Field("value").Ref("example.dev.Name").Optional().Field()
 
 	requireEqual(t, field.IsOptional(), true)
 }

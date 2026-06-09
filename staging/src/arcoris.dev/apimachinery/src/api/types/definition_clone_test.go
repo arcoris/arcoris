@@ -17,7 +17,7 @@ package types
 import "testing"
 
 func TestCloneDefinitionDetachesDescriptor(t *testing.T) {
-	original := Define("example.Name", String().Enum("alpha"))
+	original := Define("example.dev.Name", String().Enum("alpha"))
 
 	cloned := cloneDefinition(original)
 	cloned.descriptor.string.enum[0] = "changed"

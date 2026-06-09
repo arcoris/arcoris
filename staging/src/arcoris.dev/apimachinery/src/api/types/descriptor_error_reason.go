@@ -83,6 +83,8 @@ const (
 	DescriptorErrorReasonMissingListMapKey DescriptorErrorReason = "missing_list_map_key"
 	// DescriptorErrorReasonInvalidListMapKey reports a malformed ListMap key name.
 	DescriptorErrorReasonInvalidListMapKey DescriptorErrorReason = "invalid_list_map_key"
+	// DescriptorErrorReasonDuplicateListMapKey reports a repeated ListMap key name.
+	DescriptorErrorReasonDuplicateListMapKey DescriptorErrorReason = "duplicate_list_map_key"
 	// DescriptorErrorReasonListMapKeyNotFound reports a ListMap key absent from the object element.
 	DescriptorErrorReasonListMapKeyNotFound DescriptorErrorReason = "list_map_key_not_found"
 	// DescriptorErrorReasonListMapKeyOptional reports a ListMap key field that is not required.

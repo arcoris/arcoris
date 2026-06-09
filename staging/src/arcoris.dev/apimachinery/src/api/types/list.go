@@ -37,7 +37,7 @@ type ListDescriptor struct {
 // Typical reusable declaration:
 //
 //	conditionListType := ListOf(
-//		Ref("arcoris.meta.Condition"),
+//		Ref("meta.arcoris.dev.Condition"),
 //	).Map("type")
 func ListOf(elem DescriptorExpr) ListDescriptor {
 	elemType := descriptorFromExpr(elem)
@@ -102,13 +102,13 @@ func (desc ListDescriptor) Ordered() ListDescriptor {
 
 // Set records set-like list semantics.
 //
-// Set semantics record that future merge/apply layers may treat list elements
-// as identity-less set members. Until a stable value-based set identity model
-// exists, field-set extraction treats the complete list as one field and must
-// not use physical indexes for ownership purposes.
+// Set semantics require non-nullable stable scalar element descriptors: bool,
+// string, exact-width integers, or references that resolve to those descriptors.
+// Package types validates that descriptor-level identity contract.
 //
-// This package does not compare elements or enforce set uniqueness for concrete
-// values.
+// This package does not compare elements or enforce concrete value uniqueness.
+// Concrete uniqueness belongs to valuevalidation or another value-processing
+// layer.
 func (desc ListDescriptor) Set() ListDescriptor {
 	desc.payload.semantics = ListSet
 	desc.payload.mapKeys = nil

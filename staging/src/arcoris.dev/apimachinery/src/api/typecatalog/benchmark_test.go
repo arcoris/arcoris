@@ -28,7 +28,7 @@ var (
 
 func BenchmarkCatalogResolve(b *testing.B) {
 	var catalog Catalog
-	if err := catalog.Register(types.Define("example.Name", types.String().MinBytes(1))); err != nil {
+	if err := catalog.Register(types.Define("example.dev.Name", types.String().MinBytes(1))); err != nil {
 		b.Fatal(err)
 	}
 
@@ -36,7 +36,7 @@ func BenchmarkCatalogResolve(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		def, ok := catalog.Resolve("example.Name")
+		def, ok := catalog.Resolve("example.dev.Name")
 		if !ok {
 			b.Fatal("missing definition")
 		}
@@ -47,9 +47,9 @@ func BenchmarkCatalogResolve(b *testing.B) {
 func BenchmarkCatalogNames(b *testing.B) {
 	var catalog Catalog
 	if err := catalog.RegisterMany(
-		types.Define("example.Name", types.String().MinBytes(1)),
-		types.Define("example.Count", types.Int64().Min(0)),
-		types.Define("example.Enabled", types.Bool()),
+		types.Define("example.dev.Name", types.String().MinBytes(1)),
+		types.Define("example.dev.Count", types.Int64().Min(0)),
+		types.Define("example.dev.Enabled", types.Bool()),
 	); err != nil {
 		b.Fatal(err)
 	}
@@ -64,9 +64,9 @@ func BenchmarkCatalogNames(b *testing.B) {
 
 func BenchmarkCatalogRegisterManySmallBatch(b *testing.B) {
 	defs := []types.Definition{
-		types.Define("example.Name", types.String().MinBytes(1)),
-		types.Define("example.Count", types.Int64().Min(0)),
-		types.Define("example.Enabled", types.Bool()),
+		types.Define("example.dev.Name", types.String().MinBytes(1)),
+		types.Define("example.dev.Count", types.Int64().Min(0)),
+		types.Define("example.dev.Enabled", types.Bool()),
 	}
 
 	b.ReportAllocs()

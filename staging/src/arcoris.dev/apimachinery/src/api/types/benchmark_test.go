@@ -137,12 +137,12 @@ func BenchmarkValidateNestedObject(b *testing.B) {
 
 func BenchmarkValidateRefWithResolver(b *testing.B) {
 	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
-		if name == "example.Name" {
-			return Define("example.Name", String().MinBytes(1)), true
+		if name == "example.dev.Name" {
+			return Define("example.dev.Name", String().MinBytes(1)), true
 		}
 		return Definition{}, false
 	})
-	desc := Ref("example.Name").Descriptor()
+	desc := Ref("example.dev.Name").Descriptor()
 
 	b.ReportAllocs()
 	b.ResetTimer()

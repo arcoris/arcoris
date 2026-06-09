@@ -73,6 +73,28 @@ func validateList(desc Descriptor, resolver Resolver, path string, resolving map
 		)
 	}
 
+	for i, key := range desc.list.mapKeys {
+		keyPath := fmt.Sprintf("%s.mapKeys[%d]", path, i)
+
+		if !key.IsValid() {
+			return descriptorErrorf(
+				keyPath,
+				ErrInvalidField,
+				DescriptorErrorReasonInvalidListMapKey,
+				"ListMap key %q is not a valid field name",
+				key,
+			)
+		}
+	}
+
+	if err := validateDuplicateListMapKeys(desc.list.mapKeys, path); err != nil {
+		return err
+	}
+
+	if desc.list.elem.code == DescriptorRef && resolver == nil {
+		return nil
+	}
+
 	object, ok := listMapObject(*desc.list.elem, resolver)
 
 	if !ok {
@@ -92,17 +114,6 @@ func validateList(desc Descriptor, resolver Resolver, path string, resolving map
 
 	for i, key := range desc.list.mapKeys {
 		keyPath := fmt.Sprintf("%s.mapKeys[%d]", path, i)
-
-		if !key.IsValid() {
-			return descriptorErrorf(
-				keyPath,
-				ErrInvalidField,
-				DescriptorErrorReasonInvalidListMapKey,
-				"ListMap key %q is not a valid field name",
-				key,
-			)
-		}
-
 		field, ok := fields[key]
 
 		if !ok {
@@ -128,6 +139,29 @@ func validateList(desc Descriptor, resolver Resolver, path string, resolving map
 		if err := validateListMapKeyIdentityDescriptor(field, resolver, keyPath, resolving); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// validateDuplicateListMapKeys rejects repeated declared ListMap keys.
+func validateDuplicateListMapKeys(keys []FieldName, path string) error {
+	firstIndexes := make(map[FieldName]int, len(keys))
+
+	for i, key := range keys {
+		if first, exists := firstIndexes[key]; exists {
+			return descriptorErrorf(
+				fmt.Sprintf("%s.mapKeys[%d]", path, i),
+				ErrInvalidField,
+				DescriptorErrorReasonDuplicateListMapKey,
+				"ListMap key %q is duplicated at indexes %d and %d",
+				key,
+				first,
+				i,
+			)
+		}
+
+		firstIndexes[key] = i
 	}
 
 	return nil
@@ -219,13 +253,7 @@ func validateListSetElementRef(name TypeName, resolver Resolver, path string, re
 	}
 
 	if resolver == nil {
-		return descriptorErrorf(
-			path,
-			ErrUnresolvedDescriptorReference,
-			DescriptorErrorReasonUnknownReference,
-			"reference %q cannot be resolved without a resolver",
-			name,
-		)
+		return nil
 	}
 
 	if resolving[name] {

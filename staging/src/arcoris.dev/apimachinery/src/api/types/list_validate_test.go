@@ -14,7 +14,10 @@
 
 package types
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestListValidateRejectsInvalidShapes(t *testing.T) {
 	requireErrorIs(t, ValidateLocal(ListOf(DescriptorExpr(nil)).Descriptor()), ErrInvalidDescriptor)
@@ -31,10 +34,25 @@ func TestListValidateMapKeys(t *testing.T) {
 	valid := ListOf(Object(Field("type").String().Required())).Map("type").Descriptor()
 	missing := ListOf(Object(Field("type").String().Required())).Map("missing").Descriptor()
 	optional := ListOf(Object(Field("type").String().Optional())).Map("type").Descriptor()
+	duplicate := ListOf(Object(Field("type").String().Required())).Map("type", "type").Descriptor()
 
 	requireNoError(t, ValidateLocal(valid))
 	requireErrorIs(t, ValidateLocal(missing), ErrInvalidField)
 	requireErrorIs(t, ValidateLocal(optional), ErrInvalidField)
+
+	err := ValidateLocal(duplicate)
+	requireDescriptorError(
+		t,
+		err,
+		ErrInvalidField,
+		"descriptor.mapKeys[1]",
+		DescriptorErrorReasonDuplicateListMapKey,
+		"duplicated at indexes 0 and 1",
+	)
+
+	var descriptorErr *DescriptorError
+	requireEqual(t, errors.As(err, &descriptorErr), true)
+	requireEqual(t, descriptorErr.Reason, DescriptorErrorReasonDuplicateListMapKey)
 }
 
 func TestValidateListOrderedAcceptsNoMapKeys(t *testing.T) {
@@ -63,14 +81,15 @@ func TestListValidateSetElements(t *testing.T) {
 		{name: "uint", desc: ListOf(Uint64()).Set().Descriptor()},
 		{
 			name: "ref stable scalar",
-			desc: ListOf(Ref("example.Name")).Set().Descriptor(),
+			desc: ListOf(Ref("meta.arcoris.dev.Name")).Set().Descriptor(),
 			resolver: resolverFunc(func(name TypeName) (Definition, bool) {
-				if name == "example.Name" {
-					return Define("example.Name", String()), true
+				if name == "meta.arcoris.dev.Name" {
+					return Define("meta.arcoris.dev.Name", String()), true
 				}
 				return Definition{}, false
 			}),
 		},
+		{name: "local ref", desc: ListOf(Ref("meta.arcoris.dev.Name")).Set().Descriptor()},
 		{name: "nullable", desc: ListOf(String().Nullable()).Set().Descriptor(), wantTarget: ErrInvalidDescriptor},
 		{name: "object", desc: ListOf(Object()).Set().Descriptor(), wantTarget: ErrInvalidDescriptor},
 		{name: "list", desc: ListOf(ListOf(String())).Set().Descriptor(), wantTarget: ErrInvalidDescriptor},
@@ -78,7 +97,6 @@ func TestListValidateSetElements(t *testing.T) {
 		{name: "float", desc: ListOf(Float64()).Set().Descriptor(), wantTarget: ErrInvalidDescriptor},
 		{name: "decimal", desc: ListOf(Decimal()).Set().Descriptor(), wantTarget: ErrInvalidDescriptor},
 		{name: "temporal", desc: ListOf(Timestamp()).Set().Descriptor(), wantTarget: ErrInvalidDescriptor},
-		{name: "unresolved ref", desc: ListOf(Ref("example.Name")).Set().Descriptor(), wantTarget: ErrUnresolvedDescriptorReference},
 	}
 
 	for _, tc := range cases {
@@ -93,19 +111,43 @@ func TestListValidateSetElements(t *testing.T) {
 	}
 }
 
+func TestListValidateSetElementRefResolvedFailures(t *testing.T) {
+	missing := resolverFunc(func(TypeName) (Definition, bool) {
+		return Definition{}, false
+	})
+	objectResolver := resolverFunc(func(name TypeName) (Definition, bool) {
+		if name == "meta.arcoris.dev.Name" {
+			return Define("meta.arcoris.dev.Name", Object()), true
+		}
+		return Definition{}, false
+	})
+
+	desc := ListOf(Ref("meta.arcoris.dev.Name")).Set().Descriptor()
+
+	requireErrorIs(t, ValidateResolved(desc, missing), ErrUnresolvedDescriptorReference)
+	requireDescriptorError(
+		t,
+		ValidateResolved(desc, objectResolver),
+		ErrInvalidDescriptor,
+		"descriptor.elem",
+		DescriptorErrorReasonInvalidListSetElement,
+		"descriptor object",
+	)
+}
+
 func TestListValidateRefMapKeys(t *testing.T) {
 	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
-		case "example.Item":
-			return Define("example.Item", Object(Field("type").String().Required())), true
-		case "example.Name":
-			return Define("example.Name", String()), true
+		case "meta.arcoris.dev.Condition":
+			return Define("meta.arcoris.dev.Condition", Object(Field("type").String().Required())), true
+		case "meta.arcoris.dev.Name":
+			return Define("meta.arcoris.dev.Name", String()), true
 		default:
 			return Definition{}, false
 		}
 	})
 
-	requireNoError(t, ValidateResolved(ListOf(Ref("example.Item")).Map("type").Descriptor(), resolver))
-	requireErrorIs(t, ValidateLocal(ListOf(Ref("example.Item")).Map("type").Descriptor()), ErrInvalidDescriptor)
-	requireErrorIs(t, ValidateResolved(ListOf(Ref("example.Name")).Map("type").Descriptor(), resolver), ErrInvalidDescriptor)
+	requireNoError(t, ValidateLocal(ListOf(Ref("meta.arcoris.dev.Condition")).Map("type").Descriptor()))
+	requireNoError(t, ValidateResolved(ListOf(Ref("meta.arcoris.dev.Condition")).Map("type").Descriptor(), resolver))
+	requireErrorIs(t, ValidateResolved(ListOf(Ref("meta.arcoris.dev.Name")).Map("type").Descriptor(), resolver), ErrInvalidDescriptor)
 }

@@ -17,7 +17,7 @@ package types
 import "testing"
 
 func TestRefFieldBuilderEntrypoint(t *testing.T) {
-	field := Field("value").Ref("example.Name").Required().Field()
+	field := Field("value").Ref("example.dev.Name").Required().Field()
 
 	requireEqual(t, field.Descriptor().Code(), DescriptorRef)
 }

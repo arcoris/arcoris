@@ -19,7 +19,7 @@ import "arcoris.dev/apimachinery/api/codec"
 // ContentType is normalized protocol-neutral content identity key material.
 //
 // ContentType stores a canonical codec.MediaType plus deterministic parameters.
-// It is not a parser for raw Content-Descriptor headers.
+// It is not a parser for raw Content-Type headers.
 type ContentType struct {
 	// mediaType is the canonical codec media type.
 	mediaType codec.MediaType

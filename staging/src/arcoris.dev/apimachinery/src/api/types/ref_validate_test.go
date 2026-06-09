@@ -22,17 +22,17 @@ func TestRefValidateResolutionAndCycles(t *testing.T) {
 	missing := resolverFunc(func(TypeName) (Definition, bool) {
 		return Definition{}, false
 	})
-	requireErrorIs(t, ValidateResolved(Ref("example.Name").Descriptor(), missing), ErrUnresolvedDescriptorReference)
+	requireErrorIs(t, ValidateResolved(Ref("example.dev.Name").Descriptor(), missing), ErrUnresolvedDescriptorReference)
 
 	cycle := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
-		case "example.A":
-			return Define("example.A", Ref("example.B")), true
-		case "example.B":
-			return Define("example.B", Ref("example.A")), true
+		case "example.dev.A":
+			return Define("example.dev.A", Ref("example.dev.B")), true
+		case "example.dev.B":
+			return Define("example.dev.B", Ref("example.dev.A")), true
 		default:
 			return Definition{}, false
 		}
 	})
-	requireErrorIs(t, ValidateResolved(Ref("example.A").Descriptor(), cycle), ErrInvalidDescriptorReference)
+	requireErrorIs(t, ValidateResolved(Ref("example.dev.A").Descriptor(), cycle), ErrInvalidDescriptorReference)
 }

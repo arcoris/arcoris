@@ -23,7 +23,7 @@ package types
 // Field builder flow:
 //
 //	Field("conditions").ListOf(
-//		Ref("arcoris.meta.Condition"),
+//		Ref("meta.arcoris.dev.Condition"),
 //	).Optional().
 //		Nullable().
 //		MinItems(1).

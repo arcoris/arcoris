@@ -30,7 +30,7 @@ import (
 //	var catalog Catalog
 //
 //	err := catalog.Register(types.Define(
-//		"arcoris.meta.Name",
+//		"meta.arcoris.dev.Name",
 //		types.String().
 //			MinBytes(1).
 //			MaxRunes(253),
@@ -51,14 +51,14 @@ func (c *Catalog) Register(def types.Definition) error {
 //
 //	err := catalog.RegisterMany(
 //		types.Define(
-//			"arcoris.meta.Name",
+//			"meta.arcoris.dev.Name",
 //			types.String().
 //				MinBytes(1),
 //		),
 //		types.Define(
-//			"arcoris.meta.NameList",
+//			"meta.arcoris.dev.NameList",
 //			types.ListOf(
-//				types.Ref("arcoris.meta.Name"),
+//				types.Ref("meta.arcoris.dev.Name"),
 //			),
 //		),
 //	)

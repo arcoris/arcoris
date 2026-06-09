@@ -37,7 +37,7 @@ type Definition struct {
 // Typical declaration:
 //
 //	nameDef := Define(
-//		"arcoris.meta.Name",
+//		"meta.arcoris.dev.Name",
 //		String().
 //			MinBytes(1).
 //			MaxBytes(253),

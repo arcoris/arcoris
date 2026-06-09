@@ -23,17 +23,17 @@ func TestTypeNameValidationMatrix(t *testing.T) {
 	}{
 		{"", false},
 		{"Name", false},
-		{"arcoris.meta.Name", true},
-		{"arcoris.meta.Namespace", true},
+		{"meta.arcoris.dev.Name", true},
+		{"meta.arcoris.dev.Namespace", true},
 		{"arcoris.schema.Group", true},
-		{"example.CronExpression", true},
-		{"example.cronExpression", false},
+		{"example.dev.CronExpression", true},
+		{"example.dev.cronExpression", false},
 		{"Bad.CronExpression", false},
-		{"example..CronExpression", false},
-		{"example.Cron-Expression", false},
+		{"example.dev..CronExpression", false},
+		{"example.dev.Cron-Expression", false},
 		{"example-name.CronExpression", true},
 		{"example_name.CronExpression", false},
-		{"example.Имя", false},
+		{"example.dev.Имя", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

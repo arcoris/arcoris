@@ -22,25 +22,25 @@ import (
 
 func TestResolveReturnsDefinition(t *testing.T) {
 	var catalog Catalog
-	requireNoError(t, catalog.Register(types.Define("example.Name", types.String())))
+	requireNoError(t, catalog.Register(types.Define("example.dev.Name", types.String())))
 
-	def, ok := catalog.Resolve("example.Name")
+	def, ok := catalog.Resolve("example.dev.Name")
 	requireEqual(t, ok, true)
-	requireEqual(t, def.Name(), types.TypeName("example.Name"))
+	requireEqual(t, def.Name(), types.TypeName("example.dev.Name"))
 }
 
 func TestResolveReturnsDetachedDefinition(t *testing.T) {
 	var catalog Catalog
-	requireNoError(t, catalog.Register(types.Define("example.Name", types.String().Enum("alpha"))))
+	requireNoError(t, catalog.Register(types.Define("example.dev.Name", types.String().Enum("alpha"))))
 
-	def, ok := catalog.Resolve("example.Name")
+	def, ok := catalog.Resolve("example.dev.Name")
 	requireEqual(t, ok, true)
 	view, ok := def.Descriptor().AsString()
 	requireEqual(t, ok, true)
 	enum := view.Enum()
 	enum[0] = "changed"
 
-	defAgain, ok := catalog.Resolve("example.Name")
+	defAgain, ok := catalog.Resolve("example.dev.Name")
 	requireEqual(t, ok, true)
 	view, ok = defAgain.Descriptor().AsString()
 	requireEqual(t, ok, true)
@@ -50,6 +50,6 @@ func TestResolveReturnsDetachedDefinition(t *testing.T) {
 func TestResolveNilCatalogBehavesLikeEmptyCatalog(t *testing.T) {
 	var catalog *Catalog
 
-	_, ok := catalog.Resolve("example.Name")
+	_, ok := catalog.Resolve("example.dev.Name")
 	requireEqual(t, ok, false)
 }

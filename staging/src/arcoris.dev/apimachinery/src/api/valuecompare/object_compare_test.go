@@ -140,32 +140,32 @@ func TestCompareObjectUnknownRejectedReturnsUnknownField(t *testing.T) {
 	requireErrorPath(t, err, "$.extra")
 }
 
-func TestCompareObjectUnknownPreservedSameOpaqueIsEmpty(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Descriptor()
+func TestCompareObjectUnknownPreserveOpaqueSameOpaqueIsEmpty(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 
 	got, err := Compare(valueObject("extra", "same"), valueObject("extra", "same"), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, nil)
 }
 
-func TestCompareObjectUnknownPreservedChangedOpaqueIsModified(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Descriptor()
+func TestCompareObjectUnknownPreserveOpaqueChangedOpaqueIsModified(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 
 	got, err := Compare(valueObject("extra", "old"), valueObject("extra", "new"), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(rootField("extra")))
 }
 
-func TestCompareObjectUnknownPreservedAddedOpaqueIsAdded(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Descriptor()
+func TestCompareObjectUnknownPreserveOpaqueAddedOpaqueIsAdded(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 
 	got, err := Compare(valueObject(), valueObject("extra", "new"), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, paths(rootField("extra")), nil, nil)
 }
 
-func TestCompareObjectUnknownPreservedRemovedOpaqueIsRemoved(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Descriptor()
+func TestCompareObjectUnknownPreserveOpaqueRemovedOpaqueIsRemoved(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 
 	got, err := Compare(valueObject("extra", "old"), valueObject(), descriptor, Options{})
 	requireNoError(t, err)
@@ -264,8 +264,8 @@ func TestCompareOpaqueLeafModified(t *testing.T) {
 	requireResult(t, got, nil, nil, paths(rootField("extra")))
 }
 
-func TestCompareObjectUnknownPreservedDoesNotDescendIntoNestedObject(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Descriptor()
+func TestCompareObjectUnknownPreserveOpaqueDoesNotDescendIntoNestedObject(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 	oldValue := value.MustObjectValue(value.ObjectMember("x-extra", valueObject("nested", "old")))
 	newValue := value.MustObjectValue(value.ObjectMember("x-extra", valueObject("nested", "new")))
 
@@ -274,8 +274,8 @@ func TestCompareObjectUnknownPreservedDoesNotDescendIntoNestedObject(t *testing.
 	requireResult(t, got, nil, nil, paths(rootField("x-extra")))
 }
 
-func TestCompareObjectUnknownPreservedDoesNotDescendIntoNestedList(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Descriptor()
+func TestCompareObjectUnknownPreserveOpaqueDoesNotDescendIntoNestedList(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 	oldValue := value.MustObjectValue(value.ObjectMember("x-extra", value.MustListValue(value.StringValue("old"))))
 	newValue := value.MustObjectValue(value.ObjectMember("x-extra", value.MustListValue(value.StringValue("new"))))
 

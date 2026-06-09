@@ -63,7 +63,7 @@
 //     used after Field("name").
 //   - *_payload.go files own exact private payload structs plus clone/empty
 //     helpers for that payload slot.
-//   - *_view.go files own Descriptor.<Value>() accessors and read-only view methods
+//   - *_view.go files own Descriptor.As<Value>() accessors and read-only view methods
 //     such as Min, Max, Enum, Fields, Element, Value, and Name.
 //   - *_validate.go files own exact validation rules for the matching
 //     descriptor kind.
@@ -90,7 +90,7 @@
 //
 //	workloadType := Object(
 //		Field("spec").Object(
-//			Field("name").Ref("arcoris.meta.Name").
+//			Field("name").Ref("meta.arcoris.dev.Name").
 //				Required().
 //				Description("Stable API name resolved through a type catalog."),
 //
@@ -118,7 +118,7 @@
 //
 //		Field("status").Object(
 //			Field("conditions").ListOf(
-//				Ref("arcoris.meta.Condition"),
+//				Ref("meta.arcoris.dev.Condition"),
 //			).
 //				Optional().
 //				Map("type"),
@@ -154,19 +154,21 @@
 // # Named Definitions And References
 //
 // Definition gives a reusable descriptor a TypeName. Ref stores the name in
-// a DescriptorRef payload and resolves it through a Resolver during validation. A nil
-// resolver performs local structural validation only; a non-nil resolver also
-// checks that references exist and that resolved definitions are valid:
+// a DescriptorRef payload and resolves it through a Resolver during validation.
+// ValidateLocal performs descriptor-local structural validation and checks
+// reference-name syntax without resolving references. ValidateResolved requires
+// a non-nil Resolver and checks that references exist and resolved definitions
+// are valid:
 //
 //	nameDef := Define(
-//		"arcoris.meta.Name",
+//		"meta.arcoris.dev.Name",
 //		String().
 //			MinBytes(1).
 //			MaxBytes(253),
 //	)
 //
 //	conditionDef := Define(
-//		"arcoris.meta.Condition",
+//		"meta.arcoris.dev.Condition",
 //		Object(
 //			Field("type").String().
 //				Required().
@@ -179,7 +181,7 @@
 //
 //	_ = ValidateDefinitionLocal(nameDef)
 //	_ = ValidateDefinitionLocal(conditionDef)
-//	_ = ValidateLocal(Ref("arcoris.meta.Name").Descriptor())
+//	_ = ValidateLocal(Ref("meta.arcoris.dev.Name").Descriptor())
 //
 // Recursive Definition graphs are not supported by api/types. Recursive
 // schemas require a future explicit design pass because recursion affects

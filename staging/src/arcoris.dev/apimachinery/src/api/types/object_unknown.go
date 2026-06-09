@@ -26,11 +26,14 @@ const (
 	UnknownReject UnknownFieldPolicy = iota
 	// UnknownPrune means undeclared object fields may be dropped by value layers.
 	UnknownPrune
-	// UnknownPreserve means undeclared object fields may be retained by value layers.
-	UnknownPreserve
+	// UnknownPreserveOpaque means undeclared object fields may be retained by
+	// value layers as opaque payload.
+	//
+	// The descriptor does not provide structural traversal for those fields.
+	UnknownPreserveOpaque
 )
 
 // IsValid reports whether p is a known unknown-field policy.
 func (p UnknownFieldPolicy) IsValid() bool {
-	return p == UnknownReject || p == UnknownPrune || p == UnknownPreserve
+	return p == UnknownReject || p == UnknownPrune || p == UnknownPreserveOpaque
 }

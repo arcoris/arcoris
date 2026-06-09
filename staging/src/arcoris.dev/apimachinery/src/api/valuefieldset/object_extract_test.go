@@ -82,10 +82,10 @@ func TestExtractObjectUnknownRejectedReturnsError(t *testing.T) {
 	requireErrorPath(t, err, "$.spec.extra")
 }
 
-func TestExtractObjectUnknownPreservedIncludesOpaquePath(t *testing.T) {
+func TestExtractObjectUnknownPreserveOpaqueIncludesOpaquePath(t *testing.T) {
 	path := rootField("spec")
 	descriptor := types.Object().
-		UnknownFields(types.UnknownPreserve).
+		UnknownFields(types.UnknownPreserveOpaque).
 		Descriptor()
 	val := value.MustObjectValue(
 		value.ObjectMember(
@@ -102,10 +102,10 @@ func TestExtractObjectUnknownPreservedIncludesOpaquePath(t *testing.T) {
 	requireFieldSet(t, got, path.Field("extra"))
 }
 
-func TestExtractObjectUnknownPreservedDoesNotTraverseNestedStructure(t *testing.T) {
+func TestExtractObjectUnknownPreserveOpaqueDoesNotTraverseNestedStructure(t *testing.T) {
 	path := rootField("spec")
 	descriptor := types.Object().
-		UnknownFields(types.UnknownPreserve).
+		UnknownFields(types.UnknownPreserveOpaque).
 		Descriptor()
 	val := value.MustObjectValue(
 		value.ObjectMember(

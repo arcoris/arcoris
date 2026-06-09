@@ -24,16 +24,16 @@ import (
 func TestRegisterStoresValidDefinition(t *testing.T) {
 	var catalog Catalog
 
-	requireNoError(t, catalog.Register(types.Define("example.Name", types.String())))
+	requireNoError(t, catalog.Register(types.Define("example.dev.Name", types.String())))
 
-	requireDefinition(t, &catalog, "example.Name")
+	requireDefinition(t, &catalog, "example.dev.Name")
 }
 
 func TestRegisterRejectsDuplicateExistingName(t *testing.T) {
 	var catalog Catalog
-	requireNoError(t, catalog.Register(types.Define("example.Name", types.String())))
+	requireNoError(t, catalog.Register(types.Define("example.dev.Name", types.String())))
 
-	err := catalog.Register(types.Define("example.Name", types.Int64()))
+	err := catalog.Register(types.Define("example.dev.Name", types.Int64()))
 	requireErrorIs(t, err, ErrDefinitionExists)
 	requireErrorNotIs(t, err, types.ErrInvalidDescriptorReference)
 }
@@ -49,37 +49,37 @@ func TestRegisterRejectsInvalidDefinition(t *testing.T) {
 
 	requireErrorIs(
 		t,
-		catalog.Register(types.Define("example.Bad", types.ListOf(types.DescriptorExpr(nil)))),
+		catalog.Register(types.Define("example.dev.Bad", types.ListOf(types.DescriptorExpr(nil)))),
 		types.ErrInvalidDescriptor,
 	)
 }
 
 func TestRegisterManyAtomicOnInvalidDefinition(t *testing.T) {
 	var catalog Catalog
-	requireNoError(t, catalog.Register(types.Define("example.Existing", types.String())))
+	requireNoError(t, catalog.Register(types.Define("example.dev.Existing", types.String())))
 
 	err := catalog.RegisterMany(
-		types.Define("example.Next", types.String()),
-		types.Define("example.Bad", types.ListOf(types.DescriptorExpr(nil))),
+		types.Define("example.dev.Next", types.String()),
+		types.Define("example.dev.Bad", types.ListOf(types.DescriptorExpr(nil))),
 	)
 	requireErrorIs(t, err, types.ErrInvalidDescriptor)
 
-	_, ok := catalog.Resolve("example.Next")
+	_, ok := catalog.Resolve("example.dev.Next")
 	requireEqual(t, ok, false)
 }
 
 func TestRegisterManyAtomicOnExistingConflict(t *testing.T) {
 	var catalog Catalog
-	requireNoError(t, catalog.Register(types.Define("example.Existing", types.String())))
+	requireNoError(t, catalog.Register(types.Define("example.dev.Existing", types.String())))
 
 	err := catalog.RegisterMany(
-		types.Define("example.Next", types.String()),
-		types.Define("example.Existing", types.Int64()),
+		types.Define("example.dev.Next", types.String()),
+		types.Define("example.dev.Existing", types.Int64()),
 	)
 	requireErrorIs(t, err, ErrDefinitionExists)
 	requireErrorNotIs(t, err, types.ErrInvalidDescriptorReference)
 
-	_, ok := catalog.Resolve("example.Next")
+	_, ok := catalog.Resolve("example.dev.Next")
 	requireEqual(t, ok, false)
 }
 
@@ -87,14 +87,14 @@ func TestRegisterManyAtomicOnBatchDuplicate(t *testing.T) {
 	var catalog Catalog
 
 	err := catalog.RegisterMany(
-		types.Define("example.Name", types.String()),
-		types.Define("example.Name", types.Int64()),
+		types.Define("example.dev.Name", types.String()),
+		types.Define("example.dev.Name", types.Int64()),
 	)
 	requireErrorIs(t, err, ErrDuplicateDefinition)
 	requireEqual(t, errors.Is(err, types.ErrDuplicateField), false)
 	requireErrorNotIs(t, err, types.ErrInvalidDescriptorReference)
 
-	_, ok := catalog.Resolve("example.Name")
+	_, ok := catalog.Resolve("example.dev.Name")
 	requireEqual(t, ok, false)
 }
 
@@ -102,12 +102,12 @@ func TestRegisterManyAllowsReferencesInsideBatch(t *testing.T) {
 	var catalog Catalog
 
 	err := catalog.RegisterMany(
-		types.Define("example.Name", types.String().MinBytes(1)),
-		types.Define("example.NameList", types.ListOf(types.Ref("example.Name"))),
+		types.Define("example.dev.Name", types.String().MinBytes(1)),
+		types.Define("example.dev.NameList", types.ListOf(types.Ref("example.dev.Name"))),
 	)
 	requireNoError(t, err)
 
-	_, ok := catalog.Resolve("example.NameList")
+	_, ok := catalog.Resolve("example.dev.NameList")
 	requireEqual(t, ok, true)
 }
 
@@ -115,11 +115,11 @@ func TestRegisterManyRejectsUnresolvedExternalRefs(t *testing.T) {
 	var catalog Catalog
 
 	err := catalog.RegisterMany(
-		types.Define("example.Name", types.String()),
-		types.Define("example.ExternalList", types.ListOf(types.Ref("example.Missing"))),
+		types.Define("example.dev.Name", types.String()),
+		types.Define("example.dev.ExternalList", types.ListOf(types.Ref("example.dev.Missing"))),
 	)
 	requireErrorIs(t, err, types.ErrUnresolvedDescriptorReference)
 
-	_, ok := catalog.Resolve("example.Name")
+	_, ok := catalog.Resolve("example.dev.Name")
 	requireEqual(t, ok, false)
 }

@@ -99,7 +99,7 @@ func ValidateDefinitionResolved(def Definition, resolver Resolver) error {
 //
 // The path parameter describes descriptor structure, not a future object-value
 // path. It is threaded through recursive validation so callers receive precise
-// errors such as descriptor.fields[spec].type or ref(example.Name).
+// errors such as descriptor.fields[spec].type or ref(example.dev.Name).
 func validateDescriptor(desc Descriptor, resolver Resolver, path string, resolving map[TypeName]bool) error {
 	if !desc.code.IsValid() {
 		return descriptorErrorf(

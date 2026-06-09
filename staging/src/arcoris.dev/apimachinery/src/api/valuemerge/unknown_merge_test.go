@@ -125,10 +125,10 @@ func TestMergeUnknownPruneSelectedUnknownIgnored(t *testing.T) {
 	requireNoMember(t, got, "xExtra")
 }
 
-func TestMergeUnknownPreserveUnselectedBaseUnknownPreserved(t *testing.T) {
+func TestMergeUnknownPreserveOpaqueUnselectedBaseUnknownPreserveOpaque(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("name").String().Optional(),
-	).UnknownFields(types.UnknownPreserve).Descriptor()
+	).UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 
 	got, err := Merge(
 		obj(member("name", str("old")), member("xExtra", str("old"))),
@@ -145,8 +145,8 @@ func TestMergeUnknownPreserveUnselectedBaseUnknownPreserved(t *testing.T) {
 	requireStringMember(t, got, "xExtra", "old")
 }
 
-func TestMergeUnknownPreserveExactCopiesOpaque(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Descriptor()
+func TestMergeUnknownPreserveOpaqueExactCopiesOpaque(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 	overlayExtra := obj(member("nested", str("new")))
 
 	got, err := Merge(
@@ -168,8 +168,8 @@ func TestMergeUnknownPreserveExactCopiesOpaque(t *testing.T) {
 	requireValue(t, extra, overlayExtra)
 }
 
-func TestMergeUnknownPreserveRemovesOpaqueWhenOverlayAbsent(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Descriptor()
+func TestMergeUnknownPreserveOpaqueRemovesOpaqueWhenOverlayAbsent(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 
 	got, err := Merge(
 		obj(member("xExtra", str("old"))),
@@ -185,8 +185,8 @@ func TestMergeUnknownPreserveRemovesOpaqueWhenOverlayAbsent(t *testing.T) {
 	requireNoMember(t, got, "xExtra")
 }
 
-func TestMergeUnknownPreserveDescendantSelectionUnsupported(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Descriptor()
+func TestMergeUnknownPreserveOpaqueDescendantSelectionUnsupported(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 
 	_, err := Merge(
 		obj(member("xExtra", obj(member("nested", str("old"))))),

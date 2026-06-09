@@ -99,8 +99,8 @@ func TestListMapDirectObjectKeyValidation(t *testing.T) {
 
 func TestListMapRefObjectKeyValidationWithResolver(t *testing.T) {
 	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
-		if name == "example.Item" {
-			return Define("example.Item", Object(
+		if name == "example.dev.Item" {
+			return Define("example.dev.Item", Object(
 				Field("type").String().Required(),
 				Field("value").String().Optional(),
 			)), true
@@ -108,7 +108,7 @@ func TestListMapRefObjectKeyValidationWithResolver(t *testing.T) {
 		return Definition{}, false
 	})
 
-	desc := ListOf(Ref("example.Item")).Map("type").Descriptor()
+	desc := ListOf(Ref("example.dev.Item")).Map("type").Descriptor()
 	requireNoError(t, ValidateResolved(desc, resolver))
 }
 

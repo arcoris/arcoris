@@ -22,7 +22,7 @@ package types
 //
 // Field builder flow:
 //
-//	Field("name").Ref("arcoris.meta.Name").
+//	Field("name").Ref("meta.arcoris.dev.Name").
 //		Required().
 //		Nullable().
 //		Description("Reference to a reusable name type.")

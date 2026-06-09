@@ -53,7 +53,7 @@ func TestConstructorsCreateExpectedDescriptorKinds(t *testing.T) {
 		{"object", Object().Descriptor(), DescriptorObject},
 		{"list", ListOf(String()).Descriptor(), DescriptorList},
 		{"map", MapOf(String()).Descriptor(), DescriptorMap},
-		{"ref", Ref("arcoris.meta.Name").Descriptor(), DescriptorRef},
+		{"ref", Ref("meta.arcoris.dev.Name").Descriptor(), DescriptorRef},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -75,7 +75,7 @@ func TestNullableFlagBehavior(t *testing.T) {
 		Object().Nullable().Descriptor(),
 		ListOf(String()).Nullable().Descriptor(),
 		MapOf(String()).Nullable().Descriptor(),
-		Ref("arcoris.meta.Name").Nullable().Descriptor(),
+		Ref("meta.arcoris.dev.Name").Nullable().Descriptor(),
 	}
 	for _, desc := range tests {
 		requireEqual(t, desc.Nullable(), true)

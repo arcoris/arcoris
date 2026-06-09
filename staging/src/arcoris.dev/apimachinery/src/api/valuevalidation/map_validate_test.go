@@ -59,6 +59,27 @@ func TestValidateMapRejectsInvalidEntryValue(t *testing.T) {
 	)
 }
 
+func TestValidateMapRejectsInvalidEntryKey(t *testing.T) {
+	shape := types.MapOf(types.String()).
+		Keys(types.String().Pattern(`^[a-z]+$`)).
+		Descriptor()
+	payload := mustObject(t, value.ObjectMember("INVALID", value.StringValue("ok")))
+
+	err := valuevalidation.Validate(
+		payload,
+		shape,
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrPatternMismatch,
+		valuevalidation.ErrorReasonPatternMismatch,
+		`$["INVALID"]`,
+	)
+}
+
 func TestValidateMapUsesKeyPath(t *testing.T) {
 	shape := types.MapOf(types.Int32()).Descriptor()
 	payload := mustObject(t, value.ObjectMember("app.kubernetes.io/name", value.StringValue("api")))

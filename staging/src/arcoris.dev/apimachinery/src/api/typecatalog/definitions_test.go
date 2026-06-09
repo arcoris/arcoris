@@ -22,15 +22,15 @@ import (
 
 func TestDefinitionsReturnsStableRegistrationOrder(t *testing.T) {
 	var catalog Catalog
-	requireNoError(t, catalog.Register(types.Define("example.Name", types.String())))
-	requireNoError(t, catalog.Register(types.Define("example.Count", types.Int64())))
+	requireNoError(t, catalog.Register(types.Define("example.dev.Name", types.String())))
+	requireNoError(t, catalog.Register(types.Define("example.dev.Count", types.Int64())))
 
-	requireDefinitions(t, &catalog, "example.Name", "example.Count")
+	requireDefinitions(t, &catalog, "example.dev.Name", "example.dev.Count")
 }
 
 func TestDefinitionsReturnsDetachedDefinitions(t *testing.T) {
 	var catalog Catalog
-	requireNoError(t, catalog.Register(types.Define("example.Name", types.String().Enum("alpha"))))
+	requireNoError(t, catalog.Register(types.Define("example.dev.Name", types.String().Enum("alpha"))))
 
 	defs := catalog.Definitions()
 	view, ok := defs[0].Descriptor().AsString()

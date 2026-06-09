@@ -198,41 +198,41 @@ func TestValidationDiagnosticsObjectListMapRefAndPayload(t *testing.T) {
 	})
 	requireDescriptorError(
 		t,
-		ValidateResolved(Ref("example.Missing").Descriptor(), missing),
+		ValidateResolved(Ref("example.dev.Missing").Descriptor(), missing),
 		ErrUnresolvedDescriptorReference,
 		"descriptor",
 		DescriptorErrorReasonUnknownReference,
-		"example.Missing",
+		"example.dev.Missing",
 	)
 
 	invalidResolved := resolverFunc(func(name TypeName) (Definition, bool) {
-		if name == "example.Bad" {
-			return Define("example.Bad", ListOf(DescriptorExpr(nil))), true
+		if name == "example.dev.Bad" {
+			return Define("example.dev.Bad", ListOf(DescriptorExpr(nil))), true
 		}
 		return Definition{}, false
 	})
 	requireDescriptorError(
 		t,
-		ValidateResolved(Ref("example.Bad").Descriptor(), invalidResolved),
+		ValidateResolved(Ref("example.dev.Bad").Descriptor(), invalidResolved),
 		ErrInvalidDescriptor,
 		"descriptor",
 		DescriptorErrorReasonInvalidResolvedDefinition,
-		"example.Bad",
+		"example.dev.Bad",
 	)
 
 	cycle := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
-		case "example.A":
-			return Define("example.A", Ref("example.B")), true
-		case "example.B":
-			return Define("example.B", Ref("example.A")), true
+		case "example.dev.A":
+			return Define("example.dev.A", Ref("example.dev.B")), true
+		case "example.dev.B":
+			return Define("example.dev.B", Ref("example.dev.A")), true
 		default:
 			return Definition{}, false
 		}
 	})
 	requireDescriptorError(
 		t,
-		ValidateResolved(Ref("example.A").Descriptor(), cycle),
+		ValidateResolved(Ref("example.dev.A").Descriptor(), cycle),
 		ErrInvalidDescriptorReference,
 		"descriptor",
 		DescriptorErrorReasonReferenceCycle,

@@ -17,15 +17,15 @@ package types
 import "testing"
 
 func TestRefPayloadStoresTypeName(t *testing.T) {
-	payload := Ref("example.Name").Descriptor().ref
-	requireEqual(t, payload.name, TypeName("example.Name"))
+	payload := Ref("example.dev.Name").Descriptor().ref
+	requireEqual(t, payload.name, TypeName("example.dev.Name"))
 }
 
 func TestRefPayloadCloneAndEmpty(t *testing.T) {
-	payload := refPayload{name: "example.Name"}
+	payload := refPayload{name: "example.dev.Name"}
 	cloned := cloneRefPayload(payload)
 
-	requireEqual(t, cloned.name, TypeName("example.Name"))
+	requireEqual(t, cloned.name, TypeName("example.dev.Name"))
 	requireEqual(t, emptyRefPayload(refPayload{}), true)
 	requireEqual(t, emptyRefPayload(payload), false)
 }

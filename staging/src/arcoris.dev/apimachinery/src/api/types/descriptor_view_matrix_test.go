@@ -191,7 +191,7 @@ func TestDescriptorExactViewWrongKindMatrix(t *testing.T) {
 		},
 		{
 			name:       "ref",
-			descriptor: Ref("example.Name").Descriptor(),
+			descriptor: Ref("example.dev.Name").Descriptor(),
 			exact:      func(desc Descriptor) bool { _, ok := desc.AsRef(); return ok },
 			wrong: []func(Descriptor) bool{
 				func(desc Descriptor) bool { _, ok := desc.AsObject(); return ok },
@@ -232,7 +232,7 @@ func TestDescriptorViewWrongKindReturnsZeroView(t *testing.T) {
 	requireEqual(t, ok, false)
 	requireEqual(t, mapView.Value().IsZero(), true)
 
-	desc.ref.name = "example.Name"
+	desc.ref.name = "example.dev.Name"
 	refView, ok := desc.AsRef()
 	requireEqual(t, ok, false)
 	requireEqual(t, refView.Name(), TypeName(""))
