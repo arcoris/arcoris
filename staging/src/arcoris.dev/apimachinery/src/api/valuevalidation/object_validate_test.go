@@ -105,6 +105,48 @@ func TestValidateObjectUnknownFieldRejected(t *testing.T) {
 	)
 }
 
+func TestValidateObjectUnknownFieldPruneAllowed(t *testing.T) {
+	shape := types.Object(
+		types.Field("name").String().Required(),
+	).UnknownFields(types.UnknownPrune).Descriptor()
+
+	payload := mustObject(
+		t,
+		value.ObjectMember("name", value.StringValue("main")),
+		value.ObjectMember("extra", value.StringValue("x")),
+	)
+
+	requireNoError(
+		t,
+		valuevalidation.Validate(
+			payload,
+			shape,
+			valuevalidation.Options{},
+		),
+	)
+}
+
+func TestValidateObjectUnknownFieldPreserveOpaqueAllowed(t *testing.T) {
+	shape := types.Object(
+		types.Field("name").String().Required(),
+	).UnknownFields(types.UnknownPreserveOpaque).Descriptor()
+
+	payload := mustObject(
+		t,
+		value.ObjectMember("name", value.StringValue("main")),
+		value.ObjectMember("extra", mustObject(t, value.ObjectMember("nested", value.StringValue("x")))),
+	)
+
+	requireNoError(
+		t,
+		valuevalidation.Validate(
+			payload,
+			shape,
+			valuevalidation.Options{},
+		),
+	)
+}
+
 func TestValidateObjectNestedPath(t *testing.T) {
 	shape := types.Object(
 		types.Field("spec").Object(

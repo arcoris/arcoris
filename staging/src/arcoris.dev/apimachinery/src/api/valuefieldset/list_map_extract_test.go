@@ -140,15 +140,15 @@ func TestExtractListMapNonObjectItemReturnsError(t *testing.T) {
 func TestExtractListMapRefElementUsesSelectorPaths(t *testing.T) {
 	path := rootField("conditions")
 	resolver := testResolver{
-		"example.Condition": types.Define(
-			"example.Condition",
+		"example.dev.Condition": types.Define(
+			"example.dev.Condition",
 			types.Object(
 				types.Field("type").String().Required(),
 				types.Field("status").String().Required(),
 			),
 		),
 	}
-	descriptor := types.ListOf(types.Ref("example.Condition")).
+	descriptor := types.ListOf(types.Ref("example.dev.Condition")).
 		Map("type").
 		Descriptor()
 	val := value.MustListValue(readyConditionValue("True"))
@@ -167,7 +167,7 @@ func TestExtractListMapRefElementUsesSelectorPaths(t *testing.T) {
 
 func TestExtractListMapUnresolvedRefReturnsUnresolvedRef(t *testing.T) {
 	path := rootField("conditions")
-	descriptor := types.ListOf(types.Ref("example.Condition")).
+	descriptor := types.ListOf(types.Ref("example.dev.Condition")).
 		Map("type").
 		Descriptor()
 	val := value.MustListValue(readyConditionValue("True"))
@@ -182,12 +182,12 @@ func TestExtractListMapUnresolvedRefReturnsUnresolvedRef(t *testing.T) {
 func TestExtractListMapReferenceCycleReturnsReferenceCycle(t *testing.T) {
 	path := rootField("conditions")
 	resolver := testResolver{
-		"example.Condition": types.Define(
-			"example.Condition",
-			types.Ref("example.Condition"),
+		"example.dev.Condition": types.Define(
+			"example.dev.Condition",
+			types.Ref("example.dev.Condition"),
 		),
 	}
-	descriptor := types.ListOf(types.Ref("example.Condition")).
+	descriptor := types.ListOf(types.Ref("example.dev.Condition")).
 		Map("type").
 		Descriptor()
 	val := value.MustListValue(readyConditionValue("True"))
@@ -207,13 +207,13 @@ func TestExtractListMapReferenceCycleReturnsReferenceCycle(t *testing.T) {
 func TestExtractListMapRefKeyUsesSelectorLiteral(t *testing.T) {
 	path := rootField("conditions")
 	resolver := testResolver{
-		"example.ConditionType": types.Define(
-			"example.ConditionType",
+		"example.dev.ConditionType": types.Define(
+			"example.dev.ConditionType",
 			types.String(),
 		),
 	}
 	condition := types.Object(
-		types.Field("type").Ref("example.ConditionType").Required(),
+		types.Field("type").Ref("example.dev.ConditionType").Required(),
 		types.Field("status").String().Required(),
 	)
 	descriptor := types.ListOf(condition).Map("type").Descriptor()

@@ -82,9 +82,9 @@ func (e *extractor) extractList(
 // extractIndexedList extracts ordered-list item paths by physical index.
 //
 // Ordered list semantics explicitly make item position part of semantic
-// addressing. Atomic and set-like lists intentionally do not use this helper
-// because their future ownership/apply behavior treats the complete list as one
-// field until a stable non-index identity model exists.
+// addressing. Atomic lists are one field. Set-like lists also stay at the list
+// path here: valuevalidation owns concrete scalar-set uniqueness, while field
+// ownership and apply remain conservative until set item paths are designed.
 func (e *extractor) extractIndexedList(
 	path fieldpath.Path,
 	valueView value.ListView,

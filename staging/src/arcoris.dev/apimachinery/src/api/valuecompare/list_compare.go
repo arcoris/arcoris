@@ -68,9 +68,9 @@ func (c *comparer) compareList(
 
 // compareWholeList treats atomic and set-like lists as one semantic field.
 //
-// ListSet intentionally keeps whole-list equality for now. Stable item
-// identity for arbitrary set elements is not defined yet, so emitting item
-// paths would be misleading.
+// ListSet intentionally keeps whole-list comparison for now. valuevalidation
+// enforces concrete scalar-set uniqueness, but compare/apply do not yet expose
+// unordered set item paths or move semantics.
 func (c *comparer) compareWholeList(
 	path fieldpath.Path,
 	oldValue value.Value,
@@ -131,8 +131,9 @@ func listOperand(list value.ListView, index int) valuepresence.Operand {
 
 // equalList compares list payloads according to descriptor list semantics.
 //
-// It is an equality-only companion to compareList. For ListSet, equality remains
-// whole-list and order-sensitive until stable value-based set identity exists.
+// It is an equality-only companion to compareList. For ListSet, equality
+// remains whole-list and order-sensitive even though valuevalidation enforces
+// duplicate-free scalar set values.
 func (c *comparer) equalList(
 	path fieldpath.Path,
 	oldValue value.Value,

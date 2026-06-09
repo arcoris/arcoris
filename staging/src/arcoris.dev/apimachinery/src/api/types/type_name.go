@@ -22,11 +22,16 @@ import (
 
 // TypeName is a dot-separated name for an owner-defined reusable structural descriptor.
 //
-// Descriptor names identify descriptor definitions, not Go packages or concrete Go
-// types. Prefix segments are lower-case API namespaces; ARCORIS examples use
-// reverse-DNS-like prefixes such as meta.arcoris.dev. The final segment starts
-// with an upper-case ASCII letter so named semantic types stand out from field
-// names and namespace segments.
+// Canonical ARCORIS-owned names should use a reverse-DNS-like namespace followed
+// by a PascalCase semantic descriptor name, for example:
+//
+//	meta.arcoris.dev.Name
+//	meta.arcoris.dev.Condition
+//	resource.arcoris.dev.Quantity
+//
+// TypeName identifies structural descriptor definitions, not Go packages,
+// Go types, generated structs, runtime resources, runtime schemes, or storage
+// keys.
 type TypeName string
 
 // ParseTypeName validates s and returns it as a TypeName.

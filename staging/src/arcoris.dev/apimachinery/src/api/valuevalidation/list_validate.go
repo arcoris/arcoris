@@ -69,9 +69,10 @@ func (v *validator) validateList(
 
 	switch listView.Semantics() {
 	case types.ListAtomic,
-		types.ListOrdered,
-		types.ListSet:
+		types.ListOrdered:
 		v.validateIndexedList(path, valueView, element, depth)
+	case types.ListSet:
+		v.validateListSet(path, valueView, element, depth)
 	case types.ListMap:
 		v.validateListMap(path, valueView, element, listView.MapKeys(), depth)
 	default:

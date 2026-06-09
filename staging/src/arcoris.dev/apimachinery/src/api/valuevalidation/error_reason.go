@@ -79,4 +79,7 @@ const (
 
 	// ErrorReasonDuplicateListKey reports repeated ListMap selectors.
 	ErrorReasonDuplicateListKey ErrorReason = "duplicate_list_key"
+
+	// ErrorReasonDuplicateListSetElement reports repeated ListSet scalar elements.
+	ErrorReasonDuplicateListSetElement ErrorReason = "duplicate_list_set_element"
 )

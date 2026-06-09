@@ -60,6 +60,9 @@ var (
 	// ErrDuplicateListKey classifies repeated ListMap selector identities.
 	ErrDuplicateListKey = errors.New("duplicate list map key")
 
+	// ErrDuplicateListSetElement classifies repeated ListSet scalar identities.
+	ErrDuplicateListSetElement = errors.New("duplicate list set element")
+
 	// ErrInvalidListKey classifies ListMap key extraction failures.
 	ErrInvalidListKey = errors.New("invalid list map key")
 )

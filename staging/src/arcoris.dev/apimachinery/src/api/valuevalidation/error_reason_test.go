@@ -43,6 +43,7 @@ func TestErrorReasonValuesAreStable(t *testing.T) {
 		{name: "missing list key", reason: valuevalidation.ErrorReasonMissingListKey, want: "missing_list_key"},
 		{name: "invalid list key", reason: valuevalidation.ErrorReasonInvalidListKey, want: "invalid_list_key"},
 		{name: "duplicate list key", reason: valuevalidation.ErrorReasonDuplicateListKey, want: "duplicate_list_key"},
+		{name: "duplicate list set element", reason: valuevalidation.ErrorReasonDuplicateListSetElement, want: "duplicate_list_set_element"},
 	}
 
 	for _, tt := range tests {

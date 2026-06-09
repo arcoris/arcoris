@@ -217,9 +217,9 @@ func TestCompareListMapDoesNotUseIndexPathForSuccessfulSelector(t *testing.T) {
 func TestCompareListMapRefElement(t *testing.T) {
 	path := rootField("conditions")
 	resolver := testResolver{
-		"example.Condition": types.Define("example.Condition", conditionExpr()),
+		"example.dev.Condition": types.Define("example.dev.Condition", conditionExpr()),
 	}
-	descriptor := types.ListOf(types.Ref("example.Condition")).Map("type").Descriptor()
+	descriptor := types.ListOf(types.Ref("example.dev.Condition")).Map("type").Descriptor()
 	oldValue := value.MustListValue(conditionValue("Ready", "False"))
 	newValue := value.MustListValue(conditionValue("Ready", "True"))
 
@@ -231,11 +231,11 @@ func TestCompareListMapRefElement(t *testing.T) {
 func TestCompareListMapRefKeyType(t *testing.T) {
 	path := rootField("conditions")
 	resolver := testResolver{
-		"example.ConditionType": types.Define("example.ConditionType", types.String()),
+		"example.dev.ConditionType": types.Define("example.dev.ConditionType", types.String()),
 	}
 	descriptor := types.ListOf(
 		types.Object(
-			types.Field("type").Ref("example.ConditionType").Required(),
+			types.Field("type").Ref("example.dev.ConditionType").Required(),
 			types.Field("status").String().Required(),
 		),
 	).Map("type").Descriptor()

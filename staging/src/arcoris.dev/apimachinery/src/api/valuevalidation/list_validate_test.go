@@ -148,9 +148,9 @@ func TestValidateAtomicListUsesIndexPathsForDiagnostics(t *testing.T) {
 }
 
 func TestValidateSetListUsesIndexPathsForDiagnostics(t *testing.T) {
-	// Field-set extraction treats set-like lists as one semantic field until
-	// value-based set identity exists. Validation still keeps item diagnostics
-	// precise by using physical indexes.
+	// Field-set extraction still treats set-like lists as one semantic field.
+	// Validation owns concrete set uniqueness and keeps item diagnostics precise
+	// by using physical indexes.
 	shape := types.ListOf(types.String().MinBytes(1)).Set().Descriptor()
 	payload := mustList(t, value.StringValue(""))
 

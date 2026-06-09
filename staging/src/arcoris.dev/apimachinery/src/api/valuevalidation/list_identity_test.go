@@ -160,7 +160,7 @@ func TestValidateListMapNonObjectItemReportsIndexPathKindMismatch(t *testing.T) 
 }
 
 func TestValidateListMapDescriptorFailureReportsIdentityError(t *testing.T) {
-	shape := types.ListOf(types.Ref("example.Condition")).Map("type").Descriptor()
+	shape := types.ListOf(types.Ref("example.dev.Condition")).Map("type").Descriptor()
 	payload := mustList(t, conditionValue(t, "Ready", "True"))
 
 	err := valuevalidation.ValidateAt(

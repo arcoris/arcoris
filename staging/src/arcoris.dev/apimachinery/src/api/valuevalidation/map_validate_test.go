@@ -80,6 +80,56 @@ func TestValidateMapRejectsInvalidEntryKey(t *testing.T) {
 	)
 }
 
+func TestValidateMapRejectsInvalidEntryKeyLength(t *testing.T) {
+	shape := types.MapOf(types.String()).
+		Keys(types.String().MinBytes(2)).
+		Descriptor()
+	payload := mustObject(t, value.ObjectMember("a", value.StringValue("ok")))
+
+	err := valuevalidation.Validate(
+		payload,
+		shape,
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrLengthOutOfRange,
+		valuevalidation.ErrorReasonTooShort,
+		`$["a"]`,
+	)
+}
+
+func TestValidateMapValidatesEntryValueWhenKeyIsInvalid(t *testing.T) {
+	shape := types.MapOf(types.Int32()).
+		Keys(types.String().MinBytes(2)).
+		Descriptor()
+	payload := mustObject(t, value.ObjectMember("a", value.StringValue("not-int")))
+
+	err := valuevalidation.Validate(
+		payload,
+		shape,
+		valuevalidation.Options{},
+	)
+
+	requireErrorCount(t, err, 2)
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrLengthOutOfRange,
+		valuevalidation.ErrorReasonTooShort,
+		`$["a"]`,
+	)
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrKindMismatch,
+		valuevalidation.ErrorReasonKindMismatch,
+		`$["a"]`,
+	)
+}
+
 func TestValidateMapUsesKeyPath(t *testing.T) {
 	shape := types.MapOf(types.Int32()).Descriptor()
 	payload := mustObject(t, value.ObjectMember("app.kubernetes.io/name", value.StringValue("api")))
