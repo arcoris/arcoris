@@ -77,7 +77,7 @@ func TestConcurrentApplyAndDeleteSameObjectLeavesValidState(t *testing.T) {
 		}
 		return
 	}
-	requireLifecycleError(t, err, ErrNotFound, ReasonNotFound)
+	requireLifecycleError(t, err, ErrNotFound, ErrorReasonNotFound)
 }
 
 func TestConcurrentApplySameLiveRevisionAllowsOneWinner(t *testing.T) {

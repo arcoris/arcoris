@@ -45,17 +45,17 @@ func (e *Executor) initialOwnership(
 		},
 	)
 	if err != nil {
-		return objectownership.State{}, errorFor(op, ReasonApplyFailed, key, ErrApplyFailed, err)
+		return objectownership.State{}, errorFor(op, ErrorReasonApplyFailed, key, ErrApplyFailed, err)
 	}
 
 	entry, err := fieldownership.NewEntry(owner, fields)
 	if err != nil {
-		return objectownership.State{}, errorFor(op, ReasonInvalidRequest, key, ErrInvalidRequest, err)
+		return objectownership.State{}, errorFor(op, ErrorReasonInvalidRequest, key, ErrInvalidRequest, err)
 	}
 
 	state, err := fieldownership.NewState(entry)
 	if err != nil {
-		return objectownership.State{}, errorFor(op, ReasonInvalidRequest, key, ErrInvalidRequest, err)
+		return objectownership.State{}, errorFor(op, ErrorReasonInvalidRequest, key, ErrInvalidRequest, err)
 	}
 
 	return objectownership.NewState(state), nil
@@ -65,7 +65,7 @@ func (e *Executor) initialOwnership(
 func stateOwnership(op Operation, key objectstore.Key, doc objectownership.Document) (objectownership.State, error) {
 	state, err := objectownership.StateFromDocument(doc)
 	if err != nil {
-		return objectownership.State{}, errorFor(op, ReasonStoreFailed, key, ErrStoreFailed, err)
+		return objectownership.State{}, errorFor(op, ErrorReasonStoreFailed, key, ErrStoreFailed, err)
 	}
 
 	return state, nil

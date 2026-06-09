@@ -37,7 +37,7 @@ func (e *Executor) Get(ctx context.Context, req GetRequest) (Result, error) {
 		return Result{}, mapStoreError(OperationGet, prepared.key, err)
 	}
 	if !ok {
-		return Result{}, errorFor(OperationGet, ReasonNotFound, prepared.key, ErrNotFound, nil)
+		return Result{}, errorFor(OperationGet, ErrorReasonNotFound, prepared.key, ErrNotFound, nil)
 	}
 
 	return Result{Operation: OperationGet, Effect: EffectFound, State: state}, nil

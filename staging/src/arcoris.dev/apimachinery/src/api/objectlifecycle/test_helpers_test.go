@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/fieldownership"
+	"arcoris.dev/apimachinery/api/fieldpath"
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 	"arcoris.dev/apimachinery/api/meta"
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
@@ -146,6 +147,14 @@ func testObject(index int, image string) object.Object[value.Value, value.Value]
 	)
 }
 
+func testObjectWithDesired(index int, desired value.Value) object.Object[value.Value, value.Value] {
+	return object.New[value.Value, value.Value](
+		testTypeMeta(),
+		testObjectMeta(index),
+		desired,
+	)
+}
+
 func testObservedObject(index int, image string, ready string) object.Object[value.Value, value.Value] {
 	return object.NewObserved[value.Value, value.Value](
 		testTypeMeta(),
@@ -193,7 +202,7 @@ func requireErrorIs(t *testing.T, err error, target error) {
 	}
 }
 
-func requireLifecycleError(t *testing.T, err error, target error, reason Reason) *Error {
+func requireLifecycleError(t *testing.T, err error, target error, reason ErrorReason) *Error {
 	t.Helper()
 
 	requireErrorIs(t, err, target)
@@ -248,4 +257,8 @@ func requireOwnedPath(t *testing.T, doc objectownership.Document, owner fieldown
 	}
 
 	t.Fatalf("ownership path %s for owner %s not found in %#v", path, owner, doc)
+}
+
+func ownershipPath(path fieldpath.Path) objectownership.Path {
+	return objectownership.Path(path.String())
 }

@@ -15,17 +15,29 @@
 package objectlifecycle
 
 import (
-	"errors"
+	"strings"
+	"testing"
 
-	"arcoris.dev/apimachinery/api/objectapply"
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-// mapApplyError preserves objectapply causes under lifecycle sentinels.
-func mapApplyError(op Operation, key objectstore.Key, err error) error {
-	if errors.Is(err, objectapply.ErrConflict) {
-		return errorFor(op, ErrorReasonConflict, key, ErrConflict, err)
-	}
+func TestErrorStringIncludesOperationReasonAndKey(t *testing.T) {
+	key := objectstore.MustKey(testGVR(), testName(1))
+	err := errorFor(OperationDelete, ErrorReasonStaleRevision, key, ErrStaleRevision, objectstore.ErrStaleRevision).Error()
 
-	return errorFor(op, ErrorReasonApplyFailed, key, ErrApplyFailed, err)
+	for _, want := range []string{"delete", "stale_revision", key.String()} {
+		if !strings.Contains(err, want) {
+			t.Fatalf("Error() = %q; want to contain %q", err, want)
+		}
+	}
+}
+
+func TestNilErrorIsSafe(t *testing.T) {
+	var err *Error
+	if got := err.Error(); got != "<nil>" {
+		t.Fatalf("Error() = %q; want <nil>", got)
+	}
+	if got := err.Unwrap(); got != nil {
+		t.Fatalf("Unwrap() = %v; want nil", got)
+	}
 }

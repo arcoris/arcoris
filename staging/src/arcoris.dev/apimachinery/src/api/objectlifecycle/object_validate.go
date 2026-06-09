@@ -15,17 +15,29 @@
 package objectlifecycle
 
 import (
-	"errors"
-
 	"arcoris.dev/apimachinery/api/objectapply"
 	"arcoris.dev/apimachinery/api/objectstore"
+	"arcoris.dev/apimachinery/api/objectvalidation"
+	"arcoris.dev/apimachinery/api/value"
 )
 
-// mapApplyError preserves objectapply causes under lifecycle sentinels.
-func mapApplyError(op Operation, key objectstore.Key, err error) error {
-	if errors.Is(err, objectapply.ErrConflict) {
-		return errorFor(op, ErrorReasonConflict, key, ErrConflict, err)
+// validateObject delegates descriptor-aware object checks to objectvalidation.
+func (e *Executor) validateObject(
+	op Operation,
+	key objectstore.Key,
+	obj objectapply.ValueObject,
+	resolved resolvedResource,
+) error {
+	plan := objectvalidation.Plan[value.Value, value.Value]{
+		Resource:          resolved.definition,
+		Resolver:          e.resolver,
+		DesiredValidator:  e.desiredValidator,
+		ObservedValidator: e.observedValidator,
 	}
 
-	return errorFor(op, ErrorReasonApplyFailed, key, ErrApplyFailed, err)
+	if err := objectvalidation.Validate(obj, plan); err != nil {
+		return errorFor(op, ErrorReasonValidationFailed, key, ErrValidationFailed, err)
+	}
+
+	return nil
 }

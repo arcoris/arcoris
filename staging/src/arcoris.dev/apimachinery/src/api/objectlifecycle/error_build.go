@@ -14,28 +14,23 @@
 
 package objectlifecycle
 
-import "testing"
+import (
+	"errors"
 
-func TestErrorSentinelsAreNonNil(t *testing.T) {
-	for _, err := range []error{
-		ErrInvalidRequest,
-		ErrInvalidExecutor,
-		ErrResourceNotFound,
-		ErrValidationFailed,
-		ErrApplyFailed,
-		ErrConflict,
-		ErrNotFound,
-		ErrAlreadyExists,
-		ErrStaleRevision,
-		ErrStoreFailed,
-		ErrNilOption,
-		ErrNilStore,
-		ErrNilResourceResolver,
-		ErrNilDesiredValidator,
-		ErrNilContext,
-	} {
-		if err == nil {
-			t.Fatalf("sentinel is nil")
-		}
+	"arcoris.dev/apimachinery/api/objectstore"
+)
+
+// errorFor builds a structured lifecycle error while preserving cause identity.
+func errorFor(op Operation, reason ErrorReason, key objectstore.Key, sentinel error, cause error) error {
+	err := sentinel
+	if cause != nil {
+		err = errors.Join(sentinel, cause)
+	}
+
+	return &Error{
+		Operation: op,
+		Reason:    reason,
+		Key:       key,
+		Err:       err,
 	}
 }

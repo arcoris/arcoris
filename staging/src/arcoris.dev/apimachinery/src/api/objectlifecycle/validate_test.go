@@ -19,7 +19,6 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/fieldownership"
-	"arcoris.dev/apimachinery/api/valuevalidation"
 )
 
 func TestCreateRejectsNilContext(t *testing.T) {
@@ -27,7 +26,7 @@ func TestCreateRejectsNilContext(t *testing.T) {
 
 	_, err := executor.Create(nil, CreateRequest{Object: testObject(1, "api:v1"), Owner: owner("creator")})
 
-	requireLifecycleError(t, err, ErrInvalidRequest, ReasonInvalidRequest)
+	requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidRequest)
 	requireErrorIs(t, err, ErrNilContext)
 }
 
@@ -39,35 +38,6 @@ func TestCreateRejectsInvalidOwner(t *testing.T) {
 		CreateRequest{Object: testObject(1, "api:v1")},
 	)
 
-	requireLifecycleError(t, err, ErrInvalidRequest, ReasonInvalidRequest)
+	requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidRequest)
 	requireErrorIs(t, err, fieldownership.ErrInvalidOwner)
-}
-
-func TestCreateRejectsInvalidObjectIdentity(t *testing.T) {
-	executor := testExecutor(t)
-	obj := testObject(1, "api:v1")
-	obj.ObjectMeta.Name = ""
-
-	_, err := executor.Create(
-		context.Background(),
-		CreateRequest{Object: obj, Owner: owner("creator")},
-	)
-
-	requireLifecycleError(t, err, ErrInvalidRequest, ReasonInvalidRequest)
-}
-
-func TestObservedObjectRequiresObservedValidator(t *testing.T) {
-	executor, err := NewExecutor(
-		WithStore(testStore(t)),
-		WithResourceResolver(testCatalog(t, testDefinition(resourceObserved()))),
-		WithDesiredValidator(valuevalidation.SurfaceValidator{}),
-	)
-	requireNoError(t, err)
-
-	_, err = executor.Create(
-		context.Background(),
-		CreateRequest{Object: testObservedObject(1, "api:v1", "true"), Owner: owner("creator")},
-	)
-
-	requireLifecycleError(t, err, ErrValidationFailed, ReasonValidationFailed)
 }

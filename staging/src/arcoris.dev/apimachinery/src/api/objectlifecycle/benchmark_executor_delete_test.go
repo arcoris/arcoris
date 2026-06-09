@@ -14,28 +14,20 @@
 
 package objectlifecycle
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
-func TestErrorSentinelsAreNonNil(t *testing.T) {
-	for _, err := range []error{
-		ErrInvalidRequest,
-		ErrInvalidExecutor,
-		ErrResourceNotFound,
-		ErrValidationFailed,
-		ErrApplyFailed,
-		ErrConflict,
-		ErrNotFound,
-		ErrAlreadyExists,
-		ErrStaleRevision,
-		ErrStoreFailed,
-		ErrNilOption,
-		ErrNilStore,
-		ErrNilResourceResolver,
-		ErrNilDesiredValidator,
-		ErrNilContext,
-	} {
-		if err == nil {
-			t.Fatalf("sentinel is nil")
+func BenchmarkExecutorDeletePrepared(b *testing.B) {
+	executor := benchmarkExecutor(b)
+	requests := benchmarkPreparedDeletes(b, executor, b.N)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if _, err := executor.Delete(context.Background(), requests[i]); err != nil {
+			b.Fatalf("Delete() error: %v", err)
 		}
 	}
 }

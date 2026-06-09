@@ -37,17 +37,17 @@ type resolvedResource struct {
 func (e *Executor) resolveObjectResource(op Operation, obj objectapply.ValueObject) (resolvedResource, error) {
 	gvk := obj.GroupVersionKind()
 	if err := gvk.Validate(); err != nil {
-		return resolvedResource{}, errorFor(op, ReasonInvalidRequest, objectstore.Key{}, ErrInvalidRequest, err)
+		return resolvedResource{}, errorFor(op, ErrorReasonInvalidRequest, objectstore.Key{}, ErrInvalidRequest, err)
 	}
 
 	def, version, ok := e.resources.ResolveVersionKind(gvk)
 	if !ok {
-		return resolvedResource{}, errorFor(op, ReasonResourceNotFound, objectstore.Key{}, ErrResourceNotFound, nil)
+		return resolvedResource{}, errorFor(op, ErrorReasonResourceNotFound, objectstore.Key{}, ErrResourceNotFound, nil)
 	}
 
 	gvr, ok := def.GroupVersionResource(version.Version())
 	if !ok {
-		return resolvedResource{}, errorFor(op, ReasonResourceNotFound, objectstore.Key{}, ErrResourceNotFound, nil)
+		return resolvedResource{}, errorFor(op, ErrorReasonResourceNotFound, objectstore.Key{}, ErrResourceNotFound, nil)
 	}
 
 	return resolvedResource{definition: def, version: version, gvr: gvr}, nil
@@ -56,12 +56,12 @@ func (e *Executor) resolveObjectResource(op Operation, obj objectapply.ValueObje
 // resolveKeyResource resolves the resource selected by request GVR.
 func (e *Executor) resolveKeyResource(op Operation, gvr identity.GroupVersionResource) (resolvedResource, error) {
 	if err := gvr.Validate(); err != nil {
-		return resolvedResource{}, errorFor(op, ReasonInvalidRequest, objectstore.Key{}, ErrInvalidRequest, err)
+		return resolvedResource{}, errorFor(op, ErrorReasonInvalidRequest, objectstore.Key{}, ErrInvalidRequest, err)
 	}
 
 	def, version, ok := e.resources.ResolveVersionResource(gvr)
 	if !ok {
-		return resolvedResource{}, errorFor(op, ReasonResourceNotFound, objectstore.Key{}, ErrResourceNotFound, nil)
+		return resolvedResource{}, errorFor(op, ErrorReasonResourceNotFound, objectstore.Key{}, ErrResourceNotFound, nil)
 	}
 
 	return resolvedResource{definition: def, version: version, gvr: gvr}, nil

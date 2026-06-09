@@ -37,8 +37,9 @@ func (e *Executor) Delete(ctx context.Context, req DeleteRequest) (Result, error
 	if err != nil {
 		return Result{}, err
 	}
+
 	if err := objectstore.ValidateExpectedRevision(prepared.key, req.Expected); err != nil {
-		return Result{}, errorFor(OperationDelete, ReasonInvalidRequest, prepared.key, ErrInvalidRequest, err)
+		return Result{}, errorFor(OperationDelete, ErrorReasonInvalidRequest, prepared.key, ErrInvalidRequest, err)
 	}
 
 	deleted, err := e.store.Delete(ctx, prepared.key, req.Expected)

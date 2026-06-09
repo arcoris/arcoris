@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectapply"
+	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/resource"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -56,6 +57,37 @@ func TestApplyExistingObjectCommitsUpdate(t *testing.T) {
 	}
 }
 
+func TestApplySameObjectCurrentlyCommitsUpdate(t *testing.T) {
+	executor := testExecutor(t)
+	created := createObject(t, executor, 1, "api:v1", owner("creator"))
+
+	result, err := executor.Apply(
+		context.Background(),
+		ApplyRequest{Object: testObject(1, "api:v1"), Owner: owner("creator")},
+	)
+	requireNoError(t, err)
+
+	requireEffect(t, result.Result, OperationApply, EffectUpdated)
+	if !created.State.Revision.Before(result.State.Revision) {
+		t.Fatalf("revision = %v; want after %v", result.State.Revision, created.State.Revision)
+	}
+}
+
+func TestApplySameValueDifferentOwnerChangesOwnership(t *testing.T) {
+	executor := testExecutor(t)
+	createObject(t, executor, 1, "api:v1", owner("creator"))
+
+	result, err := executor.Apply(
+		context.Background(),
+		ApplyRequest{Object: testObject(1, "api:v1"), Owner: owner("observer")},
+	)
+	requireNoError(t, err)
+
+	requireEffect(t, result.Result, OperationApply, EffectUpdated)
+	requireOwnedPath(t, result.State.Ownership, owner("creator"), objectownership.Path("$.image"))
+	requireOwnedPath(t, result.State.Ownership, owner("observer"), objectownership.Path("$.image"))
+}
+
 func TestApplyInvalidObjectReturnsValidationFailed(t *testing.T) {
 	executor := testExecutor(t)
 	obj := testObject(1, "api:v1")
@@ -66,7 +98,7 @@ func TestApplyInvalidObjectReturnsValidationFailed(t *testing.T) {
 		ApplyRequest{Object: obj, Owner: owner("creator")},
 	)
 
-	requireLifecycleError(t, err, ErrValidationFailed, ReasonValidationFailed)
+	requireLifecycleError(t, err, ErrValidationFailed, ErrorReasonValidationFailed)
 }
 
 func TestApplyOwnershipConflictMapsToConflict(t *testing.T) {
@@ -78,7 +110,7 @@ func TestApplyOwnershipConflictMapsToConflict(t *testing.T) {
 		ApplyRequest{Object: testObject(1, "api:v2"), Owner: owner("other")},
 	)
 
-	requireLifecycleError(t, err, ErrConflict, ReasonConflict)
+	requireLifecycleError(t, err, ErrConflict, ErrorReasonConflict)
 	requireErrorIs(t, err, objectapply.ErrConflict)
 }
 

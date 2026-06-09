@@ -99,6 +99,10 @@ func (e *Executor) applyExisting(
 		return ApplyResult{}, mapApplyError(OperationApply, key, err)
 	}
 
+	// Existing-object Apply always commits objectapply output in this first
+	// lifecycle slice. No-op suppression needs a reliable equality decision for
+	// both the object envelope and ownership document; value equality alone would
+	// miss ownership-only changes such as another owner applying the same value.
 	next := objectstore.State{
 		Object:    applied.Object,
 		Ownership: objectownership.ToDocument(applied.Ownership),

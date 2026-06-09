@@ -37,8 +37,26 @@ func TestApplyMapsStoreStaleRevision(t *testing.T) {
 		ApplyRequest{Object: testObject(1, "api:v2"), Owner: owner("creator")},
 	)
 
-	requireLifecycleError(t, err, ErrStaleRevision, ReasonStaleRevision)
+	requireLifecycleError(t, err, ErrStaleRevision, ErrorReasonStaleRevision)
 	requireErrorIs(t, err, objectstore.ErrStaleRevision)
+}
+
+func TestApplyMapsStoreConflict(t *testing.T) {
+	store := conflictUpdateStore{state: committedStateForFakeStore()}
+	executor, err := NewExecutor(
+		WithStore(store),
+		WithResourceResolver(testCatalog(t)),
+		WithDesiredValidator(valuevalidation.SurfaceValidator{}),
+	)
+	requireNoError(t, err)
+
+	_, err = executor.Apply(
+		context.Background(),
+		ApplyRequest{Object: testObject(1, "api:v2"), Owner: owner("creator")},
+	)
+
+	requireLifecycleError(t, err, ErrConflict, ErrorReasonConflict)
+	requireErrorIs(t, err, objectstore.ErrConflict)
 }
 
 func committedStateForFakeStore() objectstore.State {
@@ -74,4 +92,24 @@ func (s staleUpdateStore) Update(context.Context, objectstore.Key, objectstore.R
 
 func (s staleUpdateStore) Delete(context.Context, objectstore.Key, objectstore.Revision) (objectstore.State, error) {
 	return objectstore.State{}, objectstore.ErrStaleRevision
+}
+
+type conflictUpdateStore struct {
+	state objectstore.State
+}
+
+func (s conflictUpdateStore) Get(context.Context, objectstore.Key) (objectstore.State, bool, error) {
+	return s.state, true, nil
+}
+
+func (s conflictUpdateStore) Create(context.Context, objectstore.Key, objectstore.State) (objectstore.State, error) {
+	return objectstore.State{}, objectstore.ErrAlreadyExists
+}
+
+func (s conflictUpdateStore) Update(context.Context, objectstore.Key, objectstore.Revision, objectstore.State) (objectstore.State, error) {
+	return objectstore.State{}, objectstore.ErrConflict
+}
+
+func (s conflictUpdateStore) Delete(context.Context, objectstore.Key, objectstore.Revision) (objectstore.State, error) {
+	return objectstore.State{}, objectstore.ErrConflict
 }

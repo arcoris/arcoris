@@ -17,6 +17,10 @@ package objectlifecycle
 import (
 	"context"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/objectownership"
+	"arcoris.dev/apimachinery/api/objectstore"
+	"arcoris.dev/apimachinery/api/value"
 )
 
 func TestGetExistingReturnsFound(t *testing.T) {
@@ -44,7 +48,7 @@ func TestGetMissingReturnsNotFound(t *testing.T) {
 		GetRequest{Resource: testGVR(), Object: testName(1)},
 	)
 
-	requireLifecycleError(t, err, ErrNotFound, ReasonNotFound)
+	requireLifecycleError(t, err, ErrNotFound, ErrorReasonNotFound)
 }
 
 func TestGetMissingResourceReturnsResourceNotFound(t *testing.T) {
@@ -54,5 +58,28 @@ func TestGetMissingResourceReturnsResourceNotFound(t *testing.T) {
 
 	_, err := executor.Get(context.Background(), req)
 
-	requireLifecycleError(t, err, ErrResourceNotFound, ReasonResourceNotFound)
+	requireLifecycleError(t, err, ErrResourceNotFound, ErrorReasonResourceNotFound)
+}
+
+func TestGetDoesNotValidateDesiredPayload(t *testing.T) {
+	store := testStore(t)
+	key := objectstore.MustKey(testGVR(), testName(1))
+	_, err := store.Create(
+		context.Background(),
+		key,
+		objectstore.State{
+			Object:    testObjectWithDesired(1, value.StringValue("descriptor-invalid")),
+			Ownership: objectownership.Document{Version: objectownership.VersionV1},
+		},
+	)
+	requireNoError(t, err)
+	executor := testExecutor(t, WithStore(store))
+
+	result, err := executor.Get(context.Background(), GetRequest{Resource: testGVR(), Object: testName(1)})
+	requireNoError(t, err)
+
+	requireEffect(t, result, OperationGet, EffectFound)
+	if got, ok := result.State.Object.Desired.String(); !ok || got != "descriptor-invalid" {
+		t.Fatalf("Desired = %q, %v; want descriptor-invalid, true", got, ok)
+	}
 }

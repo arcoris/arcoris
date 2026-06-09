@@ -15,8 +15,6 @@
 package objectlifecycle
 
 import (
-	"arcoris.dev/apimachinery/api/identity"
-	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 	"arcoris.dev/apimachinery/api/objectapply"
 	"arcoris.dev/apimachinery/api/objectstore"
 )
@@ -27,15 +25,6 @@ type preparedObjectRequest struct {
 	resolved resolvedResource
 
 	// key is the committed-state identity derived from the resolved resource and ObjectMeta.
-	key objectstore.Key
-}
-
-// preparedKeyRequest is the resolved objectstore identity shared by Get and Delete.
-type preparedKeyRequest struct {
-	// resolved is the resource/version selected by the request GVR.
-	resolved resolvedResource
-
-	// key is the committed-state identity derived from the resolved resource and object name.
 	key objectstore.Key
 }
 
@@ -64,27 +53,4 @@ func (e *Executor) prepareObjectRequest(
 	}
 
 	return preparedObjectRequest{resolved: resolved, key: key}, nil
-}
-
-// prepareKeyRequest resolves the requested resource and constructs its store key.
-//
-// Get and Delete operate from explicit GVR plus object name rather than an
-// object envelope, so this helper performs only resolver and key validation.
-// It does not validate a live object and it does not inspect stored state.
-func (e *Executor) prepareKeyRequest(
-	op Operation,
-	gvr identity.GroupVersionResource,
-	name metaidentity.ObjectName,
-) (preparedKeyRequest, error) {
-	resolved, err := e.resolveKeyResource(op, gvr)
-	if err != nil {
-		return preparedKeyRequest{}, err
-	}
-
-	key, err := keyFor(op, resolved, name)
-	if err != nil {
-		return preparedKeyRequest{}, err
-	}
-
-	return preparedKeyRequest{resolved: resolved, key: key}, nil
 }

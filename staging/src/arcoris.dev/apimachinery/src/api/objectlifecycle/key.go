@@ -23,7 +23,7 @@ import (
 func keyFor(op Operation, resolved resolvedResource, name metaidentity.ObjectName) (objectstore.Key, error) {
 	key, err := objectstore.NewKey(resolved.gvr, name)
 	if err != nil {
-		return objectstore.Key{}, errorFor(op, ReasonInvalidRequest, objectstore.Key{}, ErrInvalidRequest, err)
+		return objectstore.Key{}, errorFor(op, ErrorReasonInvalidRequest, objectstore.Key{}, ErrInvalidRequest, err)
 	}
 
 	return key, nil

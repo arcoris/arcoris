@@ -22,7 +22,7 @@ import (
 
 func TestNewExecutorRejectsNilOption(t *testing.T) {
 	_, err := NewExecutor(nil)
-	requireLifecycleError(t, err, ErrInvalidExecutor, ReasonInvalidExecutor)
+	requireLifecycleError(t, err, ErrInvalidExecutor, ErrorReasonInvalidExecutor)
 	requireErrorIs(t, err, ErrNilOption)
 }
 
@@ -31,7 +31,7 @@ func TestNewExecutorRejectsNilStore(t *testing.T) {
 		WithResourceResolver(testCatalog(t)),
 		WithDesiredValidator(valuevalidation.SurfaceValidator{}),
 	)
-	requireLifecycleError(t, err, ErrInvalidExecutor, ReasonInvalidExecutor)
+	requireLifecycleError(t, err, ErrInvalidExecutor, ErrorReasonInvalidExecutor)
 	requireErrorIs(t, err, ErrNilStore)
 }
 
@@ -40,7 +40,7 @@ func TestNewExecutorRejectsNilResourceResolver(t *testing.T) {
 		WithStore(testStore(t)),
 		WithDesiredValidator(valuevalidation.SurfaceValidator{}),
 	)
-	requireLifecycleError(t, err, ErrInvalidExecutor, ReasonInvalidExecutor)
+	requireLifecycleError(t, err, ErrInvalidExecutor, ErrorReasonInvalidExecutor)
 	requireErrorIs(t, err, ErrNilResourceResolver)
 }
 
@@ -49,7 +49,7 @@ func TestNewExecutorRejectsNilDesiredValidator(t *testing.T) {
 		WithStore(testStore(t)),
 		WithResourceResolver(testCatalog(t)),
 	)
-	requireLifecycleError(t, err, ErrInvalidExecutor, ReasonInvalidExecutor)
+	requireLifecycleError(t, err, ErrInvalidExecutor, ErrorReasonInvalidExecutor)
 	requireErrorIs(t, err, ErrNilDesiredValidator)
 }
 

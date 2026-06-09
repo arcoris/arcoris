@@ -26,14 +26,14 @@ func mapStoreError(op Operation, key objectstore.Key, err error) error {
 	case err == nil:
 		return nil
 	case errors.Is(err, objectstore.ErrNotFound):
-		return errorFor(op, ReasonNotFound, key, ErrNotFound, err)
+		return errorFor(op, ErrorReasonNotFound, key, ErrNotFound, err)
 	case errors.Is(err, objectstore.ErrAlreadyExists):
-		return errorFor(op, ReasonAlreadyExists, key, ErrAlreadyExists, err)
+		return errorFor(op, ErrorReasonAlreadyExists, key, ErrAlreadyExists, err)
 	case errors.Is(err, objectstore.ErrStaleRevision):
-		return errorFor(op, ReasonStaleRevision, key, ErrStaleRevision, err)
+		return errorFor(op, ErrorReasonStaleRevision, key, ErrStaleRevision, err)
 	case errors.Is(err, objectstore.ErrConflict):
-		return errorFor(op, ReasonConflict, key, ErrConflict, err)
+		return errorFor(op, ErrorReasonConflict, key, ErrConflict, err)
 	default:
-		return errorFor(op, ReasonStoreFailed, key, ErrStoreFailed, err)
+		return errorFor(op, ErrorReasonStoreFailed, key, ErrStoreFailed, err)
 	}
 }

@@ -15,29 +15,24 @@
 package objectlifecycle
 
 import (
+	"errors"
+	"testing"
+
 	"arcoris.dev/apimachinery/api/objectapply"
 	"arcoris.dev/apimachinery/api/objectstore"
-	"arcoris.dev/apimachinery/api/objectvalidation"
-	"arcoris.dev/apimachinery/api/value"
 )
 
-// validateObject delegates descriptor-aware object checks to objectvalidation.
-func (e *Executor) validateObject(
-	op Operation,
-	key objectstore.Key,
-	obj objectapply.ValueObject,
-	resolved resolvedResource,
-) error {
-	plan := objectvalidation.Plan[value.Value, value.Value]{
-		Resource:          resolved.definition,
-		Resolver:          e.resolver,
-		DesiredValidator:  e.desiredValidator,
-		ObservedValidator: e.observedValidator,
-	}
+func TestMapApplyErrorMapsConflict(t *testing.T) {
+	err := mapApplyError(OperationApply, objectstore.Key{}, objectapply.ErrConflict)
 
-	if err := objectvalidation.Validate(obj, plan); err != nil {
-		return errorFor(op, ReasonValidationFailed, key, ErrValidationFailed, err)
-	}
+	requireErrorIs(t, err, ErrConflict)
+	requireErrorIs(t, err, objectapply.ErrConflict)
+}
 
-	return nil
+func TestMapApplyErrorMapsFailure(t *testing.T) {
+	cause := errors.New("lower failure")
+	err := mapApplyError(OperationApply, objectstore.Key{}, cause)
+
+	requireErrorIs(t, err, ErrApplyFailed)
+	requireErrorIs(t, err, cause)
 }

@@ -14,28 +14,21 @@
 
 package objectlifecycle
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
-func TestErrorSentinelsAreNonNil(t *testing.T) {
-	for _, err := range []error{
-		ErrInvalidRequest,
-		ErrInvalidExecutor,
-		ErrResourceNotFound,
-		ErrValidationFailed,
-		ErrApplyFailed,
-		ErrConflict,
-		ErrNotFound,
-		ErrAlreadyExists,
-		ErrStaleRevision,
-		ErrStoreFailed,
-		ErrNilOption,
-		ErrNilStore,
-		ErrNilResourceResolver,
-		ErrNilDesiredValidator,
-		ErrNilContext,
-	} {
-		if err == nil {
-			t.Fatalf("sentinel is nil")
+func BenchmarkExecutorGetPrepared(b *testing.B) {
+	executor := benchmarkExecutor(b)
+	benchmarkCreateObject(b, executor, 1, "api:v1")
+	request := GetRequest{Resource: testGVR(), Object: testName(1)}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if _, err := executor.Get(context.Background(), request); err != nil {
+			b.Fatalf("Get() error: %v", err)
 		}
 	}
 }

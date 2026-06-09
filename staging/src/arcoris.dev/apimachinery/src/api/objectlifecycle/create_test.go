@@ -18,8 +18,11 @@ import (
 	"context"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/meta/stamp"
 	"arcoris.dev/apimachinery/api/objectownership"
+	"arcoris.dev/apimachinery/api/resource"
+	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
 
@@ -49,7 +52,7 @@ func TestCreateExistingReturnsAlreadyExists(t *testing.T) {
 		CreateRequest{Object: testObject(1, "api:v1"), Owner: owner("creator")},
 	)
 
-	requireLifecycleError(t, err, ErrAlreadyExists, ReasonAlreadyExists)
+	requireLifecycleError(t, err, ErrAlreadyExists, ErrorReasonAlreadyExists)
 }
 
 func TestCreateInvalidObjectReturnsValidationFailed(t *testing.T) {
@@ -62,7 +65,7 @@ func TestCreateInvalidObjectReturnsValidationFailed(t *testing.T) {
 		CreateRequest{Object: obj, Owner: owner("creator")},
 	)
 
-	requireLifecycleError(t, err, ErrValidationFailed, ReasonValidationFailed)
+	requireLifecycleError(t, err, ErrValidationFailed, ErrorReasonValidationFailed)
 }
 
 func TestCreateMissingResourceReturnsResourceNotFound(t *testing.T) {
@@ -75,7 +78,7 @@ func TestCreateMissingResourceReturnsResourceNotFound(t *testing.T) {
 		CreateRequest{Object: obj, Owner: owner("creator")},
 	)
 
-	requireLifecycleError(t, err, ErrResourceNotFound, ReasonResourceNotFound)
+	requireLifecycleError(t, err, ErrResourceNotFound, ErrorReasonResourceNotFound)
 }
 
 func TestCreateDoesNotStampMetadata(t *testing.T) {
@@ -96,4 +99,71 @@ func TestCreateDoesNotStampMetadata(t *testing.T) {
 	if result.State.Object.ObjectMeta.UID != "" {
 		t.Fatalf("UID = %q; want empty", result.State.Object.ObjectMeta.UID)
 	}
+}
+
+func TestCreateInitializesNestedDesiredOwnership(t *testing.T) {
+	executor := testExecutor(t, WithResourceResolver(testCatalog(t, ownershipDefinition())))
+	obj := testObjectWithDesired(1, objectValue(
+		member("template", objectValue(member("image", value.StringValue("api:v1")))),
+	))
+
+	result, err := executor.Create(
+		context.Background(),
+		CreateRequest{Object: obj, Owner: owner("creator")},
+	)
+	requireNoError(t, err)
+
+	requireOwnedPath(
+		t,
+		result.State.Ownership,
+		owner("creator"),
+		ownershipPath(fieldpath.RootPath().Field("template").Field("image")),
+	)
+}
+
+func TestCreateInitializesListMapDesiredOwnership(t *testing.T) {
+	executor := testExecutor(t, WithResourceResolver(testCatalog(t, ownershipDefinition())))
+	selector := fieldpath.MustSelector(fieldpath.NewSelectorEntry("type", fieldpath.StringLiteral("Ready")))
+	obj := testObjectWithDesired(1, objectValue(
+		member("conditions", value.MustListValue(objectValue(
+			member("type", value.StringValue("Ready")),
+			member("detail", objectValue(member("message", value.StringValue("ok")))),
+		))),
+	))
+
+	result, err := executor.Create(
+		context.Background(),
+		CreateRequest{Object: obj, Owner: owner("creator")},
+	)
+	requireNoError(t, err)
+
+	requireOwnedPath(
+		t,
+		result.State.Ownership,
+		owner("creator"),
+		ownershipPath(fieldpath.RootPath().Field("conditions").Select(selector).Field("detail").Field("message")),
+	)
+}
+
+func ownershipDefinition() resource.Definition {
+	condition := types.Object(
+		types.Field("type").String().Required(),
+		types.Field("detail").Object(
+			types.Field("message").String().Required(),
+		).Required(),
+	)
+	desired := types.Object(
+		types.Field("template").Object(
+			types.Field("image").String().Required(),
+		).Optional(),
+		types.Field("conditions").ListOf(condition).Optional().Map("type"),
+	).Type()
+
+	return resource.NewDefinition(
+		testGroup,
+		"Worker",
+		"workers",
+		resource.ScopeNamespaced,
+		resource.NewVersion("v1", desired, resource.Exposed(), resource.Canonical()),
+	)
 }

@@ -35,7 +35,7 @@ func TestDeleteExistingRevisionDeletesState(t *testing.T) {
 	}
 
 	_, err = executor.Get(context.Background(), GetRequest{Resource: testGVR(), Object: testName(1)})
-	requireLifecycleError(t, err, ErrNotFound, ReasonNotFound)
+	requireLifecycleError(t, err, ErrNotFound, ErrorReasonNotFound)
 }
 
 func TestDeleteMissingReturnsNotFound(t *testing.T) {
@@ -46,7 +46,7 @@ func TestDeleteMissingReturnsNotFound(t *testing.T) {
 		DeleteRequest{Resource: testGVR(), Object: testName(1), Expected: 1},
 	)
 
-	requireLifecycleError(t, err, ErrNotFound, ReasonNotFound)
+	requireLifecycleError(t, err, ErrNotFound, ErrorReasonNotFound)
 }
 
 func TestDeleteStaleRevisionReturnsStaleRevision(t *testing.T) {
@@ -58,7 +58,7 @@ func TestDeleteStaleRevisionReturnsStaleRevision(t *testing.T) {
 		DeleteRequest{Resource: testGVR(), Object: testName(1), Expected: 99},
 	)
 
-	requireLifecycleError(t, err, ErrStaleRevision, ReasonStaleRevision)
+	requireLifecycleError(t, err, ErrStaleRevision, ErrorReasonStaleRevision)
 }
 
 func TestDeleteZeroExpectedRevisionReturnsInvalidRequest(t *testing.T) {
@@ -69,5 +69,5 @@ func TestDeleteZeroExpectedRevisionReturnsInvalidRequest(t *testing.T) {
 		DeleteRequest{Resource: testGVR(), Object: testName(1)},
 	)
 
-	requireLifecycleError(t, err, ErrInvalidRequest, ReasonInvalidRequest)
+	requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidRequest)
 }

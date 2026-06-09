@@ -48,7 +48,7 @@ func newConfig(opts []Option) (config, error) {
 	var cfg config
 	for _, opt := range opts {
 		if opt == nil {
-			return config{}, errorFor(0, ReasonInvalidExecutor, objectstore.Key{}, ErrInvalidExecutor, ErrNilOption)
+			return config{}, errorFor(0, ErrorReasonInvalidExecutor, objectstore.Key{}, ErrInvalidExecutor, ErrNilOption)
 		}
 		opt(&cfg)
 	}

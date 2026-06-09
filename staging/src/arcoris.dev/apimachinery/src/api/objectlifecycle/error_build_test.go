@@ -14,28 +14,15 @@
 
 package objectlifecycle
 
-import "testing"
+import (
+	"testing"
 
-func TestErrorSentinelsAreNonNil(t *testing.T) {
-	for _, err := range []error{
-		ErrInvalidRequest,
-		ErrInvalidExecutor,
-		ErrResourceNotFound,
-		ErrValidationFailed,
-		ErrApplyFailed,
-		ErrConflict,
-		ErrNotFound,
-		ErrAlreadyExists,
-		ErrStaleRevision,
-		ErrStoreFailed,
-		ErrNilOption,
-		ErrNilStore,
-		ErrNilResourceResolver,
-		ErrNilDesiredValidator,
-		ErrNilContext,
-	} {
-		if err == nil {
-			t.Fatalf("sentinel is nil")
-		}
-	}
+	"arcoris.dev/apimachinery/api/objectstore"
+)
+
+func TestErrorForSupportsErrorsIsForLifecycleAndCause(t *testing.T) {
+	err := errorFor(OperationApply, ErrorReasonStaleRevision, objectstore.Key{}, ErrStaleRevision, objectstore.ErrStaleRevision)
+
+	requireErrorIs(t, err, ErrStaleRevision)
+	requireErrorIs(t, err, objectstore.ErrStaleRevision)
 }

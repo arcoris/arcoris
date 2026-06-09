@@ -26,11 +26,11 @@ import (
 func validateConfig(cfg config) error {
 	switch {
 	case isNilInterface(cfg.store):
-		return errorFor(0, ReasonInvalidExecutor, objectstore.Key{}, ErrInvalidExecutor, ErrNilStore)
+		return errorFor(0, ErrorReasonInvalidExecutor, objectstore.Key{}, ErrInvalidExecutor, ErrNilStore)
 	case isNilInterface(cfg.resources):
-		return errorFor(0, ReasonInvalidExecutor, objectstore.Key{}, ErrInvalidExecutor, ErrNilResourceResolver)
+		return errorFor(0, ErrorReasonInvalidExecutor, objectstore.Key{}, ErrInvalidExecutor, ErrNilResourceResolver)
 	case isNilInterface(cfg.desiredValidator):
-		return errorFor(0, ReasonInvalidExecutor, objectstore.Key{}, ErrInvalidExecutor, ErrNilDesiredValidator)
+		return errorFor(0, ErrorReasonInvalidExecutor, objectstore.Key{}, ErrInvalidExecutor, ErrNilDesiredValidator)
 	default:
 		return nil
 	}
@@ -42,7 +42,7 @@ func (e *Executor) requireExecutor(op Operation) error {
 		isNilInterface(e.store) ||
 		isNilInterface(e.resources) ||
 		isNilInterface(e.desiredValidator) {
-		return errorFor(op, ReasonInvalidExecutor, objectstore.Key{}, ErrInvalidExecutor, ErrInvalidExecutor)
+		return errorFor(op, ErrorReasonInvalidExecutor, objectstore.Key{}, ErrInvalidExecutor, ErrInvalidExecutor)
 	}
 
 	return nil
@@ -51,7 +51,7 @@ func (e *Executor) requireExecutor(op Operation) error {
 // checkContext rejects nil contexts before lower layers dereference them.
 func checkContext(op Operation, ctx context.Context) error {
 	if ctx == nil {
-		return errorFor(op, ReasonInvalidRequest, objectstore.Key{}, ErrInvalidRequest, ErrNilContext)
+		return errorFor(op, ErrorReasonInvalidRequest, objectstore.Key{}, ErrInvalidRequest, ErrNilContext)
 	}
 
 	return nil
@@ -60,7 +60,7 @@ func checkContext(op Operation, ctx context.Context) error {
 // validateOwner checks the field manager identity before apply or ownership init.
 func validateOwner(op Operation, owner fieldownership.Owner) error {
 	if err := owner.Validate(); err != nil {
-		return errorFor(op, ReasonInvalidRequest, objectstore.Key{}, ErrInvalidRequest, err)
+		return errorFor(op, ErrorReasonInvalidRequest, objectstore.Key{}, ErrInvalidRequest, err)
 	}
 
 	return nil
