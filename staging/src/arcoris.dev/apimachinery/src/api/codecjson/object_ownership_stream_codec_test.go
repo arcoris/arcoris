@@ -38,7 +38,7 @@ func TestDecodeObjectOwnershipFromMatchesDecodeObjectOwnership(t *testing.T) {
 
 func TestEncodeObjectOwnershipToMatchesEncodeObjectOwnership(t *testing.T) {
 	c := newTestCodec(t)
-	doc := objectownership.Document{Version: objectownership.VersionV1}
+	doc := objectownership.Document{Version: objectownership.DocumentVersionV1}
 
 	fromBytes, err := c.EncodeObjectOwnership(doc)
 	requireNoError(t, err)

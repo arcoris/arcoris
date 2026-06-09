@@ -35,7 +35,7 @@ func nodeToOwnershipDocument(path jsonPath, node jsonNode, config resolvedDecode
 		}
 	}
 
-	version, err := nodeToRequiredOwnershipVersion(path, node)
+	version, err := nodeToRequiredOwnershipDocumentVersion(path, node)
 	if err != nil {
 		return objectownership.Document{}, err
 	}
@@ -64,8 +64,8 @@ func nodeToOwnershipDocument(path jsonPath, node jsonNode, config resolvedDecode
 	return doc, nil
 }
 
-// nodeToRequiredOwnershipVersion extracts the explicit document version string.
-func nodeToRequiredOwnershipVersion(path jsonPath, node jsonNode) (objectownership.Version, error) {
+// nodeToRequiredOwnershipDocumentVersion extracts the explicit document version string.
+func nodeToRequiredOwnershipDocumentVersion(path jsonPath, node jsonNode) (objectownership.DocumentVersion, error) {
 	versionNode, ok := node.member(apidocument.OwnershipFieldVersion.String())
 	if !ok {
 		return "", errorAt(
@@ -81,7 +81,7 @@ func nodeToRequiredOwnershipVersion(path jsonPath, node jsonNode) (objectownersh
 		return "", err
 	}
 
-	return objectownership.Version(version), nil
+	return objectownership.DocumentVersion(version), nil
 }
 
 // nodeToOwnershipSurface converts a lower-camel surface object.

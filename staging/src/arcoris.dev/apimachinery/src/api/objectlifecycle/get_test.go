@@ -69,7 +69,7 @@ func TestGetDoesNotValidateDesiredPayload(t *testing.T) {
 		key,
 		objectstore.State{
 			Object:    testObjectWithDesired(1, value.StringValue("descriptor-invalid")),
-			Ownership: objectownership.Document{Version: objectownership.VersionV1},
+			Ownership: objectownership.Document{Version: objectownership.DocumentVersionV1},
 		},
 	)
 	requireNoError(t, err)

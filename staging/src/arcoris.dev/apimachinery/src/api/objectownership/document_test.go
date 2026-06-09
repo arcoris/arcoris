@@ -17,7 +17,7 @@ package objectownership
 import "testing"
 
 func TestDocumentIsEmpty(t *testing.T) {
-	if !(Document{Version: VersionV1}).IsEmpty() {
+	if !(Document{Version: DocumentVersionV1}).IsEmpty() {
 		t.Fatalf("empty document IsEmpty() = false")
 	}
 	if !document(documentEntry("user")).IsEmpty() {

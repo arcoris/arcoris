@@ -23,7 +23,7 @@ import (
 func TestPrepareInputStateNormalizesOwnership(t *testing.T) {
 	state := validState()
 	state.Ownership = objectownership.Document{
-		Version: objectownership.VersionV1,
+		Version: objectownership.DocumentVersionV1,
 		Desired: objectownership.Surface{
 			Entries: []objectownership.Entry{
 				{Owner: "z", Fields: []objectownership.Path{"$.z"}},

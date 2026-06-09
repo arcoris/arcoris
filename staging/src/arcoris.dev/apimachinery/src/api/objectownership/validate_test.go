@@ -21,8 +21,8 @@ import (
 	"arcoris.dev/apimachinery/api/fieldpath"
 )
 
-func TestValidateAcceptsVersionV1(t *testing.T) {
-	requireNoError(t, Validate(Document{Version: VersionV1}))
+func TestValidateAcceptsDocumentVersionV1(t *testing.T) {
+	requireNoError(t, Validate(Document{Version: DocumentVersionV1}))
 }
 
 func TestValidateRejectsZeroVersion(t *testing.T) {

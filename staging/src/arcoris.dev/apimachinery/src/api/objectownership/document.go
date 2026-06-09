@@ -22,7 +22,7 @@ package objectownership
 type Document struct {
 	// Version declares the document shape. It must be explicit so future format
 	// changes can be rejected or handled deliberately.
-	Version Version
+	Version DocumentVersion
 
 	// Desired stores ownership for the object's Desired surface. v1 does not
 	// model Observed or metadata ownership.

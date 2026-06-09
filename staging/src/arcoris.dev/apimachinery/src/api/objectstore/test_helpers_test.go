@@ -57,7 +57,7 @@ func validState() State {
 			},
 			value.StringValue("desired"),
 		),
-		Ownership: objectownership.Document{Version: objectownership.VersionV1},
+		Ownership: objectownership.Document{Version: objectownership.DocumentVersionV1},
 	}
 }
 
@@ -70,7 +70,7 @@ func validCommittedState() State {
 
 func ownershipWithEntry() objectownership.Document {
 	return objectownership.Document{
-		Version: objectownership.VersionV1,
+		Version: objectownership.DocumentVersionV1,
 		Desired: objectownership.Surface{
 			Entries: []objectownership.Entry{
 				{

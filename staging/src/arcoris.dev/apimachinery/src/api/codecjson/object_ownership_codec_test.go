@@ -29,7 +29,7 @@ func TestDecodeObjectOwnershipBytesRejectsDuplicateKey(t *testing.T) {
 // TestEncodeObjectOwnershipBytesUsesSharedWriter covers byte-slice ownership encoding.
 func TestEncodeObjectOwnershipBytesUsesSharedWriter(t *testing.T) {
 	data, err := newTestCodec(t).EncodeObjectOwnership(
-		objectownership.Document{Version: objectownership.VersionV1},
+		objectownership.Document{Version: objectownership.DocumentVersionV1},
 	)
 	requireNoError(t, err)
 

@@ -24,7 +24,7 @@ import (
 
 func TestEncodeObjectOwnershipDocument(t *testing.T) {
 	doc := objectownership.Document{
-		Version: objectownership.VersionV1,
+		Version: objectownership.DocumentVersionV1,
 		Desired: objectownership.Surface{Entries: []objectownership.Entry{
 			{
 				Owner:  fieldownership.Owner("user-cli"),
@@ -43,7 +43,7 @@ func TestEncodeObjectOwnershipDocument(t *testing.T) {
 }
 
 func TestEncodeObjectOwnershipValidatesBeforeEncode(t *testing.T) {
-	doc := objectownership.Document{Version: objectownership.VersionV1}
+	doc := objectownership.Document{Version: objectownership.DocumentVersionV1}
 	doc.Desired.Entries = []objectownership.Entry{{Owner: fieldownership.Owner(""), Fields: []objectownership.Path{"$.image"}}}
 
 	_, err := newTestCodec(t).EncodeObjectOwnership(doc)
@@ -57,7 +57,7 @@ func TestEncodeObjectOwnershipDeterministicNormalizes(t *testing.T) {
 		config.Encode.Ordering.Mode = jsonconfig.OrderingDeterministic
 	})
 	doc := objectownership.Document{
-		Version: objectownership.VersionV1,
+		Version: objectownership.DocumentVersionV1,
 		Desired: objectownership.Surface{Entries: []objectownership.Entry{
 			{Owner: fieldownership.Owner("user-b"), Fields: []objectownership.Path{"$.b"}},
 			{Owner: fieldownership.Owner("user-a"), Fields: []objectownership.Path{"$.b", "$.a"}},
@@ -75,7 +75,7 @@ func TestEncodeObjectOwnershipDeterministicNormalizes(t *testing.T) {
 
 func TestEncodeObjectOwnershipPreservesOrderByDefault(t *testing.T) {
 	doc := objectownership.Document{
-		Version: objectownership.VersionV1,
+		Version: objectownership.DocumentVersionV1,
 		Desired: objectownership.Surface{Entries: []objectownership.Entry{
 			{Owner: fieldownership.Owner("user-b"), Fields: []objectownership.Path{"$.b"}},
 			{Owner: fieldownership.Owner("user-a"), Fields: []objectownership.Path{"$.b", "$.a"}},
@@ -95,7 +95,7 @@ func TestEncodeObjectOwnershipPretty(t *testing.T) {
 	c := newTestCodecWith(t, func(config *jsonconfig.Config) {
 		config.Encode.Output.Layout = jsonconfig.LayoutPretty
 	})
-	doc := objectownership.Document{Version: objectownership.VersionV1}
+	doc := objectownership.Document{Version: objectownership.DocumentVersionV1}
 
 	data, err := c.EncodeObjectOwnership(doc)
 	requireNoError(t, err)
@@ -111,7 +111,7 @@ func TestEncodeObjectOwnershipOmitsEmptyDesiredWhenConfigured(t *testing.T) {
 		config.Encode.Ownership.EmptyDesired = jsonconfig.EmptyOwnershipSurfaceOmit
 	})
 
-	data, err := c.EncodeObjectOwnership(objectownership.Document{Version: objectownership.VersionV1})
+	data, err := c.EncodeObjectOwnership(objectownership.Document{Version: objectownership.DocumentVersionV1})
 	requireNoError(t, err)
 
 	if string(data) != `{"version":"v1"}` {
@@ -124,7 +124,7 @@ func TestEncodeObjectOwnershipOmitsEmptyEntriesWhenConfigured(t *testing.T) {
 		config.Encode.Ownership.EmptyEntries = jsonconfig.EmptyEntriesOmit
 	})
 
-	data, err := c.EncodeObjectOwnership(objectownership.Document{Version: objectownership.VersionV1})
+	data, err := c.EncodeObjectOwnership(objectownership.Document{Version: objectownership.DocumentVersionV1})
 	requireNoError(t, err)
 
 	if string(data) != `{"version":"v1","desired":{}}` {

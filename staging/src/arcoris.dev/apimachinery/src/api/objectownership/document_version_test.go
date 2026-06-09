@@ -16,26 +16,26 @@ package objectownership
 
 import "testing"
 
-func TestVersionString(t *testing.T) {
-	if VersionV1.String() != "v1" {
-		t.Fatalf("VersionV1.String() = %q", VersionV1.String())
+func TestDocumentVersionString(t *testing.T) {
+	if DocumentVersionV1.String() != "v1" {
+		t.Fatalf("DocumentVersionV1.String() = %q", DocumentVersionV1.String())
 	}
 }
 
-func TestVersionIsZero(t *testing.T) {
-	if !Version("").IsZero() {
+func TestDocumentVersionIsZero(t *testing.T) {
+	if !DocumentVersion("").IsZero() {
 		t.Fatalf("zero version IsZero() = false")
 	}
-	if VersionV1.IsZero() {
-		t.Fatalf("VersionV1 IsZero() = true")
+	if DocumentVersionV1.IsZero() {
+		t.Fatalf("DocumentVersionV1 IsZero() = true")
 	}
 }
 
-func TestVersionIsSupported(t *testing.T) {
-	if !VersionV1.IsSupported() {
-		t.Fatalf("VersionV1 IsSupported() = false")
+func TestDocumentVersionIsSupported(t *testing.T) {
+	if !DocumentVersionV1.IsSupported() {
+		t.Fatalf("DocumentVersionV1 IsSupported() = false")
 	}
-	if Version("v2").IsSupported() {
+	if DocumentVersion("v2").IsSupported() {
 		t.Fatalf("unknown version IsSupported() = true")
 	}
 }

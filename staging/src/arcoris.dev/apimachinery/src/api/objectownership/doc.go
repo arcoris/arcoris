@@ -19,9 +19,9 @@
 // deterministic, versioned in-memory document representation. Higher layers may
 // decide how that Document is serialized or stored.
 //
-// Version 1 owns only the Desired surface. The State shape is intentionally
-// private so Observed or metadata ownership can be added later without exposing
-// public struct fields.
+// Document version 1 owns only the Desired surface. The State shape is
+// intentionally private so Observed or metadata ownership can be added later
+// without exposing public struct fields.
 //
 // State is the operational object ownership model. Document is the stable
 // in-memory document representation. ToDocument converts State to Document.

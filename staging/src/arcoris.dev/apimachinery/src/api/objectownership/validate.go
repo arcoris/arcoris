@@ -19,7 +19,7 @@ package objectownership
 // Valid raw documents may contain duplicate owners, duplicate fields, unsorted
 // entries, and empty field entries. Normalize owns canonicalization.
 func Validate(doc Document) error {
-	if err := validateVersion(doc.Version); err != nil {
+	if err := validateDocumentVersion(doc.Version); err != nil {
 		return err
 	}
 	if err := validateSurface(pathDocumentDesired, doc.Desired); err != nil {
@@ -29,8 +29,8 @@ func Validate(doc Document) error {
 	return nil
 }
 
-// validateVersion rejects missing and unknown document shapes.
-func validateVersion(version Version) error {
+// validateDocumentVersion rejects missing and unknown document shapes.
+func validateDocumentVersion(version DocumentVersion) error {
 	if version.IsZero() {
 		return errorAt(
 			pathDocumentVersion,

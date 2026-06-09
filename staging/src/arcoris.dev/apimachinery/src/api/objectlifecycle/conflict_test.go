@@ -63,7 +63,7 @@ func committedStateForFakeStore() objectstore.State {
 	return objectstore.State{
 		Object: testObject(1, "api:v1"),
 		Ownership: objectownership.Document{
-			Version: objectownership.VersionV1,
+			Version: objectownership.DocumentVersionV1,
 			Desired: objectownership.Surface{
 				Entries: []objectownership.Entry{
 					{Owner: owner("creator"), Fields: []objectownership.Path{"$.image"}},

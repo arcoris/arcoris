@@ -17,7 +17,7 @@ package objectownership
 // Normalize canonicalizes doc without changing ownership semantics.
 //
 // It sorts owners, merges duplicate owner entries, deduplicates fields, prunes
-// empty entries, and writes VersionV1. It deliberately preserves shared
+// empty entries, and writes DocumentVersionV1. It deliberately preserves shared
 // ownership and explicit parent/child path pairs.
 func Normalize(doc Document) (Document, error) {
 	if err := Validate(doc); err != nil {
@@ -30,7 +30,7 @@ func Normalize(doc Document) (Document, error) {
 	}
 
 	return Document{
-		Version: VersionV1,
+		Version: DocumentVersionV1,
 		Desired: fieldOwnershipStateToDocumentSurface(
 			desired,
 		),

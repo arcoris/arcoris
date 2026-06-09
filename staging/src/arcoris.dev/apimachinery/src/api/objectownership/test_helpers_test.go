@@ -55,7 +55,7 @@ func ownershipState(entries ...fieldownership.Entry) fieldownership.State {
 
 func document(entries ...Entry) Document {
 	return Document{
-		Version: VersionV1,
+		Version: DocumentVersionV1,
 		Desired: Surface{
 			Entries: entries,
 		},

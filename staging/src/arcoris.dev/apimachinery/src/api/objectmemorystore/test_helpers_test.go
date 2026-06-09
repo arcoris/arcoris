@@ -69,7 +69,7 @@ func testState(text string) objectstore.State {
 			observed,
 		),
 		Ownership: objectownership.Document{
-			Version: objectownership.VersionV1,
+			Version: objectownership.DocumentVersionV1,
 			Desired: objectownership.Surface{
 				Entries: []objectownership.Entry{
 					{

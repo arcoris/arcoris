@@ -22,7 +22,7 @@ import (
 )
 
 func TestStateFromDocumentEmptyDocument(t *testing.T) {
-	got, err := StateFromDocument(Document{Version: VersionV1})
+	got, err := StateFromDocument(Document{Version: DocumentVersionV1})
 	requireNoError(t, err)
 
 	if !got.IsEmpty() {

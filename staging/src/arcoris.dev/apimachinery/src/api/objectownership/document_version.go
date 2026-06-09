@@ -14,28 +14,29 @@
 
 package objectownership
 
-// Version identifies the object ownership document shape.
+// DocumentVersion identifies the object ownership document shape.
 //
-// Versions are explicit even though Document is an in-memory representation so
-// future shape changes can be handled safely by higher layers.
-type Version string
+// Document versions are explicit even though Document is an in-memory
+// representation. Higher layers can therefore reject or deliberately migrate
+// future ownership document shapes instead of guessing from field presence.
+type DocumentVersion string
 
 const (
-	// VersionV1 is the first object ownership document shape.
-	VersionV1 Version = "v1"
+	// DocumentVersionV1 is the first object ownership document shape.
+	DocumentVersionV1 DocumentVersion = "v1"
 )
 
 // String returns the raw version text.
-func (v Version) String() string {
+func (v DocumentVersion) String() string {
 	return string(v)
 }
 
 // IsZero reports whether the version is absent.
-func (v Version) IsZero() bool {
+func (v DocumentVersion) IsZero() bool {
 	return v == ""
 }
 
 // IsSupported reports whether document conversion and validation can interpret v.
-func (v Version) IsSupported() bool {
-	return v == VersionV1
+func (v DocumentVersion) IsSupported() bool {
+	return v == DocumentVersionV1
 }

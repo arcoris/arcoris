@@ -28,7 +28,7 @@ func TestDecodeObjectOwnershipDocument(t *testing.T) {
 	got, err := newTestCodec(t).DecodeObjectOwnership(data)
 	requireNoError(t, err)
 
-	if got.Version != objectownership.VersionV1 {
+	if got.Version != objectownership.DocumentVersionV1 {
 		t.Fatalf("version = %q", got.Version)
 	}
 	if len(got.Desired.Entries) != 1 {
@@ -116,7 +116,7 @@ func TestDecodeObjectOwnershipIgnoresUnknownFieldsWhenConfigured(t *testing.T) {
 	doc, err := c.DecodeObjectOwnership([]byte(`{"version":"v1","extra":1}`))
 	requireNoError(t, err)
 
-	if doc.Version != objectownership.VersionV1 {
+	if doc.Version != objectownership.DocumentVersionV1 {
 		t.Fatalf("version = %q; want v1", doc.Version)
 	}
 }

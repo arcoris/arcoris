@@ -19,8 +19,8 @@ import "testing"
 func TestToDocumentEmptyState(t *testing.T) {
 	got := ToDocument(EmptyState())
 
-	if got.Version != VersionV1 {
-		t.Fatalf("Version = %q; want %q", got.Version, VersionV1)
+	if got.Version != DocumentVersionV1 {
+		t.Fatalf("Version = %q; want %q", got.Version, DocumentVersionV1)
 	}
 	if !got.Desired.IsEmpty() {
 		t.Fatalf("Desired = %#v; want empty", got.Desired)
@@ -35,9 +35,9 @@ func TestToDocumentDesiredOwnership(t *testing.T) {
 	requireDocumentEntries(t, got.Desired, documentEntry("user", "$.image"))
 }
 
-func TestToDocumentWritesVersionV1(t *testing.T) {
-	if got := ToDocument(EmptyState()).Version; got != VersionV1 {
-		t.Fatalf("ToDocument().Version = %q; want %q", got, VersionV1)
+func TestToDocumentWritesDocumentVersionV1(t *testing.T) {
+	if got := ToDocument(EmptyState()).Version; got != DocumentVersionV1 {
+		t.Fatalf("ToDocument().Version = %q; want %q", got, DocumentVersionV1)
 	}
 }
 

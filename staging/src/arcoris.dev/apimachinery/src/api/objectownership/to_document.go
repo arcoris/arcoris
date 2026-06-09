@@ -26,7 +26,7 @@ import (
 // omitted and all owners and paths follow fieldownership deterministic ordering.
 func ToDocument(state State) Document {
 	return Document{
-		Version: VersionV1,
+		Version: DocumentVersionV1,
 		Desired: fieldOwnershipStateToDocumentSurface(
 			state.Desired(),
 		),
