@@ -67,6 +67,30 @@ func TestDeleteReturnsDeletedLiveState(t *testing.T) {
 	requireDesiredString(t, deleted, "created")
 }
 
+func TestDeleteKeepsDeleteRevisionInternal(t *testing.T) {
+	store := testStore(t)
+	key := testKey(1)
+	created := createState(t, store, key, "created")
+
+	deleted, err := store.Delete(context.Background(), key, created.Revision)
+	requireNoError(t, err)
+
+	if deleted.Revision != created.Revision {
+		t.Fatalf("deleted Revision = %v; want live revision %v", deleted.Revision, created.Revision)
+	}
+
+	current := store.shardFor(key).get(key).load()
+	if current == nil || !current.deleted {
+		t.Fatalf("current record = %#v; want tombstone", current)
+	}
+	if !current.deleteRevision.IsValid() || !created.Revision.Before(current.deleteRevision) {
+		t.Fatalf("deleteRevision = %v; want committed revision after %v", current.deleteRevision, created.Revision)
+	}
+	if current.state.Revision != created.Revision {
+		t.Fatalf("tombstone state revision = %v; want deleted live revision %v", current.state.Revision, created.Revision)
+	}
+}
+
 func TestDeleteMakesObjectInvisible(t *testing.T) {
 	store := testStore(t)
 	key := testKey(1)

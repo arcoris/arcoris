@@ -21,6 +21,10 @@ import (
 )
 
 // Get reads the latest live state for key.
+//
+// Missing keys and tombstones are ordinary cache-style misses and return
+// ok=false with nil error. The returned state is detached from the immutable
+// internal record, so caller mutation cannot alter subsequent reads.
 func (s *Store) Get(ctx context.Context, key objectstore.Key) (objectstore.State, bool, error) {
 	if err := s.prepareGet(ctx, key); err != nil {
 		return objectstore.State{}, false, err

@@ -23,7 +23,9 @@ import (
 // shard protects one portion of the key-to-slot index.
 //
 // The mutex protects only slots map structure. It is not held while a caller's
-// object state is loaded or transitioned.
+// object state is loaded or transitioned. A plain Mutex is intentional: the
+// critical sections are tiny, and mixed get/create benchmarks favored it over
+// an RWMutex for this map-structure-only lock.
 type shard struct {
 	// mu protects structural access to slots.
 	mu sync.Mutex

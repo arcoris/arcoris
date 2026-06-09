@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectownership"
+	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/value"
 )
 
@@ -31,6 +32,7 @@ func TestCreateDoesNotRetainInputStateAliases(t *testing.T) {
 	requireNoError(t, err)
 
 	input.Ownership.Desired.Entries[0].Fields[0] = "$.mutated"
+	input.Object.Desired = value.StringValue("mutated")
 	*input.Object.Observed = value.StringValue("mutated")
 
 	got, ok, err := store.Get(context.Background(), key)
@@ -38,13 +40,23 @@ func TestCreateDoesNotRetainInputStateAliases(t *testing.T) {
 	if !ok {
 		t.Fatalf("Get ok = false")
 	}
-	if got.Ownership.Desired.Entries[0].Fields[0] != objectownership.Path("$.desired") {
-		t.Fatalf("stored ownership was mutated: %#v", got.Ownership.Desired.Entries)
+	requireStateAliasesIntact(t, got, "created")
+}
+
+func TestCreateReturnDoesNotExposeStoredStateAliases(t *testing.T) {
+	store := testStore(t)
+	key := testKey(1)
+
+	created, err := store.Create(context.Background(), key, testState("created"))
+	requireNoError(t, err)
+	mutateStateAliases(&created)
+
+	got, ok, err := store.Get(context.Background(), key)
+	requireNoError(t, err)
+	if !ok {
+		t.Fatalf("Get ok = false")
 	}
-	observed, ok := got.Object.Observed.String()
-	if !ok || observed != "observed-created" {
-		t.Fatalf("observed = %q, %v; want observed-created, true", observed, ok)
-	}
+	requireStateAliasesIntact(t, got, "created")
 }
 
 func TestGetDoesNotExposeStoredStateAliases(t *testing.T) {
@@ -57,21 +69,14 @@ func TestGetDoesNotExposeStoredStateAliases(t *testing.T) {
 	if !ok {
 		t.Fatalf("Get ok = false")
 	}
-	got.Ownership.Desired.Entries[0].Fields[0] = "$.mutated"
-	*got.Object.Observed = value.StringValue("mutated")
+	mutateStateAliases(&got)
 
 	again, ok, err := store.Get(context.Background(), key)
 	requireNoError(t, err)
 	if !ok {
 		t.Fatalf("Get ok = false")
 	}
-	if again.Ownership.Desired.Entries[0].Fields[0] != objectownership.Path("$.desired") {
-		t.Fatalf("stored ownership was mutated: %#v", again.Ownership.Desired.Entries)
-	}
-	observed, ok := again.Object.Observed.String()
-	if !ok || observed != "observed-created" {
-		t.Fatalf("observed = %q, %v; want observed-created, true", observed, ok)
-	}
+	requireStateAliasesIntact(t, again, "created")
 }
 
 func TestUpdateDoesNotRetainInputStateAliases(t *testing.T) {
@@ -83,13 +88,68 @@ func TestUpdateDoesNotRetainInputStateAliases(t *testing.T) {
 	_, err := store.Update(context.Background(), key, created.Revision, next)
 	requireNoError(t, err)
 	next.Ownership.Desired.Entries[0].Fields[0] = "$.mutated"
+	next.Object.Desired = value.StringValue("mutated")
+	*next.Object.Observed = value.StringValue("mutated")
 
 	got, ok, err := store.Get(context.Background(), key)
 	requireNoError(t, err)
 	if !ok {
 		t.Fatalf("Get ok = false")
 	}
-	if got.Ownership.Desired.Entries[0].Fields[0] != objectownership.Path("$.desired") {
-		t.Fatalf("stored ownership was mutated: %#v", got.Ownership.Desired.Entries)
+	requireStateAliasesIntact(t, got, "updated")
+}
+
+func TestUpdateReturnDoesNotExposeStoredStateAliases(t *testing.T) {
+	store := testStore(t)
+	key := testKey(1)
+	created := createState(t, store, key, "created")
+
+	updated, err := store.Update(context.Background(), key, created.Revision, testState("updated"))
+	requireNoError(t, err)
+	mutateStateAliases(&updated)
+
+	got, ok, err := store.Get(context.Background(), key)
+	requireNoError(t, err)
+	if !ok {
+		t.Fatalf("Get ok = false")
+	}
+	requireStateAliasesIntact(t, got, "updated")
+}
+
+func TestDeleteReturnDoesNotExposeTombstoneStateAliases(t *testing.T) {
+	store := testStore(t)
+	key := testKey(1)
+	created := createState(t, store, key, "created")
+
+	deleted, err := store.Delete(context.Background(), key, created.Revision)
+	requireNoError(t, err)
+	mutateStateAliases(&deleted)
+
+	current := store.shardFor(key).get(key).load()
+	if current == nil || !current.deleted {
+		t.Fatalf("current record = %#v; want tombstone", current)
+	}
+	requireStateAliasesIntact(t, current.visibleState(), "created")
+}
+
+func mutateStateAliases(state *objectstore.State) {
+	state.Ownership.Desired.Entries[0].Fields[0] = "$.mutated"
+	state.Object.Desired = value.StringValue("mutated")
+	if state.Object.Observed != nil {
+		*state.Object.Observed = value.StringValue("mutated")
+	}
+}
+
+func requireStateAliasesIntact(t *testing.T, state objectstore.State, text string) {
+	t.Helper()
+
+	if state.Ownership.Desired.Entries[0].Fields[0] != objectownership.Path("$.desired") {
+		t.Fatalf("stored ownership was mutated: %#v", state.Ownership.Desired.Entries)
+	}
+	requireDesiredString(t, state, text)
+
+	observed, ok := state.Object.Observed.String()
+	if !ok || observed != "observed-"+text {
+		t.Fatalf("observed = %q, %v; want observed-%s, true", observed, ok, text)
 	}
 }

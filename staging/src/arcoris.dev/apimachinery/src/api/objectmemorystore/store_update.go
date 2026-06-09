@@ -21,6 +21,10 @@ import (
 )
 
 // Update replaces live state when expected matches the current revision.
+//
+// Update is an optimistic compare-and-swap transition. If another writer
+// commits first, the loser reports stale revision, conflict, or not found
+// according to the record shape it observes after the race.
 func (s *Store) Update(ctx context.Context, key objectstore.Key, expected objectstore.Revision, state objectstore.State) (objectstore.State, error) {
 	prepared, err := s.prepareUpdate(ctx, key, expected, state)
 	if err != nil {

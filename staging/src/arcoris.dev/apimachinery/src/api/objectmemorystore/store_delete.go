@@ -21,6 +21,10 @@ import (
 )
 
 // Delete tombstones live state when expected matches the current revision.
+//
+// Delete returns the live State that was removed. The tombstone commit revision
+// is kept internally so a future event layer can distinguish the delete commit,
+// but the current objectstore.Store contract does not expose that revision.
 func (s *Store) Delete(ctx context.Context, key objectstore.Key, expected objectstore.Revision) (objectstore.State, error) {
 	if err := s.prepareDelete(ctx, key, expected); err != nil {
 		return objectstore.State{}, err

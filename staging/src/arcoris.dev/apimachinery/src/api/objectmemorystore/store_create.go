@@ -21,6 +21,11 @@ import (
 )
 
 // Create commits state for a missing or tombstoned key.
+//
+// The caller-supplied state must be an input state with zero revision; the
+// store assigns the committed revision. Recreating a tombstoned key publishes a
+// new live record in the existing per-object slot so stale delete/update races
+// cannot succeed through physical map removal.
 func (s *Store) Create(ctx context.Context, key objectstore.Key, state objectstore.State) (objectstore.State, error) {
 	prepared, err := s.prepareCreate(ctx, key, state)
 	if err != nil {

@@ -200,6 +200,28 @@ func TestConcurrentDeleteAndUpdateSameKeyHasOneTerminalWinner(t *testing.T) {
 	if successes != 1 {
 		t.Fatalf("successes = %d; want 1", successes)
 	}
+
+	deleteErr := errs[0]
+	updateErr := errs[1]
+	got, ok, err := store.Get(context.Background(), key)
+	requireNoError(t, err)
+	switch {
+	case deleteErr == nil:
+		if ok {
+			t.Fatalf("delete won but object is still visible")
+		}
+		_, err := store.Update(context.Background(), key, created.Revision, testState("after-delete"))
+		requireErrorIs(t, err, objectstore.ErrNotFound)
+	case updateErr == nil:
+		if !ok {
+			t.Fatalf("update won but object is tombstoned")
+		}
+		requireDesiredString(t, got, "updated")
+		_, err := store.Delete(context.Background(), key, created.Revision)
+		requireErrorIs(t, err, objectstore.ErrStaleRevision)
+	default:
+		t.Fatalf("no terminal winner: delete=%v update=%v", deleteErr, updateErr)
+	}
 }
 
 func TestConcurrentDeleteSameKeyAllowsOneWinner(t *testing.T) {
