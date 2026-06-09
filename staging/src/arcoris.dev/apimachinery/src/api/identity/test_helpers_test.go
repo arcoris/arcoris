@@ -26,6 +26,7 @@ import (
 // without repeating the same marshaling checks in every domain file.
 type identityMarshaler interface {
 	String() string
+	CanonicalText() (string, error)
 	Validate() error
 	MarshalText() ([]byte, error)
 	MarshalJSON() ([]byte, error)
@@ -50,11 +51,11 @@ type comparableIdentity interface {
 	comparable
 }
 
-// identityIdentifier is implemented by composite identities that expose a
-// stable diagnostic/map-key spelling in addition to String.
-type identityIdentifier interface {
+// canonicalIdentity is implemented by identities that expose validated
+// canonical text in addition to their non-validating diagnostic String.
+type canonicalIdentity interface {
 	String() string
-	Identifier() string
+	CanonicalText() (string, error)
 }
 
 // identityPointer is the pointer-side companion for a concrete identity value.
@@ -126,13 +127,15 @@ func requireEqual[T comparable](t *testing.T, label string, got T, want T) {
 	}
 }
 
-func requireIdentifier(t *testing.T, value identityIdentifier, want string) {
+func requireCanonicalText(t *testing.T, value canonicalIdentity, want string) {
 	t.Helper()
 	if got := value.String(); got != want {
 		t.Fatalf("String() = %q, want %q", got, want)
 	}
-	if got := value.Identifier(); got != want {
-		t.Fatalf("Identifier() = %q, want %q", got, want)
+	got, err := value.CanonicalText()
+	requireNoError(t, err)
+	if got != want {
+		t.Fatalf("CanonicalText() = %q, want %q", got, want)
 	}
 }
 
@@ -246,6 +249,11 @@ func requireParseOK[T comparableIdentity](t *testing.T, input string, parse func
 	requireNoError(t, value.Validate())
 	if value.String() != input {
 		t.Fatalf("String() = %q, want %q", value.String(), input)
+	}
+	text, err := value.CanonicalText()
+	requireNoError(t, err)
+	if text != input {
+		t.Fatalf("CanonicalText() = %q, want %q", text, input)
 	}
 	return value
 }

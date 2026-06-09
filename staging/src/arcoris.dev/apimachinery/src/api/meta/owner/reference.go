@@ -17,9 +17,13 @@ package owner
 import metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 
 // Reference is one owner reference metadata entry.
+//
+// Owner references use UID-pinned identity references so ownership metadata
+// points at one concrete owner incarnation. Controller and deletion semantics
+// live in this package and higher lifecycle layers, not in raw meta/identity.
 type Reference struct {
-	// Ref is the object reference stored as ownership metadata.
-	Ref metaidentity.ObjectReference `json:"ref"`
+	// Ref is the UID-pinned object reference stored as ownership metadata.
+	Ref metaidentity.ObjectIdentityReference `json:"ref"`
 	// Controller marks the single controlling owner when true.
 	Controller bool `json:"controller,omitempty"`
 }

@@ -39,9 +39,15 @@ func TestParseVersionRejectsNonCanonicalValues(t *testing.T) {
 		"v1beta0",
 		"v1rc1",
 		"v1gamma1",
+		"v1Alpha1",
 		"V1",
 		"1",
 		"v",
+		" v1",
+		"v1 ",
+		"v1 alpha1",
+		"v1alpha1extra",
+		"v1alpha1beta1",
 		"v1.0.0",
 	}, ParseVersion)
 }

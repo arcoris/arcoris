@@ -27,7 +27,21 @@ func (v Version) String() string {
 	return string(v)
 }
 
+// CanonicalText validates the version and returns its canonical text.
+func (v Version) CanonicalText() (string, error) {
+	if err := v.Validate(); err != nil {
+		return "", err
+	}
+
+	return v.String(), nil
+}
+
 // IsZero reports whether the version is absent.
 func (v Version) IsZero() bool {
+	return v == ""
+}
+
+// IsAbsent reports whether the version is absent.
+func (v Version) IsAbsent() bool {
 	return v == ""
 }

@@ -35,11 +35,28 @@ func (g Group) String() string {
 	return string(g)
 }
 
+// CanonicalText validates the group and returns its canonical text.
+//
+// The core group returns an empty string. Invalid direct literals return a
+// structured identity error instead of being promoted to canonical text.
+func (g Group) CanonicalText() (string, error) {
+	if err := g.Validate(); err != nil {
+		return "", err
+	}
+
+	return g.String(), nil
+}
+
 // IsZero reports whether the group is the core group.
 //
 // Group is the only atomic identity where the zero value is also a valid
 // complete value. Composite identities still require their version, kind, or
 // resource fields.
 func (g Group) IsZero() bool {
+	return g == CoreGroup
+}
+
+// IsCore reports whether the group is the core API group.
+func (g Group) IsCore() bool {
 	return g == CoreGroup
 }

@@ -27,4 +27,27 @@ func TestNamespace(t *testing.T) {
 	if !Namespace("").IsZero() {
 		t.Fatal("zero Namespace IsZero() = false")
 	}
+	if !Namespace("").IsAbsent() {
+		t.Fatal("zero Namespace IsAbsent() = false")
+	}
+	if namespace.IsAbsent() {
+		t.Fatal("non-zero Namespace IsAbsent() = true")
+	}
+}
+
+func TestNamespaceCanonicalText(t *testing.T) {
+	text, err := Namespace("system").CanonicalText()
+	requireNoError(t, err)
+	if text != "system" {
+		t.Fatalf("CanonicalText() = %q, want %q", text, "system")
+	}
+
+	text, err = Namespace("").CanonicalText()
+	requireNoError(t, err)
+	if text != "" {
+		t.Fatalf("CanonicalText() = %q, want empty namespace", text)
+	}
+
+	_, err = Namespace("System").CanonicalText()
+	requireErrorIs(t, err, ErrInvalidNamespace)
 }

@@ -27,4 +27,21 @@ func TestNamePrefix(t *testing.T) {
 	if !NamePrefix("").IsZero() {
 		t.Fatal("zero NamePrefix IsZero() = false")
 	}
+	if !NamePrefix("").IsAbsent() {
+		t.Fatal("zero NamePrefix IsAbsent() = false")
+	}
+	if prefix.IsAbsent() {
+		t.Fatal("non-zero NamePrefix IsAbsent() = true")
+	}
+}
+
+func TestNamePrefixCanonicalText(t *testing.T) {
+	text, err := NamePrefix("worker-").CanonicalText()
+	requireNoError(t, err)
+	if text != "worker-" {
+		t.Fatalf("CanonicalText() = %q, want %q", text, "worker-")
+	}
+
+	_, err = NamePrefix("Worker-").CanonicalText()
+	requireErrorIs(t, err, ErrInvalidNamePrefix)
 }

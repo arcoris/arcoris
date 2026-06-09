@@ -18,7 +18,7 @@ import "testing"
 
 func TestGroupVersionResourceValue(t *testing.T) {
 	gvr := GroupVersionResource{Group: "control.arcoris.dev", Version: "v1", Resource: "workers"}
-	requireIdentifier(t, gvr, "control.arcoris.dev/v1:workers")
+	requireCanonicalText(t, gvr, "control.arcoris.dev/v1:workers")
 
 	if !(GroupVersionResource{}).IsZero() {
 		t.Fatalf("zero GroupVersionResource should be zero")

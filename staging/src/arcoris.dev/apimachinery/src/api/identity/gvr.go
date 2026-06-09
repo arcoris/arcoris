@@ -30,9 +30,13 @@ func (gvr GroupVersionResource) String() string {
 	return joinGroupVersionResource(gvr.GroupVersion(), gvr.Resource)
 }
 
-// Identifier returns the canonical group/version/resource identity string.
-func (gvr GroupVersionResource) Identifier() string {
-	return gvr.String()
+// CanonicalText validates the group/version/resource identity and returns its canonical text.
+func (gvr GroupVersionResource) CanonicalText() (string, error) {
+	if err := gvr.Validate(); err != nil {
+		return "", err
+	}
+
+	return gvr.String(), nil
 }
 
 // IsZero reports whether group, version, and resource are all absent.

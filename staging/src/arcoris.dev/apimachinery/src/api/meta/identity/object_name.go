@@ -30,7 +30,7 @@ func (n ObjectName) IsZero() bool {
 	return n.Namespace.IsZero() && n.Name.IsZero()
 }
 
-// String returns "name" or "namespace/name" diagnostic text.
+// String returns "name" or "namespace/name" diagnostic text without validating it.
 //
 // The result is for logs and diagnostics. It is not a storage key, route path,
 // cache key, or authorization resource string.
@@ -39,4 +39,13 @@ func (n ObjectName) String() string {
 		return n.Name.String()
 	}
 	return n.Namespace.String() + "/" + n.Name.String()
+}
+
+// CanonicalText validates the object name and returns its canonical text.
+func (n ObjectName) CanonicalText() (string, error) {
+	if err := n.Validate(); err != nil {
+		return "", err
+	}
+
+	return n.String(), nil
 }

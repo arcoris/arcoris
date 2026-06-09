@@ -18,7 +18,7 @@ import "testing"
 
 func TestGroupResourceValue(t *testing.T) {
 	gr := GroupResource{Group: "control.arcoris.dev", Resource: "workers"}
-	requireIdentifier(t, gr, "control.arcoris.dev:workers")
+	requireCanonicalText(t, gr, "control.arcoris.dev:workers")
 
 	if !(GroupResource{}).IsZero() {
 		t.Fatalf("zero GroupResource should be zero")

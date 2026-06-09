@@ -27,7 +27,21 @@ func (k Kind) String() string {
 	return string(k)
 }
 
+// CanonicalText validates the kind and returns its canonical text.
+func (k Kind) CanonicalText() (string, error) {
+	if err := k.Validate(); err != nil {
+		return "", err
+	}
+
+	return k.String(), nil
+}
+
 // IsZero reports whether the kind is absent.
 func (k Kind) IsZero() bool {
+	return k == ""
+}
+
+// IsAbsent reports whether the kind is absent.
+func (k Kind) IsAbsent() bool {
 	return k == ""
 }

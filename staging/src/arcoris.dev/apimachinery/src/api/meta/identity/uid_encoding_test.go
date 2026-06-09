@@ -37,4 +37,14 @@ func TestUIDEncoding(t *testing.T) {
 	if string(data) != `"uid-1"` {
 		t.Fatalf("MarshalJSON() = %s", data)
 	}
+
+	_, err = UID("").MarshalText()
+	requireErrorIs(t, err, ErrInvalidUID)
+
+	_, err = json.Marshal(UID(""))
+	requireErrorIs(t, err, ErrInvalidUID)
+
+	requireErrorIs(t, json.Unmarshal([]byte(`null`), &uid), ErrInvalidJSON)
+	requireErrorIs(t, json.Unmarshal([]byte(`1`), &uid), ErrInvalidJSON)
+	requireErrorIs(t, json.Unmarshal([]byte(`{}`), &uid), ErrInvalidJSON)
 }

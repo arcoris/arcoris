@@ -23,7 +23,7 @@ import (
 // Validate checks owner references and enforces owner-list invariants.
 func (l List) Validate() error {
 	controllerCount := 0
-	seenRefs := make(map[metaidentity.ObjectReference]struct{}, len(l))
+	seenRefs := make(map[metaidentity.ObjectIdentityReference]struct{}, len(l))
 
 	for i, reference := range l {
 		path := fmt.Sprintf("ownerReferences[%d]", i)

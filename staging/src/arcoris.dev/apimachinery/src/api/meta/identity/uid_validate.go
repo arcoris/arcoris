@@ -20,6 +20,7 @@ import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 func (u UID) Validate() error {
 	return fromGrammar(
 		"uid",
+		u.String(),
 		ErrInvalidUID,
 		metagrammar.ValidateSegment(string(u)),
 	)

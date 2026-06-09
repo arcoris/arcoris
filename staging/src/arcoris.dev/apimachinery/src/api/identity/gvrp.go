@@ -32,9 +32,13 @@ func (gvrp GroupVersionResourcePath) String() string {
 	return joinGroupVersionResourcePath(gvrp.GroupVersion(), gvrp.ResourcePath())
 }
 
-// Identifier returns the canonical versioned resource path identity string.
-func (gvrp GroupVersionResourcePath) Identifier() string {
-	return gvrp.String()
+// CanonicalText validates the versioned resource path and returns its canonical text.
+func (gvrp GroupVersionResourcePath) CanonicalText() (string, error) {
+	if err := gvrp.Validate(); err != nil {
+		return "", err
+	}
+
+	return gvrp.String(), nil
 }
 
 // IsZero reports whether all identity fields are absent.

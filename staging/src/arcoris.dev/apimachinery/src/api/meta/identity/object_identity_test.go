@@ -35,6 +35,17 @@ func TestObjectIdentity(t *testing.T) {
 	}
 }
 
+func TestObjectIdentityCanonicalText(t *testing.T) {
+	text, err := (ObjectIdentity{Namespace: "system", Name: "worker", UID: "uid-1"}).CanonicalText()
+	requireNoError(t, err)
+	if text != "system/worker#uid-1" {
+		t.Fatalf("CanonicalText() = %q, want %q", text, "system/worker#uid-1")
+	}
+
+	_, err = (ObjectIdentity{Namespace: "system", Name: "worker"}).CanonicalText()
+	requireErrorIs(t, err, ErrInvalidObjectIdentity)
+}
+
 func TestObjectIdentityJSONFields(t *testing.T) {
 	data, err := json.Marshal(ObjectIdentity{Namespace: "system", Name: "worker", UID: "uid-1"})
 	requireNoError(t, err)

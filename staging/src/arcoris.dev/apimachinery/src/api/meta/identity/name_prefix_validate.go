@@ -20,6 +20,7 @@ import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 func (p NamePrefix) Validate() error {
 	return fromGrammar(
 		"namePrefix",
+		p.String(),
 		ErrInvalidNamePrefix,
 		metagrammar.ValidateNamePrefix(string(p)),
 	)

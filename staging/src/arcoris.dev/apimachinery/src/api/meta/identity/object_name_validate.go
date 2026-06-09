@@ -19,6 +19,7 @@ func (n ObjectName) Validate() error {
 	if n.Name.IsZero() {
 		return invalid(
 			"objectName.name",
+			n.String(),
 			ErrInvalidObjectName,
 			ErrorReasonEmptyValue,
 			"name is required",
@@ -26,11 +27,11 @@ func (n ObjectName) Validate() error {
 	}
 
 	if err := n.Namespace.Validate(); err != nil {
-		return nested("objectName.namespace", ErrInvalidObjectName, err)
+		return nested("objectName.namespace", n.String(), ErrInvalidObjectName, err)
 	}
 
 	if err := n.Name.Validate(); err != nil {
-		return nested("objectName.name", ErrInvalidObjectName, err)
+		return nested("objectName.name", n.String(), ErrInvalidObjectName, err)
 	}
 
 	return nil

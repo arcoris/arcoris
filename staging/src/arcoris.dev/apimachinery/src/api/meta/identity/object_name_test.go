@@ -40,6 +40,23 @@ func TestObjectName(t *testing.T) {
 	}
 }
 
+func TestObjectNameCanonicalText(t *testing.T) {
+	text, err := (ObjectName{Namespace: "system", Name: "worker"}).CanonicalText()
+	requireNoError(t, err)
+	if text != "system/worker" {
+		t.Fatalf("CanonicalText() = %q, want %q", text, "system/worker")
+	}
+
+	text, err = (ObjectName{Name: "worker"}).CanonicalText()
+	requireNoError(t, err)
+	if text != "worker" {
+		t.Fatalf("CanonicalText() = %q, want %q", text, "worker")
+	}
+
+	_, err = (ObjectName{Namespace: "system"}).CanonicalText()
+	requireErrorIs(t, err, ErrInvalidObjectName)
+}
+
 func TestObjectNameJSONFields(t *testing.T) {
 	data, err := json.Marshal(ObjectName{Namespace: "system", Name: "worker"})
 	requireNoError(t, err)

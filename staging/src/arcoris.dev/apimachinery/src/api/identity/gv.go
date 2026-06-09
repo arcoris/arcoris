@@ -28,11 +28,13 @@ func (gv GroupVersion) String() string {
 	return joinGroupVersion(gv.Group, gv.Version)
 }
 
-// Identifier returns the canonical group/version identity string.
-//
-// It is equivalent to String and is intended for diagnostics and map keys.
-func (gv GroupVersion) Identifier() string {
-	return gv.String()
+// CanonicalText validates the group/version identity and returns its canonical text.
+func (gv GroupVersion) CanonicalText() (string, error) {
+	if err := gv.Validate(); err != nil {
+		return "", err
+	}
+
+	return gv.String(), nil
 }
 
 // IsZero reports whether group and version are both absent.

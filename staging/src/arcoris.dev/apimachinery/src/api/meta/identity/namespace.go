@@ -20,12 +20,29 @@ package identity
 // this package never applies namespace defaulting.
 type Namespace string
 
-// String returns the raw namespace text.
+// String returns the raw namespace text without validating it.
 func (n Namespace) String() string {
 	return string(n)
 }
 
+// CanonicalText validates the namespace and returns its canonical text.
+//
+// The empty namespace is valid and returns an empty string because namespace
+// absence is part of the object-name domain.
+func (n Namespace) CanonicalText() (string, error) {
+	if err := n.Validate(); err != nil {
+		return "", err
+	}
+
+	return n.String(), nil
+}
+
 // IsZero reports whether the namespace is absent.
 func (n Namespace) IsZero() bool {
+	return n == ""
+}
+
+// IsAbsent reports whether no namespace is present.
+func (n Namespace) IsAbsent() bool {
 	return n == ""
 }

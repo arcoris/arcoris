@@ -26,7 +26,21 @@ func (r Resource) String() string {
 	return string(r)
 }
 
+// CanonicalText validates the resource and returns its canonical text.
+func (r Resource) CanonicalText() (string, error) {
+	if err := r.Validate(); err != nil {
+		return "", err
+	}
+
+	return r.String(), nil
+}
+
 // IsZero reports whether the resource is absent.
 func (r Resource) IsZero() bool {
+	return r == ""
+}
+
+// IsAbsent reports whether the resource collection is absent.
+func (r Resource) IsAbsent() bool {
 	return r == ""
 }

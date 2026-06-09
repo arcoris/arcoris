@@ -27,4 +27,21 @@ func TestName(t *testing.T) {
 	if !Name("").IsZero() {
 		t.Fatal("zero Name IsZero() = false")
 	}
+	if !Name("").IsAbsent() {
+		t.Fatal("zero Name IsAbsent() = false")
+	}
+	if name.IsAbsent() {
+		t.Fatal("non-zero Name IsAbsent() = true")
+	}
+}
+
+func TestNameCanonicalText(t *testing.T) {
+	text, err := Name("worker").CanonicalText()
+	requireNoError(t, err)
+	if text != "worker" {
+		t.Fatalf("CanonicalText() = %q, want %q", text, "worker")
+	}
+
+	_, err = Name("Worker").CanonicalText()
+	requireErrorIs(t, err, ErrInvalidName)
 }

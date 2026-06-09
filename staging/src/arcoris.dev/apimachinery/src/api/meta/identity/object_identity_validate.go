@@ -17,12 +17,13 @@ package identity
 // Validate checks that an object identity has a valid object name and UID.
 func (i ObjectIdentity) Validate() error {
 	if err := i.ObjectName().Validate(); err != nil {
-		return nested("objectIdentity.objectName", ErrInvalidObjectIdentity, err)
+		return nested("objectIdentity.objectName", i.String(), ErrInvalidObjectIdentity, err)
 	}
 
 	if i.UID.IsZero() {
 		return invalid(
 			"objectIdentity.uid",
+			i.String(),
 			ErrInvalidObjectIdentity,
 			ErrorReasonEmptyValue,
 			"uid is required",
@@ -30,7 +31,7 @@ func (i ObjectIdentity) Validate() error {
 	}
 
 	if err := i.UID.Validate(); err != nil {
-		return nested("objectIdentity.uid", ErrInvalidObjectIdentity, err)
+		return nested("objectIdentity.uid", i.String(), ErrInvalidObjectIdentity, err)
 	}
 
 	return nil

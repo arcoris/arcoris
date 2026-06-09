@@ -42,7 +42,7 @@ func TestEncodingHelpers(t *testing.T) {
 
 func marshalError() error {
 	_, err := marshalText("bad", func() error {
-		return invalid("name", ErrInvalidName, ErrorReasonInvalidForm, "bad name")
+		return invalid("name", "bad", ErrInvalidName, ErrorReasonInvalidForm, "bad name")
 	})
 	return err
 }

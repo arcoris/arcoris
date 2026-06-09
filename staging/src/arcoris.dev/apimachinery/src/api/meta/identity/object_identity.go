@@ -45,3 +45,12 @@ func (i ObjectIdentity) String() string {
 	}
 	return name + "#" + i.UID.String()
 }
+
+// CanonicalText validates the object identity and returns its canonical text.
+func (i ObjectIdentity) CanonicalText() (string, error) {
+	if err := i.Validate(); err != nil {
+		return "", err
+	}
+
+	return i.String(), nil
+}

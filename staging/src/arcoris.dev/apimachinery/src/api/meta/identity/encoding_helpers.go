@@ -34,6 +34,7 @@ func unmarshalJSONString(path string, data []byte) (string, error) {
 	value, isNull, err := metaencoding.DecodeJSONString(data)
 	if err != nil {
 		return "", &Error{
+			Value: string(data),
 			Record: diagnostic.WrapRecord(
 				path,
 				ErrInvalidJSON,
@@ -45,6 +46,7 @@ func unmarshalJSONString(path string, data []byte) (string, error) {
 	}
 	if isNull {
 		return "", &Error{
+			Value: "null",
 			Record: diagnostic.NewRecord(
 				path,
 				ErrInvalidJSON,

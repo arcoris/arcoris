@@ -28,9 +28,13 @@ func (rp ResourcePath) String() string {
 	return joinResourcePath(rp.Resource, rp.Subresource)
 }
 
-// Identifier returns the canonical resource path identity string.
-func (rp ResourcePath) Identifier() string {
-	return rp.String()
+// CanonicalText validates the resource path and returns its canonical text.
+func (rp ResourcePath) CanonicalText() (string, error) {
+	if err := rp.Validate(); err != nil {
+		return "", err
+	}
+
+	return rp.String(), nil
 }
 
 // IsZero reports whether resource and subresource are both absent.

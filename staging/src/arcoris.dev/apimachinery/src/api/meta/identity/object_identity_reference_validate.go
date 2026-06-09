@@ -14,38 +14,38 @@
 
 package identity
 
-// Validate checks the typed name-only object reference metadata.
-func (r ObjectReference) Validate() error {
+// Validate checks the complete UID-pinned object reference metadata.
+func (r ObjectIdentityReference) Validate() error {
 	if r.APIVersion.IsZero() {
 		return invalid(
-			"objectReference.apiVersion",
+			"objectIdentityReference.apiVersion",
 			r.String(),
-			ErrInvalidObjectReference,
+			ErrInvalidObjectIdentityReference,
 			ErrorReasonEmptyValue,
 			"apiVersion is required",
 		)
 	}
 
 	if err := r.APIVersion.Validate(); err != nil {
-		return nested("objectReference.apiVersion", r.String(), ErrInvalidObjectReference, err)
+		return nested("objectIdentityReference.apiVersion", r.String(), ErrInvalidObjectIdentityReference, err)
 	}
 
 	if r.Kind.IsZero() {
 		return invalid(
-			"objectReference.kind",
+			"objectIdentityReference.kind",
 			r.String(),
-			ErrInvalidObjectReference,
+			ErrInvalidObjectIdentityReference,
 			ErrorReasonEmptyValue,
 			"kind is required",
 		)
 	}
 
 	if err := r.Kind.Validate(); err != nil {
-		return nested("objectReference.kind", r.String(), ErrInvalidObjectReference, err)
+		return nested("objectIdentityReference.kind", r.String(), ErrInvalidObjectIdentityReference, err)
 	}
 
-	if err := r.ObjectName().Validate(); err != nil {
-		return nested("objectReference.objectName", r.String(), ErrInvalidObjectReference, err)
+	if err := r.ObjectIdentity().Validate(); err != nil {
+		return nested("objectIdentityReference.objectIdentity", r.String(), ErrInvalidObjectIdentityReference, err)
 	}
 
 	return nil

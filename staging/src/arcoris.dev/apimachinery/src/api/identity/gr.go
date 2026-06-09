@@ -28,9 +28,13 @@ func (gr GroupResource) String() string {
 	return joinGroupResource(gr.Group, gr.Resource)
 }
 
-// Identifier returns the canonical group/resource identity string.
-func (gr GroupResource) Identifier() string {
-	return gr.String()
+// CanonicalText validates the group/resource identity and returns its canonical text.
+func (gr GroupResource) CanonicalText() (string, error) {
+	if err := gr.Validate(); err != nil {
+		return "", err
+	}
+
+	return gr.String(), nil
 }
 
 // IsZero reports whether group and resource are both absent.

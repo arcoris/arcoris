@@ -22,7 +22,13 @@ func TestVersionValue(t *testing.T) {
 	if !Version("").IsZero() {
 		t.Fatalf("zero Version should be zero")
 	}
+	if !Version("").IsAbsent() {
+		t.Fatalf("zero Version should be absent")
+	}
 	if Version("v1").IsZero() {
 		t.Fatalf("non-empty Version should not be zero")
+	}
+	if Version("v1").IsAbsent() {
+		t.Fatalf("non-empty Version should not be absent")
 	}
 }

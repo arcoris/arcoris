@@ -18,7 +18,7 @@ import "testing"
 
 func TestGroupVersionKindValue(t *testing.T) {
 	gvk := GroupVersionKind{Group: "control.arcoris.dev", Version: "v1", Kind: "Worker"}
-	requireIdentifier(t, gvk, "control.arcoris.dev/v1#Worker")
+	requireCanonicalText(t, gvk, "control.arcoris.dev/v1#Worker")
 
 	if !(GroupVersionKind{}).IsZero() {
 		t.Fatalf("zero GroupVersionKind should be zero")

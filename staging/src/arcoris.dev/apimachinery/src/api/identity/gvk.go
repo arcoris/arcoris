@@ -30,9 +30,13 @@ func (gvk GroupVersionKind) String() string {
 	return joinGroupVersionKind(gvk.GroupVersion(), gvk.Kind)
 }
 
-// Identifier returns the canonical group/version/kind identity string.
-func (gvk GroupVersionKind) Identifier() string {
-	return gvk.String()
+// CanonicalText validates the group/version/kind identity and returns its canonical text.
+func (gvk GroupVersionKind) CanonicalText() (string, error) {
+	if err := gvk.Validate(); err != nil {
+		return "", err
+	}
+
+	return gvk.String(), nil
 }
 
 // IsZero reports whether group, version, and kind are all absent.

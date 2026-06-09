@@ -23,7 +23,7 @@ func TestGroupVersionResourcePathValue(t *testing.T) {
 		Resource:    "workers",
 		Subresource: "status",
 	}
-	requireIdentifier(t, path, "control.arcoris.dev/v1:workers/status")
+	requireCanonicalText(t, path, "control.arcoris.dev/v1:workers/status")
 
 	if !(GroupVersionResourcePath{}).IsZero() {
 		t.Fatalf("zero GroupVersionResourcePath should be zero")

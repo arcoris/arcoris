@@ -25,6 +25,7 @@ import (
 func TestErrorPreservesStructuredIdentityDiagnostics(t *testing.T) {
 	cause := errors.New("nested")
 	err := &Error{
+		Value: "bad",
 		Record: diagnostic.WrapRecord(
 			"objectReference.name",
 			ErrInvalidObjectReference,
@@ -47,8 +48,33 @@ func TestErrorPreservesStructuredIdentityDiagnostics(t *testing.T) {
 	if got.Reason != ErrorReasonInvalidForm {
 		t.Fatalf("Reason = %q, want %q", got.Reason, ErrorReasonInvalidForm)
 	}
+	if got.Value != "bad" {
+		t.Fatalf("Value = %q, want bad", got.Value)
+	}
 	if !strings.Contains(err.Error(), "nested value is invalid") {
 		t.Fatalf("Error() = %q, want detail", err.Error())
+	}
+	if !strings.Contains(err.Error(), `value "bad"`) {
+		t.Fatalf("Error() = %q, want rejected value", err.Error())
+	}
+}
+
+func TestErrorRecordsRejectedValue(t *testing.T) {
+	err := Name("Bad").Validate()
+	requireErrorIs(t, err, ErrInvalidName)
+
+	var got *Error
+	if !errors.As(err, &got) {
+		t.Fatalf("errors.As(%T) = false", got)
+	}
+	if got.Path != "name" {
+		t.Fatalf("Path = %q, want name", got.Path)
+	}
+	if got.Value != "Bad" {
+		t.Fatalf("Value = %q, want Bad", got.Value)
+	}
+	if got.Reason != ErrorReasonInvalidEdge {
+		t.Fatalf("Reason = %q, want %q", got.Reason, ErrorReasonInvalidEdge)
 	}
 }
 

@@ -22,7 +22,13 @@ func TestResourceValue(t *testing.T) {
 	if !Resource("").IsZero() {
 		t.Fatalf("zero Resource should be zero")
 	}
+	if !Resource("").IsAbsent() {
+		t.Fatalf("zero Resource should be absent")
+	}
 	if Resource("pods").IsZero() {
 		t.Fatalf("non-empty Resource should not be zero")
+	}
+	if Resource("pods").IsAbsent() {
+		t.Fatalf("non-empty Resource should not be absent")
 	}
 }

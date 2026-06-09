@@ -14,21 +14,7 @@
 
 package identity
 
-import "testing"
-
-func TestKindValue(t *testing.T) {
-	requireString(t, Kind("HTTPRoute").String(), "HTTPRoute")
-
-	if !Kind("").IsZero() {
-		t.Fatalf("zero Kind should be zero")
-	}
-	if !Kind("").IsAbsent() {
-		t.Fatalf("zero Kind should be absent")
-	}
-	if Kind("Pod").IsZero() {
-		t.Fatalf("non-empty Kind should not be zero")
-	}
-	if Kind("Pod").IsAbsent() {
-		t.Fatalf("non-empty Kind should not be absent")
-	}
+// Clone returns a value copy of the UID-pinned object reference.
+func (r ObjectIdentityReference) Clone() ObjectIdentityReference {
+	return r
 }

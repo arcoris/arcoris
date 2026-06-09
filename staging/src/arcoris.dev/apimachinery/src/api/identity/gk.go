@@ -28,9 +28,13 @@ func (gk GroupKind) String() string {
 	return joinGroupKind(gk.Group, gk.Kind)
 }
 
-// Identifier returns the canonical group/kind identity string.
-func (gk GroupKind) Identifier() string {
-	return gk.String()
+// CanonicalText validates the group/kind identity and returns its canonical text.
+func (gk GroupKind) CanonicalText() (string, error) {
+	if err := gk.Validate(); err != nil {
+		return "", err
+	}
+
+	return gk.String(), nil
 }
 
 // IsZero reports whether group and kind are both absent.

@@ -14,21 +14,20 @@
 
 package identity
 
-import "testing"
+import (
+	"testing"
 
-func TestKindValue(t *testing.T) {
-	requireString(t, Kind("HTTPRoute").String(), "HTTPRoute")
+	apiidentity "arcoris.dev/apimachinery/api/identity"
+)
 
-	if !Kind("").IsZero() {
-		t.Fatalf("zero Kind should be zero")
+func TestObjectIdentityReferenceClone(t *testing.T) {
+	ref := ObjectIdentityReference{
+		APIVersion: apiidentity.GroupVersion{Group: "control.arcoris.dev", Version: "v1"},
+		Kind:       "Worker",
+		Name:       "worker",
+		UID:        "uid-1",
 	}
-	if !Kind("").IsAbsent() {
-		t.Fatalf("zero Kind should be absent")
-	}
-	if Kind("Pod").IsZero() {
-		t.Fatalf("non-empty Kind should not be zero")
-	}
-	if Kind("Pod").IsAbsent() {
-		t.Fatalf("non-empty Kind should not be absent")
+	if ref.Clone() != ref {
+		t.Fatal("Clone() changed value")
 	}
 }

@@ -27,7 +27,24 @@ func (s Subresource) String() string {
 	return string(s)
 }
 
+// CanonicalText validates the subresource and returns its canonical text.
+//
+// The empty subresource is valid and returns an empty string because absence is
+// part of the subresource domain.
+func (s Subresource) CanonicalText() (string, error) {
+	if err := s.Validate(); err != nil {
+		return "", err
+	}
+
+	return s.String(), nil
+}
+
 // IsZero reports whether the subresource is absent.
 func (s Subresource) IsZero() bool {
+	return s == ""
+}
+
+// IsAbsent reports whether no subresource segment is present.
+func (s Subresource) IsAbsent() bool {
 	return s == ""
 }

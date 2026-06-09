@@ -22,7 +22,13 @@ func TestSubresourceValue(t *testing.T) {
 	if !Subresource("").IsZero() {
 		t.Fatalf("zero Subresource should be zero")
 	}
+	if !Subresource("").IsAbsent() {
+		t.Fatalf("zero Subresource should be absent")
+	}
 	if Subresource("status").IsZero() {
 		t.Fatalf("non-empty Subresource should not be zero")
+	}
+	if Subresource("status").IsAbsent() {
+		t.Fatalf("non-empty Subresource should not be absent")
 	}
 }

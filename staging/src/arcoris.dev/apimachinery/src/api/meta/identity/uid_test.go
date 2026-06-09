@@ -27,4 +27,21 @@ func TestUID(t *testing.T) {
 	if !UID("").IsZero() {
 		t.Fatal("zero UID IsZero() = false")
 	}
+	if !UID("").IsAbsent() {
+		t.Fatal("zero UID IsAbsent() = false")
+	}
+	if uid.IsAbsent() {
+		t.Fatal("non-zero UID IsAbsent() = true")
+	}
+}
+
+func TestUIDCanonicalText(t *testing.T) {
+	text, err := UID("uid-123_abc").CanonicalText()
+	requireNoError(t, err)
+	if text != "uid-123_abc" {
+		t.Fatalf("CanonicalText() = %q, want %q", text, "uid-123_abc")
+	}
+
+	_, err = UID("").CanonicalText()
+	requireErrorIs(t, err, ErrInvalidUID)
 }

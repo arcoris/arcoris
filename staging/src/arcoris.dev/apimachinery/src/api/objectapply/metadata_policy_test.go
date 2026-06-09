@@ -192,7 +192,7 @@ func metadataTimestamp() stamp.Timestamp {
 
 func metadataOwnerReference() metaowner.Reference {
 	return metaowner.Reference{
-		Ref: metaidentity.ObjectReference{
+		Ref: metaidentity.ObjectIdentityReference{
 			APIVersion: apiidentity.GroupVersion{
 				Group:   "control.arcoris.dev",
 				Version: "v1",

@@ -18,7 +18,7 @@ import "testing"
 
 func TestGroupKindValue(t *testing.T) {
 	gk := GroupKind{Group: "control.arcoris.dev", Kind: "Worker"}
-	requireIdentifier(t, gk, "control.arcoris.dev#Worker")
+	requireCanonicalText(t, gk, "control.arcoris.dev#Worker")
 
 	if !(GroupKind{}).IsZero() {
 		t.Fatalf("zero GroupKind should be zero")

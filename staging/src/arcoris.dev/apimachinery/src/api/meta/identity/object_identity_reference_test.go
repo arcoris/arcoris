@@ -21,37 +21,45 @@ import (
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 )
 
-func TestObjectReference(t *testing.T) {
-	ref := ObjectReference{
+func TestObjectIdentityReference(t *testing.T) {
+	ref := ObjectIdentityReference{
 		APIVersion: apiidentity.GroupVersion{Group: "control.arcoris.dev", Version: "v1"},
 		Kind:       "Worker",
 		Namespace:  "system",
 		Name:       "worker",
+		UID:        "uid-1",
 	}
 
+	if ref.ObjectReference().String() != "control.arcoris.dev/v1#Worker system/worker" {
+		t.Fatalf("ObjectReference() = %q", ref.ObjectReference())
+	}
 	if ref.ObjectName().String() != "system/worker" {
 		t.Fatalf("ObjectName() = %q", ref.ObjectName())
+	}
+	if ref.ObjectIdentity().String() != "system/worker#uid-1" {
+		t.Fatalf("ObjectIdentity() = %q", ref.ObjectIdentity())
 	}
 	if ref.GroupVersionKind().String() != "control.arcoris.dev/v1#Worker" {
 		t.Fatalf("GroupVersionKind() = %q", ref.GroupVersionKind())
 	}
-	if ref.String() != "control.arcoris.dev/v1#Worker system/worker" {
+	if ref.String() != "control.arcoris.dev/v1#Worker system/worker#uid-1" {
 		t.Fatalf("String() = %q", ref.String())
 	}
 	if ref.IsZero() {
-		t.Fatal("non-zero ObjectReference IsZero() = true")
+		t.Fatal("non-zero ObjectIdentityReference IsZero() = true")
 	}
-	if !(ObjectReference{}).IsZero() {
-		t.Fatal("zero ObjectReference IsZero() = false")
+	if !(ObjectIdentityReference{}).IsZero() {
+		t.Fatal("zero ObjectIdentityReference IsZero() = false")
 	}
 }
 
-func TestObjectReferenceJSONFields(t *testing.T) {
-	data, err := json.Marshal(ObjectReference{
+func TestObjectIdentityReferenceJSONFields(t *testing.T) {
+	data, err := json.Marshal(ObjectIdentityReference{
 		APIVersion: apiidentity.GroupVersion{Group: "control.arcoris.dev", Version: "v1"},
 		Kind:       "Worker",
 		Namespace:  "system",
 		Name:       "worker",
+		UID:        "uid-1",
 	})
 	requireNoError(t, err)
 
@@ -64,13 +72,7 @@ func TestObjectReferenceJSONFields(t *testing.T) {
 	if got["kind"] != "Worker" {
 		t.Fatalf("kind = %#v", got["kind"])
 	}
-	if got["namespace"] != "system" || got["name"] != "worker" {
-		t.Fatalf("object reference JSON = %#v", got)
-	}
-	if _, ok := got["uid"]; ok {
-		t.Fatalf("name-only object reference unexpectedly has uid: %#v", got)
-	}
-	if _, ok := got["APIVersion"]; ok {
-		t.Fatalf("unexpected Go field name in JSON: %s", data)
+	if got["namespace"] != "system" || got["name"] != "worker" || got["uid"] != "uid-1" {
+		t.Fatalf("object identity reference JSON = %#v", got)
 	}
 }

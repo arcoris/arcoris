@@ -20,12 +20,26 @@ package identity
 // policy belongs to higher layers that own persistence and uniqueness.
 type NamePrefix string
 
-// String returns the raw name prefix text.
+// String returns the raw name prefix text without validating it.
 func (p NamePrefix) String() string {
 	return string(p)
 }
 
+// CanonicalText validates the name prefix and returns its canonical text.
+func (p NamePrefix) CanonicalText() (string, error) {
+	if err := p.Validate(); err != nil {
+		return "", err
+	}
+
+	return p.String(), nil
+}
+
 // IsZero reports whether the prefix is absent.
 func (p NamePrefix) IsZero() bool {
+	return p == ""
+}
+
+// IsAbsent reports whether the generated-name prefix is absent.
+func (p NamePrefix) IsAbsent() bool {
 	return p == ""
 }

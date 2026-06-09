@@ -25,4 +25,7 @@ func TestParseUID(t *testing.T) {
 
 	_, err = ParseUID("uid 1")
 	requireErrorIs(t, err, ErrInvalidUID)
+
+	_, err = ParseUID("")
+	requireErrorIs(t, err, ErrInvalidUID)
 }

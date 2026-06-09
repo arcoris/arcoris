@@ -23,6 +23,7 @@ func (n Namespace) Validate() error {
 	}
 	return fromGrammar(
 		"namespace",
+		n.String(),
 		ErrInvalidNamespace,
 		metagrammar.ValidateDNSLabel(string(n)),
 	)

@@ -25,24 +25,18 @@ func TestObjectReferenceValidate(t *testing.T) {
 		APIVersion: apiidentity.GroupVersion{Group: "control.arcoris.dev", Version: "v1"},
 		Kind:       "Worker",
 		Name:       "worker",
-		UID:        "uid-1",
 	}
 	requireNoError(t, ref.Validate())
 
-	requireErrorIs(t, ObjectReference{Kind: "Worker", Name: "worker", UID: "uid-1"}.Validate(), ErrInvalidObjectReference)
+	requireErrorIs(t, ObjectReference{Kind: "Worker", Name: "worker"}.Validate(), ErrInvalidObjectReference)
 	requireErrorIs(
 		t,
-		ObjectReference{APIVersion: ref.APIVersion, Name: "worker", UID: "uid-1"}.Validate(),
+		ObjectReference{APIVersion: ref.APIVersion, Name: "worker"}.Validate(),
 		ErrInvalidObjectReference,
 	)
 	requireErrorIs(
 		t,
-		ObjectReference{APIVersion: ref.APIVersion, Kind: "Worker", UID: "uid-1"}.Validate(),
-		ErrInvalidObjectReference,
-	)
-	requireErrorIs(
-		t,
-		ObjectReference{APIVersion: ref.APIVersion, Kind: "Worker", Name: "worker"}.Validate(),
+		ObjectReference{APIVersion: ref.APIVersion, Kind: "Worker"}.Validate(),
 		ErrInvalidObjectReference,
 	)
 }

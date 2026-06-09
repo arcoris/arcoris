@@ -22,7 +22,13 @@ func TestGroupValue(t *testing.T) {
 	if !CoreGroup.IsZero() {
 		t.Fatalf("CoreGroup.IsZero() = false, want true")
 	}
+	if !CoreGroup.IsCore() {
+		t.Fatalf("CoreGroup.IsCore() = false, want true")
+	}
 	if Group("control.arcoris.dev").IsZero() {
 		t.Fatalf("named group should not be zero")
+	}
+	if Group("control.arcoris.dev").IsCore() {
+		t.Fatalf("named group should not be core")
 	}
 }

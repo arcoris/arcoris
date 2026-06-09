@@ -16,15 +16,15 @@ package identity
 
 import apiidentity "arcoris.dev/apimachinery/api/identity"
 
-// ObjectReference describes another API object by API identity and object name.
+// ObjectIdentityReference describes another API object by API identity and UID.
 //
-// ObjectReference is name-only: it may continue to refer to a recreated object
-// with the same namespace/name. Use ObjectIdentityReference when a reference
-// must be pinned to one concrete UID-bearing object incarnation.
-//
-// It does not resolve the object, check existence, or encode a route/storage
-// key. It is reference metadata only.
-type ObjectReference struct {
+// ObjectIdentityReference is UID-pinned: it identifies one concrete object
+// incarnation rather than any future object that may reuse the same
+// namespace/name. Owner metadata should use this type when ownership must be
+// tied to a concrete owner object. Lifecycle policy, controller ownership, and
+// block-owner-deletion behavior belong to api/meta/owner, not this raw identity
+// package.
+type ObjectIdentityReference struct {
 	// APIVersion identifies the referenced object's API group/version.
 	APIVersion apiidentity.GroupVersion `json:"apiVersion"`
 	// Kind identifies the referenced object's API kind.
@@ -33,31 +33,49 @@ type ObjectReference struct {
 	Namespace Namespace `json:"namespace,omitempty"`
 	// Name identifies the referenced object within its resource scope.
 	Name Name `json:"name"`
+	// UID pins the reference to one concrete object incarnation.
+	UID UID `json:"uid"`
 }
 
 // IsZero reports whether all reference fields are absent.
-func (r ObjectReference) IsZero() bool {
+func (r ObjectIdentityReference) IsZero() bool {
 	return r.APIVersion.IsZero() &&
 		r.Kind.IsZero() &&
 		r.Namespace.IsZero() &&
-		r.Name.IsZero()
+		r.Name.IsZero() &&
+		r.UID.IsZero()
+}
+
+// ObjectReference returns the name-only typed reference portion.
+func (r ObjectIdentityReference) ObjectReference() ObjectReference {
+	return ObjectReference{
+		APIVersion: r.APIVersion,
+		Kind:       r.Kind,
+		Namespace:  r.Namespace,
+		Name:       r.Name,
+	}
 }
 
 // ObjectName returns the namespace/name portion of the reference.
-func (r ObjectReference) ObjectName() ObjectName {
+func (r ObjectIdentityReference) ObjectName() ObjectName {
 	return ObjectName{Namespace: r.Namespace, Name: r.Name}
 }
 
+// ObjectIdentity returns the namespace/name/UID portion of the reference.
+func (r ObjectIdentityReference) ObjectIdentity() ObjectIdentity {
+	return ObjectIdentity{Namespace: r.Namespace, Name: r.Name, UID: r.UID}
+}
+
 // GroupVersionKind returns the API group/version/kind portion of the reference.
-func (r ObjectReference) GroupVersionKind() apiidentity.GroupVersionKind {
+func (r ObjectIdentityReference) GroupVersionKind() apiidentity.GroupVersionKind {
 	return r.APIVersion.WithKind(r.Kind)
 }
 
-// String returns diagnostic text for the typed object reference.
+// String returns diagnostic text for the UID-pinned typed object reference.
 //
 // The result is intentionally diagnostic only. Storage keys, route keys, cache
 // keys, and watch topics need explicit formats in higher layers because they
 // also depend on resource descriptors, scope, and backend policy.
-func (r ObjectReference) String() string {
-	return r.GroupVersionKind().String() + " " + r.ObjectName().String()
+func (r ObjectIdentityReference) String() string {
+	return r.GroupVersionKind().String() + " " + r.ObjectIdentity().String()
 }

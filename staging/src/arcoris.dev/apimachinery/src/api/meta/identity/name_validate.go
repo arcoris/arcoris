@@ -20,6 +20,7 @@ import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 func (n Name) Validate() error {
 	return fromGrammar(
 		"name",
+		n.String(),
 		ErrInvalidName,
 		metagrammar.ValidateDNSLabel(string(n)),
 	)

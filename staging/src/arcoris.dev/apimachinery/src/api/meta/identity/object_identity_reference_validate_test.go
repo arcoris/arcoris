@@ -20,13 +20,29 @@ import (
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 )
 
-func TestObjectReferenceClone(t *testing.T) {
-	ref := ObjectReference{
+func TestObjectIdentityReferenceValidate(t *testing.T) {
+	ref := ObjectIdentityReference{
 		APIVersion: apiidentity.GroupVersion{Group: "control.arcoris.dev", Version: "v1"},
 		Kind:       "Worker",
 		Name:       "worker",
+		UID:        "uid-1",
 	}
-	if ref.Clone() != ref {
-		t.Fatal("Clone() changed value")
-	}
+	requireNoError(t, ref.Validate())
+
+	requireErrorIs(t, ObjectIdentityReference{Kind: "Worker", Name: "worker", UID: "uid-1"}.Validate(), ErrInvalidObjectIdentityReference)
+	requireErrorIs(
+		t,
+		ObjectIdentityReference{APIVersion: ref.APIVersion, Name: "worker", UID: "uid-1"}.Validate(),
+		ErrInvalidObjectIdentityReference,
+	)
+	requireErrorIs(
+		t,
+		ObjectIdentityReference{APIVersion: ref.APIVersion, Kind: "Worker", UID: "uid-1"}.Validate(),
+		ErrInvalidObjectIdentityReference,
+	)
+	requireErrorIs(
+		t,
+		ObjectIdentityReference{APIVersion: ref.APIVersion, Kind: "Worker", Name: "worker"}.Validate(),
+		ErrInvalidObjectIdentityReference,
+	)
 }

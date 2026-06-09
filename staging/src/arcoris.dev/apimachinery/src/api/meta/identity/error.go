@@ -38,6 +38,8 @@ var (
 	ErrInvalidObjectIdentity = errors.New("invalid metadata object identity")
 	// ErrInvalidObjectReference classifies malformed object references.
 	ErrInvalidObjectReference = errors.New("invalid metadata object reference")
+	// ErrInvalidObjectIdentityReference classifies malformed UID-pinned object references.
+	ErrInvalidObjectIdentityReference = errors.New("invalid metadata object identity reference")
 	// ErrInvalidJSON classifies malformed JSON scalar metadata identity values.
 	ErrInvalidJSON = errors.New("invalid metadata identity JSON")
 	// ErrNilReceiver classifies Unmarshal calls made on nil metadata identity pointers.
@@ -67,6 +69,9 @@ const (
 
 // Error is the structured diagnostic returned by metadata identity validation.
 type Error struct {
+	// Value stores the rejected scalar or composite text when one is available.
+	Value string
+
 	// Record stores the shared path, sentinel, reason, detail, and cause fields.
 	diagnostic.Record[ErrorReason]
 }
@@ -77,7 +82,12 @@ func (e *Error) Error() string {
 		return "<nil>"
 	}
 
-	return e.Record.Format("meta/identity")
+	record := e.Record
+	if e.Value != "" && record.Detail != "" {
+		record.Detail += fmt.Sprintf(" (value %q)", e.Value)
+	}
+
+	return record.Format("meta/identity")
 }
 
 // Unwrap preserves broad and nested error identity.
@@ -90,20 +100,22 @@ func (e *Error) Unwrap() error {
 }
 
 // invalid reports a metadata identity validation failure.
-func invalid(path string, err error, reason ErrorReason, detail string) error {
+func invalid(path string, value string, err error, reason ErrorReason, detail string) error {
 	return &Error{
+		Value:  value,
 		Record: diagnostic.NewRecord(path, err, reason, detail),
 	}
 }
 
 // invalidf reports a metadata identity validation failure with formatted detail.
-func invalidf(path string, err error, reason ErrorReason, format string, args ...any) error {
-	return invalid(path, err, reason, fmt.Sprintf(format, args...))
+func invalidf(path string, value string, err error, reason ErrorReason, format string, args ...any) error {
+	return invalid(path, value, err, reason, fmt.Sprintf(format, args...))
 }
 
 // nested reports a failure caused by a nested metadata or API identity value.
-func nested(path string, err error, cause error) error {
+func nested(path string, value string, err error, cause error) error {
 	return &Error{
+		Value: value,
 		Record: diagnostic.WrapRecord(
 			path,
 			err,
@@ -116,12 +128,12 @@ func nested(path string, err error, cause error) error {
 
 // fromGrammar converts internal grammar diagnostics to public metadata identity
 // diagnostics without exposing metagrammar as API surface.
-func fromGrammar(path string, err error, v *metagrammar.Violation) error {
+func fromGrammar(path string, value string, err error, v *metagrammar.Violation) error {
 	if v == nil {
 		return nil
 	}
 
-	return invalid(path, err, reasonFromGrammar(v.Reason), v.Detail)
+	return invalid(path, value, err, reasonFromGrammar(v.Reason), v.Detail)
 }
 
 // reasonFromGrammar maps internal grammar reasons to public reason values.

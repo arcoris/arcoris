@@ -18,7 +18,7 @@ import "testing"
 
 func TestResourcePathValue(t *testing.T) {
 	path := ResourcePath{Resource: "pods", Subresource: "status"}
-	requireIdentifier(t, path, "pods/status")
+	requireCanonicalText(t, path, "pods/status")
 
 	if !(ResourcePath{}).IsZero() {
 		t.Fatalf("zero ResourcePath should be zero")

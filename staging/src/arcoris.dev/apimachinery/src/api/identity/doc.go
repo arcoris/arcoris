@@ -15,11 +15,12 @@
 // Package identity defines strict API identity primitives used by ARCORIS API
 // machinery.
 //
-// The package provides immutable value types for API groups, versions, kinds,
-// resources, subresources, and their canonical combinations. These values are
-// lexical identity tokens. They do not carry runtime object behavior, metadata,
-// structural type descriptors, codecs, REST routing policy, discovery
-// documents, version negotiation, pluralization policy, or registration state.
+// The package provides small comparable value types for API groups, versions,
+// kinds, resources, subresources, and their canonical combinations. These
+// values are lexical identity tokens. They do not carry runtime object
+// behavior, metadata, structural type descriptors, codecs, REST routing policy,
+// discovery documents, version negotiation, pluralization policy, storage key
+// formats, cache key formats, watch topics, or registration state.
 //
 // The package validates identity syntax only. Higher layers can use identity
 // values to describe resources, bind Go runtime types, generate routes, choose
@@ -30,11 +31,12 @@
 //
 // Each identity type is split by responsibility:
 //
-//   - the base file defines the value type, String/Identifier helpers,
-//     IsZero semantics, getters, and pure composition methods;
+//   - the base file defines the value type, diagnostic String helpers, IsZero
+//     and absence semantics, getters, and pure composition methods;
 //   - the parse file owns strict canonical text parsing;
 //   - the validate file owns lexical validation and structured diagnostics;
 //   - the encoding file owns text and JSON scalar encoding;
+//   - CanonicalText owns validated canonical text exposure;
 //   - grammar contains separator constants, while grammar helpers contain the
 //     shared join/split mechanics used by String and Parse methods.
 //
@@ -88,6 +90,15 @@
 //		v1:pods/status
 //		control.arcoris.dev/v1:workers/status
 //
+// String is diagnostic and never validates. Direct literals are intentionally
+// allowed for trusted declarations and tests, so invalid values can have a
+// String result that looks key-like. Trust boundaries must use Parse, Validate,
+// MarshalText, MarshalJSON, or CanonicalText. CanonicalText validates first and
+// returns an error instead of exposing malformed direct literals as canonical
+// identity text. Higher layers that need storage keys, REST paths, cache keys,
+// or watch topics must define their own explicit formats instead of reusing
+// String output.
+//
 // Parsing and encoding are strict round trips:
 //
 //	gvrp, err := ParseGroupVersionResourcePath(
@@ -115,9 +126,19 @@
 //		return err
 //	}
 //
+// Zero-value semantics are explicit:
+//
+//   - Group("") is the valid core API group.
+//   - Subresource("") is valid subresource absence.
+//   - Version(""), Kind(""), and Resource("") are absence markers and invalid
+//     in complete identities.
+//   - Composite zero values are useful optional sentinels, not complete API
+//     identities.
+//
 // This package intentionally rejects Kubernetes-style legacy forms such as
-// dotted kind/resource spellings, comma-based kind diagnostics, URL-like
-// resource paths, and object-field helper APIs. Runtime object kind mutation,
-// scheme registration, codec handling, resource definitions, and discovery or
-// negotiation policy require separate explicit packages.
+// short non-core groups, dotted kind/resource spellings, comma-based kind
+// diagnostics, URL-like resource paths, and object-field helper APIs. Runtime
+// object kind mutation, scheme registration, codec handling, resource
+// definitions, and discovery or negotiation policy require separate explicit
+// packages.
 package identity

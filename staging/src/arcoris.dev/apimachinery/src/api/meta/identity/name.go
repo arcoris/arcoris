@@ -20,12 +20,26 @@ package identity
 // layers. This package validates lexical form but never checks uniqueness.
 type Name string
 
-// String returns the raw metadata name text.
+// String returns the raw metadata name text without validating it.
 func (n Name) String() string {
 	return string(n)
 }
 
+// CanonicalText validates the name and returns its canonical text.
+func (n Name) CanonicalText() (string, error) {
+	if err := n.Validate(); err != nil {
+		return "", err
+	}
+
+	return n.String(), nil
+}
+
 // IsZero reports whether the name is absent.
 func (n Name) IsZero() bool {
+	return n == ""
+}
+
+// IsAbsent reports whether the object name is absent.
+func (n Name) IsAbsent() bool {
 	return n == ""
 }

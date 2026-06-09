@@ -14,11 +14,34 @@
 
 package identity
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestUIDValidate(t *testing.T) {
-	requireNoError(t, UID("uid-1").Validate())
+	tests := []string{
+		"uid-1",
+		"abc.DEF_123",
+		"tenant:object",
+		strings.Repeat("a", 128),
+	}
+	for _, value := range tests {
+		t.Run("valid/"+value, func(t *testing.T) {
+			requireNoError(t, UID(value).Validate())
+		})
+	}
 
-	requireErrorIs(t, UID("").Validate(), ErrInvalidUID)
-	requireErrorIs(t, UID("uid/1").Validate(), ErrInvalidUID)
+	for _, value := range []string{
+		"",
+		"uid/1",
+		"uid 1",
+		"uid\n1",
+		"uid@1",
+		strings.Repeat("a", 129),
+	} {
+		t.Run("invalid/"+value, func(t *testing.T) {
+			requireErrorIs(t, UID(value).Validate(), ErrInvalidUID)
+		})
+	}
 }

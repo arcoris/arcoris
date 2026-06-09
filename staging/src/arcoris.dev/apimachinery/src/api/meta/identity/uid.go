@@ -20,12 +20,26 @@ package identity
 // version, generation, timestamp, or UUID parser.
 type UID string
 
-// String returns the raw UID text.
+// String returns the raw UID text without validating it.
 func (u UID) String() string {
 	return string(u)
 }
 
+// CanonicalText validates the UID and returns its canonical text.
+func (u UID) CanonicalText() (string, error) {
+	if err := u.Validate(); err != nil {
+		return "", err
+	}
+
+	return u.String(), nil
+}
+
 // IsZero reports whether the UID is absent.
 func (u UID) IsZero() bool {
+	return u == ""
+}
+
+// IsAbsent reports whether the UID is absent.
+func (u UID) IsAbsent() bool {
 	return u == ""
 }
