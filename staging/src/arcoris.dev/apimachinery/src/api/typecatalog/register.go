@@ -32,10 +32,10 @@ import (
 //	err := catalog.Register(types.Define(
 //		"arcoris.meta.Name",
 //		types.String().
-//			MinLen(1).
-//			MaxLen(253),
+//			MinBytes(1).
+//			MaxRunes(253),
 //	))
-func (c *Catalog) Register(def types.TypeDefinition) error {
+func (c *Catalog) Register(def types.Definition) error {
 	return c.RegisterMany(def)
 }
 
@@ -53,7 +53,7 @@ func (c *Catalog) Register(def types.TypeDefinition) error {
 //		types.Define(
 //			"arcoris.meta.Name",
 //			types.String().
-//				MinLen(1),
+//				MinBytes(1),
 //		),
 //		types.Define(
 //			"arcoris.meta.NameList",
@@ -62,7 +62,7 @@ func (c *Catalog) Register(def types.TypeDefinition) error {
 //			),
 //		),
 //	)
-func (c *Catalog) RegisterMany(defs ...types.TypeDefinition) error {
+func (c *Catalog) RegisterMany(defs ...types.Definition) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -75,7 +75,7 @@ func (c *Catalog) RegisterMany(defs ...types.TypeDefinition) error {
 		candidate.storeLocked(def)
 	}
 	for i, def := range defs {
-		if err := types.ValidateDefinition(def, candidate); err != nil {
+		if err := types.ValidateDefinitionResolved(def, candidate); err != nil {
 			return catalogError(fmt.Sprintf("definitions[%d]", i), err)
 		}
 	}
@@ -88,17 +88,17 @@ func (c *Catalog) RegisterMany(defs ...types.TypeDefinition) error {
 
 // checkIncomingDefinitionsLocked checks batch names before mutating state.
 //
-// Duplicate names are catalog ownership conflicts. They are not TypeRef syntax
+// Duplicate names are catalog ownership conflicts. They are not DescriptorRef syntax
 // or resolution failures, so they keep catalog-specific error identity instead
-// of joining types.ErrInvalidTypeReference.
-func (c *Catalog) checkIncomingDefinitionsLocked(defs []types.TypeDefinition) error {
+// of joining types.ErrInvalidDescriptorReference.
+func (c *Catalog) checkIncomingDefinitionsLocked(defs []types.Definition) error {
 	seen := make(map[types.TypeName]struct{}, len(defs))
 	for i, def := range defs {
 		name := def.Name()
 		if !name.IsValid() {
 			return catalogError(
 				fmt.Sprintf("definitions[%d].name", i),
-				types.ErrInvalidTypeReference,
+				types.ErrInvalidDescriptorReference,
 			)
 		}
 

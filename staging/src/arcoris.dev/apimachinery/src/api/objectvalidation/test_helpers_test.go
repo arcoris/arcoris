@@ -41,16 +41,16 @@ type testResolver struct {
 	name string
 }
 
-// ResolveType satisfies types.Resolver without resolving any references.
-func (r *testResolver) ResolveType(types.TypeName) (types.TypeDefinition, bool) {
-	return types.TypeDefinition{}, false
+// Resolve satisfies types.Resolver without resolving any references.
+func (r *testResolver) Resolve(types.TypeName) (types.Definition, bool) {
+	return types.Definition{}, false
 }
 
 // spySurfaceValidator records every value passed through the validation layer.
 type spySurfaceValidator[T any] struct {
 	called    int
 	value     T
-	typ       types.Type
+	typ       types.Descriptor
 	resolver  types.Resolver
 	err       error
 	callOrder *[]string
@@ -60,7 +60,7 @@ type spySurfaceValidator[T any] struct {
 // ValidateSurface records call data and returns the configured error.
 func (v *spySurfaceValidator[T]) ValidateSurface(
 	value T,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	resolver types.Resolver,
 ) error {
 	v.called++
@@ -76,24 +76,24 @@ func (v *spySurfaceValidator[T]) ValidateSurface(
 }
 
 // desiredDescriptor returns the canonical desired descriptor used by fixtures.
-func desiredDescriptor() types.Type {
+func desiredDescriptor() types.Descriptor {
 	return types.Object(
 		types.Field("replicas").Int32().Required(),
-	).Type()
+	).Descriptor()
 }
 
 // observedDescriptor returns the canonical observed descriptor used by fixtures.
-func observedDescriptor() types.Type {
+func observedDescriptor() types.Descriptor {
 	return types.Object(
 		types.Field("readyReplicas").Int32().Required(),
-	).Type()
+	).Descriptor()
 }
 
 // alternateDescriptor gives tests a distinct descriptor for selected-version checks.
-func alternateDescriptor() types.Type {
+func alternateDescriptor() types.Descriptor {
 	return types.Object(
 		types.Field("image").String().Required(),
-	).Type()
+	).Descriptor()
 }
 
 // versionWithObserved builds a version contract that defines observed state.
@@ -262,17 +262,18 @@ func requireCallOrder(t *testing.T, got []string, want ...string) {
 }
 
 // requireAlternateDescriptor asserts the selected version descriptor through
-// public type views instead of depending on private Type layout equality.
-func requireAlternateDescriptor(t *testing.T, got types.Type) {
+// public descriptor views instead of depending on private Descriptor layout
+// equality.
+func requireAlternateDescriptor(t *testing.T, got types.Descriptor) {
 	t.Helper()
 
-	if got.Code() != types.TypeObject {
-		t.Fatalf("Type.Code() = %s, want %s", got.Code(), types.TypeObject)
+	if got.Code() != types.DescriptorObject {
+		t.Fatalf("Descriptor.Code() = %s, want %s", got.Code(), types.DescriptorObject)
 	}
 
-	view, ok := got.Object()
+	view, ok := got.AsObject()
 	if !ok {
-		t.Fatal("Type.Object() returned ok=false")
+		t.Fatal("Descriptor.AsObject() returned ok=false")
 	}
 
 	fields := view.Fields()
@@ -287,7 +288,7 @@ func requireAlternateDescriptor(t *testing.T, got types.Type) {
 	if !field.IsRequired() {
 		t.Fatal("field.IsRequired() = false, want true")
 	}
-	if field.Type().Code() != types.TypeString {
-		t.Fatalf("field.Type().Code() = %s, want %s", field.Type().Code(), types.TypeString)
+	if field.Descriptor().Code() != types.DescriptorString {
+		t.Fatalf("field.Descriptor().Code() = %s, want %s", field.Descriptor().Code(), types.DescriptorString)
 	}
 }

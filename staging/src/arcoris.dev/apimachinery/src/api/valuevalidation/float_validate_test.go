@@ -24,7 +24,7 @@ import (
 func TestValidateFloatConstraints(t *testing.T) {
 	err := valuevalidation.Validate(
 		mustFloat(t, 4.5),
-		types.Float64().Range(1, 4).Type(),
+		types.Float64().Range(1, 4).Descriptor(),
 		valuevalidation.Options{},
 	)
 

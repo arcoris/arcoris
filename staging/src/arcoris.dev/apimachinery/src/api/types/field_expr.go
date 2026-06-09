@@ -18,8 +18,8 @@ package types
 //
 // The unexported marker prevents external packages from injecting arbitrary
 // field implementations into object descriptors. Field builders also do not
-// implement TypeExpr: a field has a name, presence, description, and type; it
-// is not itself a reusable unnamed type.
+// implement DescriptorExpr: a field has a name, presence, description, and
+// value descriptor; it is not itself a reusable unnamed descriptor.
 type FieldExpr interface {
 	fieldExpr()
 	Field() FieldDescriptor

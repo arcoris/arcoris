@@ -30,7 +30,7 @@ func (c *comparer) equalValue(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (bool, error) {
 	if oldValue.IsZero() || newValue.IsZero() {
@@ -46,7 +46,7 @@ func (c *comparer) equalValue(
 			path,
 			ErrInvalidDescriptor,
 			ErrorReasonInvalidDescriptor,
-			"descriptor has no valid type code",
+			"descriptor has no valid kind",
 		)
 	}
 
@@ -55,7 +55,7 @@ func (c *comparer) equalValue(
 	}
 
 	switch descriptor.Code() {
-	case types.TypeNull:
+	case types.DescriptorNull:
 		if err := requireKind(path, oldValue, value.KindNull, descriptor.Code()); err != nil {
 			return false, err
 		}
@@ -63,32 +63,32 @@ func (c *comparer) equalValue(
 			return false, err
 		}
 		return true, nil
-	case types.TypeBool,
-		types.TypeString,
-		types.TypeBytes,
-		types.TypeInt8,
-		types.TypeInt16,
-		types.TypeInt32,
-		types.TypeInt64,
-		types.TypeUint8,
-		types.TypeUint16,
-		types.TypeUint32,
-		types.TypeUint64,
-		types.TypeFloat32,
-		types.TypeFloat64,
-		types.TypeDecimal,
-		types.TypeTimestamp,
-		types.TypeDate,
-		types.TypeTime,
-		types.TypeDuration:
+	case types.DescriptorBool,
+		types.DescriptorString,
+		types.DescriptorBytes,
+		types.DescriptorInt8,
+		types.DescriptorInt16,
+		types.DescriptorInt32,
+		types.DescriptorInt64,
+		types.DescriptorUint8,
+		types.DescriptorUint16,
+		types.DescriptorUint32,
+		types.DescriptorUint64,
+		types.DescriptorFloat32,
+		types.DescriptorFloat64,
+		types.DescriptorDecimal,
+		types.DescriptorTimestamp,
+		types.DescriptorDate,
+		types.DescriptorTime,
+		types.DescriptorDuration:
 		return c.equalScalar(path, oldValue, newValue, descriptor)
-	case types.TypeObject:
+	case types.DescriptorObject:
 		return c.equalObject(path, oldValue, newValue, descriptor, depth)
-	case types.TypeMap:
+	case types.DescriptorMap:
 		return c.equalMap(path, oldValue, newValue, descriptor, depth)
-	case types.TypeList:
+	case types.DescriptorList:
 		return c.equalList(path, oldValue, newValue, descriptor, depth)
-	case types.TypeRef:
+	case types.DescriptorRef:
 		name, resolved, err := c.resolveRefDefinition(path, descriptor, depth)
 		if err != nil {
 			return false, err
@@ -103,7 +103,7 @@ func (c *comparer) equalValue(
 			path,
 			ErrInvalidDescriptor,
 			ErrorReasonInvalidDescriptor,
-			"descriptor has an unsupported type code",
+			"descriptor has an unsupported kind",
 		)
 	}
 }

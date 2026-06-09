@@ -14,17 +14,17 @@
 
 package types
 
-// TimestampView exposes read-only TypeTimestamp payload data.
+// TimestampView exposes read-only DescriptorTimestamp payload data.
 type TimestampView struct {
 	// payload is a detached copy of the timestamp descriptor payload.
 	payload timestampPayload
 }
 
-// Timestamp returns a timestamp view when t is TypeTimestamp.
-func (t Type) Timestamp() (TimestampView, bool) {
-	if t.code != TypeTimestamp {
+// AsTimestamp returns a timestamp view when desc is DescriptorTimestamp.
+func (desc Descriptor) AsTimestamp() (TimestampView, bool) {
+	if desc.code != DescriptorTimestamp {
 		return TimestampView{}, false
 	}
 
-	return TimestampView{payload: cloneTimestampPayload(t.timestamp)}, true
+	return TimestampView{payload: cloneTimestampPayload(desc.timestamp)}, true
 }

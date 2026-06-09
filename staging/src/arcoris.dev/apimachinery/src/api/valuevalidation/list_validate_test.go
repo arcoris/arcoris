@@ -23,7 +23,7 @@ import (
 )
 
 func TestValidateListAcceptsValidItems(t *testing.T) {
-	shape := types.ListOf(types.String().MinLen(1)).Type()
+	shape := types.ListOf(types.String().MinBytes(1)).Descriptor()
 	payload := mustList(t, value.StringValue("a"), value.StringValue("b"))
 
 	requireNoError(
@@ -37,7 +37,7 @@ func TestValidateListAcceptsValidItems(t *testing.T) {
 }
 
 func TestValidateListRejectsInvalidItem(t *testing.T) {
-	shape := types.ListOf(types.String().MinLen(1)).Type()
+	shape := types.ListOf(types.String().MinBytes(1)).Descriptor()
 	payload := mustList(t, value.StringValue("ok"), value.StringValue(""))
 
 	err := valuevalidation.Validate(
@@ -56,7 +56,7 @@ func TestValidateListRejectsInvalidItem(t *testing.T) {
 }
 
 func TestValidateListUsesIndexPath(t *testing.T) {
-	shape := types.ListOf(types.Int32()).Type()
+	shape := types.ListOf(types.Int32()).Descriptor()
 	payload := mustList(t, value.StringValue("not-int"))
 
 	err := valuevalidation.Validate(
@@ -75,7 +75,7 @@ func TestValidateListUsesIndexPath(t *testing.T) {
 }
 
 func TestValidateOrderedListUsesIndexPathsForDiagnostics(t *testing.T) {
-	shape := types.ListOf(types.String().MinLen(1)).Ordered().Type()
+	shape := types.ListOf(types.String().MinBytes(1)).Ordered().Descriptor()
 	payload := mustList(t, value.StringValue("ok"), value.StringValue(""))
 
 	err := valuevalidation.ValidateAt(
@@ -97,9 +97,9 @@ func TestValidateOrderedListUsesIndexPathsForDiagnostics(t *testing.T) {
 func TestValidateOrderedListNestedObjectUsesIndexPaths(t *testing.T) {
 	item := types.Object(
 		types.Field("name").String().Required(),
-		types.Field("image").String().MinLen(1).Required(),
+		types.Field("image").String().MinBytes(1).Required(),
 	)
-	shape := types.ListOf(item).Ordered().Type()
+	shape := types.ListOf(item).Ordered().Descriptor()
 	payload := mustList(
 		t,
 		mustObject(
@@ -128,7 +128,7 @@ func TestValidateOrderedListNestedObjectUsesIndexPaths(t *testing.T) {
 func TestValidateAtomicListUsesIndexPathsForDiagnostics(t *testing.T) {
 	// Field-set extraction treats atomic lists as one semantic field, but
 	// validation still reports the concrete invalid item by index.
-	shape := types.ListOf(types.String().MinLen(1)).Atomic().Type()
+	shape := types.ListOf(types.String().MinBytes(1)).Atomic().Descriptor()
 	payload := mustList(t, value.StringValue(""))
 
 	err := valuevalidation.ValidateAt(
@@ -151,7 +151,7 @@ func TestValidateSetListUsesIndexPathsForDiagnostics(t *testing.T) {
 	// Field-set extraction treats set-like lists as one semantic field until
 	// value-based set identity exists. Validation still keeps item diagnostics
 	// precise by using physical indexes.
-	shape := types.ListOf(types.String().MinLen(1)).Set().Type()
+	shape := types.ListOf(types.String().MinBytes(1)).Set().Descriptor()
 	payload := mustList(t, value.StringValue(""))
 
 	err := valuevalidation.ValidateAt(

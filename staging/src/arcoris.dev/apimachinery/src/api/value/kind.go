@@ -55,7 +55,7 @@ const (
 	//
 	// It does not decide whether the payload should be interpreted as a fixed
 	// schema object or as a dynamic map. Descriptor-aware validation makes that
-	// decision using the expected api/types.Type.
+	// decision using the expected api/types.Descriptor.
 	KindObject
 	// KindList represents an ordered sequence of values.
 	KindList

@@ -24,7 +24,7 @@ import (
 //
 // The wrapper keeps listmapkey's failure taxonomy independent from typeref's
 // internal taxonomy. Callers of listmapkey see ListMap selector failures, not a
-// lower-level TypeRef traversal model.
+// lower-level DescriptorRef traversal model.
 type referenceResolver struct {
 	refs *typeref.Resolver
 }
@@ -46,22 +46,22 @@ func newReferenceResolver(opts Options) referenceResolver {
 // still decide whether a failure is descriptor-related or payload-related.
 func (r referenceResolver) resolve(
 	path fieldpath.Path,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
-) (types.Type, error) {
-	if descriptor.Code() != types.TypeRef {
+) (types.Descriptor, error) {
+	if descriptor.Code() != types.DescriptorRef {
 		return descriptor, nil
 	}
 
 	resolvedDescriptor, err := r.refs.ResolveFinal(path, descriptor, depth)
 	if err != nil {
-		return types.Type{}, listMapRefError(err)
+		return types.Descriptor{}, listMapRefError(err)
 	}
 
 	return resolvedDescriptor, nil
 }
 
-// listMapRefError maps shared TypeRef traversal errors into ListMap key errors.
+// listMapRefError maps shared DescriptorRef traversal errors into ListMap key errors.
 func listMapRefError(err error) error {
 	refError, ok := typeref.AsError(err)
 	if !ok {
@@ -71,7 +71,7 @@ func listMapRefError(err error) error {
 	return failure(refError.Path, listMapRefFailureKind(refError.Kind), refError.Detail)
 }
 
-// listMapRefFailureKind keeps TypeRef classifications inside listmapkey's
+// listMapRefFailureKind keeps DescriptorRef classifications inside listmapkey's
 // existing FailureKind vocabulary.
 func listMapRefFailureKind(kind typeref.FailureKind) FailureKind {
 	switch kind {

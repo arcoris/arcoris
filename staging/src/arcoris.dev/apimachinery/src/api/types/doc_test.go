@@ -17,5 +17,5 @@ package types
 import "testing"
 
 func TestPackageDocCompiles(t *testing.T) {
-	requireEqual(t, String().Type().Code(), TypeString)
+	requireEqual(t, String().Descriptor().Code(), DescriptorString)
 }

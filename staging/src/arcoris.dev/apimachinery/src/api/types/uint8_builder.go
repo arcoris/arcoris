@@ -14,7 +14,7 @@
 
 package types
 
-// Uint8 starts a field descriptor whose value type is a fixed-width uint8.
+// Uint8 starts a field descriptor whose value descriptor is a fixed-width uint8.
 //
 // The descriptor records portable uint8 constraints. It never uses Go's
 // platform-sized uint contract, so generated APIs and remote descriptors remain
@@ -30,5 +30,5 @@ package types
 //		Enum(0, 50, 100).
 //		Description("Percentage value.")
 func (b FieldBuilder) Uint8() Uint8Field {
-	return Uint8Field{field: b.state(), typ: Uint8()}
+	return Uint8Field{field: b.state(), descriptor: Uint8()}
 }

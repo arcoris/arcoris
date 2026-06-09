@@ -24,32 +24,34 @@ import (
 func (v *validator) validateMap(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) {
 	if !v.requireKind(path, val, value.KindObject, descriptor.Code()) {
 		return
 	}
 
-	mapView, ok := descriptor.Map()
+	mapView, ok := descriptor.AsMap()
 	if !ok {
 		v.add(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not a map")
 		return
 	}
-	if !mapView.Key().IsValid() {
-		v.add(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map key type is invalid")
+
+	keyDescriptor := mapView.Key()
+	if !keyDescriptor.IsValid() {
+		v.add(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map key descriptor is invalid")
 		return
 	}
 
-	valueType := mapView.Value()
-	if !valueType.IsValid() {
+	valueDescriptor := mapView.Value()
+	if !valueDescriptor.IsValid() {
 		v.add(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map value descriptor is invalid")
 		return
 	}
 
 	valueView, _ := val.Object()
 	length := valueView.Len()
-	if minEntries, ok := mapView.MinLen(); ok && length < minEntries {
+	if minEntries, ok := mapView.MinEntries(); ok && length < minEntries {
 		v.addf(
 			path,
 			ErrLengthOutOfRange,
@@ -59,7 +61,7 @@ func (v *validator) validateMap(
 			minEntries,
 		)
 	}
-	if maxEntries, ok := mapView.MaxLen(); ok && length > maxEntries {
+	if maxEntries, ok := mapView.MaxEntries(); ok && length > maxEntries {
 		v.addf(
 			path,
 			ErrLengthOutOfRange,
@@ -71,6 +73,8 @@ func (v *validator) validateMap(
 	}
 
 	for _, mapMember := range valueView.Members() {
-		v.validate(path.Key(mapMember.Name), mapMember.Value, valueType, depth+1)
+		memberPath := path.Key(mapMember.Name)
+		v.validate(memberPath, value.StringValue(mapMember.Name), keyDescriptor, depth+1)
+		v.validate(memberPath, mapMember.Value, valueDescriptor, depth+1)
 	}
 }

@@ -17,12 +17,12 @@ package types
 import "testing"
 
 func TestMapFieldWrapper(t *testing.T) {
-	field := Field("value").MapOf(String()).Required().Nullable().MinLen(1).MaxLen(3).Description("value").Field()
+	field := Field("value").MapOf(String()).Required().Nullable().MinEntries(1).MaxEntries(3).Description("value").Field()
 
-	requireEqual(t, field.Type().Code(), TypeMap)
-	requireEqual(t, field.Type().Nullable(), true)
+	requireEqual(t, field.Descriptor().Code(), DescriptorMap)
+	requireEqual(t, field.Descriptor().Nullable(), true)
 	requireEqual(t, field.Description(), "value")
-	requireNoError(t, ValidateType(objectTypeForField(field), nil))
+	requireNoError(t, ValidateLocal(objectTypeForField(field)))
 }
 
 func TestMapFieldExprMarker(t *testing.T) {

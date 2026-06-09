@@ -17,7 +17,7 @@ package types
 import "testing"
 
 func TestObjectPayloadStoresFieldsInOrder(t *testing.T) {
-	payload := Object(Field("a").String().Required(), Field("b").String().Required()).Type().object
+	payload := Object(Field("a").String().Required(), Field("b").String().Required()).Descriptor().object
 	requireEqual(t, payload.fields[0].Name(), FieldName("a"))
 	requireEqual(t, payload.fields[1].Name(), FieldName("b"))
 }

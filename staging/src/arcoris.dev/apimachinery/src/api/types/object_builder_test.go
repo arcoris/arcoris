@@ -19,5 +19,5 @@ import "testing"
 func TestObjectFieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").Object(Field("name").String().Required()).Required().Field()
 
-	requireEqual(t, field.Type().Code(), TypeObject)
+	requireEqual(t, field.Descriptor().Code(), DescriptorObject)
 }

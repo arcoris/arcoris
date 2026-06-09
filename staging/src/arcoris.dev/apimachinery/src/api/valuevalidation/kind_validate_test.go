@@ -27,7 +27,7 @@ import (
 func TestValidateReportsKindMismatchDetail(t *testing.T) {
 	err := Validate(
 		value.StringValue("three"),
-		types.Int32().Type(),
+		types.Int32().Descriptor(),
 		Options{},
 	)
 
@@ -54,7 +54,7 @@ func TestValidateReportsKindMismatchDetail(t *testing.T) {
 func TestValidateRejectsNonNullValueForNullDescriptor(t *testing.T) {
 	err := Validate(
 		value.StringValue("not-null"),
-		types.Null().Type(),
+		types.Null().Descriptor(),
 		Options{},
 	)
 
@@ -74,7 +74,7 @@ func TestRequireKindAcceptsExpectedKind(t *testing.T) {
 		fieldpath.RootPath(),
 		value.StringValue("main"),
 		value.KindString,
-		types.TypeString,
+		types.DescriptorString,
 	)
 
 	if !ok {
@@ -92,7 +92,7 @@ func TestRequireKindRecordsMismatch(t *testing.T) {
 		fieldpath.RootPath(),
 		value.StringValue("main"),
 		value.KindInteger,
-		types.TypeInt32,
+		types.DescriptorInt32,
 	)
 
 	if ok {

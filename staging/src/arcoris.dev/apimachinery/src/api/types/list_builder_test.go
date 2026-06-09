@@ -19,5 +19,5 @@ import "testing"
 func TestListFieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").ListOf(String()).Required().Field()
 
-	requireEqual(t, field.Type().Code(), TypeList)
+	requireEqual(t, field.Descriptor().Code(), DescriptorList)
 }

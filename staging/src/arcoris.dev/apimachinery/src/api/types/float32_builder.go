@@ -14,9 +14,9 @@
 
 package types
 
-// Float32 starts a field descriptor whose value type is a fixed-width float32.
+// Float32 starts a field descriptor whose value descriptor is a fixed-width float32.
 //
-// The descriptor records structural bounds and enum literals. ValidateType
+// The descriptor records structural bounds and enum literals. ValidateResolved
 // rejects NaN and infinities because descriptors must remain portable across
 // codecs and schema exporters.
 //
@@ -29,5 +29,5 @@ package types
 //		Enum(0, 0.5, 1).
 //		Description("Ratio from zero to one.")
 func (b FieldBuilder) Float32() Float32Field {
-	return Float32Field{field: b.state(), typ: Float32()}
+	return Float32Field{field: b.state(), descriptor: Float32()}
 }

@@ -16,24 +16,24 @@ package typecatalog
 
 import "arcoris.dev/apimachinery/api/types"
 
-// ResolveType returns the definition registered for name.
+// Resolve returns the definition registered for name.
 //
-// A nil catalog behaves like an empty catalog. TypeDefinition keeps its
-// descriptor payload private, and TypeDefinition.Type returns a detached Type,
+// A nil catalog behaves like an empty catalog. Definition keeps its
+// descriptor payload private, and Definition.Descriptor returns a detached Descriptor,
 // so returning the value is safe for callers outside package types.
 //
 // Typical resolver use:
 //
-//	tp := types.Ref("arcoris.meta.Name").
-//		Type()
+//	desc := types.Ref("arcoris.meta.Name").
+//		Descriptor()
 //
-//	err := types.ValidateType(
-//		tp,
+//	err := types.ValidateResolved(
+//		desc,
 //		&catalog,
 //	)
-func (c *Catalog) ResolveType(name types.TypeName) (types.TypeDefinition, bool) {
+func (c *Catalog) Resolve(name types.TypeName) (types.Definition, bool) {
 	if c == nil {
-		return types.TypeDefinition{}, false
+		return types.Definition{}, false
 	}
 
 	c.mu.RLock()
@@ -41,7 +41,7 @@ func (c *Catalog) ResolveType(name types.TypeName) (types.TypeDefinition, bool) 
 
 	def, ok := c.defs[name]
 	if !ok {
-		return types.TypeDefinition{}, false
+		return types.Definition{}, false
 	}
 	return def, true
 }

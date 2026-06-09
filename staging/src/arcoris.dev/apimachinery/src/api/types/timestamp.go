@@ -14,14 +14,14 @@
 
 package types
 
-// TimestampType builds descriptors for absolute points in time.
+// TimestampDescriptor builds descriptors for absolute points in time.
 //
-// TimestampType records an absolute point-in-time descriptor. It does not
+// TimestampDescriptor records an absolute point-in-time descriptor. It does not
 // choose RFC3339, Unix time, or another encoding; codecs own concrete
 // representations.
-type TimestampType struct {
+type TimestampDescriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
+	header descriptorHeader
 	// payload stores the exact timestamp constraints under construction.
 	payload timestampPayload
 }
@@ -31,24 +31,24 @@ type TimestampType struct {
 // Typical reusable declaration:
 //
 //	observedAtType := Timestamp().Nullable()
-func Timestamp() TimestampType {
-	return TimestampType{header: newHeader(TypeTimestamp)}
+func Timestamp() TimestampDescriptor {
+	return TimestampDescriptor{header: newHeader(DescriptorTimestamp)}
 }
 
 // Nullable returns a timestamp descriptor that admits null values.
-func (t TimestampType) Nullable() TimestampType {
-	t.header = t.header.withNullable()
+func (desc TimestampDescriptor) Nullable() TimestampDescriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t TimestampType) Type() Type {
-	out := typeFromHeader(t.header)
-	out.timestamp = cloneTimestampPayload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc TimestampDescriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.timestamp = cloneTimestampPayload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks TimestampType as a sealed TypeExpr implementation.
-func (t TimestampType) typeExpr() {}
+// descriptorExpr marks TimestampDescriptor as a sealed DescriptorExpr implementation.
+func (desc TimestampDescriptor) descriptorExpr() {}

@@ -27,7 +27,7 @@ func TestApplyInvalidLiveValueReturnsInvalidValue(t *testing.T) {
 		Owner:      owner("user"),
 		Live:       value.Value{},
 		Applied:    str("new"),
-		Descriptor: types.String().Type(),
+		Descriptor: types.String().Descriptor(),
 	}, Options{})
 
 	requireErrorIs(t, err, ErrInvalidValue)
@@ -39,7 +39,7 @@ func TestApplyInvalidAppliedValueReturnsInvalidValue(t *testing.T) {
 		Owner:      owner("user"),
 		Live:       str("old"),
 		Applied:    value.Value{},
-		Descriptor: types.String().Type(),
+		Descriptor: types.String().Descriptor(),
 	}, Options{})
 
 	requireErrorIs(t, err, ErrInvalidValue)
@@ -51,7 +51,7 @@ func TestApplyInvalidLiveValueRejectedBeforeMerge(t *testing.T) {
 		Owner:      owner("user"),
 		Live:       intValue(1),
 		Applied:    str("new"),
-		Descriptor: types.String().Type(),
+		Descriptor: types.String().Descriptor(),
 	}, Options{})
 
 	requireErrorIs(t, err, ErrInvalidValue)
@@ -63,7 +63,7 @@ func TestApplyInvalidAppliedValueRejectedBeforeMerge(t *testing.T) {
 		Owner:      owner("user"),
 		Live:       str("old"),
 		Applied:    intValue(1),
-		Descriptor: types.String().Type(),
+		Descriptor: types.String().Descriptor(),
 	}, Options{})
 
 	requireErrorIs(t, err, ErrInvalidValue)
@@ -77,7 +77,7 @@ func TestApplyDoesNotRepairInvalidLiveValue(t *testing.T) {
 		Applied: obj(),
 		Descriptor: types.Object(
 			types.Field("bad").String().Optional(),
-		).Type(),
+		).Descriptor(),
 		Ownership: state(entry("user", path("$.bad"))),
 	}, Options{})
 

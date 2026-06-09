@@ -44,7 +44,7 @@ type Definition struct {
 // NewDefinition constructs a resource-family definition.
 //
 // The constructor records the supplied values without validation. Call Validate
-// or ValidateDefinition at a trust boundary.
+// or ValidateDefinitionResolved at a trust boundary.
 func NewDefinition(
 	group identity.Group,
 	kind identity.Kind,
@@ -126,5 +126,5 @@ func (d Definition) GroupVersionResource(version identity.Version) (identity.Gro
 
 // Validate checks the structural integrity of d.
 func (d Definition) Validate(resolver types.Resolver) error {
-	return ValidateDefinition(d, resolver)
+	return ValidateDefinitionResolved(d, resolver)
 }

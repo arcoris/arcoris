@@ -14,7 +14,7 @@
 
 package types
 
-// Uint16 starts a field descriptor whose value type is a fixed-width uint16.
+// Uint16 starts a field descriptor whose value descriptor is a fixed-width uint16.
 //
 // The descriptor records portable uint16 constraints. It never uses Go's
 // platform-sized uint contract, so generated APIs and remote descriptors remain
@@ -29,5 +29,5 @@ package types
 //		Enum(80, 443).
 //		Description("Network port.")
 func (b FieldBuilder) Uint16() Uint16Field {
-	return Uint16Field{field: b.state(), typ: Uint16()}
+	return Uint16Field{field: b.state(), descriptor: Uint16()}
 }

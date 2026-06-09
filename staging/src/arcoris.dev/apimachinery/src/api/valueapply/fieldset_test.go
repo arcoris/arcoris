@@ -43,7 +43,7 @@ func TestApplyValueFieldSetErrorWrapped(t *testing.T) {
 		Owner:      owner("user"),
 		Live:       str("old"),
 		Applied:    str("new"),
-		Descriptor: types.String().Type(),
+		Descriptor: types.String().Descriptor(),
 	}
 
 	_, err := newApplier(Options{}).extractAppliedFields(req)

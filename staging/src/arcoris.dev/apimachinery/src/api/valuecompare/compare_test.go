@@ -25,7 +25,7 @@ import (
 )
 
 func TestCompareStartsAtRoot(t *testing.T) {
-	got, err := Compare(value.StringValue("old"), value.StringValue("new"), types.String().Type(), Options{})
+	got, err := Compare(value.StringValue("old"), value.StringValue("new"), types.String().Descriptor(), Options{})
 	requireNoError(t, err)
 
 	requireResult(t, got, nil, nil, paths(fieldpath.RootPath()))
@@ -34,7 +34,7 @@ func TestCompareStartsAtRoot(t *testing.T) {
 func TestCompareAtPreservesBasePath(t *testing.T) {
 	path := rootField("desired", "name")
 
-	got, err := CompareAt(path, value.StringValue("old"), value.StringValue("new"), types.String().Type(), Options{})
+	got, err := CompareAt(path, value.StringValue("old"), value.StringValue("new"), types.String().Descriptor(), Options{})
 	requireNoError(t, err)
 
 	requireResult(t, got, nil, nil, paths(path))
@@ -43,7 +43,7 @@ func TestCompareAtPreservesBasePath(t *testing.T) {
 func TestCompareAtInvalidBasePathReturnsInvalidPath(t *testing.T) {
 	path := fieldpath.RootPath().Index(-1)
 
-	_, err := CompareAt(path, value.StringValue("old"), value.StringValue("new"), types.String().Type(), Options{})
+	_, err := CompareAt(path, value.StringValue("old"), value.StringValue("new"), types.String().Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrInvalidPath)
 	requireErrorNotIs(t, err, ErrInvalidDescriptor)
@@ -82,7 +82,7 @@ func TestCompareDispatchesScalarDescriptor(t *testing.T) {
 		fieldpath.RootPath(),
 		valuepresence.Present(value.StringValue("old")),
 		valuepresence.Present(value.StringValue("new")),
-		types.String().Type(),
+		types.String().Descriptor(),
 		0,
 	)
 	requireNoError(t, err)
@@ -94,7 +94,7 @@ func TestComparePresenceBothAbsentIsEmpty(t *testing.T) {
 		rootField("name"),
 		valuepresence.Absent(),
 		valuepresence.Absent(),
-		types.String().Type(),
+		types.String().Descriptor(),
 	)
 	requireNoError(t, err)
 
@@ -106,7 +106,7 @@ func TestComparePresenceBothAbsentIsEmpty(t *testing.T) {
 
 func TestComparePresenceAddedUsesSubtree(t *testing.T) {
 	path := rootField("spec")
-	descriptor := types.Object(types.Field("image").String().Optional()).Type()
+	descriptor := types.Object(types.Field("image").String().Optional()).Descriptor()
 	newValue := value.MustObjectValue(value.ObjectMember("image", value.StringValue("v1")))
 
 	got, done, err := newComparer(Options{}).comparePresence(
@@ -125,7 +125,7 @@ func TestComparePresenceAddedUsesSubtree(t *testing.T) {
 
 func TestComparePresenceRemovedUsesSubtree(t *testing.T) {
 	path := rootField("spec")
-	descriptor := types.Object(types.Field("image").String().Optional()).Type()
+	descriptor := types.Object(types.Field("image").String().Optional()).Descriptor()
 	oldValue := value.MustObjectValue(value.ObjectMember("image", value.StringValue("v1")))
 
 	got, done, err := newComparer(Options{}).comparePresence(
@@ -147,7 +147,7 @@ func TestComparePresenceBothPresentContinues(t *testing.T) {
 		rootField("name"),
 		valuepresence.Present(value.StringValue("old")),
 		valuepresence.Present(value.StringValue("new")),
-		types.String().Type(),
+		types.String().Descriptor(),
 	)
 	requireNoError(t, err)
 
@@ -156,21 +156,21 @@ func TestComparePresenceBothPresentContinues(t *testing.T) {
 	}
 }
 func TestRequireComparableInputsRejectsZeroValue(t *testing.T) {
-	err := requireComparableInputs(fieldpath.RootPath(), value.Value{}, value.StringValue("x"), types.String().Type())
+	err := requireComparableInputs(fieldpath.RootPath(), value.Value{}, value.StringValue("x"), types.String().Descriptor())
 
 	requireErrorIs(t, err, ErrInvalidValue)
 	requireErrorReason(t, err, ErrorReasonInvalidZero)
 }
 
 func TestRequireComparableInputsRejectsInvalidDescriptor(t *testing.T) {
-	err := requireComparableInputs(fieldpath.RootPath(), value.StringValue("x"), value.StringValue("y"), types.Type{})
+	err := requireComparableInputs(fieldpath.RootPath(), value.StringValue("x"), value.StringValue("y"), types.Descriptor{})
 
 	requireErrorIs(t, err, ErrInvalidDescriptor)
 	requireErrorReason(t, err, ErrorReasonInvalidDescriptor)
 }
 
 func TestRequireKindRejectsMismatch(t *testing.T) {
-	err := requireKind(fieldpath.RootPath(), value.StringValue("x"), value.KindBool, types.TypeBool)
+	err := requireKind(fieldpath.RootPath(), value.StringValue("x"), value.KindBool, types.DescriptorBool)
 
 	requireErrorIs(t, err, ErrKindMismatch)
 	requireErrorReason(t, err, ErrorReasonKindMismatch)
@@ -196,7 +196,7 @@ func TestCompareNullDescriptorRejectsNonNull(t *testing.T) {
 		rootField("name"),
 		value.StringValue("x"),
 		value.NullValue(),
-		types.Null().Type(),
+		types.Null().Descriptor(),
 	)
 
 	requireErrorIs(t, err, ErrKindMismatch)

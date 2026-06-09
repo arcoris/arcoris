@@ -14,19 +14,19 @@
 
 package types
 
-// Float64View exposes read-only TypeFloat64 payload data.
+// Float64View exposes read-only DescriptorFloat64 payload data.
 type Float64View struct {
-	// payload is a detached copy of the TypeFloat64 payload.
+	// payload is a detached copy of the DescriptorFloat64 payload.
 	payload float64Payload
 }
 
-// Float64 returns a read-only TypeFloat64 view when t is a float64 descriptor.
-func (t Type) Float64() (Float64View, bool) {
-	if t.code != TypeFloat64 {
+// AsFloat64 returns a read-only DescriptorFloat64 view when desc is a float64 descriptor.
+func (desc Descriptor) AsFloat64() (Float64View, bool) {
+	if desc.code != DescriptorFloat64 {
 		return Float64View{}, false
 	}
 
-	return Float64View{payload: cloneFloat64Payload(t.float64)}, true
+	return Float64View{payload: cloneFloat64Payload(desc.float64)}, true
 }
 
 // Min returns the inclusive lower bound when one is set.

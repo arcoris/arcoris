@@ -23,14 +23,14 @@ import (
 func TestResolveFinalReturnsNonRefDescriptor(t *testing.T) {
 	descriptor, err := New(nil, 64).ResolveFinal(
 		rootPath(),
-		types.String().Type(),
+		types.String().Descriptor(),
 		0,
 	)
 	if err != nil {
 		t.Fatalf("ResolveFinal() error = %v", err)
 	}
-	if descriptor.Code() != types.TypeString {
-		t.Fatalf("ResolveFinal() descriptor = %s; want %s", descriptor.Code(), types.TypeString)
+	if descriptor.Code() != types.DescriptorString {
+		t.Fatalf("ResolveFinal() descriptor = %s; want %s", descriptor.Code(), types.DescriptorString)
 	}
 }
 
@@ -43,8 +43,8 @@ func TestResolveFinalResolvesReferenceChain(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ResolveFinal() error = %v", err)
 	}
-	if descriptor.Code() != types.TypeString {
-		t.Fatalf("ResolveFinal() descriptor = %s; want %s", descriptor.Code(), types.TypeString)
+	if descriptor.Code() != types.DescriptorString {
+		t.Fatalf("ResolveFinal() descriptor = %s; want %s", descriptor.Code(), types.DescriptorString)
 	}
 }
 

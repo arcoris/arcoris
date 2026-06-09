@@ -26,7 +26,7 @@ func (m *merger) mergeBaseMapMembers(
 	path fieldpath.Path,
 	baseMembers []value.Member,
 	overlayLookup memberLookup,
-	valueDescriptor types.Type,
+	valueDescriptor types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
 ) ([]value.Member, error) {
@@ -58,7 +58,7 @@ func (m *merger) appendOverlayMapMembers(
 	members []value.Member,
 	baseLookup memberLookup,
 	overlayMembers []value.Member,
-	valueDescriptor types.Type,
+	valueDescriptor types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
 ) ([]value.Member, error) {
@@ -91,7 +91,7 @@ func (m *merger) mergeMapMember(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
-	valueDescriptor types.Type,
+	valueDescriptor types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
 ) (operand, error) {

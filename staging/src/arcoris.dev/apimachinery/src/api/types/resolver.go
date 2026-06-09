@@ -14,16 +14,16 @@
 
 package types
 
-// Resolver resolves named structural type definitions.
+// Resolver resolves named structural descriptor definitions.
 //
-// Resolver belongs to package types because TypeRef belongs to package types.
-// Concrete catalogs belong to higher layers. This keeps structural type
+// Resolver belongs to package types because DescriptorRef belongs to package types.
+// Concrete catalogs belong to higher layers. This keeps structural descriptor
 // descriptors independent from catalog storage, resource registries, runtime
 // schemes, codecs, converters, and global registration state.
 //
-// Resolver is not a recursion escape hatch. ValidateDefinition rejects
-// recursive TypeDefinition graphs; recursive schemas require a future explicit
+// Resolver is not a recursion escape hatch. ValidateDefinitionResolved rejects
+// recursive Definition graphs; recursive schemas require a future explicit
 // design pass before they become part of the descriptor contract.
 type Resolver interface {
-	ResolveType(name TypeName) (TypeDefinition, bool)
+	Resolve(name TypeName) (Definition, bool)
 }

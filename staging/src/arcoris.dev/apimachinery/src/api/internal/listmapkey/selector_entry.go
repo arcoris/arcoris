@@ -63,7 +63,7 @@ func (r selectorRequest) selectorEntry(
 	selectorLiteral, err := literalFromValue(
 		keyPath,
 		keyMemberValue,
-		keyFieldDescriptor.Type(),
+		keyFieldDescriptor.Descriptor(),
 		r.resolver,
 		0,
 	)

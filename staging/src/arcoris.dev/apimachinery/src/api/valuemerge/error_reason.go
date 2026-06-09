@@ -33,10 +33,10 @@ const (
 	// ErrorReasonUnknownField reports an undeclared object member rejected by policy.
 	ErrorReasonUnknownField ErrorReason = "unknown_field"
 
-	// ErrorReasonUnresolvedRef reports a TypeRef the resolver cannot load.
+	// ErrorReasonUnresolvedRef reports a DescriptorRef the resolver cannot load.
 	ErrorReasonUnresolvedRef ErrorReason = "unresolved_ref"
 
-	// ErrorReasonReferenceCycle reports recursive or over-depth TypeRef traversal.
+	// ErrorReasonReferenceCycle reports recursive or over-depth DescriptorRef traversal.
 	ErrorReasonReferenceCycle ErrorReason = "reference_cycle"
 
 	// ErrorReasonMissingListKey reports a ListMap item missing a key field.

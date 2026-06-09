@@ -20,7 +20,7 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// validateBool checks TypeBool kind compatibility.
-func (v *validator) validateBool(path fieldpath.Path, val value.Value, descriptor types.Type) {
+// validateBool checks DescriptorBool kind compatibility.
+func (v *validator) validateBool(path fieldpath.Path, val value.Value, descriptor types.Descriptor) {
 	v.requireKind(path, val, value.KindBool, descriptor.Code())
 }

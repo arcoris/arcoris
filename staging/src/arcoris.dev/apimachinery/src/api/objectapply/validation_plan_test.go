@@ -24,9 +24,9 @@ import (
 // testResolver is a minimal resolver fixture used to verify option plumbing.
 type testResolver struct{}
 
-// ResolveType satisfies types.Resolver without resolving any references.
-func (testResolver) ResolveType(types.TypeName) (types.TypeDefinition, bool) {
-	return types.TypeDefinition{}, false
+// Resolve satisfies types.Resolver without resolving any references.
+func (testResolver) Resolve(types.TypeName) (types.Definition, bool) {
+	return types.Definition{}, false
 }
 
 func TestValidationPlan(t *testing.T) {

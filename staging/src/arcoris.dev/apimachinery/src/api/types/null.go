@@ -14,17 +14,17 @@
 
 package types
 
-// NullType builds the TypeNull literal descriptor.
+// NullDescriptor builds the DescriptorNull literal descriptor.
 //
-// NullType models the null literal as its own structural type. It is not a
+// NullDescriptor models the null literal as its own structural descriptor. It is not a
 // nullable marker for other descriptors; builders for non-null families carry
-// nullability through Type flags instead.
+// nullability through Descriptor flags instead.
 //
-// NullType deliberately has no Nullable method. TypeNull already describes the
+// NullDescriptor deliberately has no Nullable method. DescriptorNull already describes the
 // null literal itself and must not also carry nullable semantics.
-type NullType struct {
+type NullDescriptor struct {
 	// header stores the descriptor kind under construction.
-	header typeHeader
+	header descriptorHeader
 }
 
 // Null returns a descriptor for the null literal type.
@@ -32,14 +32,14 @@ type NullType struct {
 // Typical reusable declaration:
 //
 //	nullLiteral := Null()
-func Null() NullType {
-	return NullType{header: newHeader(TypeNull)}
+func Null() NullDescriptor {
+	return NullDescriptor{header: newHeader(DescriptorNull)}
 }
 
-// Type returns a detached Type descriptor.
-func (t NullType) Type() Type {
-	return typeFromHeader(t.header)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc NullDescriptor) Descriptor() Descriptor {
+	return descriptorFromHeader(desc.header)
 }
 
-// typeExpr marks NullType as a sealed TypeExpr implementation.
-func (t NullType) typeExpr() {}
+// descriptorExpr marks NullDescriptor as a sealed DescriptorExpr implementation.
+func (desc NullDescriptor) descriptorExpr() {}

@@ -14,14 +14,14 @@
 
 package types
 
-// StringType builds UTF-8 text descriptors with portable string constraints.
+// StringDescriptor builds UTF-8 text descriptors with portable string constraints.
 //
-// StringType records portable text constraints such as length, pattern text,
+// StringDescriptor records portable text constraints such as length, pattern text,
 // and enum literals. Patterns are stored as strings so future exporters and
 // codecs can choose their own compiled representation.
-type StringType struct {
+type StringDescriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
+	header descriptorHeader
 	// payload stores the exact string constraints under construction.
 	payload stringPayload
 }
@@ -30,57 +30,75 @@ type StringType struct {
 //
 // Typical reusable declaration:
 //
-//	nameType := String()
-//	nameType = nameType.MinLen(1)
-//	nameType = nameType.MaxLen(253)
-//	nameType = nameType.Pattern(namePattern)
-func String() StringType {
-	return StringType{header: newHeader(TypeString)}
+//	nameType := String().
+//		MinBytes(1).
+//		MaxBytes(253).
+//		Pattern(namePattern)
+func String() StringDescriptor {
+	return StringDescriptor{header: newHeader(DescriptorString)}
 }
 
 // Nullable returns a string descriptor that admits null values.
-func (t StringType) Nullable() StringType {
-	t.header = t.header.withNullable()
+func (desc StringDescriptor) Nullable() StringDescriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
-// MinLen sets the inclusive minimum string length.
-func (t StringType) MinLen(n int) StringType {
-	t.payload.minLen = limit[int]{value: n, set: true}
+// MinBytes sets the inclusive minimum UTF-8 byte length.
+func (desc StringDescriptor) MinBytes(n int) StringDescriptor {
+	desc.payload.minBytes = limit[int]{value: n, set: true}
 
-	return t
+	return desc
 }
 
-// MaxLen sets the inclusive maximum string length.
-func (t StringType) MaxLen(n int) StringType {
-	t.payload.maxLen = limit[int]{value: n, set: true}
+// MaxBytes sets the inclusive maximum UTF-8 byte length.
+func (desc StringDescriptor) MaxBytes(n int) StringDescriptor {
+	desc.payload.maxBytes = limit[int]{value: n, set: true}
 
-	return t
+	return desc
+}
+
+// MinRunes sets the inclusive minimum Unicode code point count.
+//
+// The descriptor counts Go runes. It deliberately does not count grapheme
+// clusters, because grapheme segmentation is locale-sensitive and belongs to a
+// higher text-processing layer if ARCORIS ever needs it.
+func (desc StringDescriptor) MinRunes(n int) StringDescriptor {
+	desc.payload.minRunes = limit[int]{value: n, set: true}
+
+	return desc
+}
+
+// MaxRunes sets the inclusive maximum Unicode code point count.
+func (desc StringDescriptor) MaxRunes(n int) StringDescriptor {
+	desc.payload.maxRunes = limit[int]{value: n, set: true}
+
+	return desc
 }
 
 // Pattern stores a portable textual regular expression for string values.
-func (t StringType) Pattern(pattern string) StringType {
-	t.payload.pattern = pattern
-	t.payload.hasPattern = true
+func (desc StringDescriptor) Pattern(pattern string) StringDescriptor {
+	desc.payload.pattern = pattern
+	desc.payload.hasPattern = true
 
-	return t
+	return desc
 }
 
 // Enum stores accepted string literals in declaration order.
-func (t StringType) Enum(values ...string) StringType {
-	t.payload.enum = cloneSlice(values)
+func (desc StringDescriptor) Enum(values ...string) StringDescriptor {
+	desc.payload.enum = cloneSlice(values)
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t StringType) Type() Type {
-	out := typeFromHeader(t.header)
-	out.string = cloneStringPayload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc StringDescriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.string = cloneStringPayload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks StringType as a sealed TypeExpr implementation.
-func (t StringType) typeExpr() {}
+// descriptorExpr marks StringDescriptor as a sealed DescriptorExpr implementation.
+func (desc StringDescriptor) descriptorExpr() {}

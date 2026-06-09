@@ -30,7 +30,7 @@ func TestErrorListUnwrapStillSupportsErrorsIs(t *testing.T) {
 		types.Object(
 			types.Field("name").String().Required(),
 			types.Field("replicas").Int32().Required(),
-		).Type(),
+		).Descriptor(),
 		valuevalidation.Options{},
 	)
 
@@ -53,7 +53,7 @@ func TestErrorListUnwrapStillSupportsErrorsIs(t *testing.T) {
 func TestErrorListErrorsReturnsDetachedCopy(t *testing.T) {
 	err := valuevalidation.Validate(
 		mustObject(t),
-		types.Object(types.Field("name").String().Required()).Type(),
+		types.Object(types.Field("name").String().Required()).Descriptor(),
 		valuevalidation.Options{},
 	)
 
@@ -78,7 +78,7 @@ func TestErrorListFirst(t *testing.T) {
 
 	err := valuevalidation.Validate(
 		mustObject(t),
-		types.Object(types.Field("name").String().Required()).Type(),
+		types.Object(types.Field("name").String().Required()).Descriptor(),
 		valuevalidation.Options{},
 	)
 
@@ -97,7 +97,7 @@ func TestErrorListFormatAll(t *testing.T) {
 		types.Object(
 			types.Field("name").String().Required(),
 			types.Field("replicas").Int32().Required(),
-		).Type(),
+		).Descriptor(),
 		valuevalidation.Options{},
 	)
 
@@ -132,7 +132,7 @@ func TestErrorListErrorRemainsCompact(t *testing.T) {
 		types.Object(
 			types.Field("name").String().Required(),
 			types.Field("replicas").Int32().Required(),
-		).Type(),
+		).Descriptor(),
 		valuevalidation.Options{},
 	)
 
@@ -173,7 +173,7 @@ func TestErrorListEmptySummary(t *testing.T) {
 func TestErrorListSingleSummary(t *testing.T) {
 	err := valuevalidation.Validate(
 		value.StringValue("x"),
-		types.Int64().Type(),
+		types.Int64().Descriptor(),
 		valuevalidation.Options{},
 	)
 

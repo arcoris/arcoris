@@ -43,7 +43,7 @@ func (m *merger) merge(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
 ) (operand, error) {
@@ -64,13 +64,13 @@ func (m *merger) merge(
 	}
 
 	switch descriptor.Code() {
-	case types.TypeRef:
+	case types.DescriptorRef:
 		return m.mergeRef(path, base, overlay, descriptor, fields, depth)
-	case types.TypeObject:
+	case types.DescriptorObject:
 		return m.mergeObject(path, base, overlay, descriptor, fields, depth)
-	case types.TypeMap:
+	case types.DescriptorMap:
 		return m.mergeMap(path, base, overlay, descriptor, fields, depth)
-	case types.TypeList:
+	case types.DescriptorList:
 		return m.mergeList(path, base, overlay, descriptor, fields, depth)
 	default:
 		return m.mergeScalar(path, base, overlay, descriptor)

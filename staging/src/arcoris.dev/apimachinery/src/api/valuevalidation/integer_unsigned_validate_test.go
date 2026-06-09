@@ -27,28 +27,28 @@ func TestValidateUnsignedIntegerConstraints(t *testing.T) {
 	tests := []struct {
 		name     string
 		payload  value.Value
-		shape    types.Type
+		shape    types.Descriptor
 		sentinel error
 		reason   valuevalidation.ErrorReason
 	}{
 		{
 			name:     "negative value",
 			payload:  value.Int64Value(-1),
-			shape:    types.Uint64().Type(),
+			shape:    types.Uint64().Descriptor(),
 			sentinel: valuevalidation.ErrValueOutOfRange,
 			reason:   valuevalidation.ErrorReasonBelowMinimum,
 		},
 		{
 			name:     "uint8 overflow",
 			payload:  value.Uint64Value(math.MaxUint8 + 1),
-			shape:    types.Uint8().Type(),
+			shape:    types.Uint8().Descriptor(),
 			sentinel: valuevalidation.ErrValueOutOfRange,
 			reason:   valuevalidation.ErrorReasonAboveMaximum,
 		},
 		{
 			name:     "uint32 enum mismatch",
 			payload:  value.Uint64Value(3),
-			shape:    types.Uint32().Enum(1, 2).Type(),
+			shape:    types.Uint32().Enum(1, 2).Descriptor(),
 			sentinel: valuevalidation.ErrEnumMismatch,
 			reason:   valuevalidation.ErrorReasonEnumMismatch,
 		},
@@ -72,7 +72,7 @@ func TestValidateUint64AcceptsMaxUint64(t *testing.T) {
 		t,
 		valuevalidation.Validate(
 			value.Uint64Value(math.MaxUint64),
-			types.Uint64().Type(),
+			types.Uint64().Descriptor(),
 			valuevalidation.Options{},
 		),
 	)

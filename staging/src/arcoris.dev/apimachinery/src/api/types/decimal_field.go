@@ -14,7 +14,7 @@
 
 package types
 
-// DecimalField builds object fields whose value type is exact decimal.
+// DecimalField builds object fields whose value descriptor is exact decimal.
 //
 // The wrapper keeps object-field metadata beside the decimal builder,
 // allowing fluent field declarations without making fields reusable unnamed
@@ -22,8 +22,8 @@ package types
 type DecimalField struct {
 	// field stores the name, presence, and description shared by field wrappers.
 	field fieldState
-	// typ stores the decimal descriptor builder for this field value.
-	typ DecimalType
+	// descriptor stores the decimal descriptor builder for this field value.
+	descriptor DecimalDescriptor
 }
 
 // Required marks the field key as required.
@@ -49,28 +49,28 @@ func (f DecimalField) Description(text string) DecimalField {
 
 // Nullable admits null in addition to decimal values.
 func (f DecimalField) Nullable() DecimalField {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
 // Precision sets the maximum number of significant decimal digits.
 func (f DecimalField) Precision(n int) DecimalField {
-	f.typ = f.typ.Precision(n)
+	f.descriptor = f.descriptor.Precision(n)
 
 	return f
 }
 
 // Scale sets the number of fractional decimal digits.
 func (f DecimalField) Scale(n int) DecimalField {
-	f.typ = f.typ.Scale(n)
+	f.descriptor = f.descriptor.Scale(n)
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f DecimalField) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks DecimalField as a sealed FieldExpr implementation.

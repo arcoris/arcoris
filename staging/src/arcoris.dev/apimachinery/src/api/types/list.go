@@ -14,24 +14,24 @@
 
 package types
 
-// ListType builds list descriptors.
+// ListDescriptor builds list descriptors.
 //
-// ListType describes a homogeneous sequence.
+// ListDescriptor describes a homogeneous sequence.
 //
-// The descriptor records element type, length constraints, and future
+// The descriptor records element descriptor, length constraints, and future
 // merge/apply intent, but it does not implement scheduling, queues, patch/apply,
 // field ownership, or concrete value validation.
-type ListType struct {
+type ListDescriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
+	header descriptorHeader
 	// payload stores the exact list shape under construction.
 	payload listPayload
 }
 
 // ListOf returns a list descriptor builder for elem.
 //
-// A nil TypeExpr is accepted as an invalid zero element descriptor so
-// ValidateType can report the shape error at list.elem. The default list
+// A nil DescriptorExpr is accepted as an invalid zero element descriptor so
+// ValidateResolved can report the shape error at list.elem. The default list
 // semantics are atomic, which is the most conservative structural merge intent.
 //
 // Typical reusable declaration:
@@ -39,11 +39,11 @@ type ListType struct {
 //	conditionListType := ListOf(
 //		Ref("arcoris.meta.Condition"),
 //	).Map("type")
-func ListOf(elem TypeExpr) ListType {
-	elemType := typeFromExpr(elem)
+func ListOf(elem DescriptorExpr) ListDescriptor {
+	elemType := descriptorFromExpr(elem)
 
-	return ListType{
-		header: newHeader(TypeList),
+	return ListDescriptor{
+		header: newHeader(DescriptorList),
 		payload: listPayload{
 			elem:      &elemType,
 			semantics: ListAtomic,
@@ -52,24 +52,24 @@ func ListOf(elem TypeExpr) ListType {
 }
 
 // Nullable returns a list descriptor that admits null values.
-func (t ListType) Nullable() ListType {
-	t.header = t.header.withNullable()
+func (desc ListDescriptor) Nullable() ListDescriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
-// MinLen sets the inclusive minimum list length.
-func (t ListType) MinLen(n int) ListType {
-	t.payload.minLen = limit[int]{n, true}
+// MinItems sets the inclusive minimum list item count.
+func (desc ListDescriptor) MinItems(n int) ListDescriptor {
+	desc.payload.minLen = limit[int]{n, true}
 
-	return t
+	return desc
 }
 
-// MaxLen sets the inclusive maximum list length.
-func (t ListType) MaxLen(n int) ListType {
-	t.payload.maxLen = limit[int]{n, true}
+// MaxItems sets the inclusive maximum list item count.
+func (desc ListDescriptor) MaxItems(n int) ListDescriptor {
+	desc.payload.maxLen = limit[int]{n, true}
 
-	return t
+	return desc
 }
 
 // Atomic records atomic list semantics.
@@ -78,11 +78,11 @@ func (t ListType) MaxLen(n int) ListType {
 // ownership, merge, and apply layers should treat the complete list as a single
 // replaceable semantic field. Validation may still inspect individual items and
 // report item-level diagnostics by index.
-func (t ListType) Atomic() ListType {
-	t.payload.semantics = ListAtomic
-	t.payload.mapKeys = nil
+func (desc ListDescriptor) Atomic() ListDescriptor {
+	desc.payload.semantics = ListAtomic
+	desc.payload.mapKeys = nil
 
-	return t
+	return desc
 }
 
 // Ordered records index-addressable list semantics.
@@ -93,11 +93,11 @@ func (t ListType) Atomic() ListType {
 // as ordered command arguments or ordered pipeline stages.
 //
 // Atomic remains the default because it treats the complete list as one field.
-func (t ListType) Ordered() ListType {
-	t.payload.semantics = ListOrdered
-	t.payload.mapKeys = nil
+func (desc ListDescriptor) Ordered() ListDescriptor {
+	desc.payload.semantics = ListOrdered
+	desc.payload.mapKeys = nil
 
-	return t
+	return desc
 }
 
 // Set records set-like list semantics.
@@ -109,16 +109,16 @@ func (t ListType) Ordered() ListType {
 //
 // This package does not compare elements or enforce set uniqueness for concrete
 // values.
-func (t ListType) Set() ListType {
-	t.payload.semantics = ListSet
-	t.payload.mapKeys = nil
+func (desc ListDescriptor) Set() ListDescriptor {
+	desc.payload.semantics = ListSet
+	desc.payload.mapKeys = nil
 
-	return t
+	return desc
 }
 
 // Map records ListMap semantics keyed by object field names.
 //
-// ValidateType later checks that map keys are valid field names, that the list
+// ValidateResolved later checks that map keys are valid field names, that the list
 // element is an object or resolvable object reference, that each key field is
 // required, and that each key field resolves to a non-nullable stable scalar
 // identity type suitable for selector-based validation, field-set extraction,
@@ -126,24 +126,24 @@ func (t ListType) Set() ListType {
 //
 // Field-set extraction can then address items by selector rather than unstable
 // physical index. The builder only records the declared key order.
-func (t ListType) Map(keys ...string) ListType {
-	t.payload.semantics = ListMap
-	t.payload.mapKeys = make([]FieldName, len(keys))
+func (desc ListDescriptor) Map(keys ...string) ListDescriptor {
+	desc.payload.semantics = ListMap
+	desc.payload.mapKeys = make([]FieldName, len(keys))
 
 	for i, key := range keys {
-		t.payload.mapKeys[i] = FieldName(key)
+		desc.payload.mapKeys[i] = FieldName(key)
 	}
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t ListType) Type() Type {
-	out := typeFromHeader(t.header)
-	out.list = cloneListPayload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc ListDescriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.list = cloneListPayload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks ListType as a sealed TypeExpr implementation.
-func (t ListType) typeExpr() {}
+// descriptorExpr marks ListDescriptor as a sealed DescriptorExpr implementation.
+func (desc ListDescriptor) descriptorExpr() {}

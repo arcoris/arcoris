@@ -14,10 +14,10 @@
 
 package types
 
-// RefField builds object fields whose value type is a named type reference.
+// RefField builds object fields whose value descriptor is a named descriptor reference.
 type RefField struct {
-	field fieldState
-	typ   RefType
+	field      fieldState
+	descriptor RefDescriptor
 }
 
 // Required marks the field key as required.
@@ -43,14 +43,14 @@ func (f RefField) Description(text string) RefField {
 
 // Nullable admits null in addition to referenced values.
 func (f RefField) Nullable() RefField {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f RefField) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks RefField as a sealed FieldExpr implementation.

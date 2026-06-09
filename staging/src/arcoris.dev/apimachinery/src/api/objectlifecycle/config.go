@@ -30,7 +30,7 @@ type config struct {
 	// resources is the required descriptor lookup dependency.
 	resources ResourceResolver
 
-	// resolver is optional unless descriptors contain TypeRef values.
+	// resolver is optional unless descriptors contain DescriptorRef values.
 	resolver types.Resolver
 
 	// desiredValidator is required for every objectvalidation.Plan.

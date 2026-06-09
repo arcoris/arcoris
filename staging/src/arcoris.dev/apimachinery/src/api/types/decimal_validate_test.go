@@ -17,22 +17,22 @@ package types
 import "testing"
 
 func TestDecimalValidateRejectsInvalidRules(t *testing.T) {
-	tests := []Type{
-		Decimal().Precision(0).Type(),
-		Decimal().Scale(-1).Type(),
-		Decimal().Precision(2).Scale(3).Type(),
+	tests := []Descriptor{
+		Decimal().Precision(0).Descriptor(),
+		Decimal().Scale(-1).Descriptor(),
+		Decimal().Precision(2).Scale(3).Descriptor(),
 	}
-	for _, typ := range tests {
-		requireErrorIs(t, ValidateType(typ, nil), ErrInvalidType)
+	for _, desc := range tests {
+		requireErrorIs(t, ValidateLocal(desc), ErrInvalidDescriptor)
 	}
 }
 
 func TestDecimalValidateAllowsScaleWithoutPrecision(t *testing.T) {
-	typ := Decimal().Scale(2).Type()
+	desc := Decimal().Scale(2).Descriptor()
 
-	requireNoError(t, ValidateType(typ, nil))
+	requireNoError(t, ValidateLocal(desc))
 
-	view := requireDecimalView(t, typ)
+	view := requireDecimalView(t, desc)
 	scale, ok := view.Scale()
 	requireEqual(t, ok, true)
 	requireEqual(t, scale, 2)

@@ -17,89 +17,89 @@ package types
 import "testing"
 
 // resolverFunc adapts a function to Resolver for focused validation tests.
-type resolverFunc func(TypeName) (TypeDefinition, bool)
+type resolverFunc func(TypeName) (Definition, bool)
 
-// ResolveType implements Resolver.
-func (f resolverFunc) ResolveType(name TypeName) (TypeDefinition, bool) {
+// Resolve implements Resolver.
+func (f resolverFunc) Resolve(name TypeName) (Definition, bool) {
 	return f(name)
 }
 
 func TestResolverValidationNilResolverAcceptsValidRefName(t *testing.T) {
-	requireNoError(t, ValidateType(Ref("example.Name").Type(), nil))
+	requireNoError(t, ValidateLocal(Ref("example.Name").Descriptor()))
 }
 
 func TestResolverValidationRejectsUnresolvedRef(t *testing.T) {
-	resolver := resolverFunc(func(TypeName) (TypeDefinition, bool) {
-		return TypeDefinition{}, false
+	resolver := resolverFunc(func(TypeName) (Definition, bool) {
+		return Definition{}, false
 	})
 
-	requireErrorIs(t, ValidateType(Ref("example.Name").Type(), resolver), ErrUnknownTypeReference)
+	requireErrorIs(t, ValidateResolved(Ref("example.Name").Descriptor(), resolver), ErrUnresolvedDescriptorReference)
 }
 
 func TestResolverValidationAcceptsResolvedRef(t *testing.T) {
-	resolver := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		if name == "example.Name" {
-			return Define("example.Name", String().MinLen(1)), true
+			return Define("example.Name", String().MinBytes(1)), true
 		}
-		return TypeDefinition{}, false
+		return Definition{}, false
 	})
 
-	requireNoError(t, ValidateType(Ref("example.Name").Type(), resolver))
+	requireNoError(t, ValidateResolved(Ref("example.Name").Descriptor(), resolver))
 }
 
 func TestResolverValidationRejectsResolvedInvalidDefinition(t *testing.T) {
-	resolver := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		if name == "example.Bad" {
-			return Define("example.Bad", ListOf(TypeExpr(nil))), true
+			return Define("example.Bad", ListOf(DescriptorExpr(nil))), true
 		}
-		return TypeDefinition{}, false
+		return Definition{}, false
 	})
 
-	requireErrorIs(t, ValidateType(Ref("example.Bad").Type(), resolver), ErrInvalidType)
+	requireErrorIs(t, ValidateResolved(Ref("example.Bad").Descriptor(), resolver), ErrInvalidDescriptor)
 }
 
 func TestResolverValidationRejectsReferenceCycle(t *testing.T) {
-	resolver := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
 		case "example.A":
 			return Define("example.A", Ref("example.B")), true
 		case "example.B":
 			return Define("example.B", Ref("example.A")), true
 		default:
-			return TypeDefinition{}, false
+			return Definition{}, false
 		}
 	})
 
-	requireErrorIs(t, ValidateType(Ref("example.A").Type(), resolver), ErrInvalidTypeReference)
+	requireErrorIs(t, ValidateResolved(Ref("example.A").Descriptor(), resolver), ErrInvalidDescriptorReference)
 }
 
 func TestResolverValidationRejectsDirectDefinitionCycle(t *testing.T) {
-	resolver := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		if name == "example.A" {
 			return Define("example.A", Ref("example.A")), true
 		}
-		return TypeDefinition{}, false
+		return Definition{}, false
 	})
 
-	requireErrorIs(t, ValidateDefinition(Define("example.A", Ref("example.A")), resolver), ErrInvalidTypeReference)
+	requireErrorIs(t, ValidateDefinitionResolved(Define("example.A", Ref("example.A")), resolver), ErrInvalidDescriptorReference)
 }
 
 func TestResolverValidationSiblingRefsDoNotShareResolvingState(t *testing.T) {
-	resolver := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
 		case "example.A":
-			return Define("example.A", String().MinLen(1)), true
+			return Define("example.A", String().MinBytes(1)), true
 		case "example.B":
-			return Define("example.B", String().MinLen(1)), true
+			return Define("example.B", String().MinBytes(1)), true
 		default:
-			return TypeDefinition{}, false
+			return Definition{}, false
 		}
 	})
 
-	typ := Object(
+	desc := Object(
 		Field("a").Ref("example.A").Required(),
 		Field("b").Ref("example.B").Required(),
-	).Type()
+	).Descriptor()
 
-	requireValidType(t, typ, resolver)
+	requireValidDescriptor(t, desc, resolver)
 }

@@ -25,7 +25,7 @@ func requireKind(
 	path fieldpath.Path,
 	val value.Value,
 	expected value.Kind,
-	code types.TypeCode,
+	code types.DescriptorKind,
 ) error {
 	if val.Kind() == expected {
 		return nil

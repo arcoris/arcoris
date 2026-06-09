@@ -27,6 +27,6 @@
 // controllers, provider lifecycle hooks, or process-wide extension state.
 //
 // Catalogs validate resource definitions at registration time. Definitions that
-// use TypeRef roots are validated against the types.Resolver supplied to New.
+// use DescriptorRef roots are validated against the types.Resolver supplied to New.
 // A zero-value Catalog is usable and behaves as if it had a nil type resolver.
 package resourcecatalog

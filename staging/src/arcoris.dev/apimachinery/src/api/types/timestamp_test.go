@@ -17,16 +17,16 @@ package types
 import "testing"
 
 func TestTimestampTypeDescriptor(t *testing.T) {
-	typ := Timestamp().Nullable().Type()
+	desc := Timestamp().Nullable().Descriptor()
 
-	requireEqual(t, typ.Code(), TypeTimestamp)
-	requireEqual(t, typ.Nullable(), true)
-	requireTimestampView(t, typ)
-	_, ok := typ.Date()
+	requireEqual(t, desc.Code(), DescriptorTimestamp)
+	requireEqual(t, desc.Nullable(), true)
+	requireTimestampView(t, desc)
+	_, ok := desc.AsDate()
 	requireEqual(t, ok, false)
-	requireNoError(t, ValidateType(typ, nil))
+	requireNoError(t, ValidateLocal(desc))
 }
 
-func TestTimestampTypeExprMarker(t *testing.T) {
-	Timestamp().typeExpr()
+func TestTimestampDescriptorExprMarker(t *testing.T) {
+	Timestamp().descriptorExpr()
 }

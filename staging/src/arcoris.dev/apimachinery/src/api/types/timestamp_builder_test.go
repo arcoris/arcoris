@@ -20,5 +20,5 @@ func TestTimestampFieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").Timestamp().Required().Field()
 
 	requireEqual(t, field.Name(), FieldName("value"))
-	requireEqual(t, field.Type().Code(), TypeTimestamp)
+	requireEqual(t, field.Descriptor().Code(), DescriptorTimestamp)
 }

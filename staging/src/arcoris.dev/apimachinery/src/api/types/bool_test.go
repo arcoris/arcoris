@@ -17,17 +17,17 @@ package types
 import "testing"
 
 func TestBoolTypeDescriptor(t *testing.T) {
-	typ := Bool().Nullable().Type()
+	desc := Bool().Nullable().Descriptor()
 
-	requireEqual(t, typ.Code(), TypeBool)
-	requireEqual(t, typ.Nullable(), true)
-	_, ok := typ.String()
+	requireEqual(t, desc.Code(), DescriptorBool)
+	requireEqual(t, desc.Nullable(), true)
+	_, ok := desc.AsString()
 	requireEqual(t, ok, false)
-	_, ok = typ.Object()
+	_, ok = desc.AsObject()
 	requireEqual(t, ok, false)
-	requireNoError(t, ValidateType(typ, nil))
+	requireNoError(t, ValidateLocal(desc))
 }
 
-func TestBoolTypeExprMarker(t *testing.T) {
-	Bool().typeExpr()
+func TestBoolDescriptorExprMarker(t *testing.T) {
+	Bool().descriptorExpr()
 }

@@ -20,5 +20,5 @@ func TestNullFieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").Null().Required().Field()
 
 	requireEqual(t, field.Name(), FieldName("value"))
-	requireEqual(t, field.Type().Code(), TypeNull)
+	requireEqual(t, field.Descriptor().Code(), DescriptorNull)
 }

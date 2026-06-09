@@ -25,7 +25,7 @@ import (
 func TestCatalogZeroValueUsable(t *testing.T) {
 	var catalog Catalog
 
-	requireNoError(t, catalog.Register(types.Define("example.Name", types.String().MinLen(1))))
+	requireNoError(t, catalog.Register(types.Define("example.Name", types.String().MinBytes(1))))
 
 	requireDefinition(t, &catalog, "example.Name")
 }
@@ -40,7 +40,7 @@ func TestCatalogConcurrentAccessRaceFree(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for j := 0; j < 100; j++ {
-				catalog.ResolveType("example.Name")
+				catalog.Resolve("example.Name")
 				catalog.Names()
 				catalog.Definitions()
 			}

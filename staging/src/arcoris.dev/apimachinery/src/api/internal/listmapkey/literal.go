@@ -27,7 +27,7 @@ import (
 func literalFromValue(
 	path fieldpath.Path,
 	keyValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	references referenceResolver,
 	depth int,
 ) (fieldpath.Literal, error) {
@@ -37,19 +37,19 @@ func literalFromValue(
 	}
 
 	switch resolvedDescriptor.Code() {
-	case types.TypeBool:
+	case types.DescriptorBool:
 		return boolLiteral(path, keyValue)
-	case types.TypeString:
+	case types.DescriptorString:
 		return stringLiteral(path, keyValue)
-	case types.TypeInt8,
-		types.TypeInt16,
-		types.TypeInt32,
-		types.TypeInt64:
+	case types.DescriptorInt8,
+		types.DescriptorInt16,
+		types.DescriptorInt32,
+		types.DescriptorInt64:
 		return signedIntegerLiteral(path, keyValue)
-	case types.TypeUint8,
-		types.TypeUint16,
-		types.TypeUint32,
-		types.TypeUint64:
+	case types.DescriptorUint8,
+		types.DescriptorUint16,
+		types.DescriptorUint32,
+		types.DescriptorUint64:
 		return unsignedIntegerLiteral(path, keyValue)
 	default:
 		return fieldpath.Literal{}, failure(

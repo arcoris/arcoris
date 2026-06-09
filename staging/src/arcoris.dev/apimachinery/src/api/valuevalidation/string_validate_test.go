@@ -29,35 +29,35 @@ func TestValidateStringConstraints(t *testing.T) {
 	tests := []struct {
 		name     string
 		payload  value.Value
-		shape    types.Type
+		shape    types.Descriptor
 		sentinel error
 		reason   valuevalidation.ErrorReason
 	}{
 		{
 			name:     "too short",
 			payload:  value.StringValue("a"),
-			shape:    types.String().MinLen(2).Type(),
+			shape:    types.String().MinBytes(2).Descriptor(),
 			sentinel: valuevalidation.ErrLengthOutOfRange,
 			reason:   valuevalidation.ErrorReasonTooShort,
 		},
 		{
 			name:     "too long",
 			payload:  value.StringValue("abcd"),
-			shape:    types.String().MaxLen(3).Type(),
+			shape:    types.String().MaxBytes(3).Descriptor(),
 			sentinel: valuevalidation.ErrLengthOutOfRange,
 			reason:   valuevalidation.ErrorReasonTooLong,
 		},
 		{
 			name:     "pattern mismatch",
 			payload:  value.StringValue("abc"),
-			shape:    types.String().Pattern(`^[0-9]+$`).Type(),
+			shape:    types.String().Pattern(`^[0-9]+$`).Descriptor(),
 			sentinel: valuevalidation.ErrPatternMismatch,
 			reason:   valuevalidation.ErrorReasonPatternMismatch,
 		},
 		{
 			name:     "enum mismatch",
 			payload:  value.StringValue("blue"),
-			shape:    types.String().Enum("red", "green").Type(),
+			shape:    types.String().Enum("red", "green").Descriptor(),
 			sentinel: valuevalidation.ErrEnumMismatch,
 			reason:   valuevalidation.ErrorReasonEnumMismatch,
 		},
@@ -77,7 +77,7 @@ func TestValidateStringConstraints(t *testing.T) {
 }
 
 func TestValidateStringPatternReusesPatternWithinRun(t *testing.T) {
-	shape := types.ListOf(types.String().Pattern(`^[a-z]+$`)).Type()
+	shape := types.ListOf(types.String().Pattern(`^[a-z]+$`)).Descriptor()
 	payload := mustList(t, value.StringValue("ok"), value.StringValue("bad1"))
 
 	err := valuevalidation.ValidateAt(
@@ -99,7 +99,7 @@ func TestValidateStringPatternReusesPatternWithinRun(t *testing.T) {
 func TestValidateStringInvalidPatternPreservesCompileError(t *testing.T) {
 	err := valuevalidation.Validate(
 		value.StringValue("anything"),
-		types.String().Pattern(`[`).Type(),
+		types.String().Pattern(`[`).Descriptor(),
 		valuevalidation.Options{},
 	)
 

@@ -14,15 +14,15 @@
 
 package types
 
-// Uint8Type builds uint8 descriptors.
+// Uint8Descriptor builds uint8 descriptors.
 //
-// Uint8Type records portable fixed-width uint8 constraints. It deliberately
+// Uint8Descriptor records portable fixed-width uint8 constraints. It deliberately
 // avoids Go platform-sized uint semantics, so descriptors remain stable
 // across architectures and code generators.
-type Uint8Type struct {
+type Uint8Descriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
-	// payload stores TypeUint8 constraints under construction.
+	header descriptorHeader
+	// payload stores DescriptorUint8 constraints under construction.
 	payload uint8Payload
 }
 
@@ -31,50 +31,50 @@ type Uint8Type struct {
 // Typical reusable declaration:
 //
 //	percentageType := Uint8().Max(100)
-func Uint8() Uint8Type {
-	return Uint8Type{header: newHeader(TypeUint8)}
+func Uint8() Uint8Descriptor {
+	return Uint8Descriptor{header: newHeader(DescriptorUint8)}
 }
 
 // Nullable returns a uint8 descriptor that admits null values.
-func (t Uint8Type) Nullable() Uint8Type {
-	t.header = t.header.withNullable()
+func (desc Uint8Descriptor) Nullable() Uint8Descriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
 // Min sets the inclusive uint8 lower bound.
-func (t Uint8Type) Min(n uint8) Uint8Type {
-	t.payload.min = limit[uint8]{value: n, set: true}
+func (desc Uint8Descriptor) Min(n uint8) Uint8Descriptor {
+	desc.payload.min = limit[uint8]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Max sets the inclusive uint8 upper bound.
-func (t Uint8Type) Max(n uint8) Uint8Type {
-	t.payload.max = limit[uint8]{value: n, set: true}
+func (desc Uint8Descriptor) Max(n uint8) Uint8Descriptor {
+	desc.payload.max = limit[uint8]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Range sets the inclusive uint8 lower and upper bounds.
-func (t Uint8Type) Range(min, max uint8) Uint8Type {
-	return t.Min(min).Max(max)
+func (desc Uint8Descriptor) Range(min, max uint8) Uint8Descriptor {
+	return desc.Min(min).Max(max)
 }
 
 // Enum stores accepted uint8 literals in declaration order.
-func (t Uint8Type) Enum(values ...uint8) Uint8Type {
-	t.payload.enum = cloneSlice(values)
+func (desc Uint8Descriptor) Enum(values ...uint8) Uint8Descriptor {
+	desc.payload.enum = cloneSlice(values)
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t Uint8Type) Type() Type {
-	out := typeFromHeader(t.header)
-	out.uint8 = cloneUint8Payload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc Uint8Descriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.uint8 = cloneUint8Payload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks Uint8Type as a sealed TypeExpr implementation.
-func (t Uint8Type) typeExpr() {}
+// descriptorExpr marks Uint8Descriptor as a sealed DescriptorExpr implementation.
+func (desc Uint8Descriptor) descriptorExpr() {}

@@ -24,14 +24,14 @@ import "arcoris.dev/apimachinery/api/types"
 // value validation, codecs, runtime object machinery, or resource metadata into
 // this package.
 func validateSurface(
-	typ types.Type,
+	desc types.Descriptor,
 	resolver types.Resolver,
 	path string,
 	invalidReason ErrorReason,
 	objectReason ErrorReason,
 	label string,
 ) error {
-	if err := types.ValidateType(typ, resolver); err != nil {
+	if err := validateSurfaceDescriptor(desc, resolver); err != nil {
 		return nestedVersionError(
 			path,
 			invalidReason,
@@ -41,10 +41,20 @@ func validateSurface(
 	}
 
 	return requireObjectLike(
-		typ,
+		desc,
 		resolver,
 		path,
 		objectReason,
 		label,
 	)
+}
+
+// validateSurfaceDescriptor keeps resource-local validation aligned with
+// api/types without making resource callers pass a sentinel resolver for local
+// checks.
+func validateSurfaceDescriptor(desc types.Descriptor, resolver types.Resolver) error {
+	if resolver == nil {
+		return types.ValidateLocal(desc)
+	}
+	return types.ValidateResolved(desc, resolver)
 }

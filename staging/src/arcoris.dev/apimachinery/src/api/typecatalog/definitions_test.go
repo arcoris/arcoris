@@ -33,12 +33,12 @@ func TestDefinitionsReturnsDetachedDefinitions(t *testing.T) {
 	requireNoError(t, catalog.Register(types.Define("example.Name", types.String().Enum("alpha"))))
 
 	defs := catalog.Definitions()
-	view, ok := defs[0].Type().String()
+	view, ok := defs[0].Descriptor().AsString()
 	requireEqual(t, ok, true)
 	enum := view.Enum()
 	enum[0] = "changed"
 
-	view, ok = catalog.Definitions()[0].Type().String()
+	view, ok = catalog.Definitions()[0].Descriptor().AsString()
 	requireEqual(t, ok, true)
 	requireEqual(t, view.Enum()[0], "alpha")
 }

@@ -14,22 +14,22 @@
 
 package types
 
-// MapOf starts a field descriptor whose value type is a string-keyed map.
+// MapOf starts a field descriptor whose value descriptor is a string-keyed map.
 //
-// Only string keys are part of this first descriptor design. Value type
-// validation is deferred to ValidateType so map.value diagnostics include the
-// surrounding descriptor path.
+// Concrete keys are strings. Keys can add structural constraints to those
+// string tokens, while value descriptor validation is deferred to ValidateResolved so
+// map.value diagnostics include the surrounding descriptor path.
 //
 // Field builder flow:
 //
 //	Field("labels").MapOf(
 //		String().
-//			MinLen(1),
+//			MinBytes(1),
 //	).Optional().
 //		Nullable().
-//		MinLen(1).
-//		MaxLen(64).
+//		MinEntries(1).
+//		MaxEntries(64).
 //		Description("User-provided labels.")
-func (b FieldBuilder) MapOf(value TypeExpr) MapField {
-	return MapField{field: b.state(), typ: MapOf(value)}
+func (b FieldBuilder) MapOf(value DescriptorExpr) MapField {
+	return MapField{field: b.state(), descriptor: MapOf(value)}
 }

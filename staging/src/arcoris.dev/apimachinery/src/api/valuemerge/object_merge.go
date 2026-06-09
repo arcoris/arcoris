@@ -26,7 +26,7 @@ func (m *merger) mergeObject(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
 ) (operand, error) {
@@ -44,7 +44,7 @@ func (m *merger) mergeObject(
 		return preserved, nil
 	}
 
-	view, ok := descriptor.Object()
+	view, ok := descriptor.AsObject()
 	if !ok {
 		return operand{}, errorAt(
 			path,

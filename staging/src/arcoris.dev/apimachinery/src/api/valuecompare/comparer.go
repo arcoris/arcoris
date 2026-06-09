@@ -22,13 +22,13 @@ import (
 // comparer holds one isolated comparison run.
 //
 // The resolver and depth limit are normalized once, then shared with the
-// internal TypeRef helper for this one comparison run.
+// internal DescriptorRef helper for this one comparison run.
 type comparer struct {
-	// resolver loads named descriptor definitions for TypeRef nodes.
+	// resolver loads named descriptor definitions for DescriptorRef nodes.
 	resolver types.Resolver
-	// maxDepth is the effective TypeRef hop limit for this run.
+	// maxDepth is the effective DescriptorRef hop limit for this run.
 	maxDepth int
-	// refs tracks the active TypeRef stack for cycle detection.
+	// refs tracks the active DescriptorRef stack for cycle detection.
 	refs *typeref.Resolver
 }
 

@@ -22,7 +22,7 @@ import (
 
 func TestAddSubtreeUsesValueFieldSet(t *testing.T) {
 	path := rootField("spec")
-	descriptor := types.Object(types.Field("image").String().Optional()).Type()
+	descriptor := types.Object(types.Field("image").String().Optional()).Descriptor()
 	val := value.MustObjectValue(value.ObjectMember("image", value.StringValue("v1")))
 
 	got, err := newComparer(Options{}).addSubtree(path, val, descriptor, EmptyResult())
@@ -33,7 +33,7 @@ func TestAddSubtreeUsesValueFieldSet(t *testing.T) {
 
 func TestRemoveSubtreeUsesValueFieldSet(t *testing.T) {
 	path := rootField("spec")
-	descriptor := types.Object(types.Field("image").String().Optional()).Type()
+	descriptor := types.Object(types.Field("image").String().Optional()).Descriptor()
 	val := value.MustObjectValue(value.ObjectMember("image", value.StringValue("v1")))
 
 	got, err := newComparer(Options{}).removeSubtree(path, val, descriptor, EmptyResult())

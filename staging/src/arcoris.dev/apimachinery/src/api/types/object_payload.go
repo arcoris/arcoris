@@ -18,7 +18,7 @@ package types
 //
 // Fields are stored as a slice, not a map, because descriptor order is useful
 // for diagnostics, generated code, schema export, and stable review output.
-// Duplicate names are rejected by ValidateType so builders stay cheap and can
+// Duplicate names are rejected by ValidateResolved so builders stay cheap and can
 // report errors with complete descriptor paths.
 type objectPayload struct {
 	// fields contains finalized object fields in declaration order.
@@ -39,7 +39,7 @@ func cloneObjectPayload(p objectPayload) objectPayload {
 	return p
 }
 
-// emptyObjectPayload reports whether p has no configured TypeObject state.
+// emptyObjectPayload reports whether p has no configured DescriptorObject state.
 func emptyObjectPayload(p objectPayload) bool {
 	return len(p.fields) == 0 && p.unknown == UnknownReject
 }

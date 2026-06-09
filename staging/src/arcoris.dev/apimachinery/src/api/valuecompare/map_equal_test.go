@@ -20,7 +20,7 @@ import (
 )
 
 func TestEqualMapSameIsTrue(t *testing.T) {
-	descriptor := types.MapOf(types.String()).Type()
+	descriptor := types.MapOf(types.String()).Descriptor()
 
 	got, err := newComparer(Options{}).equalMap(rootField("labels"), valueObject("env", "prod"), valueObject("env", "prod"), descriptor, 0)
 	requireNoError(t, err)
@@ -31,7 +31,7 @@ func TestEqualMapSameIsTrue(t *testing.T) {
 }
 
 func TestEqualMapDifferentValueIsFalse(t *testing.T) {
-	descriptor := types.MapOf(types.String()).Type()
+	descriptor := types.MapOf(types.String()).Descriptor()
 
 	got, err := newComparer(Options{}).equalMap(rootField("labels"), valueObject("env", "prod"), valueObject("env", "stage"), descriptor, 0)
 	requireNoError(t, err)

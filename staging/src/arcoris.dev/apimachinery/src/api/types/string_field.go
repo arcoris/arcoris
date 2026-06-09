@@ -14,15 +14,15 @@
 
 package types
 
-// StringField builds object fields whose value type is string.
+// StringField builds object fields whose value descriptor is string.
 //
 // The wrapper keeps object-field metadata beside the string builder, allowing
 // fluent field declarations without making fields reusable unnamed types.
 type StringField struct {
 	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
-	// typ stores the typed descriptor builder for this field value.
-	typ StringType
+	// descriptor stores the typed descriptor builder for this field value.
+	descriptor StringDescriptor
 }
 
 // Required marks the field key as required.
@@ -48,42 +48,56 @@ func (f StringField) Description(text string) StringField {
 
 // Nullable admits null in addition to string values.
 func (f StringField) Nullable() StringField {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
-// MinLen sets the inclusive minimum string length.
-func (f StringField) MinLen(n int) StringField {
-	f.typ = f.typ.MinLen(n)
+// MinBytes sets the inclusive minimum UTF-8 byte length.
+func (f StringField) MinBytes(n int) StringField {
+	f.descriptor = f.descriptor.MinBytes(n)
 
 	return f
 }
 
-// MaxLen sets the inclusive maximum string length.
-func (f StringField) MaxLen(n int) StringField {
-	f.typ = f.typ.MaxLen(n)
+// MaxBytes sets the inclusive maximum UTF-8 byte length.
+func (f StringField) MaxBytes(n int) StringField {
+	f.descriptor = f.descriptor.MaxBytes(n)
+
+	return f
+}
+
+// MinRunes sets the inclusive minimum Unicode code point count.
+func (f StringField) MinRunes(n int) StringField {
+	f.descriptor = f.descriptor.MinRunes(n)
+
+	return f
+}
+
+// MaxRunes sets the inclusive maximum Unicode code point count.
+func (f StringField) MaxRunes(n int) StringField {
+	f.descriptor = f.descriptor.MaxRunes(n)
 
 	return f
 }
 
 // Pattern stores a textual regular expression for the string field.
 func (f StringField) Pattern(pattern string) StringField {
-	f.typ = f.typ.Pattern(pattern)
+	f.descriptor = f.descriptor.Pattern(pattern)
 
 	return f
 }
 
 // Enum stores accepted string literals for the field.
 func (f StringField) Enum(values ...string) StringField {
-	f.typ = f.typ.Enum(values...)
+	f.descriptor = f.descriptor.Enum(values...)
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f StringField) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks StringField as a sealed FieldExpr implementation.

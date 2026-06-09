@@ -32,7 +32,7 @@ func (c *comparer) compareObject(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (Result, error) {
 	if err := requireKind(path, oldValue, value.KindObject, descriptor.Code()); err != nil {
@@ -42,7 +42,7 @@ func (c *comparer) compareObject(
 		return Result{}, err
 	}
 
-	objectView, ok := descriptor.Object()
+	objectView, ok := descriptor.AsObject()
 	if !ok {
 		return Result{}, errorAt(
 			path,
@@ -67,7 +67,7 @@ func (c *comparer) compareObject(
 			fieldPath,
 			valuepresence.From(oldFieldValue, oldFound),
 			valuepresence.From(newFieldValue, newFound),
-			field.Type(),
+			field.Descriptor(),
 			depth+1,
 		)
 		if err != nil {

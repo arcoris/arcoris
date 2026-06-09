@@ -14,10 +14,10 @@
 
 package types
 
-// ListOf starts a field descriptor whose value type is a homogeneous list.
+// ListOf starts a field descriptor whose value descriptor is a homogeneous list.
 //
 // The element expression is captured as descriptor metadata. Nil or invalid
-// elements are preserved as invalid descriptors so ValidateType can report
+// elements are preserved as invalid descriptors so ValidateResolved can report
 // list.elem errors with a stable path.
 //
 // Field builder flow:
@@ -26,10 +26,10 @@ package types
 //		Ref("arcoris.meta.Condition"),
 //	).Optional().
 //		Nullable().
-//		MinLen(1).
-//		MaxLen(32).
+//		MinItems(1).
+//		MaxItems(32).
 //		Map("type").
 //		Description("Status conditions keyed by type.")
-func (b FieldBuilder) ListOf(elem TypeExpr) ListField {
-	return ListField{field: b.state(), typ: ListOf(elem)}
+func (b FieldBuilder) ListOf(elem DescriptorExpr) ListField {
+	return ListField{field: b.state(), descriptor: ListOf(elem)}
 }

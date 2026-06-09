@@ -14,15 +14,15 @@
 
 package types
 
-// RefType builds references to named structural TypeDefinition values.
+// RefDescriptor builds references to named structural Definition values.
 //
-// TypeRef is the descriptor reuse mechanism. It never represents arbitrary Go
+// DescriptorRef is the descriptor reuse mechanism. It never represents arbitrary Go
 // implementations, package globals, reflection types, or runtime object types.
-// Recursive TypeDefinition graphs are not supported; recursive schemas need a
-// future explicit design pass before TypeRef can carry those semantics.
-type RefType struct {
+// Recursive Definition graphs are not supported; recursive schemas need a
+// future explicit design pass before DescriptorRef can carry those semantics.
+type RefDescriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
+	header descriptorHeader
 	// payload stores the exact reference target under construction.
 	payload refPayload
 }
@@ -34,29 +34,29 @@ type RefType struct {
 //
 // Typical reusable declaration:
 //
-//	nameRef := Ref("arcoris.meta.Name")
-//	nameRef = nameRef.Nullable()
-func Ref[N ~string](name N) RefType {
-	return RefType{
-		header:  newHeader(TypeRef),
+//	nameRef := Ref("arcoris.meta.Name").
+//		Nullable()
+func Ref[N ~string](name N) RefDescriptor {
+	return RefDescriptor{
+		header:  newHeader(DescriptorRef),
 		payload: refPayload{name: TypeName(name)},
 	}
 }
 
 // Nullable returns a reference descriptor that admits null values.
-func (t RefType) Nullable() RefType {
-	t.header = t.header.withNullable()
+func (desc RefDescriptor) Nullable() RefDescriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t RefType) Type() Type {
-	out := typeFromHeader(t.header)
-	out.ref = cloneRefPayload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc RefDescriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.ref = cloneRefPayload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks RefType as a sealed TypeExpr implementation.
-func (t RefType) typeExpr() {}
+// descriptorExpr marks RefDescriptor as a sealed DescriptorExpr implementation.
+func (desc RefDescriptor) descriptorExpr() {}

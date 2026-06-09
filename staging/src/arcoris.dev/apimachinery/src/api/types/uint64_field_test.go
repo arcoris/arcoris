@@ -22,9 +22,9 @@ func TestUint64FieldWrapper(t *testing.T) {
 	requireEqual(t, field.Name(), FieldName("value"))
 	requireEqual(t, field.IsRequired(), true)
 	requireEqual(t, field.Description(), "value")
-	requireEqual(t, field.Type().Code(), TypeUint64)
-	requireEqual(t, field.Type().Nullable(), true)
-	requireNoError(t, ValidateType(objectTypeForField(field), nil))
+	requireEqual(t, field.Descriptor().Code(), DescriptorUint64)
+	requireEqual(t, field.Descriptor().Nullable(), true)
+	requireNoError(t, ValidateLocal(objectTypeForField(field)))
 }
 
 func TestUint64FieldExprMarker(t *testing.T) {

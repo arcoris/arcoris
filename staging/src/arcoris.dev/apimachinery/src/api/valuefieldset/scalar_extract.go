@@ -29,7 +29,7 @@ import (
 func (e *extractor) extractScalar(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 ) (fieldpath.Set, error) {
 	expected, ok := scalarKind(descriptor.Code())
 	if !ok {
@@ -49,6 +49,6 @@ func (e *extractor) extractScalar(
 }
 
 // scalarKind maps descriptor scalar codes to concrete value kinds.
-func scalarKind(code types.TypeCode) (value.Kind, bool) {
+func scalarKind(code types.DescriptorKind) (value.Kind, bool) {
 	return typekind.Scalar(code)
 }

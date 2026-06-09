@@ -23,12 +23,12 @@ import (
 )
 
 func TestTypeMetaJSONTagsMatchAPIDocument(t *testing.T) {
-	typ := reflect.TypeOf(meta.TypeMeta{})
+	goType := reflect.TypeOf(meta.TypeMeta{})
 
-	assertJSONTagName(t, typ, typeMetaGoFieldAPIVersion, apidocument.TypeMetaFieldAPIVersion)
-	assertJSONTagHasOptions(t, typ, typeMetaGoFieldAPIVersion, jsonTagOptionOmitEmpty, jsonTagOptionOmitZero)
+	assertJSONTagName(t, goType, typeMetaGoFieldAPIVersion, apidocument.TypeMetaFieldAPIVersion)
+	assertJSONTagHasOptions(t, goType, typeMetaGoFieldAPIVersion, jsonTagOptionOmitEmpty, jsonTagOptionOmitZero)
 
-	assertJSONTagName(t, typ, typeMetaGoFieldKind, apidocument.TypeMetaFieldKind)
-	assertJSONTagHasOptions(t, typ, typeMetaGoFieldKind, jsonTagOptionOmitEmpty)
-	assertJSONTagLacksOptions(t, typ, typeMetaGoFieldKind, jsonTagOptionOmitZero)
+	assertJSONTagName(t, goType, typeMetaGoFieldKind, apidocument.TypeMetaFieldKind)
+	assertJSONTagHasOptions(t, goType, typeMetaGoFieldKind, jsonTagOptionOmitEmpty)
+	assertJSONTagLacksOptions(t, goType, typeMetaGoFieldKind, jsonTagOptionOmitZero)
 }

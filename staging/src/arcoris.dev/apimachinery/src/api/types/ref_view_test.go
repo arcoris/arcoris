@@ -17,7 +17,7 @@ package types
 import "testing"
 
 func TestRefViewName(t *testing.T) {
-	view, ok := Ref("example.Name").Type().Ref()
+	view, ok := Ref("example.Name").Descriptor().AsRef()
 	requireEqual(t, ok, true)
 	requireEqual(t, view.Name(), TypeName("example.Name"))
 }

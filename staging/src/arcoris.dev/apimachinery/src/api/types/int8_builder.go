@@ -14,7 +14,7 @@
 
 package types
 
-// Int8 starts a field descriptor whose value type is a fixed-width int8.
+// Int8 starts a field descriptor whose value descriptor is a fixed-width int8.
 //
 // The descriptor records portable int8 constraints. It never uses Go's
 // platform-sized int contract, so generated APIs and remote descriptors remain
@@ -29,5 +29,5 @@ package types
 //		Enum(0, 5, 10).
 //		Description("Scheduling priority.")
 func (b FieldBuilder) Int8() Int8Field {
-	return Int8Field{field: b.state(), typ: Int8()}
+	return Int8Field{field: b.state(), descriptor: Int8()}
 }

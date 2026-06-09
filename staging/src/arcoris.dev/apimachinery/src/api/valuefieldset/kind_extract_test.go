@@ -26,7 +26,7 @@ func TestRequireKindAcceptsMatchingKind(t *testing.T) {
 		rootField("enabled"),
 		value.BoolValue(true),
 		value.KindBool,
-		types.TypeBool,
+		types.DescriptorBool,
 	)
 
 	requireNoError(t, err)
@@ -37,7 +37,7 @@ func TestRequireKindRejectsMismatchedKind(t *testing.T) {
 		rootField("enabled"),
 		value.StringValue("true"),
 		value.KindBool,
-		types.TypeBool,
+		types.DescriptorBool,
 	)
 
 	requireErrorIs(t, err, ErrKindMismatch)

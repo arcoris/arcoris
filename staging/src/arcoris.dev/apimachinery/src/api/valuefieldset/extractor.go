@@ -39,11 +39,11 @@ func newExtractor(opts Options) *extractor {
 	}
 }
 
-// extract dispatches field-set extraction by descriptor type code.
+// extract dispatches field-set extraction by descriptor kind.
 func (e *extractor) extract(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (fieldpath.Set, error) {
 	if val.IsZero() {
@@ -60,7 +60,7 @@ func (e *extractor) extract(
 			path,
 			ErrInvalidDescriptor,
 			ErrorReasonInvalidDescriptor,
-			"descriptor has no valid type code",
+			"descriptor has no valid kind",
 		)
 	}
 
@@ -69,41 +69,41 @@ func (e *extractor) extract(
 	}
 
 	switch descriptor.Code() {
-	case types.TypeNull:
+	case types.DescriptorNull:
 		return e.extractNull(path, val, descriptor)
-	case types.TypeBool,
-		types.TypeString,
-		types.TypeBytes,
-		types.TypeInt8,
-		types.TypeInt16,
-		types.TypeInt32,
-		types.TypeInt64,
-		types.TypeUint8,
-		types.TypeUint16,
-		types.TypeUint32,
-		types.TypeUint64,
-		types.TypeFloat32,
-		types.TypeFloat64,
-		types.TypeDecimal,
-		types.TypeTimestamp,
-		types.TypeDate,
-		types.TypeTime,
-		types.TypeDuration:
+	case types.DescriptorBool,
+		types.DescriptorString,
+		types.DescriptorBytes,
+		types.DescriptorInt8,
+		types.DescriptorInt16,
+		types.DescriptorInt32,
+		types.DescriptorInt64,
+		types.DescriptorUint8,
+		types.DescriptorUint16,
+		types.DescriptorUint32,
+		types.DescriptorUint64,
+		types.DescriptorFloat32,
+		types.DescriptorFloat64,
+		types.DescriptorDecimal,
+		types.DescriptorTimestamp,
+		types.DescriptorDate,
+		types.DescriptorTime,
+		types.DescriptorDuration:
 		return e.extractScalar(path, val, descriptor)
-	case types.TypeObject:
+	case types.DescriptorObject:
 		return e.extractObject(path, val, descriptor, depth)
-	case types.TypeMap:
+	case types.DescriptorMap:
 		return e.extractMap(path, val, descriptor, depth)
-	case types.TypeList:
+	case types.DescriptorList:
 		return e.extractList(path, val, descriptor, depth)
-	case types.TypeRef:
+	case types.DescriptorRef:
 		return e.extractRef(path, val, descriptor, depth)
 	default:
 		return fieldpath.Set{}, errorAt(
 			path,
 			ErrInvalidDescriptor,
 			ErrorReasonInvalidDescriptor,
-			"descriptor has an unsupported type code",
+			"descriptor has an unsupported kind",
 		)
 	}
 }

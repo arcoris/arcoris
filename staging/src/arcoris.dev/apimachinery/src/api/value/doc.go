@@ -28,12 +28,12 @@
 //
 // Constructors that return Value use the <Kind>Value naming form, such as
 // StringValue, ObjectValue, and ListValue. Constructors that return supporting
-// domain types keep New<Type> names, such as NewDate and NewDecimal. Must
+// domain types keep New<Descriptor> names, such as NewDate and NewDecimal. Must
 // variants exist only for fallible Value or domain constructors.
 //
 // Value Object is a concrete keyed payload node. It does not decide whether the
 // payload is a descriptor object or descriptor map. Descriptor-aware validation
-// interprets the same concrete payload according to the expected api/types.Type.
+// interprets the same concrete payload according to the expected api/types.Descriptor.
 //
 // Object views use linear lookup rather than storing lookup indexes in payloads.
 // API values are expected to be small, and this keeps construction, cloning, and

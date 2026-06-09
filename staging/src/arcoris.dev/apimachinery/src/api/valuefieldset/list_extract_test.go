@@ -31,7 +31,7 @@ func TestExtractOrderedListUsesIndexPaths(t *testing.T) {
 	got, err := ExtractAt(
 		path,
 		val,
-		types.ListOf(types.String()).Ordered().Type(),
+		types.ListOf(types.String()).Ordered().Descriptor(),
 		Options{},
 	)
 	requireNoError(t, err)
@@ -45,7 +45,7 @@ func TestExtractOrderedListObjectItemsUseIndexedChildPaths(t *testing.T) {
 		types.Field("name").String().Required(),
 		types.Field("image").String().Required(),
 	)
-	descriptor := types.ListOf(item).Ordered().Type()
+	descriptor := types.ListOf(item).Ordered().Descriptor()
 	val := value.MustListValue(
 		value.MustObjectValue(
 			value.ObjectMember("name", value.StringValue("api")),
@@ -71,7 +71,7 @@ func TestExtractOrderedListEmptyIncludesListPath(t *testing.T) {
 	got, err := ExtractAt(
 		path,
 		val,
-		types.ListOf(types.String()).Ordered().Type(),
+		types.ListOf(types.String()).Ordered().Descriptor(),
 		Options{},
 	)
 	requireNoError(t, err)
@@ -89,7 +89,7 @@ func TestExtractAtomicListIncludesOnlyListPath(t *testing.T) {
 	got, err := ExtractAt(
 		path,
 		val,
-		types.ListOf(types.String()).Atomic().Type(),
+		types.ListOf(types.String()).Atomic().Descriptor(),
 		Options{},
 	)
 	requireNoError(t, err)
@@ -107,7 +107,7 @@ func TestExtractSetListIncludesOnlyListPath(t *testing.T) {
 	got, err := ExtractAt(
 		path,
 		val,
-		types.ListOf(types.String()).Set().Type(),
+		types.ListOf(types.String()).Set().Descriptor(),
 		Options{},
 	)
 	requireNoError(t, err)

@@ -17,79 +17,110 @@ package types
 import (
 	"fmt"
 	"regexp"
+	"unicode/utf8"
 )
 
-// validateString checks TypeString length, pattern, and enum descriptor rules.
+// validateString checks DescriptorString length, pattern, and enum descriptor rules.
 //
 // Pattern text is compiled only for descriptor validation. The descriptor keeps
 // the original pattern string so future codecs and schema exporters can choose
 // their own representation without depending on Go regexp internals.
-func validateString(t Type, path string) error {
-	if err := validateLengthLimits(t.string.minLen, t.string.maxLen, path+".len"); err != nil {
+func validateString(desc Descriptor, path string) error {
+	if err := validateLengthLimits(desc.string.minBytes, desc.string.maxBytes, path+".bytes"); err != nil {
+		return err
+	}
+	if err := validateLengthLimits(desc.string.minRunes, desc.string.maxRunes, path+".runes"); err != nil {
 		return err
 	}
 
-	if t.string.hasPattern {
-		compiled, err := regexp.Compile(t.string.pattern)
+	if desc.string.hasPattern {
+		compiled, err := regexp.Compile(desc.string.pattern)
 
 		if err != nil {
-			return typeErrorf(
+			return descriptorErrorf(
 				path+".pattern",
-				ErrInvalidType,
-				TypeErrorReasonInvalidPattern,
+				ErrInvalidDescriptor,
+				DescriptorErrorReasonInvalidPattern,
 				"string pattern %q is not a valid regexp: %v",
-				t.string.pattern,
+				desc.string.pattern,
 				err,
 			)
 		}
 
-		for i, value := range t.string.enum {
+		for i, value := range desc.string.enum {
 			if !compiled.MatchString(value) {
-				return typeErrorf(
+				return descriptorErrorf(
 					fmt.Sprintf("%s.enum[%d]", path, i),
-					ErrInvalidType,
-					TypeErrorReasonEnumPatternMismatch,
+					ErrInvalidDescriptor,
+					DescriptorErrorReasonEnumPatternMismatch,
 					"string enum value %q does not match pattern %q",
 					value,
-					t.string.pattern,
+					desc.string.pattern,
 				)
 			}
 		}
 	}
 
-	if index, value, ok := firstDuplicate(t.string.enum); ok {
-		return typeErrorf(
+	if index, value, ok := firstDuplicate(desc.string.enum); ok {
+		return descriptorErrorf(
 			path+".enum",
-			ErrInvalidType,
-			TypeErrorReasonDuplicateEnum,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonDuplicateEnum,
 			"string enum values must be unique; duplicate value %q at index %d",
 			value,
 			index,
 		)
 	}
 
-	for i, value := range t.string.enum {
-		if t.string.minLen.set && len(value) < t.string.minLen.value {
-			return typeErrorf(
+	for i, value := range desc.string.enum {
+		byteLen := len(value)
+		runeLen := utf8.RuneCountInString(value)
+
+		if desc.string.minBytes.set && byteLen < desc.string.minBytes.value {
+			return descriptorErrorf(
 				fmt.Sprintf("%s.enum[%d]", path, i),
-				ErrInvalidType,
-				TypeErrorReasonEnumBelowMinimum,
-				"string enum value %q length %d is below minimum length %d",
+				ErrInvalidDescriptor,
+				DescriptorErrorReasonEnumBelowMinimum,
+				"string enum value %q byte length %d is below minimum byte length %d",
 				value,
-				len(value),
-				t.string.minLen.value,
+				byteLen,
+				desc.string.minBytes.value,
 			)
 		}
 
-		if t.string.maxLen.set && len(value) > t.string.maxLen.value {
-			return typeErrorf(
+		if desc.string.maxBytes.set && byteLen > desc.string.maxBytes.value {
+			return descriptorErrorf(
 				fmt.Sprintf("%s.enum[%d]", path, i),
-				ErrInvalidType,
-				TypeErrorReasonEnumAboveMaximum,
-				"string enum value %q length %d is above maximum length %d",
+				ErrInvalidDescriptor,
+				DescriptorErrorReasonEnumAboveMaximum,
+				"string enum value %q byte length %d is above maximum byte length %d",
 				value,
-				len(value),
-				t.string.maxLen.value,
+				byteLen,
+				desc.string.maxBytes.value,
+			)
+		}
+
+		if desc.string.minRunes.set && runeLen < desc.string.minRunes.value {
+			return descriptorErrorf(
+				fmt.Sprintf("%s.enum[%d]", path, i),
+				ErrInvalidDescriptor,
+				DescriptorErrorReasonEnumBelowMinimum,
+				"string enum value %q rune count %d is below minimum rune count %d",
+				value,
+				runeLen,
+				desc.string.minRunes.value,
+			)
+		}
+
+		if desc.string.maxRunes.set && runeLen > desc.string.maxRunes.value {
+			return descriptorErrorf(
+				fmt.Sprintf("%s.enum[%d]", path, i),
+				ErrInvalidDescriptor,
+				DescriptorErrorReasonEnumAboveMaximum,
+				"string enum value %q rune count %d is above maximum rune count %d",
+				value,
+				runeLen,
+				desc.string.maxRunes.value,
 			)
 		}
 	}

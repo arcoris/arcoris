@@ -16,139 +16,139 @@ package types
 
 import "testing"
 
-var benchmarkTypeSink Type
+var benchmarkDescriptorSink Descriptor
 
-func BenchmarkStringTypeBuild(b *testing.B) {
+func BenchmarkStringDescriptorBuild(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		benchmarkTypeSink = String().
-			MinLen(1).
-			MaxLen(253).
+		benchmarkDescriptorSink = String().
+			MinBytes(1).
+			MaxBytes(253).
 			Pattern("^[a-z]+$").
 			Enum("alpha", "beta").
-			Type()
+			Descriptor()
 	}
 }
 
-func BenchmarkInt8TypeBuild(b *testing.B) {
+func BenchmarkInt8DescriptorBuild(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		benchmarkTypeSink = Int8().
+		benchmarkDescriptorSink = Int8().
 			Range(0, 10).
 			Enum(1, 2, 3).
-			Type()
+			Descriptor()
 	}
 }
 
-func BenchmarkInt64TypeBuild(b *testing.B) {
+func BenchmarkInt64DescriptorBuild(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		benchmarkTypeSink = Int64().
+		benchmarkDescriptorSink = Int64().
 			Range(1, 1000).
 			Enum(1, 10, 100).
-			Type()
+			Descriptor()
 	}
 }
 
-func BenchmarkUint64TypeBuild(b *testing.B) {
+func BenchmarkUint64DescriptorBuild(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		benchmarkTypeSink = Uint64().
+		benchmarkDescriptorSink = Uint64().
 			Range(0, 1000).
 			Enum(1, 10, 100).
-			Type()
+			Descriptor()
 	}
 }
 
-func BenchmarkFloat64TypeBuild(b *testing.B) {
+func BenchmarkFloat64DescriptorBuild(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		benchmarkTypeSink = Float64().
+		benchmarkDescriptorSink = Float64().
 			Range(0, 1).
 			Enum(0.25, 0.5, 0.75).
-			Type()
+			Descriptor()
 	}
 }
 
-func BenchmarkObjectTypeBuild(b *testing.B) {
+func BenchmarkObjectDescriptorBuild(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		benchmarkTypeSink = Object(
-			Field("name").String().Required().MinLen(1),
+		benchmarkDescriptorSink = Object(
+			Field("name").String().Required().MinBytes(1),
 			Field("replicas").Int64().Optional().Min(1),
 			Field("labels").MapOf(String()).Optional(),
-		).UnknownFields(UnknownReject).Type()
+		).UnknownFields(UnknownReject).Descriptor()
 	}
 }
 
-func BenchmarkListTypeBuild(b *testing.B) {
+func BenchmarkListDescriptorBuild(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		benchmarkTypeSink = ListOf(Object(
-			Field("name").String().Required().MinLen(1),
+		benchmarkDescriptorSink = ListOf(Object(
+			Field("name").String().Required().MinBytes(1),
 			Field("value").Int64().Required().Min(0),
-		)).Map("name").Type()
+		)).Map("name").Descriptor()
 	}
 }
 
 func BenchmarkValidateSmallObject(b *testing.B) {
-	tp := Object(
-		Field("name").String().Required().MinLen(1),
+	desc := Object(
+		Field("name").String().Required().MinBytes(1),
 		Field("replicas").Int64().Optional().Min(1),
-	).Type()
+	).Descriptor()
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if err := ValidateType(tp, nil); err != nil {
+		if err := ValidateLocal(desc); err != nil {
 			b.Fatal(err)
 		}
 	}
 }
 
 func BenchmarkValidateNestedObject(b *testing.B) {
-	tp := Object(
+	desc := Object(
 		Field("spec").Object(
-			Field("name").String().Required().MinLen(1),
+			Field("name").String().Required().MinBytes(1),
 			Field("ports").ListOf(Object(
-				Field("name").String().Required().MinLen(1),
+				Field("name").String().Required().MinBytes(1),
 				Field("port").Uint16().Required().Min(1),
 			)).Optional().Map("name"),
 		).Required().UnknownFields(UnknownReject),
-	).Type()
+	).Descriptor()
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if err := ValidateType(tp, nil); err != nil {
+		if err := ValidateLocal(desc); err != nil {
 			b.Fatal(err)
 		}
 	}
 }
 
 func BenchmarkValidateRefWithResolver(b *testing.B) {
-	resolver := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		if name == "example.Name" {
-			return Define("example.Name", String().MinLen(1)), true
+			return Define("example.Name", String().MinBytes(1)), true
 		}
-		return TypeDefinition{}, false
+		return Definition{}, false
 	})
-	tp := Ref("example.Name").Type()
+	desc := Ref("example.Name").Descriptor()
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if err := ValidateType(tp, resolver); err != nil {
+		if err := ValidateResolved(desc, resolver); err != nil {
 			b.Fatal(err)
 		}
 	}

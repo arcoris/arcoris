@@ -33,7 +33,7 @@
 // Callers are expected to validate base and overlay values with
 // api/valuevalidation before merge when full descriptor conformance is required.
 // valuemerge performs only the defensive checks needed for selected traversal
-// and replacement shape. Exact subtree replacement checks zero values, TypeRef
+// and replacement shape. Exact subtree replacement checks zero values, DescriptorRef
 // resolution, and descriptor/value kind compatibility; it does not fully
 // validate the replacement subtree.
 //

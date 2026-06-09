@@ -14,15 +14,15 @@
 
 package types
 
-// BytesField builds object fields whose value type is bytes.
+// BytesField builds object fields whose value descriptor is bytes.
 //
 // The wrapper keeps object-field metadata beside the bytes builder, allowing
 // fluent field declarations without making fields reusable unnamed types.
 type BytesField struct {
 	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
-	// typ stores the typed descriptor builder for this field value.
-	typ BytesType
+	// descriptor stores the typed descriptor builder for this field value.
+	descriptor BytesDescriptor
 }
 
 // Required marks the field key as required.
@@ -48,28 +48,28 @@ func (f BytesField) Description(text string) BytesField {
 
 // Nullable admits null in addition to byte-sequence values.
 func (f BytesField) Nullable() BytesField {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
-// MinLen sets the inclusive minimum byte length.
-func (f BytesField) MinLen(n int) BytesField {
-	f.typ = f.typ.MinLen(n)
+// MinBytes sets the inclusive minimum byte length.
+func (f BytesField) MinBytes(n int) BytesField {
+	f.descriptor = f.descriptor.MinBytes(n)
 
 	return f
 }
 
-// MaxLen sets the inclusive maximum byte length.
-func (f BytesField) MaxLen(n int) BytesField {
-	f.typ = f.typ.MaxLen(n)
+// MaxBytes sets the inclusive maximum byte length.
+func (f BytesField) MaxBytes(n int) BytesField {
+	f.descriptor = f.descriptor.MaxBytes(n)
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f BytesField) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks BytesField as a sealed FieldExpr implementation.

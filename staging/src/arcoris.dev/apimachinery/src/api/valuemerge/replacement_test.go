@@ -25,7 +25,7 @@ func TestReplaceSubtreeCopiesOverlay(t *testing.T) {
 	got, err := newMerger(Options{}).replaceSubtree(
 		root(),
 		valuepresence.Present(str("new")),
-		types.String().Type(),
+		types.String().Descriptor(),
 		0,
 	)
 	if err != nil {
@@ -39,7 +39,7 @@ func TestReplaceSubtreeAbsentRemoves(t *testing.T) {
 	got, err := newMerger(Options{}).replaceSubtree(
 		root(),
 		valuepresence.Absent(),
-		types.String().Type(),
+		types.String().Descriptor(),
 		0,
 	)
 	if err != nil {
@@ -54,7 +54,7 @@ func TestMergeExactSelectedReplacementChecksKind(t *testing.T) {
 	_, err := Merge(
 		obj(),
 		str("invalid"),
-		types.Object().Type(),
+		types.Object().Descriptor(),
 		pathSet(root()),
 		Options{},
 	)

@@ -14,11 +14,11 @@
 
 package types
 
-// Bool starts a field descriptor whose value type is boolean.
+// Bool starts a field descriptor whose value descriptor is boolean.
 //
-// The returned wrapper combines the captured field name with boolean type
+// The returned wrapper combines the captured field name with boolean descriptor
 // metadata. Presence remains unset until Required or Optional is called, so
-// ValidateType can reject incomplete field declarations with a precise path.
+// ValidateResolved can reject incomplete field declarations with a precise path.
 //
 // Field builder flow:
 //
@@ -27,5 +27,5 @@ package types
 //		Nullable().
 //		Description("Whether the feature is enabled.")
 func (b FieldBuilder) Bool() BoolField {
-	return BoolField{field: b.state(), typ: Bool()}
+	return BoolField{field: b.state(), descriptor: Bool()}
 }

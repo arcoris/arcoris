@@ -22,38 +22,38 @@ import (
 // Scalar maps non-null scalar descriptor codes to their concrete payload kind.
 //
 // Integer width and signedness are descriptor constraints; concrete payloads use
-// one integer kind for both signed and unsigned integer descriptors. TypeNull is
+// one integer kind for both signed and unsigned integer descriptors. DescriptorNull is
 // intentionally not included because null is a presence-sensitive leaf in the
 // caller packages, not part of this reusable scalar-kind table.
-func Scalar(code types.TypeCode) (value.Kind, bool) {
+func Scalar(code types.DescriptorKind) (value.Kind, bool) {
 	switch code {
-	case types.TypeBool:
+	case types.DescriptorBool:
 		return value.KindBool, true
-	case types.TypeString:
+	case types.DescriptorString:
 		return value.KindString, true
-	case types.TypeBytes:
+	case types.DescriptorBytes:
 		return value.KindBytes, true
-	case types.TypeInt8,
-		types.TypeInt16,
-		types.TypeInt32,
-		types.TypeInt64,
-		types.TypeUint8,
-		types.TypeUint16,
-		types.TypeUint32,
-		types.TypeUint64:
+	case types.DescriptorInt8,
+		types.DescriptorInt16,
+		types.DescriptorInt32,
+		types.DescriptorInt64,
+		types.DescriptorUint8,
+		types.DescriptorUint16,
+		types.DescriptorUint32,
+		types.DescriptorUint64:
 		return value.KindInteger, true
-	case types.TypeFloat32,
-		types.TypeFloat64:
+	case types.DescriptorFloat32,
+		types.DescriptorFloat64:
 		return value.KindFloat, true
-	case types.TypeDecimal:
+	case types.DescriptorDecimal:
 		return value.KindDecimal, true
-	case types.TypeTimestamp:
+	case types.DescriptorTimestamp:
 		return value.KindTimestamp, true
-	case types.TypeDate:
+	case types.DescriptorDate:
 		return value.KindDate, true
-	case types.TypeTime:
+	case types.DescriptorTime:
 		return value.KindTimeOfDay, true
-	case types.TypeDuration:
+	case types.DescriptorDuration:
 		return value.KindDuration, true
 	default:
 		return value.KindInvalid, false

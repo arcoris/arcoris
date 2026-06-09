@@ -17,22 +17,22 @@ package types
 import "testing"
 
 func TestObjectEmptyObjectValidAndUnknownDefault(t *testing.T) {
-	typ := Object().Type()
+	desc := Object().Descriptor()
 
-	requireNoError(t, ValidateType(typ, nil))
-	view, ok := typ.Object()
+	requireNoError(t, ValidateLocal(desc))
+	view, ok := desc.AsObject()
 	requireEqual(t, ok, true)
 	requireEqual(t, len(view.Fields()), 0)
 	requireEqual(t, view.UnknownFields(), UnknownReject)
 }
 
 func TestObjectFieldOrderAndDetach(t *testing.T) {
-	typ := Object(
+	desc := Object(
 		Field("first").String().Required(),
 		Field("second").Int64().Optional(),
-	).UnknownFields(UnknownPrune).Type()
+	).UnknownFields(UnknownPrune).Descriptor()
 
-	view, ok := typ.Object()
+	view, ok := desc.AsObject()
 	requireEqual(t, ok, true)
 	fields := view.Fields()
 	requireEqual(t, fields[0].Name(), FieldName("first"))
@@ -44,32 +44,32 @@ func TestObjectFieldOrderAndDetach(t *testing.T) {
 }
 
 func TestObjectDuplicateFieldsRejected(t *testing.T) {
-	typ := Object(
+	desc := Object(
 		Field("name").String().Required(),
 		Field("name").String().Optional(),
-	).Type()
+	).Descriptor()
 
-	requireErrorIs(t, ValidateType(typ, nil), ErrDuplicateField)
+	requireErrorIs(t, ValidateLocal(desc), ErrDuplicateField)
 }
 
 func TestObjectInvalidUnknownPolicyRejected(t *testing.T) {
-	typ := Object().Type()
-	typ.object.unknown = UnknownFieldPolicy(99)
+	desc := Object().Descriptor()
+	desc.object.unknown = UnknownFieldPolicy(99)
 
-	requireErrorIs(t, ValidateType(typ, nil), ErrInvalidType)
+	requireErrorIs(t, ValidateLocal(desc), ErrInvalidDescriptor)
 }
 
 func TestObjectNestedValidation(t *testing.T) {
-	typ := Object(
+	desc := Object(
 		Field("spec").Object(
 			Field("maxConcurrency").Int64().Required().Min(1),
-			Field("image").String().Optional().MinLen(1),
+			Field("image").String().Optional().MinBytes(1),
 		).Required().UnknownFields(UnknownReject),
-	).Type()
+	).Descriptor()
 
-	requireNoError(t, ValidateType(typ, nil))
+	requireNoError(t, ValidateLocal(desc))
 }
 
-func TestObjectTypeExprMarker(t *testing.T) {
-	Object().typeExpr()
+func TestObjectDescriptorExprMarker(t *testing.T) {
+	Object().descriptorExpr()
 }

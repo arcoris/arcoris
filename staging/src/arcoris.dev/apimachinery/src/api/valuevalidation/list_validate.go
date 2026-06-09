@@ -25,14 +25,14 @@ import (
 func (v *validator) validateList(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) {
 	if !v.requireKind(path, val, value.KindList, descriptor.Code()) {
 		return
 	}
 
-	listView, ok := descriptor.List()
+	listView, ok := descriptor.AsList()
 	if !ok {
 		v.add(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not a list")
 		return
@@ -46,7 +46,7 @@ func (v *validator) validateList(
 
 	valueView, _ := val.List()
 	length := valueView.Len()
-	if minItems, ok := listView.MinLen(); ok && length < minItems {
+	if minItems, ok := listView.MinItems(); ok && length < minItems {
 		v.addf(
 			path,
 			ErrLengthOutOfRange,
@@ -56,7 +56,7 @@ func (v *validator) validateList(
 			minItems,
 		)
 	}
-	if maxItems, ok := listView.MaxLen(); ok && length > maxItems {
+	if maxItems, ok := listView.MaxItems(); ok && length > maxItems {
 		v.addf(
 			path,
 			ErrLengthOutOfRange,
@@ -88,7 +88,7 @@ func (v *validator) validateList(
 func (v *validator) validateIndexedList(
 	path fieldpath.Path,
 	valueView value.ListView,
-	element types.Type,
+	element types.Descriptor,
 	depth int,
 ) {
 	for i := 0; i < valueView.Len(); i++ {
@@ -101,7 +101,7 @@ func (v *validator) validateIndexedList(
 func (v *validator) validateListMap(
 	path fieldpath.Path,
 	valueView value.ListView,
-	element types.Type,
+	element types.Descriptor,
 	keys []types.FieldName,
 	depth int,
 ) {

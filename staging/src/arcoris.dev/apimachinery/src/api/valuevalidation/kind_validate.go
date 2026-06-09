@@ -25,7 +25,7 @@ func (v *validator) addKindMismatch(
 	path fieldpath.Path,
 	actual value.Kind,
 	expected value.Kind,
-	code types.TypeCode,
+	code types.DescriptorKind,
 ) {
 	v.addf(
 		path,
@@ -43,7 +43,7 @@ func (v *validator) requireKind(
 	path fieldpath.Path,
 	val value.Value,
 	expected value.Kind,
-	code types.TypeCode,
+	code types.DescriptorKind,
 ) bool {
 	if val.Kind() == expected {
 		return true

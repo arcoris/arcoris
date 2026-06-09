@@ -20,35 +20,39 @@ type MapView struct {
 	payload mapPayload
 }
 
-// Map returns a map view when t is TypeMap.
-func (t Type) Map() (MapView, bool) {
-	if t.code != TypeMap {
+// AsMap returns a map view when desc is DescriptorMap.
+func (desc Descriptor) AsMap() (MapView, bool) {
+	if desc.code != DescriptorMap {
 		return MapView{}, false
 	}
 
-	return MapView{payload: cloneMapPayload(t.mapType)}, true
+	return MapView{payload: cloneMapPayload(desc.mapType)}, true
 }
 
-// Key returns the map key type.
-func (v MapView) Key() MapKeyType {
-	return v.payload.key
+// Key returns a detached map key descriptor.
+func (v MapView) Key() Descriptor {
+	if v.payload.key == nil {
+		return Descriptor{}
+	}
+
+	return cloneDescriptor(*v.payload.key)
 }
 
 // Value returns a detached map value descriptor.
-func (v MapView) Value() Type {
+func (v MapView) Value() Descriptor {
 	if v.payload.value == nil {
-		return Type{}
+		return Descriptor{}
 	}
 
-	return cloneType(*v.payload.value)
+	return cloneDescriptor(*v.payload.value)
 }
 
-// MinLen returns the map minimum size rule.
-func (v MapView) MinLen() (int, bool) {
+// MinEntries returns the map minimum entry count rule.
+func (v MapView) MinEntries() (int, bool) {
 	return v.payload.minLen.value, v.payload.minLen.set
 }
 
-// MaxLen returns the map maximum size rule.
-func (v MapView) MaxLen() (int, bool) {
+// MaxEntries returns the map maximum entry count rule.
+func (v MapView) MaxEntries() (int, bool) {
 	return v.payload.maxLen.value, v.payload.maxLen.set
 }

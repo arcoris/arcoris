@@ -20,23 +20,23 @@ import (
 )
 
 func TestFloat64ValidateRejectsInvalidRules(t *testing.T) {
-	tests := []Type{
-		Float64().Range(10, 1).Type(),
-		Float64().Min(1).Enum(0).Type(),
-		Float64().Max(1).Enum(2).Type(),
-		Float64().Enum(1, 1).Type(),
-		Float64().Enum(math.Inf(1)).Type(),
-		Float64().Enum(math.NaN()).Type(),
+	tests := []Descriptor{
+		Float64().Range(10, 1).Descriptor(),
+		Float64().Min(1).Enum(0).Descriptor(),
+		Float64().Max(1).Enum(2).Descriptor(),
+		Float64().Enum(1, 1).Descriptor(),
+		Float64().Enum(math.Inf(1)).Descriptor(),
+		Float64().Enum(math.NaN()).Descriptor(),
 	}
-	for _, typ := range tests {
-		requireErrorIs(t, ValidateType(typ, nil), ErrInvalidType)
+	for _, desc := range tests {
+		requireErrorIs(t, ValidateLocal(desc), ErrInvalidDescriptor)
 	}
 }
 
 func TestFloat64ValidateEnumDuplicatesUseNumericEquality(t *testing.T) {
 	negativeZero := math.Copysign(0, -1)
 
-	requireErrorIs(t, ValidateType(Float64().Enum(0, negativeZero).Type(), nil), ErrInvalidType)
+	requireErrorIs(t, ValidateLocal(Float64().Enum(0, negativeZero).Descriptor()), ErrInvalidDescriptor)
 }
 
 func TestInvalidFloat64(t *testing.T) {

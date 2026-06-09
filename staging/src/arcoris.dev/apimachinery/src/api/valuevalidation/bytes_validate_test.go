@@ -25,7 +25,7 @@ import (
 func TestValidateBytesLength(t *testing.T) {
 	err := valuevalidation.Validate(
 		value.BytesValue([]byte("abcd")),
-		types.Bytes().MaxLen(3).Type(),
+		types.Bytes().MaxBytes(3).Descriptor(),
 		valuevalidation.Options{},
 	)
 

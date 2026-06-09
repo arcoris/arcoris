@@ -17,20 +17,20 @@ package types
 import "testing"
 
 func TestDecimalTypeDescriptor(t *testing.T) {
-	typ := Decimal().Precision(10).Scale(2).Nullable().Type()
+	desc := Decimal().Precision(10).Scale(2).Nullable().Descriptor()
 
-	requireEqual(t, typ.Code(), TypeDecimal)
-	requireEqual(t, typ.Nullable(), true)
-	view := requireDecimalView(t, typ)
+	requireEqual(t, desc.Code(), DescriptorDecimal)
+	requireEqual(t, desc.Nullable(), true)
+	view := requireDecimalView(t, desc)
 	precision, ok := view.Precision()
 	requireEqual(t, ok, true)
 	requireEqual(t, precision, 10)
 	scale, ok := view.Scale()
 	requireEqual(t, ok, true)
 	requireEqual(t, scale, 2)
-	requireNoError(t, ValidateType(typ, nil))
+	requireNoError(t, ValidateLocal(desc))
 }
 
-func TestDecimalTypeExprMarker(t *testing.T) {
-	Decimal().typeExpr()
+func TestDecimalDescriptorExprMarker(t *testing.T) {
+	Decimal().descriptorExpr()
 }

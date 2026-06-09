@@ -14,31 +14,31 @@
 
 package types
 
-// typeHeader is the shared working state carried by public builders.
+// descriptorHeader is the shared working state carried by public builders.
 //
-// Builders keep only the TypeCode, common flags, and their exact local payload.
-// They do not keep a full Type while building. Type remains the normalized
-// descriptor/IR assembled at Type() boundaries.
-type typeHeader struct {
+// Builders keep only the DescriptorKind, common flags, and their exact local payload.
+// They do not keep a full Descriptor while building. Descriptor remains the normalized
+// descriptor/IR assembled at Descriptor() boundaries.
+type descriptorHeader struct {
 	// code selects the descriptor kind being built.
-	code TypeCode
+	code DescriptorKind
 	// flags records descriptor-wide builder flags such as nullability.
-	flags typeFlags
+	flags descriptorFlags
 }
 
 // newHeader creates builder header state for code.
-func newHeader(code TypeCode) typeHeader {
-	return typeHeader{code: code}
+func newHeader(code DescriptorKind) descriptorHeader {
+	return descriptorHeader{code: code}
 }
 
 // withNullable returns a copy of h that admits null values.
-func (h typeHeader) withNullable() typeHeader {
-	h.flags |= typeFlagNullable
+func (h descriptorHeader) withNullable() descriptorHeader {
+	h.flags |= descriptorFlagNullable
 
 	return h
 }
 
-// typeFromHeader creates the normalized descriptor shell for a builder.
-func typeFromHeader(h typeHeader) Type {
-	return Type{code: h.code, flags: h.flags}
+// descriptorFromHeader creates the normalized descriptor shell for a builder.
+func descriptorFromHeader(h descriptorHeader) Descriptor {
+	return Descriptor{code: h.code, flags: h.flags}
 }

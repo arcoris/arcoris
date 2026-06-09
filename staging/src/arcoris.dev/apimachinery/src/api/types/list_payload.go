@@ -23,9 +23,9 @@ type listPayload struct {
 	// elem points at the structural descriptor of each list element.
 	//
 	// The pointer is an internal representation detail. Public APIs still expose
-	// Type by value, but the pointer breaks the otherwise recursive Type ->
-	// listPayload -> Type storage cycle that Go cannot represent directly.
-	elem *Type
+	// Descriptor by value, but the pointer breaks the otherwise recursive Descriptor ->
+	// listPayload -> Descriptor storage cycle that Go cannot represent directly.
+	elem *Descriptor
 	// minLen is the inclusive minimum list length.
 	//
 	// The limit wrapper distinguishes an explicit zero from an unset rule.
@@ -41,7 +41,7 @@ type listPayload struct {
 	semantics ListSemantics
 	// mapKeys stores object field names used by ListMap semantics.
 	//
-	// ValidateType checks that these names are valid, present on the element
+	// ValidateResolved checks that these names are valid, present on the element
 	// object, and required.
 	mapKeys []FieldName
 }
@@ -49,7 +49,7 @@ type listPayload struct {
 // cloneListPayload detaches the list element and map keys.
 func cloneListPayload(p listPayload) listPayload {
 	if p.elem != nil {
-		elem := cloneType(*p.elem)
+		elem := cloneDescriptor(*p.elem)
 		p.elem = &elem
 	}
 	p.mapKeys = cloneSlice(p.mapKeys)
@@ -57,7 +57,7 @@ func cloneListPayload(p listPayload) listPayload {
 	return p
 }
 
-// emptyListPayload reports whether p has no configured TypeList state.
+// emptyListPayload reports whether p has no configured DescriptorList state.
 func emptyListPayload(p listPayload) bool {
 	return p.elem == nil &&
 		!p.minLen.set &&

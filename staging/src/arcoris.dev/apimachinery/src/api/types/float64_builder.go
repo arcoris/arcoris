@@ -14,9 +14,9 @@
 
 package types
 
-// Float64 starts a field descriptor whose value type is a fixed-width float64.
+// Float64 starts a field descriptor whose value descriptor is a fixed-width float64.
 //
-// The descriptor records structural bounds and enum literals. ValidateType
+// The descriptor records structural bounds and enum literals. ValidateResolved
 // rejects NaN and infinities because descriptors must remain portable across
 // codecs and schema exporters.
 //
@@ -30,5 +30,5 @@ package types
 //		Enum(1, 10, 100).
 //		Description("Relative scheduling weight.")
 func (b FieldBuilder) Float64() Float64Field {
-	return Float64Field{field: b.state(), typ: Float64()}
+	return Float64Field{field: b.state(), descriptor: Float64()}
 }

@@ -20,31 +20,31 @@ type ListView struct {
 	payload listPayload
 }
 
-// List returns a list view when t is TypeList.
-func (t Type) List() (ListView, bool) {
-	if t.code != TypeList {
+// AsList returns a list view when desc is DescriptorList.
+func (desc Descriptor) AsList() (ListView, bool) {
+	if desc.code != DescriptorList {
 		return ListView{}, false
 	}
 
-	return ListView{payload: cloneListPayload(t.list)}, true
+	return ListView{payload: cloneListPayload(desc.list)}, true
 }
 
 // Element returns a detached list element descriptor.
-func (v ListView) Element() Type {
+func (v ListView) Element() Descriptor {
 	if v.payload.elem == nil {
-		return Type{}
+		return Descriptor{}
 	}
 
-	return cloneType(*v.payload.elem)
+	return cloneDescriptor(*v.payload.elem)
 }
 
-// MinLen returns the list minimum length rule.
-func (v ListView) MinLen() (int, bool) {
+// MinItems returns the list minimum item count rule.
+func (v ListView) MinItems() (int, bool) {
 	return v.payload.minLen.value, v.payload.minLen.set
 }
 
-// MaxLen returns the list maximum length rule.
-func (v ListView) MaxLen() (int, bool) {
+// MaxItems returns the list maximum item count rule.
+func (v ListView) MaxItems() (int, bool) {
 	return v.payload.maxLen.value, v.payload.maxLen.set
 }
 

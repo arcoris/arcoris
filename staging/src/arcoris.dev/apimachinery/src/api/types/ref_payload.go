@@ -14,14 +14,14 @@
 
 package types
 
-// refPayload stores the named definition target for TypeRef.
+// refPayload stores the named definition target for DescriptorRef.
 //
-// A reference points at a TypeDefinition through an owner-created Resolver. It
+// A reference points at a Definition through an owner-created Resolver. It
 // is not a Go type, reflection handle, global registry lookup, or callback hook.
 type refPayload struct {
 	// name is resolved through an owner-created Resolver.
 	//
-	// ValidateType checks syntax and, when a resolver is supplied, resolution and
+	// ValidateResolved checks syntax and, when a resolver is supplied, resolution and
 	// reference cycles.
 	name TypeName
 }
@@ -31,7 +31,7 @@ func cloneRefPayload(p refPayload) refPayload {
 	return p
 }
 
-// emptyRefPayload reports whether p has no configured TypeRef state.
+// emptyRefPayload reports whether p has no configured DescriptorRef state.
 func emptyRefPayload(p refPayload) bool {
 	return p.name == ""
 }

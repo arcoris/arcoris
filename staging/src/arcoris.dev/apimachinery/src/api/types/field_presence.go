@@ -17,7 +17,7 @@ package types
 // FieldPresence describes whether an object field must be present.
 //
 // Presence is a field-level property. It is intentionally separate from
-// Type.Nullable: a required field may still allow a null value, and an optional
+// Descriptor.Nullable: a required field may still allow a null value, and an optional
 // field may still reject null when it is present.
 type FieldPresence uint8
 

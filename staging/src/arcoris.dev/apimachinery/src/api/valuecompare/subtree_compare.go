@@ -25,7 +25,7 @@ import (
 func (c *comparer) addSubtree(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	result Result,
 ) (Result, error) {
 	set, err := c.extractSubtree(path, val, descriptor)
@@ -40,7 +40,7 @@ func (c *comparer) addSubtree(
 func (c *comparer) removeSubtree(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	result Result,
 ) (Result, error) {
 	set, err := c.extractSubtree(path, val, descriptor)
@@ -59,7 +59,7 @@ func (c *comparer) removeSubtree(
 func (c *comparer) extractSubtree(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 ) (fieldpath.Set, error) {
 	set, err := valuefieldset.ExtractAt(
 		path,

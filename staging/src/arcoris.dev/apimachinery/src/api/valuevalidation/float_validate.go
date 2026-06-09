@@ -23,7 +23,7 @@ import (
 )
 
 // validateFloat32 checks float32 bounds, range, and enum constraints.
-func (v *validator) validateFloat32(path fieldpath.Path, val value.Value, descriptor types.Type) {
+func (v *validator) validateFloat32(path fieldpath.Path, val value.Value, descriptor types.Descriptor) {
 	if !v.requireKind(path, val, value.KindFloat, descriptor.Code()) {
 		return
 	}
@@ -34,7 +34,7 @@ func (v *validator) validateFloat32(path fieldpath.Path, val value.Value, descri
 		return
 	}
 
-	view, ok := descriptor.Float32()
+	view, ok := descriptor.AsFloat32()
 	if !ok {
 		v.add(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not float32")
 		return
@@ -66,13 +66,13 @@ func (v *validator) validateFloat32(path fieldpath.Path, val value.Value, descri
 }
 
 // validateFloat64 checks float64 bounds and enum constraints.
-func (v *validator) validateFloat64(path fieldpath.Path, val value.Value, descriptor types.Type) {
+func (v *validator) validateFloat64(path fieldpath.Path, val value.Value, descriptor types.Descriptor) {
 	if !v.requireKind(path, val, value.KindFloat, descriptor.Code()) {
 		return
 	}
 
 	got, _ := val.Float()
-	view, ok := descriptor.Float64()
+	view, ok := descriptor.AsFloat64()
 	if !ok {
 		v.add(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not float64")
 		return

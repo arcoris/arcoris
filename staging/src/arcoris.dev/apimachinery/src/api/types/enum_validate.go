@@ -93,10 +93,10 @@ func firstEnumAboveMax[T ordered](values []T, max limit[T]) (int, T, bool) {
 // validateEnumRules checks enum uniqueness and min/max membership.
 func validateEnumRules[T ordered](path, descriptor string, values []T, min, max limit[T]) error {
 	if index, value, ok := firstDuplicate(values); ok {
-		return typeErrorf(
+		return descriptorErrorf(
 			path+".enum",
-			ErrInvalidType,
-			TypeErrorReasonDuplicateEnum,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonDuplicateEnum,
 			"%s enum values must be unique; duplicate value %v at index %d",
 			descriptor,
 			value,
@@ -105,10 +105,10 @@ func validateEnumRules[T ordered](path, descriptor string, values []T, min, max 
 	}
 
 	if index, value, ok := firstEnumBelowMin(values, min); ok {
-		return typeErrorf(
+		return descriptorErrorf(
 			fmt.Sprintf("%s.enum[%d]", path, index),
-			ErrInvalidType,
-			TypeErrorReasonEnumBelowMinimum,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonEnumBelowMinimum,
 			"%s enum value %v is below minimum %v",
 			descriptor,
 			value,
@@ -117,10 +117,10 @@ func validateEnumRules[T ordered](path, descriptor string, values []T, min, max 
 	}
 
 	if index, value, ok := firstEnumAboveMax(values, max); ok {
-		return typeErrorf(
+		return descriptorErrorf(
 			fmt.Sprintf("%s.enum[%d]", path, index),
-			ErrInvalidType,
-			TypeErrorReasonEnumAboveMaximum,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonEnumAboveMaximum,
 			"%s enum value %v is above maximum %v",
 			descriptor,
 			value,

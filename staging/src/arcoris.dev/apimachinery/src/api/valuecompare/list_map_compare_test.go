@@ -131,7 +131,7 @@ func TestCompareListMapMultiKeySelector(t *testing.T) {
 			types.Field("port").Uint64().Required(),
 			types.Field("backend").String().Required(),
 		),
-	).Map("host", "port").Type()
+	).Map("host", "port").Descriptor()
 	oldValue := value.MustListValue(routeValue("old"))
 	newValue := value.MustListValue(routeValue("new"))
 
@@ -219,7 +219,7 @@ func TestCompareListMapRefElement(t *testing.T) {
 	resolver := testResolver{
 		"example.Condition": types.Define("example.Condition", conditionExpr()),
 	}
-	descriptor := types.ListOf(types.Ref("example.Condition")).Map("type").Type()
+	descriptor := types.ListOf(types.Ref("example.Condition")).Map("type").Descriptor()
 	oldValue := value.MustListValue(conditionValue("Ready", "False"))
 	newValue := value.MustListValue(conditionValue("Ready", "True"))
 
@@ -238,7 +238,7 @@ func TestCompareListMapRefKeyType(t *testing.T) {
 			types.Field("type").Ref("example.ConditionType").Required(),
 			types.Field("status").String().Required(),
 		),
-	).Map("type").Type()
+	).Map("type").Descriptor()
 	oldValue := value.MustListValue(conditionValue("Ready", "False"))
 	newValue := value.MustListValue(conditionValue("Ready", "True"))
 
@@ -256,7 +256,7 @@ func routeValue(backend string) value.Value {
 }
 func TestListMapEntriesIndexesBySelector(t *testing.T) {
 	descriptor := conditionsDescriptor()
-	listView, _ := descriptor.List()
+	listView, _ := descriptor.AsList()
 	listValue, _ := value.MustListValue(conditionValue("Ready", "True")).List()
 
 	got, err := newComparer(Options{}).listMapEntries(rootField("conditions"), listValue, listView.Element(), listView.MapKeys())
@@ -273,7 +273,7 @@ func TestListMapEntriesIndexesBySelector(t *testing.T) {
 
 func TestListMapEntriesRejectsEmptyKeys(t *testing.T) {
 	descriptor := conditionsDescriptor()
-	listView, _ := descriptor.List()
+	listView, _ := descriptor.AsList()
 	listValue, _ := value.MustListValue(conditionValue("Ready", "True")).List()
 
 	_, err := newComparer(Options{}).listMapEntries(rootField("conditions"), listValue, listView.Element(), nil)
@@ -302,7 +302,7 @@ func TestListMapEntryStoresSelectorIndexAndItem(t *testing.T) {
 }
 func TestEqualListMapSameReorderedIsTrue(t *testing.T) {
 	descriptor := conditionsDescriptor()
-	listView, _ := descriptor.List()
+	listView, _ := descriptor.AsList()
 	oldList, _ := value.MustListValue(
 		conditionValue("Ready", "True"),
 		conditionValue("Degraded", "False"),
@@ -322,7 +322,7 @@ func TestEqualListMapSameReorderedIsTrue(t *testing.T) {
 
 func TestEqualListMapDifferentSelectorSetIsFalse(t *testing.T) {
 	descriptor := conditionsDescriptor()
-	listView, _ := descriptor.List()
+	listView, _ := descriptor.AsList()
 	oldList, _ := value.MustListValue(conditionValue("Ready", "True")).List()
 	newList, _ := value.MustListValue(conditionValue("Degraded", "False")).List()
 

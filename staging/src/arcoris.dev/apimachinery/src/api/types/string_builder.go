@@ -14,7 +14,7 @@
 
 package types
 
-// String starts a field descriptor whose value type is UTF-8 text.
+// String starts a field descriptor whose value descriptor is UTF-8 text.
 //
 // String fields can record portable length, pattern, and enum constraints.
 // Pattern text is kept as descriptor data rather than a compiled regexp so
@@ -25,11 +25,11 @@ package types
 //	Field("image").String().
 //		Required().
 //		Nullable().
-//		MinLen(1).
-//		MaxLen(253).
+//		MinBytes(1).
+//		MaxBytes(253).
 //		Pattern("^[a-z][a-z0-9-]*$").
 //		Enum("app", "sidecar").
 //		Description("Container image reference.")
 func (b FieldBuilder) String() StringField {
-	return StringField{field: b.state(), typ: String()}
+	return StringField{field: b.state(), descriptor: String()}
 }

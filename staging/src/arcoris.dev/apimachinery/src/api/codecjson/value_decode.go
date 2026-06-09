@@ -23,7 +23,7 @@ import (
 //
 // This is the descriptor-agnostic mapping: JSON strings become value strings,
 // JSON numbers are classified by source token text, and JSON object/array order
-// is preserved. Type-aware interpretations such as bytes or timestamps are left
+// is preserved. Descriptor-aware interpretations such as bytes or timestamps are left
 // to future descriptor-aware codecs.
 func nodeToValue(path jsonPath, node jsonNode, config resolvedDecodeConfig) (value.Value, error) {
 	switch node.kind {

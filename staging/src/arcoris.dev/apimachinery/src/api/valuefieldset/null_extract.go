@@ -20,11 +20,11 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// extractNull handles a TypeNull descriptor with a non-null concrete value.
+// extractNull handles a DescriptorNull descriptor with a non-null concrete value.
 func (e *extractor) extractNull(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 ) (fieldpath.Set, error) {
 	if err := requireKind(path, val, value.KindNull, descriptor.Code()); err != nil {
 		return fieldpath.Set{}, err

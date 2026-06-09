@@ -14,15 +14,15 @@
 
 package types
 
-// Uint8Field builds object fields whose value type is uint8.
+// Uint8Field builds object fields whose value descriptor is uint8.
 //
 // The wrapper keeps object-field metadata beside the uint8 builder, allowing
 // fluent field declarations without making fields reusable unnamed types.
 type Uint8Field struct {
 	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
-	// typ stores the typed descriptor builder for this field value.
-	typ Uint8Type
+	// descriptor stores the typed descriptor builder for this field value.
+	descriptor Uint8Descriptor
 }
 
 // Required marks the field key as required.
@@ -48,42 +48,42 @@ func (f Uint8Field) Description(text string) Uint8Field {
 
 // Nullable admits null in addition to uint8 values.
 func (f Uint8Field) Nullable() Uint8Field {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
 // Min sets the inclusive uint8 lower bound.
 func (f Uint8Field) Min(n uint8) Uint8Field {
-	f.typ = f.typ.Min(n)
+	f.descriptor = f.descriptor.Min(n)
 
 	return f
 }
 
 // Max sets the inclusive uint8 upper bound.
 func (f Uint8Field) Max(n uint8) Uint8Field {
-	f.typ = f.typ.Max(n)
+	f.descriptor = f.descriptor.Max(n)
 
 	return f
 }
 
 // Range sets the inclusive uint8 lower and upper bounds.
 func (f Uint8Field) Range(min, max uint8) Uint8Field {
-	f.typ = f.typ.Range(min, max)
+	f.descriptor = f.descriptor.Range(min, max)
 
 	return f
 }
 
 // Enum stores accepted uint8 literals for the field.
 func (f Uint8Field) Enum(values ...uint8) Uint8Field {
-	f.typ = f.typ.Enum(values...)
+	f.descriptor = f.descriptor.Enum(values...)
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f Uint8Field) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks Uint8Field as a sealed FieldExpr implementation.

@@ -29,14 +29,14 @@ import (
 func (e *extractor) extractList(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (fieldpath.Set, error) {
 	if err := requireKind(path, val, value.KindList, descriptor.Code()); err != nil {
 		return fieldpath.Set{}, err
 	}
 
-	listView, ok := descriptor.List()
+	listView, ok := descriptor.AsList()
 	if !ok {
 		return fieldpath.Set{}, errorAt(
 			path,
@@ -88,7 +88,7 @@ func (e *extractor) extractList(
 func (e *extractor) extractIndexedList(
 	path fieldpath.Path,
 	valueView value.ListView,
-	element types.Type,
+	element types.Descriptor,
 	depth int,
 ) (fieldpath.Set, error) {
 	out := fieldpath.EmptySet()
@@ -110,7 +110,7 @@ func (e *extractor) extractIndexedList(
 func (e *extractor) extractListMap(
 	path fieldpath.Path,
 	valueView value.ListView,
-	element types.Type,
+	element types.Descriptor,
 	keys []types.FieldName,
 	depth int,
 ) (fieldpath.Set, error) {

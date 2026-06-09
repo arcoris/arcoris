@@ -14,27 +14,27 @@
 
 package types
 
-// BytesView exposes read-only TypeBytes payload data.
+// BytesView exposes read-only DescriptorBytes payload data.
 type BytesView struct {
 	// payload is a detached copy of the bytes descriptor payload.
 	payload bytesPayload
 }
 
-// Bytes returns a bytes view when t is TypeBytes.
-func (t Type) Bytes() (BytesView, bool) {
-	if t.code != TypeBytes {
+// AsBytes returns a bytes view when desc is DescriptorBytes.
+func (desc Descriptor) AsBytes() (BytesView, bool) {
+	if desc.code != DescriptorBytes {
 		return BytesView{}, false
 	}
 
-	return BytesView{payload: cloneBytesPayload(t.bytes)}, true
+	return BytesView{payload: cloneBytesPayload(desc.bytes)}, true
 }
 
-// MinLen returns the bytes minimum length rule.
-func (v BytesView) MinLen() (int, bool) {
-	return v.payload.minLen.value, v.payload.minLen.set
+// MinBytes returns the bytes minimum length rule.
+func (v BytesView) MinBytes() (int, bool) {
+	return v.payload.minBytes.value, v.payload.minBytes.set
 }
 
-// MaxLen returns the bytes maximum length rule.
-func (v BytesView) MaxLen() (int, bool) {
-	return v.payload.maxLen.value, v.payload.maxLen.set
+// MaxBytes returns the bytes maximum length rule.
+func (v BytesView) MaxBytes() (int, bool) {
+	return v.payload.maxBytes.value, v.payload.maxBytes.set
 }

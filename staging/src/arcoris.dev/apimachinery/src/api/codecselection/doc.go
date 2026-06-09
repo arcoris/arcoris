@@ -39,7 +39,7 @@
 // and they do not make the selected codec implementations themselves
 // concurrency-safe.
 //
-// The package does not parse Content-Type or Accept headers, implement wildcard
+// The package does not parse Content-Descriptor or Accept headers, implement wildcard
 // matching, interpret q-values, define public/storage/import/debug roles,
 // create codecs, configure codecs, validate API values against descriptors,
 // apply objects, access storage, run admission, or install global defaults.

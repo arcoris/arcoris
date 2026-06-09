@@ -14,7 +14,7 @@
 
 package types
 
-// Int16 starts a field descriptor whose value type is a fixed-width int16.
+// Int16 starts a field descriptor whose value descriptor is a fixed-width int16.
 //
 // The descriptor records portable int16 constraints. It never uses Go's
 // platform-sized int contract, so generated APIs and remote descriptors remain
@@ -30,5 +30,5 @@ package types
 //		Enum(0, 1, 2).
 //		Description("Shard identifier.")
 func (b FieldBuilder) Int16() Int16Field {
-	return Int16Field{field: b.state(), typ: Int16()}
+	return Int16Field{field: b.state(), descriptor: Int16()}
 }

@@ -26,7 +26,7 @@ func TestCompareRefScalar(t *testing.T) {
 		"example.Name": types.Define("example.Name", types.String()),
 	}
 
-	got, err := Compare(value.StringValue("old"), value.StringValue("new"), types.Ref("example.Name").Type(), Options{Resolver: resolver})
+	got, err := Compare(value.StringValue("old"), value.StringValue("new"), types.Ref("example.Name").Descriptor(), Options{Resolver: resolver})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(fieldpath.RootPath()))
 }
@@ -39,13 +39,13 @@ func TestCompareRefObject(t *testing.T) {
 		),
 	}
 
-	got, err := Compare(valueObject("image", "v1"), valueObject("image", "v2"), types.Ref("example.Spec").Type(), Options{Resolver: resolver})
+	got, err := Compare(valueObject("image", "v1"), valueObject("image", "v2"), types.Ref("example.Spec").Descriptor(), Options{Resolver: resolver})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(rootField("image")))
 }
 
 func TestCompareRefMissingResolver(t *testing.T) {
-	_, err := Compare(value.StringValue("old"), value.StringValue("new"), types.Ref("example.Name").Type(), Options{})
+	_, err := Compare(value.StringValue("old"), value.StringValue("new"), types.Ref("example.Name").Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrUnresolvedRef)
 	requireErrorReason(t, err, ErrorReasonUnresolvedRef)
@@ -56,7 +56,7 @@ func TestCompareRefUnresolved(t *testing.T) {
 	_, err := Compare(
 		value.StringValue("old"),
 		value.StringValue("new"),
-		types.Ref("example.Missing").Type(),
+		types.Ref("example.Missing").Descriptor(),
 		Options{Resolver: testResolver{}},
 	)
 
@@ -71,7 +71,7 @@ func TestCompareRefCycle(t *testing.T) {
 		"example.B": types.Define("example.B", types.Ref("example.A")),
 	}
 
-	_, err := Compare(value.StringValue("old"), value.StringValue("new"), types.Ref("example.A").Type(), Options{Resolver: resolver})
+	_, err := Compare(value.StringValue("old"), value.StringValue("new"), types.Ref("example.A").Descriptor(), Options{Resolver: resolver})
 
 	requireErrorIs(t, err, ErrReferenceCycle)
 	requireErrorReason(t, err, ErrorReasonReferenceCycle)
@@ -83,7 +83,7 @@ func TestCompareRefDirectCycle(t *testing.T) {
 		"example.A": types.Define("example.A", types.Ref("example.A")),
 	}
 
-	_, err := Compare(value.StringValue("old"), value.StringValue("new"), types.Ref("example.A").Type(), Options{Resolver: resolver})
+	_, err := Compare(value.StringValue("old"), value.StringValue("new"), types.Ref("example.A").Descriptor(), Options{Resolver: resolver})
 
 	requireErrorIs(t, err, ErrReferenceCycle)
 	requireErrorReason(t, err, ErrorReasonReferenceCycle)
@@ -97,7 +97,7 @@ func TestCompareRefIndirectCycle(t *testing.T) {
 		"example.C": types.Define("example.C", types.Ref("example.A")),
 	}
 
-	_, err := Compare(value.StringValue("old"), value.StringValue("new"), types.Ref("example.A").Type(), Options{Resolver: resolver})
+	_, err := Compare(value.StringValue("old"), value.StringValue("new"), types.Ref("example.A").Descriptor(), Options{Resolver: resolver})
 
 	requireErrorIs(t, err, ErrReferenceCycle)
 	requireErrorReason(t, err, ErrorReasonReferenceCycle)
@@ -113,7 +113,7 @@ func TestCompareRefMaxDepth(t *testing.T) {
 	_, err := Compare(
 		value.StringValue("old"),
 		value.StringValue("new"),
-		types.Ref("example.A").Type(),
+		types.Ref("example.A").Descriptor(),
 		Options{Resolver: resolver, MaxDepth: 1},
 	)
 
@@ -127,7 +127,7 @@ func TestCompareAtomicListOfRefs(t *testing.T) {
 	resolver := testResolver{
 		"example.Name": types.Define("example.Name", types.String()),
 	}
-	descriptor := types.ListOf(types.Ref("example.Name")).Atomic().Type()
+	descriptor := types.ListOf(types.Ref("example.Name")).Atomic().Descriptor()
 
 	got, err := CompareAt(
 		path,

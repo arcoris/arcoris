@@ -20,8 +20,8 @@ import (
 )
 
 // validateNull applies descriptor nullability rules to an explicit null value.
-func (v *validator) validateNull(path fieldpath.Path, descriptor types.Type) {
-	if descriptor.Code() == types.TypeNull || descriptor.Nullable() {
+func (v *validator) validateNull(path fieldpath.Path, descriptor types.Descriptor) {
+	if descriptor.Code() == types.DescriptorNull || descriptor.Nullable() {
 		return
 	}
 

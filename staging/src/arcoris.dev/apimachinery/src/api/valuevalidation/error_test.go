@@ -24,7 +24,7 @@ import (
 )
 
 func TestErrorIsSentinel(t *testing.T) {
-	err := valuevalidation.Validate(value.StringValue("x"), types.Int64().Type(), valuevalidation.Options{})
+	err := valuevalidation.Validate(value.StringValue("x"), types.Int64().Descriptor(), valuevalidation.Options{})
 
 	if !errors.Is(err, valuevalidation.ErrKindMismatch) {
 		t.Fatalf("errors.Is(ErrKindMismatch) = false")
@@ -32,7 +32,7 @@ func TestErrorIsSentinel(t *testing.T) {
 }
 
 func TestErrorAsValueValidationError(t *testing.T) {
-	err := valuevalidation.Validate(value.StringValue("x"), types.Int64().Type(), valuevalidation.Options{})
+	err := valuevalidation.Validate(value.StringValue("x"), types.Int64().Descriptor(), valuevalidation.Options{})
 
 	var validationError *valuevalidation.Error
 	if !errors.As(err, &validationError) {

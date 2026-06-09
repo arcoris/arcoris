@@ -17,10 +17,15 @@ package types
 import "testing"
 
 func TestMapViewAccessorsDetach(t *testing.T) {
-	typ := MapOf(String().Enum("alpha")).Type()
-	view, ok := typ.Map()
+	desc := MapOf(String().Enum("alpha")).Keys(String().Enum("key")).Descriptor()
+	view, ok := desc.AsMap()
 	requireEqual(t, ok, true)
-	requireEqual(t, view.Key(), MapKeyString)
+
+	key := view.Key()
+	key.string.enum[0] = "changed"
+	keyAgain := view.Key()
+	requireEqual(t, keyAgain.string.enum[0], "key")
+
 	value := view.Value()
 	value.string.enum[0] = "changed"
 	valueAgain := view.Value()
@@ -29,5 +34,6 @@ func TestMapViewAccessorsDetach(t *testing.T) {
 
 func TestMapViewZeroValueValue(t *testing.T) {
 	var view MapView
-	requireEqual(t, view.Value().Code(), TypeInvalid)
+	requireEqual(t, view.Key().Code(), DescriptorInvalid)
+	requireEqual(t, view.Value().Code(), DescriptorInvalid)
 }

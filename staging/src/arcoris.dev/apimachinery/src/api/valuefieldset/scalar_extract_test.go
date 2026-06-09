@@ -27,7 +27,7 @@ func TestExtractScalarIncludesCurrentPath(t *testing.T) {
 	got, err := ExtractAt(
 		path,
 		value.Int64Value(3),
-		types.Int64().Type(),
+		types.Int64().Descriptor(),
 		Options{},
 	)
 	requireNoError(t, err)
@@ -41,7 +41,7 @@ func TestExtractScalarMismatchReturnsError(t *testing.T) {
 	_, err := ExtractAt(
 		path,
 		value.StringValue("three"),
-		types.Int64().Type(),
+		types.Int64().Descriptor(),
 		Options{},
 	)
 
@@ -53,22 +53,22 @@ func TestExtractScalarMismatchReturnsError(t *testing.T) {
 func TestScalarDescriptorKind(t *testing.T) {
 	tests := []struct {
 		name string
-		code types.TypeCode
+		code types.DescriptorKind
 		want value.Kind
 		ok   bool
 	}{
-		{name: "bool", code: types.TypeBool, want: value.KindBool, ok: true},
-		{name: "string", code: types.TypeString, want: value.KindString, ok: true},
-		{name: "bytes", code: types.TypeBytes, want: value.KindBytes, ok: true},
-		{name: "signed integer", code: types.TypeInt64, want: value.KindInteger, ok: true},
-		{name: "unsigned integer", code: types.TypeUint64, want: value.KindInteger, ok: true},
-		{name: "float", code: types.TypeFloat64, want: value.KindFloat, ok: true},
-		{name: "decimal", code: types.TypeDecimal, want: value.KindDecimal, ok: true},
-		{name: "timestamp", code: types.TypeTimestamp, want: value.KindTimestamp, ok: true},
-		{name: "date", code: types.TypeDate, want: value.KindDate, ok: true},
-		{name: "time", code: types.TypeTime, want: value.KindTimeOfDay, ok: true},
-		{name: "duration", code: types.TypeDuration, want: value.KindDuration, ok: true},
-		{name: "object", code: types.TypeObject, want: value.KindInvalid, ok: false},
+		{name: "bool", code: types.DescriptorBool, want: value.KindBool, ok: true},
+		{name: "string", code: types.DescriptorString, want: value.KindString, ok: true},
+		{name: "bytes", code: types.DescriptorBytes, want: value.KindBytes, ok: true},
+		{name: "signed integer", code: types.DescriptorInt64, want: value.KindInteger, ok: true},
+		{name: "unsigned integer", code: types.DescriptorUint64, want: value.KindInteger, ok: true},
+		{name: "float", code: types.DescriptorFloat64, want: value.KindFloat, ok: true},
+		{name: "decimal", code: types.DescriptorDecimal, want: value.KindDecimal, ok: true},
+		{name: "timestamp", code: types.DescriptorTimestamp, want: value.KindTimestamp, ok: true},
+		{name: "date", code: types.DescriptorDate, want: value.KindDate, ok: true},
+		{name: "time", code: types.DescriptorTime, want: value.KindTimeOfDay, ok: true},
+		{name: "duration", code: types.DescriptorDuration, want: value.KindDuration, ok: true},
+		{name: "object", code: types.DescriptorObject, want: value.KindInvalid, ok: false},
 	}
 
 	for _, tt := range tests {

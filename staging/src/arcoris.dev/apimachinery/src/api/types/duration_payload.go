@@ -14,7 +14,7 @@
 
 package types
 
-// durationPayload stores TypeDuration constraints.
+// durationPayload stores DescriptorDuration constraints.
 type durationPayload struct {
 	// Reserved for future duration constraints.
 }
@@ -24,7 +24,7 @@ func cloneDurationPayload(p durationPayload) durationPayload {
 	return p
 }
 
-// emptyDurationPayload reports whether p has no configured TypeDuration state.
+// emptyDurationPayload reports whether p has no configured DescriptorDuration state.
 func emptyDurationPayload(p durationPayload) bool {
 	return true
 }

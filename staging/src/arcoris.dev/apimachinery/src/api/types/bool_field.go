@@ -14,15 +14,15 @@
 
 package types
 
-// BoolField builds object fields whose value type is boolean.
+// BoolField builds object fields whose value descriptor is boolean.
 //
-// The wrapper carries field metadata separately from the boolean type
+// The wrapper carries field metadata separately from the boolean descriptor
 // descriptor so presence, description, and value shape remain distinct.
 type BoolField struct {
 	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
-	// typ stores the typed descriptor builder for this field value.
-	typ BoolType
+	// descriptor stores the typed descriptor builder for this field value.
+	descriptor BoolDescriptor
 }
 
 // Required marks the field key as required.
@@ -48,14 +48,14 @@ func (f BoolField) Description(text string) BoolField {
 
 // Nullable admits null in addition to boolean values.
 func (f BoolField) Nullable() BoolField {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f BoolField) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks BoolField as a sealed FieldExpr implementation.

@@ -21,11 +21,11 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// validateRef resolves a TypeRef and validates the value at the same semantic path.
+// validateRef resolves a DescriptorRef and validates the value at the same semantic path.
 func (v *validator) validateRef(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) {
 	name, resolved, err := v.refs.Resolve(path, descriptor, depth)
@@ -40,7 +40,7 @@ func (v *validator) validateRef(
 	v.validate(path, val, resolved, depth+1)
 }
 
-// addRefError maps shared TypeRef traversal failures into validation diagnostics.
+// addRefError maps shared DescriptorRef traversal failures into validation diagnostics.
 func (v *validator) addRefError(err error) {
 	refError, ok := typeref.AsError(err)
 	if !ok {
@@ -48,7 +48,7 @@ func (v *validator) addRefError(err error) {
 			fieldpath.RootPath(),
 			ErrInvalidDescriptor,
 			ErrorReasonInvalidDescriptor,
-			"TypeRef traversal failed",
+			"DescriptorRef traversal failed",
 			err,
 		)
 		return

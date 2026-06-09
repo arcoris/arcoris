@@ -20,5 +20,5 @@ func TestDateFieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").Date().Required().Field()
 
 	requireEqual(t, field.Name(), FieldName("value"))
-	requireEqual(t, field.Type().Code(), TypeDate)
+	requireEqual(t, field.Descriptor().Code(), DescriptorDate)
 }

@@ -27,17 +27,17 @@ var (
 	// ErrInvalidDescriptor classifies malformed descriptors encountered defensively.
 	ErrInvalidDescriptor = errors.New("invalid descriptor")
 
-	// ErrKindMismatch classifies value kind / descriptor type mismatches.
+	// ErrKindMismatch classifies value kind / descriptor kind mismatches.
 	ErrKindMismatch = errors.New("value kind mismatch")
 
 	// ErrUnknownField classifies actual object members rejected by descriptor policy.
 	ErrUnknownField = errors.New("unknown field")
 
-	// ErrUnresolvedRef classifies TypeRef descriptors that cannot resolve.
-	ErrUnresolvedRef = errors.New("unresolved type reference")
+	// ErrUnresolvedRef classifies DescriptorRef descriptors that cannot resolve.
+	ErrUnresolvedRef = errors.New("unresolved descriptor reference")
 
-	// ErrReferenceCycle classifies recursive or too-deep TypeRef traversal.
-	ErrReferenceCycle = errors.New("type reference cycle")
+	// ErrReferenceCycle classifies recursive or too-deep DescriptorRef traversal.
+	ErrReferenceCycle = errors.New("descriptor reference cycle")
 
 	// ErrInvalidListKey classifies ListMap key extraction failures.
 	ErrInvalidListKey = errors.New("invalid list map key")

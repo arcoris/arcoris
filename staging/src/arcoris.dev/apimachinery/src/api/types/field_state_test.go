@@ -18,7 +18,7 @@ import "testing"
 
 func TestFieldStateBuildsDescriptor(t *testing.T) {
 	state := fieldState{name: "name"}.withRequired().withDescription("text")
-	field := state.fieldWithType(String().MinLen(1).Type())
+	field := state.fieldWithType(String().MinBytes(1).Descriptor())
 
 	requireEqual(t, field.Name(), FieldName("name"))
 	requireEqual(t, field.IsRequired(), true)

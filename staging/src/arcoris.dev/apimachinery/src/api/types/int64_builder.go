@@ -14,7 +14,7 @@
 
 package types
 
-// Int64 starts a field descriptor whose value type is a fixed-width int64.
+// Int64 starts a field descriptor whose value descriptor is a fixed-width int64.
 //
 // The descriptor records portable int64 constraints. It never uses Go's
 // platform-sized int contract, so generated APIs and remote descriptors remain
@@ -30,5 +30,5 @@ package types
 //		Enum(1, 10, 100).
 //		Description("Maximum concurrent work.")
 func (b FieldBuilder) Int64() Int64Field {
-	return Int64Field{field: b.state(), typ: Int64()}
+	return Int64Field{field: b.state(), descriptor: Int64()}
 }

@@ -14,11 +14,11 @@
 
 package types
 
-// validateUint16 checks TypeUint16 bounds, enum uniqueness, and enum membership.
-func validateUint16(t Type, path string) error {
-	if err := validateRangeRule(path, "uint16", t.uint16.min, t.uint16.max); err != nil {
+// validateUint16 checks DescriptorUint16 bounds, enum uniqueness, and enum membership.
+func validateUint16(desc Descriptor, path string) error {
+	if err := validateRangeRule(path, "uint16", desc.uint16.min, desc.uint16.max); err != nil {
 		return err
 	}
 
-	return validateEnumRules(path, "uint16", t.uint16.enum, t.uint16.min, t.uint16.max)
+	return validateEnumRules(path, "uint16", desc.uint16.enum, desc.uint16.min, desc.uint16.max)
 }

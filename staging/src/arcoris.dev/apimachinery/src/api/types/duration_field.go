@@ -14,7 +14,7 @@
 
 package types
 
-// DurationField builds object fields whose value type is duration.
+// DurationField builds object fields whose value descriptor is duration.
 //
 // The wrapper keeps object-field metadata beside the duration builder,
 // allowing fluent field declarations without making fields reusable unnamed
@@ -22,8 +22,8 @@ package types
 type DurationField struct {
 	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
-	// typ stores the typed descriptor builder for this field value.
-	typ DurationType
+	// descriptor stores the typed descriptor builder for this field value.
+	descriptor DurationDescriptor
 }
 
 // Required marks the field key as required.
@@ -49,14 +49,14 @@ func (f DurationField) Description(text string) DurationField {
 
 // Nullable admits null in addition to duration values.
 func (f DurationField) Nullable() DurationField {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f DurationField) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks DurationField as a sealed FieldExpr implementation.

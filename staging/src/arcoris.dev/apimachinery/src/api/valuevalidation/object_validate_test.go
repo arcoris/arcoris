@@ -25,7 +25,7 @@ import (
 func TestValidateObjectRequiredFields(t *testing.T) {
 	shape := types.Object(
 		types.Field("name").String().Required(),
-	).Type()
+	).Descriptor()
 
 	err := valuevalidation.Validate(
 		mustObject(t),
@@ -45,7 +45,7 @@ func TestValidateObjectRequiredFields(t *testing.T) {
 func TestValidateObjectOptionalFields(t *testing.T) {
 	shape := types.Object(
 		types.Field("name").String().Optional(),
-	).Type()
+	).Descriptor()
 
 	requireNoError(
 		t,
@@ -61,7 +61,7 @@ func TestValidateObjectNullability(t *testing.T) {
 	shape := types.Object(
 		types.Field("name").String().Required(),
 		types.Field("note").String().Nullable().Optional(),
-	).Type()
+	).Descriptor()
 
 	payload := mustObject(
 		t,
@@ -82,7 +82,7 @@ func TestValidateObjectNullability(t *testing.T) {
 func TestValidateObjectUnknownFieldRejected(t *testing.T) {
 	shape := types.Object(
 		types.Field("name").String().Required(),
-	).UnknownFields(types.UnknownReject).Type()
+	).UnknownFields(types.UnknownReject).Descriptor()
 
 	payload := mustObject(
 		t,
@@ -110,7 +110,7 @@ func TestValidateObjectNestedPath(t *testing.T) {
 		types.Field("spec").Object(
 			types.Field("replicas").Int32().Required(),
 		).Required(),
-	).Type()
+	).Descriptor()
 
 	payload := mustObject(
 		t,

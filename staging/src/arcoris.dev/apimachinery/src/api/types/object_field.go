@@ -14,10 +14,10 @@
 
 package types
 
-// ObjectField builds object fields whose value type is another object.
+// ObjectField builds object fields whose value descriptor is another object.
 type ObjectField struct {
-	field fieldState
-	typ   ObjectType
+	field      fieldState
+	descriptor ObjectDescriptor
 }
 
 // Required marks the field key as required.
@@ -43,21 +43,21 @@ func (f ObjectField) Description(text string) ObjectField {
 
 // Nullable admits null in addition to object values.
 func (f ObjectField) Nullable() ObjectField {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
 // UnknownFields records the structural policy for undeclared nested fields.
 func (f ObjectField) UnknownFields(policy UnknownFieldPolicy) ObjectField {
-	f.typ = f.typ.UnknownFields(policy)
+	f.descriptor = f.descriptor.UnknownFields(policy)
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f ObjectField) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks ObjectField as a sealed FieldExpr implementation.

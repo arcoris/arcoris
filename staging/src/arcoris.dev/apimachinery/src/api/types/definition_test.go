@@ -16,7 +16,13 @@ package types
 
 import "testing"
 
-func TestMapKeyTypeValidity(t *testing.T) {
-	requireEqual(t, MapKeyString.IsValid(), true)
-	requireEqual(t, MapKeyType(99).IsValid(), false)
+func TestDefinitionAccessorsAndDetach(t *testing.T) {
+	def := Define("example.Name", String().Enum("alpha")).WithDescription("Name")
+	desc := def.Descriptor()
+	desc.string.enum[0] = "changed"
+
+	requireEqual(t, def.Name(), TypeName("example.Name"))
+	requireEqual(t, def.Description(), "Name")
+	view, _ := def.Descriptor().AsString()
+	requireEqual(t, view.Enum()[0], "alpha")
 }

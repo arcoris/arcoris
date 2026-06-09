@@ -14,19 +14,19 @@
 
 package types
 
-// DecimalView exposes read-only TypeDecimal payload data.
+// DecimalView exposes read-only DescriptorDecimal payload data.
 type DecimalView struct {
 	// payload is a detached copy of the decimal descriptor payload.
 	payload decimalPayload
 }
 
-// Decimal returns a decimal view when t is TypeDecimal.
-func (t Type) Decimal() (DecimalView, bool) {
-	if t.code != TypeDecimal {
+// AsDecimal returns a decimal view when desc is DescriptorDecimal.
+func (desc Descriptor) AsDecimal() (DecimalView, bool) {
+	if desc.code != DescriptorDecimal {
 		return DecimalView{}, false
 	}
 
-	return DecimalView{payload: cloneDecimalPayload(t.decimal)}, true
+	return DecimalView{payload: cloneDecimalPayload(desc.decimal)}, true
 }
 
 // Precision returns the decimal precision rule.

@@ -17,10 +17,10 @@ package types
 import "testing"
 
 func TestBytesPayloadCloneAndEmpty(t *testing.T) {
-	payload := bytesPayload{minLen: limit[int]{value: 1, set: true}}
+	payload := bytesPayload{minBytes: limit[int]{value: 1, set: true}}
 	cloned := cloneBytesPayload(payload)
 
-	requireEqual(t, cloned.minLen.value, 1)
+	requireEqual(t, cloned.minBytes.value, 1)
 	requireEqual(t, emptyBytesPayload(bytesPayload{}), true)
 	requireEqual(t, emptyBytesPayload(payload), false)
 }

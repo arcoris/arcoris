@@ -24,7 +24,7 @@ import "arcoris.dev/apimachinery/api/types"
 // cannot leak partial state into the owner catalog.
 func (c *Catalog) cloneLocked() *Catalog {
 	out := &Catalog{
-		defs:  make(map[types.TypeName]types.TypeDefinition, len(c.defs)),
+		defs:  make(map[types.TypeName]types.Definition, len(c.defs)),
 		order: append([]types.TypeName(nil), c.order...),
 	}
 	for name, def := range c.defs {
@@ -37,9 +37,9 @@ func (c *Catalog) cloneLocked() *Catalog {
 //
 // The helper owns lazy map initialization and registration-order maintenance so
 // write paths cannot accidentally update one without the other.
-func (c *Catalog) storeLocked(def types.TypeDefinition) {
+func (c *Catalog) storeLocked(def types.Definition) {
 	if c.defs == nil {
-		c.defs = make(map[types.TypeName]types.TypeDefinition)
+		c.defs = make(map[types.TypeName]types.Definition)
 	}
 	c.defs[def.Name()] = def
 	c.order = append(c.order, def.Name())

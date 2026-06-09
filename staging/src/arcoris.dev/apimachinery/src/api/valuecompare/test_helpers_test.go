@@ -24,9 +24,9 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-type testResolver map[types.TypeName]types.TypeDefinition
+type testResolver map[types.TypeName]types.Definition
 
-func (r testResolver) ResolveType(name types.TypeName) (types.TypeDefinition, bool) {
+func (r testResolver) Resolve(name types.TypeName) (types.Definition, bool) {
 	definition, ok := r[name]
 	return definition, ok
 }
@@ -201,24 +201,24 @@ func routeSelector() fieldpath.Selector {
 	)
 }
 
-func conditionDescriptor() types.Type {
-	return conditionExpr().Type()
+func conditionDescriptor() types.Descriptor {
+	return conditionExpr().Descriptor()
 }
 
-func conditionExpr() types.ObjectType {
+func conditionExpr() types.ObjectDescriptor {
 	return types.Object(
 		types.Field("type").String().Required(),
 		types.Field("status").String().Required(),
 	)
 }
 
-func conditionsDescriptor() types.Type {
+func conditionsDescriptor() types.Descriptor {
 	return types.ListOf(
 		types.Object(
 			types.Field("type").String().Required(),
 			types.Field("status").String().Required(),
 		),
-	).Map("type").Type()
+	).Map("type").Descriptor()
 }
 
 func conditionValue(conditionType string, status string) value.Value {
@@ -237,13 +237,13 @@ func valueObject(fields ...string) value.Value {
 	return value.MustObjectValue(members...)
 }
 
-func typesObject(fields ...string) types.Type {
+func typesObject(fields ...string) types.Descriptor {
 	exprs := make([]types.FieldExpr, 0, len(fields))
 	for _, name := range fields {
 		exprs = append(exprs, types.Field(name).String().Optional())
 	}
 
-	return types.Object(exprs...).Type()
+	return types.Object(exprs...).Descriptor()
 }
 
 func imageContainer(image string) value.Value {

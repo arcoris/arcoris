@@ -34,7 +34,7 @@ func TestMergerPreservesUnselectedBase(t *testing.T) {
 		root().Field("name"),
 		valuepresence.Present(str("old")),
 		valuepresence.Present(str("new")),
-		types.String().Type(),
+		types.String().Descriptor(),
 		pathSet(root().Field("other")),
 		0,
 	)

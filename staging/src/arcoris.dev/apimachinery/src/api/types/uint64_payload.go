@@ -14,11 +14,11 @@
 
 package types
 
-// uint64Payload stores TypeUint64 constraints in their exact native width.
+// uint64Payload stores DescriptorUint64 constraints in their exact native width.
 type uint64Payload struct {
-	// min stores the inclusive lower bound for TypeUint64.
+	// min stores the inclusive lower bound for DescriptorUint64.
 	min limit[uint64]
-	// max stores the inclusive upper bound for TypeUint64.
+	// max stores the inclusive upper bound for DescriptorUint64.
 	max limit[uint64]
 	// enum stores accepted uint64 literals in declaration order.
 	enum []uint64
@@ -31,7 +31,7 @@ func cloneUint64Payload(p uint64Payload) uint64Payload {
 	return p
 }
 
-// emptyUint64Payload reports whether p has no configured TypeUint64 state.
+// emptyUint64Payload reports whether p has no configured DescriptorUint64 state.
 func emptyUint64Payload(p uint64Payload) bool {
 	return !p.min.set && !p.max.set && len(p.enum) == 0
 }

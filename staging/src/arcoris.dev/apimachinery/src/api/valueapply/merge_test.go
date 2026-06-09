@@ -45,7 +45,7 @@ func TestApplyValueMergeErrorWrapped(t *testing.T) {
 		Owner:      owner("user"),
 		Live:       str("old"),
 		Applied:    str("new"),
-		Descriptor: types.String().Type(),
+		Descriptor: types.String().Descriptor(),
 	}
 	result := Result{MergeFields: fields(root().Field("nested"))}
 

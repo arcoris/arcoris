@@ -33,7 +33,7 @@ type SurfaceValidator struct {
 // preserved.
 func (v SurfaceValidator) ValidateSurface(
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	resolver types.Resolver,
 ) error {
 	opts := v.Options

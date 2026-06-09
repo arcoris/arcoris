@@ -14,14 +14,14 @@
 
 package types
 
-// BytesType builds byte-sequence descriptors with length constraints.
+// BytesDescriptor builds byte-sequence descriptors with length constraints.
 //
-// BytesType records binary payload structure and length constraints. It
+// BytesDescriptor records binary payload structure and length constraints. It
 // deliberately does not choose a wire encoding such as base64 or raw bytes;
 // codecs own that mapping.
-type BytesType struct {
+type BytesDescriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
+	header descriptorHeader
 	// payload stores the exact byte-sequence constraints under construction.
 	payload bytesPayload
 }
@@ -30,41 +30,41 @@ type BytesType struct {
 //
 // Typical reusable declaration:
 //
-//	payloadType := Bytes()
-//	payloadType = payloadType.MinLen(1)
-//	payloadType = payloadType.MaxLen(4096)
-func Bytes() BytesType {
-	return BytesType{header: newHeader(TypeBytes)}
+//	payloadType := Bytes().
+//		MinBytes(1).
+//		MaxBytes(4096)
+func Bytes() BytesDescriptor {
+	return BytesDescriptor{header: newHeader(DescriptorBytes)}
 }
 
 // Nullable returns a bytes descriptor that admits null values.
-func (t BytesType) Nullable() BytesType {
-	t.header = t.header.withNullable()
+func (desc BytesDescriptor) Nullable() BytesDescriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
-// MinLen sets the inclusive minimum byte length.
-func (t BytesType) MinLen(n int) BytesType {
-	t.payload.minLen = limit[int]{value: n, set: true}
+// MinBytes sets the inclusive minimum byte length.
+func (desc BytesDescriptor) MinBytes(n int) BytesDescriptor {
+	desc.payload.minBytes = limit[int]{value: n, set: true}
 
-	return t
+	return desc
 }
 
-// MaxLen sets the inclusive maximum byte length.
-func (t BytesType) MaxLen(n int) BytesType {
-	t.payload.maxLen = limit[int]{value: n, set: true}
+// MaxBytes sets the inclusive maximum byte length.
+func (desc BytesDescriptor) MaxBytes(n int) BytesDescriptor {
+	desc.payload.maxBytes = limit[int]{value: n, set: true}
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t BytesType) Type() Type {
-	out := typeFromHeader(t.header)
-	out.bytes = cloneBytesPayload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc BytesDescriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.bytes = cloneBytesPayload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks BytesType as a sealed TypeExpr implementation.
-func (t BytesType) typeExpr() {}
+// descriptorExpr marks BytesDescriptor as a sealed DescriptorExpr implementation.
+func (desc BytesDescriptor) descriptorExpr() {}

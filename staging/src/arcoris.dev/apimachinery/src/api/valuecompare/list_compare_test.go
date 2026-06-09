@@ -21,7 +21,7 @@ import (
 )
 
 func TestCompareAtomicListSameIsEmpty(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Atomic().Type()
+	descriptor := types.ListOf(types.String()).Atomic().Descriptor()
 	oldValue := value.MustListValue(value.StringValue("one"))
 
 	got, err := CompareAt(rootField("args"), oldValue, oldValue, descriptor, Options{})
@@ -31,7 +31,7 @@ func TestCompareAtomicListSameIsEmpty(t *testing.T) {
 
 func TestCompareAtomicListChangedItemIsModifiedAtListPath(t *testing.T) {
 	path := rootField("args")
-	descriptor := types.ListOf(types.String()).Atomic().Type()
+	descriptor := types.ListOf(types.String()).Atomic().Descriptor()
 
 	got, err := CompareAt(
 		path,
@@ -46,7 +46,7 @@ func TestCompareAtomicListChangedItemIsModifiedAtListPath(t *testing.T) {
 
 func TestCompareAtomicListAddedItemIsModifiedAtListPath(t *testing.T) {
 	path := rootField("args")
-	descriptor := types.ListOf(types.String()).Atomic().Type()
+	descriptor := types.ListOf(types.String()).Atomic().Descriptor()
 
 	got, err := CompareAt(path, value.MustListValue(), value.MustListValue(value.StringValue("one")), descriptor, Options{})
 	requireNoError(t, err)
@@ -55,7 +55,7 @@ func TestCompareAtomicListAddedItemIsModifiedAtListPath(t *testing.T) {
 
 func TestCompareAtomicListRemovedItemIsModifiedAtListPath(t *testing.T) {
 	path := rootField("args")
-	descriptor := types.ListOf(types.String()).Atomic().Type()
+	descriptor := types.ListOf(types.String()).Atomic().Descriptor()
 
 	got, err := CompareAt(path, value.MustListValue(value.StringValue("one")), value.MustListValue(), descriptor, Options{})
 	requireNoError(t, err)
@@ -64,7 +64,7 @@ func TestCompareAtomicListRemovedItemIsModifiedAtListPath(t *testing.T) {
 
 func TestCompareAtomicListNeverEmitsIndexPaths(t *testing.T) {
 	path := rootField("args")
-	descriptor := types.ListOf(types.String()).Atomic().Type()
+	descriptor := types.ListOf(types.String()).Atomic().Descriptor()
 
 	got, err := CompareAt(
 		path,
@@ -79,7 +79,7 @@ func TestCompareAtomicListNeverEmitsIndexPaths(t *testing.T) {
 }
 
 func TestCompareSetListSameIsEmpty(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Set().Type()
+	descriptor := types.ListOf(types.String()).Set().Descriptor()
 	oldValue := value.MustListValue(value.StringValue("one"))
 
 	got, err := CompareAt(rootField("tags"), oldValue, oldValue, descriptor, Options{})
@@ -89,7 +89,7 @@ func TestCompareSetListSameIsEmpty(t *testing.T) {
 
 func TestCompareSetListDifferentOrderIsModifiedAtListPathForNow(t *testing.T) {
 	path := rootField("tags")
-	descriptor := types.ListOf(types.String()).Set().Type()
+	descriptor := types.ListOf(types.String()).Set().Descriptor()
 
 	got, err := CompareAt(
 		path,
@@ -104,7 +104,7 @@ func TestCompareSetListDifferentOrderIsModifiedAtListPathForNow(t *testing.T) {
 
 func TestCompareSetListNeverEmitsIndexPaths(t *testing.T) {
 	path := rootField("tags")
-	descriptor := types.ListOf(types.String()).Set().Type()
+	descriptor := types.ListOf(types.String()).Set().Descriptor()
 
 	got, err := CompareAt(path, value.MustListValue(), value.MustListValue(value.StringValue("a")), descriptor, Options{})
 	requireNoError(t, err)
@@ -114,7 +114,7 @@ func TestCompareSetListNeverEmitsIndexPaths(t *testing.T) {
 
 func TestCompareSetListAddedItemIsModifiedAtListPath(t *testing.T) {
 	path := rootField("tags")
-	descriptor := types.ListOf(types.String()).Set().Type()
+	descriptor := types.ListOf(types.String()).Set().Descriptor()
 
 	got, err := CompareAt(path, value.MustListValue(), value.MustListValue(value.StringValue("a")), descriptor, Options{})
 	requireNoError(t, err)
@@ -122,7 +122,7 @@ func TestCompareSetListAddedItemIsModifiedAtListPath(t *testing.T) {
 }
 
 func TestCompareOrderedListSameIsEmpty(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 	oldValue := value.MustListValue(value.StringValue("one"))
 
 	got, err := CompareAt(rootField("args"), oldValue, oldValue, descriptor, Options{})
@@ -132,7 +132,7 @@ func TestCompareOrderedListSameIsEmpty(t *testing.T) {
 
 func TestCompareOrderedListModifiedItem(t *testing.T) {
 	path := rootField("args")
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := CompareAt(
 		path,
@@ -147,7 +147,7 @@ func TestCompareOrderedListModifiedItem(t *testing.T) {
 
 func TestCompareOrderedListModifiedItemUsesIndexPath(t *testing.T) {
 	path := rootField("args")
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := CompareAt(
 		path,
@@ -162,7 +162,7 @@ func TestCompareOrderedListModifiedItemUsesIndexPath(t *testing.T) {
 
 func TestCompareOrderedListAddedItem(t *testing.T) {
 	path := rootField("args")
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := CompareAt(path, value.MustListValue(value.StringValue("one")), value.MustListValue(value.StringValue("one"), value.StringValue("two")), descriptor, Options{})
 	requireNoError(t, err)
@@ -171,7 +171,7 @@ func TestCompareOrderedListAddedItem(t *testing.T) {
 
 func TestCompareOrderedListAddedItemUsesIndexPath(t *testing.T) {
 	path := rootField("args")
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := CompareAt(path, value.MustListValue(value.StringValue("one")), value.MustListValue(value.StringValue("one"), value.StringValue("two")), descriptor, Options{})
 	requireNoError(t, err)
@@ -180,7 +180,7 @@ func TestCompareOrderedListAddedItemUsesIndexPath(t *testing.T) {
 
 func TestCompareOrderedListRemovedItem(t *testing.T) {
 	path := rootField("args")
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := CompareAt(path, value.MustListValue(value.StringValue("one"), value.StringValue("two")), value.MustListValue(value.StringValue("one")), descriptor, Options{})
 	requireNoError(t, err)
@@ -189,7 +189,7 @@ func TestCompareOrderedListRemovedItem(t *testing.T) {
 
 func TestCompareOrderedListRemovedItemUsesIndexPath(t *testing.T) {
 	path := rootField("args")
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := CompareAt(path, value.MustListValue(value.StringValue("one"), value.StringValue("two")), value.MustListValue(value.StringValue("one")), descriptor, Options{})
 	requireNoError(t, err)
@@ -203,7 +203,7 @@ func TestCompareOrderedListObjectItemModifiedField(t *testing.T) {
 			types.Field("name").String().Optional(),
 			types.Field("image").String().Optional(),
 		),
-	).Ordered().Type()
+	).Ordered().Descriptor()
 
 	got, err := CompareAt(path, value.MustListValue(imageContainer("v1")), value.MustListValue(imageContainer("v2")), descriptor, Options{})
 	requireNoError(t, err)
@@ -217,7 +217,7 @@ func TestCompareOrderedListObjectItemModifiedFieldUsesIndexedFieldPath(t *testin
 			types.Field("name").String().Optional(),
 			types.Field("image").String().Optional(),
 		),
-	).Ordered().Type()
+	).Ordered().Descriptor()
 
 	got, err := CompareAt(path, value.MustListValue(imageContainer("v1")), value.MustListValue(imageContainer("v2")), descriptor, Options{})
 	requireNoError(t, err)
@@ -228,7 +228,7 @@ func TestCompareOrderedListObjectItemAddedField(t *testing.T) {
 	path := rootField("containers")
 	descriptor := types.ListOf(
 		types.Object(types.Field("image").String().Optional()),
-	).Ordered().Type()
+	).Ordered().Descriptor()
 
 	got, err := CompareAt(path, value.MustListValue(valueObject()), value.MustListValue(valueObject("image", "v1")), descriptor, Options{})
 	requireNoError(t, err)
@@ -239,14 +239,14 @@ func TestCompareOrderedListObjectItemRemovedField(t *testing.T) {
 	path := rootField("containers")
 	descriptor := types.ListOf(
 		types.Object(types.Field("image").String().Optional()),
-	).Ordered().Type()
+	).Ordered().Descriptor()
 
 	got, err := CompareAt(path, value.MustListValue(valueObject("image", "v1")), value.MustListValue(valueObject()), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, paths(path.Index(0).Field("image")), nil)
 }
 func TestEqualListOrderedDifferentLengthIsFalse(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := newComparer(Options{}).equalList(
 		rootField("args"),
@@ -283,7 +283,7 @@ func TestEqualListByIndexSameItemsIsTrue(t *testing.T) {
 	oldList, _ := value.MustListValue(value.StringValue("one")).List()
 	newList, _ := value.MustListValue(value.StringValue("one")).List()
 
-	got, err := newComparer(Options{}).equalListByIndex(rootField("args"), oldList, newList, types.String().Type(), 0)
+	got, err := newComparer(Options{}).equalListByIndex(rootField("args"), oldList, newList, types.String().Descriptor(), 0)
 	requireNoError(t, err)
 
 	if !got {
@@ -295,7 +295,7 @@ func TestEqualListByIndexInvalidElementDescriptorReturnsError(t *testing.T) {
 	oldList, _ := value.MustListValue(value.StringValue("one")).List()
 	newList, _ := value.MustListValue(value.StringValue("one")).List()
 
-	_, err := newComparer(Options{}).equalListByIndex(rootField("args"), oldList, newList, types.Type{}, 0)
+	_, err := newComparer(Options{}).equalListByIndex(rootField("args"), oldList, newList, types.Descriptor{}, 0)
 
 	requireErrorIs(t, err, ErrInvalidDescriptor)
 }

@@ -21,18 +21,18 @@ import (
 )
 
 func TestMergeRefScalar(t *testing.T) {
-	resolver := resolverFunc(func(name types.TypeName) (types.TypeDefinition, bool) {
+	resolver := resolverFunc(func(name types.TypeName) (types.Definition, bool) {
 		if name == "example.Name" {
 			return types.Define("example.Name", types.String()), true
 		}
 
-		return types.TypeDefinition{}, false
+		return types.Definition{}, false
 	})
 
 	got, err := Merge(
 		str("old"),
 		str("new"),
-		types.Ref("example.Name").Type(),
+		types.Ref("example.Name").Descriptor(),
 		pathSet(root()),
 		Options{Resolver: resolver},
 	)
@@ -47,7 +47,7 @@ func TestMergeRefMissingResolver(t *testing.T) {
 	_, err := Merge(
 		str("old"),
 		str("new"),
-		types.Ref("example.Name").Type(),
+		types.Ref("example.Name").Descriptor(),
 		pathSet(root()),
 		Options{},
 	)
@@ -56,18 +56,18 @@ func TestMergeRefMissingResolver(t *testing.T) {
 }
 
 func TestMergeRefCycle(t *testing.T) {
-	resolver := resolverFunc(func(name types.TypeName) (types.TypeDefinition, bool) {
+	resolver := resolverFunc(func(name types.TypeName) (types.Definition, bool) {
 		if name == "example.A" {
 			return types.Define("example.A", types.Ref("example.A")), true
 		}
 
-		return types.TypeDefinition{}, false
+		return types.Definition{}, false
 	})
 
 	_, err := Merge(
 		str("old"),
 		str("new"),
-		types.Ref("example.A").Type(),
+		types.Ref("example.A").Descriptor(),
 		pathSet(root()),
 		Options{Resolver: resolver},
 	)

@@ -24,7 +24,7 @@ import (
 // New creates an owner-created resource catalog.
 //
 // The resolver is used only during registration to validate resource surface
-// TypeRef roots. It is not mutable after construction because changing it would
+// DescriptorRef roots. It is not mutable after construction because changing it would
 // weaken the catalog's registration-time invariants.
 func New(resolver types.Resolver) *Catalog {
 	return &Catalog{resolver: resolver}
@@ -61,7 +61,7 @@ func (c *Catalog) RegisterMany(defs ...resource.Definition) error {
 		candidate.storeLocked(def)
 	}
 	for i, def := range defs {
-		if err := resource.ValidateDefinition(def, candidate.resolver); err != nil {
+		if err := resource.ValidateDefinitionResolved(def, candidate.resolver); err != nil {
 			return nestedCatalogError(
 				definitionPath(i),
 				ErrorReasonInvalidDefinition,

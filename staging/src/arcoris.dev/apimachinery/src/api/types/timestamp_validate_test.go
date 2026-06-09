@@ -17,5 +17,5 @@ package types
 import "testing"
 
 func TestValidateTimestampAcceptsDescriptor(t *testing.T) {
-	requireNoError(t, validateTimestamp(Timestamp().Type(), "type"))
+	requireNoError(t, validateTimestamp(Timestamp().Descriptor(), "type"))
 }

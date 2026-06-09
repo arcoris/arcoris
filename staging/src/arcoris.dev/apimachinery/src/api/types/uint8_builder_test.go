@@ -20,5 +20,5 @@ func TestUint8FieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").Uint8().Required().Field()
 
 	requireEqual(t, field.Name(), FieldName("value"))
-	requireEqual(t, field.Type().Code(), TypeUint8)
+	requireEqual(t, field.Descriptor().Code(), DescriptorUint8)
 }

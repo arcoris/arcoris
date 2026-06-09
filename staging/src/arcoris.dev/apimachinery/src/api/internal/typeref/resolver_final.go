@@ -19,23 +19,23 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
-// ResolveFinal resolves a TypeRef chain to the first non-reference descriptor.
+// ResolveFinal resolves a DescriptorRef chain to the first non-reference descriptor.
 //
 // This is for descriptor inspection paths, such as ListMap key extraction,
 // where the caller needs to know the terminal key descriptor but does not need
 // to run a full value traversal at every intermediate reference.
 func (r *Resolver) ResolveFinal(
 	path fieldpath.Path,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
-) (types.Type, error) {
-	if descriptor.Code() != types.TypeRef {
+) (types.Descriptor, error) {
+	if descriptor.Code() != types.DescriptorRef {
 		return descriptor, nil
 	}
 
 	name, resolved, err := r.Resolve(path, descriptor, depth)
 	if err != nil {
-		return types.Type{}, err
+		return types.Descriptor{}, err
 	}
 
 	leave := r.Enter(name)

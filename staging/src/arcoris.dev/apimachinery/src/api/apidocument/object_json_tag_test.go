@@ -25,25 +25,25 @@ import (
 )
 
 func TestObjectEnvelopeJSONTagsMatchAPIDocument(t *testing.T) {
-	typ := reflect.TypeOf(object.Object[value.Value, value.Value]{})
+	goType := reflect.TypeOf(object.Object[value.Value, value.Value]{})
 
-	assertJSONTagNameString(t, typ, objectGoFieldTypeMeta, jsonTagNoExplicitName)
-	assertJSONTagHasOptions(t, typ, objectGoFieldTypeMeta, jsonTagOptionInline)
+	assertJSONTagNameString(t, goType, objectGoFieldTypeMeta, jsonTagNoExplicitName)
+	assertJSONTagHasOptions(t, goType, objectGoFieldTypeMeta, jsonTagOptionInline)
 
-	assertJSONTagName(t, typ, objectGoFieldObjectMeta, apidocument.ObjectFieldMetadata)
-	assertJSONTagHasOptions(t, typ, objectGoFieldObjectMeta, jsonTagOptionOmitEmpty, jsonTagOptionOmitZero)
+	assertJSONTagName(t, goType, objectGoFieldObjectMeta, apidocument.ObjectFieldMetadata)
+	assertJSONTagHasOptions(t, goType, objectGoFieldObjectMeta, jsonTagOptionOmitEmpty, jsonTagOptionOmitZero)
 
-	assertJSONTagName(t, typ, objectGoFieldDesired, apidocument.ObjectFieldDesired)
-	assertJSONTagLacksOptions(t, typ, objectGoFieldDesired, jsonTagOptionOmitEmpty, jsonTagOptionOmitZero)
+	assertJSONTagName(t, goType, objectGoFieldDesired, apidocument.ObjectFieldDesired)
+	assertJSONTagLacksOptions(t, goType, objectGoFieldDesired, jsonTagOptionOmitEmpty, jsonTagOptionOmitZero)
 
-	assertJSONTagName(t, typ, objectGoFieldObserved, apidocument.ObjectFieldObserved)
-	assertJSONTagHasOptions(t, typ, objectGoFieldObserved, jsonTagOptionOmitEmpty)
-	assertJSONTagLacksOptions(t, typ, objectGoFieldObserved, jsonTagOptionOmitZero)
+	assertJSONTagName(t, goType, objectGoFieldObserved, apidocument.ObjectFieldObserved)
+	assertJSONTagHasOptions(t, goType, objectGoFieldObserved, jsonTagOptionOmitEmpty)
+	assertJSONTagLacksOptions(t, goType, objectGoFieldObserved, jsonTagOptionOmitZero)
 }
 
 func TestObjectEnvelopeFlattenedJSONFieldsMatchAPIDocument(t *testing.T) {
-	typ := reflect.TypeOf(object.Object[value.Value, value.Value]{})
-	got := collectFlattenedJSONFieldNames(t, typ)
+	goType := reflect.TypeOf(object.Object[value.Value, value.Value]{})
+	got := collectFlattenedJSONFieldNames(t, goType)
 	want := []string{
 		apidocument.ObjectFieldAPIVersion.String(),
 		apidocument.ObjectFieldKind.String(),

@@ -14,7 +14,7 @@
 
 package types
 
-// validateTimestamp checks TypeTimestamp payload invariants.
-func validateTimestamp(t Type, path string) error {
+// validateTimestamp checks DescriptorTimestamp payload invariants.
+func validateTimestamp(desc Descriptor, path string) error {
 	return nil
 }

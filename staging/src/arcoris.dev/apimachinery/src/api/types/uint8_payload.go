@@ -14,11 +14,11 @@
 
 package types
 
-// uint8Payload stores TypeUint8 constraints in their exact native width.
+// uint8Payload stores DescriptorUint8 constraints in their exact native width.
 type uint8Payload struct {
-	// min stores the inclusive lower bound for TypeUint8.
+	// min stores the inclusive lower bound for DescriptorUint8.
 	min limit[uint8]
-	// max stores the inclusive upper bound for TypeUint8.
+	// max stores the inclusive upper bound for DescriptorUint8.
 	max limit[uint8]
 	// enum stores accepted uint8 literals in declaration order.
 	enum []uint8
@@ -31,7 +31,7 @@ func cloneUint8Payload(p uint8Payload) uint8Payload {
 	return p
 }
 
-// emptyUint8Payload reports whether p has no configured TypeUint8 state.
+// emptyUint8Payload reports whether p has no configured DescriptorUint8 state.
 func emptyUint8Payload(p uint8Payload) bool {
 	return !p.min.set && !p.max.set && len(p.enum) == 0
 }

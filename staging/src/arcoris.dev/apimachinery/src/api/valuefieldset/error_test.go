@@ -23,13 +23,13 @@ import (
 )
 
 func TestErrorIsSentinel(t *testing.T) {
-	_, err := Extract(value.StringValue("api"), types.Int64().Type(), Options{})
+	_, err := Extract(value.StringValue("api"), types.Int64().Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrKindMismatch)
 }
 
 func TestErrorAsValueFieldSetError(t *testing.T) {
-	_, err := Extract(value.StringValue("api"), types.Int64().Type(), Options{})
+	_, err := Extract(value.StringValue("api"), types.Int64().Descriptor(), Options{})
 
 	var got *Error
 	if !errors.As(err, &got) {
@@ -46,7 +46,7 @@ func TestErrorAsValueFieldSetError(t *testing.T) {
 func TestErrorPath(t *testing.T) {
 	path := rootField("spec", "replicas")
 
-	_, err := ExtractAt(path, value.StringValue("api"), types.Int64().Type(), Options{})
+	_, err := ExtractAt(path, value.StringValue("api"), types.Int64().Descriptor(), Options{})
 
 	requireErrorPath(t, err, "$.spec.replicas")
 }

@@ -27,7 +27,7 @@ func TestComparerAbsentAbsentIsEmpty(t *testing.T) {
 		fieldpath.RootPath(),
 		valuepresence.Absent(),
 		valuepresence.Absent(),
-		types.String().Type(),
+		types.String().Descriptor(),
 		0,
 	)
 	requireNoError(t, err)
@@ -39,7 +39,7 @@ func TestComparerAbsentPresentIsAddedSubtree(t *testing.T) {
 		fieldpath.RootPath(),
 		valuepresence.Absent(),
 		valuepresence.Present(value.StringValue("new")),
-		types.String().Type(),
+		types.String().Descriptor(),
 		0,
 	)
 	requireNoError(t, err)
@@ -51,7 +51,7 @@ func TestComparerPresentAbsentIsRemovedSubtree(t *testing.T) {
 		fieldpath.RootPath(),
 		valuepresence.Present(value.StringValue("old")),
 		valuepresence.Absent(),
-		types.String().Type(),
+		types.String().Descriptor(),
 		0,
 	)
 	requireNoError(t, err)
@@ -59,7 +59,7 @@ func TestComparerPresentAbsentIsRemovedSubtree(t *testing.T) {
 }
 
 func TestCompareInvalidZeroValue(t *testing.T) {
-	_, err := Compare(value.Value{}, value.StringValue("new"), types.String().Type(), Options{})
+	_, err := Compare(value.Value{}, value.StringValue("new"), types.String().Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrInvalidValue)
 	requireErrorReason(t, err, ErrorReasonInvalidZero)
@@ -67,7 +67,7 @@ func TestCompareInvalidZeroValue(t *testing.T) {
 }
 
 func TestCompareKindMismatch(t *testing.T) {
-	_, err := Compare(value.BoolValue(true), value.StringValue("new"), types.String().Type(), Options{})
+	_, err := Compare(value.BoolValue(true), value.StringValue("new"), types.String().Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrKindMismatch)
 	requireErrorReason(t, err, ErrorReasonKindMismatch)

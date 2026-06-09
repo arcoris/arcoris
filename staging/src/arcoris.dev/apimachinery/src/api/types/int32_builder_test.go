@@ -20,5 +20,5 @@ func TestInt32FieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").Int32().Required().Field()
 
 	requireEqual(t, field.Name(), FieldName("value"))
-	requireEqual(t, field.Type().Code(), TypeInt32)
+	requireEqual(t, field.Descriptor().Code(), DescriptorInt32)
 }

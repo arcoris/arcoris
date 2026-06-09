@@ -27,10 +27,10 @@ func TestObjectFieldWrapper(t *testing.T) {
 		Description("value").
 		Field()
 
-	requireEqual(t, field.Type().Code(), TypeObject)
-	requireEqual(t, field.Type().Nullable(), true)
+	requireEqual(t, field.Descriptor().Code(), DescriptorObject)
+	requireEqual(t, field.Descriptor().Nullable(), true)
 	requireEqual(t, field.Description(), "value")
-	requireNoError(t, ValidateType(objectTypeForField(field), nil))
+	requireNoError(t, ValidateLocal(objectTypeForField(field)))
 }
 
 func TestObjectFieldExprMarker(t *testing.T) {

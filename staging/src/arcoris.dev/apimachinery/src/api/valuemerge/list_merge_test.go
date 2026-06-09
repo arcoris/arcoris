@@ -21,7 +21,7 @@ import (
 )
 
 func TestMergeAtomicListExactSelectedReplacesWholeList(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Atomic().Type()
+	descriptor := types.ListOf(types.String()).Atomic().Descriptor()
 	base := list(str("old"))
 	overlay := list(str("new"), str("next"))
 
@@ -34,7 +34,7 @@ func TestMergeAtomicListExactSelectedReplacesWholeList(t *testing.T) {
 }
 
 func TestMergeAtomicListDescendantSelectionUnsupported(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Atomic().Type()
+	descriptor := types.ListOf(types.String()).Atomic().Descriptor()
 
 	_, err := Merge(
 		list(str("old")),
@@ -48,7 +48,7 @@ func TestMergeAtomicListDescendantSelectionUnsupported(t *testing.T) {
 }
 
 func TestMergeSetListExactSelectedReplacesWholeList(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Set().Type()
+	descriptor := types.ListOf(types.String()).Set().Descriptor()
 	base := list(str("old"))
 	overlay := list(str("new"), str("next"))
 
@@ -61,7 +61,7 @@ func TestMergeSetListExactSelectedReplacesWholeList(t *testing.T) {
 }
 
 func TestMergeSetListDescendantSelectionUnsupported(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Set().Type()
+	descriptor := types.ListOf(types.String()).Set().Descriptor()
 
 	_, err := Merge(
 		list(str("old")),

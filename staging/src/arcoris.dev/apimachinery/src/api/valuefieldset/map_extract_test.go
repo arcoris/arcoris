@@ -27,7 +27,7 @@ func TestExtractMapEntriesUseKeyPaths(t *testing.T) {
 		value.ObjectMember("app", value.StringValue("api")),
 	)
 
-	got, err := ExtractAt(path, val, types.MapOf(types.String()).Type(), Options{})
+	got, err := ExtractAt(path, val, types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path.Key("app"))
@@ -37,7 +37,7 @@ func TestExtractMapEmptyIncludesMapPath(t *testing.T) {
 	path := rootField("metadata", "labels")
 	val := value.MustObjectValue()
 
-	got, err := ExtractAt(path, val, types.MapOf(types.String()).Type(), Options{})
+	got, err := ExtractAt(path, val, types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path)
@@ -47,7 +47,7 @@ func TestExtractMapRejectsKindMismatch(t *testing.T) {
 	path := rootField("metadata", "labels")
 	val := value.MustListValue(value.StringValue("app"))
 
-	_, err := ExtractAt(path, val, types.MapOf(types.String()).Type(), Options{})
+	_, err := ExtractAt(path, val, types.MapOf(types.String()).Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrKindMismatch)
 	requireErrorReason(t, err, ErrorReasonKindMismatch)
@@ -60,7 +60,7 @@ func TestExtractMapNestedObjectValues(t *testing.T) {
 		types.Object(
 			types.Field("backend").String().Required(),
 		),
-	).Type()
+	).Descriptor()
 	val := value.MustObjectValue(
 		value.ObjectMember(
 			"api",

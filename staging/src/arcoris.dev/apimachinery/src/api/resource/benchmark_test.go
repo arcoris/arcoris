@@ -38,8 +38,8 @@ func BenchmarkDefinitionBuildSmall(b *testing.B) {
 			ScopeNamespaced,
 			NewVersion(
 				identity.Version("v1"),
-				types.Object().Type(),
-				Observed(types.Object().Type()),
+				types.Object().Descriptor(),
+				Observed(types.Object().Descriptor()),
 				Exposed(),
 				Canonical(),
 			),
@@ -69,7 +69,7 @@ func BenchmarkValidateDefinition(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if err := ValidateDefinition(def, nil); err != nil {
+		if err := ValidateDefinitionLocal(def); err != nil {
 			b.Fatal(err)
 		}
 	}

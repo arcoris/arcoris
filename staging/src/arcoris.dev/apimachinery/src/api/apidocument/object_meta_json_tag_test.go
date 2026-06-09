@@ -24,7 +24,7 @@ import (
 )
 
 func TestObjectMetaJSONTagsMatchAPIDocument(t *testing.T) {
-	typ := reflect.TypeOf(meta.ObjectMeta{})
+	goType := reflect.TypeOf(meta.ObjectMeta{})
 	fields := []struct {
 		goName string
 		api    apidocument.FieldName
@@ -45,16 +45,16 @@ func TestObjectMetaJSONTagsMatchAPIDocument(t *testing.T) {
 
 	for _, field := range fields {
 		t.Run(field.goName, func(t *testing.T) {
-			assertJSONTagName(t, typ, field.goName, field.api)
-			assertJSONTagHasOptions(t, typ, field.goName, jsonTagOptionOmitEmpty)
+			assertJSONTagName(t, goType, field.goName, field.api)
+			assertJSONTagHasOptions(t, goType, field.goName, jsonTagOptionOmitEmpty)
 		})
 	}
-	assertJSONTagHasOptions(t, typ, objectMetaGoFieldCreatedAt, jsonTagOptionOmitZero)
+	assertJSONTagHasOptions(t, goType, objectMetaGoFieldCreatedAt, jsonTagOptionOmitZero)
 }
 
 func TestObjectMetaFlattenedJSONFieldsMatchAPIDocument(t *testing.T) {
-	typ := reflect.TypeOf(meta.ObjectMeta{})
-	got := collectFlattenedJSONFieldNames(t, typ)
+	goType := reflect.TypeOf(meta.ObjectMeta{})
+	got := collectFlattenedJSONFieldNames(t, goType)
 	want := []string{
 		apidocument.ObjectMetaFieldName.String(),
 		apidocument.ObjectMetaFieldGenerateName.String(),

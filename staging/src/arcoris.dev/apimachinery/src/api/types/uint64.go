@@ -14,15 +14,15 @@
 
 package types
 
-// Uint64Type builds uint64 descriptors.
+// Uint64Descriptor builds uint64 descriptors.
 //
-// Uint64Type records portable fixed-width uint64 constraints. Codecs and
+// Uint64Descriptor records portable fixed-width uint64 constraints. Codecs and
 // generators may need special handling for targets that cannot precisely
 // represent the full uint64 range.
-type Uint64Type struct {
+type Uint64Descriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
-	// payload stores TypeUint64 constraints under construction.
+	header descriptorHeader
+	// payload stores DescriptorUint64 constraints under construction.
 	payload uint64Payload
 }
 
@@ -31,50 +31,50 @@ type Uint64Type struct {
 // Typical reusable declaration:
 //
 //	sizeType := Uint64().Min(0)
-func Uint64() Uint64Type {
-	return Uint64Type{header: newHeader(TypeUint64)}
+func Uint64() Uint64Descriptor {
+	return Uint64Descriptor{header: newHeader(DescriptorUint64)}
 }
 
 // Nullable returns a uint64 descriptor that admits null values.
-func (t Uint64Type) Nullable() Uint64Type {
-	t.header = t.header.withNullable()
+func (desc Uint64Descriptor) Nullable() Uint64Descriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
 // Min sets the inclusive uint64 lower bound.
-func (t Uint64Type) Min(n uint64) Uint64Type {
-	t.payload.min = limit[uint64]{value: n, set: true}
+func (desc Uint64Descriptor) Min(n uint64) Uint64Descriptor {
+	desc.payload.min = limit[uint64]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Max sets the inclusive uint64 upper bound.
-func (t Uint64Type) Max(n uint64) Uint64Type {
-	t.payload.max = limit[uint64]{value: n, set: true}
+func (desc Uint64Descriptor) Max(n uint64) Uint64Descriptor {
+	desc.payload.max = limit[uint64]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Range sets the inclusive uint64 lower and upper bounds.
-func (t Uint64Type) Range(min, max uint64) Uint64Type {
-	return t.Min(min).Max(max)
+func (desc Uint64Descriptor) Range(min, max uint64) Uint64Descriptor {
+	return desc.Min(min).Max(max)
 }
 
 // Enum stores accepted uint64 literals in declaration order.
-func (t Uint64Type) Enum(values ...uint64) Uint64Type {
-	t.payload.enum = cloneSlice(values)
+func (desc Uint64Descriptor) Enum(values ...uint64) Uint64Descriptor {
+	desc.payload.enum = cloneSlice(values)
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t Uint64Type) Type() Type {
-	out := typeFromHeader(t.header)
-	out.uint64 = cloneUint64Payload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc Uint64Descriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.uint64 = cloneUint64Payload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks Uint64Type as a sealed TypeExpr implementation.
-func (t Uint64Type) typeExpr() {}
+// descriptorExpr marks Uint64Descriptor as a sealed DescriptorExpr implementation.
+func (desc Uint64Descriptor) descriptorExpr() {}

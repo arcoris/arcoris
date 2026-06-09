@@ -18,15 +18,15 @@ package types
 //
 // FieldDescriptor values are produced by field builders and stored by object
 // descriptors in declaration order. The fields are immutable-by-convention;
-// accessors return detached Type copies so callers cannot rewrite object
+// accessors return detached Descriptor copies so callers cannot rewrite object
 // descriptors through a field returned by a view or resolved definition.
 type FieldDescriptor struct {
 	// name is the lowerCamelCase API field name.
 	name FieldName
 	// presence records whether the field key is required or optional.
 	presence FieldPresence
-	// typ is the structural descriptor of the field value.
-	typ Type
+	// descriptor is the structural descriptor of the field value.
+	descriptor Descriptor
 	// description is optional human-facing descriptor text.
 	description string
 }
@@ -41,9 +41,9 @@ func (f FieldDescriptor) Presence() FieldPresence {
 	return f.presence
 }
 
-// Type returns a detached copy of the field value descriptor.
-func (f FieldDescriptor) Type() Type {
-	return cloneType(f.typ)
+// Descriptor returns a detached copy of the field value descriptor.
+func (f FieldDescriptor) Descriptor() Descriptor {
+	return cloneDescriptor(f.descriptor)
 }
 
 // IsRequired reports whether the field key must be present.
@@ -66,32 +66,10 @@ func (f FieldDescriptor) Description() string {
 // A zero field can be produced only by zero values or nil FieldExpr entries in
 // package-local construction paths. Object validation rejects zero fields
 // because real API fields must have a valid name, required/optional presence,
-// and a valid normalized Type.
+// and a valid normalized Descriptor.
 func (f FieldDescriptor) IsZero() bool {
 	return f.name == "" &&
 		f.presence == PresenceUnspecified &&
-		f.typ.IsZero() &&
+		f.descriptor.IsZero() &&
 		f.description == ""
-}
-
-// cloneField detaches the Type payload stored inside f.
-func cloneField(f FieldDescriptor) FieldDescriptor {
-	f.typ = cloneType(f.typ)
-
-	return f
-}
-
-// cloneFields detaches an ordered field list.
-func cloneFields(fields []FieldDescriptor) []FieldDescriptor {
-	if fields == nil {
-		return nil
-	}
-
-	out := make([]FieldDescriptor, len(fields))
-
-	for i := range fields {
-		out[i] = cloneField(fields[i])
-	}
-
-	return out
 }

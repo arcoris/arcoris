@@ -17,13 +17,13 @@ package types
 import "testing"
 
 func TestUint64ValidateRejectsInvalidRules(t *testing.T) {
-	tests := []Type{
-		Uint64().Range(10, 1).Type(),
-		Uint64().Min(1).Enum(0).Type(),
-		Uint64().Max(1).Enum(2).Type(),
-		Uint64().Enum(1, 1).Type(),
+	tests := []Descriptor{
+		Uint64().Range(10, 1).Descriptor(),
+		Uint64().Min(1).Enum(0).Descriptor(),
+		Uint64().Max(1).Enum(2).Descriptor(),
+		Uint64().Enum(1, 1).Descriptor(),
 	}
-	for _, typ := range tests {
-		requireErrorIs(t, ValidateType(typ, nil), ErrInvalidType)
+	for _, desc := range tests {
+		requireErrorIs(t, ValidateLocal(desc), ErrInvalidDescriptor)
 	}
 }

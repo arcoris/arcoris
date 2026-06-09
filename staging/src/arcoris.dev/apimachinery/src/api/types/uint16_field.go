@@ -14,15 +14,15 @@
 
 package types
 
-// Uint16Field builds object fields whose value type is uint16.
+// Uint16Field builds object fields whose value descriptor is uint16.
 //
 // The wrapper keeps object-field metadata beside the uint16 builder, allowing
 // fluent field declarations without making fields reusable unnamed types.
 type Uint16Field struct {
 	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
-	// typ stores the typed descriptor builder for this field value.
-	typ Uint16Type
+	// descriptor stores the typed descriptor builder for this field value.
+	descriptor Uint16Descriptor
 }
 
 // Required marks the field key as required.
@@ -48,42 +48,42 @@ func (f Uint16Field) Description(text string) Uint16Field {
 
 // Nullable admits null in addition to uint16 values.
 func (f Uint16Field) Nullable() Uint16Field {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
 // Min sets the inclusive uint16 lower bound.
 func (f Uint16Field) Min(n uint16) Uint16Field {
-	f.typ = f.typ.Min(n)
+	f.descriptor = f.descriptor.Min(n)
 
 	return f
 }
 
 // Max sets the inclusive uint16 upper bound.
 func (f Uint16Field) Max(n uint16) Uint16Field {
-	f.typ = f.typ.Max(n)
+	f.descriptor = f.descriptor.Max(n)
 
 	return f
 }
 
 // Range sets the inclusive uint16 lower and upper bounds.
 func (f Uint16Field) Range(min, max uint16) Uint16Field {
-	f.typ = f.typ.Range(min, max)
+	f.descriptor = f.descriptor.Range(min, max)
 
 	return f
 }
 
 // Enum stores accepted uint16 literals for the field.
 func (f Uint16Field) Enum(values ...uint16) Uint16Field {
-	f.typ = f.typ.Enum(values...)
+	f.descriptor = f.descriptor.Enum(values...)
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f Uint16Field) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks Uint16Field as a sealed FieldExpr implementation.

@@ -22,10 +22,10 @@ import "arcoris.dev/apimachinery/api/types"
 // traversal and ownership policy through without reinterpreting value-level
 // semantics.
 type Options struct {
-	// Resolver resolves api/types TypeRef descriptors.
+	// Resolver resolves api/types DescriptorRef descriptors.
 	Resolver types.Resolver
 
-	// MaxDepth bounds TypeRef traversal in lower-level validators and apply.
+	// MaxDepth bounds DescriptorRef traversal in lower-level validators and apply.
 	//
 	// Zero means lower-level package defaults. objectapply does not define its
 	// own recursion limit.

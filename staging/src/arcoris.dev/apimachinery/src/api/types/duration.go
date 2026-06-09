@@ -14,13 +14,13 @@
 
 package types
 
-// DurationType builds descriptors for elapsed intervals.
+// DurationDescriptor builds descriptors for elapsed intervals.
 //
-// DurationType records an elapsed-interval descriptor. It does not choose
+// DurationDescriptor records an elapsed-interval descriptor. It does not choose
 // ISO-8601, nanoseconds, Go duration text, or another encoding.
-type DurationType struct {
+type DurationDescriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
+	header descriptorHeader
 	// payload stores the exact duration constraints under construction.
 	payload durationPayload
 }
@@ -30,24 +30,24 @@ type DurationType struct {
 // Typical reusable declaration:
 //
 //	timeoutType := Duration().Nullable()
-func Duration() DurationType {
-	return DurationType{header: newHeader(TypeDuration)}
+func Duration() DurationDescriptor {
+	return DurationDescriptor{header: newHeader(DescriptorDuration)}
 }
 
 // Nullable returns a duration descriptor that admits null values.
-func (t DurationType) Nullable() DurationType {
-	t.header = t.header.withNullable()
+func (desc DurationDescriptor) Nullable() DurationDescriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t DurationType) Type() Type {
-	out := typeFromHeader(t.header)
-	out.duration = cloneDurationPayload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc DurationDescriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.duration = cloneDurationPayload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks DurationType as a sealed TypeExpr implementation.
-func (t DurationType) typeExpr() {}
+// descriptorExpr marks DurationDescriptor as a sealed DescriptorExpr implementation.
+func (desc DurationDescriptor) descriptorExpr() {}

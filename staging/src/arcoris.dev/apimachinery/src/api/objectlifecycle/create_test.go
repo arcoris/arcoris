@@ -157,7 +157,7 @@ func ownershipDefinition() resource.Definition {
 			types.Field("image").String().Required(),
 		).Optional(),
 		types.Field("conditions").ListOf(condition).Optional().Map("type"),
-	).Type()
+	).Descriptor()
 
 	return resource.NewDefinition(
 		testGroup,

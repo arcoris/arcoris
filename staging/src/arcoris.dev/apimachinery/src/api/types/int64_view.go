@@ -14,19 +14,19 @@
 
 package types
 
-// Int64View exposes read-only TypeInt64 payload data.
+// Int64View exposes read-only DescriptorInt64 payload data.
 type Int64View struct {
-	// payload is a detached copy of the TypeInt64 payload.
+	// payload is a detached copy of the DescriptorInt64 payload.
 	payload int64Payload
 }
 
-// Int64 returns a read-only TypeInt64 view when t is an int64 descriptor.
-func (t Type) Int64() (Int64View, bool) {
-	if t.code != TypeInt64 {
+// AsInt64 returns a read-only DescriptorInt64 view when desc is an int64 descriptor.
+func (desc Descriptor) AsInt64() (Int64View, bool) {
+	if desc.code != DescriptorInt64 {
 		return Int64View{}, false
 	}
 
-	return Int64View{payload: cloneInt64Payload(t.int64)}, true
+	return Int64View{payload: cloneInt64Payload(desc.int64)}, true
 }
 
 // Min returns the inclusive lower bound when one is set.

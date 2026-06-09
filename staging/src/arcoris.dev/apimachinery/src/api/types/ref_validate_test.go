@@ -17,22 +17,22 @@ package types
 import "testing"
 
 func TestRefValidateResolutionAndCycles(t *testing.T) {
-	requireErrorIs(t, ValidateType(Ref("bad").Type(), nil), ErrInvalidTypeReference)
+	requireErrorIs(t, ValidateLocal(Ref("bad").Descriptor()), ErrInvalidDescriptorReference)
 
-	missing := resolverFunc(func(TypeName) (TypeDefinition, bool) {
-		return TypeDefinition{}, false
+	missing := resolverFunc(func(TypeName) (Definition, bool) {
+		return Definition{}, false
 	})
-	requireErrorIs(t, ValidateType(Ref("example.Name").Type(), missing), ErrUnknownTypeReference)
+	requireErrorIs(t, ValidateResolved(Ref("example.Name").Descriptor(), missing), ErrUnresolvedDescriptorReference)
 
-	cycle := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+	cycle := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
 		case "example.A":
 			return Define("example.A", Ref("example.B")), true
 		case "example.B":
 			return Define("example.B", Ref("example.A")), true
 		default:
-			return TypeDefinition{}, false
+			return Definition{}, false
 		}
 	})
-	requireErrorIs(t, ValidateType(Ref("example.A").Type(), cycle), ErrInvalidTypeReference)
+	requireErrorIs(t, ValidateResolved(Ref("example.A").Descriptor(), cycle), ErrInvalidDescriptorReference)
 }

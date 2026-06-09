@@ -20,13 +20,13 @@ type ObjectView struct {
 	payload objectPayload
 }
 
-// Object returns an object view when t is TypeObject.
-func (t Type) Object() (ObjectView, bool) {
-	if t.code != TypeObject {
+// AsObject returns an object view when desc is DescriptorObject.
+func (desc Descriptor) AsObject() (ObjectView, bool) {
+	if desc.code != DescriptorObject {
 		return ObjectView{}, false
 	}
 
-	return ObjectView{payload: cloneObjectPayload(t.object)}, true
+	return ObjectView{payload: cloneObjectPayload(desc.object)}, true
 }
 
 // Fields returns detached object fields in declaration order.

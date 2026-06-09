@@ -31,7 +31,7 @@ func TestApplyInvalidPathReturnsInvalidPath(t *testing.T) {
 		Owner:      owner("user"),
 		Live:       str("old"),
 		Applied:    str("new"),
-		Descriptor: types.String().Type(),
+		Descriptor: types.String().Descriptor(),
 	}, Options{})
 
 	requireErrorIs(t, err, ErrInvalidPath)
@@ -43,7 +43,7 @@ func TestApplyInvalidOwnerReturnsInvalidOwner(t *testing.T) {
 		Owner:      fieldownership.Owner(" "),
 		Live:       str("old"),
 		Applied:    str("new"),
-		Descriptor: types.String().Type(),
+		Descriptor: types.String().Descriptor(),
 	}, Options{})
 
 	requireErrorIs(t, err, ErrInvalidOwner)

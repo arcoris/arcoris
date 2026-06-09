@@ -28,7 +28,7 @@ func (c *comparer) compareScalar(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 ) (Result, error) {
 	equal, err := c.equalScalar(path, oldValue, newValue, descriptor)
 	if err != nil {
@@ -49,7 +49,7 @@ func (c *comparer) equalScalar(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 ) (bool, error) {
 	expected, ok := scalarKind(descriptor.Code())
 	if !ok {
@@ -71,58 +71,58 @@ func (c *comparer) equalScalar(
 }
 
 // scalarKind maps scalar descriptor codes to their concrete payload kind.
-func scalarKind(code types.TypeCode) (value.Kind, bool) {
+func scalarKind(code types.DescriptorKind) (value.Kind, bool) {
 	return typekind.Scalar(code)
 }
 
 // scalarValuesEqual compares same-kind scalar payloads without descriptor redispatch.
-func scalarValuesEqual(oldValue value.Value, newValue value.Value, code types.TypeCode) (bool, bool) {
+func scalarValuesEqual(oldValue value.Value, newValue value.Value, code types.DescriptorKind) (bool, bool) {
 	switch code {
-	case types.TypeBool:
+	case types.DescriptorBool:
 		oldBool, _ := oldValue.Bool()
 		newBool, _ := newValue.Bool()
 		return oldBool == newBool, true
-	case types.TypeString:
+	case types.DescriptorString:
 		oldString, _ := oldValue.String()
 		newString, _ := newValue.String()
 		return oldString == newString, true
-	case types.TypeBytes:
+	case types.DescriptorBytes:
 		oldBytes, _ := oldValue.Bytes()
 		newBytes, _ := newValue.Bytes()
 		return bytes.Equal(oldBytes, newBytes), true
-	case types.TypeInt8,
-		types.TypeInt16,
-		types.TypeInt32,
-		types.TypeInt64,
-		types.TypeUint8,
-		types.TypeUint16,
-		types.TypeUint32,
-		types.TypeUint64:
+	case types.DescriptorInt8,
+		types.DescriptorInt16,
+		types.DescriptorInt32,
+		types.DescriptorInt64,
+		types.DescriptorUint8,
+		types.DescriptorUint16,
+		types.DescriptorUint32,
+		types.DescriptorUint64:
 		oldInteger, _ := oldValue.Integer()
 		newInteger, _ := newValue.Integer()
 		return oldInteger.Equal(newInteger), true
-	case types.TypeFloat32,
-		types.TypeFloat64:
+	case types.DescriptorFloat32,
+		types.DescriptorFloat64:
 		oldFloat, _ := oldValue.Float()
 		newFloat, _ := newValue.Float()
 		return oldFloat == newFloat, true
-	case types.TypeDecimal:
+	case types.DescriptorDecimal:
 		oldDecimal, _ := oldValue.Decimal()
 		newDecimal, _ := newValue.Decimal()
 		return oldDecimal.Compare(newDecimal) == 0, true
-	case types.TypeTimestamp:
+	case types.DescriptorTimestamp:
 		oldTimestamp, _ := oldValue.Timestamp()
 		newTimestamp, _ := newValue.Timestamp()
 		return oldTimestamp.Equal(newTimestamp), true
-	case types.TypeDate:
+	case types.DescriptorDate:
 		oldDate, _ := oldValue.Date()
 		newDate, _ := newValue.Date()
 		return oldDate.Equal(newDate), true
-	case types.TypeTime:
+	case types.DescriptorTime:
 		oldTime, _ := oldValue.TimeOfDay()
 		newTime, _ := newValue.TimeOfDay()
 		return oldTime.Equal(newTime), true
-	case types.TypeDuration:
+	case types.DescriptorDuration:
 		oldDuration, _ := oldValue.Duration()
 		newDuration, _ := newValue.Duration()
 		return oldDuration == newDuration, true

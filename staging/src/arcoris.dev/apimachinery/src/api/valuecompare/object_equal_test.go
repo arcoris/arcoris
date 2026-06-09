@@ -38,7 +38,7 @@ func TestEqualObjectDifferentFieldIsFalse(t *testing.T) {
 }
 
 func TestEqualObjectPreservedUnknownSameIsTrue(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Type()
+	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Descriptor()
 
 	got, err := newComparer(Options{}).equalObject(rootField("spec"), valueObject("extra", "same"), valueObject("extra", "same"), descriptor, 0)
 	requireNoError(t, err)
@@ -49,7 +49,7 @@ func TestEqualObjectPreservedUnknownSameIsTrue(t *testing.T) {
 }
 
 func TestEqualObjectRejectedUnknownReturnsError(t *testing.T) {
-	_, err := newComparer(Options{}).equalObject(rootField("spec"), valueObject("extra", "old"), valueObject(), types.Object().Type(), 0)
+	_, err := newComparer(Options{}).equalObject(rootField("spec"), valueObject("extra", "old"), valueObject(), types.Object().Descriptor(), 0)
 
 	requireErrorIs(t, err, ErrUnknownField)
 }

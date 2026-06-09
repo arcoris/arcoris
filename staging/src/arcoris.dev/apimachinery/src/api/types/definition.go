@@ -14,21 +14,21 @@
 
 package types
 
-// TypeDefinition binds a reusable structural Type to a stable TypeName.
+// Definition binds a reusable structural Descriptor to a stable TypeName.
 //
 // Definitions are resolved through Resolver implementations supplied by the
 // caller. Package types does not own concrete mutable catalog storage and
 // performs no global or init-time registration.
-type TypeDefinition struct {
+type Definition struct {
 	// name is the stable resolver key for the reusable descriptor.
 	name TypeName
-	// typ is the structural descriptor associated with name.
-	typ Type
+	// descriptor is the structural descriptor associated with name.
+	descriptor Descriptor
 	// description is optional human-facing descriptor text.
 	description string
 }
 
-// Define creates a named type definition from typ.
+// Define creates a named descriptor definition from descriptor.
 //
 // The name parameter accepts string-like values so call sites can use string
 // literals in descriptor declarations while the finalized definition still
@@ -39,38 +39,31 @@ type TypeDefinition struct {
 //	nameDef := Define(
 //		"arcoris.meta.Name",
 //		String().
-//			MinLen(1).
-//			MaxLen(253),
+//			MinBytes(1).
+//			MaxBytes(253),
 //	)
-func Define[N ~string](name N, typ TypeExpr) TypeDefinition {
-	return TypeDefinition{name: TypeName(name), typ: typeFromExpr(typ)}
+func Define[N ~string](name N, descriptor DescriptorExpr) Definition {
+	return Definition{name: TypeName(name), descriptor: descriptorFromExpr(descriptor)}
 }
 
 // Name returns the definition name.
-func (d TypeDefinition) Name() TypeName {
+func (d Definition) Name() TypeName {
 	return d.name
 }
 
-// Type returns a detached copy of the definition type.
-func (d TypeDefinition) Type() Type {
-	return cloneType(d.typ)
+// Descriptor returns a detached copy of the definition descriptor.
+func (d Definition) Descriptor() Descriptor {
+	return cloneDescriptor(d.descriptor)
 }
 
 // Description returns optional human-facing descriptor text.
-func (d TypeDefinition) Description() string {
+func (d Definition) Description() string {
 	return d.description
 }
 
 // WithDescription returns a copy of d with human-facing descriptor text.
-func (d TypeDefinition) WithDescription(text string) TypeDefinition {
+func (d Definition) WithDescription(text string) Definition {
 	d.description = text
-
-	return d
-}
-
-// cloneDefinition detaches the type payload stored in d.
-func cloneDefinition(d TypeDefinition) TypeDefinition {
-	d.typ = cloneType(d.typ)
 
 	return d
 }

@@ -17,7 +17,7 @@ package types
 import "testing"
 
 func TestStringPayloadCloneAndEmpty(t *testing.T) {
-	payload := stringPayload{minLen: limit[int]{value: 1, set: true}, enum: []string{"a"}}
+	payload := stringPayload{minBytes: limit[int]{value: 1, set: true}, enum: []string{"a"}}
 	cloned := cloneStringPayload(payload)
 	cloned.enum[0] = "b"
 

@@ -26,10 +26,10 @@ const (
 	// selector extraction.
 	FailureInvalidDescriptor FailureKind = "invalid_descriptor"
 
-	// FailureUnresolvedRef reports a TypeRef that cannot be resolved.
+	// FailureUnresolvedRef reports a DescriptorRef that cannot be resolved.
 	FailureUnresolvedRef FailureKind = "unresolved_ref"
 
-	// FailureReferenceCycle reports recursive or too-deep TypeRef traversal.
+	// FailureReferenceCycle reports recursive or too-deep DescriptorRef traversal.
 	FailureReferenceCycle FailureKind = "reference_cycle"
 
 	// FailureItemKindMismatch reports a ListMap item that is not a concrete

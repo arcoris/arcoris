@@ -22,9 +22,9 @@ func TestInt16FieldWrapper(t *testing.T) {
 	requireEqual(t, field.Name(), FieldName("value"))
 	requireEqual(t, field.IsRequired(), true)
 	requireEqual(t, field.Description(), "value")
-	requireEqual(t, field.Type().Code(), TypeInt16)
-	requireEqual(t, field.Type().Nullable(), true)
-	requireNoError(t, ValidateType(objectTypeForField(field), nil))
+	requireEqual(t, field.Descriptor().Code(), DescriptorInt16)
+	requireEqual(t, field.Descriptor().Nullable(), true)
+	requireNoError(t, ValidateLocal(objectTypeForField(field)))
 }
 
 func TestInt16FieldExprMarker(t *testing.T) {

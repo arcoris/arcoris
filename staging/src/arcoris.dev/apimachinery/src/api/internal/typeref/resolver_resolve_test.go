@@ -32,15 +32,15 @@ func TestResolveReturnsDefinition(t *testing.T) {
 	if name != "example.Name" {
 		t.Fatalf("Resolve() name = %q; want %q", name, "example.Name")
 	}
-	if descriptor.Code() != types.TypeString {
-		t.Fatalf("Resolve() descriptor = %s; want %s", descriptor.Code(), types.TypeString)
+	if descriptor.Code() != types.DescriptorString {
+		t.Fatalf("Resolve() descriptor = %s; want %s", descriptor.Code(), types.DescriptorString)
 	}
 }
 
 func TestResolveRejectsNonReferenceDescriptor(t *testing.T) {
 	_, _, err := New(exampleResolver(), 64).Resolve(
 		rootPath(),
-		types.String().Type(),
+		types.String().Descriptor(),
 		0,
 	)
 	requireFailureKind(t, err, FailureInvalidDescriptor)
@@ -56,8 +56,8 @@ func TestResolveRejectsMissingResolver(t *testing.T) {
 }
 
 func TestResolveRejectsResolverMiss(t *testing.T) {
-	resolver := resolverFunc(func(types.TypeName) (types.TypeDefinition, bool) {
-		return types.TypeDefinition{}, false
+	resolver := resolverFunc(func(types.TypeName) (types.Definition, bool) {
+		return types.Definition{}, false
 	})
 
 	_, _, err := New(resolver, 64).Resolve(

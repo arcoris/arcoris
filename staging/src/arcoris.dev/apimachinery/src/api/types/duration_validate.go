@@ -14,7 +14,7 @@
 
 package types
 
-// validateDuration checks TypeDuration payload invariants.
-func validateDuration(t Type, path string) error {
+// validateDuration checks DescriptorDuration payload invariants.
+func validateDuration(desc Descriptor, path string) error {
 	return nil
 }

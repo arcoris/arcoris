@@ -14,7 +14,7 @@
 
 package types
 
-// timestampPayload stores TypeTimestamp constraints.
+// timestampPayload stores DescriptorTimestamp constraints.
 type timestampPayload struct {
 	// Reserved for future timestamp constraints.
 }
@@ -24,7 +24,7 @@ func cloneTimestampPayload(p timestampPayload) timestampPayload {
 	return p
 }
 
-// emptyTimestampPayload reports whether p has no configured TypeTimestamp state.
+// emptyTimestampPayload reports whether p has no configured DescriptorTimestamp state.
 func emptyTimestampPayload(p timestampPayload) bool {
 	return true
 }

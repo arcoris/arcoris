@@ -14,16 +14,20 @@
 
 package types
 
-// stringPayload stores TypeString constraints.
+// stringPayload stores DescriptorString constraints.
 //
 // Pattern is stored as text rather than *regexp.Regexp so descriptors remain
 // serializable by future codecs and exporters. Validation may compile the
 // pattern, but the descriptor itself does not own runtime regex state.
 type stringPayload struct {
-	// minLen is the inclusive minimum string length.
-	minLen limit[int]
-	// maxLen is the inclusive maximum string length.
-	maxLen limit[int]
+	// minBytes is the inclusive minimum UTF-8 byte length.
+	minBytes limit[int]
+	// maxBytes is the inclusive maximum UTF-8 byte length.
+	maxBytes limit[int]
+	// minRunes is the inclusive minimum Go rune count.
+	minRunes limit[int]
+	// maxRunes is the inclusive maximum Go rune count.
+	maxRunes limit[int]
 
 	// pattern stores the textual regular expression for string descriptors.
 	pattern string
@@ -41,7 +45,13 @@ func cloneStringPayload(p stringPayload) stringPayload {
 	return p
 }
 
-// emptyStringPayload reports whether p has no configured TypeString state.
+// emptyStringPayload reports whether p has no configured DescriptorString state.
 func emptyStringPayload(p stringPayload) bool {
-	return !p.minLen.set && !p.maxLen.set && !p.hasPattern && p.pattern == "" && len(p.enum) == 0
+	return !p.minBytes.set &&
+		!p.maxBytes.set &&
+		!p.minRunes.set &&
+		!p.maxRunes.set &&
+		!p.hasPattern &&
+		p.pattern == "" &&
+		len(p.enum) == 0
 }

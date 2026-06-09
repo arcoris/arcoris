@@ -17,14 +17,14 @@ package types
 import "testing"
 
 func TestBytesFieldWrapper(t *testing.T) {
-	field := Field("value").Bytes().Required().Nullable().MinLen(1).MaxLen(8).Description("value").Field()
+	field := Field("value").Bytes().Required().Nullable().MinBytes(1).MaxBytes(8).Description("value").Field()
 
 	requireEqual(t, field.Name(), FieldName("value"))
 	requireEqual(t, field.IsRequired(), true)
 	requireEqual(t, field.Description(), "value")
-	requireEqual(t, field.Type().Code(), TypeBytes)
-	requireEqual(t, field.Type().Nullable(), true)
-	requireNoError(t, ValidateType(objectTypeForField(field), nil))
+	requireEqual(t, field.Descriptor().Code(), DescriptorBytes)
+	requireEqual(t, field.Descriptor().Nullable(), true)
+	requireNoError(t, ValidateLocal(objectTypeForField(field)))
 }
 
 func TestBytesFieldExprMarker(t *testing.T) {
@@ -32,7 +32,7 @@ func TestBytesFieldExprMarker(t *testing.T) {
 }
 
 func TestBytesFieldOptionalPath(t *testing.T) {
-	field := Field("value").Bytes().Optional().MinLen(1).MaxLen(2).Field()
+	field := Field("value").Bytes().Optional().MinBytes(1).MaxBytes(2).Field()
 
 	requireEqual(t, field.IsOptional(), true)
 }

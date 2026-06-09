@@ -18,6 +18,6 @@ import "testing"
 
 func TestPackageHasNoRuntimeState(t *testing.T) {
 	if _, ok := Scalar(0); ok {
-		t.Fatalf("zero TypeCode unexpectedly maps to a scalar kind")
+		t.Fatalf("zero DescriptorKind unexpectedly maps to a scalar kind")
 	}
 }

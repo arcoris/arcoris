@@ -17,13 +17,13 @@ package types
 import "testing"
 
 func TestDurationTypeDescriptor(t *testing.T) {
-	typ := Duration().Nullable().Type()
+	desc := Duration().Nullable().Descriptor()
 
-	requireEqual(t, typ.Code(), TypeDuration)
-	requireEqual(t, typ.Nullable(), true)
-	requireNoError(t, ValidateType(typ, nil))
+	requireEqual(t, desc.Code(), DescriptorDuration)
+	requireEqual(t, desc.Nullable(), true)
+	requireNoError(t, ValidateLocal(desc))
 }
 
-func TestDurationTypeExprMarker(t *testing.T) {
-	Duration().typeExpr()
+func TestDurationDescriptorExprMarker(t *testing.T) {
+	Duration().descriptorExpr()
 }

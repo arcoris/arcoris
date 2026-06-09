@@ -22,9 +22,9 @@ func TestDecimalFieldWrapper(t *testing.T) {
 	requireEqual(t, field.Name(), FieldName("value"))
 	requireEqual(t, field.IsRequired(), true)
 	requireEqual(t, field.Description(), "value")
-	requireEqual(t, field.Type().Code(), TypeDecimal)
-	requireEqual(t, field.Type().Nullable(), true)
-	requireNoError(t, ValidateType(objectTypeForField(field), nil))
+	requireEqual(t, field.Descriptor().Code(), DescriptorDecimal)
+	requireEqual(t, field.Descriptor().Nullable(), true)
+	requireNoError(t, ValidateLocal(objectTypeForField(field)))
 }
 
 func TestDecimalFieldExprMarker(t *testing.T) {

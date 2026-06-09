@@ -29,10 +29,10 @@ type VersionDefinition struct {
 	version identity.Version
 
 	// desired is the required user-authored state descriptor.
-	desired types.Type
+	desired types.Descriptor
 
 	// observed is the optional system-computed state descriptor.
-	observed types.Type
+	observed types.Descriptor
 
 	// flags stores exposed/canonical descriptor markers.
 	flags versionFlags
@@ -42,8 +42,8 @@ type VersionDefinition struct {
 //
 // The desired descriptor is required by validation. The constructor records the
 // supplied values without validating them so declarations stay cheap and errors
-// are reported consistently by ValidateDefinition.
-func NewVersion(version identity.Version, desired types.Type, options ...VersionOption) VersionDefinition {
+// are reported consistently by ValidateDefinitionResolved.
+func NewVersion(version identity.Version, desired types.Descriptor, options ...VersionOption) VersionDefinition {
 	out := VersionDefinition{version: version, desired: desired}
 	for _, option := range options {
 		if option != nil {
@@ -68,12 +68,12 @@ func (v VersionDefinition) IsZero() bool {
 func (v VersionDefinition) Version() identity.Version { return v.version }
 
 // Desired returns the user-authored/requested state descriptor.
-func (v VersionDefinition) Desired() types.Type { return v.desired }
+func (v VersionDefinition) Desired() types.Descriptor { return v.desired }
 
 // Observed returns the optional system-computed/read state descriptor.
-func (v VersionDefinition) Observed() (types.Type, bool) {
+func (v VersionDefinition) Observed() (types.Descriptor, bool) {
 	if v.observed.IsZero() {
-		return types.Type{}, false
+		return types.Descriptor{}, false
 	}
 	return v.observed, true
 }

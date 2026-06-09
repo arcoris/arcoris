@@ -16,15 +16,15 @@ package types
 
 import "errors"
 
-// validateRef checks TypeRef syntax, optional resolver lookup, and cycles.
-func validateRef(t Type, resolver Resolver, path string, resolving map[TypeName]bool) error {
-	name := t.ref.name
+// validateRef checks DescriptorRef syntax, optional resolver lookup, and cycles.
+func validateRef(desc Descriptor, resolver Resolver, path string, resolving map[TypeName]bool) error {
+	name := desc.ref.name
 
 	if !name.IsValid() {
-		return typeErrorf(
+		return descriptorErrorf(
 			path,
-			ErrInvalidTypeReference,
-			TypeErrorReasonInvalidReferenceName,
+			ErrInvalidDescriptorReference,
+			DescriptorErrorReasonInvalidReferenceName,
 			"reference name %q is not a valid TypeName",
 			name,
 		)
@@ -35,22 +35,22 @@ func validateRef(t Type, resolver Resolver, path string, resolving map[TypeName]
 	}
 
 	if resolving[name] {
-		return typeErrorf(
+		return descriptorErrorf(
 			path,
-			ErrInvalidTypeReference,
-			TypeErrorReasonReferenceCycle,
-			"reference %q creates a recursive TypeDefinition graph",
+			ErrInvalidDescriptorReference,
+			DescriptorErrorReasonReferenceCycle,
+			"reference %q creates a recursive Definition graph",
 			name,
 		)
 	}
 
-	def, ok := resolver.ResolveType(name)
+	def, ok := resolver.Resolve(name)
 
 	if !ok {
-		return typeErrorf(
+		return descriptorErrorf(
 			path,
-			ErrUnknownTypeReference,
-			TypeErrorReasonUnknownReference,
+			ErrUnresolvedDescriptorReference,
+			DescriptorErrorReasonUnknownReference,
 			"reference %q was not found in resolver",
 			name,
 		)
@@ -59,17 +59,17 @@ func validateRef(t Type, resolver Resolver, path string, resolving map[TypeName]
 	next := copyResolving(resolving)
 	next[name] = true
 
-	if err := validateType(def.Type(), resolver, path, next); err != nil {
-		var typeErr *TypeError
+	if err := validateDescriptor(def.Descriptor(), resolver, path, next); err != nil {
+		var descriptorErr *DescriptorError
 
-		if errors.As(err, &typeErr) && typeErr.Reason == TypeErrorReasonReferenceCycle {
+		if errors.As(err, &descriptorErr) && descriptorErr.Reason == DescriptorErrorReasonReferenceCycle {
 			return err
 		}
 
-		return typeErrorf(
+		return descriptorErrorf(
 			path,
 			err,
-			TypeErrorReasonInvalidResolvedDefinition,
+			DescriptorErrorReasonInvalidResolvedDefinition,
 			"resolved reference %q is structurally invalid: %v",
 			name,
 			err,

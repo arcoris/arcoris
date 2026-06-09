@@ -37,11 +37,11 @@ var (
 	// ErrUnknownField classifies object members rejected by UnknownReject.
 	ErrUnknownField = errors.New("unknown field")
 
-	// ErrUnresolvedRef classifies TypeRef descriptors that cannot be resolved.
-	ErrUnresolvedRef = errors.New("unresolved type reference")
+	// ErrUnresolvedRef classifies DescriptorRef descriptors that cannot be resolved.
+	ErrUnresolvedRef = errors.New("unresolved descriptor reference")
 
-	// ErrReferenceCycle classifies recursive or over-depth TypeRef traversal.
-	ErrReferenceCycle = errors.New("type reference cycle")
+	// ErrReferenceCycle classifies recursive or over-depth DescriptorRef traversal.
+	ErrReferenceCycle = errors.New("descriptor reference cycle")
 
 	// ErrInvalidListKey classifies ListMap keys that cannot form selectors.
 	ErrInvalidListKey = errors.New("invalid list map key")

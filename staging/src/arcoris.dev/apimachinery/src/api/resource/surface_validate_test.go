@@ -23,21 +23,21 @@ import (
 func TestValidateSurfaceRejectsInvalidAndNonObjectSurfaces(t *testing.T) {
 	cases := []struct {
 		name   string
-		typ    types.Type
+		desc   types.Descriptor
 		path   string
 		target error
 		reason ErrorReason
 	}{
 		{
 			name:   "invalid desired type",
-			typ:    types.Type{},
+			desc:   types.Descriptor{},
 			path:   "definition.versions[v1].desired",
 			target: ErrInvalidVersion,
 			reason: ErrorReasonInvalidDesired,
 		},
 		{
 			name:   "desired scalar",
-			typ:    stringType(),
+			desc:   stringType(),
 			path:   "definition.versions[v1].desired",
 			target: ErrInvalidVersion,
 			reason: ErrorReasonDesiredNotObject,
@@ -47,7 +47,7 @@ func TestValidateSurfaceRejectsInvalidAndNonObjectSurfaces(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := validateSurface(
-				tc.typ,
+				tc.desc,
 				nil,
 				tc.path,
 				ErrorReasonInvalidDesired,

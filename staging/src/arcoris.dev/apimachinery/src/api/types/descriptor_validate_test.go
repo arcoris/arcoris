@@ -22,7 +22,7 @@ import (
 func TestValidateTypeBroadInvariantMatrix(t *testing.T) {
 	validObject := Object(
 		Field("spec").Object(
-			Field("name").String().Required().MinLen(1),
+			Field("name").String().Required().MinBytes(1),
 			Field("replicas").Int32().Optional().Range(1, 10),
 			Field("labels").MapOf(String()).Optional(),
 		).Required().UnknownFields(UnknownReject),
@@ -32,42 +32,42 @@ func TestValidateTypeBroadInvariantMatrix(t *testing.T) {
 				Field("status").String().Required(),
 			)).Optional().Map("type"),
 		).Optional(),
-	).UnknownFields(UnknownReject).Type()
+	).UnknownFields(UnknownReject).Descriptor()
 
-	requireNoError(t, ValidateType(validObject, nil))
+	requireNoError(t, ValidateLocal(validObject))
 
 	invalidNested := validObject
-	invalidNested.object.fields[0].typ.object.fields[0].typ.string.minLen = limit[int]{value: 4, set: true}
-	invalidNested.object.fields[0].typ.object.fields[0].typ.string.maxLen = limit[int]{value: 1, set: true}
-	requireErrorIs(t, ValidateType(invalidNested, nil), ErrInvalidType)
+	invalidNested.object.fields[0].descriptor.object.fields[0].descriptor.string.minBytes = limit[int]{value: 4, set: true}
+	invalidNested.object.fields[0].descriptor.object.fields[0].descriptor.string.maxBytes = limit[int]{value: 1, set: true}
+	requireErrorIs(t, ValidateLocal(invalidNested), ErrInvalidDescriptor)
 }
 
-func TestValidateTypeErrorWrappingAndPath(t *testing.T) {
-	typ := Object(Field("name").String().Required()).Type()
-	typ.object.fields[0].typ.string.minLen = limit[int]{value: 5, set: true}
-	typ.object.fields[0].typ.string.maxLen = limit[int]{value: 1, set: true}
+func TestValidateDescriptorErrorWrappingAndPath(t *testing.T) {
+	desc := Object(Field("name").String().Required()).Descriptor()
+	desc.object.fields[0].descriptor.string.minBytes = limit[int]{value: 5, set: true}
+	desc.object.fields[0].descriptor.string.maxBytes = limit[int]{value: 1, set: true}
 
-	err := ValidateType(typ, nil)
-	requireErrorIs(t, err, ErrInvalidType)
-	var typeErr *TypeError
-	if !errors.As(err, &typeErr) {
-		t.Fatalf("expected TypeError, got %T", err)
+	err := ValidateLocal(desc)
+	requireErrorIs(t, err, ErrInvalidDescriptor)
+	var descriptorErr *DescriptorError
+	if !errors.As(err, &descriptorErr) {
+		t.Fatalf("expected DescriptorError, got %T", err)
 	}
-	requireEqual(t, typeErr.Path, "type.fields[name].type.len")
+	requireEqual(t, descriptorErr.Path, "descriptor.fields[name].type.bytes")
 }
 
 func TestValidateDefinitionRejectsInvalidNameAndCycles(t *testing.T) {
-	resolver := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
 		case "example.Name":
 			return Define("example.Name", String()), true
 		case "example.Self":
 			return Define("example.Self", Ref("example.Self")), true
 		default:
-			return TypeDefinition{}, false
+			return Definition{}, false
 		}
 	})
 
-	requireErrorIs(t, ValidateDefinition(Define("bad", String()), resolver), ErrInvalidTypeReference)
-	requireErrorIs(t, ValidateDefinition(Define("example.Self", Ref("example.Self")), resolver), ErrInvalidTypeReference)
+	requireErrorIs(t, ValidateDefinitionResolved(Define("bad", String()), resolver), ErrInvalidDescriptorReference)
+	requireErrorIs(t, ValidateDefinitionResolved(Define("example.Self", Ref("example.Self")), resolver), ErrInvalidDescriptorReference)
 }

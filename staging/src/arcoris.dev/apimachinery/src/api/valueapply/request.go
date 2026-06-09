@@ -38,7 +38,7 @@ type Request struct {
 	Applied value.Value
 
 	// Descriptor describes both Live and Applied.
-	Descriptor types.Type
+	Descriptor types.Descriptor
 
 	// Ownership is the current field ownership state for this value surface.
 	Ownership fieldownership.State

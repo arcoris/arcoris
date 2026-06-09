@@ -90,59 +90,59 @@ func parseJSONTag(raw string) parsedJSONTag {
 }
 
 // derefType dereferences pointers so helpers can inspect pointer embeddings.
-func derefType(typ reflect.Type) reflect.Type {
-	for typ.Kind() == reflect.Pointer {
-		typ = typ.Elem()
+func derefType(goType reflect.Type) reflect.Type {
+	for goType.Kind() == reflect.Pointer {
+		goType = goType.Elem()
 	}
 
-	return typ
+	return goType
 }
 
 // assertJSONTagName asserts that a Go field tag matches a canonical field name.
 func assertJSONTagName(
 	t *testing.T,
-	typ reflect.Type,
+	goType reflect.Type,
 	fieldName string,
 	want apidocument.FieldName,
 ) {
 	t.Helper()
 
-	assertJSONTagNameString(t, typ, fieldName, want.String())
+	assertJSONTagNameString(t, goType, fieldName, want.String())
 }
 
 // assertJSONTagNameString asserts that a Go field tag has exactly want as name.
 func assertJSONTagNameString(
 	t *testing.T,
-	typ reflect.Type,
+	goType reflect.Type,
 	fieldName string,
 	want string,
 ) {
 	t.Helper()
 
-	field := requireStructField(t, typ, fieldName)
+	field := requireStructField(t, goType, fieldName)
 	tag := parseJSONTag(field.Tag.Get(jsonTagName))
 	if tag.ignored {
-		t.Fatalf("%s.%s json tag is ignored", derefType(typ), fieldName)
+		t.Fatalf("%s.%s json tag is ignored", derefType(goType), fieldName)
 	}
 	if tag.name != want {
-		t.Fatalf("%s.%s json tag name = %q; want %q", derefType(typ), fieldName, tag.name, want)
+		t.Fatalf("%s.%s json tag name = %q; want %q", derefType(goType), fieldName, tag.name, want)
 	}
 }
 
 // assertJSONTagHasOptions asserts that all wanted tag options are present.
 func assertJSONTagHasOptions(
 	t *testing.T,
-	typ reflect.Type,
+	goType reflect.Type,
 	fieldName string,
 	wantOptions ...string,
 ) {
 	t.Helper()
 
-	field := requireStructField(t, typ, fieldName)
+	field := requireStructField(t, goType, fieldName)
 	tag := parseJSONTag(field.Tag.Get(jsonTagName))
 	for _, option := range wantOptions {
 		if !tag.options[option] {
-			t.Fatalf("%s.%s json tag missing option %q", derefType(typ), fieldName, option)
+			t.Fatalf("%s.%s json tag missing option %q", derefType(goType), fieldName, option)
 		}
 	}
 }
@@ -150,33 +150,33 @@ func assertJSONTagHasOptions(
 // assertJSONTagLacksOptions asserts that disallowed tag options are absent.
 func assertJSONTagLacksOptions(
 	t *testing.T,
-	typ reflect.Type,
+	goType reflect.Type,
 	fieldName string,
 	disallowedOptions ...string,
 ) {
 	t.Helper()
 
-	field := requireStructField(t, typ, fieldName)
+	field := requireStructField(t, goType, fieldName)
 	tag := parseJSONTag(field.Tag.Get(jsonTagName))
 	for _, option := range disallowedOptions {
 		if tag.options[option] {
-			t.Fatalf("%s.%s json tag unexpectedly has option %q", derefType(typ), fieldName, option)
+			t.Fatalf("%s.%s json tag unexpectedly has option %q", derefType(goType), fieldName, option)
 		}
 	}
 }
 
 // collectFlattenedJSONFieldNames collects exported document fields in wire order.
-func collectFlattenedJSONFieldNames(t *testing.T, typ reflect.Type) []string {
+func collectFlattenedJSONFieldNames(t *testing.T, goType reflect.Type) []string {
 	t.Helper()
 
-	typ = derefType(typ)
-	if typ.Kind() != reflect.Struct {
-		t.Fatalf("type %s is %s; want struct", typ, typ.Kind())
+	goType = derefType(goType)
+	if goType.Kind() != reflect.Struct {
+		t.Fatalf("type %s is %s; want struct", goType, goType.Kind())
 	}
 
 	var names []string
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
+	for i := 0; i < goType.NumField(); i++ {
+		field := goType.Field(i)
 		if field.PkgPath != "" {
 			continue
 		}
@@ -190,7 +190,7 @@ func collectFlattenedJSONFieldNames(t *testing.T, typ reflect.Type) []string {
 			continue
 		}
 		if tag.name == jsonTagNoExplicitName {
-			t.Fatalf("%s.%s lacks explicit json field name", typ, field.Name)
+			t.Fatalf("%s.%s lacks explicit json field name", goType, field.Name)
 		}
 
 		names = append(names, tag.name)
@@ -200,13 +200,13 @@ func collectFlattenedJSONFieldNames(t *testing.T, typ reflect.Type) []string {
 }
 
 // requireStructField returns a named field or fails the current test.
-func requireStructField(t *testing.T, typ reflect.Type, fieldName string) reflect.StructField {
+func requireStructField(t *testing.T, goType reflect.Type, fieldName string) reflect.StructField {
 	t.Helper()
 
-	typ = derefType(typ)
-	field, ok := typ.FieldByName(fieldName)
+	goType = derefType(goType)
+	field, ok := goType.FieldByName(fieldName)
 	if !ok {
-		t.Fatalf("%s has no field %s", typ, fieldName)
+		t.Fatalf("%s has no field %s", goType, fieldName)
 	}
 
 	return field

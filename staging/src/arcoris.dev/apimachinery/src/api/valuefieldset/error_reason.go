@@ -26,17 +26,17 @@ const (
 	ErrorReasonInvalidDescriptor ErrorReason = "invalid_descriptor"
 
 	// ErrorReasonKindMismatch reports a concrete value kind that does not match
-	// the descriptor type code.
+	// the descriptor kind.
 	ErrorReasonKindMismatch ErrorReason = "kind_mismatch"
 
 	// ErrorReasonUnknownField reports an actual object member rejected by the
 	// descriptor's unknown-field policy.
 	ErrorReasonUnknownField ErrorReason = "unknown_field"
 
-	// ErrorReasonUnresolvedRef reports a TypeRef that cannot be resolved.
+	// ErrorReasonUnresolvedRef reports a DescriptorRef that cannot be resolved.
 	ErrorReasonUnresolvedRef ErrorReason = "unresolved_ref"
 
-	// ErrorReasonReferenceCycle reports recursive TypeRef traversal.
+	// ErrorReasonReferenceCycle reports recursive DescriptorRef traversal.
 	ErrorReasonReferenceCycle ErrorReason = "reference_cycle"
 
 	// ErrorReasonMissingListKey reports an ListMap item missing an

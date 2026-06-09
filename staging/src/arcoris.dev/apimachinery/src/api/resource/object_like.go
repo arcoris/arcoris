@@ -25,8 +25,8 @@ import (
 //
 // The caller provides the reason because Desired and Observed use distinct
 // diagnostics while sharing the same structural root rule.
-func requireObjectLike(t types.Type, resolver types.Resolver, path string, reason ErrorReason, label string) error {
-	ok, detail := objectLike(t, resolver, make(map[types.TypeName]bool), label)
+func requireObjectLike(desc types.Descriptor, resolver types.Resolver, path string, reason ErrorReason, label string) error {
+	ok, detail := objectLike(desc, resolver, make(map[types.TypeName]bool), label)
 	if ok {
 		return nil
 	}
@@ -34,20 +34,20 @@ func requireObjectLike(t types.Type, resolver types.Resolver, path string, reaso
 	return versionError(path, reason, detail)
 }
 
-// objectLike reports whether t is a direct object or resolver-proven object
+// objectLike reports whether desc is a direct object or resolver-proven object
 // reference.
 //
 // Nil resolvers intentionally do not prove references. api/types may accept a
-// syntactically valid unresolved TypeRef during local validation, but resource
+// syntactically valid unresolved DescriptorRef during local validation, but resource
 // surfaces need object-like proof because resource definitions define API
 // object roots.
-func objectLike(t types.Type, resolver types.Resolver, resolving map[types.TypeName]bool, label string) (bool, string) {
-	switch t.Code() {
-	case types.TypeObject:
+func objectLike(desc types.Descriptor, resolver types.Resolver, resolving map[types.TypeName]bool, label string) (bool, string) {
+	switch desc.Code() {
+	case types.DescriptorObject:
 		return true, ""
 
-	case types.TypeRef:
-		view, _ := t.Ref()
+	case types.DescriptorRef:
+		view, _ := desc.AsRef()
 		name := view.Name()
 
 		if resolver == nil {
@@ -62,7 +62,7 @@ func objectLike(t types.Type, resolver types.Resolver, resolving map[types.TypeN
 			return false, fmt.Sprintf("%s root reference %q is recursive", label, name)
 		}
 
-		def, ok := resolver.ResolveType(name)
+		def, ok := resolver.Resolve(name)
 		if !ok {
 			return false, fmt.Sprintf(
 				"%s root reference %q was not found in resolver",
@@ -77,13 +77,13 @@ func objectLike(t types.Type, resolver types.Resolver, resolving map[types.TypeN
 		}
 		next[name] = true
 
-		return objectLike(def.Type(), resolver, next, label)
+		return objectLike(def.Descriptor(), resolver, next, label)
 
 	default:
 		return false, fmt.Sprintf(
 			"%s root must be object or reference to object, got %s",
 			label,
-			t.Code(),
+			desc.Code(),
 		)
 	}
 }

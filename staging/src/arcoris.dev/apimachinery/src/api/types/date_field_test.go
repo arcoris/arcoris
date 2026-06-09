@@ -22,9 +22,9 @@ func TestDateFieldWrapper(t *testing.T) {
 	requireEqual(t, field.Name(), FieldName("value"))
 	requireEqual(t, field.IsRequired(), true)
 	requireEqual(t, field.Description(), "value")
-	requireEqual(t, field.Type().Code(), TypeDate)
-	requireEqual(t, field.Type().Nullable(), true)
-	requireNoError(t, ValidateType(objectTypeForField(field), nil))
+	requireEqual(t, field.Descriptor().Code(), DescriptorDate)
+	requireEqual(t, field.Descriptor().Nullable(), true)
+	requireNoError(t, ValidateLocal(objectTypeForField(field)))
 }
 
 func TestDateFieldExprMarker(t *testing.T) {

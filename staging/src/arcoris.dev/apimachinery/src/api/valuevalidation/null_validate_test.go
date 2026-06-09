@@ -25,12 +25,12 @@ import (
 func TestValidateNullability(t *testing.T) {
 	tests := []struct {
 		name       string
-		descriptor types.Type
+		descriptor types.Descriptor
 		wantErr    bool
 	}{
-		{name: "null descriptor", descriptor: types.Null().Type()},
-		{name: "nullable string", descriptor: types.String().Nullable().Type()},
-		{name: "non nullable string", descriptor: types.String().Type(), wantErr: true},
+		{name: "null descriptor", descriptor: types.Null().Descriptor()},
+		{name: "nullable string", descriptor: types.String().Nullable().Descriptor()},
+		{name: "non nullable string", descriptor: types.String().Descriptor(), wantErr: true},
 	}
 
 	for _, tt := range tests {

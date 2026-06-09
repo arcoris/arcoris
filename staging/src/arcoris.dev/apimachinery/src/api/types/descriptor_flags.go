@@ -14,28 +14,28 @@
 
 package types
 
-// typeFlags stores descriptor-wide boolean modifiers.
+// descriptorFlags stores descriptor-wide boolean modifiers.
 //
 // Flags are deliberately private so new descriptor-wide semantics can be added
 // without allowing callers to manufacture unsupported combinations. Validation
-// remains the authority on whether a flag is legal for a TypeCode.
-type typeFlags uint8
+// remains the authority on whether a flag is legal for a DescriptorKind.
+type descriptorFlags uint8
 
 const (
-	// typeFlagNullable records value nullability for every non-null descriptor.
+	// descriptorFlagNullable records value nullability for every non-null descriptor.
 	//
-	// This flag does not describe field presence and does not turn TypeNull into
-	// a nullable type. TypeNull is already the null literal.
-	typeFlagNullable typeFlags = 1 << iota
+	// This flag does not describe field presence and does not turn DescriptorNull into
+	// a nullable type. DescriptorNull is already the null literal.
+	descriptorFlagNullable descriptorFlags = 1 << iota
 )
 
-// withNullable returns a copy of t that admits null values.
+// withNullable returns a copy of desc that admits null values.
 //
 // Builders use this helper instead of mutating shared state. The helper does
-// not reject TypeNull so it can remain tiny and allocation-free; ValidateType
-// enforces the exact TypeNull invariant that TypeNull cannot be nullable.
-func (t Type) withNullable() Type {
-	t.flags |= typeFlagNullable
+// not reject DescriptorNull so it can remain tiny and allocation-free; ValidateResolved
+// enforces the exact DescriptorNull invariant that DescriptorNull cannot be nullable.
+func (desc Descriptor) withNullable() Descriptor {
+	desc.flags |= descriptorFlagNullable
 
-	return t
+	return desc
 }

@@ -14,7 +14,7 @@
 
 package types
 
-// TimestampField builds object fields whose value type is timestamp.
+// TimestampField builds object fields whose value descriptor is timestamp.
 //
 // The wrapper keeps object-field metadata beside the timestamp builder,
 // allowing fluent field declarations without making fields reusable unnamed
@@ -22,8 +22,8 @@ package types
 type TimestampField struct {
 	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
-	// typ stores the typed descriptor builder for this field value.
-	typ TimestampType
+	// descriptor stores the typed descriptor builder for this field value.
+	descriptor TimestampDescriptor
 }
 
 // Required marks the field key as required.
@@ -49,14 +49,14 @@ func (f TimestampField) Description(text string) TimestampField {
 
 // Nullable admits null in addition to timestamp values.
 func (f TimestampField) Nullable() TimestampField {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f TimestampField) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks TimestampField as a sealed FieldExpr implementation.

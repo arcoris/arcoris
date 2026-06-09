@@ -22,13 +22,13 @@ import (
 
 // ExtractSelector extracts the semantic selector for one ListMap item.
 //
-// The element descriptor must be an object descriptor or a TypeRef resolving to
+// The element descriptor must be an object descriptor or a DescriptorRef resolving to
 // one. The declared keys must point at object fields whose concrete item values
 // can become fieldpath selector literals.
 func ExtractSelector(
 	indexPath fieldpath.Path,
 	item value.Value,
-	element types.Type,
+	element types.Descriptor,
 	keys []types.FieldName,
 	opts Options,
 ) (fieldpath.Selector, error) {
@@ -48,7 +48,7 @@ func ExtractSelector(
 type selectorRequest struct {
 	indexPath fieldpath.Path
 	item      value.Value
-	element   types.Type
+	element   types.Descriptor
 	keys      []types.FieldName
 	resolver  referenceResolver
 }

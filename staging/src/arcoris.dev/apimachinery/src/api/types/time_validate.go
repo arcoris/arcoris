@@ -14,7 +14,7 @@
 
 package types
 
-// validateTime checks TypeTime payload invariants.
-func validateTime(t Type, path string) error {
+// validateTime checks DescriptorTime payload invariants.
+func validateTime(desc Descriptor, path string) error {
 	return nil
 }

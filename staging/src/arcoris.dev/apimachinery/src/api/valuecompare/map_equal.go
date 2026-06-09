@@ -28,7 +28,7 @@ func (c *comparer) equalMap(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (bool, error) {
 	if err := requireKind(path, oldValue, value.KindObject, descriptor.Code()); err != nil {
@@ -38,16 +38,16 @@ func (c *comparer) equalMap(
 		return false, err
 	}
 
-	mapView, ok := descriptor.Map()
+	mapView, ok := descriptor.AsMap()
 	if !ok {
 		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not a map")
 	}
 	if !mapView.Key().IsValid() {
-		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map key type is invalid")
+		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map key descriptor is invalid")
 	}
 
-	valueType := mapView.Value()
-	if !valueType.IsValid() {
+	valueDescriptor := mapView.Value()
+	if !valueDescriptor.IsValid() {
 		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map value descriptor is invalid")
 	}
 
@@ -64,7 +64,7 @@ func (c *comparer) equalMap(
 			return false, nil
 		}
 
-		equal, err := c.equalValue(path.Key(newMember.Name), oldMember, newMember.Value, valueType, depth+1)
+		equal, err := c.equalValue(path.Key(newMember.Name), oldMember, newMember.Value, valueDescriptor, depth+1)
 		if err != nil {
 			return false, err
 		}

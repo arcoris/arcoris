@@ -17,17 +17,17 @@ package types
 import "testing"
 
 func TestFieldDescriptorAccessorsDetachType(t *testing.T) {
-	field := Field("name").String().Required().MinLen(1).Description("name field").Field()
-	typ := field.Type()
-	typ.string.minLen = limit[int]{value: 99, set: true}
+	field := Field("name").String().Required().MinBytes(1).Description("name field").Field()
+	desc := field.Descriptor()
+	desc.string.minBytes = limit[int]{value: 99, set: true}
 
 	requireEqual(t, field.Name(), FieldName("name"))
 	requireEqual(t, field.Presence(), PresenceRequired)
 	requireEqual(t, field.IsRequired(), true)
 	requireEqual(t, field.IsOptional(), false)
 	requireEqual(t, field.Description(), "name field")
-	view, _ := field.Type().String()
-	min, _ := view.MinLen()
+	view, _ := field.Descriptor().AsString()
+	min, _ := view.MinBytes()
 	requireEqual(t, min, 1)
 }
 
@@ -42,64 +42,49 @@ func TestFieldDescriptorShapeAndPresence(t *testing.T) {
 	requireEqual(t, required.IsRequired(), true)
 	requireEqual(t, required.IsOptional(), false)
 	requireEqual(t, required.Description(), "display name")
-	requireCode(t, required.Type(), TypeString)
-	requireNullable(t, required.Type(), true)
+	requireCode(t, required.Descriptor(), DescriptorString)
+	requireNullable(t, required.Descriptor(), true)
 
 	optional := Field("enabled").Bool().Optional().Field()
 	requireEqual(t, optional.Presence(), PresenceOptional)
 	requireEqual(t, optional.IsRequired(), false)
 	requireEqual(t, optional.IsOptional(), true)
-	requireNullable(t, optional.Type(), false)
+	requireNullable(t, optional.Descriptor(), false)
 }
 
 func TestFieldDescriptorExpressionBoundaries(t *testing.T) {
 	if _, ok := any(Field("name")).(FieldExpr); ok {
 		t.Fatal("FieldBuilder must not implement FieldExpr")
 	}
-	if _, ok := any(Field("name").String()).(TypeExpr); ok {
-		t.Fatal("field builders must not implement TypeExpr")
+	if _, ok := any(Field("name").String()).(DescriptorExpr); ok {
+		t.Fatal("field builders must not implement DescriptorExpr")
 	}
 }
 
 func TestFieldDescriptorObjectValidationBoundaries(t *testing.T) {
-	requireInvalidType(t, Object(FieldExpr(nil)).Type(), nil, ErrInvalidField)
+	requireInvalidDescriptor(t, Object(FieldExpr(nil)).Descriptor(), nil, ErrInvalidField)
 
 	missingPresence := Field("name").String().Field()
-	requireInvalidType(t, objectTypeForField(missingPresence), nil, ErrInvalidField)
+	requireInvalidDescriptor(t, objectTypeForField(missingPresence), nil, ErrInvalidField)
 
 	duplicate := Object(
 		Field("name").String().Required(),
 		Field("name").Bool().Optional(),
-	).Type()
-	requireInvalidType(t, duplicate, nil, ErrDuplicateField)
+	).Descriptor()
+	requireInvalidDescriptor(t, duplicate, nil, ErrDuplicateField)
 }
 
 func TestFieldDescriptorObjectViewDetachAndOrder(t *testing.T) {
-	typ := Object(
+	desc := Object(
 		Field("first").String().Required(),
 		Field("second").Int64().Optional(),
-	).Type()
+	).Descriptor()
 
-	fields := requireObjectView(t, typ).Fields()
+	fields := requireObjectView(t, desc).Fields()
 	requireEqual(t, fields[0].Name(), FieldName("first"))
 	requireEqual(t, fields[1].Name(), FieldName("second"))
 	fields[0] = Field("changed").String().Required().Field()
 
-	fields = requireObjectView(t, typ).Fields()
+	fields = requireObjectView(t, desc).Fields()
 	requireEqual(t, fields[0].Name(), FieldName("first"))
-}
-
-func TestFieldDescriptorCloneHelpersDetachTypeAndSlices(t *testing.T) {
-	field := Field("name").String().Required().Enum("a").Field()
-	cloned := cloneField(field)
-	cloned.typ.string.enum[0] = "b"
-
-	view := requireStringView(t, field.Type())
-	requireEqual(t, view.Enum()[0], "a")
-
-	fields := []FieldDescriptor{field}
-	clonedFields := cloneFields(fields)
-	clonedFields[0] = Field("changed").String().Required().Field()
-	requireEqual(t, fields[0].Name(), FieldName("name"))
-	requireEqual(t, cloneFields(nil) == nil, true)
 }

@@ -23,7 +23,7 @@ func (r selectorRequest) objectDescriptor() (types.ObjectView, error) {
 		return types.ObjectView{}, err
 	}
 
-	if resolvedDescriptor.Code() != types.TypeObject {
+	if resolvedDescriptor.Code() != types.DescriptorObject {
 		return types.ObjectView{}, failure(
 			r.indexPath,
 			FailureInvalidDescriptor,
@@ -31,7 +31,7 @@ func (r selectorRequest) objectDescriptor() (types.ObjectView, error) {
 		)
 	}
 
-	elementObjectView, ok := resolvedDescriptor.Object()
+	elementObjectView, ok := resolvedDescriptor.AsObject()
 	if !ok {
 		return types.ObjectView{}, failure(
 			r.indexPath,

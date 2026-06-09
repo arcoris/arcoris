@@ -24,14 +24,14 @@ import (
 func (e *extractor) extractMap(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (fieldpath.Set, error) {
 	if err := requireKind(path, val, value.KindObject, descriptor.Code()); err != nil {
 		return fieldpath.Set{}, err
 	}
 
-	mapView, ok := descriptor.Map()
+	mapView, ok := descriptor.AsMap()
 	if !ok {
 		return fieldpath.Set{}, errorAt(
 			path,
@@ -45,12 +45,12 @@ func (e *extractor) extractMap(
 			path,
 			ErrInvalidDescriptor,
 			ErrorReasonInvalidDescriptor,
-			"map key type is invalid",
+			"map key descriptor is invalid",
 		)
 	}
 
-	valueType := mapView.Value()
-	if !valueType.IsValid() {
+	valueDescriptor := mapView.Value()
+	if !valueDescriptor.IsValid() {
 		return fieldpath.Set{}, errorAt(
 			path,
 			ErrInvalidDescriptor,
@@ -69,7 +69,7 @@ func (e *extractor) extractMap(
 		memberSet, err := e.extract(
 			path.Key(mapMember.Name),
 			mapMember.Value,
-			valueType,
+			valueDescriptor,
 			depth+1,
 		)
 		if err != nil {

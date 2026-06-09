@@ -17,5 +17,5 @@ package types
 import "testing"
 
 func TestUint32ValidateRejectsInvalidRules(t *testing.T) {
-	requireErrorIs(t, ValidateType(Uint32().Range(10, 1).Type(), nil), ErrInvalidType)
+	requireErrorIs(t, ValidateLocal(Uint32().Range(10, 1).Descriptor()), ErrInvalidDescriptor)
 }

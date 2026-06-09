@@ -20,12 +20,12 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
-// mergeRef resolves one TypeRef edge without changing the semantic path.
+// mergeRef resolves one DescriptorRef edge without changing the semantic path.
 func (m *merger) mergeRef(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
 ) (operand, error) {
@@ -40,21 +40,21 @@ func (m *merger) mergeRef(
 	return m.merge(path, base, overlay, resolved, fields, depth+1)
 }
 
-// resolveRefDefinition resolves one TypeRef edge and enforces recursion guards.
+// resolveRefDefinition resolves one DescriptorRef edge and enforces recursion guards.
 func (m *merger) resolveRefDefinition(
 	path fieldpath.Path,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
-) (types.TypeName, types.Type, error) {
+) (types.TypeName, types.Descriptor, error) {
 	name, resolved, err := m.refs.Resolve(path, descriptor, depth)
 	if err != nil {
-		return "", types.Type{}, valuemergeRefError(err)
+		return "", types.Descriptor{}, valuemergeRefError(err)
 	}
 
 	return name, resolved, nil
 }
 
-// valuemergeRefError maps internal TypeRef traversal failures into this package.
+// valuemergeRefError maps internal DescriptorRef traversal failures into this package.
 func valuemergeRefError(err error) error {
 	refError, ok := typeref.AsError(err)
 	if !ok {

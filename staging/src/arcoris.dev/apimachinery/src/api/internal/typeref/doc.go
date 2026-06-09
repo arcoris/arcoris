@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package typeref provides shared TypeRef traversal guards for descriptor-aware
+// Package typeref provides shared DescriptorRef traversal guards for descriptor-aware
 // API packages.
 //
 // The package is intentionally internal and diagnostic-neutral. Callers keep
 // their own public sentinel and reason models, while this package owns the
 // common resolver, recursion, and depth-limit mechanics.
 //
-// Resolver resolves one TypeRef edge at a time. Callers explicitly enter and
+// Resolver resolves one DescriptorRef edge at a time. Callers explicitly enter and
 // leave the returned reference name while descending, which keeps comparison,
 // validation, and field-set extraction free to preserve their own control flow
 // and semantic paths. ResolveFinal is available for call sites that only need to

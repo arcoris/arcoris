@@ -14,7 +14,7 @@
 
 package types
 
-// Bytes starts a field descriptor whose value type is an opaque byte sequence.
+// Bytes starts a field descriptor whose value descriptor is an opaque byte sequence.
 //
 // Bytes fields support structural length constraints only. Encoding choices
 // such as base64, hex, or binary framing belong to codecs and exporters, not to
@@ -25,9 +25,9 @@ package types
 //	Field("payload").Bytes().
 //		Optional().
 //		Nullable().
-//		MinLen(1).
-//		MaxLen(4096).
+//		MinBytes(1).
+//		MaxBytes(4096).
 //		Description("Opaque payload bytes.")
 func (b FieldBuilder) Bytes() BytesField {
-	return BytesField{field: b.state(), typ: Bytes()}
+	return BytesField{field: b.state(), descriptor: Bytes()}
 }

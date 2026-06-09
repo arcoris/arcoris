@@ -14,19 +14,19 @@
 
 package types
 
-// Float32View exposes read-only TypeFloat32 payload data.
+// Float32View exposes read-only DescriptorFloat32 payload data.
 type Float32View struct {
-	// payload is a detached copy of the TypeFloat32 payload.
+	// payload is a detached copy of the DescriptorFloat32 payload.
 	payload float32Payload
 }
 
-// Float32 returns a read-only TypeFloat32 view when t is a float32 descriptor.
-func (t Type) Float32() (Float32View, bool) {
-	if t.code != TypeFloat32 {
+// AsFloat32 returns a read-only DescriptorFloat32 view when desc is a float32 descriptor.
+func (desc Descriptor) AsFloat32() (Float32View, bool) {
+	if desc.code != DescriptorFloat32 {
 		return Float32View{}, false
 	}
 
-	return Float32View{payload: cloneFloat32Payload(t.float32)}, true
+	return Float32View{payload: cloneFloat32Payload(desc.float32)}, true
 }
 
 // Min returns the inclusive lower bound when one is set.

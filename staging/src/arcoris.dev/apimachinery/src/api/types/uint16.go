@@ -14,15 +14,15 @@
 
 package types
 
-// Uint16Type builds uint16 descriptors.
+// Uint16Descriptor builds uint16 descriptors.
 //
-// Uint16Type records portable fixed-width uint16 constraints. It deliberately
+// Uint16Descriptor records portable fixed-width uint16 constraints. It deliberately
 // avoids Go platform-sized uint semantics, so descriptors remain stable
 // across architectures and code generators.
-type Uint16Type struct {
+type Uint16Descriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
-	// payload stores TypeUint16 constraints under construction.
+	header descriptorHeader
+	// payload stores DescriptorUint16 constraints under construction.
 	payload uint16Payload
 }
 
@@ -31,50 +31,50 @@ type Uint16Type struct {
 // Typical reusable declaration:
 //
 //	portType := Uint16().Range(1, 65535)
-func Uint16() Uint16Type {
-	return Uint16Type{header: newHeader(TypeUint16)}
+func Uint16() Uint16Descriptor {
+	return Uint16Descriptor{header: newHeader(DescriptorUint16)}
 }
 
 // Nullable returns a uint16 descriptor that admits null values.
-func (t Uint16Type) Nullable() Uint16Type {
-	t.header = t.header.withNullable()
+func (desc Uint16Descriptor) Nullable() Uint16Descriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
 // Min sets the inclusive uint16 lower bound.
-func (t Uint16Type) Min(n uint16) Uint16Type {
-	t.payload.min = limit[uint16]{value: n, set: true}
+func (desc Uint16Descriptor) Min(n uint16) Uint16Descriptor {
+	desc.payload.min = limit[uint16]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Max sets the inclusive uint16 upper bound.
-func (t Uint16Type) Max(n uint16) Uint16Type {
-	t.payload.max = limit[uint16]{value: n, set: true}
+func (desc Uint16Descriptor) Max(n uint16) Uint16Descriptor {
+	desc.payload.max = limit[uint16]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Range sets the inclusive uint16 lower and upper bounds.
-func (t Uint16Type) Range(min, max uint16) Uint16Type {
-	return t.Min(min).Max(max)
+func (desc Uint16Descriptor) Range(min, max uint16) Uint16Descriptor {
+	return desc.Min(min).Max(max)
 }
 
 // Enum stores accepted uint16 literals in declaration order.
-func (t Uint16Type) Enum(values ...uint16) Uint16Type {
-	t.payload.enum = cloneSlice(values)
+func (desc Uint16Descriptor) Enum(values ...uint16) Uint16Descriptor {
+	desc.payload.enum = cloneSlice(values)
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t Uint16Type) Type() Type {
-	out := typeFromHeader(t.header)
-	out.uint16 = cloneUint16Payload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc Uint16Descriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.uint16 = cloneUint16Payload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks Uint16Type as a sealed TypeExpr implementation.
-func (t Uint16Type) typeExpr() {}
+// descriptorExpr marks Uint16Descriptor as a sealed DescriptorExpr implementation.
+func (desc Uint16Descriptor) descriptorExpr() {}

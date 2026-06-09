@@ -25,7 +25,7 @@ func (m *merger) mergeList(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
 ) (operand, error) {
@@ -43,7 +43,7 @@ func (m *merger) mergeList(
 		return preserved, nil
 	}
 
-	view, ok := descriptor.List()
+	view, ok := descriptor.AsList()
 	if !ok {
 		return operand{}, errorAt(
 			path,

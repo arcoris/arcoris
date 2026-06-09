@@ -14,19 +14,19 @@
 
 package types
 
-// Int32View exposes read-only TypeInt32 payload data.
+// Int32View exposes read-only DescriptorInt32 payload data.
 type Int32View struct {
-	// payload is a detached copy of the TypeInt32 payload.
+	// payload is a detached copy of the DescriptorInt32 payload.
 	payload int32Payload
 }
 
-// Int32 returns a read-only TypeInt32 view when t is an int32 descriptor.
-func (t Type) Int32() (Int32View, bool) {
-	if t.code != TypeInt32 {
+// AsInt32 returns a read-only DescriptorInt32 view when desc is an int32 descriptor.
+func (desc Descriptor) AsInt32() (Int32View, bool) {
+	if desc.code != DescriptorInt32 {
 		return Int32View{}, false
 	}
 
-	return Int32View{payload: cloneInt32Payload(t.int32)}, true
+	return Int32View{payload: cloneInt32Payload(desc.int32)}, true
 }
 
 // Min returns the inclusive lower bound when one is set.

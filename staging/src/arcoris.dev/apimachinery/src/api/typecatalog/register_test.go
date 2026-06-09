@@ -35,7 +35,7 @@ func TestRegisterRejectsDuplicateExistingName(t *testing.T) {
 
 	err := catalog.Register(types.Define("example.Name", types.Int64()))
 	requireErrorIs(t, err, ErrDefinitionExists)
-	requireErrorNotIs(t, err, types.ErrInvalidTypeReference)
+	requireErrorNotIs(t, err, types.ErrInvalidDescriptorReference)
 }
 
 func TestRegisterRejectsInvalidDefinition(t *testing.T) {
@@ -44,13 +44,13 @@ func TestRegisterRejectsInvalidDefinition(t *testing.T) {
 	requireErrorIs(
 		t,
 		catalog.Register(types.Define("bad", types.String())),
-		types.ErrInvalidTypeReference,
+		types.ErrInvalidDescriptorReference,
 	)
 
 	requireErrorIs(
 		t,
-		catalog.Register(types.Define("example.Bad", types.ListOf(types.TypeExpr(nil)))),
-		types.ErrInvalidType,
+		catalog.Register(types.Define("example.Bad", types.ListOf(types.DescriptorExpr(nil)))),
+		types.ErrInvalidDescriptor,
 	)
 }
 
@@ -60,11 +60,11 @@ func TestRegisterManyAtomicOnInvalidDefinition(t *testing.T) {
 
 	err := catalog.RegisterMany(
 		types.Define("example.Next", types.String()),
-		types.Define("example.Bad", types.ListOf(types.TypeExpr(nil))),
+		types.Define("example.Bad", types.ListOf(types.DescriptorExpr(nil))),
 	)
-	requireErrorIs(t, err, types.ErrInvalidType)
+	requireErrorIs(t, err, types.ErrInvalidDescriptor)
 
-	_, ok := catalog.ResolveType("example.Next")
+	_, ok := catalog.Resolve("example.Next")
 	requireEqual(t, ok, false)
 }
 
@@ -77,9 +77,9 @@ func TestRegisterManyAtomicOnExistingConflict(t *testing.T) {
 		types.Define("example.Existing", types.Int64()),
 	)
 	requireErrorIs(t, err, ErrDefinitionExists)
-	requireErrorNotIs(t, err, types.ErrInvalidTypeReference)
+	requireErrorNotIs(t, err, types.ErrInvalidDescriptorReference)
 
-	_, ok := catalog.ResolveType("example.Next")
+	_, ok := catalog.Resolve("example.Next")
 	requireEqual(t, ok, false)
 }
 
@@ -92,9 +92,9 @@ func TestRegisterManyAtomicOnBatchDuplicate(t *testing.T) {
 	)
 	requireErrorIs(t, err, ErrDuplicateDefinition)
 	requireEqual(t, errors.Is(err, types.ErrDuplicateField), false)
-	requireErrorNotIs(t, err, types.ErrInvalidTypeReference)
+	requireErrorNotIs(t, err, types.ErrInvalidDescriptorReference)
 
-	_, ok := catalog.ResolveType("example.Name")
+	_, ok := catalog.Resolve("example.Name")
 	requireEqual(t, ok, false)
 }
 
@@ -102,12 +102,12 @@ func TestRegisterManyAllowsReferencesInsideBatch(t *testing.T) {
 	var catalog Catalog
 
 	err := catalog.RegisterMany(
-		types.Define("example.Name", types.String().MinLen(1)),
+		types.Define("example.Name", types.String().MinBytes(1)),
 		types.Define("example.NameList", types.ListOf(types.Ref("example.Name"))),
 	)
 	requireNoError(t, err)
 
-	_, ok := catalog.ResolveType("example.NameList")
+	_, ok := catalog.Resolve("example.NameList")
 	requireEqual(t, ok, true)
 }
 
@@ -118,8 +118,8 @@ func TestRegisterManyRejectsUnresolvedExternalRefs(t *testing.T) {
 		types.Define("example.Name", types.String()),
 		types.Define("example.ExternalList", types.ListOf(types.Ref("example.Missing"))),
 	)
-	requireErrorIs(t, err, types.ErrUnknownTypeReference)
+	requireErrorIs(t, err, types.ErrUnresolvedDescriptorReference)
 
-	_, ok := catalog.ResolveType("example.Name")
+	_, ok := catalog.Resolve("example.Name")
 	requireEqual(t, ok, false)
 }

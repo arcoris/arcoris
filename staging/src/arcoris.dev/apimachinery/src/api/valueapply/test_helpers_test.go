@@ -206,52 +206,52 @@ func pathStrings(paths []fieldpath.Path) []string {
 	return out
 }
 
-func specDescriptor() types.Type {
+func specDescriptor() types.Descriptor {
 	return types.Object(
 		types.Field("image").String().Optional(),
 		types.Field("replicas").Int64().Optional(),
-	).Type()
+	).Descriptor()
 }
 
-func specStringDescriptor() types.Type {
+func specStringDescriptor() types.Descriptor {
 	return types.Object(
 		types.Field("image").String().Optional(),
 		types.Field("replicas").String().Optional(),
-	).Type()
+	).Descriptor()
 }
 
-func typesUnknownPruneObject() types.Type {
-	return types.Object().UnknownFields(types.UnknownPrune).Type()
+func typesUnknownPruneObject() types.Descriptor {
+	return types.Object().UnknownFields(types.UnknownPrune).Descriptor()
 }
 
-func typesObjectWithSpec() types.Type {
+func typesObjectWithSpec() types.Descriptor {
 	return types.Object(
 		types.Field("name").String().Optional(),
 		types.Field("spec").Object(
 			types.Field("image").String().Optional(),
 		).Optional(),
-	).Type()
+	).Descriptor()
 }
 
-func mapDescriptor() types.Type {
-	return types.MapOf(types.String()).Type()
+func mapDescriptor() types.Descriptor {
+	return types.MapOf(types.String()).Descriptor()
 }
 
-func orderedStringListDescriptor() types.Type {
-	return types.ListOf(types.String()).Ordered().Type()
+func orderedStringListDescriptor() types.Descriptor {
+	return types.ListOf(types.String()).Ordered().Descriptor()
 }
 
-func atomicStringListDescriptor() types.Type {
-	return types.ListOf(types.String()).Atomic().Type()
+func atomicStringListDescriptor() types.Descriptor {
+	return types.ListOf(types.String()).Atomic().Descriptor()
 }
 
-func conditionsDescriptor() types.Type {
+func conditionsDescriptor() types.Descriptor {
 	return types.ListOf(
 		types.Object(
 			types.Field("type").String().Required(),
 			types.Field("status").String().Optional(),
 		),
-	).Map("type").Type()
+	).Map("type").Descriptor()
 }
 
 func specPath() fieldpath.Path {

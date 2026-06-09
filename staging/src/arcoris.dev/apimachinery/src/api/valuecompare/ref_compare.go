@@ -21,14 +21,14 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
-// compareRef resolves one TypeRef edge without changing the semantic path.
+// compareRef resolves one DescriptorRef edge without changing the semantic path.
 //
 // Result paths describe payload locations, not descriptor definition paths.
 func (c *comparer) compareRef(
 	path fieldpath.Path,
 	oldOperand valuepresence.Operand,
 	newOperand valuepresence.Operand,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (Result, error) {
 	name, resolved, err := c.resolveRefDefinition(path, descriptor, depth)
@@ -42,24 +42,24 @@ func (c *comparer) compareRef(
 	return c.compare(path, oldOperand, newOperand, resolved, depth+1)
 }
 
-// resolveRefDefinition resolves one TypeRef edge and enforces recursion guards.
+// resolveRefDefinition resolves one DescriptorRef edge and enforces recursion guards.
 //
 // The caller owns marking the returned name in c.refs while it descends
 // into the resolved descriptor.
 func (c *comparer) resolveRefDefinition(
 	path fieldpath.Path,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
-) (types.TypeName, types.Type, error) {
+) (types.TypeName, types.Descriptor, error) {
 	name, resolved, err := c.refs.Resolve(path, descriptor, depth)
 	if err != nil {
-		return "", types.Type{}, valuecompareRefError(err)
+		return "", types.Descriptor{}, valuecompareRefError(err)
 	}
 
 	return name, resolved, nil
 }
 
-// valuecompareRefError maps internal TypeRef traversal failures into this
+// valuecompareRefError maps internal DescriptorRef traversal failures into this
 // package's public sentinel and reason model.
 func valuecompareRefError(err error) error {
 	refError, ok := typeref.AsError(err)

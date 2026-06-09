@@ -27,7 +27,7 @@ func TestValidateBoolAcceptsBoolValue(t *testing.T) {
 		t,
 		valuevalidation.Validate(
 			value.BoolValue(true),
-			types.Bool().Type(),
+			types.Bool().Descriptor(),
 			valuevalidation.Options{},
 		),
 	)

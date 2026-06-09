@@ -25,7 +25,7 @@ import (
 func Merge(
 	base value.Value,
 	overlay value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	fields fieldpath.Set,
 	opts Options,
 ) (value.Value, error) {
@@ -43,7 +43,7 @@ func MergeAt(
 	path fieldpath.Path,
 	base value.Value,
 	overlay value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	fields fieldpath.Set,
 	opts Options,
 ) (value.Value, error) {

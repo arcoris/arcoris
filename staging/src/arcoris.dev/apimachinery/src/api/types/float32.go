@@ -14,20 +14,20 @@
 
 package types
 
-// Float32Type builds float32 descriptors.
+// Float32Descriptor builds float32 descriptors.
 //
-// Float32Type records portable binary32 floating-point constraints.
+// Float32Descriptor records portable binary32 floating-point constraints.
 // Validation rejects NaN and infinities in descriptor rules because those
 // values are not stable common API literals.
 //
-// Float32Type describes portable IEEE-754 binary32 API values. It stores
+// Float32Descriptor describes portable IEEE-754 binary32 API values. It stores
 // structural bounds and enum literals as descriptor data only; it does not
 // implement value parsing, coercion, defaulting, validation, codec mapping, or
 // OpenAPI/JSON Schema export.
-type Float32Type struct {
+type Float32Descriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
-	// payload stores TypeFloat32 constraints under construction.
+	header descriptorHeader
+	// payload stores DescriptorFloat32 constraints under construction.
 	payload float32Payload
 }
 
@@ -36,50 +36,50 @@ type Float32Type struct {
 // Typical reusable declaration:
 //
 //	ratioType := Float32().Range(0, 1)
-func Float32() Float32Type {
-	return Float32Type{header: newHeader(TypeFloat32)}
+func Float32() Float32Descriptor {
+	return Float32Descriptor{header: newHeader(DescriptorFloat32)}
 }
 
 // Nullable returns a float32 descriptor that admits null values.
-func (t Float32Type) Nullable() Float32Type {
-	t.header = t.header.withNullable()
+func (desc Float32Descriptor) Nullable() Float32Descriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
 // Min sets the inclusive float32 lower bound.
-func (t Float32Type) Min(n float32) Float32Type {
-	t.payload.min = limit[float32]{value: n, set: true}
+func (desc Float32Descriptor) Min(n float32) Float32Descriptor {
+	desc.payload.min = limit[float32]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Max sets the inclusive float32 upper bound.
-func (t Float32Type) Max(n float32) Float32Type {
-	t.payload.max = limit[float32]{value: n, set: true}
+func (desc Float32Descriptor) Max(n float32) Float32Descriptor {
+	desc.payload.max = limit[float32]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Range sets the inclusive float32 lower and upper bounds.
-func (t Float32Type) Range(min, max float32) Float32Type {
-	return t.Min(min).Max(max)
+func (desc Float32Descriptor) Range(min, max float32) Float32Descriptor {
+	return desc.Min(min).Max(max)
 }
 
 // Enum stores accepted float32 literals in declaration order.
-func (t Float32Type) Enum(values ...float32) Float32Type {
-	t.payload.enum = cloneSlice(values)
+func (desc Float32Descriptor) Enum(values ...float32) Float32Descriptor {
+	desc.payload.enum = cloneSlice(values)
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t Float32Type) Type() Type {
-	out := typeFromHeader(t.header)
-	out.float32 = cloneFloat32Payload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc Float32Descriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.float32 = cloneFloat32Payload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks Float32Type as a sealed TypeExpr implementation.
-func (t Float32Type) typeExpr() {}
+// descriptorExpr marks Float32Descriptor as a sealed DescriptorExpr implementation.
+func (desc Float32Descriptor) descriptorExpr() {}

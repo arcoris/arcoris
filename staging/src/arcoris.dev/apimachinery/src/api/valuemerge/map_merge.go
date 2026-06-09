@@ -26,7 +26,7 @@ func (m *merger) mergeMap(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
 ) (operand, error) {
@@ -44,7 +44,7 @@ func (m *merger) mergeMap(
 		return preserved, nil
 	}
 
-	view, ok := descriptor.Map()
+	view, ok := descriptor.AsMap()
 	if !ok {
 		return operand{}, errorAt(
 			path,
@@ -62,7 +62,7 @@ func (m *merger) mergeMapView(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
-	valueDescriptor types.Type,
+	valueDescriptor types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
 ) (operand, error) {

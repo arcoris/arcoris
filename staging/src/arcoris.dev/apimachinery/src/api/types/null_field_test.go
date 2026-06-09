@@ -22,9 +22,9 @@ func TestNullFieldWrapper(t *testing.T) {
 	requireEqual(t, field.Name(), FieldName("value"))
 	requireEqual(t, field.IsRequired(), true)
 	requireEqual(t, field.Description(), "value")
-	requireEqual(t, field.Type().Code(), TypeNull)
-	requireEqual(t, field.Type().Nullable(), false)
-	requireNoError(t, ValidateType(objectTypeForField(field), nil))
+	requireEqual(t, field.Descriptor().Code(), DescriptorNull)
+	requireEqual(t, field.Descriptor().Nullable(), false)
+	requireNoError(t, ValidateLocal(objectTypeForField(field)))
 }
 
 func TestNullFieldExprMarker(t *testing.T) {

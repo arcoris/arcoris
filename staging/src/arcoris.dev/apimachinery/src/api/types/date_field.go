@@ -14,15 +14,15 @@
 
 package types
 
-// DateField builds object fields whose value type is a calendar date.
+// DateField builds object fields whose value descriptor is a calendar date.
 //
 // The wrapper keeps object-field metadata beside the date builder, allowing
 // fluent field declarations without making fields reusable unnamed types.
 type DateField struct {
 	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
-	// typ stores the typed descriptor builder for this field value.
-	typ DateType
+	// descriptor stores the typed descriptor builder for this field value.
+	descriptor DateDescriptor
 }
 
 // Required marks the field key as required.
@@ -48,14 +48,14 @@ func (f DateField) Description(text string) DateField {
 
 // Nullable admits null in addition to date values.
 func (f DateField) Nullable() DateField {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f DateField) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks DateField as a sealed FieldExpr implementation.

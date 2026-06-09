@@ -14,7 +14,7 @@
 
 package types
 
-// Float32Field builds object fields whose value type is float32.
+// Float32Field builds object fields whose value descriptor is float32.
 //
 // The wrapper keeps object-field metadata beside the float32 builder,
 // allowing fluent field declarations without making fields reusable unnamed
@@ -22,8 +22,8 @@ package types
 type Float32Field struct {
 	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
-	// typ stores the typed descriptor builder for this field value.
-	typ Float32Type
+	// descriptor stores the typed descriptor builder for this field value.
+	descriptor Float32Descriptor
 }
 
 // Required marks the field key as required.
@@ -49,42 +49,42 @@ func (f Float32Field) Description(text string) Float32Field {
 
 // Nullable admits null in addition to float32 values.
 func (f Float32Field) Nullable() Float32Field {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
 // Min sets the inclusive float32 lower bound.
 func (f Float32Field) Min(n float32) Float32Field {
-	f.typ = f.typ.Min(n)
+	f.descriptor = f.descriptor.Min(n)
 
 	return f
 }
 
 // Max sets the inclusive float32 upper bound.
 func (f Float32Field) Max(n float32) Float32Field {
-	f.typ = f.typ.Max(n)
+	f.descriptor = f.descriptor.Max(n)
 
 	return f
 }
 
 // Range sets the inclusive float32 lower and upper bounds.
 func (f Float32Field) Range(min, max float32) Float32Field {
-	f.typ = f.typ.Range(min, max)
+	f.descriptor = f.descriptor.Range(min, max)
 
 	return f
 }
 
 // Enum stores accepted float32 literals for the field.
 func (f Float32Field) Enum(values ...float32) Float32Field {
-	f.typ = f.typ.Enum(values...)
+	f.descriptor = f.descriptor.Enum(values...)
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f Float32Field) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks Float32Field as a sealed FieldExpr implementation.

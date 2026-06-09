@@ -14,29 +14,39 @@
 
 package types
 
-// StringView exposes read-only TypeString payload data.
+// StringView exposes read-only DescriptorString payload data.
 type StringView struct {
 	// payload is a detached copy of the string descriptor payload.
 	payload stringPayload
 }
 
-// String returns a string view when t is TypeString.
-func (t Type) String() (StringView, bool) {
-	if t.code != TypeString {
+// AsString returns a string view when desc is DescriptorString.
+func (desc Descriptor) AsString() (StringView, bool) {
+	if desc.code != DescriptorString {
 		return StringView{}, false
 	}
 
-	return StringView{payload: cloneStringPayload(t.string)}, true
+	return StringView{payload: cloneStringPayload(desc.string)}, true
 }
 
-// MinLen returns the string minimum length rule.
-func (v StringView) MinLen() (int, bool) {
-	return v.payload.minLen.value, v.payload.minLen.set
+// MinBytes returns the string minimum UTF-8 byte length rule.
+func (v StringView) MinBytes() (int, bool) {
+	return v.payload.minBytes.value, v.payload.minBytes.set
 }
 
-// MaxLen returns the string maximum length rule.
-func (v StringView) MaxLen() (int, bool) {
-	return v.payload.maxLen.value, v.payload.maxLen.set
+// MaxBytes returns the string maximum UTF-8 byte length rule.
+func (v StringView) MaxBytes() (int, bool) {
+	return v.payload.maxBytes.value, v.payload.maxBytes.set
+}
+
+// MinRunes returns the string minimum rune count rule.
+func (v StringView) MinRunes() (int, bool) {
+	return v.payload.minRunes.value, v.payload.minRunes.set
+}
+
+// MaxRunes returns the string maximum rune count rule.
+func (v StringView) MaxRunes() (int, bool) {
+	return v.payload.maxRunes.value, v.payload.maxRunes.set
 }
 
 // Pattern returns the string pattern rule.

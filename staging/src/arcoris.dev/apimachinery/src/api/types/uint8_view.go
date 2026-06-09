@@ -14,19 +14,19 @@
 
 package types
 
-// Uint8View exposes read-only TypeUint8 payload data.
+// Uint8View exposes read-only DescriptorUint8 payload data.
 type Uint8View struct {
-	// payload is a detached copy of the TypeUint8 payload.
+	// payload is a detached copy of the DescriptorUint8 payload.
 	payload uint8Payload
 }
 
-// Uint8 returns a read-only TypeUint8 view when t is a uint8 descriptor.
-func (t Type) Uint8() (Uint8View, bool) {
-	if t.code != TypeUint8 {
+// AsUint8 returns a read-only DescriptorUint8 view when desc is a uint8 descriptor.
+func (desc Descriptor) AsUint8() (Uint8View, bool) {
+	if desc.code != DescriptorUint8 {
 		return Uint8View{}, false
 	}
 
-	return Uint8View{payload: cloneUint8Payload(t.uint8)}, true
+	return Uint8View{payload: cloneUint8Payload(desc.uint8)}, true
 }
 
 // Min returns the inclusive lower bound when one is set.

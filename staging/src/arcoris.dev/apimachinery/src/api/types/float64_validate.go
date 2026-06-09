@@ -19,38 +19,38 @@ import (
 	"math"
 )
 
-// validateFloat64 checks TypeFloat64 finite bounds, enum uniqueness, and enum membership.
-func validateFloat64(t Type, path string) error {
-	if t.float64.min.set && invalidFloat64(t.float64.min.value) {
-		return typeErrorf(
+// validateFloat64 checks DescriptorFloat64 finite bounds, enum uniqueness, and enum membership.
+func validateFloat64(desc Descriptor, path string) error {
+	if desc.float64.min.set && invalidFloat64(desc.float64.min.value) {
+		return descriptorErrorf(
 			path+".min",
-			ErrInvalidType,
-			TypeErrorReasonNonFiniteValue,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonNonFiniteValue,
 			"float64 minimum must be finite, got %s",
-			float64Diagnostic(t.float64.min.value),
+			float64Diagnostic(desc.float64.min.value),
 		)
 	}
 
-	if t.float64.max.set && invalidFloat64(t.float64.max.value) {
-		return typeErrorf(
+	if desc.float64.max.set && invalidFloat64(desc.float64.max.value) {
+		return descriptorErrorf(
 			path+".max",
-			ErrInvalidType,
-			TypeErrorReasonNonFiniteValue,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonNonFiniteValue,
 			"float64 maximum must be finite, got %s",
-			float64Diagnostic(t.float64.max.value),
+			float64Diagnostic(desc.float64.max.value),
 		)
 	}
 
-	if err := validateRangeRule(path, "float64", t.float64.min, t.float64.max); err != nil {
+	if err := validateRangeRule(path, "float64", desc.float64.min, desc.float64.max); err != nil {
 		return err
 	}
 
-	for i, value := range t.float64.enum {
+	for i, value := range desc.float64.enum {
 		if invalidFloat64(value) {
-			return typeErrorf(
+			return descriptorErrorf(
 				fmt.Sprintf("%s.enum[%d]", path, i),
-				ErrInvalidType,
-				TypeErrorReasonNonFiniteValue,
+				ErrInvalidDescriptor,
+				DescriptorErrorReasonNonFiniteValue,
 				"float64 enum value must be finite, got %s",
 				float64Diagnostic(value),
 			)
@@ -59,7 +59,7 @@ func validateFloat64(t Type, path string) error {
 
 	// NaN and infinities are rejected before duplicate checks. Descriptor enum
 	// identity then follows Go numeric equality, not float bit-pattern identity.
-	return validateEnumRules(path, "float64", t.float64.enum, t.float64.min, t.float64.max)
+	return validateEnumRules(path, "float64", desc.float64.enum, desc.float64.min, desc.float64.max)
 }
 
 // invalidFloat64 reports whether value is not a finite portable float64 rule.

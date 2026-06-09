@@ -17,14 +17,14 @@ package types
 import "testing"
 
 func TestFloat64TypeDescriptor(t *testing.T) {
-	typ := Float64().Range(0.5, 2.5).Enum(1.5, 2.5).Nullable().Type()
+	desc := Float64().Range(0.5, 2.5).Enum(1.5, 2.5).Nullable().Descriptor()
 	requireExactNumericDescriptor(t, exactNumericDescriptorCase[float64]{
-		typ:         typ,
-		code:        TypeFloat64,
-		min:         func(typ Type) (float64, bool) { return requireFloat64View(t, typ).Min() },
-		max:         func(typ Type) (float64, bool) { return requireFloat64View(t, typ).Max() },
-		enum:        func(typ Type) []float64 { return requireFloat64View(t, typ).Enum() },
-		wrong:       func(typ Type) bool { _, ok := typ.Float32(); return ok },
+		descriptor:  desc,
+		code:        DescriptorFloat64,
+		min:         func(desc Descriptor) (float64, bool) { return requireFloat64View(t, desc).Min() },
+		max:         func(desc Descriptor) (float64, bool) { return requireFloat64View(t, desc).Max() },
+		enum:        func(desc Descriptor) []float64 { return requireFloat64View(t, desc).Enum() },
+		wrong:       func(desc Descriptor) bool { _, ok := desc.AsFloat32(); return ok },
 		wantMin:     0.5,
 		wantMax:     2.5,
 		wantFirst:   1.5,
@@ -32,6 +32,6 @@ func TestFloat64TypeDescriptor(t *testing.T) {
 	})
 }
 
-func TestFloat64TypeExprMarker(t *testing.T) {
-	Float64().typeExpr()
+func TestFloat64DescriptorExprMarker(t *testing.T) {
+	Float64().descriptorExpr()
 }

@@ -24,14 +24,14 @@ import (
 func (v *validator) validateObject(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) {
 	if !v.requireKind(path, val, value.KindObject, descriptor.Code()) {
 		return
 	}
 
-	objectView, ok := descriptor.Object()
+	objectView, ok := descriptor.AsObject()
 	if !ok {
 		v.add(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not an object")
 		return
@@ -54,7 +54,7 @@ func (v *validator) validateObject(
 			continue
 		}
 
-		v.validate(fieldPath, memberValue, fieldDescriptor.Type(), depth+1)
+		v.validate(fieldPath, memberValue, fieldDescriptor.Descriptor(), depth+1)
 	}
 
 	if objectView.UnknownFields() == types.UnknownReject {

@@ -17,20 +17,20 @@ package types
 import "testing"
 
 func TestInt64TypeDescriptor(t *testing.T) {
-	typ := Int64().Range(-1, 1).Enum(-1, 0, 1).Nullable().Type()
+	desc := Int64().Range(-1, 1).Enum(-1, 0, 1).Nullable().Descriptor()
 	requireExactNumericDescriptor(t, exactNumericDescriptorCase[int64]{
-		typ:       typ,
-		code:      TypeInt64,
-		min:       func(typ Type) (int64, bool) { return requireInt64View(t, typ).Min() },
-		max:       func(typ Type) (int64, bool) { return requireInt64View(t, typ).Max() },
-		enum:      func(typ Type) []int64 { return requireInt64View(t, typ).Enum() },
-		wrong:     func(typ Type) bool { _, ok := typ.Int8(); return ok },
-		wantMin:   -1,
-		wantMax:   1,
-		wantFirst: -1,
+		descriptor: desc,
+		code:       DescriptorInt64,
+		min:        func(desc Descriptor) (int64, bool) { return requireInt64View(t, desc).Min() },
+		max:        func(desc Descriptor) (int64, bool) { return requireInt64View(t, desc).Max() },
+		enum:       func(desc Descriptor) []int64 { return requireInt64View(t, desc).Enum() },
+		wrong:      func(desc Descriptor) bool { _, ok := desc.AsInt8(); return ok },
+		wantMin:    -1,
+		wantMax:    1,
+		wantFirst:  -1,
 	})
 }
 
-func TestInt64TypeExprMarker(t *testing.T) {
-	Int64().typeExpr()
+func TestInt64DescriptorExprMarker(t *testing.T) {
+	Int64().descriptorExpr()
 }

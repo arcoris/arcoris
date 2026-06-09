@@ -14,7 +14,7 @@
 
 package types
 
-// validateDate checks TypeDate payload invariants.
-func validateDate(t Type, path string) error {
+// validateDate checks DescriptorDate payload invariants.
+func validateDate(desc Descriptor, path string) error {
 	return nil
 }

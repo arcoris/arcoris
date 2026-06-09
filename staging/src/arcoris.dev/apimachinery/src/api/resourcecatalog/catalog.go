@@ -39,7 +39,7 @@ type Catalog struct {
 	// committing changes.
 	mu sync.RWMutex
 
-	// resolver validates resource surface TypeRef roots during registration.
+	// resolver validates resource surface DescriptorRef roots during registration.
 	//
 	// The field is intentionally set only by New or by the zero value. Changing
 	// it after registration would weaken catalog invariants.

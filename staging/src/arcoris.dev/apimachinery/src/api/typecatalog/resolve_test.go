@@ -20,36 +20,36 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
-func TestResolveTypeReturnsDefinition(t *testing.T) {
+func TestResolveReturnsDefinition(t *testing.T) {
 	var catalog Catalog
 	requireNoError(t, catalog.Register(types.Define("example.Name", types.String())))
 
-	def, ok := catalog.ResolveType("example.Name")
+	def, ok := catalog.Resolve("example.Name")
 	requireEqual(t, ok, true)
 	requireEqual(t, def.Name(), types.TypeName("example.Name"))
 }
 
-func TestResolveTypeReturnsDetachedDefinition(t *testing.T) {
+func TestResolveReturnsDetachedDefinition(t *testing.T) {
 	var catalog Catalog
 	requireNoError(t, catalog.Register(types.Define("example.Name", types.String().Enum("alpha"))))
 
-	def, ok := catalog.ResolveType("example.Name")
+	def, ok := catalog.Resolve("example.Name")
 	requireEqual(t, ok, true)
-	view, ok := def.Type().String()
+	view, ok := def.Descriptor().AsString()
 	requireEqual(t, ok, true)
 	enum := view.Enum()
 	enum[0] = "changed"
 
-	defAgain, ok := catalog.ResolveType("example.Name")
+	defAgain, ok := catalog.Resolve("example.Name")
 	requireEqual(t, ok, true)
-	view, ok = defAgain.Type().String()
+	view, ok = defAgain.Descriptor().AsString()
 	requireEqual(t, ok, true)
 	requireEqual(t, view.Enum()[0], "alpha")
 }
 
-func TestResolveTypeNilCatalogBehavesLikeEmptyCatalog(t *testing.T) {
+func TestResolveNilCatalogBehavesLikeEmptyCatalog(t *testing.T) {
 	var catalog *Catalog
 
-	_, ok := catalog.ResolveType("example.Name")
+	_, ok := catalog.Resolve("example.Name")
 	requireEqual(t, ok, false)
 }

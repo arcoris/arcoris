@@ -24,18 +24,18 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
-type fakeResolver map[types.TypeName]types.TypeDefinition
+type fakeResolver map[types.TypeName]types.Definition
 
-func (f fakeResolver) ResolveType(name types.TypeName) (types.TypeDefinition, bool) {
+func (f fakeResolver) Resolve(name types.TypeName) (types.Definition, bool) {
 	def, ok := f[name]
 	return def, ok
 }
 
-func objectType() types.Type { return types.Object().Type() }
+func objectType() types.Descriptor { return types.Object().Descriptor() }
 
-func stringType() types.Type { return types.String().Type() }
+func stringType() types.Descriptor { return types.String().Descriptor() }
 
-func refType(name string) types.Type { return types.Ref(name).Type() }
+func refType(name string) types.Descriptor { return types.Ref(name).Descriptor() }
 
 func validVersion(options ...VersionOption) VersionDefinition {
 	opts := append([]VersionOption{Observed(objectType()), Exposed(), Canonical()}, options...)

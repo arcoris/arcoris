@@ -21,7 +21,7 @@ import (
 )
 
 func TestMergeOrderedListSelectedIndex(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := Merge(
 		list(str("a"), str("b"), str("c")),
@@ -38,7 +38,7 @@ func TestMergeOrderedListSelectedIndex(t *testing.T) {
 }
 
 func TestMergeOrderedListAddsSelectedIndex(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := Merge(
 		list(str("a")),
@@ -55,7 +55,7 @@ func TestMergeOrderedListAddsSelectedIndex(t *testing.T) {
 }
 
 func TestMergeOrderedListSparseAppendUnsupported(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	_, err := Merge(
 		list(str("a")),
@@ -69,7 +69,7 @@ func TestMergeOrderedListSparseAppendUnsupported(t *testing.T) {
 }
 
 func TestMergeOrderedListContiguousAppendSelectedIndexes(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := Merge(
 		list(str("a")),
@@ -86,7 +86,7 @@ func TestMergeOrderedListContiguousAppendSelectedIndexes(t *testing.T) {
 }
 
 func TestMergeOrderedListAppendFirstMissingIndexAllowed(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := Merge(
 		list(str("a")),
@@ -103,7 +103,7 @@ func TestMergeOrderedListAppendFirstMissingIndexAllowed(t *testing.T) {
 }
 
 func TestMergeOrderedListExistingIndexSelectionStillWorks(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := Merge(
 		list(str("a"), str("b")),
@@ -120,7 +120,7 @@ func TestMergeOrderedListExistingIndexSelectionStillWorks(t *testing.T) {
 }
 
 func TestMergeOrderedListRemovesSelectedIndex(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := Merge(
 		list(str("a"), str("b"), str("c")),
@@ -137,7 +137,7 @@ func TestMergeOrderedListRemovesSelectedIndex(t *testing.T) {
 }
 
 func TestMergeOrderedListRemovesMultipleIndexes(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := Merge(
 		list(str("a"), str("b"), str("c"), str("d")),
@@ -159,7 +159,7 @@ func TestMergeOrderedListNestedObjectItemField(t *testing.T) {
 			types.Field("image").String().Optional(),
 			types.Field("name").String().Optional(),
 		),
-	).Ordered().Type()
+	).Ordered().Descriptor()
 	base := list(obj(member("name", str("api")), member("image", str("api:v1"))))
 	overlay := list(obj(member("name", str("ignored")), member("image", str("api:v2"))))
 
@@ -181,7 +181,7 @@ func TestMergeOrderedListNestedObjectItemField(t *testing.T) {
 }
 
 func TestMergeOrderedListExactSelectedReplacesWholeList(t *testing.T) {
-	descriptor := types.ListOf(types.String()).Ordered().Type()
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 	base := list(str("old"))
 	overlay := list(str("new"), str("next"))
 

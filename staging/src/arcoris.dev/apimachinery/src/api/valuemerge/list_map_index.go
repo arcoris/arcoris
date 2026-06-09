@@ -38,7 +38,7 @@ type listMapIndex struct {
 func (m *merger) listMapIndex(
 	path fieldpath.Path,
 	list operand,
-	element types.Type,
+	element types.Descriptor,
 	keys []types.FieldName,
 ) (listMapIndex, error) {
 	if len(keys) == 0 {
@@ -99,7 +99,7 @@ func (m *merger) listMapEntryAt(
 	path fieldpath.Path,
 	index int,
 	item value.Value,
-	element types.Type,
+	element types.Descriptor,
 	keys []types.FieldName,
 ) (listMapEntry, error) {
 	indexPath := path.Index(index)

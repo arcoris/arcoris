@@ -20,5 +20,5 @@ func TestFieldExprNilBecomesZeroFieldDescriptor(t *testing.T) {
 	field := fieldFromExpr(nil)
 
 	requireEqual(t, field.Name(), FieldName(""))
-	requireEqual(t, field.Type().Code(), TypeInvalid)
+	requireEqual(t, field.Descriptor().Code(), DescriptorInvalid)
 }

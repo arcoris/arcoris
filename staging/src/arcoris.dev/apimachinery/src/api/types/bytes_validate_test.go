@@ -17,14 +17,14 @@ package types
 import "testing"
 
 func TestBytesValidateRejectsInvalidLengthRules(t *testing.T) {
-	negativeMin := Bytes().Type()
-	negativeMin.bytes.minLen = limit[int]{value: -1, set: true}
+	negativeMin := Bytes().Descriptor()
+	negativeMin.bytes.minBytes = limit[int]{value: -1, set: true}
 
-	tests := []Type{
+	tests := []Descriptor{
 		negativeMin,
-		Bytes().MinLen(2).MaxLen(1).Type(),
+		Bytes().MinBytes(2).MaxBytes(1).Descriptor(),
 	}
-	for _, typ := range tests {
-		requireErrorIs(t, ValidateType(typ, nil), ErrInvalidType)
+	for _, desc := range tests {
+		requireErrorIs(t, ValidateLocal(desc), ErrInvalidDescriptor)
 	}
 }

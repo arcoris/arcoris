@@ -27,5 +27,5 @@ package types
 //		Nullable().
 //		Description("Effective calendar date.")
 func (b FieldBuilder) Date() DateField {
-	return DateField{field: b.state(), typ: Date()}
+	return DateField{field: b.state(), descriptor: Date()}
 }

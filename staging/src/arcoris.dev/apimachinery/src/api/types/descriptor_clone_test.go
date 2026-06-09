@@ -16,22 +16,22 @@ package types
 
 import "testing"
 
-func TestCloneTypeDetachesExactPayloadSlots(t *testing.T) {
-	typ := Object(
+func TestCloneDescriptorDetachesExactPayloadSlots(t *testing.T) {
+	desc := Object(
 		Field("name").String().Required().Enum("alpha", "beta"),
 		Field("items").ListOf(
 			Object(Field("key").String().Required()),
 		).Required().Map("key"),
 		Field("lookup").MapOf(String().Enum("one", "two")).Optional(),
-	).Type()
+	).Descriptor()
 
-	cloned := cloneType(typ)
+	cloned := cloneDescriptor(desc)
 	cloned.object.fields[0] = Field("changed").String().Required().Field()
-	cloned.object.fields[1].typ.list.mapKeys[0] = "changed"
-	cloned.object.fields[2].typ.mapType.value.string.enum[0] = "changed"
+	cloned.object.fields[1].descriptor.list.mapKeys[0] = "changed"
+	cloned.object.fields[2].descriptor.mapType.value.string.enum[0] = "changed"
 
-	fields := typ.object.fields
+	fields := desc.object.fields
 	requireEqual(t, fields[0].Name(), FieldName("name"))
-	requireEqual(t, fields[1].typ.list.mapKeys[0], FieldName("key"))
-	requireEqual(t, fields[2].typ.mapType.value.string.enum[0], "one")
+	requireEqual(t, fields[1].descriptor.list.mapKeys[0], FieldName("key"))
+	requireEqual(t, fields[2].descriptor.mapType.value.string.enum[0], "one")
 }

@@ -17,31 +17,49 @@ package types
 import "testing"
 
 func TestMapOfRequiresValidValue(t *testing.T) {
-	var expr TypeExpr
-	typ := MapOf(expr).Type()
+	var expr DescriptorExpr
+	desc := MapOf(expr).Descriptor()
 
-	requireErrorIs(t, ValidateType(typ, nil), ErrInvalidType)
+	requireErrorIs(t, ValidateLocal(desc), ErrInvalidDescriptor)
 }
 
 func TestMapLengthAndDefaultKey(t *testing.T) {
-	typ := MapOf(String()).MinLen(1).MaxLen(10).Type()
+	desc := MapOf(String()).MinEntries(1).MaxEntries(10).Descriptor()
 
-	requireNoError(t, ValidateType(typ, nil))
-	view, ok := typ.Map()
+	requireNoError(t, ValidateLocal(desc))
+	view, ok := desc.AsMap()
 	requireEqual(t, ok, true)
-	requireEqual(t, view.Key(), MapKeyString)
-	requireEqual(t, view.Value().Code(), TypeString)
+	requireEqual(t, view.Key().Code(), DescriptorString)
+	requireEqual(t, view.Value().Code(), DescriptorString)
+}
+
+func TestMapKeyDescriptor(t *testing.T) {
+	desc := MapOf(String()).Keys(String().MinBytes(1).MaxBytes(253)).Descriptor()
+
+	requireNoError(t, ValidateLocal(desc))
+	view, ok := desc.AsMap()
+	requireEqual(t, ok, true)
+
+	key, ok := view.Key().AsString()
+	requireEqual(t, ok, true)
+
+	minBytes, ok := key.MinBytes()
+	requireEqual(t, ok, true)
+	requireEqual(t, minBytes, 1)
+
+	maxBytes, ok := key.MaxBytes()
+	requireEqual(t, ok, true)
+	requireEqual(t, maxBytes, 253)
 }
 
 func TestMapInvalidRulesRejected(t *testing.T) {
-	invalidLen := MapOf(String()).MinLen(2).MaxLen(1).Type()
-	invalidKey := MapOf(String()).Type()
-	invalidKey.mapType.key = MapKeyType(99)
+	invalidLen := MapOf(String()).MinEntries(2).MaxEntries(1).Descriptor()
+	invalidKey := MapOf(String()).Keys(Bool()).Descriptor()
 
-	requireErrorIs(t, ValidateType(invalidLen, nil), ErrInvalidType)
-	requireErrorIs(t, ValidateType(invalidKey, nil), ErrInvalidType)
+	requireErrorIs(t, ValidateLocal(invalidLen), ErrInvalidDescriptor)
+	requireErrorIs(t, ValidateLocal(invalidKey), ErrInvalidField)
 }
 
-func TestMapTypeExprMarker(t *testing.T) {
-	MapOf(String()).typeExpr()
+func TestMapDescriptorExprMarker(t *testing.T) {
+	MapOf(String()).descriptorExpr()
 }

@@ -73,11 +73,11 @@ func validateVersionDefinition(version VersionDefinition, resolver types.Resolve
 // invalidSurfaceDetail summarizes nested api/types failures for Desired/Observed.
 //
 // The nested error remains attached as Cause on the returned resource Error, so
-// callers can still use errors.As for the original *types.TypeError. The detail
+// callers can still use errors.As for the original *types.DescriptorError. The detail
 // string keeps only the most useful structured fields to avoid repeating the
 // entire nested Error text in CLI/editor diagnostics.
 func invalidSurfaceDetail(label string, err error) string {
-	var typeErr *types.TypeError
+	var typeErr *types.DescriptorError
 	if errors.As(err, &typeErr) {
 		if typeErr.Detail != "" {
 			return fmt.Sprintf(

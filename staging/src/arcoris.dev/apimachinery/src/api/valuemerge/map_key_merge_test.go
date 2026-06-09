@@ -26,7 +26,7 @@ func TestMergeMapMemberPreservesUnselectedKey(t *testing.T) {
 		root().Key("app"),
 		valuepresence.Present(str("old")),
 		valuepresence.Present(str("new")),
-		types.String().Type(),
+		types.String().Descriptor(),
 		pathSet(root().Key("other")),
 		0,
 	)
@@ -42,7 +42,7 @@ func TestMergeMapMemberMergesSelectedKey(t *testing.T) {
 		root().Key("app"),
 		valuepresence.Present(str("old")),
 		valuepresence.Present(str("new")),
-		types.String().Type(),
+		types.String().Descriptor(),
 		pathSet(root().Key("app")),
 		0,
 	)

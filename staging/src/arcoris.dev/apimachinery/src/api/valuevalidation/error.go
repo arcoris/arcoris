@@ -27,7 +27,7 @@ var (
 	// ErrInvalidDescriptor classifies malformed descriptors encountered defensively.
 	ErrInvalidDescriptor = errors.New("invalid descriptor")
 
-	// ErrKindMismatch classifies value kind / descriptor type mismatches.
+	// ErrKindMismatch classifies value kind / descriptor kind mismatches.
 	ErrKindMismatch = errors.New("value kind mismatch")
 
 	// ErrNullNotAllowed classifies explicit null where null is not admitted.
@@ -51,11 +51,11 @@ var (
 	// ErrEnumMismatch classifies scalar enum mismatches.
 	ErrEnumMismatch = errors.New("enum mismatch")
 
-	// ErrUnresolvedRef classifies TypeRef descriptors that cannot resolve.
-	ErrUnresolvedRef = errors.New("unresolved type reference")
+	// ErrUnresolvedRef classifies DescriptorRef descriptors that cannot resolve.
+	ErrUnresolvedRef = errors.New("unresolved descriptor reference")
 
-	// ErrReferenceCycle classifies recursive or too-deep TypeRef traversal.
-	ErrReferenceCycle = errors.New("type reference cycle")
+	// ErrReferenceCycle classifies recursive or too-deep DescriptorRef traversal.
+	ErrReferenceCycle = errors.New("descriptor reference cycle")
 
 	// ErrDuplicateListKey classifies repeated ListMap selector identities.
 	ErrDuplicateListKey = errors.New("duplicate list map key")

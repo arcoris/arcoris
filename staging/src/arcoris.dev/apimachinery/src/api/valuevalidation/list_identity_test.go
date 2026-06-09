@@ -160,7 +160,7 @@ func TestValidateListMapNonObjectItemReportsIndexPathKindMismatch(t *testing.T) 
 }
 
 func TestValidateListMapDescriptorFailureReportsIdentityError(t *testing.T) {
-	shape := types.ListOf(types.Ref("example.Condition")).Map("type").Type()
+	shape := types.ListOf(types.Ref("example.Condition")).Map("type").Descriptor()
 	payload := mustList(t, conditionValue(t, "Ready", "True"))
 
 	err := valuevalidation.ValidateAt(
@@ -227,9 +227,9 @@ func TestValidateListMapMultiKeySelectorPath(t *testing.T) {
 	routeShape := types.Object(
 		types.Field("host").String().Required(),
 		types.Field("port").Uint64().Required(),
-		types.Field("backend").String().MinLen(1).Required(),
+		types.Field("backend").String().MinBytes(1).Required(),
 	)
-	shape := types.ListOf(routeShape).Map("host", "port").Type()
+	shape := types.ListOf(routeShape).Map("host", "port").Descriptor()
 	payload := mustList(
 		t,
 		mustObject(
@@ -256,13 +256,13 @@ func TestValidateListMapMultiKeySelectorPath(t *testing.T) {
 	)
 }
 
-func conditionListShape() types.Type {
+func conditionListShape() types.Descriptor {
 	conditionShape := types.Object(
 		types.Field("type").String().Required(),
-		types.Field("status").String().MinLen(1).Required(),
+		types.Field("status").String().MinBytes(1).Required(),
 	)
 
-	return types.ListOf(conditionShape).Map("type").Type()
+	return types.ListOf(conditionShape).Map("type").Descriptor()
 }
 
 func conditionValue(t *testing.T, conditionType string, status string) value.Value {

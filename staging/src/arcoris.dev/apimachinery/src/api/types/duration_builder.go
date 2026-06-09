@@ -26,5 +26,5 @@ package types
 //		Nullable().
 //		Description("Operation timeout.")
 func (b FieldBuilder) Duration() DurationField {
-	return DurationField{field: b.state(), typ: Duration()}
+	return DurationField{field: b.state(), descriptor: Duration()}
 }

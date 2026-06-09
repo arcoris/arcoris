@@ -26,7 +26,7 @@ func (m *merger) mergeOrderedList(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
-	element types.Type,
+	element types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
 ) (operand, error) {
@@ -91,7 +91,7 @@ func (m *merger) mergeOrderedItem(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
-	element types.Type,
+	element types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
 ) (operand, error) {

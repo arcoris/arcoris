@@ -19,5 +19,5 @@ import "testing"
 func TestMapFieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").MapOf(String()).Required().Field()
 
-	requireEqual(t, field.Type().Code(), TypeMap)
+	requireEqual(t, field.Descriptor().Code(), DescriptorMap)
 }

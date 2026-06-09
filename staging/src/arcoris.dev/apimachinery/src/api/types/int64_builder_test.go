@@ -20,5 +20,5 @@ func TestInt64FieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").Int64().Required().Field()
 
 	requireEqual(t, field.Name(), FieldName("value"))
-	requireEqual(t, field.Type().Code(), TypeInt64)
+	requireEqual(t, field.Descriptor().Code(), DescriptorInt64)
 }

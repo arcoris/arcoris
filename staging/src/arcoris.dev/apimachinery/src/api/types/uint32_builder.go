@@ -14,7 +14,7 @@
 
 package types
 
-// Uint32 starts a field descriptor whose value type is a fixed-width uint32.
+// Uint32 starts a field descriptor whose value descriptor is a fixed-width uint32.
 //
 // The descriptor records portable uint32 constraints. It never uses Go's
 // platform-sized uint contract, so generated APIs and remote descriptors remain
@@ -30,5 +30,5 @@ package types
 //		Enum(1, 2, 3).
 //		Description("Observed generation.")
 func (b FieldBuilder) Uint32() Uint32Field {
-	return Uint32Field{field: b.state(), typ: Uint32()}
+	return Uint32Field{field: b.state(), descriptor: Uint32()}
 }

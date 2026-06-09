@@ -140,7 +140,7 @@ func TestApplyMissingDesiredDescriptorReturnsInvalidResource(t *testing.T) {
 		apiidentity.Kind("Worker"),
 		apiidentity.Resource("workers"),
 		resource.ScopeNamespaced,
-		resource.NewVersion("v1", types.Type{}, resource.Exposed(), resource.Canonical()),
+		resource.NewVersion("v1", types.Descriptor{}, resource.Exposed(), resource.Canonical()),
 	)
 
 	_, err := Apply(req, Options{})

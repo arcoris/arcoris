@@ -26,7 +26,7 @@ func TestMergeEmptyFieldsPreservesBase(t *testing.T) {
 	base := str("old")
 	overlay := str("new")
 
-	got, err := Merge(base, overlay, types.String().Type(), fieldpath.EmptySet(), Options{})
+	got, err := Merge(base, overlay, types.String().Descriptor(), fieldpath.EmptySet(), Options{})
 	if err != nil {
 		t.Fatalf("Merge returned error: %v", err)
 	}
@@ -40,7 +40,7 @@ func TestMergeEmptyFieldsDoesNotRequireValidOverlay(t *testing.T) {
 	got, err := Merge(
 		base,
 		value.Value{},
-		types.String().Type(),
+		types.String().Descriptor(),
 		fieldpath.EmptySet(),
 		Options{},
 	)
@@ -57,7 +57,7 @@ func TestMergeEmptyFieldsClonesBase(t *testing.T) {
 	got, err := Merge(
 		base,
 		value.Value{},
-		types.Object(types.Field("name").String().Optional()).Type(),
+		types.Object(types.Field("name").String().Optional()).Descriptor(),
 		fieldpath.EmptySet(),
 		Options{},
 	)
@@ -74,7 +74,7 @@ func TestMergeEmptyFieldsClonesBase(t *testing.T) {
 func TestMergeDoesNotMutateBase(t *testing.T) {
 	base := obj(member("name", str("old")))
 	overlay := obj(member("name", str("new")))
-	descriptor := types.Object(types.Field("name").String().Optional()).Type()
+	descriptor := types.Object(types.Field("name").String().Optional()).Descriptor()
 
 	got, err := Merge(
 		base,
@@ -94,7 +94,7 @@ func TestMergeDoesNotMutateBase(t *testing.T) {
 func TestMergeDoesNotMutateOverlay(t *testing.T) {
 	base := obj(member("name", str("old")))
 	overlay := obj(member("name", str("new")))
-	descriptor := types.Object(types.Field("name").String().Optional()).Type()
+	descriptor := types.Object(types.Field("name").String().Optional()).Descriptor()
 
 	got, err := Merge(
 		base,
@@ -115,7 +115,7 @@ func TestMergeInvalidBaseValueReturnsInvalidValue(t *testing.T) {
 	_, err := Merge(
 		value.Value{},
 		str("new"),
-		types.String().Type(),
+		types.String().Descriptor(),
 		pathSet(root()),
 		Options{},
 	)
@@ -127,7 +127,7 @@ func TestMergeInvalidOverlayValueReturnsInvalidValue(t *testing.T) {
 	_, err := Merge(
 		str("old"),
 		value.Value{},
-		types.String().Type(),
+		types.String().Descriptor(),
 		pathSet(root()),
 		Options{},
 	)
@@ -139,7 +139,7 @@ func TestMergeKindMismatchReturnsKindMismatch(t *testing.T) {
 	_, err := Merge(
 		str("old"),
 		boolValue(true),
-		types.String().Type(),
+		types.String().Descriptor(),
 		pathSet(root()),
 		Options{},
 	)

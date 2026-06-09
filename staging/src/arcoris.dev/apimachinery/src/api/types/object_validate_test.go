@@ -19,23 +19,22 @@ import "testing"
 func TestObjectValidateRejectsDuplicateInvalidFieldAndUnknownPolicy(t *testing.T) {
 	requireErrorIs(
 		t,
-		ValidateType(
+		ValidateLocal(
 			Object(
 				Field("name").String().Required(),
 				Field("name").String().Optional(),
-			).Type(),
-			nil,
+			).Descriptor(),
 		),
 		ErrDuplicateField,
 	)
 	requireErrorIs(
 		t,
-		ValidateType(Object(Field("bad-name").String().Required()).Type(), nil),
+		ValidateLocal(Object(Field("bad-name").String().Required()).Descriptor()),
 		ErrInvalidField,
 	)
-	requireErrorIs(t, ValidateType(Object(Field("name").String()).Type(), nil), ErrInvalidField)
+	requireErrorIs(t, ValidateLocal(Object(Field("name").String()).Descriptor()), ErrInvalidField)
 
-	invalidPolicy := Object().Type()
+	invalidPolicy := Object().Descriptor()
 	invalidPolicy.object.unknown = UnknownFieldPolicy(99)
-	requireErrorIs(t, ValidateType(invalidPolicy, nil), ErrInvalidType)
+	requireErrorIs(t, ValidateLocal(invalidPolicy), ErrInvalidDescriptor)
 }

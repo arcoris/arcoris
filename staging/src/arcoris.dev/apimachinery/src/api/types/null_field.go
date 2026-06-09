@@ -14,15 +14,15 @@
 
 package types
 
-// NullField builds object fields whose value type is the null literal.
+// NullField builds object fields whose value descriptor is the null literal.
 //
-// The wrapper carries field metadata separately from the null type descriptor
+// The wrapper carries field metadata separately from the null structural descriptor
 // so presence, description, and value shape remain distinct.
 type NullField struct {
 	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
-	// typ stores the typed descriptor builder for this field value.
-	typ NullType
+	// descriptor stores the typed descriptor builder for this field value.
+	descriptor NullDescriptor
 }
 
 // Required marks the field key as required.
@@ -48,7 +48,7 @@ func (f NullField) Description(text string) NullField {
 
 // Field returns a detached finalized field descriptor.
 func (f NullField) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks NullField as a sealed FieldExpr implementation.

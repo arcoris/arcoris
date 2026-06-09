@@ -16,17 +16,19 @@ package types
 
 import "testing"
 
-func TestMapPayloadStoresStringKeyAndValue(t *testing.T) {
-	payload := MapOf(String()).Type().mapType
-	requireEqual(t, payload.key, MapKeyString)
-	requireEqual(t, payload.value.Code(), TypeString)
+func TestMapPayloadStoresKeyAndValueDescriptors(t *testing.T) {
+	payload := MapOf(String()).Descriptor().mapType
+	requireEqual(t, payload.key.Code(), DescriptorString)
+	requireEqual(t, payload.value.Code(), DescriptorString)
 }
 
 func TestMapPayloadCloneAndEmpty(t *testing.T) {
-	payload := MapOf(String().Enum("a")).Type().mapType
+	payload := MapOf(String().Enum("a")).Keys(String().Enum("key")).Descriptor().mapType
 	cloned := cloneMapPayload(payload)
+	cloned.key.string.enum[0] = "other"
 	cloned.value.string.enum[0] = "b"
 
+	requireEqual(t, payload.key.string.enum[0], "key")
 	requireEqual(t, payload.value.string.enum[0], "a")
 	requireEqual(t, emptyMapPayload(mapPayload{}), true)
 	requireEqual(t, emptyMapPayload(payload), false)

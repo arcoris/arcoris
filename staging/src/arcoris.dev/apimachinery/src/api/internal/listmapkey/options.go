@@ -20,17 +20,17 @@ const defaultMaxDepth = 64
 
 // Options configures one ListMap key extraction operation.
 type Options struct {
-	// Resolver resolves api/types TypeRef descriptors used by ListMap element
+	// Resolver resolves api/types DescriptorRef descriptors used by ListMap element
 	// descriptors or key field descriptors.
 	Resolver types.Resolver
 
-	// MaxDepth prevents runaway TypeRef recursion.
+	// MaxDepth prevents runaway DescriptorRef recursion.
 	//
 	// Zero or a negative value uses the package default.
 	MaxDepth int
 }
 
-// normalizedMaxDepth returns the effective TypeRef traversal budget.
+// normalizedMaxDepth returns the effective DescriptorRef traversal budget.
 func (o Options) normalizedMaxDepth() int {
 	if o.MaxDepth > 0 {
 		return o.MaxDepth

@@ -17,14 +17,14 @@ package types
 import "testing"
 
 func TestUint32TypeDescriptor(t *testing.T) {
-	typ := Uint32().Range(0, 2).Enum(0, 1, 2).Nullable().Type()
+	desc := Uint32().Range(0, 2).Enum(0, 1, 2).Nullable().Descriptor()
 	requireExactNumericDescriptor(t, exactNumericDescriptorCase[uint32]{
-		typ:         typ,
-		code:        TypeUint32,
-		min:         func(typ Type) (uint32, bool) { return requireUint32View(t, typ).Min() },
-		max:         func(typ Type) (uint32, bool) { return requireUint32View(t, typ).Max() },
-		enum:        func(typ Type) []uint32 { return requireUint32View(t, typ).Enum() },
-		wrong:       func(typ Type) bool { _, ok := typ.Uint8(); return ok },
+		descriptor:  desc,
+		code:        DescriptorUint32,
+		min:         func(desc Descriptor) (uint32, bool) { return requireUint32View(t, desc).Min() },
+		max:         func(desc Descriptor) (uint32, bool) { return requireUint32View(t, desc).Max() },
+		enum:        func(desc Descriptor) []uint32 { return requireUint32View(t, desc).Enum() },
+		wrong:       func(desc Descriptor) bool { _, ok := desc.AsUint8(); return ok },
 		wantMin:     0,
 		wantMax:     2,
 		wantFirst:   0,
@@ -32,6 +32,6 @@ func TestUint32TypeDescriptor(t *testing.T) {
 	})
 }
 
-func TestUint32TypeExprMarker(t *testing.T) {
-	Uint32().typeExpr()
+func TestUint32DescriptorExprMarker(t *testing.T) {
+	Uint32().descriptorExpr()
 }

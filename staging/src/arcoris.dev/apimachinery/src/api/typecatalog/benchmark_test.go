@@ -21,14 +21,14 @@ import (
 )
 
 var (
-	benchmarkDefinitionSink  types.TypeDefinition
+	benchmarkDefinitionSink  types.Definition
 	benchmarkNamesSink       []types.TypeName
 	benchmarkCatalogSizeSink int
 )
 
-func BenchmarkCatalogResolveType(b *testing.B) {
+func BenchmarkCatalogResolve(b *testing.B) {
 	var catalog Catalog
-	if err := catalog.Register(types.Define("example.Name", types.String().MinLen(1))); err != nil {
+	if err := catalog.Register(types.Define("example.Name", types.String().MinBytes(1))); err != nil {
 		b.Fatal(err)
 	}
 
@@ -36,7 +36,7 @@ func BenchmarkCatalogResolveType(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		def, ok := catalog.ResolveType("example.Name")
+		def, ok := catalog.Resolve("example.Name")
 		if !ok {
 			b.Fatal("missing definition")
 		}
@@ -47,7 +47,7 @@ func BenchmarkCatalogResolveType(b *testing.B) {
 func BenchmarkCatalogNames(b *testing.B) {
 	var catalog Catalog
 	if err := catalog.RegisterMany(
-		types.Define("example.Name", types.String().MinLen(1)),
+		types.Define("example.Name", types.String().MinBytes(1)),
 		types.Define("example.Count", types.Int64().Min(0)),
 		types.Define("example.Enabled", types.Bool()),
 	); err != nil {
@@ -63,8 +63,8 @@ func BenchmarkCatalogNames(b *testing.B) {
 }
 
 func BenchmarkCatalogRegisterManySmallBatch(b *testing.B) {
-	defs := []types.TypeDefinition{
-		types.Define("example.Name", types.String().MinLen(1)),
+	defs := []types.Definition{
+		types.Define("example.Name", types.String().MinBytes(1)),
 		types.Define("example.Count", types.Int64().Min(0)),
 		types.Define("example.Enabled", types.Bool()),
 	}

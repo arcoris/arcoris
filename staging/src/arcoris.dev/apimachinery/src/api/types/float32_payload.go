@@ -14,11 +14,11 @@
 
 package types
 
-// float32Payload stores TypeFloat32 constraints in their exact native width.
+// float32Payload stores DescriptorFloat32 constraints in their exact native width.
 type float32Payload struct {
-	// min stores the inclusive finite lower bound for TypeFloat32.
+	// min stores the inclusive finite lower bound for DescriptorFloat32.
 	min limit[float32]
-	// max stores the inclusive finite upper bound for TypeFloat32.
+	// max stores the inclusive finite upper bound for DescriptorFloat32.
 	max limit[float32]
 	// enum stores accepted finite float32 literals in declaration order.
 	enum []float32
@@ -31,7 +31,7 @@ func cloneFloat32Payload(p float32Payload) float32Payload {
 	return p
 }
 
-// emptyFloat32Payload reports whether p has no configured TypeFloat32 state.
+// emptyFloat32Payload reports whether p has no configured DescriptorFloat32 state.
 func emptyFloat32Payload(p float32Payload) bool {
 	return !p.min.set && !p.max.set && len(p.enum) == 0
 }

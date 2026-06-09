@@ -14,7 +14,7 @@
 
 package types
 
-// datePayload stores TypeDate constraints.
+// datePayload stores DescriptorDate constraints.
 type datePayload struct {
 	// Reserved for future date constraints.
 }
@@ -24,7 +24,7 @@ func cloneDatePayload(p datePayload) datePayload {
 	return p
 }
 
-// emptyDatePayload reports whether p has no configured TypeDate state.
+// emptyDatePayload reports whether p has no configured DescriptorDate state.
 func emptyDatePayload(p datePayload) bool {
 	return true
 }

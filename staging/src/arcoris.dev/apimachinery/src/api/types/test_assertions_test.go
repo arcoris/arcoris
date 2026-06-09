@@ -44,229 +44,246 @@ func requireEqual[T comparable](t *testing.T, got, want T) {
 	}
 }
 
-// requireCode fails t when typ does not use the expected TypeCode.
-func requireCode(t *testing.T, typ Type, want TypeCode) {
+// requireCode fails t when desc does not use the expected DescriptorKind.
+func requireCode(t *testing.T, desc Descriptor, want DescriptorKind) {
 	t.Helper()
-	requireEqual(t, typ.Code(), want)
+	requireEqual(t, desc.Code(), want)
 }
 
-// requireNullable fails t when typ has unexpected nullability.
-func requireNullable(t *testing.T, typ Type, want bool) {
+// requireNullable fails t when desc has unexpected nullability.
+func requireNullable(t *testing.T, desc Descriptor, want bool) {
 	t.Helper()
-	requireEqual(t, typ.Nullable(), want)
+	requireEqual(t, desc.Nullable(), want)
 }
 
-// requireValidType fails t when typ is not structurally valid.
-func requireValidType(t *testing.T, typ Type, resolver Resolver) {
+// requireValidDescriptor fails t when desc is not structurally valid.
+func requireValidDescriptor(t *testing.T, desc Descriptor, resolver Resolver) {
 	t.Helper()
-	requireNoError(t, ValidateType(typ, resolver))
+	if resolver == nil {
+		requireNoError(t, ValidateLocal(desc))
+		return
+	}
+	requireNoError(t, ValidateResolved(desc, resolver))
 }
 
-// requireInvalidType fails t when typ is valid or has the wrong broad error.
-func requireInvalidType(t *testing.T, typ Type, resolver Resolver, target error) {
+// requireInvalidDescriptor fails t when desc is valid or has the wrong broad error.
+func requireInvalidDescriptor(t *testing.T, desc Descriptor, resolver Resolver, target error) {
 	t.Helper()
-	requireErrorIs(t, ValidateType(typ, resolver), target)
+	if resolver == nil {
+		requireErrorIs(t, ValidateLocal(desc), target)
+		return
+	}
+	requireErrorIs(t, ValidateResolved(desc, resolver), target)
 }
 
-// requireTypeError returns the structured TypeError diagnostics or fails t.
-func requireTypeError(
+// validateTestDescriptor keeps tests terse while the public API stays explicit.
+func validateTestDescriptor(desc Descriptor, resolver Resolver) error {
+	if resolver == nil {
+		return ValidateLocal(desc)
+	}
+
+	return ValidateResolved(desc, resolver)
+}
+
+// requireDescriptorError returns the structured DescriptorError diagnostics or fails t.
+func requireDescriptorError(
 	t *testing.T,
 	err error,
 	target error,
 	path string,
-	reason TypeErrorReason,
+	reason DescriptorErrorReason,
 	detailContains string,
-) *TypeError {
+) *DescriptorError {
 	t.Helper()
 	requireErrorIs(t, err, target)
 
-	var typeErr *TypeError
-	if !errors.As(err, &typeErr) {
-		t.Fatalf("expected TypeError, got %T", err)
+	var descriptorErr *DescriptorError
+	if !errors.As(err, &descriptorErr) {
+		t.Fatalf("expected DescriptorError, got %T", err)
 	}
 
-	requireEqual(t, typeErr.Path, path)
-	requireEqual(t, typeErr.Reason, reason)
+	requireEqual(t, descriptorErr.Path, path)
+	requireEqual(t, descriptorErr.Reason, reason)
 
-	if detailContains != "" && !strings.Contains(typeErr.Detail, detailContains) {
-		t.Fatalf("expected detail containing %q, got %q", detailContains, typeErr.Detail)
+	if detailContains != "" && !strings.Contains(descriptorErr.Detail, detailContains) {
+		t.Fatalf("expected detail containing %q, got %q", detailContains, descriptorErr.Detail)
 	}
 
-	return typeErr
+	return descriptorErr
 }
 
-// requireStringView returns the exact TypeString view or fails t.
-func requireStringView(t *testing.T, typ Type) StringView {
+// requireStringView returns the exact DescriptorString view or fails t.
+func requireStringView(t *testing.T, desc Descriptor) StringView {
 	t.Helper()
-	view, ok := typ.String()
+	view, ok := desc.AsString()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireBytesView returns the exact TypeBytes view or fails t.
-func requireBytesView(t *testing.T, typ Type) BytesView {
+// requireBytesView returns the exact DescriptorBytes view or fails t.
+func requireBytesView(t *testing.T, desc Descriptor) BytesView {
 	t.Helper()
-	view, ok := typ.Bytes()
+	view, ok := desc.AsBytes()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireInt8View returns the exact TypeInt8 view or fails t.
-func requireInt8View(t *testing.T, typ Type) Int8View {
+// requireInt8View returns the exact DescriptorInt8 view or fails t.
+func requireInt8View(t *testing.T, desc Descriptor) Int8View {
 	t.Helper()
-	view, ok := typ.Int8()
+	view, ok := desc.AsInt8()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireInt16View returns the exact TypeInt16 view or fails t.
-func requireInt16View(t *testing.T, typ Type) Int16View {
+// requireInt16View returns the exact DescriptorInt16 view or fails t.
+func requireInt16View(t *testing.T, desc Descriptor) Int16View {
 	t.Helper()
-	view, ok := typ.Int16()
+	view, ok := desc.AsInt16()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireInt32View returns the exact TypeInt32 view or fails t.
-func requireInt32View(t *testing.T, typ Type) Int32View {
+// requireInt32View returns the exact DescriptorInt32 view or fails t.
+func requireInt32View(t *testing.T, desc Descriptor) Int32View {
 	t.Helper()
-	view, ok := typ.Int32()
+	view, ok := desc.AsInt32()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireInt64View returns the exact TypeInt64 view or fails t.
-func requireInt64View(t *testing.T, typ Type) Int64View {
+// requireInt64View returns the exact DescriptorInt64 view or fails t.
+func requireInt64View(t *testing.T, desc Descriptor) Int64View {
 	t.Helper()
-	view, ok := typ.Int64()
+	view, ok := desc.AsInt64()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireUint8View returns the exact TypeUint8 view or fails t.
-func requireUint8View(t *testing.T, typ Type) Uint8View {
+// requireUint8View returns the exact DescriptorUint8 view or fails t.
+func requireUint8View(t *testing.T, desc Descriptor) Uint8View {
 	t.Helper()
-	view, ok := typ.Uint8()
+	view, ok := desc.AsUint8()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireUint16View returns the exact TypeUint16 view or fails t.
-func requireUint16View(t *testing.T, typ Type) Uint16View {
+// requireUint16View returns the exact DescriptorUint16 view or fails t.
+func requireUint16View(t *testing.T, desc Descriptor) Uint16View {
 	t.Helper()
-	view, ok := typ.Uint16()
+	view, ok := desc.AsUint16()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireUint32View returns the exact TypeUint32 view or fails t.
-func requireUint32View(t *testing.T, typ Type) Uint32View {
+// requireUint32View returns the exact DescriptorUint32 view or fails t.
+func requireUint32View(t *testing.T, desc Descriptor) Uint32View {
 	t.Helper()
-	view, ok := typ.Uint32()
+	view, ok := desc.AsUint32()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireUint64View returns the exact TypeUint64 view or fails t.
-func requireUint64View(t *testing.T, typ Type) Uint64View {
+// requireUint64View returns the exact DescriptorUint64 view or fails t.
+func requireUint64View(t *testing.T, desc Descriptor) Uint64View {
 	t.Helper()
-	view, ok := typ.Uint64()
+	view, ok := desc.AsUint64()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireFloat32View returns the exact TypeFloat32 view or fails t.
-func requireFloat32View(t *testing.T, typ Type) Float32View {
+// requireFloat32View returns the exact DescriptorFloat32 view or fails t.
+func requireFloat32View(t *testing.T, desc Descriptor) Float32View {
 	t.Helper()
-	view, ok := typ.Float32()
+	view, ok := desc.AsFloat32()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireFloat64View returns the exact TypeFloat64 view or fails t.
-func requireFloat64View(t *testing.T, typ Type) Float64View {
+// requireFloat64View returns the exact DescriptorFloat64 view or fails t.
+func requireFloat64View(t *testing.T, desc Descriptor) Float64View {
 	t.Helper()
-	view, ok := typ.Float64()
+	view, ok := desc.AsFloat64()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireDecimalView returns the exact TypeDecimal view or fails t.
-func requireDecimalView(t *testing.T, typ Type) DecimalView {
+// requireDecimalView returns the exact DescriptorDecimal view or fails t.
+func requireDecimalView(t *testing.T, desc Descriptor) DecimalView {
 	t.Helper()
-	view, ok := typ.Decimal()
+	view, ok := desc.AsDecimal()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireTimestampView returns the exact TypeTimestamp view or fails t.
-func requireTimestampView(t *testing.T, typ Type) TimestampView {
+// requireTimestampView returns the exact DescriptorTimestamp view or fails t.
+func requireTimestampView(t *testing.T, desc Descriptor) TimestampView {
 	t.Helper()
-	view, ok := typ.Timestamp()
+	view, ok := desc.AsTimestamp()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireDateView returns the exact TypeDate view or fails t.
-func requireDateView(t *testing.T, typ Type) DateView {
+// requireDateView returns the exact DescriptorDate view or fails t.
+func requireDateView(t *testing.T, desc Descriptor) DateView {
 	t.Helper()
-	view, ok := typ.Date()
+	view, ok := desc.AsDate()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireTimeView returns the exact TypeTime view or fails t.
-func requireTimeView(t *testing.T, typ Type) TimeView {
+// requireTimeView returns the exact DescriptorTime view or fails t.
+func requireTimeView(t *testing.T, desc Descriptor) TimeView {
 	t.Helper()
-	view, ok := typ.Time()
+	view, ok := desc.AsTime()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireDurationView returns the exact TypeDuration view or fails t.
-func requireDurationView(t *testing.T, typ Type) DurationView {
+// requireDurationView returns the exact DescriptorDuration view or fails t.
+func requireDurationView(t *testing.T, desc Descriptor) DurationView {
 	t.Helper()
-	view, ok := typ.Duration()
+	view, ok := desc.AsDuration()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireObjectView returns the exact TypeObject view or fails t.
-func requireObjectView(t *testing.T, typ Type) ObjectView {
+// requireObjectView returns the exact DescriptorObject view or fails t.
+func requireObjectView(t *testing.T, desc Descriptor) ObjectView {
 	t.Helper()
-	view, ok := typ.Object()
+	view, ok := desc.AsObject()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireListView returns the exact TypeList view or fails t.
-func requireListView(t *testing.T, typ Type) ListView {
+// requireListView returns the exact DescriptorList view or fails t.
+func requireListView(t *testing.T, desc Descriptor) ListView {
 	t.Helper()
-	view, ok := typ.List()
+	view, ok := desc.AsList()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireMapView returns the exact TypeMap view or fails t.
-func requireMapView(t *testing.T, typ Type) MapView {
+// requireMapView returns the exact DescriptorMap view or fails t.
+func requireMapView(t *testing.T, desc Descriptor) MapView {
 	t.Helper()
-	view, ok := typ.Map()
+	view, ok := desc.AsMap()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// requireRefView returns the exact TypeRef view or fails t.
-func requireRefView(t *testing.T, typ Type) RefView {
+// requireRefView returns the exact DescriptorRef view or fails t.
+func requireRefView(t *testing.T, desc Descriptor) RefView {
 	t.Helper()
-	view, ok := typ.Ref()
+	view, ok := desc.AsRef()
 	requireEqual(t, ok, true)
 	return view
 }
 
-// objectTypeForField creates a TypeObject around a finalized field descriptor.
-func objectTypeForField(field FieldDescriptor) Type {
-	typ := Type{code: TypeObject}
-	typ.object.unknown = UnknownReject
-	typ.object.fields = []FieldDescriptor{field}
-	return typ
+// objectTypeForField creates a DescriptorObject around a finalized field descriptor.
+func objectTypeForField(field FieldDescriptor) Descriptor {
+	desc := Descriptor{code: DescriptorObject}
+	desc.object.unknown = UnknownReject
+	desc.object.fields = []FieldDescriptor{field}
+	return desc
 }

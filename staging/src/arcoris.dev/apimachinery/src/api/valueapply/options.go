@@ -18,10 +18,10 @@ import "arcoris.dev/apimachinery/api/types"
 
 // Options configures one value-level apply operation.
 type Options struct {
-	// Resolver resolves api/types TypeRef descriptors.
+	// Resolver resolves api/types DescriptorRef descriptors.
 	Resolver types.Resolver
 
-	// MaxDepth prevents runaway TypeRef recursion.
+	// MaxDepth prevents runaway DescriptorRef recursion.
 	//
 	// Zero means package defaults in lower-level packages.
 	MaxDepth int

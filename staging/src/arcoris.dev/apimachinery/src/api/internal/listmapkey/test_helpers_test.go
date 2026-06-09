@@ -23,9 +23,9 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-type resolverFunc func(types.TypeName) (types.TypeDefinition, bool)
+type resolverFunc func(types.TypeName) (types.Definition, bool)
 
-func (f resolverFunc) ResolveType(name types.TypeName) (types.TypeDefinition, bool) {
+func (f resolverFunc) Resolve(name types.TypeName) (types.Definition, bool) {
 	return f(name)
 }
 
@@ -58,8 +58,8 @@ func requireEqual[T comparable](t *testing.T, got, want T) {
 	}
 }
 
-func objectElement(fields ...types.FieldExpr) types.Type {
-	return types.Object(fields...).Type()
+func objectElement(fields ...types.FieldExpr) types.Descriptor {
+	return types.Object(fields...).Descriptor()
 }
 
 func objectWith(name string, val value.Value) value.Value {

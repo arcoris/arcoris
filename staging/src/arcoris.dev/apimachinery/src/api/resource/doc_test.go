@@ -29,8 +29,8 @@ func TestPackageDocumentationConstructionFlow(t *testing.T) {
 		ScopeNamespaced,
 		NewVersion(
 			identity.Version("v1"),
-			types.Object().Type(),
-			Observed(types.Object().Type()),
+			types.Object().Descriptor(),
+			Observed(types.Object().Descriptor()),
 			Exposed(),
 			Canonical(),
 		),

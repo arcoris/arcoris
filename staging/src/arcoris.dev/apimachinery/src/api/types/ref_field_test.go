@@ -19,8 +19,8 @@ import "testing"
 func TestRefFieldWrapper(t *testing.T) {
 	field := Field("value").Ref("example.Name").Required().Nullable().Description("value").Field()
 
-	requireEqual(t, field.Type().Code(), TypeRef)
-	requireEqual(t, field.Type().Nullable(), true)
+	requireEqual(t, field.Descriptor().Code(), DescriptorRef)
+	requireEqual(t, field.Descriptor().Nullable(), true)
 	requireEqual(t, field.Description(), "value")
 }
 

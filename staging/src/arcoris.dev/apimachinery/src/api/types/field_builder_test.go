@@ -20,5 +20,5 @@ func TestFieldBuilderStoresNameWithoutEarlyValidation(t *testing.T) {
 	field := Field("bad-name").String().Required().Field()
 
 	requireEqual(t, field.Name(), FieldName("bad-name"))
-	requireErrorIs(t, ValidateType(objectTypeForField(field), nil), ErrInvalidField)
+	requireErrorIs(t, ValidateLocal(objectTypeForField(field)), ErrInvalidField)
 }

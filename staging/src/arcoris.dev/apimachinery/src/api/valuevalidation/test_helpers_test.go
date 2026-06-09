@@ -25,9 +25,9 @@ import (
 	"arcoris.dev/apimachinery/api/valuevalidation"
 )
 
-type testResolver map[types.TypeName]types.TypeDefinition
+type testResolver map[types.TypeName]types.Definition
 
-func (r testResolver) ResolveType(name types.TypeName) (types.TypeDefinition, bool) {
+func (r testResolver) Resolve(name types.TypeName) (types.Definition, bool) {
 	definition, ok := r[name]
 	return definition, ok
 }

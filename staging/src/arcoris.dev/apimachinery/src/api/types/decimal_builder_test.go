@@ -20,5 +20,5 @@ func TestDecimalFieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").Decimal().Required().Field()
 
 	requireEqual(t, field.Name(), FieldName("value"))
-	requireEqual(t, field.Type().Code(), TypeDecimal)
+	requireEqual(t, field.Descriptor().Code(), DescriptorDecimal)
 }

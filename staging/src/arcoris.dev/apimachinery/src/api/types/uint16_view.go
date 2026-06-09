@@ -14,19 +14,19 @@
 
 package types
 
-// Uint16View exposes read-only TypeUint16 payload data.
+// Uint16View exposes read-only DescriptorUint16 payload data.
 type Uint16View struct {
-	// payload is a detached copy of the TypeUint16 payload.
+	// payload is a detached copy of the DescriptorUint16 payload.
 	payload uint16Payload
 }
 
-// Uint16 returns a read-only TypeUint16 view when t is a uint16 descriptor.
-func (t Type) Uint16() (Uint16View, bool) {
-	if t.code != TypeUint16 {
+// AsUint16 returns a read-only DescriptorUint16 view when desc is a uint16 descriptor.
+func (desc Descriptor) AsUint16() (Uint16View, bool) {
+	if desc.code != DescriptorUint16 {
 		return Uint16View{}, false
 	}
 
-	return Uint16View{payload: cloneUint16Payload(t.uint16)}, true
+	return Uint16View{payload: cloneUint16Payload(desc.uint16)}, true
 }
 
 // Min returns the inclusive lower bound when one is set.

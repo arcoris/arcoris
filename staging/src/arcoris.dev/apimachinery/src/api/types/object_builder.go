@@ -14,22 +14,22 @@
 
 package types
 
-// Object starts a field descriptor whose value type is a structural object.
+// Object starts a field descriptor whose value descriptor is a structural object.
 //
 // The nested field order is preserved exactly as declared. Duplicate names,
 // missing presence, invalid field names, and invalid nested types are reported
-// by ValidateType rather than by this constructor.
+// by ValidateResolved rather than by this constructor.
 //
 // Field builder flow:
 //
 //	Field("spec").Object(
 //		Field("image").String().
 //			Required().
-//			MinLen(1),
+//			MinBytes(1),
 //	).Required().
 //		Nullable().
 //		UnknownFields(UnknownReject).
 //		Description("Desired object state.")
 func (b FieldBuilder) Object(fields ...FieldExpr) ObjectField {
-	return ObjectField{field: b.state(), typ: Object(fields...)}
+	return ObjectField{field: b.state(), descriptor: Object(fields...)}
 }

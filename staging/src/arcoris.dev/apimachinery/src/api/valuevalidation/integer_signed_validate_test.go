@@ -27,28 +27,28 @@ func TestValidateSignedIntegerConstraints(t *testing.T) {
 	tests := []struct {
 		name     string
 		payload  value.Value
-		shape    types.Type
+		shape    types.Descriptor
 		sentinel error
 		reason   valuevalidation.ErrorReason
 	}{
 		{
 			name:     "int8 overflow",
 			payload:  value.Int64Value(math.MaxInt8 + 1),
-			shape:    types.Int8().Type(),
+			shape:    types.Int8().Descriptor(),
 			sentinel: valuevalidation.ErrValueOutOfRange,
 			reason:   valuevalidation.ErrorReasonAboveMaximum,
 		},
 		{
 			name:     "int16 descriptor minimum",
 			payload:  value.Int64Value(-3),
-			shape:    types.Int16().Min(-2).Type(),
+			shape:    types.Int16().Min(-2).Descriptor(),
 			sentinel: valuevalidation.ErrValueOutOfRange,
 			reason:   valuevalidation.ErrorReasonBelowMinimum,
 		},
 		{
 			name:     "int32 enum mismatch",
 			payload:  value.Int64Value(3),
-			shape:    types.Int32().Enum(1, 2).Type(),
+			shape:    types.Int32().Enum(1, 2).Descriptor(),
 			sentinel: valuevalidation.ErrEnumMismatch,
 			reason:   valuevalidation.ErrorReasonEnumMismatch,
 		},
@@ -70,7 +70,7 @@ func TestValidateSignedIntegerConstraints(t *testing.T) {
 func TestValidateSignedIntegerRejectsUint64OnlyValue(t *testing.T) {
 	err := valuevalidation.Validate(
 		value.Uint64Value(math.MaxUint64),
-		types.Int64().Type(),
+		types.Int64().Descriptor(),
 		valuevalidation.Options{},
 	)
 

@@ -38,7 +38,7 @@ type Catalog struct {
 	// defs stores definitions by validated name.
 	//
 	// The map is initialized lazily so the zero value remains usable.
-	defs map[types.TypeName]types.TypeDefinition
+	defs map[types.TypeName]types.Definition
 
 	// order preserves stable registration order for enumeration.
 	//

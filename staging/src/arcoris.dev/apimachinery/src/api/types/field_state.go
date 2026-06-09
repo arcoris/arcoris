@@ -49,12 +49,12 @@ func (s fieldState) withDescription(text string) fieldState {
 	return s
 }
 
-// fieldWithType finalizes shared state with a detached type descriptor.
-func (s fieldState) fieldWithType(t Type) FieldDescriptor {
+// fieldWithType finalizes shared state with a detached value descriptor.
+func (s fieldState) fieldWithType(desc Descriptor) FieldDescriptor {
 	return FieldDescriptor{
 		name:        s.name,
 		presence:    s.presence,
-		typ:         cloneType(t),
+		descriptor:  cloneDescriptor(desc),
 		description: s.description,
 	}
 }

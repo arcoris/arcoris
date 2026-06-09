@@ -14,11 +14,11 @@
 
 package types
 
-// validateUint8 checks TypeUint8 bounds, enum uniqueness, and enum membership.
-func validateUint8(t Type, path string) error {
-	if err := validateRangeRule(path, "uint8", t.uint8.min, t.uint8.max); err != nil {
+// validateUint8 checks DescriptorUint8 bounds, enum uniqueness, and enum membership.
+func validateUint8(desc Descriptor, path string) error {
+	if err := validateRangeRule(path, "uint8", desc.uint8.min, desc.uint8.max); err != nil {
 		return err
 	}
 
-	return validateEnumRules(path, "uint8", t.uint8.enum, t.uint8.min, t.uint8.max)
+	return validateEnumRules(path, "uint8", desc.uint8.enum, desc.uint8.min, desc.uint8.max)
 }

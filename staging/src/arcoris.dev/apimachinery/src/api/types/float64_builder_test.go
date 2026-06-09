@@ -20,5 +20,5 @@ func TestFloat64FieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").Float64().Required().Field()
 
 	requireEqual(t, field.Name(), FieldName("value"))
-	requireEqual(t, field.Type().Code(), TypeFloat64)
+	requireEqual(t, field.Descriptor().Code(), DescriptorFloat64)
 }

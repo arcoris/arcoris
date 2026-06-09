@@ -21,7 +21,7 @@ import (
 )
 
 func TestMergeUnknownRejectSelectedUnknownReturnsUnknownField(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownReject).Type()
+	descriptor := types.Object().UnknownFields(types.UnknownReject).Descriptor()
 
 	_, err := Merge(
 		obj(member("xExtra", str("old"))),
@@ -37,7 +37,7 @@ func TestMergeUnknownRejectSelectedUnknownReturnsUnknownField(t *testing.T) {
 func TestMergeUnknownRejectUnselectedBaseUnknownReturnsUnknownField(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("name").String().Optional(),
-	).UnknownFields(types.UnknownReject).Type()
+	).UnknownFields(types.UnknownReject).Descriptor()
 
 	_, err := Merge(
 		obj(member("name", str("old")), member("xExtra", str("old"))),
@@ -53,7 +53,7 @@ func TestMergeUnknownRejectUnselectedBaseUnknownReturnsUnknownField(t *testing.T
 func TestMergeUnknownRejectUnselectedOverlayUnknownReturnsUnknownField(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("name").String().Optional(),
-	).UnknownFields(types.UnknownReject).Type()
+	).UnknownFields(types.UnknownReject).Descriptor()
 
 	_, err := Merge(
 		obj(member("name", str("old"))),
@@ -69,7 +69,7 @@ func TestMergeUnknownRejectUnselectedOverlayUnknownReturnsUnknownField(t *testin
 func TestMergeUnknownPruneIgnoresUnknown(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("name").String().Optional(),
-	).UnknownFields(types.UnknownPrune).Type()
+	).UnknownFields(types.UnknownPrune).Descriptor()
 	base := obj(member("name", str("old")), member("xExtra", str("old")))
 	overlay := obj(member("xExtra", str("new")))
 
@@ -91,7 +91,7 @@ func TestMergeUnknownPruneIgnoresUnknown(t *testing.T) {
 func TestMergeUnknownPruneUnselectedBaseUnknownPruned(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("name").String().Optional(),
-	).UnknownFields(types.UnknownPrune).Type()
+	).UnknownFields(types.UnknownPrune).Descriptor()
 
 	got, err := Merge(
 		obj(member("name", str("old")), member("xExtra", str("old"))),
@@ -109,7 +109,7 @@ func TestMergeUnknownPruneUnselectedBaseUnknownPruned(t *testing.T) {
 }
 
 func TestMergeUnknownPruneSelectedUnknownIgnored(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownPrune).Type()
+	descriptor := types.Object().UnknownFields(types.UnknownPrune).Descriptor()
 
 	got, err := Merge(
 		obj(member("xExtra", str("old"))),
@@ -128,7 +128,7 @@ func TestMergeUnknownPruneSelectedUnknownIgnored(t *testing.T) {
 func TestMergeUnknownPreserveUnselectedBaseUnknownPreserved(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("name").String().Optional(),
-	).UnknownFields(types.UnknownPreserve).Type()
+	).UnknownFields(types.UnknownPreserve).Descriptor()
 
 	got, err := Merge(
 		obj(member("name", str("old")), member("xExtra", str("old"))),
@@ -146,7 +146,7 @@ func TestMergeUnknownPreserveUnselectedBaseUnknownPreserved(t *testing.T) {
 }
 
 func TestMergeUnknownPreserveExactCopiesOpaque(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Type()
+	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Descriptor()
 	overlayExtra := obj(member("nested", str("new")))
 
 	got, err := Merge(
@@ -169,7 +169,7 @@ func TestMergeUnknownPreserveExactCopiesOpaque(t *testing.T) {
 }
 
 func TestMergeUnknownPreserveRemovesOpaqueWhenOverlayAbsent(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Type()
+	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Descriptor()
 
 	got, err := Merge(
 		obj(member("xExtra", str("old"))),
@@ -186,7 +186,7 @@ func TestMergeUnknownPreserveRemovesOpaqueWhenOverlayAbsent(t *testing.T) {
 }
 
 func TestMergeUnknownPreserveDescendantSelectionUnsupported(t *testing.T) {
-	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Type()
+	descriptor := types.Object().UnknownFields(types.UnknownPreserve).Descriptor()
 
 	_, err := Merge(
 		obj(member("xExtra", obj(member("nested", str("old"))))),

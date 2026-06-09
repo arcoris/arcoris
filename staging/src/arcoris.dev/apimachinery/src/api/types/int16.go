@@ -14,15 +14,15 @@
 
 package types
 
-// Int16Type builds int16 descriptors.
+// Int16Descriptor builds int16 descriptors.
 //
-// Int16Type records portable fixed-width int16 constraints. It does not use
+// Int16Descriptor records portable fixed-width int16 constraints. It does not use
 // Go platform-sized int semantics, so descriptors remain stable across
 // architectures and code generators.
-type Int16Type struct {
+type Int16Descriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
-	// payload stores TypeInt16 constraints under construction.
+	header descriptorHeader
+	// payload stores DescriptorInt16 constraints under construction.
 	payload int16Payload
 }
 
@@ -31,50 +31,50 @@ type Int16Type struct {
 // Typical reusable declaration:
 //
 //	shardType := Int16().Min(0)
-func Int16() Int16Type {
-	return Int16Type{header: newHeader(TypeInt16)}
+func Int16() Int16Descriptor {
+	return Int16Descriptor{header: newHeader(DescriptorInt16)}
 }
 
 // Nullable returns an int16 descriptor that admits null values.
-func (t Int16Type) Nullable() Int16Type {
-	t.header = t.header.withNullable()
+func (desc Int16Descriptor) Nullable() Int16Descriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
 // Min sets the inclusive int16 lower bound.
-func (t Int16Type) Min(n int16) Int16Type {
-	t.payload.min = limit[int16]{value: n, set: true}
+func (desc Int16Descriptor) Min(n int16) Int16Descriptor {
+	desc.payload.min = limit[int16]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Max sets the inclusive int16 upper bound.
-func (t Int16Type) Max(n int16) Int16Type {
-	t.payload.max = limit[int16]{value: n, set: true}
+func (desc Int16Descriptor) Max(n int16) Int16Descriptor {
+	desc.payload.max = limit[int16]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Range sets the inclusive int16 lower and upper bounds.
-func (t Int16Type) Range(min, max int16) Int16Type {
-	return t.Min(min).Max(max)
+func (desc Int16Descriptor) Range(min, max int16) Int16Descriptor {
+	return desc.Min(min).Max(max)
 }
 
 // Enum stores accepted int16 literals in declaration order.
-func (t Int16Type) Enum(values ...int16) Int16Type {
-	t.payload.enum = cloneSlice(values)
+func (desc Int16Descriptor) Enum(values ...int16) Int16Descriptor {
+	desc.payload.enum = cloneSlice(values)
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t Int16Type) Type() Type {
-	out := typeFromHeader(t.header)
-	out.int16 = cloneInt16Payload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc Int16Descriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.int16 = cloneInt16Payload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks Int16Type as a sealed TypeExpr implementation.
-func (t Int16Type) typeExpr() {}
+// descriptorExpr marks Int16Descriptor as a sealed DescriptorExpr implementation.
+func (desc Int16Descriptor) descriptorExpr() {}

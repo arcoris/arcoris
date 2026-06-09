@@ -14,13 +14,13 @@
 
 package types
 
-// DateType builds descriptors for calendar dates without a time of day.
+// DateDescriptor builds descriptors for calendar dates without a time of day.
 //
-// DateType records a calendar-date descriptor without time-of-day semantics.
+// DateDescriptor records a calendar-date descriptor without time-of-day semantics.
 // It does not choose an external textual or numeric encoding.
-type DateType struct {
+type DateDescriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
+	header descriptorHeader
 	// payload stores the exact date constraints under construction.
 	payload datePayload
 }
@@ -30,24 +30,24 @@ type DateType struct {
 // Typical reusable declaration:
 //
 //	effectiveDateType := Date().Nullable()
-func Date() DateType {
-	return DateType{header: newHeader(TypeDate)}
+func Date() DateDescriptor {
+	return DateDescriptor{header: newHeader(DescriptorDate)}
 }
 
 // Nullable returns a date descriptor that admits null values.
-func (t DateType) Nullable() DateType {
-	t.header = t.header.withNullable()
+func (desc DateDescriptor) Nullable() DateDescriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t DateType) Type() Type {
-	out := typeFromHeader(t.header)
-	out.date = cloneDatePayload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc DateDescriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.date = cloneDatePayload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks DateType as a sealed TypeExpr implementation.
-func (t DateType) typeExpr() {}
+// descriptorExpr marks DateDescriptor as a sealed DescriptorExpr implementation.
+func (desc DateDescriptor) descriptorExpr() {}

@@ -38,7 +38,7 @@ func TestValidateVersionDefinitionRejectsInvalidVersionAndMissingDesired(t *test
 		},
 		{
 			name:    "missing desired",
-			version: NewVersion(identity.Version("v1"), types.Type{}, Exposed(), Canonical()),
+			version: NewVersion(identity.Version("v1"), types.Descriptor{}, Exposed(), Canonical()),
 			path:    "definition.versions[v1].desired",
 			reason:  ErrorReasonMissingDesired,
 		},
@@ -66,7 +66,7 @@ func TestValidateVersionDefinitionAcceptsValidVersionWithoutObserved(t *testing.
 func TestValidateVersionDefinitionRejectsStructurallyInvalidDesired(t *testing.T) {
 	version := NewVersion(
 		identity.Version("v1"),
-		types.String().MinLen(2).MaxLen(1).Type(),
+		types.String().MinBytes(2).MaxBytes(1).Descriptor(),
 		Exposed(),
 		Canonical(),
 	)
@@ -84,9 +84,9 @@ func TestValidateVersionDefinitionRejectsStructurallyInvalidDesired(t *testing.T
 		ErrorReasonInvalidDesired,
 	)
 
-	var typeErr *types.TypeError
+	var typeErr *types.DescriptorError
 	if !errors.As(resourceErr.Cause, &typeErr) {
-		t.Fatalf("expected nested *types.TypeError, got %T", resourceErr.Cause)
+		t.Fatalf("expected nested *types.DescriptorError, got %T", resourceErr.Cause)
 	}
 
 	requireDetailContains(t, err, "desired descriptor is structurally invalid at")
@@ -119,7 +119,7 @@ func TestValidateVersionDefinitionRejectsStructurallyInvalidObserved(t *testing.
 	version := NewVersion(
 		identity.Version("v1"),
 		objectType(),
-		Observed(types.String().MinLen(2).MaxLen(1).Type()),
+		Observed(types.String().MinBytes(2).MaxBytes(1).Descriptor()),
 		Exposed(),
 		Canonical(),
 	)
@@ -139,23 +139,23 @@ func TestValidateVersionDefinitionRejectsStructurallyInvalidObserved(t *testing.
 }
 
 func TestInvalidSurfaceDetail(t *testing.T) {
-	err := invalidSurfaceDetail("desired", types.ErrInvalidType)
-	requireEqual(t, err, "desired descriptor is structurally invalid: invalid type")
+	err := invalidSurfaceDetail("desired", types.ErrInvalidDescriptor)
+	requireEqual(t, err, "desired descriptor is structurally invalid: invalid descriptor")
 }
 
 func TestInvalidSurfaceDetailUsesStructuredTypeError(t *testing.T) {
 	cases := []struct {
 		name string
-		err  *types.TypeError
+		err  *types.DescriptorError
 		want string
 	}{
 		{
 			name: "path reason detail",
-			err: &types.TypeError{
+			err: &types.DescriptorError{
 				Record: diagnostic.NewRecord(
 					"string.range",
-					types.ErrInvalidType,
-					types.TypeErrorReasonInvalidRange,
+					types.ErrInvalidDescriptor,
+					types.DescriptorErrorReasonInvalidRange,
 					"minimum must be <= maximum",
 				),
 			},
@@ -163,11 +163,11 @@ func TestInvalidSurfaceDetailUsesStructuredTypeError(t *testing.T) {
 		},
 		{
 			name: "path reason",
-			err: &types.TypeError{
+			err: &types.DescriptorError{
 				Record: diagnostic.NewRecord(
 					"string.range",
-					types.ErrInvalidType,
-					types.TypeErrorReasonInvalidRange,
+					types.ErrInvalidDescriptor,
+					types.DescriptorErrorReasonInvalidRange,
 					"",
 				),
 			},
@@ -175,11 +175,11 @@ func TestInvalidSurfaceDetailUsesStructuredTypeError(t *testing.T) {
 		},
 		{
 			name: "path only",
-			err: &types.TypeError{
+			err: &types.DescriptorError{
 				Record: diagnostic.NewRecord(
 					"string.range",
-					types.ErrInvalidType,
-					types.TypeErrorReason(""),
+					types.ErrInvalidDescriptor,
+					types.DescriptorErrorReason(""),
 					"",
 				),
 			},

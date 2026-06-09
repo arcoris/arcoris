@@ -26,7 +26,7 @@ func (m *merger) mergeScalar(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 ) (operand, error) {
 	if err := requireScalarOperands(path, base, overlay, descriptor); err != nil {
 		return operand{}, err
@@ -47,7 +47,7 @@ func requireScalarOperands(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 ) error {
 	expected, ok := scalarKind(descriptor.Code())
 	if !ok {
@@ -67,8 +67,8 @@ func requireScalarOperands(
 }
 
 // scalarKind maps scalar descriptor codes to concrete payload kinds.
-func scalarKind(code types.TypeCode) (value.Kind, bool) {
-	if code == types.TypeNull {
+func scalarKind(code types.DescriptorKind) (value.Kind, bool) {
+	if code == types.DescriptorNull {
 		return value.KindNull, true
 	}
 

@@ -23,12 +23,12 @@ import (
 // Extract returns the semantic paths explicitly mentioned by v from "$".
 //
 // The descriptor is expected to have been validated at construction,
-// registration, or catalog boundaries. Extract does not call types.ValidateType
+// registration, or catalog boundaries. Extract does not call types.ValidateResolved
 // on every payload; it performs local defensive checks needed for read-only
 // traversal and stable path construction.
 func Extract(
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	opts Options,
 ) (fieldpath.Set, error) {
 	return ExtractAt(fieldpath.RootPath(), val, descriptor, opts)
@@ -42,7 +42,7 @@ func Extract(
 func ExtractAt(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	opts Options,
 ) (fieldpath.Set, error) {
 	if err := path.Validate(); err != nil {

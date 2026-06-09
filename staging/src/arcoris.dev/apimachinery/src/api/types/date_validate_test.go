@@ -17,5 +17,5 @@ package types
 import "testing"
 
 func TestValidateDateAcceptsDescriptor(t *testing.T) {
-	requireNoError(t, validateDate(Date().Type(), "type"))
+	requireNoError(t, validateDate(Date().Descriptor(), "type"))
 }

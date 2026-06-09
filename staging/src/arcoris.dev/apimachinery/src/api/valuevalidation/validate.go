@@ -23,10 +23,10 @@ import (
 // Validate checks v against descriptor starting at the semantic root path.
 //
 // The descriptor is expected to have been validated at construction,
-// registration, or catalog boundaries. Validate does not call types.ValidateType
+// registration, or catalog boundaries. Validate does not call types.ValidateResolved
 // for every payload; it performs local defensive descriptor checks while
 // traversing the value.
-func Validate(v value.Value, descriptor types.Type, opts Options) error {
+func Validate(v value.Value, descriptor types.Descriptor, opts Options) error {
 	return ValidateAt(fieldpath.RootPath(), v, descriptor, opts)
 }
 
@@ -39,7 +39,7 @@ func Validate(v value.Value, descriptor types.Type, opts Options) error {
 // ValidateAt shares Validate's descriptor-preparation boundary: descriptors are
 // expected to be prevalidated, and this function only performs local defensive
 // checks needed during concrete value traversal.
-func ValidateAt(path fieldpath.Path, v value.Value, descriptor types.Type, opts Options) error {
+func ValidateAt(path fieldpath.Path, v value.Value, descriptor types.Descriptor, opts Options) error {
 	run := newValidator(opts)
 	run.validate(path, v, descriptor, 0)
 

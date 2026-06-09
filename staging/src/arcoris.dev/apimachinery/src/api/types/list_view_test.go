@@ -17,10 +17,10 @@ package types
 import "testing"
 
 func TestListViewAccessorsDetach(t *testing.T) {
-	typ := ListOf(Object(Field("type").String().Required())).Map("type").Type()
-	view, ok := typ.List()
+	desc := ListOf(Object(Field("type").String().Required())).Map("type").Descriptor()
+	view, ok := desc.AsList()
 	requireEqual(t, ok, true)
-	requireEqual(t, view.Element().Code(), TypeObject)
+	requireEqual(t, view.Element().Code(), DescriptorObject)
 	requireEqual(t, view.Semantics(), ListMap)
 	keys := view.MapKeys()
 	keys[0] = "changed"
@@ -29,5 +29,5 @@ func TestListViewAccessorsDetach(t *testing.T) {
 
 func TestListViewZeroValueElem(t *testing.T) {
 	var view ListView
-	requireEqual(t, view.Element().Code(), TypeInvalid)
+	requireEqual(t, view.Element().Code(), DescriptorInvalid)
 }

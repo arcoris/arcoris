@@ -17,20 +17,20 @@ package types
 import "testing"
 
 func TestInt8TypeDescriptor(t *testing.T) {
-	typ := Int8().Range(-1, 1).Enum(-1, 0, 1).Nullable().Type()
+	desc := Int8().Range(-1, 1).Enum(-1, 0, 1).Nullable().Descriptor()
 	requireExactNumericDescriptor(t, exactNumericDescriptorCase[int8]{
-		typ:       typ,
-		code:      TypeInt8,
-		min:       func(typ Type) (int8, bool) { return requireInt8View(t, typ).Min() },
-		max:       func(typ Type) (int8, bool) { return requireInt8View(t, typ).Max() },
-		enum:      func(typ Type) []int8 { return requireInt8View(t, typ).Enum() },
-		wrong:     func(typ Type) bool { _, ok := typ.Int16(); return ok },
-		wantMin:   -1,
-		wantMax:   1,
-		wantFirst: -1,
+		descriptor: desc,
+		code:       DescriptorInt8,
+		min:        func(desc Descriptor) (int8, bool) { return requireInt8View(t, desc).Min() },
+		max:        func(desc Descriptor) (int8, bool) { return requireInt8View(t, desc).Max() },
+		enum:       func(desc Descriptor) []int8 { return requireInt8View(t, desc).Enum() },
+		wrong:      func(desc Descriptor) bool { _, ok := desc.AsInt16(); return ok },
+		wantMin:    -1,
+		wantMax:    1,
+		wantFirst:  -1,
 	})
 }
 
-func TestInt8TypeExprMarker(t *testing.T) {
-	Int8().typeExpr()
+func TestInt8DescriptorExprMarker(t *testing.T) {
+	Int8().descriptorExpr()
 }

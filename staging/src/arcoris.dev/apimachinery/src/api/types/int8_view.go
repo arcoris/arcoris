@@ -14,19 +14,19 @@
 
 package types
 
-// Int8View exposes read-only TypeInt8 payload data.
+// Int8View exposes read-only DescriptorInt8 payload data.
 type Int8View struct {
-	// payload is a detached copy of the TypeInt8 payload.
+	// payload is a detached copy of the DescriptorInt8 payload.
 	payload int8Payload
 }
 
-// Int8 returns a read-only TypeInt8 view when t is an int8 descriptor.
-func (t Type) Int8() (Int8View, bool) {
-	if t.code != TypeInt8 {
+// AsInt8 returns a read-only DescriptorInt8 view when desc is an int8 descriptor.
+func (desc Descriptor) AsInt8() (Int8View, bool) {
+	if desc.code != DescriptorInt8 {
 		return Int8View{}, false
 	}
 
-	return Int8View{payload: cloneInt8Payload(t.int8)}, true
+	return Int8View{payload: cloneInt8Payload(desc.int8)}, true
 }
 
 // Min returns the inclusive lower bound when one is set.

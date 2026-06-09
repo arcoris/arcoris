@@ -52,11 +52,11 @@ func newValidator(opts Options) *validator {
 	}
 }
 
-// validate dispatches concrete value validation by descriptor type code.
+// validate dispatches concrete value validation by descriptor kind.
 func (v *validator) validate(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) {
 	if v.shouldStop() {
@@ -73,16 +73,16 @@ func (v *validator) validate(
 			path,
 			ErrInvalidDescriptor,
 			ErrorReasonInvalidDescriptor,
-			"descriptor has no valid type code",
+			"descriptor has no valid kind",
 		)
 		return
 	}
 
 	if val.IsNull() {
-		// A TypeRef can resolve to a nullable target even when the reference
+		// A DescriptorRef can resolve to a nullable target even when the reference
 		// descriptor itself is not marked nullable. Resolve before applying
 		// nullability so reusable semantic types keep their own value contract.
-		if descriptor.Code() == types.TypeRef && !descriptor.Nullable() {
+		if descriptor.Code() == types.DescriptorRef && !descriptor.Nullable() {
 			v.validateRef(path, val, descriptor, depth)
 			return
 		}
@@ -92,49 +92,49 @@ func (v *validator) validate(
 	}
 
 	switch descriptor.Code() {
-	case types.TypeNull:
+	case types.DescriptorNull:
 		v.addKindMismatch(path, val.Kind(), value.KindNull, descriptor.Code())
-	case types.TypeBool:
+	case types.DescriptorBool:
 		v.validateBool(path, val, descriptor)
-	case types.TypeString:
+	case types.DescriptorString:
 		v.validateString(path, val, descriptor)
-	case types.TypeBytes:
+	case types.DescriptorBytes:
 		v.validateBytes(path, val, descriptor)
-	case types.TypeInt8,
-		types.TypeInt16,
-		types.TypeInt32,
-		types.TypeInt64:
+	case types.DescriptorInt8,
+		types.DescriptorInt16,
+		types.DescriptorInt32,
+		types.DescriptorInt64:
 		v.validateSignedInteger(path, val, descriptor)
-	case types.TypeUint8,
-		types.TypeUint16,
-		types.TypeUint32,
-		types.TypeUint64:
+	case types.DescriptorUint8,
+		types.DescriptorUint16,
+		types.DescriptorUint32,
+		types.DescriptorUint64:
 		v.validateUnsignedInteger(path, val, descriptor)
-	case types.TypeFloat32:
+	case types.DescriptorFloat32:
 		v.validateFloat32(path, val, descriptor)
-	case types.TypeFloat64:
+	case types.DescriptorFloat64:
 		v.validateFloat64(path, val, descriptor)
-	case types.TypeDecimal:
+	case types.DescriptorDecimal:
 		v.validateDecimal(path, val, descriptor)
-	case types.TypeTimestamp,
-		types.TypeDate,
-		types.TypeTime,
-		types.TypeDuration:
+	case types.DescriptorTimestamp,
+		types.DescriptorDate,
+		types.DescriptorTime,
+		types.DescriptorDuration:
 		v.validateTemporal(path, val, descriptor)
-	case types.TypeObject:
+	case types.DescriptorObject:
 		v.validateObject(path, val, descriptor, depth)
-	case types.TypeMap:
+	case types.DescriptorMap:
 		v.validateMap(path, val, descriptor, depth)
-	case types.TypeList:
+	case types.DescriptorList:
 		v.validateList(path, val, descriptor, depth)
-	case types.TypeRef:
+	case types.DescriptorRef:
 		v.validateRef(path, val, descriptor, depth)
 	default:
 		v.add(
 			path,
 			ErrInvalidDescriptor,
 			ErrorReasonInvalidDescriptor,
-			"descriptor has an unsupported type code",
+			"descriptor has an unsupported kind",
 		)
 	}
 }

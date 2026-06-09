@@ -17,15 +17,15 @@ package types
 import "testing"
 
 func TestListOfRequiresValidElement(t *testing.T) {
-	var expr TypeExpr
-	typ := ListOf(expr).Type()
+	var expr DescriptorExpr
+	desc := ListOf(expr).Descriptor()
 
-	requireErrorIs(t, ValidateType(typ, nil), ErrInvalidType)
+	requireErrorIs(t, ValidateLocal(desc), ErrInvalidDescriptor)
 }
 
 func TestListOfDefaultsToAtomic(t *testing.T) {
-	typ := ListOf(String()).Type()
-	view, ok := typ.List()
+	desc := ListOf(String()).Descriptor()
+	view, ok := desc.AsList()
 
 	requireEqual(t, ok, true)
 	requireEqual(t, view.Semantics(), ListAtomic)
@@ -33,94 +33,94 @@ func TestListOfDefaultsToAtomic(t *testing.T) {
 }
 
 func TestListTypeOrdered(t *testing.T) {
-	typ := ListOf(String()).Ordered().Type()
-	view, ok := typ.List()
+	desc := ListOf(String()).Ordered().Descriptor()
+	view, ok := desc.AsList()
 
 	requireEqual(t, ok, true)
 	requireEqual(t, view.Semantics(), ListOrdered)
 	requireEqual(t, len(view.MapKeys()), 0)
-	requireNoError(t, ValidateType(typ, nil))
+	requireNoError(t, ValidateLocal(desc))
 }
 
 func TestListOrderedClearsMapKeys(t *testing.T) {
-	typ := ListOf(Object(Field("name").String().Required())).
+	desc := ListOf(Object(Field("name").String().Required())).
 		Map("name").
 		Ordered().
-		Type()
-	view, ok := typ.List()
+		Descriptor()
+	view, ok := desc.AsList()
 
 	requireEqual(t, ok, true)
 	requireEqual(t, view.Semantics(), ListOrdered)
 	requireEqual(t, len(view.MapKeys()), 0)
-	requireNoError(t, ValidateType(typ, nil))
+	requireNoError(t, ValidateLocal(desc))
 }
 
 func TestListLengthAndSemantics(t *testing.T) {
-	atomic := ListOf(String()).MinLen(1).MaxLen(3).Atomic().Type()
-	ordered := ListOf(String()).Ordered().Type()
-	set := ListOf(String()).Set().Type()
+	atomic := ListOf(String()).MinItems(1).MaxItems(3).Atomic().Descriptor()
+	ordered := ListOf(String()).Ordered().Descriptor()
+	set := ListOf(String()).Set().Descriptor()
 
-	requireNoError(t, ValidateType(atomic, nil))
-	requireNoError(t, ValidateType(ordered, nil))
-	requireNoError(t, ValidateType(set, nil))
+	requireNoError(t, ValidateLocal(atomic))
+	requireNoError(t, ValidateLocal(ordered))
+	requireNoError(t, ValidateLocal(set))
 
-	view, ok := set.List()
+	view, ok := set.AsList()
 	requireEqual(t, ok, true)
 	requireEqual(t, view.Semantics(), ListSet)
 }
 
 func TestListInvalidLengthAndSemanticsRejected(t *testing.T) {
-	invalidLen := ListOf(String()).MinLen(2).MaxLen(1).Type()
-	invalidSemantics := ListOf(String()).Type()
+	invalidLen := ListOf(String()).MinItems(2).MaxItems(1).Descriptor()
+	invalidSemantics := ListOf(String()).Descriptor()
 	invalidSemantics.list.semantics = ListSemantics(99)
 
-	requireErrorIs(t, ValidateType(invalidLen, nil), ErrInvalidType)
-	requireErrorIs(t, ValidateType(invalidSemantics, nil), ErrInvalidType)
+	requireErrorIs(t, ValidateLocal(invalidLen), ErrInvalidDescriptor)
+	requireErrorIs(t, ValidateLocal(invalidSemantics), ErrInvalidDescriptor)
 }
 
 func TestListMapRequiresKeys(t *testing.T) {
-	typ := ListOf(Object(Field("name").String().Required())).Map().Type()
+	desc := ListOf(Object(Field("name").String().Required())).Map().Descriptor()
 
-	requireErrorIs(t, ValidateType(typ, nil), ErrInvalidField)
+	requireErrorIs(t, ValidateLocal(desc), ErrInvalidField)
 }
 
 func TestListMapDirectObjectKeyValidation(t *testing.T) {
 	valid := ListOf(Object(
 		Field("type").String().Required(),
 		Field("message").String().Optional(),
-	)).Map("type").Type()
-	missing := ListOf(Object(Field("type").String().Required())).Map("missing").Type()
-	optional := ListOf(Object(Field("type").String().Optional())).Map("type").Type()
+	)).Map("type").Descriptor()
+	missing := ListOf(Object(Field("type").String().Required())).Map("missing").Descriptor()
+	optional := ListOf(Object(Field("type").String().Optional())).Map("type").Descriptor()
 
-	requireNoError(t, ValidateType(valid, nil))
-	requireErrorIs(t, ValidateType(missing, nil), ErrInvalidField)
-	requireErrorIs(t, ValidateType(optional, nil), ErrInvalidField)
+	requireNoError(t, ValidateLocal(valid))
+	requireErrorIs(t, ValidateLocal(missing), ErrInvalidField)
+	requireErrorIs(t, ValidateLocal(optional), ErrInvalidField)
 }
 
 func TestListMapRefObjectKeyValidationWithResolver(t *testing.T) {
-	resolver := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		if name == "example.Item" {
 			return Define("example.Item", Object(
 				Field("type").String().Required(),
 				Field("value").String().Optional(),
 			)), true
 		}
-		return TypeDefinition{}, false
+		return Definition{}, false
 	})
 
-	typ := ListOf(Ref("example.Item")).Map("type").Type()
-	requireNoError(t, ValidateType(typ, resolver))
+	desc := ListOf(Ref("example.Item")).Map("type").Descriptor()
+	requireNoError(t, ValidateResolved(desc, resolver))
 }
 
 func TestListMapKeysDetached(t *testing.T) {
-	typ := ListOf(Object(Field("type").String().Required())).Map("type").Type()
-	view, ok := typ.List()
+	desc := ListOf(Object(Field("type").String().Required())).Map("type").Descriptor()
+	view, ok := desc.AsList()
 	requireEqual(t, ok, true)
 	keys := view.MapKeys()
 	keys[0] = "changed"
 	requireEqual(t, view.MapKeys()[0], FieldName("type"))
 }
 
-func TestListTypeExprMarker(t *testing.T) {
-	ListOf(String()).typeExpr()
+func TestListDescriptorExprMarker(t *testing.T) {
+	ListOf(String()).descriptorExpr()
 }

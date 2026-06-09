@@ -20,5 +20,5 @@ func TestDurationFieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").Duration().Required().Field()
 
 	requireEqual(t, field.Name(), FieldName("value"))
-	requireEqual(t, field.Type().Code(), TypeDuration)
+	requireEqual(t, field.Descriptor().Code(), DescriptorDuration)
 }

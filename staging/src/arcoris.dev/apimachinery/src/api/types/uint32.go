@@ -14,15 +14,15 @@
 
 package types
 
-// Uint32Type builds uint32 descriptors.
+// Uint32Descriptor builds uint32 descriptors.
 //
-// Uint32Type records portable fixed-width uint32 constraints. It deliberately
+// Uint32Descriptor records portable fixed-width uint32 constraints. It deliberately
 // avoids Go platform-sized uint semantics, so descriptors remain stable
 // across architectures and code generators.
-type Uint32Type struct {
+type Uint32Descriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
-	// payload stores TypeUint32 constraints under construction.
+	header descriptorHeader
+	// payload stores DescriptorUint32 constraints under construction.
 	payload uint32Payload
 }
 
@@ -31,50 +31,50 @@ type Uint32Type struct {
 // Typical reusable declaration:
 //
 //	generationType := Uint32().Min(1)
-func Uint32() Uint32Type {
-	return Uint32Type{header: newHeader(TypeUint32)}
+func Uint32() Uint32Descriptor {
+	return Uint32Descriptor{header: newHeader(DescriptorUint32)}
 }
 
 // Nullable returns a uint32 descriptor that admits null values.
-func (t Uint32Type) Nullable() Uint32Type {
-	t.header = t.header.withNullable()
+func (desc Uint32Descriptor) Nullable() Uint32Descriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
 // Min sets the inclusive uint32 lower bound.
-func (t Uint32Type) Min(n uint32) Uint32Type {
-	t.payload.min = limit[uint32]{value: n, set: true}
+func (desc Uint32Descriptor) Min(n uint32) Uint32Descriptor {
+	desc.payload.min = limit[uint32]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Max sets the inclusive uint32 upper bound.
-func (t Uint32Type) Max(n uint32) Uint32Type {
-	t.payload.max = limit[uint32]{value: n, set: true}
+func (desc Uint32Descriptor) Max(n uint32) Uint32Descriptor {
+	desc.payload.max = limit[uint32]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Range sets the inclusive uint32 lower and upper bounds.
-func (t Uint32Type) Range(min, max uint32) Uint32Type {
-	return t.Min(min).Max(max)
+func (desc Uint32Descriptor) Range(min, max uint32) Uint32Descriptor {
+	return desc.Min(min).Max(max)
 }
 
 // Enum stores accepted uint32 literals in declaration order.
-func (t Uint32Type) Enum(values ...uint32) Uint32Type {
-	t.payload.enum = cloneSlice(values)
+func (desc Uint32Descriptor) Enum(values ...uint32) Uint32Descriptor {
+	desc.payload.enum = cloneSlice(values)
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t Uint32Type) Type() Type {
-	out := typeFromHeader(t.header)
-	out.uint32 = cloneUint32Payload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc Uint32Descriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.uint32 = cloneUint32Payload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks Uint32Type as a sealed TypeExpr implementation.
-func (t Uint32Type) typeExpr() {}
+// descriptorExpr marks Uint32Descriptor as a sealed DescriptorExpr implementation.
+func (desc Uint32Descriptor) descriptorExpr() {}

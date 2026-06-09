@@ -21,13 +21,13 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func conditionDescriptor() types.Type {
+func conditionDescriptor() types.Descriptor {
 	condition := types.Object(
 		types.Field("type").String().Required(),
 		types.Field("status").String().Required(),
 	)
 
-	return types.ListOf(condition).Map("type").Type()
+	return types.ListOf(condition).Map("type").Descriptor()
 }
 
 func readyConditionValue(status string) value.Value {
@@ -150,7 +150,7 @@ func TestExtractListMapRefElementUsesSelectorPaths(t *testing.T) {
 	}
 	descriptor := types.ListOf(types.Ref("example.Condition")).
 		Map("type").
-		Type()
+		Descriptor()
 	val := value.MustListValue(readyConditionValue("True"))
 	selectorPath := path.Select(readySelector())
 
@@ -169,7 +169,7 @@ func TestExtractListMapUnresolvedRefReturnsUnresolvedRef(t *testing.T) {
 	path := rootField("conditions")
 	descriptor := types.ListOf(types.Ref("example.Condition")).
 		Map("type").
-		Type()
+		Descriptor()
 	val := value.MustListValue(readyConditionValue("True"))
 
 	_, err := ExtractAt(path, val, descriptor, Options{})
@@ -189,7 +189,7 @@ func TestExtractListMapReferenceCycleReturnsReferenceCycle(t *testing.T) {
 	}
 	descriptor := types.ListOf(types.Ref("example.Condition")).
 		Map("type").
-		Type()
+		Descriptor()
 	val := value.MustListValue(readyConditionValue("True"))
 
 	_, err := ExtractAt(
@@ -216,7 +216,7 @@ func TestExtractListMapRefKeyUsesSelectorLiteral(t *testing.T) {
 		types.Field("type").Ref("example.ConditionType").Required(),
 		types.Field("status").String().Required(),
 	)
-	descriptor := types.ListOf(condition).Map("type").Type()
+	descriptor := types.ListOf(condition).Map("type").Descriptor()
 	val := value.MustListValue(readyConditionValue("True"))
 	selectorPath := path.Select(readySelector())
 
@@ -238,7 +238,7 @@ func TestExtractListMapMultiKeySelector(t *testing.T) {
 		types.Field("port").Uint64().Required(),
 		types.Field("backend").String().Required(),
 	)
-	descriptor := types.ListOf(route).Map("host", "port").Type()
+	descriptor := types.ListOf(route).Map("host", "port").Descriptor()
 	val := value.MustListValue(
 		value.MustObjectValue(
 			value.ObjectMember("host", value.StringValue("api.example.com")),
@@ -268,7 +268,7 @@ func TestExtractListMapNestedObjectPaths(t *testing.T) {
 			types.Field("message").String().Required(),
 		).Required(),
 	)
-	descriptor := types.ListOf(condition).Map("type").Type()
+	descriptor := types.ListOf(condition).Map("type").Descriptor()
 	val := value.MustListValue(
 		value.MustObjectValue(
 			value.ObjectMember("type", value.StringValue("Ready")),

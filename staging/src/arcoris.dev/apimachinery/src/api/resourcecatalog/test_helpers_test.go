@@ -27,8 +27,8 @@ import (
 
 const testGroup = identity.Group("control.arcoris.dev")
 
-func objectType() types.Type {
-	return types.Object().Type()
+func objectType() types.Descriptor {
+	return types.Object().Descriptor()
 }
 
 func objectVersion(version identity.Version, options ...resource.VersionOption) resource.VersionDefinition {
@@ -73,8 +73,8 @@ func refDefinition() resource.Definition {
 		resource.ScopeNamespaced,
 		resource.NewVersion(
 			identity.Version("v1"),
-			types.Ref("control.arcoris.dev.WorkerDesired").Type(),
-			resource.Observed(types.Ref("control.arcoris.dev.WorkerObserved").Type()),
+			types.Ref("control.arcoris.dev.WorkerDesired").Descriptor(),
+			resource.Observed(types.Ref("control.arcoris.dev.WorkerObserved").Descriptor()),
 			resource.Exposed(),
 			resource.Canonical(),
 		),

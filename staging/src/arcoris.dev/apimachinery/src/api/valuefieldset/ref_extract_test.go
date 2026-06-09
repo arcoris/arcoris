@@ -30,7 +30,7 @@ func TestExtractRefResolvesScalar(t *testing.T) {
 	got, err := ExtractAt(
 		path,
 		value.StringValue("api"),
-		types.Ref("example.Name").Type(),
+		types.Ref("example.Name").Descriptor(),
 		Options{Resolver: resolver},
 	)
 	requireNoError(t, err)
@@ -53,7 +53,7 @@ func TestExtractRefResolvesObject(t *testing.T) {
 	got, err := ExtractAt(
 		path,
 		val,
-		types.Ref("example.Spec").Type(),
+		types.Ref("example.Spec").Descriptor(),
 		Options{Resolver: resolver},
 	)
 	requireNoError(t, err)
@@ -64,7 +64,7 @@ func TestExtractRefResolvesObject(t *testing.T) {
 func TestExtractRefRejectsMissingResolver(t *testing.T) {
 	_, err := Extract(
 		value.StringValue("api"),
-		types.Ref("example.Name").Type(),
+		types.Ref("example.Name").Descriptor(),
 		Options{},
 	)
 
@@ -75,7 +75,7 @@ func TestExtractRefRejectsMissingResolver(t *testing.T) {
 func TestExtractRefRejectsUnresolvedReference(t *testing.T) {
 	_, err := Extract(
 		value.StringValue("api"),
-		types.Ref("example.Missing").Type(),
+		types.Ref("example.Missing").Descriptor(),
 		Options{Resolver: testResolver{}},
 	)
 
@@ -91,7 +91,7 @@ func TestExtractRefRejectsReferenceCycle(t *testing.T) {
 
 	_, err := Extract(
 		value.StringValue("api"),
-		types.Ref("example.A").Type(),
+		types.Ref("example.A").Descriptor(),
 		Options{Resolver: resolver},
 	)
 
@@ -107,7 +107,7 @@ func TestExtractRefHonorsMaxDepth(t *testing.T) {
 
 	_, err := Extract(
 		value.StringValue("api"),
-		types.Ref("example.A").Type(),
+		types.Ref("example.A").Descriptor(),
 		Options{Resolver: resolver, MaxDepth: 1},
 	)
 

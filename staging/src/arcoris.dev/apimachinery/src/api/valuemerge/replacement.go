@@ -25,7 +25,7 @@ import (
 func (m *merger) replaceSubtree(
 	path fieldpath.Path,
 	overlay operand,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (operand, error) {
 	if overlay.Absent() {
@@ -38,11 +38,11 @@ func (m *merger) replaceSubtree(
 	return overlay.Clone(), nil
 }
 
-// requireReplacementKind checks only zero value, TypeRef, and descriptor kind.
+// requireReplacementKind checks only zero value, DescriptorRef, and descriptor kind.
 func (m *merger) requireReplacementKind(
 	path fieldpath.Path,
 	overlay operand,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) error {
 	if err := requireValidValue(path, overlay); err != nil {
@@ -53,7 +53,7 @@ func (m *merger) requireReplacementKind(
 	}
 
 	switch descriptor.Code() {
-	case types.TypeRef:
+	case types.DescriptorRef:
 		name, resolved, err := m.resolveRefDefinition(path, descriptor, depth)
 		if err != nil {
 			return err
@@ -63,9 +63,9 @@ func (m *merger) requireReplacementKind(
 		defer leave()
 
 		return m.requireReplacementKind(path, overlay, resolved, depth+1)
-	case types.TypeObject, types.TypeMap:
+	case types.DescriptorObject, types.DescriptorMap:
 		return requireKind(path, overlay, value.KindObject)
-	case types.TypeList:
+	case types.DescriptorList:
 		return requireKind(path, overlay, value.KindList)
 	default:
 		expected, ok := scalarKind(descriptor.Code())

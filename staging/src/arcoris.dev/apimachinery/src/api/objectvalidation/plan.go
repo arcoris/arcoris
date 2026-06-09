@@ -26,7 +26,7 @@ import (
 // validation starts.
 //
 // Resolver is passed through to surface validators so they can resolve
-// structural TypeRef descriptors. It may be nil when the selected descriptors
+// structural DescriptorRef descriptors. It may be nil when the selected descriptors
 // and validators do not need reference resolution; objectvalidation itself does
 // not dereference it.
 //

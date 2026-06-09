@@ -19,27 +19,27 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
-// Resolve resolves one TypeRef edge and leaves stack ownership to the caller.
+// Resolve resolves one DescriptorRef edge and leaves stack ownership to the caller.
 //
 // Call Enter with the returned name before descending into the resolved
 // descriptor. Keeping stack entry separate lets callers preserve their own
 // control flow while sharing the failure checks.
 func (r *Resolver) Resolve(
 	path fieldpath.Path,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
-) (types.TypeName, types.Type, error) {
+) (types.TypeName, types.Descriptor, error) {
 	if depth >= r.maxDepth {
-		return "", types.Type{}, failure(
+		return "", types.Descriptor{}, failure(
 			path,
 			FailureReferenceCycle,
-			"maximum TypeRef traversal depth reached",
+			"maximum DescriptorRef traversal depth reached",
 		)
 	}
 
-	view, ok := descriptor.Ref()
+	view, ok := descriptor.AsRef()
 	if !ok {
-		return "", types.Type{}, failure(
+		return "", types.Descriptor{}, failure(
 			path,
 			FailureInvalidDescriptor,
 			"descriptor is not a reference",
@@ -48,7 +48,7 @@ func (r *Resolver) Resolve(
 
 	name := view.Name()
 	if r.resolver == nil {
-		return "", types.Type{}, failuref(
+		return "", types.Descriptor{}, failuref(
 			path,
 			FailureUnresolvedRef,
 			"reference %q has no resolver",
@@ -56,7 +56,7 @@ func (r *Resolver) Resolve(
 		)
 	}
 	if r.active[name] {
-		return "", types.Type{}, failuref(
+		return "", types.Descriptor{}, failuref(
 			path,
 			FailureReferenceCycle,
 			"reference %q is recursive",
@@ -64,9 +64,9 @@ func (r *Resolver) Resolve(
 		)
 	}
 
-	definition, ok := r.resolver.ResolveType(name)
+	definition, ok := r.resolver.Resolve(name)
 	if !ok {
-		return "", types.Type{}, failuref(
+		return "", types.Descriptor{}, failuref(
 			path,
 			FailureUnresolvedRef,
 			"reference %q was not found",
@@ -74,5 +74,5 @@ func (r *Resolver) Resolve(
 		)
 	}
 
-	return name, definition.Type(), nil
+	return name, definition.Descriptor(), nil
 }

@@ -16,41 +16,47 @@ package types
 
 import "fmt"
 
-// validateList checks element type, length limits, semantics, and map keys.
-func validateList(t Type, resolver Resolver, path string, resolving map[TypeName]bool) error {
-	if t.list.elem == nil {
-		return typeErrorf(
+// validateList checks element descriptor, length limits, semantics, and map keys.
+func validateList(desc Descriptor, resolver Resolver, path string, resolving map[TypeName]bool) error {
+	if desc.list.elem == nil {
+		return descriptorErrorf(
 			path+".elem",
-			ErrInvalidType,
-			TypeErrorReasonMissingElement,
-			"list descriptor must have an element type",
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonMissingElement,
+			"list descriptor must have an element descriptor",
 		)
 	}
 
-	if err := validateType(*t.list.elem, resolver, path+".elem", resolving); err != nil {
+	if err := validateDescriptor(*desc.list.elem, resolver, path+".elem", resolving); err != nil {
 		return err
 	}
 
-	if err := validateLengthLimits(t.list.minLen, t.list.maxLen, path+".len"); err != nil {
+	if err := validateLengthLimits(desc.list.minLen, desc.list.maxLen, path+".len"); err != nil {
 		return err
 	}
 
-	if !t.list.semantics.IsValid() {
-		return typeErrorf(
+	if !desc.list.semantics.IsValid() {
+		return descriptorErrorf(
 			path+".semantics",
-			ErrInvalidType,
-			TypeErrorReasonInvalidSemantics,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonInvalidSemantics,
 			"list semantics %d is not supported",
-			t.list.semantics,
+			desc.list.semantics,
 		)
 	}
 
-	if t.list.semantics != ListMap {
-		if len(t.list.mapKeys) > 0 {
-			return typeErrorf(
+	if desc.list.semantics == ListSet {
+		if err := validateListSetElementDescriptor(*desc.list.elem, resolver, path+".elem", resolving); err != nil {
+			return err
+		}
+	}
+
+	if desc.list.semantics != ListMap {
+		if len(desc.list.mapKeys) > 0 {
+			return descriptorErrorf(
 				path+".mapKeys",
 				ErrInvalidField,
-				TypeErrorReasonInvalidListMapKey,
+				DescriptorErrorReasonInvalidListMapKey,
 				"list map keys are only valid with ListMap semantics",
 			)
 		}
@@ -58,23 +64,23 @@ func validateList(t Type, resolver Resolver, path string, resolving map[TypeName
 		return nil
 	}
 
-	if len(t.list.mapKeys) == 0 {
-		return typeErrorf(
+	if len(desc.list.mapKeys) == 0 {
+		return descriptorErrorf(
 			path+".mapKeys",
 			ErrInvalidField,
-			TypeErrorReasonMissingListMapKey,
+			DescriptorErrorReasonMissingListMapKey,
 			"ListMap semantics requires at least one key field",
 		)
 	}
 
-	object, ok := listMapObject(*t.list.elem, resolver)
+	object, ok := listMapObject(*desc.list.elem, resolver)
 
 	if !ok {
-		return typeErrorf(
+		return descriptorErrorf(
 			path+".elem",
-			ErrInvalidType,
-			TypeErrorReasonListMapElementNotObject,
-			"ListMap element must be an object descriptor or a TypeRef resolving to an object",
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonListMapElementNotObject,
+			"ListMap element must be an object descriptor or a DescriptorRef resolving to an object",
 		)
 	}
 
@@ -84,14 +90,14 @@ func validateList(t Type, resolver Resolver, path string, resolving map[TypeName
 		fields[field.name] = field
 	}
 
-	for i, key := range t.list.mapKeys {
+	for i, key := range desc.list.mapKeys {
 		keyPath := fmt.Sprintf("%s.mapKeys[%d]", path, i)
 
 		if !key.IsValid() {
-			return typeErrorf(
+			return descriptorErrorf(
 				keyPath,
 				ErrInvalidField,
-				TypeErrorReasonInvalidListMapKey,
+				DescriptorErrorReasonInvalidListMapKey,
 				"ListMap key %q is not a valid field name",
 				key,
 			)
@@ -100,26 +106,26 @@ func validateList(t Type, resolver Resolver, path string, resolving map[TypeName
 		field, ok := fields[key]
 
 		if !ok {
-			return typeErrorf(
+			return descriptorErrorf(
 				keyPath,
 				ErrInvalidField,
-				TypeErrorReasonListMapKeyNotFound,
+				DescriptorErrorReasonListMapKeyNotFound,
 				"ListMap key %q is not present in the object element",
 				key,
 			)
 		}
 
 		if !field.IsRequired() {
-			return typeErrorf(
+			return descriptorErrorf(
 				keyPath,
 				ErrInvalidField,
-				TypeErrorReasonListMapKeyOptional,
+				DescriptorErrorReasonListMapKeyOptional,
 				"ListMap key field %q must be required",
 				key,
 			)
 		}
 
-		if err := validateListMapKeyIdentityType(field, resolver, keyPath, resolving); err != nil {
+		if err := validateListMapKeyIdentityDescriptor(field, resolver, keyPath, resolving); err != nil {
 			return err
 		}
 	}
@@ -128,26 +134,123 @@ func validateList(t Type, resolver Resolver, path string, resolving map[TypeName
 }
 
 // listMapObject resolves the object payload used by ListMap semantics.
-func listMapObject(elem Type, resolver Resolver) (objectPayload, bool) {
-	if elem.code == TypeObject {
+func listMapObject(elem Descriptor, resolver Resolver) (objectPayload, bool) {
+	if elem.code == DescriptorObject {
 		return elem.object, true
 	}
 
-	if elem.code != TypeRef || resolver == nil {
+	if elem.code != DescriptorRef || resolver == nil {
 		return objectPayload{}, false
 	}
 
-	def, ok := resolver.ResolveType(elem.ref.name)
+	def, ok := resolver.Resolve(elem.ref.name)
 
 	if !ok {
 		return objectPayload{}, false
 	}
 
-	typ := def.Type()
+	descriptor := def.Descriptor()
 
-	if typ.code != TypeObject {
+	if descriptor.code != DescriptorObject {
 		return objectPayload{}, false
 	}
 
-	return typ.object, true
+	return descriptor.object, true
+}
+
+// validateListSetElementDescriptor checks the stable identity contract for
+// ListSet elements.
+//
+// Set elements need deterministic future identity for validation, comparison,
+// field ownership, and apply. This first pass deliberately limits set elements
+// to non-nullable bool, string, and exact-width integer descriptors, including
+// references that resolve to those descriptors.
+func validateListSetElementDescriptor(
+	desc Descriptor,
+	resolver Resolver,
+	path string,
+	resolving map[TypeName]bool,
+) error {
+	if desc.Nullable() {
+		return descriptorErrorf(
+			path,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonInvalidListSetElement,
+			"ListSet element descriptor must be non-nullable",
+		)
+	}
+
+	switch desc.code {
+	case DescriptorBool,
+		DescriptorString,
+		DescriptorInt8,
+		DescriptorInt16,
+		DescriptorInt32,
+		DescriptorInt64,
+		DescriptorUint8,
+		DescriptorUint16,
+		DescriptorUint32,
+		DescriptorUint64:
+		return nil
+	case DescriptorRef:
+		return validateListSetElementRef(desc.ref.name, resolver, path, resolving)
+	default:
+		return descriptorErrorf(
+			path,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonInvalidListSetElement,
+			"ListSet element descriptor %s cannot be represented as a stable identity value",
+			desc.code,
+		)
+	}
+}
+
+// validateListSetElementRef resolves a referenced ListSet element descriptor
+// while preserving descriptor-reference cycle checks.
+func validateListSetElementRef(name TypeName, resolver Resolver, path string, resolving map[TypeName]bool) error {
+	if !name.IsValid() {
+		return descriptorErrorf(
+			path,
+			ErrInvalidDescriptorReference,
+			DescriptorErrorReasonInvalidReferenceName,
+			"reference name %q is not a valid TypeName",
+			name,
+		)
+	}
+
+	if resolver == nil {
+		return descriptorErrorf(
+			path,
+			ErrUnresolvedDescriptorReference,
+			DescriptorErrorReasonUnknownReference,
+			"reference %q cannot be resolved without a resolver",
+			name,
+		)
+	}
+
+	if resolving[name] {
+		return descriptorErrorf(
+			path,
+			ErrInvalidDescriptorReference,
+			DescriptorErrorReasonReferenceCycle,
+			"reference %q creates a recursive Definition graph",
+			name,
+		)
+	}
+
+	def, ok := resolver.Resolve(name)
+	if !ok {
+		return descriptorErrorf(
+			path,
+			ErrUnresolvedDescriptorReference,
+			DescriptorErrorReasonUnknownReference,
+			"reference %q was not found in resolver",
+			name,
+		)
+	}
+
+	next := copyResolving(resolving)
+	next[name] = true
+
+	return validateListSetElementDescriptor(def.Descriptor(), resolver, path, next)
 }

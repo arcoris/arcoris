@@ -17,19 +17,19 @@ package types
 import "testing"
 
 func TestStringValidateRejectsInvalidRules(t *testing.T) {
-	negativeMin := String().Type()
-	negativeMin.string.minLen = limit[int]{value: -1, set: true}
+	negativeMin := String().Descriptor()
+	negativeMin.string.minBytes = limit[int]{value: -1, set: true}
 
-	tests := []Type{
+	tests := []Descriptor{
 		negativeMin,
-		String().MinLen(2).MaxLen(1).Type(),
-		String().Pattern("[").Type(),
-		String().MinLen(2).Enum("a").Type(),
-		String().MaxLen(1).Enum("ab").Type(),
-		String().Pattern("^a+$").Enum("bbb").Type(),
-		String().Enum("a", "a").Type(),
+		String().MinBytes(2).MaxBytes(1).Descriptor(),
+		String().Pattern("[").Descriptor(),
+		String().MinBytes(2).Enum("a").Descriptor(),
+		String().MaxBytes(1).Enum("ab").Descriptor(),
+		String().Pattern("^a+$").Enum("bbb").Descriptor(),
+		String().Enum("a", "a").Descriptor(),
 	}
-	for _, typ := range tests {
-		requireErrorIs(t, ValidateType(typ, nil), ErrInvalidType)
+	for _, desc := range tests {
+		requireErrorIs(t, ValidateLocal(desc), ErrInvalidDescriptor)
 	}
 }

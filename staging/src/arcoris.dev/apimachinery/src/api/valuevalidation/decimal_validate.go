@@ -26,13 +26,13 @@ import (
 // validator therefore checks the exact descriptor rules that are currently
 // defined: maximum precision and maximum scale. Future decimal bounds must use
 // value.Decimal.Compare and must not use binary floating-point conversion.
-func (v *validator) validateDecimal(path fieldpath.Path, val value.Value, descriptor types.Type) {
+func (v *validator) validateDecimal(path fieldpath.Path, val value.Value, descriptor types.Descriptor) {
 	if !v.requireKind(path, val, value.KindDecimal, descriptor.Code()) {
 		return
 	}
 
 	got, _ := val.Decimal()
-	view, ok := descriptor.Decimal()
+	view, ok := descriptor.AsDecimal()
 	if !ok {
 		v.add(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not decimal")
 		return

@@ -27,7 +27,7 @@ func TestExtractNullIncludesCurrentPath(t *testing.T) {
 	got, err := ExtractAt(
 		path,
 		value.NullValue(),
-		types.String().Type(),
+		types.String().Descriptor(),
 		Options{},
 	)
 	requireNoError(t, err)

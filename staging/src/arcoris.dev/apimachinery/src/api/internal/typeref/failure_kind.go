@@ -14,11 +14,11 @@
 
 package typeref
 
-// FailureKind classifies TypeRef traversal failures for package-local mapping.
+// FailureKind classifies DescriptorRef traversal failures for package-local mapping.
 type FailureKind string
 
 const (
-	// FailureInvalidDescriptor reports a descriptor that is not a valid TypeRef
+	// FailureInvalidDescriptor reports a descriptor that is not a valid DescriptorRef
 	// at a call site that requires one.
 	FailureInvalidDescriptor FailureKind = "invalid_descriptor"
 

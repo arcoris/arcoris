@@ -21,11 +21,11 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// extractRef resolves a TypeRef and extracts paths at the same semantic location.
+// extractRef resolves a DescriptorRef and extracts paths at the same semantic location.
 func (e *extractor) extractRef(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (fieldpath.Set, error) {
 	name, resolved, err := e.resolveRefDefinition(path, descriptor, depth, e.refs)
@@ -46,33 +46,33 @@ func (e *extractor) extractRef(
 // before the actual list item is recursively traversed.
 func (e *extractor) resolveRefDescriptor(
 	path fieldpath.Path,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
-) (types.Type, error) {
+) (types.Descriptor, error) {
 	resolved, err := typeref.New(e.resolver, e.maxDepth).ResolveFinal(path, descriptor, depth)
 	if err != nil {
-		return types.Type{}, valuefieldsetRefError(err)
+		return types.Descriptor{}, valuefieldsetRefError(err)
 	}
 
 	return resolved, nil
 }
 
-// resolveRefDefinition resolves the immediate TypeRef target.
+// resolveRefDefinition resolves the immediate DescriptorRef target.
 func (e *extractor) resolveRefDefinition(
 	path fieldpath.Path,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 	references *typeref.Resolver,
-) (types.TypeName, types.Type, error) {
+) (types.TypeName, types.Descriptor, error) {
 	name, resolved, err := references.Resolve(path, descriptor, depth)
 	if err != nil {
-		return "", types.Type{}, valuefieldsetRefError(err)
+		return "", types.Descriptor{}, valuefieldsetRefError(err)
 	}
 
 	return name, resolved, nil
 }
 
-// valuefieldsetRefError maps shared TypeRef traversal failures into this
+// valuefieldsetRefError maps shared DescriptorRef traversal failures into this
 // package's structured error model.
 func valuefieldsetRefError(err error) error {
 	refError, ok := typeref.AsError(err)

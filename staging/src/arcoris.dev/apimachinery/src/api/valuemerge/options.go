@@ -20,14 +20,14 @@ const defaultMaxDepth = 64
 
 // Options configures descriptor traversal during a merge.
 type Options struct {
-	// Resolver resolves api/types TypeRef descriptors.
+	// Resolver resolves api/types DescriptorRef descriptors.
 	Resolver types.Resolver
 
-	// MaxDepth prevents runaway TypeRef recursion. Zero means package default.
+	// MaxDepth prevents runaway DescriptorRef recursion. Zero means package default.
 	MaxDepth int
 }
 
-// normalizedMaxDepth returns the effective TypeRef traversal limit.
+// normalizedMaxDepth returns the effective DescriptorRef traversal limit.
 func normalizedMaxDepth(maxDepth int) int {
 	if maxDepth <= 0 {
 		return defaultMaxDepth

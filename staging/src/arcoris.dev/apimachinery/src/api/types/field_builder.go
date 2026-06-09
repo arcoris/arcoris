@@ -20,10 +20,10 @@ package types
 // field name and then lets the next typed method choose the value descriptor, for
 // example Field("replicas").Int64() or Field("labels").MapOf(String()). The
 // typed field wrapper then owns presence, nullability, description, and
-// type-specific constraints.
+// descriptor-family constraints.
 //
 // Field does not validate the name immediately. Builders stay simple,
-// immutable-by-value, and allocation-light; ValidateType owns descriptor-shape
+// immutable-by-value, and allocation-light; ValidateResolved owns descriptor-shape
 // diagnostics and reports invalid field names with full descriptor paths.
 func Field(name string) FieldBuilder {
 	return FieldBuilder{name: FieldName(name)}
@@ -34,7 +34,7 @@ func Field(name string) FieldBuilder {
 // It is intentionally small: the builder only carries a FieldName until a
 // family-specific method creates a concrete field wrapper. FieldBuilder itself
 // does not implement FieldExpr, because an object field is incomplete until it
-// has a value type and Required or Optional presence.
+// has a value descriptor and Required or Optional presence.
 type FieldBuilder struct {
 	// name is retained until a typed field wrapper finalizes the descriptor.
 	name FieldName
@@ -44,7 +44,7 @@ type FieldBuilder struct {
 //
 // Family-specific field wrappers embed this state so every wrapper follows the
 // same descriptor rules for name, presence, and description while keeping
-// type-specific constraints in its own builder value.
+// descriptor-family constraints in its own builder value.
 func (b FieldBuilder) state() fieldState {
 	return fieldState{name: b.name}
 }

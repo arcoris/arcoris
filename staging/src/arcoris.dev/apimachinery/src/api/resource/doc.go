@@ -55,7 +55,7 @@
 //	  Group + Kind + Resource + Scope + []VersionDefinition
 //
 //	VersionDefinition
-//	  Version + Desired Type + optional Observed Type + Exposed/Canonical flags
+//	  Version + Desired Descriptor + optional Observed Descriptor + Exposed/Canonical flags
 //
 // Definitions validate their identity values, version set, exposed/canonical
 // invariants, and structural surface descriptors. Desired and Observed root
@@ -75,9 +75,9 @@
 //		resource.ScopeNamespaced,
 //		resource.NewVersion(
 //			identity.Version("v1"),
-//			types.Ref("control.arcoris.dev.WorkerDesired").Type(),
+//			types.Ref("control.arcoris.dev.WorkerDesired").Descriptor(),
 //			resource.Observed(
-//				types.Ref("control.arcoris.dev.WorkerObserved").Type(),
+//				types.Ref("control.arcoris.dev.WorkerObserved").Descriptor(),
 //			),
 //			resource.Exposed(),
 //			resource.Canonical(),

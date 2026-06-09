@@ -17,13 +17,13 @@ package types
 import "testing"
 
 func TestDateTypeDescriptor(t *testing.T) {
-	typ := Date().Nullable().Type()
+	desc := Date().Nullable().Descriptor()
 
-	requireEqual(t, typ.Code(), TypeDate)
-	requireEqual(t, typ.Nullable(), true)
-	requireNoError(t, ValidateType(typ, nil))
+	requireEqual(t, desc.Code(), DescriptorDate)
+	requireEqual(t, desc.Nullable(), true)
+	requireNoError(t, ValidateLocal(desc))
 }
 
-func TestDateTypeExprMarker(t *testing.T) {
-	Date().typeExpr()
+func TestDateDescriptorExprMarker(t *testing.T) {
+	Date().descriptorExpr()
 }

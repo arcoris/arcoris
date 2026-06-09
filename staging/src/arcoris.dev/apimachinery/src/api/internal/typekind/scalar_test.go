@@ -24,33 +24,33 @@ import (
 func TestScalar(t *testing.T) {
 	cases := []struct {
 		name string
-		code types.TypeCode
+		code types.DescriptorKind
 		want value.Kind
 		ok   bool
 	}{
-		{name: "bool", code: types.TypeBool, want: value.KindBool, ok: true},
-		{name: "string", code: types.TypeString, want: value.KindString, ok: true},
-		{name: "bytes", code: types.TypeBytes, want: value.KindBytes, ok: true},
-		{name: "int8", code: types.TypeInt8, want: value.KindInteger, ok: true},
-		{name: "int16", code: types.TypeInt16, want: value.KindInteger, ok: true},
-		{name: "int32", code: types.TypeInt32, want: value.KindInteger, ok: true},
-		{name: "int64", code: types.TypeInt64, want: value.KindInteger, ok: true},
-		{name: "uint8", code: types.TypeUint8, want: value.KindInteger, ok: true},
-		{name: "uint16", code: types.TypeUint16, want: value.KindInteger, ok: true},
-		{name: "uint32", code: types.TypeUint32, want: value.KindInteger, ok: true},
-		{name: "uint64", code: types.TypeUint64, want: value.KindInteger, ok: true},
-		{name: "float32", code: types.TypeFloat32, want: value.KindFloat, ok: true},
-		{name: "float64", code: types.TypeFloat64, want: value.KindFloat, ok: true},
-		{name: "decimal", code: types.TypeDecimal, want: value.KindDecimal, ok: true},
-		{name: "timestamp", code: types.TypeTimestamp, want: value.KindTimestamp, ok: true},
-		{name: "date", code: types.TypeDate, want: value.KindDate, ok: true},
-		{name: "time", code: types.TypeTime, want: value.KindTimeOfDay, ok: true},
-		{name: "duration", code: types.TypeDuration, want: value.KindDuration, ok: true},
-		{name: "null", code: types.TypeNull, want: value.KindInvalid, ok: false},
-		{name: "object", code: types.TypeObject, want: value.KindInvalid, ok: false},
-		{name: "map", code: types.TypeMap, want: value.KindInvalid, ok: false},
-		{name: "list", code: types.TypeList, want: value.KindInvalid, ok: false},
-		{name: "ref", code: types.TypeRef, want: value.KindInvalid, ok: false},
+		{name: "bool", code: types.DescriptorBool, want: value.KindBool, ok: true},
+		{name: "string", code: types.DescriptorString, want: value.KindString, ok: true},
+		{name: "bytes", code: types.DescriptorBytes, want: value.KindBytes, ok: true},
+		{name: "int8", code: types.DescriptorInt8, want: value.KindInteger, ok: true},
+		{name: "int16", code: types.DescriptorInt16, want: value.KindInteger, ok: true},
+		{name: "int32", code: types.DescriptorInt32, want: value.KindInteger, ok: true},
+		{name: "int64", code: types.DescriptorInt64, want: value.KindInteger, ok: true},
+		{name: "uint8", code: types.DescriptorUint8, want: value.KindInteger, ok: true},
+		{name: "uint16", code: types.DescriptorUint16, want: value.KindInteger, ok: true},
+		{name: "uint32", code: types.DescriptorUint32, want: value.KindInteger, ok: true},
+		{name: "uint64", code: types.DescriptorUint64, want: value.KindInteger, ok: true},
+		{name: "float32", code: types.DescriptorFloat32, want: value.KindFloat, ok: true},
+		{name: "float64", code: types.DescriptorFloat64, want: value.KindFloat, ok: true},
+		{name: "decimal", code: types.DescriptorDecimal, want: value.KindDecimal, ok: true},
+		{name: "timestamp", code: types.DescriptorTimestamp, want: value.KindTimestamp, ok: true},
+		{name: "date", code: types.DescriptorDate, want: value.KindDate, ok: true},
+		{name: "time", code: types.DescriptorTime, want: value.KindTimeOfDay, ok: true},
+		{name: "duration", code: types.DescriptorDuration, want: value.KindDuration, ok: true},
+		{name: "null", code: types.DescriptorNull, want: value.KindInvalid, ok: false},
+		{name: "object", code: types.DescriptorObject, want: value.KindInvalid, ok: false},
+		{name: "map", code: types.DescriptorMap, want: value.KindInvalid, ok: false},
+		{name: "list", code: types.DescriptorList, want: value.KindInvalid, ok: false},
+		{name: "ref", code: types.DescriptorRef, want: value.KindInvalid, ok: false},
 	}
 
 	for _, tt := range cases {

@@ -34,17 +34,17 @@ var (
 	// constructed during comparison.
 	ErrInvalidPath = errors.New("invalid field path")
 
-	// ErrKindMismatch classifies concrete value kind / descriptor type mismatches.
+	// ErrKindMismatch classifies concrete value kind / descriptor kind mismatches.
 	ErrKindMismatch = errors.New("value kind mismatch")
 
 	// ErrUnknownField classifies object members rejected by UnknownReject.
 	ErrUnknownField = errors.New("unknown field")
 
-	// ErrUnresolvedRef classifies TypeRef descriptors that cannot be resolved.
-	ErrUnresolvedRef = errors.New("unresolved type reference")
+	// ErrUnresolvedRef classifies DescriptorRef descriptors that cannot be resolved.
+	ErrUnresolvedRef = errors.New("unresolved descriptor reference")
 
-	// ErrReferenceCycle classifies recursive or over-depth TypeRef traversal.
-	ErrReferenceCycle = errors.New("type reference cycle")
+	// ErrReferenceCycle classifies recursive or over-depth DescriptorRef traversal.
+	ErrReferenceCycle = errors.New("descriptor reference cycle")
 
 	// ErrInvalidListKey classifies ListMap keys that cannot form selectors.
 	ErrInvalidListKey = errors.New("invalid list map key")
@@ -96,10 +96,10 @@ const (
 	// ErrorReasonUnknownField reports an undeclared object member rejected by policy.
 	ErrorReasonUnknownField ErrorReason = "unknown_field"
 
-	// ErrorReasonUnresolvedRef reports a TypeRef the resolver cannot load.
+	// ErrorReasonUnresolvedRef reports a DescriptorRef the resolver cannot load.
 	ErrorReasonUnresolvedRef ErrorReason = "unresolved_ref"
 
-	// ErrorReasonReferenceCycle reports recursive or over-depth TypeRef traversal.
+	// ErrorReasonReferenceCycle reports recursive or over-depth DescriptorRef traversal.
 	ErrorReasonReferenceCycle ErrorReason = "reference_cycle"
 
 	// ErrorReasonMissingListKey reports a ListMap item missing a key field.

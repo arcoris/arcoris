@@ -67,8 +67,8 @@ func requireListOperand(path fieldpath.Path, operand operand) error {
 }
 
 // descriptorKindName returns a stable diagnostic descriptor name.
-func descriptorKindName(descriptor types.Type) string {
-	if descriptor.Code() == types.TypeNull {
+func descriptorKindName(descriptor types.Descriptor) string {
+	if descriptor.Code() == types.DescriptorNull {
 		return value.KindNull.String()
 	}
 

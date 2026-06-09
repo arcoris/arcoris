@@ -19,5 +19,5 @@ import "testing"
 func TestRefFieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").Ref("example.Name").Required().Field()
 
-	requireEqual(t, field.Type().Code(), TypeRef)
+	requireEqual(t, field.Descriptor().Code(), DescriptorRef)
 }

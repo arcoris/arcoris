@@ -19,38 +19,38 @@ import (
 	"math"
 )
 
-// validateFloat32 checks TypeFloat32 finite bounds, enum uniqueness, and enum membership.
-func validateFloat32(t Type, path string) error {
-	if t.float32.min.set && invalidFloat32(t.float32.min.value) {
-		return typeErrorf(
+// validateFloat32 checks DescriptorFloat32 finite bounds, enum uniqueness, and enum membership.
+func validateFloat32(desc Descriptor, path string) error {
+	if desc.float32.min.set && invalidFloat32(desc.float32.min.value) {
+		return descriptorErrorf(
 			path+".min",
-			ErrInvalidType,
-			TypeErrorReasonNonFiniteValue,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonNonFiniteValue,
 			"float32 minimum must be finite, got %s",
-			float32Diagnostic(t.float32.min.value),
+			float32Diagnostic(desc.float32.min.value),
 		)
 	}
 
-	if t.float32.max.set && invalidFloat32(t.float32.max.value) {
-		return typeErrorf(
+	if desc.float32.max.set && invalidFloat32(desc.float32.max.value) {
+		return descriptorErrorf(
 			path+".max",
-			ErrInvalidType,
-			TypeErrorReasonNonFiniteValue,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonNonFiniteValue,
 			"float32 maximum must be finite, got %s",
-			float32Diagnostic(t.float32.max.value),
+			float32Diagnostic(desc.float32.max.value),
 		)
 	}
 
-	if err := validateRangeRule(path, "float32", t.float32.min, t.float32.max); err != nil {
+	if err := validateRangeRule(path, "float32", desc.float32.min, desc.float32.max); err != nil {
 		return err
 	}
 
-	for i, value := range t.float32.enum {
+	for i, value := range desc.float32.enum {
 		if invalidFloat32(value) {
-			return typeErrorf(
+			return descriptorErrorf(
 				fmt.Sprintf("%s.enum[%d]", path, i),
-				ErrInvalidType,
-				TypeErrorReasonNonFiniteValue,
+				ErrInvalidDescriptor,
+				DescriptorErrorReasonNonFiniteValue,
 				"float32 enum value must be finite, got %s",
 				float32Diagnostic(value),
 			)
@@ -59,7 +59,7 @@ func validateFloat32(t Type, path string) error {
 
 	// NaN and infinities are rejected before duplicate checks. Descriptor enum
 	// identity then follows Go numeric equality, not float bit-pattern identity.
-	return validateEnumRules(path, "float32", t.float32.enum, t.float32.min, t.float32.max)
+	return validateEnumRules(path, "float32", desc.float32.enum, desc.float32.min, desc.float32.max)
 }
 
 // invalidFloat32 reports whether value is not a finite portable float32 rule.

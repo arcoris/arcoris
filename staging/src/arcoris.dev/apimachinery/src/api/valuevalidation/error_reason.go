@@ -26,11 +26,11 @@ const (
 	ErrorReasonInvalidDescriptor ErrorReason = "invalid_descriptor"
 
 	// ErrorReasonKindMismatch reports a concrete value kind that does not match
-	// the descriptor type code.
+	// the descriptor kind.
 	ErrorReasonKindMismatch ErrorReason = "kind_mismatch"
 
 	// ErrorReasonNullNotAllowed reports an explicit null where the descriptor is
-	// not nullable and is not TypeNull.
+	// not nullable and is not DescriptorNull.
 	ErrorReasonNullNotAllowed ErrorReason = "null_not_allowed"
 
 	// ErrorReasonMissingField reports a required object field that is absent.
@@ -63,10 +63,10 @@ const (
 	// ErrorReasonEnumMismatch reports a scalar value outside its descriptor enum.
 	ErrorReasonEnumMismatch ErrorReason = "enum_mismatch"
 
-	// ErrorReasonUnresolvedRef reports a TypeRef that cannot be resolved.
+	// ErrorReasonUnresolvedRef reports a DescriptorRef that cannot be resolved.
 	ErrorReasonUnresolvedRef ErrorReason = "unresolved_ref"
 
-	// ErrorReasonReferenceCycle reports recursive TypeRef traversal.
+	// ErrorReasonReferenceCycle reports recursive DescriptorRef traversal.
 	ErrorReasonReferenceCycle ErrorReason = "reference_cycle"
 
 	// ErrorReasonMissingListKey reports an ListMap item missing an

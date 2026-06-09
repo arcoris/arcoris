@@ -22,231 +22,231 @@ import (
 func TestValidationDiagnosticsFloat64(t *testing.T) {
 	tests := []struct {
 		name           string
-		typ            Type
+		descriptor     Descriptor
 		path           string
-		reason         TypeErrorReason
+		reason         DescriptorErrorReason
 		detailContains string
 	}{
 		{
 			name:           "min non finite",
-			typ:            Float64().Min(math.Inf(1)).Type(),
-			path:           "type.min",
-			reason:         TypeErrorReasonNonFiniteValue,
+			descriptor:     Float64().Min(math.Inf(1)).Descriptor(),
+			path:           "descriptor.min",
+			reason:         DescriptorErrorReasonNonFiniteValue,
 			detailContains: "+Inf",
 		},
 		{
 			name:           "max non finite",
-			typ:            Float64().Max(math.NaN()).Type(),
-			path:           "type.max",
-			reason:         TypeErrorReasonNonFiniteValue,
+			descriptor:     Float64().Max(math.NaN()).Descriptor(),
+			path:           "descriptor.max",
+			reason:         DescriptorErrorReasonNonFiniteValue,
 			detailContains: "NaN",
 		},
 		{
 			name:           "range inverted",
-			typ:            Float64().Range(10, 1).Type(),
-			path:           "type.range",
-			reason:         TypeErrorReasonInvalidRange,
+			descriptor:     Float64().Range(10, 1).Descriptor(),
+			path:           "descriptor.range",
+			reason:         DescriptorErrorReasonInvalidRange,
 			detailContains: "min=10 max=1",
 		},
 		{
 			name:           "enum non finite",
-			typ:            Float64().Enum(1, math.Inf(-1)).Type(),
-			path:           "type.enum[1]",
-			reason:         TypeErrorReasonNonFiniteValue,
+			descriptor:     Float64().Enum(1, math.Inf(-1)).Descriptor(),
+			path:           "descriptor.enum[1]",
+			reason:         DescriptorErrorReasonNonFiniteValue,
 			detailContains: "-Inf",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			requireTypeError(t, ValidateType(tt.typ, nil), ErrInvalidType, tt.path, tt.reason, tt.detailContains)
+			requireDescriptorError(t, ValidateLocal(tt.descriptor), ErrInvalidDescriptor, tt.path, tt.reason, tt.detailContains)
 		})
 	}
 }
 
 func TestValidationDiagnosticsEnumRules(t *testing.T) {
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(Int8().Enum(1, 1).Type(), nil),
-		ErrInvalidType,
-		"type.enum",
-		TypeErrorReasonDuplicateEnum,
+		ValidateLocal(Int8().Enum(1, 1).Descriptor()),
+		ErrInvalidDescriptor,
+		"descriptor.enum",
+		DescriptorErrorReasonDuplicateEnum,
 		"duplicate value 1",
 	)
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(Int8().Min(0).Enum(-1).Type(), nil),
-		ErrInvalidType,
-		"type.enum[0]",
-		TypeErrorReasonEnumBelowMinimum,
+		ValidateLocal(Int8().Min(0).Enum(-1).Descriptor()),
+		ErrInvalidDescriptor,
+		"descriptor.enum[0]",
+		DescriptorErrorReasonEnumBelowMinimum,
 		"below minimum 0",
 	)
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(Uint64().Max(1).Enum(2).Type(), nil),
-		ErrInvalidType,
-		"type.enum[0]",
-		TypeErrorReasonEnumAboveMaximum,
+		ValidateLocal(Uint64().Max(1).Enum(2).Descriptor()),
+		ErrInvalidDescriptor,
+		"descriptor.enum[0]",
+		DescriptorErrorReasonEnumAboveMaximum,
 		"above maximum 1",
 	)
 }
 
 func TestValidationDiagnosticsString(t *testing.T) {
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(String().Pattern("[").Type(), nil),
-		ErrInvalidType,
-		"type.pattern",
-		TypeErrorReasonInvalidPattern,
+		ValidateLocal(String().Pattern("[").Descriptor()),
+		ErrInvalidDescriptor,
+		"descriptor.pattern",
+		DescriptorErrorReasonInvalidPattern,
 		"not a valid regexp",
 	)
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(String().Pattern("^a+$").Enum("bbb").Type(), nil),
-		ErrInvalidType,
-		"type.enum[0]",
-		TypeErrorReasonEnumPatternMismatch,
+		ValidateLocal(String().Pattern("^a+$").Enum("bbb").Descriptor()),
+		ErrInvalidDescriptor,
+		"descriptor.enum[0]",
+		DescriptorErrorReasonEnumPatternMismatch,
 		"does not match pattern",
 	)
 }
 
 func TestValidationDiagnosticsBytesAndDecimal(t *testing.T) {
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(Bytes().MinLen(-1).Type(), nil),
-		ErrInvalidType,
-		"type.len.min",
-		TypeErrorReasonNegativeLimit,
+		ValidateLocal(Bytes().MinBytes(-1).Descriptor()),
+		ErrInvalidDescriptor,
+		"descriptor.bytes.min",
+		DescriptorErrorReasonNegativeLimit,
 		"got -1",
 	)
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(Bytes().MaxLen(-1).Type(), nil),
-		ErrInvalidType,
-		"type.len.max",
-		TypeErrorReasonNegativeLimit,
+		ValidateLocal(Bytes().MaxBytes(-1).Descriptor()),
+		ErrInvalidDescriptor,
+		"descriptor.bytes.max",
+		DescriptorErrorReasonNegativeLimit,
 		"got -1",
 	)
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(Decimal().Precision(0).Type(), nil),
-		ErrInvalidType,
-		"type.precision",
-		TypeErrorReasonInvalidPrecision,
+		ValidateLocal(Decimal().Precision(0).Descriptor()),
+		ErrInvalidDescriptor,
+		"descriptor.precision",
+		DescriptorErrorReasonInvalidPrecision,
 		"greater than zero",
 	)
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(Decimal().Precision(2).Scale(3).Type(), nil),
-		ErrInvalidType,
-		"type.scale",
-		TypeErrorReasonInvalidScale,
+		ValidateLocal(Decimal().Precision(2).Scale(3).Descriptor()),
+		ErrInvalidDescriptor,
+		"descriptor.scale",
+		DescriptorErrorReasonInvalidScale,
 		"scale=3 precision=2",
 	)
 }
 
 func TestValidationDiagnosticsObjectListMapRefAndPayload(t *testing.T) {
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(Object(
+		ValidateLocal(Object(
 			Field("name").String().Required(),
 			Field("name").Int64().Optional(),
-		).Type(), nil),
+		).Descriptor()),
 		ErrDuplicateField,
-		"type.fields[name].name",
-		TypeErrorReasonDuplicateFieldName,
+		"descriptor.fields[name].name",
+		DescriptorErrorReasonDuplicateFieldName,
 		"name",
 	)
 
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(ListOf(Object(Field("name").String().Required())).Map().Type(), nil),
+		ValidateLocal(ListOf(Object(Field("name").String().Required())).Map().Descriptor()),
 		ErrInvalidField,
-		"type.mapKeys",
-		TypeErrorReasonMissingListMapKey,
+		"descriptor.mapKeys",
+		DescriptorErrorReasonMissingListMapKey,
 		"requires at least one key",
 	)
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(ListOf(Object(Field("name").String().Required())).Map("missing").Type(), nil),
+		ValidateLocal(ListOf(Object(Field("name").String().Required())).Map("missing").Descriptor()),
 		ErrInvalidField,
-		"type.mapKeys[0]",
-		TypeErrorReasonListMapKeyNotFound,
+		"descriptor.mapKeys[0]",
+		DescriptorErrorReasonListMapKeyNotFound,
 		"not present",
 	)
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(ListOf(Object(Field("name").String().Optional())).Map("name").Type(), nil),
+		ValidateLocal(ListOf(Object(Field("name").String().Optional())).Map("name").Descriptor()),
 		ErrInvalidField,
-		"type.mapKeys[0]",
-		TypeErrorReasonListMapKeyOptional,
+		"descriptor.mapKeys[0]",
+		DescriptorErrorReasonListMapKeyOptional,
 		"must be required",
 	)
 
-	mapping := MapOf(String()).Type()
+	mapping := MapOf(String()).Descriptor()
 	mapping.mapType.value = nil
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(mapping, nil),
-		ErrInvalidType,
-		"type.value",
-		TypeErrorReasonMissingValue,
-		"must have a value type",
+		ValidateLocal(mapping),
+		ErrInvalidDescriptor,
+		"descriptor.value",
+		DescriptorErrorReasonMissingValue,
+		"must have a value descriptor",
 	)
 
-	missing := resolverFunc(func(TypeName) (TypeDefinition, bool) {
-		return TypeDefinition{}, false
+	missing := resolverFunc(func(TypeName) (Definition, bool) {
+		return Definition{}, false
 	})
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(Ref("example.Missing").Type(), missing),
-		ErrUnknownTypeReference,
-		"type",
-		TypeErrorReasonUnknownReference,
+		ValidateResolved(Ref("example.Missing").Descriptor(), missing),
+		ErrUnresolvedDescriptorReference,
+		"descriptor",
+		DescriptorErrorReasonUnknownReference,
 		"example.Missing",
 	)
 
-	invalidResolved := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+	invalidResolved := resolverFunc(func(name TypeName) (Definition, bool) {
 		if name == "example.Bad" {
-			return Define("example.Bad", ListOf(TypeExpr(nil))), true
+			return Define("example.Bad", ListOf(DescriptorExpr(nil))), true
 		}
-		return TypeDefinition{}, false
+		return Definition{}, false
 	})
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(Ref("example.Bad").Type(), invalidResolved),
-		ErrInvalidType,
-		"type",
-		TypeErrorReasonInvalidResolvedDefinition,
+		ValidateResolved(Ref("example.Bad").Descriptor(), invalidResolved),
+		ErrInvalidDescriptor,
+		"descriptor",
+		DescriptorErrorReasonInvalidResolvedDefinition,
 		"example.Bad",
 	)
 
-	cycle := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+	cycle := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
 		case "example.A":
 			return Define("example.A", Ref("example.B")), true
 		case "example.B":
 			return Define("example.B", Ref("example.A")), true
 		default:
-			return TypeDefinition{}, false
+			return Definition{}, false
 		}
 	})
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(Ref("example.A").Type(), cycle),
-		ErrInvalidTypeReference,
-		"type",
-		TypeErrorReasonReferenceCycle,
+		ValidateResolved(Ref("example.A").Descriptor(), cycle),
+		ErrInvalidDescriptorReference,
+		"descriptor",
+		DescriptorErrorReasonReferenceCycle,
 		"recursive",
 	)
 
-	inactive := String().Type()
+	inactive := String().Descriptor()
 	inactive.int8.min = limit[int8]{value: 1, set: true}
-	requireTypeError(
+	requireDescriptorError(
 		t,
-		ValidateType(inactive, nil),
-		ErrInvalidType,
-		"type.payload",
-		TypeErrorReasonInactivePayload,
+		ValidateLocal(inactive),
+		ErrInvalidDescriptor,
+		"descriptor.payload",
+		DescriptorErrorReasonInactivePayload,
 		"int8 payload is populated",
 	)
 }

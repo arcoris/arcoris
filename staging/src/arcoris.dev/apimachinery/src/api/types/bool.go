@@ -14,14 +14,14 @@
 
 package types
 
-// BoolType builds boolean descriptors.
+// BoolDescriptor builds boolean descriptors.
 //
-// BoolType records the structural contract for boolean API values. It has no
+// BoolDescriptor records the structural contract for boolean API values. It has no
 // value constraints in this design pass and exists as a closed descriptor
 // builder rather than a Go bool wrapper.
-type BoolType struct {
+type BoolDescriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
+	header descriptorHeader
 }
 
 // Bool returns a descriptor builder for boolean values.
@@ -29,21 +29,21 @@ type BoolType struct {
 // Typical reusable declaration:
 //
 //	enabledType := Bool().Nullable()
-func Bool() BoolType {
-	return BoolType{header: newHeader(TypeBool)}
+func Bool() BoolDescriptor {
+	return BoolDescriptor{header: newHeader(DescriptorBool)}
 }
 
 // Nullable returns a boolean descriptor that admits null values.
-func (t BoolType) Nullable() BoolType {
-	t.header = t.header.withNullable()
+func (desc BoolDescriptor) Nullable() BoolDescriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t BoolType) Type() Type {
-	return typeFromHeader(t.header)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc BoolDescriptor) Descriptor() Descriptor {
+	return descriptorFromHeader(desc.header)
 }
 
-// typeExpr marks BoolType as a sealed TypeExpr implementation.
-func (t BoolType) typeExpr() {}
+// descriptorExpr marks BoolDescriptor as a sealed DescriptorExpr implementation.
+func (desc BoolDescriptor) descriptorExpr() {}

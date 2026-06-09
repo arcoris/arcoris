@@ -14,15 +14,15 @@
 
 package types
 
-// Int32Type builds int32 descriptors.
+// Int32Descriptor builds int32 descriptors.
 //
-// Int32Type records portable fixed-width int32 constraints. It does not use
+// Int32Descriptor records portable fixed-width int32 constraints. It does not use
 // Go platform-sized int semantics, so descriptors remain stable across
 // architectures and code generators.
-type Int32Type struct {
+type Int32Descriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
-	// payload stores TypeInt32 constraints under construction.
+	header descriptorHeader
+	// payload stores DescriptorInt32 constraints under construction.
 	payload int32Payload
 }
 
@@ -31,50 +31,50 @@ type Int32Type struct {
 // Typical reusable declaration:
 //
 //	replicasType := Int32().Range(1, 1000)
-func Int32() Int32Type {
-	return Int32Type{header: newHeader(TypeInt32)}
+func Int32() Int32Descriptor {
+	return Int32Descriptor{header: newHeader(DescriptorInt32)}
 }
 
 // Nullable returns an int32 descriptor that admits null values.
-func (t Int32Type) Nullable() Int32Type {
-	t.header = t.header.withNullable()
+func (desc Int32Descriptor) Nullable() Int32Descriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
 // Min sets the inclusive int32 lower bound.
-func (t Int32Type) Min(n int32) Int32Type {
-	t.payload.min = limit[int32]{value: n, set: true}
+func (desc Int32Descriptor) Min(n int32) Int32Descriptor {
+	desc.payload.min = limit[int32]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Max sets the inclusive int32 upper bound.
-func (t Int32Type) Max(n int32) Int32Type {
-	t.payload.max = limit[int32]{value: n, set: true}
+func (desc Int32Descriptor) Max(n int32) Int32Descriptor {
+	desc.payload.max = limit[int32]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Range sets the inclusive int32 lower and upper bounds.
-func (t Int32Type) Range(min, max int32) Int32Type {
-	return t.Min(min).Max(max)
+func (desc Int32Descriptor) Range(min, max int32) Int32Descriptor {
+	return desc.Min(min).Max(max)
 }
 
 // Enum stores accepted int32 literals in declaration order.
-func (t Int32Type) Enum(values ...int32) Int32Type {
-	t.payload.enum = cloneSlice(values)
+func (desc Int32Descriptor) Enum(values ...int32) Int32Descriptor {
+	desc.payload.enum = cloneSlice(values)
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t Int32Type) Type() Type {
-	out := typeFromHeader(t.header)
-	out.int32 = cloneInt32Payload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc Int32Descriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.int32 = cloneInt32Payload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks Int32Type as a sealed TypeExpr implementation.
-func (t Int32Type) typeExpr() {}
+// descriptorExpr marks Int32Descriptor as a sealed DescriptorExpr implementation.
+func (desc Int32Descriptor) descriptorExpr() {}

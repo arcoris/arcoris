@@ -18,10 +18,10 @@ import "arcoris.dev/apimachinery/api/types"
 
 // Definitions returns registered definitions in stable registration order.
 //
-// TypeDefinition has private descriptor payload and returns detached Type
-// values from Type(), so the returned values do not expose mutable catalog
+// Definition has private descriptor payload and returns detached Descriptor
+// values from Descriptor(), so the returned values do not expose mutable catalog
 // internals.
-func (c *Catalog) Definitions() []types.TypeDefinition {
+func (c *Catalog) Definitions() []types.Definition {
 	if c == nil {
 		return nil
 	}
@@ -29,7 +29,7 @@ func (c *Catalog) Definitions() []types.TypeDefinition {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	out := make([]types.TypeDefinition, 0, len(c.order))
+	out := make([]types.Definition, 0, len(c.order))
 	for _, name := range c.order {
 		out = append(out, c.defs[name])
 	}

@@ -20,13 +20,13 @@ type RefView struct {
 	payload refPayload
 }
 
-// Ref returns a reference view when t is TypeRef.
-func (t Type) Ref() (RefView, bool) {
-	if t.code != TypeRef {
+// AsRef returns a reference view when desc is DescriptorRef.
+func (desc Descriptor) AsRef() (RefView, bool) {
+	if desc.code != DescriptorRef {
 		return RefView{}, false
 	}
 
-	return RefView{payload: cloneRefPayload(t.ref)}, true
+	return RefView{payload: cloneRefPayload(desc.ref)}, true
 }
 
 // Name returns the referenced type name.

@@ -38,12 +38,12 @@ func TestCloneLockedDetachesOrderAndDefinitions(t *testing.T) {
 
 	requireNames(t, &catalog, "example.Name")
 
-	view, ok := clone.defs["example.Name"].Type().String()
+	view, ok := clone.defs["example.Name"].Descriptor().AsString()
 	requireEqual(t, ok, true)
 	enum := view.Enum()
 	enum[0] = "changed"
 
-	view, ok = catalog.defs["example.Name"].Type().String()
+	view, ok = catalog.defs["example.Name"].Descriptor().AsString()
 	requireEqual(t, ok, true)
 	requireEqual(t, view.Enum()[0], "alpha")
 }

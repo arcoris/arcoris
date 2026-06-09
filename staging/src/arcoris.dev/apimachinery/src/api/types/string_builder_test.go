@@ -20,5 +20,5 @@ func TestStringFieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").String().Required().Field()
 
 	requireEqual(t, field.Name(), FieldName("value"))
-	requireEqual(t, field.Type().Code(), TypeString)
+	requireEqual(t, field.Descriptor().Code(), DescriptorString)
 }

@@ -14,7 +14,7 @@
 
 package types
 
-// Uint64 starts a field descriptor whose value type is a fixed-width uint64.
+// Uint64 starts a field descriptor whose value descriptor is a fixed-width uint64.
 //
 // The descriptor records portable uint64 constraints. It never uses Go's
 // platform-sized uint contract, so generated APIs and remote descriptors remain
@@ -30,5 +30,5 @@ package types
 //		Enum(0, 1024).
 //		Description("Observed byte count.")
 func (b FieldBuilder) Uint64() Uint64Field {
-	return Uint64Field{field: b.state(), typ: Uint64()}
+	return Uint64Field{field: b.state(), descriptor: Uint64()}
 }

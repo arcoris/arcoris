@@ -17,5 +17,5 @@ package types
 import "testing"
 
 func TestValidateTimeAcceptsDescriptor(t *testing.T) {
-	requireNoError(t, validateTime(Time().Type(), "type"))
+	requireNoError(t, validateTime(Time().Descriptor(), "type"))
 }

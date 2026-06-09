@@ -14,10 +14,10 @@
 
 package types
 
-// validateBytes checks TypeBytes length descriptor rules.
+// validateBytes checks DescriptorBytes length descriptor rules.
 //
-// TypeBytes intentionally has no pattern or enum rules. Encoding choices such
+// DescriptorBytes intentionally has no pattern or enum rules. Encoding choices such
 // as base64, hex, or binary framing belong to codecs and exporters.
-func validateBytes(t Type, path string) error {
-	return validateLengthLimits(t.bytes.minLen, t.bytes.maxLen, path+".len")
+func validateBytes(desc Descriptor, path string) error {
+	return validateLengthLimits(desc.bytes.minBytes, desc.bytes.maxBytes, path+".bytes")
 }

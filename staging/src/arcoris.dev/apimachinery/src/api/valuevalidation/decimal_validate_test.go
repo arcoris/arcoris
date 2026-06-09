@@ -25,7 +25,7 @@ import (
 func TestValidateDecimalRejectsKindMismatch(t *testing.T) {
 	err := valuevalidation.Validate(
 		value.StringValue("12.30"),
-		types.Decimal().Type(),
+		types.Decimal().Descriptor(),
 		valuevalidation.Options{},
 	)
 
@@ -41,7 +41,7 @@ func TestValidateDecimalRejectsKindMismatch(t *testing.T) {
 func TestValidateDecimalPrecisionAndScale(t *testing.T) {
 	err := valuevalidation.Validate(
 		mustDecimal(t, "123.45"),
-		types.Decimal().Precision(4).Scale(1).Type(),
+		types.Decimal().Precision(4).Scale(1).Descriptor(),
 		valuevalidation.Options{},
 	)
 

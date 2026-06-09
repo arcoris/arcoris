@@ -25,7 +25,7 @@ func TestMergeSelectedString(t *testing.T) {
 	got, err := Merge(
 		str("old"),
 		str("new"),
-		types.String().Type(),
+		types.String().Descriptor(),
 		pathSet(root()),
 		Options{},
 	)
@@ -41,7 +41,7 @@ func TestMergeUnselectedStringPreserved(t *testing.T) {
 		root().Field("name"),
 		str("old"),
 		str("new"),
-		types.String().Type(),
+		types.String().Descriptor(),
 		pathSet(root().Field("other")),
 		Options{},
 	)
@@ -56,7 +56,7 @@ func TestMergeSelectedBool(t *testing.T) {
 	got, err := Merge(
 		boolValue(false),
 		boolValue(true),
-		types.Bool().Type(),
+		types.Bool().Descriptor(),
 		pathSet(root()),
 		Options{},
 	)
@@ -71,7 +71,7 @@ func TestMergeSelectedInteger(t *testing.T) {
 	got, err := Merge(
 		intValue(1),
 		intValue(2),
-		types.Int64().Type(),
+		types.Int64().Descriptor(),
 		pathSet(root()),
 		Options{},
 	)
@@ -86,7 +86,7 @@ func TestMergeSelectedNullReplacesValue(t *testing.T) {
 	got, err := Merge(
 		str("old"),
 		value.NullValue(),
-		types.String().Nullable().Type(),
+		types.String().Nullable().Descriptor(),
 		pathSet(root()),
 		Options{},
 	)
@@ -102,7 +102,7 @@ func TestMergeDescendantUnderScalarReturnsUnsupported(t *testing.T) {
 	_, err := Merge(
 		str("old"),
 		str("new"),
-		types.String().Type(),
+		types.String().Descriptor(),
 		pathSet(root().Field("name")),
 		Options{},
 	)

@@ -21,7 +21,7 @@ import (
 )
 
 func TestCompareMapSameIsEmpty(t *testing.T) {
-	descriptor := types.MapOf(types.String()).Type()
+	descriptor := types.MapOf(types.String()).Descriptor()
 	oldValue := valueObject("env", "prod")
 
 	got, err := Compare(oldValue, oldValue, descriptor, Options{})
@@ -32,7 +32,7 @@ func TestCompareMapSameIsEmpty(t *testing.T) {
 func TestCompareMapAddedKey(t *testing.T) {
 	path := rootField("labels")
 
-	got, err := CompareAt(path, valueObject(), valueObject("env", "prod"), types.MapOf(types.String()).Type(), Options{})
+	got, err := CompareAt(path, valueObject(), valueObject("env", "prod"), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, paths(path.Key("env")), nil, nil)
 }
@@ -40,7 +40,7 @@ func TestCompareMapAddedKey(t *testing.T) {
 func TestCompareMapRemovedKey(t *testing.T) {
 	path := rootField("labels")
 
-	got, err := CompareAt(path, valueObject("env", "prod"), valueObject(), types.MapOf(types.String()).Type(), Options{})
+	got, err := CompareAt(path, valueObject("env", "prod"), valueObject(), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, paths(path.Key("env")), nil)
 }
@@ -48,7 +48,7 @@ func TestCompareMapRemovedKey(t *testing.T) {
 func TestCompareMapModifiedKeyValue(t *testing.T) {
 	path := rootField("labels")
 
-	got, err := CompareAt(path, valueObject("env", "prod"), valueObject("env", "stage"), types.MapOf(types.String()).Type(), Options{})
+	got, err := CompareAt(path, valueObject("env", "prod"), valueObject("env", "stage"), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(path.Key("env")))
 }
@@ -57,7 +57,7 @@ func TestCompareMapNestedObjectValue(t *testing.T) {
 	path := rootField("ports")
 	descriptor := types.MapOf(
 		types.Object(types.Field("target").String().Optional()),
-	).Type()
+	).Descriptor()
 	oldValue := value.MustObjectValue(value.ObjectMember("http", valueObject("target", "8080")))
 	newValue := value.MustObjectValue(value.ObjectMember("http", valueObject("target", "8081")))
 
@@ -69,7 +69,7 @@ func TestCompareMapNestedObjectValue(t *testing.T) {
 func TestCompareMapEmptyToNonEmpty(t *testing.T) {
 	path := rootField("labels")
 
-	got, err := CompareAt(path, valueObject(), valueObject("env", "prod"), types.MapOf(types.String()).Type(), Options{})
+	got, err := CompareAt(path, valueObject(), valueObject("env", "prod"), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, paths(path.Key("env")), nil, nil)
 }
@@ -77,7 +77,7 @@ func TestCompareMapEmptyToNonEmpty(t *testing.T) {
 func TestCompareMapNonEmptyToEmpty(t *testing.T) {
 	path := rootField("labels")
 
-	got, err := CompareAt(path, valueObject("env", "prod"), valueObject(), types.MapOf(types.String()).Type(), Options{})
+	got, err := CompareAt(path, valueObject("env", "prod"), valueObject(), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, paths(path.Key("env")), nil)
 }

@@ -20,5 +20,5 @@ func TestUint16FieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").Uint16().Required().Field()
 
 	requireEqual(t, field.Name(), FieldName("value"))
-	requireEqual(t, field.Type().Code(), TypeUint16)
+	requireEqual(t, field.Descriptor().Code(), DescriptorUint16)
 }

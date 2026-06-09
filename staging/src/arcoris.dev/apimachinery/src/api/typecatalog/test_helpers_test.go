@@ -49,9 +49,9 @@ func requireEqual[T comparable](t *testing.T, got, want T) {
 	}
 }
 
-func requireDefinition(t *testing.T, c *Catalog, name types.TypeName) types.TypeDefinition {
+func requireDefinition(t *testing.T, c *Catalog, name types.TypeName) types.Definition {
 	t.Helper()
-	def, ok := c.ResolveType(name)
+	def, ok := c.Resolve(name)
 	if !ok {
 		t.Fatalf("missing definition %s", name)
 	}

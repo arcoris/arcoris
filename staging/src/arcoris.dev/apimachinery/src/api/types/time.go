@@ -14,13 +14,13 @@
 
 package types
 
-// TimeType builds descriptors for times of day without calendar dates.
+// TimeDescriptor builds descriptors for times of day without calendar dates.
 //
-// TimeType records a time-of-day descriptor without a calendar date. It does
+// TimeDescriptor records a time-of-day descriptor without a calendar date. It does
 // not choose an external textual or numeric encoding.
-type TimeType struct {
+type TimeDescriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
+	header descriptorHeader
 	// payload stores the exact time-of-day constraints under construction.
 	payload timePayload
 }
@@ -30,24 +30,24 @@ type TimeType struct {
 // Typical reusable declaration:
 //
 //	startTimeType := Time().Nullable()
-func Time() TimeType {
-	return TimeType{header: newHeader(TypeTime)}
+func Time() TimeDescriptor {
+	return TimeDescriptor{header: newHeader(DescriptorTime)}
 }
 
 // Nullable returns a time descriptor that admits null values.
-func (t TimeType) Nullable() TimeType {
-	t.header = t.header.withNullable()
+func (desc TimeDescriptor) Nullable() TimeDescriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t TimeType) Type() Type {
-	out := typeFromHeader(t.header)
-	out.timeOfDay = cloneTimePayload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc TimeDescriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.timeOfDay = cloneTimePayload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks TimeType as a sealed TypeExpr implementation.
-func (t TimeType) typeExpr() {}
+// descriptorExpr marks TimeDescriptor as a sealed DescriptorExpr implementation.
+func (desc TimeDescriptor) descriptorExpr() {}

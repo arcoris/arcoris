@@ -21,8 +21,8 @@ func TestStringFieldWrapper(t *testing.T) {
 		String().
 		Required().
 		Nullable().
-		MinLen(1).
-		MaxLen(8).
+		MinBytes(1).
+		MaxBytes(8).
 		Pattern("^[a-z]+$").
 		Enum("alpha").
 		Description("value").
@@ -31,9 +31,9 @@ func TestStringFieldWrapper(t *testing.T) {
 	requireEqual(t, field.Name(), FieldName("value"))
 	requireEqual(t, field.IsRequired(), true)
 	requireEqual(t, field.Description(), "value")
-	requireEqual(t, field.Type().Code(), TypeString)
-	requireEqual(t, field.Type().Nullable(), true)
-	requireNoError(t, ValidateType(objectTypeForField(field), nil))
+	requireEqual(t, field.Descriptor().Code(), DescriptorString)
+	requireEqual(t, field.Descriptor().Nullable(), true)
+	requireNoError(t, ValidateLocal(objectTypeForField(field)))
 }
 
 func TestStringFieldExprMarker(t *testing.T) {

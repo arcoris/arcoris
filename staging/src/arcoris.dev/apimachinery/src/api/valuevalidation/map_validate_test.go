@@ -23,7 +23,7 @@ import (
 )
 
 func TestValidateMapAcceptsDynamicEntries(t *testing.T) {
-	shape := types.MapOf(types.String().MinLen(1)).Type()
+	shape := types.MapOf(types.String().MinBytes(1)).Descriptor()
 	payload := mustObject(
 		t,
 		value.ObjectMember("app", value.StringValue("api")),
@@ -41,7 +41,7 @@ func TestValidateMapAcceptsDynamicEntries(t *testing.T) {
 }
 
 func TestValidateMapRejectsInvalidEntryValue(t *testing.T) {
-	shape := types.MapOf(types.String().MinLen(1)).Type()
+	shape := types.MapOf(types.String().MinBytes(1)).Descriptor()
 	payload := mustObject(t, value.ObjectMember("app", value.StringValue("")))
 
 	err := valuevalidation.Validate(
@@ -60,7 +60,7 @@ func TestValidateMapRejectsInvalidEntryValue(t *testing.T) {
 }
 
 func TestValidateMapUsesKeyPath(t *testing.T) {
-	shape := types.MapOf(types.Int32()).Type()
+	shape := types.MapOf(types.Int32()).Descriptor()
 	payload := mustObject(t, value.ObjectMember("app.kubernetes.io/name", value.StringValue("api")))
 
 	err := valuevalidation.Validate(

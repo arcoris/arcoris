@@ -17,37 +17,37 @@ package types
 import "fmt"
 
 // validateObject checks fields, duplicate names, and unknown-field policy.
-func validateObject(t Type, resolver Resolver, path string, resolving map[TypeName]bool) error {
-	if !t.object.unknown.IsValid() {
-		return typeErrorf(
+func validateObject(desc Descriptor, resolver Resolver, path string, resolving map[TypeName]bool) error {
+	if !desc.object.unknown.IsValid() {
+		return descriptorErrorf(
 			path+".unknown",
-			ErrInvalidType,
-			TypeErrorReasonInvalidUnknownPolicy,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonInvalidUnknownPolicy,
 			"unknown-field policy %d is not supported",
-			t.object.unknown,
+			desc.object.unknown,
 		)
 	}
 
-	seen := make(map[FieldName]struct{}, len(t.object.fields))
+	seen := make(map[FieldName]struct{}, len(desc.object.fields))
 
-	for _, field := range t.object.fields {
+	for _, field := range desc.object.fields {
 		fieldPath := fmt.Sprintf("%s.fields[%s]", path, field.name)
 
 		if !field.name.IsValid() {
-			return typeErrorf(
+			return descriptorErrorf(
 				fieldPath+".name",
 				ErrInvalidField,
-				TypeErrorReasonInvalidFieldName,
+				DescriptorErrorReasonInvalidFieldName,
 				"field name %q is not lowerCamelCase",
 				field.name,
 			)
 		}
 
 		if _, ok := seen[field.name]; ok {
-			return typeErrorf(
+			return descriptorErrorf(
 				fieldPath+".name",
 				ErrDuplicateField,
-				TypeErrorReasonDuplicateFieldName,
+				DescriptorErrorReasonDuplicateFieldName,
 				"field name %q is declared more than once",
 				field.name,
 			)
@@ -56,17 +56,17 @@ func validateObject(t Type, resolver Resolver, path string, resolving map[TypeNa
 		seen[field.name] = struct{}{}
 
 		if !field.presence.IsValid() {
-			return typeErrorf(
+			return descriptorErrorf(
 				fieldPath+".presence",
 				ErrInvalidField,
-				TypeErrorReasonInvalidPresence,
+				DescriptorErrorReasonInvalidPresence,
 				"field %q must be required or optional, got %s",
 				field.name,
 				field.presence,
 			)
 		}
 
-		if err := validateType(field.typ, resolver, fieldPath+".type", resolving); err != nil {
+		if err := validateDescriptor(field.descriptor, resolver, fieldPath+".type", resolving); err != nil {
 			return err
 		}
 	}

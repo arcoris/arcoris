@@ -17,13 +17,13 @@ package types
 import "testing"
 
 func TestBytesTypeDescriptor(t *testing.T) {
-	typ := Bytes().MinLen(1).MaxLen(10).Nullable().Type()
+	desc := Bytes().MinBytes(1).MaxBytes(10).Nullable().Descriptor()
 
-	requireEqual(t, typ.Code(), TypeBytes)
-	requireEqual(t, typ.Nullable(), true)
-	requireNoError(t, ValidateType(typ, nil))
+	requireEqual(t, desc.Code(), DescriptorBytes)
+	requireEqual(t, desc.Nullable(), true)
+	requireNoError(t, ValidateLocal(desc))
 }
 
-func TestBytesTypeExprMarker(t *testing.T) {
-	Bytes().typeExpr()
+func TestBytesDescriptorExprMarker(t *testing.T) {
+	Bytes().descriptorExpr()
 }

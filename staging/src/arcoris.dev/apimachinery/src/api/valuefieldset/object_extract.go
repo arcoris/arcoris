@@ -24,14 +24,14 @@ import (
 func (e *extractor) extractObject(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (fieldpath.Set, error) {
 	if err := requireKind(path, val, value.KindObject, descriptor.Code()); err != nil {
 		return fieldpath.Set{}, err
 	}
 
-	objectView, ok := descriptor.Object()
+	objectView, ok := descriptor.AsObject()
 	if !ok {
 		return fieldpath.Set{}, errorAt(
 			path,
@@ -70,7 +70,7 @@ func (e *extractor) extractObject(
 		memberSet, err := e.extract(
 			memberPath,
 			objectMember.Value,
-			fieldDescriptor.Type(),
+			fieldDescriptor.Descriptor(),
 			depth+1,
 		)
 		if err != nil {

@@ -29,7 +29,7 @@ func (c *comparer) equalObject(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (bool, error) {
 	if err := requireKind(path, oldValue, value.KindObject, descriptor.Code()); err != nil {
@@ -39,7 +39,7 @@ func (c *comparer) equalObject(
 		return false, err
 	}
 
-	objectView, ok := descriptor.Object()
+	objectView, ok := descriptor.AsObject()
 	if !ok {
 		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not an object")
 	}
@@ -59,7 +59,7 @@ func (c *comparer) equalObject(
 			continue
 		}
 
-		equal, err := c.equalValue(path.Field(name), oldMember, newMember, field.Type(), depth+1)
+		equal, err := c.equalValue(path.Field(name), oldMember, newMember, field.Descriptor(), depth+1)
 		if err != nil {
 			return false, err
 		}

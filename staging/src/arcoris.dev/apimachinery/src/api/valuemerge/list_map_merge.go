@@ -26,7 +26,7 @@ func (m *merger) mergeListMap(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
-	element types.Type,
+	element types.Descriptor,
 	keys []types.FieldName,
 	fields fieldpath.Set,
 	depth int,
@@ -70,7 +70,7 @@ func (m *merger) mergeBaseListMapItems(
 	path fieldpath.Path,
 	baseIndex listMapIndex,
 	overlayIndex listMapIndex,
-	element types.Type,
+	element types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
 ) ([]value.Value, error) {
@@ -105,7 +105,7 @@ func (m *merger) appendOverlayListMapItems(
 	items []value.Value,
 	baseIndex listMapIndex,
 	overlayIndex listMapIndex,
-	element types.Type,
+	element types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
 ) ([]value.Value, error) {
@@ -139,7 +139,7 @@ func (m *merger) mergeListMapItem(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
-	element types.Type,
+	element types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
 ) (operand, error) {

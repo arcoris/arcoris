@@ -15,19 +15,21 @@
 package valuevalidation
 
 import (
+	"unicode/utf8"
+
 	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// validateString checks TypeString kind, length, pattern, and enum constraints.
-func (v *validator) validateString(path fieldpath.Path, val value.Value, descriptor types.Type) {
+// validateString checks DescriptorString kind, length, pattern, and enum constraints.
+func (v *validator) validateString(path fieldpath.Path, val value.Value, descriptor types.Descriptor) {
 	if !v.requireKind(path, val, value.KindString, descriptor.Code()) {
 		return
 	}
 
 	text, _ := val.String()
-	stringView, ok := descriptor.String()
+	stringView, ok := descriptor.AsString()
 	if !ok {
 		v.add(
 			path,
@@ -45,25 +47,48 @@ func (v *validator) validateString(path fieldpath.Path, val value.Value, descrip
 
 // validateStringLength checks byte-length rules using the same semantics as api/types.
 func (v *validator) validateStringLength(path fieldpath.Path, text string, stringView types.StringView) {
-	length := len(text)
-	if minLength, ok := stringView.MinLen(); ok && length < minLength {
+	byteLength := len(text)
+	if minLength, ok := stringView.MinBytes(); ok && byteLength < minLength {
 		v.addf(
 			path,
 			ErrLengthOutOfRange,
 			ErrorReasonTooShort,
-			"string length %d is below minimum %d",
-			length,
+			"string byte length %d is below minimum %d",
+			byteLength,
 			minLength,
 		)
 	}
 
-	if maxLength, ok := stringView.MaxLen(); ok && length > maxLength {
+	if maxLength, ok := stringView.MaxBytes(); ok && byteLength > maxLength {
 		v.addf(
 			path,
 			ErrLengthOutOfRange,
 			ErrorReasonTooLong,
-			"string length %d is above maximum %d",
-			length,
+			"string byte length %d is above maximum %d",
+			byteLength,
+			maxLength,
+		)
+	}
+
+	runeLength := utf8.RuneCountInString(text)
+	if minLength, ok := stringView.MinRunes(); ok && runeLength < minLength {
+		v.addf(
+			path,
+			ErrLengthOutOfRange,
+			ErrorReasonTooShort,
+			"string rune count %d is below minimum %d",
+			runeLength,
+			minLength,
+		)
+	}
+
+	if maxLength, ok := stringView.MaxRunes(); ok && runeLength > maxLength {
+		v.addf(
+			path,
+			ErrLengthOutOfRange,
+			ErrorReasonTooLong,
+			"string rune count %d is above maximum %d",
+			runeLength,
 			maxLength,
 		)
 	}

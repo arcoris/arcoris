@@ -24,14 +24,14 @@ import (
 
 func TestValidateRefResolvesScalar(t *testing.T) {
 	resolver := testResolver{
-		"example.Name": types.Define("example.Name", types.String().MinLen(1)),
+		"example.Name": types.Define("example.Name", types.String().MinBytes(1)),
 	}
 
 	requireNoError(
 		t,
 		valuevalidation.Validate(
 			value.StringValue("main"),
-			types.Ref("example.Name").Type(),
+			types.Ref("example.Name").Descriptor(),
 			valuevalidation.Options{Resolver: resolver},
 		),
 	)
@@ -51,7 +51,7 @@ func TestValidateRefResolvesObject(t *testing.T) {
 		t,
 		valuevalidation.Validate(
 			payload,
-			types.Ref("example.Spec").Type(),
+			types.Ref("example.Spec").Descriptor(),
 			valuevalidation.Options{Resolver: resolver},
 		),
 	)
@@ -69,7 +69,7 @@ func TestValidateRefResolvesNullableTargetForNullValue(t *testing.T) {
 		t,
 		valuevalidation.Validate(
 			value.NullValue(),
-			types.Ref("example.Note").Type(),
+			types.Ref("example.Note").Descriptor(),
 			valuevalidation.Options{Resolver: resolver},
 		),
 	)
@@ -78,7 +78,7 @@ func TestValidateRefResolvesNullableTargetForNullValue(t *testing.T) {
 func TestValidateRefRejectsMissingResolver(t *testing.T) {
 	err := valuevalidation.Validate(
 		value.StringValue("main"),
-		types.Ref("example.Name").Type(),
+		types.Ref("example.Name").Descriptor(),
 		valuevalidation.Options{},
 	)
 
@@ -94,7 +94,7 @@ func TestValidateRefRejectsMissingResolver(t *testing.T) {
 func TestValidateRefRejectsUnresolvedReference(t *testing.T) {
 	err := valuevalidation.Validate(
 		value.StringValue("main"),
-		types.Ref("example.Name").Type(),
+		types.Ref("example.Name").Descriptor(),
 		valuevalidation.Options{Resolver: testResolver{}},
 	)
 
@@ -115,7 +115,7 @@ func TestValidateRefRejectsReferenceCycle(t *testing.T) {
 
 	err := valuevalidation.Validate(
 		value.StringValue("main"),
-		types.Ref("example.A").Type(),
+		types.Ref("example.A").Descriptor(),
 		valuevalidation.Options{Resolver: resolver},
 	)
 
@@ -131,12 +131,12 @@ func TestValidateRefRejectsReferenceCycle(t *testing.T) {
 func TestValidateRefRejectsMaxDepth(t *testing.T) {
 	resolver := testResolver{
 		"example.Name":       types.Define("example.Name", types.Ref("example.StringName")),
-		"example.StringName": types.Define("example.StringName", types.String().MinLen(1)),
+		"example.StringName": types.Define("example.StringName", types.String().MinBytes(1)),
 	}
 
 	err := valuevalidation.Validate(
 		value.StringValue("main"),
-		types.Ref("example.Name").Type(),
+		types.Ref("example.Name").Descriptor(),
 		valuevalidation.Options{
 			Resolver: resolver,
 			MaxDepth: 0,
@@ -147,7 +147,7 @@ func TestValidateRefRejectsMaxDepth(t *testing.T) {
 
 	err = valuevalidation.Validate(
 		value.StringValue("main"),
-		types.Ref("example.Name").Type(),
+		types.Ref("example.Name").Descriptor(),
 		valuevalidation.Options{
 			Resolver: resolver,
 			MaxDepth: 1,

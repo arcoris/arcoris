@@ -14,20 +14,20 @@
 
 package types
 
-// Int64Type builds int64 descriptors.
+// Int64Descriptor builds int64 descriptors.
 //
-// Int64Type records portable fixed-width int64 constraints. It does not use
+// Int64Descriptor records portable fixed-width int64 constraints. It does not use
 // Go platform-sized int semantics, so descriptors remain stable across
 // architectures and code generators.
 //
 // The builder stores descriptor rules, not runtime values. Min, Max, Range, and
-// Enum record portable int64 constraints that ValidateType later checks for
+// Enum record portable int64 constraints that ValidateResolved later checks for
 // consistency. The builder is immutable-by-value: each method returns a copy so
 // fluent declarations can be reused without sharing mutable slices or maps.
-type Int64Type struct {
+type Int64Descriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
-	// payload stores TypeInt64 constraints under construction.
+	header descriptorHeader
+	// payload stores DescriptorInt64 constraints under construction.
 	payload int64Payload
 }
 
@@ -36,59 +36,59 @@ type Int64Type struct {
 // Typical reusable declaration:
 //
 //	maxConcurrencyType := Int64().Min(1)
-func Int64() Int64Type {
-	return Int64Type{header: newHeader(TypeInt64)}
+func Int64() Int64Descriptor {
+	return Int64Descriptor{header: newHeader(DescriptorInt64)}
 }
 
 // Nullable returns an int64 descriptor that admits null values.
-func (t Int64Type) Nullable() Int64Type {
-	t.header = t.header.withNullable()
+func (desc Int64Descriptor) Nullable() Int64Descriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
 // Min sets the inclusive int64 lower bound.
 //
 // The bound is structural metadata. This package does not compare concrete API
 // values against it; that belongs to future value-validation layers.
-func (t Int64Type) Min(n int64) Int64Type {
-	t.payload.min = limit[int64]{n, true}
+func (desc Int64Descriptor) Min(n int64) Int64Descriptor {
+	desc.payload.min = limit[int64]{n, true}
 
-	return t
+	return desc
 }
 
 // Max sets the inclusive int64 upper bound.
 //
 // The bound is retained as a limit[int64] so an explicit zero can be
 // distinguished from an unset maximum without allocating a pointer.
-func (t Int64Type) Max(n int64) Int64Type {
-	t.payload.max = limit[int64]{n, true}
+func (desc Int64Descriptor) Max(n int64) Int64Descriptor {
+	desc.payload.max = limit[int64]{n, true}
 
-	return t
+	return desc
 }
 
 // Range sets the inclusive int64 lower and upper bounds.
-func (t Int64Type) Range(min, max int64) Int64Type {
-	return t.Min(min).Max(max)
+func (desc Int64Descriptor) Range(min, max int64) Int64Descriptor {
+	return desc.Min(min).Max(max)
 }
 
 // Enum stores accepted int64 literals in declaration order.
 //
 // The input slice is cloned. Later caller mutation of the variadic backing
-// array cannot rewrite the descriptor returned by Type.
-func (t Int64Type) Enum(values ...int64) Int64Type {
-	t.payload.enum = cloneSlice(values)
+// array cannot rewrite the descriptor returned by Descriptor.
+func (desc Int64Descriptor) Enum(values ...int64) Int64Descriptor {
+	desc.payload.enum = cloneSlice(values)
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t Int64Type) Type() Type {
-	out := typeFromHeader(t.header)
-	out.int64 = cloneInt64Payload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc Int64Descriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.int64 = cloneInt64Payload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks Int64Type as a sealed TypeExpr implementation.
-func (t Int64Type) typeExpr() {}
+// descriptorExpr marks Int64Descriptor as a sealed DescriptorExpr implementation.
+func (desc Int64Descriptor) descriptorExpr() {}

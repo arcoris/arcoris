@@ -17,14 +17,55 @@ package types
 import "testing"
 
 func TestMapValidateRejectsInvalidShapes(t *testing.T) {
-	requireErrorIs(t, ValidateType(MapOf(TypeExpr(nil)).Type(), nil), ErrInvalidType)
-	requireErrorIs(t, ValidateType(MapOf(String()).MinLen(2).MaxLen(1).Type(), nil), ErrInvalidType)
+	requireErrorIs(t, ValidateLocal(MapOf(DescriptorExpr(nil)).Descriptor()), ErrInvalidDescriptor)
+	requireErrorIs(t, ValidateLocal(MapOf(String()).MinEntries(2).MaxEntries(1).Descriptor()), ErrInvalidDescriptor)
 
-	invalidKey := MapOf(String()).Type()
-	invalidKey.mapType.key = MapKeyType(99)
-	requireErrorIs(t, ValidateType(invalidKey, nil), ErrInvalidType)
+	invalidKey := MapOf(String()).Descriptor()
+	invalidKey.mapType.key = nil
+	requireErrorIs(t, ValidateLocal(invalidKey), ErrInvalidDescriptor)
 
-	missingValue := Type{code: TypeMap}
-	missingValue.mapType.key = MapKeyString
-	requireErrorIs(t, ValidateType(missingValue, nil), ErrInvalidType)
+	boolKey := MapOf(String()).Keys(Bool()).Descriptor()
+	requireErrorIs(t, ValidateLocal(boolKey), ErrInvalidField)
+
+	nullableKey := MapOf(String()).Keys(String().Nullable()).Descriptor()
+	requireErrorIs(t, ValidateLocal(nullableKey), ErrInvalidField)
+
+	missingValue := Descriptor{code: DescriptorMap}
+	key := String().Descriptor()
+	missingValue.mapType.key = &key
+	requireErrorIs(t, ValidateLocal(missingValue), ErrInvalidDescriptor)
+}
+
+func TestMapValidateResolvedKeyReference(t *testing.T) {
+	keyDef := Define("meta.arcoris.dev.LabelKey", String().MinBytes(1))
+	desc := MapOf(String()).Keys(Ref("meta.arcoris.dev.LabelKey")).Descriptor()
+
+	requireNoError(t, ValidateResolved(desc, resolverFunc(func(name TypeName) (Definition, bool) {
+		if name == keyDef.Name() {
+			return keyDef, true
+		}
+
+		return Definition{}, false
+	})))
+}
+
+func TestMapValidateRejectsUnresolvedKeyReference(t *testing.T) {
+	desc := MapOf(String()).Keys(Ref("meta.arcoris.dev.LabelKey")).Descriptor()
+
+	requireErrorIs(t, ValidateResolved(desc, resolverFunc(func(TypeName) (Definition, bool) {
+		return Definition{}, false
+	})), ErrUnresolvedDescriptorReference)
+}
+
+func TestMapValidateRejectsKeyReferenceToNonStringDescriptor(t *testing.T) {
+	keyDef := Define("meta.arcoris.dev.LabelKey", Bool())
+	desc := MapOf(String()).Keys(Ref("meta.arcoris.dev.LabelKey")).Descriptor()
+
+	requireErrorIs(t, ValidateResolved(desc, resolverFunc(func(name TypeName) (Definition, bool) {
+		if name == keyDef.Name() {
+			return keyDef, true
+		}
+
+		return Definition{}, false
+	})), ErrInvalidField)
 }

@@ -14,7 +14,7 @@
 
 package types
 
-// validateListMapKeyIdentityType checks the descriptor-level identity contract
+// validateListMapKeyIdentityDescriptor checks the descriptor-level identity contract
 // for one ListMap key field.
 //
 // ListMap keys are stronger than ordinary required object fields. Future value
@@ -22,58 +22,58 @@ package types
 // selector identity values. This first pass limits that identity surface to
 // non-nullable bool, string, and integer descriptors, including references that
 // resolve to those descriptors.
-func validateListMapKeyIdentityType(
+func validateListMapKeyIdentityDescriptor(
 	field FieldDescriptor,
 	resolver Resolver,
 	path string,
 	resolving map[TypeName]bool,
 ) error {
-	return validateListMapKeyType(field.Type(), resolver, path, resolving)
+	return validateListMapKeyDescriptor(field.Descriptor(), resolver, path, resolving)
 }
 
-// validateListMapKeyType validates a concrete or referenced key type.
-func validateListMapKeyType(
-	typ Type,
+// validateListMapKeyDescriptor validates a concrete or referenced key descriptor.
+func validateListMapKeyDescriptor(
+	descriptor Descriptor,
 	resolver Resolver,
 	path string,
 	resolving map[TypeName]bool,
 ) error {
-	if typ.Nullable() {
-		return typeErrorf(
+	if descriptor.Nullable() {
+		return descriptorErrorf(
 			path,
 			ErrInvalidField,
-			TypeErrorReasonInvalidListMapKeyType,
+			DescriptorErrorReasonInvalidListMapKeyDescriptor,
 			"ListMap key field must be non-nullable",
 		)
 	}
 
-	switch typ.code {
-	case TypeBool,
-		TypeString,
-		TypeInt8,
-		TypeInt16,
-		TypeInt32,
-		TypeInt64,
-		TypeUint8,
-		TypeUint16,
-		TypeUint32,
-		TypeUint64:
+	switch descriptor.code {
+	case DescriptorBool,
+		DescriptorString,
+		DescriptorInt8,
+		DescriptorInt16,
+		DescriptorInt32,
+		DescriptorInt64,
+		DescriptorUint8,
+		DescriptorUint16,
+		DescriptorUint32,
+		DescriptorUint64:
 		return nil
-	case TypeRef:
-		return validateListMapKeyRef(typ.ref.name, resolver, path, resolving)
+	case DescriptorRef:
+		return validateListMapKeyRef(descriptor.ref.name, resolver, path, resolving)
 	default:
-		return typeErrorf(
+		return descriptorErrorf(
 			path,
 			ErrInvalidField,
-			TypeErrorReasonInvalidListMapKeyType,
-			"ListMap key field type %s cannot be represented as a stable identity value",
-			typ.code,
+			DescriptorErrorReasonInvalidListMapKeyDescriptor,
+			"ListMap key field descriptor %s cannot be represented as a stable identity value",
+			descriptor.code,
 		)
 	}
 }
 
-// validateListMapKeyRef resolves a referenced key type without introducing a
-// catalog dependency or a public identity-type API.
+// validateListMapKeyRef resolves a referenced key descriptor without introducing a
+// catalog dependency or a public identity-descriptor API.
 func validateListMapKeyRef(
 	name TypeName,
 	resolver Resolver,
@@ -81,42 +81,42 @@ func validateListMapKeyRef(
 	resolving map[TypeName]bool,
 ) error {
 	if !name.IsValid() {
-		return typeErrorf(
+		return descriptorErrorf(
 			path,
-			ErrInvalidTypeReference,
-			TypeErrorReasonInvalidReferenceName,
+			ErrInvalidDescriptorReference,
+			DescriptorErrorReasonInvalidReferenceName,
 			"reference name %q is not a valid TypeName",
 			name,
 		)
 	}
 
 	if resolver == nil {
-		return typeErrorf(
+		return descriptorErrorf(
 			path,
-			ErrUnknownTypeReference,
-			TypeErrorReasonUnknownReference,
+			ErrUnresolvedDescriptorReference,
+			DescriptorErrorReasonUnknownReference,
 			"reference %q cannot be resolved without a resolver",
 			name,
 		)
 	}
 
 	if resolving[name] {
-		return typeErrorf(
+		return descriptorErrorf(
 			path,
-			ErrInvalidTypeReference,
-			TypeErrorReasonReferenceCycle,
-			"reference %q creates a recursive TypeDefinition graph",
+			ErrInvalidDescriptorReference,
+			DescriptorErrorReasonReferenceCycle,
+			"reference %q creates a recursive Definition graph",
 			name,
 		)
 	}
 
-	def, ok := resolver.ResolveType(name)
+	def, ok := resolver.Resolve(name)
 
 	if !ok {
-		return typeErrorf(
+		return descriptorErrorf(
 			path,
-			ErrUnknownTypeReference,
-			TypeErrorReasonUnknownReference,
+			ErrUnresolvedDescriptorReference,
+			DescriptorErrorReasonUnknownReference,
 			"reference %q was not found in resolver",
 			name,
 		)
@@ -125,5 +125,5 @@ func validateListMapKeyRef(
 	next := copyResolving(resolving)
 	next[name] = true
 
-	return validateListMapKeyType(def.Type(), resolver, path, next)
+	return validateListMapKeyDescriptor(def.Descriptor(), resolver, path, next)
 }

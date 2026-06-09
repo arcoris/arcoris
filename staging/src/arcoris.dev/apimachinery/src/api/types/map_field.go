@@ -14,10 +14,10 @@
 
 package types
 
-// MapField builds object fields whose value type is a dynamic map.
+// MapField builds object fields whose value descriptor is a dynamic map.
 type MapField struct {
-	field fieldState
-	typ   MapType
+	field      fieldState
+	descriptor MapDescriptor
 }
 
 // Required marks the field key as required.
@@ -43,28 +43,28 @@ func (f MapField) Description(text string) MapField {
 
 // Nullable admits null in addition to map values.
 func (f MapField) Nullable() MapField {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
-// MinLen sets the inclusive minimum number of map entries.
-func (f MapField) MinLen(n int) MapField {
-	f.typ = f.typ.MinLen(n)
+// MinEntries sets the inclusive minimum number of map entries.
+func (f MapField) MinEntries(n int) MapField {
+	f.descriptor = f.descriptor.MinEntries(n)
 
 	return f
 }
 
-// MaxLen sets the inclusive maximum number of map entries.
-func (f MapField) MaxLen(n int) MapField {
-	f.typ = f.typ.MaxLen(n)
+// MaxEntries sets the inclusive maximum number of map entries.
+func (f MapField) MaxEntries(n int) MapField {
+	f.descriptor = f.descriptor.MaxEntries(n)
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f MapField) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks MapField as a sealed FieldExpr implementation.

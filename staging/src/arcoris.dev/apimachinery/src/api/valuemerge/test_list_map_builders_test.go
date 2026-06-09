@@ -20,19 +20,19 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func conditionElementDescriptor() types.Type {
-	return conditionElementExpr().Type()
+func conditionElementDescriptor() types.Descriptor {
+	return conditionElementExpr().Descriptor()
 }
 
-func conditionElementExpr() types.ObjectType {
+func conditionElementExpr() types.ObjectDescriptor {
 	return types.Object(
 		types.Field("type").String().Required(),
 		types.Field("status").String().Optional(),
 	)
 }
 
-func conditionListDescriptor() types.Type {
-	return types.ListOf(conditionElementExpr()).Map("type").Type()
+func conditionListDescriptor() types.Descriptor {
+	return types.ListOf(conditionElementExpr()).Map("type").Descriptor()
 }
 
 func conditionKeys() []types.FieldName {

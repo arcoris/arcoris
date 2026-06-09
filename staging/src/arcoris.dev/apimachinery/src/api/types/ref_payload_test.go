@@ -17,7 +17,7 @@ package types
 import "testing"
 
 func TestRefPayloadStoresTypeName(t *testing.T) {
-	payload := Ref("example.Name").Type().ref
+	payload := Ref("example.Name").Descriptor().ref
 	requireEqual(t, payload.name, TypeName("example.Name"))
 }
 

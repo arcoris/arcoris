@@ -17,13 +17,13 @@ package types
 import "testing"
 
 func TestStringTypeDescriptor(t *testing.T) {
-	typ := String().MinLen(1).MaxLen(10).Pattern("^[a-z]+$").Enum("alpha").Nullable().Type()
+	desc := String().MinBytes(1).MaxBytes(10).Pattern("^[a-z]+$").Enum("alpha").Nullable().Descriptor()
 
-	requireEqual(t, typ.Code(), TypeString)
-	requireEqual(t, typ.Nullable(), true)
-	requireNoError(t, ValidateType(typ, nil))
+	requireEqual(t, desc.Code(), DescriptorString)
+	requireEqual(t, desc.Nullable(), true)
+	requireNoError(t, ValidateLocal(desc))
 }
 
-func TestStringTypeExprMarker(t *testing.T) {
-	String().typeExpr()
+func TestStringDescriptorExprMarker(t *testing.T) {
+	String().descriptorExpr()
 }

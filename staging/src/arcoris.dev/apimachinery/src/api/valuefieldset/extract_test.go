@@ -25,7 +25,7 @@ import (
 func TestExtractStartsAtRootPath(t *testing.T) {
 	got, err := Extract(
 		value.StringValue("api"),
-		types.String().Type(),
+		types.String().Descriptor(),
 		Options{},
 	)
 	requireNoError(t, err)
@@ -39,7 +39,7 @@ func TestExtractAtPreservesBasePath(t *testing.T) {
 	got, err := ExtractAt(
 		path,
 		value.StringValue("api:v1"),
-		types.String().Type(),
+		types.String().Descriptor(),
 		Options{},
 	)
 	requireNoError(t, err)
@@ -48,7 +48,7 @@ func TestExtractAtPreservesBasePath(t *testing.T) {
 }
 
 func TestExtractRejectsInvalidZeroValue(t *testing.T) {
-	_, err := Extract(value.Value{}, types.String().Type(), Options{})
+	_, err := Extract(value.Value{}, types.String().Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrInvalidValue)
 	requireErrorReason(t, err, ErrorReasonInvalidZero)
@@ -56,7 +56,7 @@ func TestExtractRejectsInvalidZeroValue(t *testing.T) {
 }
 
 func TestExtractRejectsInvalidDescriptor(t *testing.T) {
-	_, err := Extract(value.StringValue("api"), types.Type{}, Options{})
+	_, err := Extract(value.StringValue("api"), types.Descriptor{}, Options{})
 
 	requireErrorIs(t, err, ErrInvalidDescriptor)
 	requireErrorReason(t, err, ErrorReasonInvalidDescriptor)
@@ -67,7 +67,7 @@ func TestExtractAtRejectsInvalidBasePath(t *testing.T) {
 	_, err := ExtractAt(
 		fieldpath.RootPath().Field(""),
 		value.StringValue("api"),
-		types.String().Type(),
+		types.String().Descriptor(),
 		Options{},
 	)
 
@@ -80,7 +80,7 @@ func TestExtractReturnsSortedUniqueSet(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("zeta").String().Optional(),
 		types.Field("alpha").String().Optional(),
-	).Type()
+	).Descriptor()
 	val := value.MustObjectValue(
 		value.ObjectMember("zeta", value.StringValue("last")),
 		value.ObjectMember("alpha", value.StringValue("first")),
@@ -104,7 +104,7 @@ func TestExtractDoesNotMutateValue(t *testing.T) {
 
 	_, err := Extract(
 		val,
-		types.Object(types.Field("name").String().Required()).Type(),
+		types.Object(types.Field("name").String().Required()).Descriptor(),
 		Options{},
 	)
 	requireNoError(t, err)

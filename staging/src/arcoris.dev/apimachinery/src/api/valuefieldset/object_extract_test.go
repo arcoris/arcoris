@@ -26,7 +26,7 @@ func TestExtractObjectLeaves(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("replicas").Int32().Required(),
 		types.Field("image").String().Required(),
-	).Type()
+	).Descriptor()
 	val := value.MustObjectValue(
 		value.ObjectMember("replicas", value.Int64Value(3)),
 		value.ObjectMember("image", value.StringValue("api:v1")),
@@ -47,7 +47,7 @@ func TestExtractObjectEmptyIncludesObjectPath(t *testing.T) {
 	path := rootField("spec")
 	val := value.MustObjectValue()
 
-	got, err := ExtractAt(path, val, types.Object().Type(), Options{})
+	got, err := ExtractAt(path, val, types.Object().Descriptor(), Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path)
@@ -58,7 +58,7 @@ func TestExtractObjectMissingFieldsNotIncluded(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("replicas").Int32().Required(),
 		types.Field("image").String().Required(),
-	).Type()
+	).Descriptor()
 	val := value.MustObjectValue(
 		value.ObjectMember("replicas", value.Int64Value(3)),
 	)
@@ -75,7 +75,7 @@ func TestExtractObjectUnknownRejectedReturnsError(t *testing.T) {
 		value.ObjectMember("extra", value.StringValue("debug")),
 	)
 
-	_, err := ExtractAt(path, val, types.Object().Type(), Options{})
+	_, err := ExtractAt(path, val, types.Object().Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrUnknownField)
 	requireErrorReason(t, err, ErrorReasonUnknownField)
@@ -86,7 +86,7 @@ func TestExtractObjectUnknownPreservedIncludesOpaquePath(t *testing.T) {
 	path := rootField("spec")
 	descriptor := types.Object().
 		UnknownFields(types.UnknownPreserve).
-		Type()
+		Descriptor()
 	val := value.MustObjectValue(
 		value.ObjectMember(
 			"extra",
@@ -106,7 +106,7 @@ func TestExtractObjectUnknownPreservedDoesNotTraverseNestedStructure(t *testing.
 	path := rootField("spec")
 	descriptor := types.Object().
 		UnknownFields(types.UnknownPreserve).
-		Type()
+		Descriptor()
 	val := value.MustObjectValue(
 		value.ObjectMember(
 			"extra",
@@ -128,7 +128,7 @@ func TestExtractObjectUnknownPrunedSkipsPath(t *testing.T) {
 		types.Field("name").String().Required(),
 	).
 		UnknownFields(types.UnknownPrune).
-		Type()
+		Descriptor()
 	val := value.MustObjectValue(
 		value.ObjectMember("name", value.StringValue("api")),
 		value.ObjectMember("extra", value.StringValue("debug")),
@@ -144,7 +144,7 @@ func TestExtractObjectOnlyPrunedUnknownFieldsReturnsEmptySet(t *testing.T) {
 	path := rootField("spec")
 	descriptor := types.Object().
 		UnknownFields(types.UnknownPrune).
-		Type()
+		Descriptor()
 	val := value.MustObjectValue(
 		value.ObjectMember("x-extra", value.StringValue("value")),
 	)
@@ -161,7 +161,7 @@ func TestExtractObjectNestedPaths(t *testing.T) {
 		types.Field("template").Object(
 			types.Field("image").String().Required(),
 		).Required(),
-	).Type()
+	).Descriptor()
 	val := value.MustObjectValue(
 		value.ObjectMember(
 			"template",

@@ -14,78 +14,92 @@
 
 package types
 
-// MapType builds descriptors for dynamic string-keyed maps.
+// MapDescriptor builds descriptors for dynamic string-keyed maps.
 //
-// MapType is for dictionaries with dynamic keys and one shared value type. It
-// is intentionally separate from ObjectType, which models fixed schema fields.
-// Only string keys are supported in this design pass.
-type MapType struct {
+// MapDescriptor is for dictionaries with dynamic keys and one shared value descriptor. It
+// is intentionally separate from ObjectDescriptor, which models fixed schema fields.
+// Concrete map keys are strings; Keys can constrain those string tokens with a
+// string-like descriptor or a reference resolving to one.
+type MapDescriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
+	header descriptorHeader
 	// payload stores the exact map shape under construction.
 	payload mapPayload
 }
 
 // MapOf returns a string-keyed map descriptor builder for value.
 //
-// A nil TypeExpr is recorded as an invalid zero value descriptor so
-// ValidateType can classify the error at map.value. The builder itself stays
+// A nil DescriptorExpr is recorded as an invalid zero value descriptor so
+// ValidateResolved can classify the error at map.value. The builder itself stays
 // allocation-light and panic-free.
 //
 // Typical reusable declaration:
 //
-//	labelValue := String()
-//	labelValue = labelValue.MinLen(1)
+//	labelValue := String().MinBytes(1)
 //
 //	labelsType := MapOf(
 //		labelValue,
-//	).MaxLen(64)
-func MapOf(value TypeExpr) MapType {
-	valueType := typeFromExpr(value)
+//	).Keys(String().MinBytes(1)).MaxEntries(64)
+func MapOf(value DescriptorExpr) MapDescriptor {
+	keyType := String().Descriptor()
+	valueType := descriptorFromExpr(value)
 
-	return MapType{
-		header: newHeader(TypeMap),
+	return MapDescriptor{
+		header: newHeader(DescriptorMap),
 		payload: mapPayload{
-			key:   MapKeyString,
+			key:   &keyType,
 			value: &valueType,
 		},
 	}
 }
 
-// Nullable returns a map descriptor that admits null values.
-func (t MapType) Nullable() MapType {
-	t.header = t.header.withNullable()
+// Keys constrains concrete string keys for the map.
+//
+// key must be a non-nullable string descriptor or a reference that resolves to
+// a non-nullable string descriptor during resolved validation. The descriptor
+// validates key tokens only; it does not turn map keys into objects, routes, or
+// storage paths.
+func (desc MapDescriptor) Keys(key DescriptorExpr) MapDescriptor {
+	keyType := descriptorFromExpr(key)
+	desc.payload.key = &keyType
 
-	return t
+	return desc
 }
 
-// MinLen sets the inclusive minimum number of map entries.
+// Nullable returns a map descriptor that admits null values.
+func (desc MapDescriptor) Nullable() MapDescriptor {
+	desc.header = desc.header.withNullable()
+
+	return desc
+}
+
+// MinEntries sets the inclusive minimum number of map entries.
 //
 // The limit is structural metadata only. Concrete map entry counts are checked
 // by future value-validation layers.
-func (t MapType) MinLen(n int) MapType {
-	t.payload.minLen = limit[int]{n, true}
+func (desc MapDescriptor) MinEntries(n int) MapDescriptor {
+	desc.payload.minLen = limit[int]{n, true}
 
-	return t
+	return desc
 }
 
-// MaxLen sets the inclusive maximum number of map entries.
+// MaxEntries sets the inclusive maximum number of map entries.
 //
 // The limit uses limit[int] so an explicit zero maximum can be represented
 // without a pointer allocation.
-func (t MapType) MaxLen(n int) MapType {
-	t.payload.maxLen = limit[int]{n, true}
+func (desc MapDescriptor) MaxEntries(n int) MapDescriptor {
+	desc.payload.maxLen = limit[int]{n, true}
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t MapType) Type() Type {
-	out := typeFromHeader(t.header)
-	out.mapType = cloneMapPayload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc MapDescriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.mapType = cloneMapPayload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks MapType as a sealed TypeExpr implementation.
-func (t MapType) typeExpr() {}
+// descriptorExpr marks MapDescriptor as a sealed DescriptorExpr implementation.
+func (desc MapDescriptor) descriptorExpr() {}

@@ -14,15 +14,12 @@
 
 package types
 
-// MapKeyType identifies the structural key family for map descriptors.
-type MapKeyType uint8
+import "testing"
 
-const (
-	// MapKeyString is the only supported map key type in this design pass.
-	MapKeyString MapKeyType = iota
-)
+func TestDescriptorNullabilityFlag(t *testing.T) {
+	desc := String().Descriptor().withNullable()
+	requireEqual(t, desc.Nullable(), true)
 
-// IsValid reports whether k is a supported map key type.
-func (k MapKeyType) IsValid() bool {
-	return k == MapKeyString
+	nullType := Null().Descriptor().withNullable()
+	requireErrorIs(t, ValidateLocal(nullType), ErrInvalidDescriptor)
 }

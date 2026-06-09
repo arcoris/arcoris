@@ -14,11 +14,11 @@
 
 package types
 
-// validateUint32 checks TypeUint32 bounds, enum uniqueness, and enum membership.
-func validateUint32(t Type, path string) error {
-	if err := validateRangeRule(path, "uint32", t.uint32.min, t.uint32.max); err != nil {
+// validateUint32 checks DescriptorUint32 bounds, enum uniqueness, and enum membership.
+func validateUint32(desc Descriptor, path string) error {
+	if err := validateRangeRule(path, "uint32", desc.uint32.min, desc.uint32.max); err != nil {
 		return err
 	}
 
-	return validateEnumRules(path, "uint32", t.uint32.enum, t.uint32.min, t.uint32.max)
+	return validateEnumRules(path, "uint32", desc.uint32.enum, desc.uint32.min, desc.uint32.max)
 }

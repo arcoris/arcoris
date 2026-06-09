@@ -46,7 +46,7 @@ func TestMergeAtInvalidBasePathReturnsInvalidPath(t *testing.T) {
 		badPath,
 		str("old"),
 		str("new"),
-		types.String().Type(),
+		types.String().Descriptor(),
 		pathSet(root()),
 		Options{},
 	)

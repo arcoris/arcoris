@@ -30,7 +30,7 @@ func (c *comparer) compareList(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (Result, error) {
 	if err := requireKind(path, oldValue, value.KindList, descriptor.Code()); err != nil {
@@ -40,7 +40,7 @@ func (c *comparer) compareList(
 		return Result{}, err
 	}
 
-	listView, ok := descriptor.List()
+	listView, ok := descriptor.AsList()
 	if !ok {
 		return Result{}, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not a list")
 	}
@@ -75,7 +75,7 @@ func (c *comparer) compareWholeList(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (Result, error) {
 	equal, err := c.equalValue(path, oldValue, newValue, descriptor, depth)
@@ -97,7 +97,7 @@ func (c *comparer) compareOrderedList(
 	path fieldpath.Path,
 	oldList value.ListView,
 	newList value.ListView,
-	element types.Type,
+	element types.Descriptor,
 	depth int,
 ) (Result, error) {
 	result := EmptyResult()
@@ -137,7 +137,7 @@ func (c *comparer) equalList(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (bool, error) {
 	if err := requireKind(path, oldValue, value.KindList, descriptor.Code()); err != nil {
@@ -147,7 +147,7 @@ func (c *comparer) equalList(
 		return false, err
 	}
 
-	listView, ok := descriptor.List()
+	listView, ok := descriptor.AsList()
 	if !ok {
 		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not a list")
 	}
@@ -176,7 +176,7 @@ func (c *comparer) equalListByIndex(
 	path fieldpath.Path,
 	oldList value.ListView,
 	newList value.ListView,
-	element types.Type,
+	element types.Descriptor,
 	depth int,
 ) (bool, error) {
 	n := oldList.Len()

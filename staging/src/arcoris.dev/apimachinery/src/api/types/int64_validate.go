@@ -14,11 +14,11 @@
 
 package types
 
-// validateInt64 checks TypeInt64 bounds, enum uniqueness, and enum membership.
-func validateInt64(t Type, path string) error {
-	if err := validateRangeRule(path, "int64", t.int64.min, t.int64.max); err != nil {
+// validateInt64 checks DescriptorInt64 bounds, enum uniqueness, and enum membership.
+func validateInt64(desc Descriptor, path string) error {
+	if err := validateRangeRule(path, "int64", desc.int64.min, desc.int64.max); err != nil {
 		return err
 	}
 
-	return validateEnumRules(path, "int64", t.int64.enum, t.int64.min, t.int64.max)
+	return validateEnumRules(path, "int64", desc.int64.enum, desc.int64.min, desc.int64.max)
 }

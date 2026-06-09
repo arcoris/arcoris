@@ -125,37 +125,37 @@ func desiredOwnership(entries ...fieldownership.Entry) objectownership.State {
 }
 
 // desiredDescriptor returns the standard object Desired descriptor.
-func desiredDescriptor() types.Type {
+func desiredDescriptor() types.Descriptor {
 	return types.Object(
 		types.Field("image").String().Optional(),
 		types.Field("replicas").String().Optional(),
-	).Type()
+	).Descriptor()
 }
 
 // observedDescriptor returns the standard observed descriptor.
-func observedDescriptor() types.Type {
+func observedDescriptor() types.Descriptor {
 	return types.Object(
 		types.Field("ready").String().Optional(),
-	).Type()
+	).Descriptor()
 }
 
 // mapDesiredDescriptor returns the map Desired descriptor.
-func mapDesiredDescriptor() types.Type {
-	return types.MapOf(types.String()).Type()
+func mapDesiredDescriptor() types.Descriptor {
+	return types.MapOf(types.String()).Descriptor()
 }
 
 // conditionsDescriptor returns the list-map conditions descriptor.
-func conditionsDescriptor() types.Type {
+func conditionsDescriptor() types.Descriptor {
 	return types.ListOf(
 		types.Object(
 			types.Field("type").String().Required(),
 			types.Field("status").String().Optional(),
 		),
-	).Map("type").Type()
+	).Map("type").Descriptor()
 }
 
 // testResource builds the canonical Worker resource definition.
-func testResource(desired types.Type, opts ...resource.VersionOption) resource.Definition {
+func testResource(desired types.Descriptor, opts ...resource.VersionOption) resource.Definition {
 	options := append([]resource.VersionOption{resource.Exposed(), resource.Canonical()}, opts...)
 
 	return resource.NewDefinition(
@@ -168,7 +168,7 @@ func testResource(desired types.Type, opts ...resource.VersionOption) resource.D
 }
 
 // testResourceWithObserved builds a Worker resource that defines Observed.
-func testResourceWithObserved(desired types.Type) resource.Definition {
+func testResourceWithObserved(desired types.Descriptor) resource.Definition {
 	return testResource(desired, resource.Observed(observedDescriptor()))
 }
 

@@ -16,10 +16,8 @@ package types
 
 import "testing"
 
-func TestTypeNullabilityFlag(t *testing.T) {
-	typ := String().Type().withNullable()
-	requireEqual(t, typ.Nullable(), true)
-
-	nullType := Null().Type().withNullable()
-	requireErrorIs(t, ValidateType(nullType, nil), ErrInvalidType)
+func TestNilDescriptorErrorMethods(t *testing.T) {
+	var err *DescriptorError
+	requireEqual(t, err.Error(), "<nil>")
+	requireEqual[error](t, err.Unwrap(), nil)
 }

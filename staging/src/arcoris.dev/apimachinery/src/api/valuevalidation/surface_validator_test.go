@@ -34,7 +34,7 @@ func TestSurfaceValidatorValidatesValue(t *testing.T) {
 
 	err := adapter.ValidateSurface(
 		value.StringValue(""),
-		types.String().MinLen(1).Type(),
+		types.String().MinBytes(1).Descriptor(),
 		nil,
 	)
 
@@ -49,10 +49,10 @@ func TestSurfaceValidatorValidatesValue(t *testing.T) {
 
 func TestSurfaceValidatorUsesPlanResolverArgument(t *testing.T) {
 	optionsResolver := testResolver{
-		"example.Name": types.Define("example.Name", types.String().MinLen(4)),
+		"example.Name": types.Define("example.Name", types.String().MinBytes(4)),
 	}
 	planResolver := testResolver{
-		"example.Name": types.Define("example.Name", types.String().MinLen(1)),
+		"example.Name": types.Define("example.Name", types.String().MinBytes(1)),
 	}
 	adapter := valuevalidation.SurfaceValidator{
 		Options: valuevalidation.Options{Resolver: optionsResolver},
@@ -62,7 +62,7 @@ func TestSurfaceValidatorUsesPlanResolverArgument(t *testing.T) {
 		t,
 		adapter.ValidateSurface(
 			value.StringValue("ok"),
-			types.Ref("example.Name").Type(),
+			types.Ref("example.Name").Descriptor(),
 			planResolver,
 		),
 	)
@@ -70,7 +70,7 @@ func TestSurfaceValidatorUsesPlanResolverArgument(t *testing.T) {
 
 func TestSurfaceValidatorFallsBackToOptionsResolverWhenArgumentNil(t *testing.T) {
 	optionsResolver := testResolver{
-		"example.Name": types.Define("example.Name", types.String().MinLen(1)),
+		"example.Name": types.Define("example.Name", types.String().MinBytes(1)),
 	}
 	adapter := valuevalidation.SurfaceValidator{
 		Options: valuevalidation.Options{Resolver: optionsResolver},
@@ -80,7 +80,7 @@ func TestSurfaceValidatorFallsBackToOptionsResolverWhenArgumentNil(t *testing.T)
 		t,
 		adapter.ValidateSurface(
 			value.StringValue("ok"),
-			types.Ref("example.Name").Type(),
+			types.Ref("example.Name").Descriptor(),
 			nil,
 		),
 	)
@@ -89,7 +89,7 @@ func TestSurfaceValidatorFallsBackToOptionsResolverWhenArgumentNil(t *testing.T)
 func TestObjectValidationUsesValueSurfaceValidator(t *testing.T) {
 	desired := types.Object(
 		types.Field("replicas").Int32().Required(),
-	).Type()
+	).Descriptor()
 	resourceDefinition := resource.NewDefinition(
 		apiidentity.Group("control.arcoris.dev"),
 		apiidentity.Kind("Worker"),

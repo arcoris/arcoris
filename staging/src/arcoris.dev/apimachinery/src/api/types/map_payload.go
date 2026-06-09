@@ -18,17 +18,19 @@ package types
 //
 // Map payloads describe dynamic key/value dictionaries. Fixed schema fields
 // belong to objectPayload instead, which preserves declaration order and field
-// presence.
+// presence. Map keys remain concrete string tokens, but the key descriptor can
+// constrain those tokens or reference a reusable string-like definition.
 type mapPayload struct {
-	// key records the structural key family.
+	// key points at the structural descriptor for concrete string map keys.
 	//
-	// Only string keys are supported in this design pass.
-	key MapKeyType
+	// The pointer is private and preserves public value semantics while avoiding
+	// a recursive Descriptor -> mapPayload -> Descriptor storage cycle.
+	key *Descriptor
 	// value points at the structural descriptor of every map value.
 	//
 	// The pointer is private and preserves public value semantics while avoiding
-	// a recursive Type -> mapPayload -> Type storage cycle.
-	value *Type
+	// a recursive Descriptor -> mapPayload -> Descriptor storage cycle.
+	value *Descriptor
 	// minLen is the inclusive minimum map size.
 	//
 	// The limit wrapper distinguishes an explicit zero from an unset rule.
@@ -41,15 +43,20 @@ type mapPayload struct {
 
 // cloneMapPayload detaches the map value descriptor.
 func cloneMapPayload(p mapPayload) mapPayload {
+	if p.key != nil {
+		key := cloneDescriptor(*p.key)
+		p.key = &key
+	}
+
 	if p.value != nil {
-		value := cloneType(*p.value)
+		value := cloneDescriptor(*p.value)
 		p.value = &value
 	}
 
 	return p
 }
 
-// emptyMapPayload reports whether p has no configured TypeMap state.
+// emptyMapPayload reports whether p has no configured DescriptorMap state.
 func emptyMapPayload(p mapPayload) bool {
-	return p.key == MapKeyString && p.value == nil && !p.minLen.set && !p.maxLen.set
+	return p.key == nil && p.value == nil && !p.minLen.set && !p.maxLen.set
 }

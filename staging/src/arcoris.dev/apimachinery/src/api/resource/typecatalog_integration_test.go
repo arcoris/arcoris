@@ -31,7 +31,7 @@ func TestValidateDefinitionWithTypeCatalogCatalog(t *testing.T) {
 				"control.arcoris.dev.WorkerDesired",
 				types.Object(
 					types.Field("spec").Object(
-						types.Field("image").String().Required().MinLen(1),
+						types.Field("image").String().Required().MinBytes(1),
 						types.Field("replicas").Int64().Optional().Min(1),
 					).Required(),
 				).UnknownFields(types.UnknownReject),
@@ -41,8 +41,8 @@ func TestValidateDefinitionWithTypeCatalogCatalog(t *testing.T) {
 				types.Object(
 					types.Field("conditions").ListOf(
 						types.Object(
-							types.Field("type").String().Required().MinLen(1),
-							types.Field("status").String().Required().MinLen(1),
+							types.Field("type").String().Required().MinBytes(1),
+							types.Field("status").String().Required().MinBytes(1),
 						).UnknownFields(types.UnknownReject),
 					).Optional().Map("type"),
 				).UnknownFields(types.UnknownReject),
@@ -57,12 +57,12 @@ func TestValidateDefinitionWithTypeCatalogCatalog(t *testing.T) {
 		ScopeNamespaced,
 		NewVersion(
 			identity.Version("v1"),
-			types.Ref("control.arcoris.dev.WorkerDesired").Type(),
-			Observed(types.Ref("control.arcoris.dev.WorkerObserved").Type()),
+			types.Ref("control.arcoris.dev.WorkerDesired").Descriptor(),
+			Observed(types.Ref("control.arcoris.dev.WorkerObserved").Descriptor()),
 			Exposed(),
 			Canonical(),
 		),
 	)
 
-	requireNoError(t, ValidateDefinition(def, &catalog))
+	requireNoError(t, ValidateDefinitionResolved(def, &catalog))
 }

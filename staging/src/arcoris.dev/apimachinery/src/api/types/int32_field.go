@@ -14,15 +14,15 @@
 
 package types
 
-// Int32Field builds object fields whose value type is int32.
+// Int32Field builds object fields whose value descriptor is int32.
 //
 // The wrapper keeps object-field metadata beside the int32 builder, allowing
 // fluent field declarations without making fields reusable unnamed types.
 type Int32Field struct {
 	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
-	// typ stores the typed descriptor builder for this field value.
-	typ Int32Type
+	// descriptor stores the typed descriptor builder for this field value.
+	descriptor Int32Descriptor
 }
 
 // Required marks the field key as required.
@@ -48,42 +48,42 @@ func (f Int32Field) Description(text string) Int32Field {
 
 // Nullable admits null in addition to int32 values.
 func (f Int32Field) Nullable() Int32Field {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
 // Min sets the inclusive int32 lower bound.
 func (f Int32Field) Min(n int32) Int32Field {
-	f.typ = f.typ.Min(n)
+	f.descriptor = f.descriptor.Min(n)
 
 	return f
 }
 
 // Max sets the inclusive int32 upper bound.
 func (f Int32Field) Max(n int32) Int32Field {
-	f.typ = f.typ.Max(n)
+	f.descriptor = f.descriptor.Max(n)
 
 	return f
 }
 
 // Range sets the inclusive int32 lower and upper bounds.
 func (f Int32Field) Range(min, max int32) Int32Field {
-	f.typ = f.typ.Range(min, max)
+	f.descriptor = f.descriptor.Range(min, max)
 
 	return f
 }
 
 // Enum stores accepted int32 literals for the field.
 func (f Int32Field) Enum(values ...int32) Int32Field {
-	f.typ = f.typ.Enum(values...)
+	f.descriptor = f.descriptor.Enum(values...)
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f Int32Field) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks Int32Field as a sealed FieldExpr implementation.

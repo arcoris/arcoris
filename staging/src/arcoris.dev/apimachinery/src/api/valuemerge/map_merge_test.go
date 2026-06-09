@@ -21,7 +21,7 @@ import (
 )
 
 func TestMergeMapSelectedKey(t *testing.T) {
-	descriptor := types.MapOf(types.String()).Type()
+	descriptor := types.MapOf(types.String()).Descriptor()
 	base := obj(member("app", str("old")), member("tier", str("backend")))
 	overlay := obj(member("app", str("new")), member("tier", str("frontend")))
 
@@ -41,7 +41,7 @@ func TestMergeMapSelectedKey(t *testing.T) {
 }
 
 func TestMergeMapAddsSelectedKey(t *testing.T) {
-	descriptor := types.MapOf(types.String()).Type()
+	descriptor := types.MapOf(types.String()).Descriptor()
 	base := obj(member("tier", str("backend")))
 	overlay := obj(member("app", str("api")))
 
@@ -61,7 +61,7 @@ func TestMergeMapAddsSelectedKey(t *testing.T) {
 }
 
 func TestMergeMapRemovesSelectedKeyAbsentFromOverlay(t *testing.T) {
-	descriptor := types.MapOf(types.String()).Type()
+	descriptor := types.MapOf(types.String()).Descriptor()
 	base := obj(member("app", str("api")), member("tier", str("backend")))
 	overlay := obj(member("tier", str("frontend")))
 
@@ -81,7 +81,7 @@ func TestMergeMapRemovesSelectedKeyAbsentFromOverlay(t *testing.T) {
 }
 
 func TestMergeMapExactSelectedReplacesWholeMap(t *testing.T) {
-	descriptor := types.MapOf(types.String()).Type()
+	descriptor := types.MapOf(types.String()).Descriptor()
 	base := obj(member("app", str("old")))
 	overlay := obj(member("tier", str("backend")))
 
@@ -99,7 +99,7 @@ func TestMergeMapNestedObjectValueSelectedField(t *testing.T) {
 			types.Field("image").String().Optional(),
 			types.Field("replicas").Int64().Optional(),
 		),
-	).Type()
+	).Descriptor()
 	base := obj(member("api", obj(member("image", str("api:v1")), member("replicas", intValue(3)))))
 	overlay := obj(member("api", obj(member("image", str("api:v2")))))
 
@@ -121,7 +121,7 @@ func TestMergeMapNestedObjectValueSelectedField(t *testing.T) {
 }
 
 func TestMergeMapUsesKeyPathNotFieldPath(t *testing.T) {
-	descriptor := types.MapOf(types.String()).Type()
+	descriptor := types.MapOf(types.String()).Descriptor()
 	base := obj(member("app", str("old")))
 	overlay := obj(member("app", str("new")))
 

@@ -125,7 +125,7 @@ func (m *merger) mergeObjectMember(
 	}
 
 	if known {
-		return m.merge(path, base, overlay, field.Type(), fields, depth+1)
+		return m.merge(path, base, overlay, field.Descriptor(), fields, depth+1)
 	}
 
 	return mergeUnknownObjectMember(path, base, overlay, unknown, selection)

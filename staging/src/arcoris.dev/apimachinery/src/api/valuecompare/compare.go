@@ -25,12 +25,12 @@ import (
 //
 // The descriptor is expected to have been validated before comparison. Compare
 // performs only local traversal checks for blockers such as invalid zero values,
-// unusable descriptor views, kind mismatches, unresolved TypeRef values, and
+// unusable descriptor views, kind mismatches, unresolved DescriptorRef values, and
 // invalid ListMap keys.
 func Compare(
 	oldValue value.Value,
 	newValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	opts Options,
 ) (Result, error) {
 	return CompareAt(fieldpath.RootPath(), oldValue, newValue, descriptor, opts)
@@ -45,7 +45,7 @@ func CompareAt(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	opts Options,
 ) (Result, error) {
 	if err := path.Validate(); err != nil {
@@ -77,7 +77,7 @@ func (c *comparer) compare(
 	path fieldpath.Path,
 	oldOperand valuepresence.Operand,
 	newOperand valuepresence.Operand,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (Result, error) {
 	if result, done, err := c.comparePresence(path, oldOperand, newOperand, descriptor); done {
@@ -94,41 +94,41 @@ func (c *comparer) compare(
 	}
 
 	switch descriptor.Code() {
-	case types.TypeNull:
+	case types.DescriptorNull:
 		return c.compareNullDescriptor(path, oldValue, newValue, descriptor)
-	case types.TypeBool,
-		types.TypeString,
-		types.TypeBytes,
-		types.TypeInt8,
-		types.TypeInt16,
-		types.TypeInt32,
-		types.TypeInt64,
-		types.TypeUint8,
-		types.TypeUint16,
-		types.TypeUint32,
-		types.TypeUint64,
-		types.TypeFloat32,
-		types.TypeFloat64,
-		types.TypeDecimal,
-		types.TypeTimestamp,
-		types.TypeDate,
-		types.TypeTime,
-		types.TypeDuration:
+	case types.DescriptorBool,
+		types.DescriptorString,
+		types.DescriptorBytes,
+		types.DescriptorInt8,
+		types.DescriptorInt16,
+		types.DescriptorInt32,
+		types.DescriptorInt64,
+		types.DescriptorUint8,
+		types.DescriptorUint16,
+		types.DescriptorUint32,
+		types.DescriptorUint64,
+		types.DescriptorFloat32,
+		types.DescriptorFloat64,
+		types.DescriptorDecimal,
+		types.DescriptorTimestamp,
+		types.DescriptorDate,
+		types.DescriptorTime,
+		types.DescriptorDuration:
 		return c.compareScalar(path, oldValue, newValue, descriptor)
-	case types.TypeObject:
+	case types.DescriptorObject:
 		return c.compareObject(path, oldValue, newValue, descriptor, depth)
-	case types.TypeMap:
+	case types.DescriptorMap:
 		return c.compareMap(path, oldValue, newValue, descriptor, depth)
-	case types.TypeList:
+	case types.DescriptorList:
 		return c.compareList(path, oldValue, newValue, descriptor, depth)
-	case types.TypeRef:
+	case types.DescriptorRef:
 		return c.compareRef(path, oldOperand, newOperand, descriptor, depth)
 	default:
 		return Result{}, errorAt(
 			path,
 			ErrInvalidDescriptor,
 			ErrorReasonInvalidDescriptor,
-			"descriptor has an unsupported type code",
+			"descriptor has an unsupported kind",
 		)
 	}
 }
@@ -142,7 +142,7 @@ func (c *comparer) comparePresence(
 	path fieldpath.Path,
 	oldOperand valuepresence.Operand,
 	newOperand valuepresence.Operand,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 ) (Result, bool, error) {
 	switch {
 	case oldOperand.Absent() && newOperand.Absent():
@@ -163,7 +163,7 @@ func requireComparableInputs(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 ) error {
 	if oldValue.IsZero() || newValue.IsZero() {
 		return errorAt(
@@ -178,7 +178,7 @@ func requireComparableInputs(
 			path,
 			ErrInvalidDescriptor,
 			ErrorReasonInvalidDescriptor,
-			"descriptor has no valid type code",
+			"descriptor has no valid kind",
 		)
 	}
 
@@ -186,7 +186,7 @@ func requireComparableInputs(
 }
 
 // requireKind reports when a concrete payload kind cannot satisfy a descriptor.
-func requireKind(path fieldpath.Path, val value.Value, expected value.Kind, code types.TypeCode) error {
+func requireKind(path fieldpath.Path, val value.Value, expected value.Kind, code types.DescriptorKind) error {
 	if val.Kind() == expected {
 		return nil
 	}
@@ -218,12 +218,12 @@ func (c *comparer) compareNull(
 	return EmptyResult().withModified(path)
 }
 
-// compareNullDescriptor verifies both present values satisfy TypeNull.
+// compareNullDescriptor verifies both present values satisfy DescriptorNull.
 func (c *comparer) compareNullDescriptor(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 ) (Result, error) {
 	if err := requireKind(path, oldValue, value.KindNull, descriptor.Code()); err != nil {
 		return Result{}, err

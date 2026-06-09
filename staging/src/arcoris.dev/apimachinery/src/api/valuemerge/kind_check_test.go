@@ -35,10 +35,10 @@ func TestRequireKindRejectsMismatch(t *testing.T) {
 }
 
 func TestScalarKindIncludesNull(t *testing.T) {
-	got, ok := scalarKind(types.TypeNull)
+	got, ok := scalarKind(types.DescriptorNull)
 
 	if !ok {
-		t.Fatalf("scalarKind(TypeNull) ok = false")
+		t.Fatalf("scalarKind(DescriptorNull) ok = false")
 	}
 	if got != value.KindNull {
 		t.Fatalf("kind = %s; want null", got)

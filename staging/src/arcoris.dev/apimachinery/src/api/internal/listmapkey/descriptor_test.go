@@ -25,7 +25,7 @@ func TestExtractSelectorRejectsNonObjectElement(t *testing.T) {
 	_, err := ExtractSelector(
 		conditionPath(0),
 		objectWith("type", value.StringValue("Ready")),
-		types.String().Type(),
+		types.String().Descriptor(),
 		[]types.FieldName{"type"},
 		Options{},
 	)

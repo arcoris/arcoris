@@ -17,13 +17,13 @@ package types
 import "testing"
 
 func TestInt8ValidateRejectsInvalidRules(t *testing.T) {
-	tests := []Type{
-		Int8().Range(10, 1).Type(),
-		Int8().Min(1).Enum(0).Type(),
-		Int8().Max(1).Enum(2).Type(),
-		Int8().Enum(1, 1).Type(),
+	tests := []Descriptor{
+		Int8().Range(10, 1).Descriptor(),
+		Int8().Min(1).Enum(0).Descriptor(),
+		Int8().Max(1).Enum(2).Descriptor(),
+		Int8().Enum(1, 1).Descriptor(),
 	}
-	for _, typ := range tests {
-		requireErrorIs(t, ValidateType(typ, nil), ErrInvalidType)
+	for _, desc := range tests {
+		requireErrorIs(t, ValidateLocal(desc), ErrInvalidDescriptor)
 	}
 }

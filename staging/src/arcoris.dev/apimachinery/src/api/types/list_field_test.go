@@ -25,29 +25,29 @@ func TestListFieldWrapper(t *testing.T) {
 		).
 		Required().
 		Nullable().
-		MinLen(1).
-		MaxLen(3).
+		MinItems(1).
+		MaxItems(3).
 		Map("type").
 		Description("value").
 		Field()
 
-	requireEqual(t, field.Type().Code(), TypeList)
-	requireEqual(t, field.Type().Nullable(), true)
+	requireEqual(t, field.Descriptor().Code(), DescriptorList)
+	requireEqual(t, field.Descriptor().Nullable(), true)
 	requireEqual(t, field.Description(), "value")
-	requireNoError(t, ValidateType(objectTypeForField(field), nil))
+	requireNoError(t, ValidateLocal(objectTypeForField(field)))
 }
 
 func TestListFieldExprMarker(t *testing.T) {
 	Field("value").ListOf(String()).fieldExpr()
 }
 
-func TestListFieldOrderedDelegatesToListType(t *testing.T) {
+func TestListFieldOrderedDelegatesToListDescriptor(t *testing.T) {
 	field := Field("items").
 		ListOf(String()).
 		Ordered().
 		Required().
 		Field()
-	view, ok := field.Type().List()
+	view, ok := field.Descriptor().AsList()
 
 	requireEqual(t, ok, true)
 	requireEqual(t, view.Semantics(), ListOrdered)

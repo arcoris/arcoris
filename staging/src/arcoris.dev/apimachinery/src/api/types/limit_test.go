@@ -54,12 +54,12 @@ func TestValidateLengthLimits(t *testing.T) {
 	requireErrorIs(
 		t,
 		validateLengthLimits(limit[int]{value: -1, set: true}, limit[int]{}, "len"),
-		ErrInvalidType,
+		ErrInvalidDescriptor,
 	)
 	requireErrorIs(
 		t,
 		validateLengthLimits(limit[int]{}, limit[int]{value: -1, set: true}, "len"),
-		ErrInvalidType,
+		ErrInvalidDescriptor,
 	)
 	requireErrorIs(
 		t,
@@ -68,6 +68,6 @@ func TestValidateLengthLimits(t *testing.T) {
 			limit[int]{value: 1, set: true},
 			"len",
 		),
-		ErrInvalidType,
+		ErrInvalidDescriptor,
 	)
 }

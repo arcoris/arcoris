@@ -33,7 +33,7 @@ func (c *comparer) compareListMap(
 	path fieldpath.Path,
 	oldList value.ListView,
 	newList value.ListView,
-	element types.Type,
+	element types.Descriptor,
 	keys []types.FieldName,
 	depth int,
 ) (Result, error) {
@@ -80,7 +80,7 @@ func (c *comparer) equalListMap(
 	path fieldpath.Path,
 	oldList value.ListView,
 	newList value.ListView,
-	element types.Type,
+	element types.Descriptor,
 	keys []types.FieldName,
 	depth int,
 ) (bool, error) {
@@ -132,7 +132,7 @@ type listMapEntry struct {
 func (c *comparer) listMapEntries(
 	path fieldpath.Path,
 	list value.ListView,
-	element types.Type,
+	element types.Descriptor,
 	keys []types.FieldName,
 ) (map[string]listMapEntry, error) {
 	if len(keys) == 0 {
@@ -170,7 +170,7 @@ func (c *comparer) listMapEntryAt(
 	path fieldpath.Path,
 	list value.ListView,
 	index int,
-	element types.Type,
+	element types.Descriptor,
 	keys []types.FieldName,
 ) (listMapEntry, error) {
 	item, _ := list.At(index)
@@ -199,12 +199,12 @@ func unionSortedListMapKeys(left, right map[string]listMapEntry) []string {
 
 // extractListMapSelector delegates stable selector construction to listmapkey.
 //
-// The shared helper owns key-field traversal and TypeRef-aware literal
+// The shared helper owns key-field traversal and DescriptorRef-aware literal
 // extraction. This package only maps helper errors into valuecompare errors.
 func (c *comparer) extractListMapSelector(
 	indexPath fieldpath.Path,
 	item value.Value,
-	element types.Type,
+	element types.Descriptor,
 	keys []types.FieldName,
 ) (fieldpath.Selector, error) {
 	selector, err := listmapkey.ExtractSelector(

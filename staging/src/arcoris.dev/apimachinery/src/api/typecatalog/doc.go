@@ -16,10 +16,10 @@
 // type definitions.
 //
 // The catalog is the concrete storage counterpart to the Resolver contract in
-// package arcoris.dev/apimachinery/api/types. Package types owns TypeRef and
+// package arcoris.dev/apimachinery/api/types. Package types owns DescriptorRef and
 // therefore owns the minimal resolution interface. Package typecatalog owns the
 // mutable, concurrency-safe collection used by descriptor authors who want a
-// local catalog of TypeDefinition values.
+// local catalog of Definition values.
 //
 // Catalog is an API descriptor composition helper. It is not a runtime scheme,
 // codec registry, resource registry, storage registry, discovery cache, or

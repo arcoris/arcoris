@@ -74,17 +74,17 @@ func testObjectMeta(index int) meta.ObjectMeta {
 	}
 }
 
-func desiredDescriptor() types.Type {
+func desiredDescriptor() types.Descriptor {
 	return types.Object(
 		types.Field("image").String().Optional(),
 		types.Field("replicas").String().Optional(),
-	).Type()
+	).Descriptor()
 }
 
-func observedDescriptor() types.Type {
+func observedDescriptor() types.Descriptor {
 	return types.Object(
 		types.Field("ready").String().Optional(),
-	).Type()
+	).Descriptor()
 }
 
 func testDefinition(opts ...resource.VersionOption) resource.Definition {

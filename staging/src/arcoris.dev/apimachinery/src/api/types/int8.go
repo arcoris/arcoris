@@ -14,15 +14,15 @@
 
 package types
 
-// Int8Type builds int8 descriptors.
+// Int8Descriptor builds int8 descriptors.
 //
-// Int8Type records portable fixed-width int8 constraints. It does not use Go
+// Int8Descriptor records portable fixed-width int8 constraints. It does not use Go
 // platform-sized int semantics, so descriptors remain stable across
 // architectures and code generators.
-type Int8Type struct {
+type Int8Descriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
-	// payload stores TypeInt8 constraints under construction.
+	header descriptorHeader
+	// payload stores DescriptorInt8 constraints under construction.
 	payload int8Payload
 }
 
@@ -31,50 +31,50 @@ type Int8Type struct {
 // Typical reusable declaration:
 //
 //	priorityType := Int8().Range(0, 10)
-func Int8() Int8Type {
-	return Int8Type{header: newHeader(TypeInt8)}
+func Int8() Int8Descriptor {
+	return Int8Descriptor{header: newHeader(DescriptorInt8)}
 }
 
 // Nullable returns an int8 descriptor that admits null values.
-func (t Int8Type) Nullable() Int8Type {
-	t.header = t.header.withNullable()
+func (desc Int8Descriptor) Nullable() Int8Descriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
 // Min sets the inclusive int8 lower bound.
-func (t Int8Type) Min(n int8) Int8Type {
-	t.payload.min = limit[int8]{value: n, set: true}
+func (desc Int8Descriptor) Min(n int8) Int8Descriptor {
+	desc.payload.min = limit[int8]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Max sets the inclusive int8 upper bound.
-func (t Int8Type) Max(n int8) Int8Type {
-	t.payload.max = limit[int8]{value: n, set: true}
+func (desc Int8Descriptor) Max(n int8) Int8Descriptor {
+	desc.payload.max = limit[int8]{value: n, set: true}
 
-	return t
+	return desc
 }
 
 // Range sets the inclusive int8 lower and upper bounds.
-func (t Int8Type) Range(min, max int8) Int8Type {
-	return t.Min(min).Max(max)
+func (desc Int8Descriptor) Range(min, max int8) Int8Descriptor {
+	return desc.Min(min).Max(max)
 }
 
 // Enum stores accepted int8 literals in declaration order.
-func (t Int8Type) Enum(values ...int8) Int8Type {
-	t.payload.enum = cloneSlice(values)
+func (desc Int8Descriptor) Enum(values ...int8) Int8Descriptor {
+	desc.payload.enum = cloneSlice(values)
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t Int8Type) Type() Type {
-	out := typeFromHeader(t.header)
-	out.int8 = cloneInt8Payload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc Int8Descriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.int8 = cloneInt8Payload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks Int8Type as a sealed TypeExpr implementation.
-func (t Int8Type) typeExpr() {}
+// descriptorExpr marks Int8Descriptor as a sealed DescriptorExpr implementation.
+func (desc Int8Descriptor) descriptorExpr() {}

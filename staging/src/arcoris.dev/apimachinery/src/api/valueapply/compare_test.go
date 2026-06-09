@@ -43,7 +43,7 @@ func TestApplyValueCompareErrorWrapped(t *testing.T) {
 		Owner:      owner("user"),
 		Live:       str("old"),
 		Applied:    str("new"),
-		Descriptor: types.Bool().Type(),
+		Descriptor: types.Bool().Descriptor(),
 	}
 
 	_, err := newApplier(Options{}).compare(req)

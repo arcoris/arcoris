@@ -120,7 +120,7 @@ func TestMergeObjectNestedSelectedField(t *testing.T) {
 			types.Field("image").String().Optional(),
 			types.Field("replicas").Int64().Optional(),
 		).Optional(),
-	).Type()
+	).Descriptor()
 	base := obj(member("spec", obj(member("image", str("api:v1")), member("replicas", intValue(3)))))
 	overlay := obj(member("spec", obj(member("image", str("api:v2")))))
 
@@ -146,7 +146,7 @@ func TestMergeDescendantIntoWrongKindBaseReturnsKindMismatch(t *testing.T) {
 		types.Field("spec").Object(
 			types.Field("replicas").Int64().Optional(),
 		).Optional(),
-	).Type()
+	).Descriptor()
 
 	_, err := Merge(
 		obj(member("spec", str("invalid"))),
@@ -164,7 +164,7 @@ func TestMergeDescendantIntoAbsentBaseAndAbsentOverlayNoops(t *testing.T) {
 		types.Field("spec").Object(
 			types.Field("replicas").Int64().Optional(),
 		).Optional(),
-	).Type()
+	).Descriptor()
 
 	got, err := Merge(
 		obj(),
@@ -185,7 +185,7 @@ func TestMergeDescendantIntoNullBaseAndAbsentOverlayPreservesNull(t *testing.T) 
 		types.Field("spec").Object(
 			types.Field("replicas").Int64().Optional(),
 		).Optional(),
-	).Type()
+	).Descriptor()
 
 	got, err := Merge(
 		obj(member("spec", value.NullValue())),
@@ -210,7 +210,7 @@ func TestMergeDescendantIntoAbsentBaseCreatesFromOverlayContainer(t *testing.T) 
 			types.Field("image").String().Optional(),
 			types.Field("replicas").Int64().Optional(),
 		).Optional(),
-	).Type()
+	).Descriptor()
 
 	got, err := Merge(
 		obj(),
@@ -232,7 +232,7 @@ func TestMergeObjectRequiredFieldAbsentIsNotValidationError(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("image").String().Required(),
 		types.Field("replicas").Int64().Optional(),
-	).Type()
+	).Descriptor()
 	base := obj(member("image", str("api:v1")), member("replicas", intValue(3)))
 	overlay := obj()
 
@@ -251,9 +251,9 @@ func TestMergeObjectRequiredFieldAbsentIsNotValidationError(t *testing.T) {
 	requireIntegerMember(t, got, "replicas", 3)
 }
 
-func simpleSpecDescriptor() types.Type {
+func simpleSpecDescriptor() types.Descriptor {
 	return types.Object(
 		types.Field("image").String().Optional(),
 		types.Field("replicas").Int64().Optional(),
-	).Type()
+	).Descriptor()
 }

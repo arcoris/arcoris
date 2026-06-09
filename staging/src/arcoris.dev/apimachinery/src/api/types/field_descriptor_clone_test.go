@@ -16,13 +16,17 @@ package types
 
 import "testing"
 
-func TestTypeDefinitionAccessorsAndDetach(t *testing.T) {
-	def := Define("example.Name", String().Enum("alpha")).WithDescription("Name")
-	typ := def.Type()
-	typ.string.enum[0] = "changed"
+func TestFieldDescriptorCloneHelpersDetachDescriptorAndSlices(t *testing.T) {
+	field := Field("name").String().Required().Enum("a").Field()
+	cloned := cloneField(field)
+	cloned.descriptor.string.enum[0] = "b"
 
-	requireEqual(t, def.Name(), TypeName("example.Name"))
-	requireEqual(t, def.Description(), "Name")
-	view, _ := def.Type().String()
-	requireEqual(t, view.Enum()[0], "alpha")
+	view := requireStringView(t, field.Descriptor())
+	requireEqual(t, view.Enum()[0], "a")
+
+	fields := []FieldDescriptor{field}
+	clonedFields := cloneFields(fields)
+	clonedFields[0] = Field("changed").String().Required().Field()
+	requireEqual(t, fields[0].Name(), FieldName("name"))
+	requireEqual(t, cloneFields(nil) == nil, true)
 }

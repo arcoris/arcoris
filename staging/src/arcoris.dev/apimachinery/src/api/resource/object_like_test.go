@@ -76,20 +76,20 @@ func TestObjectLikeRejectsNonObjectRoots(t *testing.T) {
 
 	cases := []struct {
 		name   string
-		typ    types.Type
+		desc   types.Descriptor
 		r      types.Resolver
 		detail string
 	}{
-		{name: "scalar", typ: stringType(), detail: "object or reference to object"},
-		{name: "unresolved ref", typ: refType("control.arcoris.dev.Object"), detail: "requires a resolver"},
-		{name: "ref not found", typ: refType("control.arcoris.dev.Missing"), r: resolver, detail: "was not found"},
-		{name: "ref scalar", typ: refType("control.arcoris.dev.Text"), r: resolver, detail: "object or reference to object"},
+		{name: "scalar", desc: stringType(), detail: "object or reference to object"},
+		{name: "unresolved ref", desc: refType("control.arcoris.dev.Object"), detail: "requires a resolver"},
+		{name: "ref not found", desc: refType("control.arcoris.dev.Missing"), r: resolver, detail: "was not found"},
+		{name: "ref scalar", desc: refType("control.arcoris.dev.Text"), r: resolver, detail: "object or reference to object"},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			ok, detail := objectLike(
-				tc.typ,
+				tc.desc,
 				tc.r,
 				make(map[types.TypeName]bool),
 				"desired",

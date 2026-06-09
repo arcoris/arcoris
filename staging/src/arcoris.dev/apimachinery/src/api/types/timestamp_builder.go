@@ -26,5 +26,5 @@ package types
 //		Nullable().
 //		Description("Observation timestamp.")
 func (b FieldBuilder) Timestamp() TimestampField {
-	return TimestampField{field: b.state(), typ: Timestamp()}
+	return TimestampField{field: b.state(), descriptor: Timestamp()}
 }

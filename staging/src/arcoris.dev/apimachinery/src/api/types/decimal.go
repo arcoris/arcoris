@@ -14,18 +14,18 @@
 
 package types
 
-// DecimalType builds exact decimal descriptors.
+// DecimalDescriptor builds exact decimal descriptors.
 //
-// DecimalType records exact base-10 numeric shape. Exact decimal comparison
+// DecimalDescriptor records exact base-10 numeric shape. Exact decimal comparison
 // and literal representation need a dedicated value model, so this pass only
 // records precision and scale.
 //
 // Decimal min/max rules are intentionally absent in this package because exact
 // decimal values need a dedicated value representation design before structural
 // comparison rules can be portable.
-type DecimalType struct {
+type DecimalDescriptor struct {
 	// header stores the descriptor kind and descriptor-wide flags under construction.
-	header typeHeader
+	header descriptorHeader
 	// payload stores the exact decimal constraints under construction.
 	payload decimalPayload
 }
@@ -37,22 +37,22 @@ type DecimalType struct {
 //	priceType := Decimal()
 //	priceType = priceType.Precision(12)
 //	priceType = priceType.Scale(2)
-func Decimal() DecimalType {
-	return DecimalType{header: newHeader(TypeDecimal)}
+func Decimal() DecimalDescriptor {
+	return DecimalDescriptor{header: newHeader(DescriptorDecimal)}
 }
 
 // Nullable returns a decimal descriptor that admits null values.
-func (t DecimalType) Nullable() DecimalType {
-	t.header = t.header.withNullable()
+func (desc DecimalDescriptor) Nullable() DecimalDescriptor {
+	desc.header = desc.header.withNullable()
 
-	return t
+	return desc
 }
 
 // Precision sets the maximum number of significant decimal digits.
-func (t DecimalType) Precision(n int) DecimalType {
-	t.payload.precision = limit[int]{n, true}
+func (desc DecimalDescriptor) Precision(n int) DecimalDescriptor {
+	desc.payload.precision = limit[int]{n, true}
 
-	return t
+	return desc
 }
 
 // Scale sets the number of fractional decimal digits.
@@ -60,19 +60,19 @@ func (t DecimalType) Precision(n int) DecimalType {
 // Scale may be set without Precision. In that form it records fractional
 // shape without bounding total significant digits. When both rules are set,
 // validation requires Scale to be less than or equal to Precision.
-func (t DecimalType) Scale(n int) DecimalType {
-	t.payload.scale = limit[int]{n, true}
+func (desc DecimalDescriptor) Scale(n int) DecimalDescriptor {
+	desc.payload.scale = limit[int]{n, true}
 
-	return t
+	return desc
 }
 
-// Type returns a detached Type descriptor.
-func (t DecimalType) Type() Type {
-	out := typeFromHeader(t.header)
-	out.decimal = cloneDecimalPayload(t.payload)
+// Descriptor returns a detached Descriptor descriptor.
+func (desc DecimalDescriptor) Descriptor() Descriptor {
+	out := descriptorFromHeader(desc.header)
+	out.decimal = cloneDecimalPayload(desc.payload)
 
 	return out
 }
 
-// typeExpr marks DecimalType as a sealed TypeExpr implementation.
-func (t DecimalType) typeExpr() {}
+// descriptorExpr marks DecimalDescriptor as a sealed DescriptorExpr implementation.
+func (desc DecimalDescriptor) descriptorExpr() {}

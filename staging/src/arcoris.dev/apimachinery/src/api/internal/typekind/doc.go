@@ -15,8 +15,8 @@
 // Package typekind contains descriptor-to-payload kind helpers shared by
 // descriptor-aware value packages.
 //
-// The package is deliberately small. It centralizes mechanical TypeCode to
+// The package is deliberately small. It centralizes mechanical DescriptorKind to
 // value.Kind mappings that otherwise drift across validation, field-set
 // extraction, and comparison packages. It does not inspect descriptor views,
-// validate values, resolve TypeRef descriptors, or decide path semantics.
+// validate values, resolve DescriptorRef descriptors, or decide path semantics.
 package typekind

@@ -17,7 +17,7 @@ package types
 import "testing"
 
 func TestObjectViewFieldsAreDetached(t *testing.T) {
-	view, ok := Object(Field("name").String().Required()).UnknownFields(UnknownPrune).Type().Object()
+	view, ok := Object(Field("name").String().Required()).UnknownFields(UnknownPrune).Descriptor().AsObject()
 	requireEqual(t, ok, true)
 	requireEqual(t, view.UnknownFields(), UnknownPrune)
 	fields := view.Fields()

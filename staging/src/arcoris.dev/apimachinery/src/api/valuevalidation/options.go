@@ -17,7 +17,7 @@ package valuevalidation
 import "arcoris.dev/apimachinery/api/types"
 
 const (
-	// defaultMaxDepth bounds recursive TypeRef traversal when callers do not
+	// defaultMaxDepth bounds recursive DescriptorRef traversal when callers do not
 	// provide an explicit limit.
 	defaultMaxDepth = 64
 
@@ -28,17 +28,17 @@ const (
 // Options configures descriptor-aware value validation.
 //
 // Zero Options are valid. The validator uses conservative defaults for
-// recursion depth and diagnostic collection, and TypeRef validation reports
+// recursion depth and diagnostic collection, and DescriptorRef validation reports
 // unresolved-reference diagnostics when no resolver is available.
 //
 // Options do not request full descriptor validation. Descriptor preparation is
 // an upstream responsibility of api/types validation and catalog registration.
 type Options struct {
-	// Resolver resolves TypeRef descriptors. It may be nil for descriptor trees
+	// Resolver resolves DescriptorRef descriptors. It may be nil for descriptor trees
 	// that do not contain references.
 	Resolver types.Resolver
 
-	// MaxDepth prevents runaway TypeRef recursion. Values <= 0 use the package
+	// MaxDepth prevents runaway DescriptorRef recursion. Values <= 0 use the package
 	// default.
 	MaxDepth int
 

@@ -17,13 +17,13 @@ package types
 import "testing"
 
 func TestListPayloadStoresElementAndMapKeys(t *testing.T) {
-	payload := ListOf(Object(Field("type").String().Required())).Map("type").Type().list
-	requireEqual(t, payload.elem.Code(), TypeObject)
+	payload := ListOf(Object(Field("type").String().Required())).Map("type").Descriptor().list
+	requireEqual(t, payload.elem.Code(), DescriptorObject)
 	requireEqual(t, payload.mapKeys[0], FieldName("type"))
 }
 
 func TestListPayloadCloneAndEmpty(t *testing.T) {
-	payload := ListOf(String().Enum("a")).Map("key").Type().list
+	payload := ListOf(String().Enum("a")).Map("key").Descriptor().list
 	cloned := cloneListPayload(payload)
 	cloned.mapKeys[0] = "changed"
 	cloned.elem.string.enum[0] = "b"

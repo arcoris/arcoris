@@ -25,7 +25,7 @@ func TestEqualValueDecimalUsesNumericCompare(t *testing.T) {
 		fieldpath.RootPath(),
 		mustDecimal(t, "1.0"),
 		mustDecimal(t, "1.00"),
-		types.Decimal().Type(),
+		types.Decimal().Descriptor(),
 		0,
 	)
 	requireNoError(t, err)

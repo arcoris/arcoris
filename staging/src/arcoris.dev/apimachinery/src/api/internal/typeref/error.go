@@ -21,7 +21,7 @@ import (
 	"arcoris.dev/apimachinery/api/fieldpath"
 )
 
-// Error reports a TypeRef traversal failure without imposing a public error
+// Error reports a DescriptorRef traversal failure without imposing a public error
 // taxonomy on the caller.
 type Error struct {
 	// Path is the semantic payload path whose descriptor reference blocked
@@ -64,7 +64,7 @@ func (e *Error) Unwrap() error {
 	return e.Cause
 }
 
-// AsError extracts a TypeRef traversal error from an arbitrary error.
+// AsError extracts a DescriptorRef traversal error from an arbitrary error.
 func AsError(err error) (*Error, bool) {
 	var refError *Error
 	if errors.As(err, &refError) {

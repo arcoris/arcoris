@@ -17,7 +17,7 @@ package types
 // ordered is the private comparison set used by descriptor-limit helpers.
 //
 // It is intentionally private. Public descriptor concepts remain exact:
-// Int8View returns int8, Uint64View returns uint64, and every TypeCode still
+// Int8View returns int8, Uint64View returns uint64, and every DescriptorKind still
 // owns an exact payload slot.
 type ordered interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
@@ -45,10 +45,10 @@ func invalidRange[T ordered](min, max limit[T]) bool {
 // validateRangeRule checks descriptor minimum/maximum ordering.
 func validateRangeRule[T ordered](path, descriptor string, min, max limit[T]) error {
 	if invalidRange(min, max) {
-		return typeErrorf(
+		return descriptorErrorf(
 			path+".range",
-			ErrInvalidType,
-			TypeErrorReasonInvalidRange,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonInvalidRange,
 			"%s minimum must be <= maximum, got min=%v max=%v",
 			descriptor,
 			min.value,
@@ -62,30 +62,30 @@ func validateRangeRule[T ordered](path, descriptor string, min, max limit[T]) er
 // validateLengthLimits checks non-negative size limits and ordering.
 func validateLengthLimits(min, max limit[int], path string) error {
 	if min.set && min.value < 0 {
-		return typeErrorf(
+		return descriptorErrorf(
 			path+".min",
-			ErrInvalidType,
-			TypeErrorReasonNegativeLimit,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonNegativeLimit,
 			"minimum length must be non-negative, got %d",
 			min.value,
 		)
 	}
 
 	if max.set && max.value < 0 {
-		return typeErrorf(
+		return descriptorErrorf(
 			path+".max",
-			ErrInvalidType,
-			TypeErrorReasonNegativeLimit,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonNegativeLimit,
 			"maximum length must be non-negative, got %d",
 			max.value,
 		)
 	}
 
 	if invalidRange(min, max) {
-		return typeErrorf(
+		return descriptorErrorf(
 			path,
-			ErrInvalidType,
-			TypeErrorReasonInvalidRange,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonInvalidRange,
 			"minimum length must be <= maximum length, got min=%d max=%d",
 			min.value,
 			max.value,

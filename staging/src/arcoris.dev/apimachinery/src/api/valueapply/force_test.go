@@ -165,7 +165,7 @@ func TestApplyForceListDescendantConflictTakesOwnership(t *testing.T) {
 		Applied: obj(member("args", list(str("new")))),
 		Descriptor: types.Object(
 			types.Field("args").ListOf(types.String()).Atomic().Optional(),
-		).Type(),
+		).Descriptor(),
 		Ownership: state(entry("other", path("$.args[0]"))),
 	}
 

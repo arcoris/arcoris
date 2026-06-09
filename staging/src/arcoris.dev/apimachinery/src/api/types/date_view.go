@@ -14,17 +14,17 @@
 
 package types
 
-// DateView exposes read-only TypeDate payload data.
+// DateView exposes read-only DescriptorDate payload data.
 type DateView struct {
 	// payload is a detached copy of the date descriptor payload.
 	payload datePayload
 }
 
-// Date returns a date view when t is TypeDate.
-func (t Type) Date() (DateView, bool) {
-	if t.code != TypeDate {
+// AsDate returns a date view when desc is DescriptorDate.
+func (desc Descriptor) AsDate() (DateView, bool) {
+	if desc.code != DescriptorDate {
 		return DateView{}, false
 	}
 
-	return DateView{payload: cloneDatePayload(t.date)}, true
+	return DateView{payload: cloneDatePayload(desc.date)}, true
 }

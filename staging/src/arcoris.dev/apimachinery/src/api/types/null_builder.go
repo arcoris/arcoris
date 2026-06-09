@@ -14,7 +14,7 @@
 
 package types
 
-// Null starts a field descriptor whose value type is the null literal.
+// Null starts a field descriptor whose value descriptor is the null literal.
 //
 // Use Null for fields that are structurally constrained to the literal null
 // value. Do not use it as a nullable marker for another family; nullable
@@ -27,5 +27,5 @@ package types
 //		Optional().
 //		Description("Explicit null marker.")
 func (b FieldBuilder) Null() NullField {
-	return NullField{field: b.state(), typ: Null()}
+	return NullField{field: b.state(), descriptor: Null()}
 }

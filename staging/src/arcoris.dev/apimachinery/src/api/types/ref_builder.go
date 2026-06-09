@@ -14,9 +14,9 @@
 
 package types
 
-// Ref starts a field descriptor whose value type is a named structural reference.
+// Ref starts a field descriptor whose value descriptor is a named structural reference.
 //
-// The name is recorded as descriptor data. ValidateType checks name syntax and,
+// The name is recorded as descriptor data. ValidateResolved checks name syntax and,
 // when supplied a Resolver, verifies that the reference resolves and does not
 // introduce a cycle.
 //
@@ -27,5 +27,5 @@ package types
 //		Nullable().
 //		Description("Reference to a reusable name type.")
 func (b FieldBuilder) Ref(name string) RefField {
-	return RefField{field: b.state(), typ: Ref(name)}
+	return RefField{field: b.state(), descriptor: Ref(name)}
 }

@@ -20,14 +20,14 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// validateBytes checks TypeBytes kind and length constraints.
-func (v *validator) validateBytes(path fieldpath.Path, val value.Value, descriptor types.Type) {
+// validateBytes checks DescriptorBytes kind and length constraints.
+func (v *validator) validateBytes(path fieldpath.Path, val value.Value, descriptor types.Descriptor) {
 	if !v.requireKind(path, val, value.KindBytes, descriptor.Code()) {
 		return
 	}
 
 	bytes, _ := val.Bytes()
-	bytesView, ok := descriptor.Bytes()
+	bytesView, ok := descriptor.AsBytes()
 	if !ok {
 		v.add(
 			path,
@@ -43,7 +43,7 @@ func (v *validator) validateBytes(path fieldpath.Path, val value.Value, descript
 
 // validateBytesLength checks byte-sequence length rules.
 func (v *validator) validateBytesLength(path fieldpath.Path, length int, bytesView types.BytesView) {
-	if minLength, ok := bytesView.MinLen(); ok && length < minLength {
+	if minLength, ok := bytesView.MinBytes(); ok && length < minLength {
 		v.addf(
 			path,
 			ErrLengthOutOfRange,
@@ -54,7 +54,7 @@ func (v *validator) validateBytesLength(path fieldpath.Path, length int, bytesVi
 		)
 	}
 
-	if maxLength, ok := bytesView.MaxLen(); ok && length > maxLength {
+	if maxLength, ok := bytesView.MaxBytes(); ok && length > maxLength {
 		v.addf(
 			path,
 			ErrLengthOutOfRange,

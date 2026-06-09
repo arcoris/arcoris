@@ -44,7 +44,7 @@ func Canonical() VersionOption {
 // Observed describes a structural read surface. It does not introduce status
 // subresources, condition conventions, persistence rules, or object value
 // validation.
-func Observed(observed types.Type) VersionOption {
+func Observed(observed types.Descriptor) VersionOption {
 	return func(v *VersionDefinition) {
 		v.observed = observed
 	}

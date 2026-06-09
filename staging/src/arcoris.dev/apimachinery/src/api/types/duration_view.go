@@ -14,17 +14,17 @@
 
 package types
 
-// DurationView exposes read-only TypeDuration payload data.
+// DurationView exposes read-only DescriptorDuration payload data.
 type DurationView struct {
 	// payload is a detached copy of the duration descriptor payload.
 	payload durationPayload
 }
 
-// Duration returns a duration view when t is TypeDuration.
-func (t Type) Duration() (DurationView, bool) {
-	if t.code != TypeDuration {
+// AsDuration returns a duration view when desc is DescriptorDuration.
+func (desc Descriptor) AsDuration() (DurationView, bool) {
+	if desc.code != DescriptorDuration {
 		return DurationView{}, false
 	}
 
-	return DurationView{payload: cloneDurationPayload(t.duration)}, true
+	return DurationView{payload: cloneDurationPayload(desc.duration)}, true
 }

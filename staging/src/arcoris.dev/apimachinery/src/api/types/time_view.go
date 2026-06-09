@@ -14,17 +14,17 @@
 
 package types
 
-// TimeView exposes read-only TypeTime payload data.
+// TimeView exposes read-only DescriptorTime payload data.
 type TimeView struct {
 	// payload is a detached copy of the time-of-day descriptor payload.
 	payload timePayload
 }
 
-// Time returns a time-of-day view when t is TypeTime.
-func (t Type) Time() (TimeView, bool) {
-	if t.code != TypeTime {
+// AsTime returns a time-of-day view when desc is DescriptorTime.
+func (desc Descriptor) AsTime() (TimeView, bool) {
+	if desc.code != DescriptorTime {
 		return TimeView{}, false
 	}
 
-	return TimeView{payload: cloneTimePayload(t.timeOfDay)}, true
+	return TimeView{payload: cloneTimePayload(desc.timeOfDay)}, true
 }

@@ -14,7 +14,7 @@
 
 package types
 
-// timePayload stores TypeTime constraints.
+// timePayload stores DescriptorTime constraints.
 type timePayload struct {
 	// Reserved for future time-of-day constraints.
 }
@@ -24,7 +24,7 @@ func cloneTimePayload(p timePayload) timePayload {
 	return p
 }
 
-// emptyTimePayload reports whether p has no configured TypeTime state.
+// emptyTimePayload reports whether p has no configured DescriptorTime state.
 func emptyTimePayload(p timePayload) bool {
 	return true
 }

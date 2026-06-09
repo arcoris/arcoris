@@ -35,90 +35,90 @@ func TestListMapKeyValidationAcceptsStableIdentityScalars(t *testing.T) {
 		{
 			name:  "string ref",
 			field: Field("key").Ref("example.StringKey").Required(),
-			resolver: resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+			resolver: resolverFunc(func(name TypeName) (Definition, bool) {
 				if name == "example.StringKey" {
-					return Define("example.StringKey", String().MinLen(1)), true
+					return Define("example.StringKey", String().MinBytes(1)), true
 				}
-				return TypeDefinition{}, false
+				return Definition{}, false
 			}),
 		},
 		{
 			name:  "uint64 ref",
 			field: Field("key").Ref("example.Uint64Key").Required(),
-			resolver: resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+			resolver: resolverFunc(func(name TypeName) (Definition, bool) {
 				if name == "example.Uint64Key" {
 					return Define("example.Uint64Key", Uint64()), true
 				}
-				return TypeDefinition{}, false
+				return Definition{}, false
 			}),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			typ := listMapWithKeyField(tt.field)
+			desc := listMapWithKeyField(tt.field)
 
-			requireNoError(t, ValidateType(typ, tt.resolver))
+			requireNoError(t, validateTestDescriptor(desc, tt.resolver))
 		})
 	}
 }
 
-func TestListMapKeyValidationRejectsUnsupportedIdentityTypes(t *testing.T) {
+func TestListMapKeyValidationRejectsUnsupportedIdentityDescriptors(t *testing.T) {
 	tests := []struct {
 		name     string
 		field    FieldExpr
 		resolver Resolver
 		detail   string
 	}{
-		{name: "null", field: Field("key").Null().Required(), detail: "type null"},
-		{name: "bytes", field: Field("key").Bytes().Required(), detail: "type bytes"},
-		{name: "float32", field: Field("key").Float32().Required(), detail: "type float32"},
-		{name: "float64", field: Field("key").Float64().Required(), detail: "type float64"},
-		{name: "decimal", field: Field("key").Decimal().Required(), detail: "type decimal"},
-		{name: "timestamp", field: Field("key").Timestamp().Required(), detail: "type timestamp"},
-		{name: "date", field: Field("key").Date().Required(), detail: "type date"},
-		{name: "time", field: Field("key").Time().Required(), detail: "type time"},
-		{name: "duration", field: Field("key").Duration().Required(), detail: "type duration"},
+		{name: "null", field: Field("key").Null().Required(), detail: "descriptor null"},
+		{name: "bytes", field: Field("key").Bytes().Required(), detail: "descriptor bytes"},
+		{name: "float32", field: Field("key").Float32().Required(), detail: "descriptor float32"},
+		{name: "float64", field: Field("key").Float64().Required(), detail: "descriptor float64"},
+		{name: "decimal", field: Field("key").Decimal().Required(), detail: "descriptor decimal"},
+		{name: "timestamp", field: Field("key").Timestamp().Required(), detail: "descriptor timestamp"},
+		{name: "date", field: Field("key").Date().Required(), detail: "descriptor date"},
+		{name: "time", field: Field("key").Time().Required(), detail: "descriptor time"},
+		{name: "duration", field: Field("key").Duration().Required(), detail: "descriptor duration"},
 		{
 			name: "object",
 			field: Field("key").Object(
 				Field("part").String().Required(),
 			).Required(),
-			detail: "type object",
+			detail: "descriptor object",
 		},
 		{
 			name:   "list",
 			field:  Field("key").ListOf(String()).Required(),
-			detail: "type list",
+			detail: "descriptor list",
 		},
 		{
 			name:   "map",
 			field:  Field("key").MapOf(String()).Required(),
-			detail: "type map",
+			detail: "descriptor map",
 		},
 		{
 			name:  "object ref",
 			field: Field("key").Ref("example.ObjectKey").Required(),
-			resolver: resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+			resolver: resolverFunc(func(name TypeName) (Definition, bool) {
 				if name == "example.ObjectKey" {
 					return Define("example.ObjectKey", Object(
 						Field("part").String().Required(),
 					)), true
 				}
-				return TypeDefinition{}, false
+				return Definition{}, false
 			}),
-			detail: "type object",
+			detail: "descriptor object",
 		},
 		{
 			name:  "bytes ref",
 			field: Field("key").Ref("example.BytesKey").Required(),
-			resolver: resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+			resolver: resolverFunc(func(name TypeName) (Definition, bool) {
 				if name == "example.BytesKey" {
 					return Define("example.BytesKey", Bytes()), true
 				}
-				return TypeDefinition{}, false
+				return Definition{}, false
 			}),
-			detail: "type bytes",
+			detail: "descriptor bytes",
 		},
 		{
 			name:   "nullable string",
@@ -128,22 +128,22 @@ func TestListMapKeyValidationRejectsUnsupportedIdentityTypes(t *testing.T) {
 		{
 			name:  "nullable ref",
 			field: Field("key").Ref("example.StringKey").Nullable().Required(),
-			resolver: resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+			resolver: resolverFunc(func(name TypeName) (Definition, bool) {
 				if name == "example.StringKey" {
 					return Define("example.StringKey", String()), true
 				}
-				return TypeDefinition{}, false
+				return Definition{}, false
 			}),
 			detail: "non-nullable",
 		},
 		{
 			name:  "ref to nullable string",
 			field: Field("key").Ref("example.NullableStringKey").Required(),
-			resolver: resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+			resolver: resolverFunc(func(name TypeName) (Definition, bool) {
 				if name == "example.NullableStringKey" {
 					return Define("example.NullableStringKey", String().Nullable()), true
 				}
-				return TypeDefinition{}, false
+				return Definition{}, false
 			}),
 			detail: "non-nullable",
 		},
@@ -151,14 +151,14 @@ func TestListMapKeyValidationRejectsUnsupportedIdentityTypes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateType(listMapWithKeyField(tt.field), tt.resolver)
+			err := validateTestDescriptor(listMapWithKeyField(tt.field), tt.resolver)
 
-			requireTypeError(
+			requireDescriptorError(
 				t,
 				err,
 				ErrInvalidField,
-				"type.mapKeys[0]",
-				TypeErrorReasonInvalidListMapKeyType,
+				"descriptor.mapKeys[0]",
+				DescriptorErrorReasonInvalidListMapKeyDescriptor,
 				tt.detail,
 			)
 		})
@@ -166,78 +166,81 @@ func TestListMapKeyValidationRejectsUnsupportedIdentityTypes(t *testing.T) {
 }
 
 func TestListMapKeyValidationRejectsUnresolvedKeyRefWithoutResolver(t *testing.T) {
-	err := ValidateType(
+	missing := resolverFunc(func(TypeName) (Definition, bool) {
+		return Definition{}, false
+	})
+	err := ValidateResolved(
 		listMapWithKeyField(Field("key").Ref("example.Key").Required()),
-		nil,
+		missing,
 	)
 
-	requireTypeError(
+	requireDescriptorError(
 		t,
 		err,
-		ErrUnknownTypeReference,
-		"type.mapKeys[0]",
-		TypeErrorReasonUnknownReference,
-		"without a resolver",
+		ErrUnresolvedDescriptorReference,
+		"descriptor.elem.fields[key].type",
+		DescriptorErrorReasonUnknownReference,
+		"not found in resolver",
 	)
 }
 
 func TestListMapKeyValidationRejectsReferenceCycle(t *testing.T) {
-	resolver := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
 		case "example.A":
 			return Define("example.A", Ref("example.B")), true
 		case "example.B":
 			return Define("example.B", Ref("example.A")), true
 		default:
-			return TypeDefinition{}, false
+			return Definition{}, false
 		}
 	})
 	field := Field("key").Ref("example.A").Required().Field()
 
-	err := validateListMapKeyIdentityType(
+	err := validateListMapKeyIdentityDescriptor(
 		field,
 		resolver,
-		"type.mapKeys[0]",
+		"descriptor.mapKeys[0]",
 		make(map[TypeName]bool),
 	)
 
-	requireTypeError(
+	requireDescriptorError(
 		t,
 		err,
-		ErrInvalidTypeReference,
-		"type.mapKeys[0]",
-		TypeErrorReasonReferenceCycle,
+		ErrInvalidDescriptorReference,
+		"descriptor.mapKeys[0]",
+		DescriptorErrorReasonReferenceCycle,
 		"recursive",
 	)
 }
 
-func TestListMapKeyValidationRejectsInvalidZeroType(t *testing.T) {
+func TestListMapKeyValidationRejectsInvalidZeroDescriptor(t *testing.T) {
 	field := FieldDescriptor{
-		name:     "key",
-		presence: PresenceRequired,
-		typ:      Type{},
+		name:       "key",
+		presence:   PresenceRequired,
+		descriptor: Descriptor{},
 	}
 
-	err := validateListMapKeyIdentityType(
+	err := validateListMapKeyIdentityDescriptor(
 		field,
 		nil,
-		"type.mapKeys[0]",
+		"descriptor.mapKeys[0]",
 		make(map[TypeName]bool),
 	)
 
-	requireTypeError(
+	requireDescriptorError(
 		t,
 		err,
 		ErrInvalidField,
-		"type.mapKeys[0]",
-		TypeErrorReasonInvalidListMapKeyType,
-		"type invalid",
+		"descriptor.mapKeys[0]",
+		DescriptorErrorReasonInvalidListMapKeyDescriptor,
+		"descriptor invalid",
 	)
 }
 
-func listMapWithKeyField(field FieldExpr) Type {
+func listMapWithKeyField(field FieldExpr) Descriptor {
 	return ListOf(Object(
 		field,
 		Field("value").String().Required(),
-	)).Map("key").Type()
+	)).Map("key").Descriptor()
 }

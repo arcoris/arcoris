@@ -26,7 +26,7 @@ import (
 func (v *validator) validateUnsignedInteger(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 ) {
 	if !v.requireKind(path, val, value.KindInteger, descriptor.Code()) {
 		return
@@ -45,20 +45,20 @@ func (v *validator) validateUnsignedInteger(
 	}
 
 	switch descriptor.Code() {
-	case types.TypeUint8:
+	case types.DescriptorUint8:
 		v.validateUint8(path, got, descriptor)
-	case types.TypeUint16:
+	case types.DescriptorUint16:
 		v.validateUint16(path, got, descriptor)
-	case types.TypeUint32:
+	case types.DescriptorUint32:
 		v.validateUint32(path, got, descriptor)
-	case types.TypeUint64:
+	case types.DescriptorUint64:
 		v.validateUint64(path, got, descriptor)
 	}
 }
 
 // validateUint8 checks uint8 width, descriptor bounds, and enum rules.
-func (v *validator) validateUint8(path fieldpath.Path, got uint64, descriptor types.Type) {
-	view, ok := descriptor.Uint8()
+func (v *validator) validateUint8(path fieldpath.Path, got uint64, descriptor types.Descriptor) {
+	view, ok := descriptor.AsUint8()
 	if !ok {
 		v.add(
 			path,
@@ -75,8 +75,8 @@ func (v *validator) validateUint8(path fieldpath.Path, got uint64, descriptor ty
 }
 
 // validateUint16 checks uint16 width, descriptor bounds, and enum rules.
-func (v *validator) validateUint16(path fieldpath.Path, got uint64, descriptor types.Type) {
-	view, ok := descriptor.Uint16()
+func (v *validator) validateUint16(path fieldpath.Path, got uint64, descriptor types.Descriptor) {
+	view, ok := descriptor.AsUint16()
 	if !ok {
 		v.add(
 			path,
@@ -93,8 +93,8 @@ func (v *validator) validateUint16(path fieldpath.Path, got uint64, descriptor t
 }
 
 // validateUint32 checks uint32 width, descriptor bounds, and enum rules.
-func (v *validator) validateUint32(path fieldpath.Path, got uint64, descriptor types.Type) {
-	view, ok := descriptor.Uint32()
+func (v *validator) validateUint32(path fieldpath.Path, got uint64, descriptor types.Descriptor) {
+	view, ok := descriptor.AsUint32()
 	if !ok {
 		v.add(
 			path,
@@ -111,8 +111,8 @@ func (v *validator) validateUint32(path fieldpath.Path, got uint64, descriptor t
 }
 
 // validateUint64 checks uint64 descriptor bounds and enum rules.
-func (v *validator) validateUint64(path fieldpath.Path, got uint64, descriptor types.Type) {
-	view, ok := descriptor.Uint64()
+func (v *validator) validateUint64(path fieldpath.Path, got uint64, descriptor types.Descriptor) {
+	view, ok := descriptor.AsUint64()
 	if !ok {
 		v.add(
 			path,

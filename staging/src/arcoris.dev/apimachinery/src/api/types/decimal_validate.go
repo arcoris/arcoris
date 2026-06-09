@@ -14,7 +14,7 @@
 
 package types
 
-// validateDecimal checks TypeDecimal precision and scale descriptor rules.
+// validateDecimal checks DescriptorDecimal precision and scale descriptor rules.
 //
 // Decimal deliberately has no min/max or enum rules in this package. Future
 // descriptor bounds must be defined with exact decimal semantics and without
@@ -22,37 +22,37 @@ package types
 //
 // Scale without precision is allowed. It constrains fractional shape while
 // leaving total significant digits unconstrained.
-func validateDecimal(t Type, path string) error {
-	if t.decimal.precision.set && t.decimal.precision.value <= 0 {
-		return typeErrorf(
+func validateDecimal(desc Descriptor, path string) error {
+	if desc.decimal.precision.set && desc.decimal.precision.value <= 0 {
+		return descriptorErrorf(
 			path+".precision",
-			ErrInvalidType,
-			TypeErrorReasonInvalidPrecision,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonInvalidPrecision,
 			"decimal precision must be greater than zero, got %d",
-			t.decimal.precision.value,
+			desc.decimal.precision.value,
 		)
 	}
 
-	if t.decimal.scale.set && t.decimal.scale.value < 0 {
-		return typeErrorf(
+	if desc.decimal.scale.set && desc.decimal.scale.value < 0 {
+		return descriptorErrorf(
 			path+".scale",
-			ErrInvalidType,
-			TypeErrorReasonInvalidScale,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonInvalidScale,
 			"decimal scale must be non-negative, got %d",
-			t.decimal.scale.value,
+			desc.decimal.scale.value,
 		)
 	}
 
-	if t.decimal.precision.set &&
-		t.decimal.scale.set &&
-		t.decimal.scale.value > t.decimal.precision.value {
-		return typeErrorf(
+	if desc.decimal.precision.set &&
+		desc.decimal.scale.set &&
+		desc.decimal.scale.value > desc.decimal.precision.value {
+		return descriptorErrorf(
 			path+".scale",
-			ErrInvalidType,
-			TypeErrorReasonInvalidScale,
+			ErrInvalidDescriptor,
+			DescriptorErrorReasonInvalidScale,
 			"decimal scale must be <= precision, got scale=%d precision=%d",
-			t.decimal.scale.value,
-			t.decimal.precision.value,
+			desc.decimal.scale.value,
+			desc.decimal.precision.value,
 		)
 	}
 

@@ -45,7 +45,7 @@ func FuzzValidateTypeDoesNotPanic(f *testing.F) {
 		f.Add(seed)
 	}
 	f.Fuzz(func(t *testing.T, code uint8) {
-		_ = ValidateType(Type{code: TypeCode(code)}, nil)
+		_ = ValidateLocal(Descriptor{code: DescriptorKind(code)})
 	})
 }
 
@@ -54,6 +54,6 @@ func FuzzValidateStringPatternDoesNotPanic(f *testing.F) {
 		f.Add(seed)
 	}
 	f.Fuzz(func(t *testing.T, pattern string) {
-		_ = ValidateType(String().Pattern(pattern).Enum("alpha").Type(), nil)
+		_ = ValidateLocal(String().Pattern(pattern).Enum("alpha").Descriptor())
 	})
 }

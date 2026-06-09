@@ -26,5 +26,5 @@ package types
 //		Nullable().
 //		Description("Start time of day.")
 func (b FieldBuilder) Time() TimeField {
-	return TimeField{field: b.state(), typ: Time()}
+	return TimeField{field: b.state(), descriptor: Time()}
 }

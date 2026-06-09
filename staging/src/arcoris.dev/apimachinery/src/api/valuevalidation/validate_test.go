@@ -27,16 +27,16 @@ func TestValidateAcceptsValidScalarValues(t *testing.T) {
 	tests := []struct {
 		name    string
 		payload value.Value
-		shape   types.Type
+		shape   types.Descriptor
 	}{
-		{name: "bool", payload: value.BoolValue(true), shape: types.Bool().Type()},
-		{name: "string", payload: value.StringValue("main"), shape: types.String().MinLen(1).Type()},
-		{name: "bytes", payload: value.BytesValue([]byte("abc")), shape: types.Bytes().MinLen(3).Type()},
-		{name: "int64", payload: value.Int64Value(-1), shape: types.Int64().Min(-2).Type()},
-		{name: "uint64", payload: value.Uint64Value(3), shape: types.Uint64().Max(4).Type()},
-		{name: "float64", payload: mustFloat(t, 1.5), shape: types.Float64().Range(1, 2).Type()},
-		{name: "decimal", payload: mustDecimal(t, "12.30"), shape: types.Decimal().Precision(4).Scale(2).Type()},
-		{name: "date", payload: mustDate(t, 2026, 6, 1), shape: types.Date().Type()},
+		{name: "bool", payload: value.BoolValue(true), shape: types.Bool().Descriptor()},
+		{name: "string", payload: value.StringValue("main"), shape: types.String().MinBytes(1).Descriptor()},
+		{name: "bytes", payload: value.BytesValue([]byte("abc")), shape: types.Bytes().MinBytes(3).Descriptor()},
+		{name: "int64", payload: value.Int64Value(-1), shape: types.Int64().Min(-2).Descriptor()},
+		{name: "uint64", payload: value.Uint64Value(3), shape: types.Uint64().Max(4).Descriptor()},
+		{name: "float64", payload: mustFloat(t, 1.5), shape: types.Float64().Range(1, 2).Descriptor()},
+		{name: "decimal", payload: mustDecimal(t, "12.30"), shape: types.Decimal().Precision(4).Scale(2).Descriptor()},
+		{name: "date", payload: mustDate(t, 2026, 6, 1), shape: types.Date().Descriptor()},
 	}
 
 	for _, tt := range tests {
@@ -56,7 +56,7 @@ func TestValidateAcceptsValidScalarValues(t *testing.T) {
 func TestValidateRejectsInvalidZeroValue(t *testing.T) {
 	err := valuevalidation.Validate(
 		value.Value{},
-		types.String().Type(),
+		types.String().Descriptor(),
 		valuevalidation.Options{},
 	)
 
@@ -72,7 +72,7 @@ func TestValidateRejectsInvalidZeroValue(t *testing.T) {
 func TestValidateRejectsInvalidZeroDescriptorDefensively(t *testing.T) {
 	err := valuevalidation.Validate(
 		value.StringValue("x"),
-		types.Type{},
+		types.Descriptor{},
 		valuevalidation.Options{},
 	)
 
@@ -88,7 +88,7 @@ func TestValidateRejectsInvalidZeroDescriptorDefensively(t *testing.T) {
 func TestValidateRejectsMapWithInvalidValueDescriptorDefensively(t *testing.T) {
 	err := valuevalidation.Validate(
 		mustObject(t, value.ObjectMember("name", value.StringValue("main"))),
-		types.MapOf(nil).Type(),
+		types.MapOf(nil).Descriptor(),
 		valuevalidation.Options{},
 	)
 
@@ -104,7 +104,7 @@ func TestValidateRejectsMapWithInvalidValueDescriptorDefensively(t *testing.T) {
 func TestValidateRejectsListWithInvalidElementDescriptorDefensively(t *testing.T) {
 	err := valuevalidation.Validate(
 		mustList(t, value.StringValue("main")),
-		types.ListOf(nil).Type(),
+		types.ListOf(nil).Descriptor(),
 		valuevalidation.Options{},
 	)
 
@@ -120,7 +120,7 @@ func TestValidateRejectsListWithInvalidElementDescriptorDefensively(t *testing.T
 func TestValidateRejectsKindMismatch(t *testing.T) {
 	err := valuevalidation.Validate(
 		value.StringValue("x"),
-		types.Int64().Type(),
+		types.Int64().Descriptor(),
 		valuevalidation.Options{},
 	)
 
@@ -138,7 +138,7 @@ func TestValidateAtUsesBasePath(t *testing.T) {
 	err := valuevalidation.ValidateAt(
 		basePath,
 		value.StringValue("x"),
-		types.Int32().Type(),
+		types.Int32().Descriptor(),
 		valuevalidation.Options{},
 	)
 
@@ -155,7 +155,7 @@ func TestValidateCollectsMultipleErrors(t *testing.T) {
 	shape := types.Object(
 		types.Field("name").String().Required(),
 		types.Field("replicas").Int32().Required(),
-	).Type()
+	).Descriptor()
 
 	payload := mustObject(t)
 	err := valuevalidation.Validate(
@@ -186,7 +186,7 @@ func TestValidateHonorsMaxErrors(t *testing.T) {
 		types.Field("a").String().Required(),
 		types.Field("b").String().Required(),
 		types.Field("c").String().Required(),
-	).Type()
+	).Descriptor()
 
 	payload := mustObject(t)
 	err := valuevalidation.Validate(
@@ -202,9 +202,9 @@ func TestValidateHonorsMaxErrorsWithListMapFallback(t *testing.T) {
 	shape := types.ListOf(
 		types.Object(
 			types.Field("type").String().Required(),
-			types.Field("status").String().MinLen(1).Required(),
+			types.Field("status").String().MinBytes(1).Required(),
 		),
-	).Map("type").Type()
+	).Map("type").Descriptor()
 	payload := mustList(
 		t,
 		mustObject(t, value.ObjectMember("status", value.StringValue(""))),
@@ -223,8 +223,8 @@ func TestValidateHonorsMaxErrorsWithListMapFallback(t *testing.T) {
 func TestValidateHonorsMaxErrorsWithObjectAndMapErrors(t *testing.T) {
 	shape := types.Object(
 		types.Field("name").String().Required(),
-		types.Field("labels").MapOf(types.String().MinLen(1)).Required(),
-	).Type()
+		types.Field("labels").MapOf(types.String().MinBytes(1)).Required(),
+	).Descriptor()
 	payload := mustObject(
 		t,
 		value.ObjectMember(

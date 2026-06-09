@@ -14,7 +14,7 @@
 
 package types
 
-// Int32 starts a field descriptor whose value type is a fixed-width int32.
+// Int32 starts a field descriptor whose value descriptor is a fixed-width int32.
 //
 // The descriptor records portable int32 constraints. It never uses Go's
 // platform-sized int contract, so generated APIs and remote descriptors remain
@@ -29,5 +29,5 @@ package types
 //		Enum(1, 3, 5).
 //		Description("Desired replica count.")
 func (b FieldBuilder) Int32() Int32Field {
-	return Int32Field{field: b.state(), typ: Int32()}
+	return Int32Field{field: b.state(), descriptor: Int32()}
 }

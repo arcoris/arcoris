@@ -16,8 +16,8 @@ package types
 
 import "testing"
 
-func TestTypeExprNilBecomesZeroType(t *testing.T) {
-	typ := typeFromExpr(nil)
+func TestDescriptorExprNilBecomesZeroType(t *testing.T) {
+	desc := descriptorFromExpr(nil)
 
-	requireEqual(t, typ.Code(), TypeInvalid)
+	requireEqual(t, desc.Code(), DescriptorInvalid)
 }

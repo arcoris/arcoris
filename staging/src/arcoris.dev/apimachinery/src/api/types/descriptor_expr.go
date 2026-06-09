@@ -14,25 +14,27 @@
 
 package types
 
-// TypeExpr is the sealed interface implemented by package-owned type builders.
+// DescriptorExpr is the sealed interface implemented by package-owned
+// descriptor builders.
 //
 // The unexported marker prevents external packages from implementing the
-// interface. That keeps Type as a closed structural system instead of an
+// interface. That keeps Descriptor as a closed structural system instead of an
 // extension point for arbitrary Go validators, reflection types, runtime object
 // implementations, or transport-specific schema fragments.
-type TypeExpr interface {
-	typeExpr()
-	Type() Type
+type DescriptorExpr interface {
+	descriptorExpr()
+	Descriptor() Descriptor
 }
 
-// typeFromExpr converts a sealed type expression into a detached Type value.
+// descriptorFromExpr converts a sealed descriptor expression into a detached
+// Descriptor value.
 //
-// A nil expression becomes the zero Type so constructors stay panic-free and
-// ValidateType can report invalid descriptor paths consistently.
-func typeFromExpr(expr TypeExpr) Type {
+// A nil expression becomes the zero Descriptor so constructors stay panic-free and
+// ValidateResolved can report invalid descriptor paths consistently.
+func descriptorFromExpr(expr DescriptorExpr) Descriptor {
 	if expr == nil {
-		return Type{}
+		return Descriptor{}
 	}
 
-	return expr.Type()
+	return expr.Descriptor()
 }

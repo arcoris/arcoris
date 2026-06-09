@@ -16,14 +16,26 @@ package resource
 
 import "arcoris.dev/apimachinery/api/types"
 
-// ValidateDefinition checks the structural integrity of def.
+// ValidateDefinitionLocal checks the local structural integrity of def.
 //
-// Validation is descriptor validation only. It checks identity values, scope,
-// version-set invariants, and Desired/Observed structural surfaces. It does not
-// validate concrete object values, derive metadata, export schemas, perform
-// conversion/defaulting, define storage behavior, or register the definition in
-// a global catalog.
-func ValidateDefinition(def Definition, resolver types.Resolver) error {
+// Local validation checks identity values, scope, version-set invariants, and
+// descriptor-local Desired/Observed surfaces. It validates reference syntax but
+// does not require referenced descriptor definitions to resolve.
+func ValidateDefinitionLocal(def Definition) error {
+	if err := validateDefinitionIdentity(def); err != nil {
+		return err
+	}
+	return validateDefinitionVersions(def.versions, nil)
+}
+
+// ValidateDefinitionResolved checks the structural integrity of def.
+//
+// Resolved validation checks identity values, scope, version-set invariants, and
+// Desired/Observed structural surfaces, and it requires descriptor references to
+// resolve through resolver. It does not validate concrete object values, derive
+// metadata, export schemas, perform conversion/defaulting, define storage
+// behavior, or register the definition in a global catalog.
+func ValidateDefinitionResolved(def Definition, resolver types.Resolver) error {
 	if err := validateDefinitionIdentity(def); err != nil {
 		return err
 	}

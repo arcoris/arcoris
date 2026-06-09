@@ -26,10 +26,10 @@ func ParseFieldName(s string) (FieldName, error) {
 	name := FieldName(s)
 
 	if !name.IsValid() {
-		return "", typeErrorf(
+		return "", descriptorErrorf(
 			"field.name",
 			ErrInvalidField,
-			TypeErrorReasonInvalidFieldName,
+			DescriptorErrorReasonInvalidFieldName,
 			"field name %q is not lowerCamelCase",
 			s,
 		)

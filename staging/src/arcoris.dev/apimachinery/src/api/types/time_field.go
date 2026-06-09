@@ -14,15 +14,15 @@
 
 package types
 
-// TimeField builds object fields whose value type is a time of day.
+// TimeField builds object fields whose value descriptor is a time of day.
 //
 // The wrapper keeps object-field metadata beside the time builder, allowing
 // fluent field declarations without making fields reusable unnamed types.
 type TimeField struct {
 	// field stores name, presence, and description shared by all field wrappers.
 	field fieldState
-	// typ stores the typed descriptor builder for this field value.
-	typ TimeType
+	// descriptor stores the typed descriptor builder for this field value.
+	descriptor TimeDescriptor
 }
 
 // Required marks the field key as required.
@@ -48,14 +48,14 @@ func (f TimeField) Description(text string) TimeField {
 
 // Nullable admits null in addition to time values.
 func (f TimeField) Nullable() TimeField {
-	f.typ = f.typ.Nullable()
+	f.descriptor = f.descriptor.Nullable()
 
 	return f
 }
 
 // Field returns a detached finalized field descriptor.
 func (f TimeField) Field() FieldDescriptor {
-	return f.field.fieldWithType(f.typ.Type())
+	return f.field.fieldWithType(f.descriptor.Descriptor())
 }
 
 // fieldExpr marks TimeField as a sealed FieldExpr implementation.

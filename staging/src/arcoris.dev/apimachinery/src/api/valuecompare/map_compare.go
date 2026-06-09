@@ -23,14 +23,14 @@ import (
 
 // compareMap interprets value.KindObject as a dynamic string-keyed map.
 //
-// TypeMap shares the concrete object payload with TypeObject, but uses
+// DescriptorMap shares the concrete object payload with DescriptorObject, but uses
 // path.Key(key) rather than path.Field(name). Dynamic keys are sorted before
 // traversal so result construction is deterministic.
 func (c *comparer) compareMap(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 	depth int,
 ) (Result, error) {
 	if err := requireKind(path, oldValue, value.KindObject, descriptor.Code()); err != nil {
@@ -40,16 +40,16 @@ func (c *comparer) compareMap(
 		return Result{}, err
 	}
 
-	mapView, ok := descriptor.Map()
+	mapView, ok := descriptor.AsMap()
 	if !ok {
 		return Result{}, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not a map")
 	}
 	if !mapView.Key().IsValid() {
-		return Result{}, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map key type is invalid")
+		return Result{}, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map key descriptor is invalid")
 	}
 
-	valueType := mapView.Value()
-	if !valueType.IsValid() {
+	valueDescriptor := mapView.Value()
+	if !valueDescriptor.IsValid() {
 		return Result{}, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map value descriptor is invalid")
 	}
 
@@ -65,7 +65,7 @@ func (c *comparer) compareMap(
 			memberPath,
 			mapOperand(oldMembers, key),
 			mapOperand(newMembers, key),
-			valueType,
+			valueDescriptor,
 			depth+1,
 		)
 		if err != nil {

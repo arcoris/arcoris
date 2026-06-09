@@ -21,48 +21,48 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
-type resolverFunc func(types.TypeName) (types.TypeDefinition, bool)
+type resolverFunc func(types.TypeName) (types.Definition, bool)
 
-func (f resolverFunc) ResolveType(name types.TypeName) (types.TypeDefinition, bool) {
+func (f resolverFunc) Resolve(name types.TypeName) (types.Definition, bool) {
 	return f(name)
 }
 
-func stringResolver(name types.TypeName) (types.TypeDefinition, bool) {
+func stringResolver(name types.TypeName) (types.Definition, bool) {
 	return types.Define(name, types.String()), true
 }
 
 func exampleResolver() types.Resolver {
-	return resolverFunc(func(name types.TypeName) (types.TypeDefinition, bool) {
+	return resolverFunc(func(name types.TypeName) (types.Definition, bool) {
 		if name == "example.Name" {
 			return types.Define("example.Name", types.String()), true
 		}
 
-		return types.TypeDefinition{}, false
+		return types.Definition{}, false
 	})
 }
 
 func chainResolver() types.Resolver {
-	return resolverFunc(func(name types.TypeName) (types.TypeDefinition, bool) {
+	return resolverFunc(func(name types.TypeName) (types.Definition, bool) {
 		switch name {
 		case "example.Name":
 			return types.Define("example.Name", types.Ref("example.Text")), true
 		case "example.Text":
 			return types.Define("example.Text", types.String()), true
 		default:
-			return types.TypeDefinition{}, false
+			return types.Definition{}, false
 		}
 	})
 }
 
 func cycleResolver() types.Resolver {
-	return resolverFunc(func(name types.TypeName) (types.TypeDefinition, bool) {
+	return resolverFunc(func(name types.TypeName) (types.Definition, bool) {
 		switch name {
 		case "example.A":
 			return types.Define("example.A", types.Ref("example.B")), true
 		case "example.B":
 			return types.Define("example.B", types.Ref("example.A")), true
 		default:
-			return types.TypeDefinition{}, false
+			return types.Definition{}, false
 		}
 	})
 }
@@ -71,8 +71,8 @@ func rootPath() fieldpath.Path {
 	return fieldpath.RootPath()
 }
 
-func refType(name types.TypeName) types.Type {
-	return types.Ref(name).Type()
+func refType(name types.TypeName) types.Descriptor {
+	return types.Ref(name).Descriptor()
 }
 
 func requireFailureKind(t *testing.T, err error, want FailureKind) {

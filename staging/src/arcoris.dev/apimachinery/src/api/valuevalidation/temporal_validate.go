@@ -28,16 +28,16 @@ import (
 func (v *validator) validateTemporal(
 	path fieldpath.Path,
 	val value.Value,
-	descriptor types.Type,
+	descriptor types.Descriptor,
 ) {
 	switch descriptor.Code() {
-	case types.TypeTimestamp:
+	case types.DescriptorTimestamp:
 		v.requireKind(path, val, value.KindTimestamp, descriptor.Code())
-	case types.TypeDate:
+	case types.DescriptorDate:
 		v.requireKind(path, val, value.KindDate, descriptor.Code())
-	case types.TypeTime:
+	case types.DescriptorTime:
 		v.requireKind(path, val, value.KindTimeOfDay, descriptor.Code())
-	case types.TypeDuration:
+	case types.DescriptorDuration:
 		v.requireKind(path, val, value.KindDuration, descriptor.Code())
 	}
 }

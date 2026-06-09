@@ -17,12 +17,12 @@ package types
 import "testing"
 
 type exactNumericDescriptorCase[T comparable] struct {
-	typ         Type
-	code        TypeCode
-	min         func(Type) (T, bool)
-	max         func(Type) (T, bool)
-	enum        func(Type) []T
-	wrong       func(Type) bool
+	descriptor  Descriptor
+	code        DescriptorKind
+	min         func(Descriptor) (T, bool)
+	max         func(Descriptor) (T, bool)
+	enum        func(Descriptor) []T
+	wrong       func(Descriptor) bool
 	wantMin     T
 	wantMax     T
 	wantFirst   T
@@ -32,23 +32,23 @@ type exactNumericDescriptorCase[T comparable] struct {
 func requireExactNumericDescriptor[T comparable](t *testing.T, tt exactNumericDescriptorCase[T]) {
 	t.Helper()
 
-	requireCode(t, tt.typ, tt.code)
-	requireNullable(t, tt.typ, true)
+	requireCode(t, tt.descriptor, tt.code)
+	requireNullable(t, tt.descriptor, true)
 
-	min, ok := tt.min(tt.typ)
+	min, ok := tt.min(tt.descriptor)
 	requireEqual(t, ok, true)
 	requireEqual(t, min, tt.wantMin)
 
-	max, ok := tt.max(tt.typ)
+	max, ok := tt.max(tt.descriptor)
 	requireEqual(t, ok, true)
 	requireEqual(t, max, tt.wantMax)
 
-	enum := tt.enum(tt.typ)
+	enum := tt.enum(tt.descriptor)
 	enum[0] = tt.replaceWith
-	requireEqual(t, tt.enum(tt.typ)[0], tt.wantFirst)
+	requireEqual(t, tt.enum(tt.descriptor)[0], tt.wantFirst)
 
-	requireEqual(t, tt.wrong(tt.typ), false)
-	requireValidType(t, tt.typ, nil)
+	requireEqual(t, tt.wrong(tt.descriptor), false)
+	requireValidDescriptor(t, tt.descriptor, nil)
 }
 
 type enumPayloadCloneCase[T comparable, P any] struct {

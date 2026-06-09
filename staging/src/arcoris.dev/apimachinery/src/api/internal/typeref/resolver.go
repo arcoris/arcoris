@@ -16,7 +16,7 @@ package typeref
 
 import "arcoris.dev/apimachinery/api/types"
 
-// Resolver carries one traversal's TypeRef state.
+// Resolver carries one traversal's DescriptorRef state.
 //
 // The active stack is per operation. Sharing a Resolver across independent
 // validation, extraction, or comparison runs would make cycle detection leak
@@ -27,7 +27,7 @@ type Resolver struct {
 	active   map[types.TypeName]bool
 }
 
-// New creates TypeRef resolver state for one descriptor traversal.
+// New creates DescriptorRef resolver state for one descriptor traversal.
 //
 // maxDepth is expected to be normalized by the caller. Keeping normalization in
 // public packages lets each package expose its own defaults without coupling

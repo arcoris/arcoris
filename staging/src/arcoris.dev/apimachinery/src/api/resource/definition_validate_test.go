@@ -23,7 +23,7 @@ import (
 )
 
 func TestValidateDefinitionAcceptsValidCases(t *testing.T) {
-	requireNoError(t, ValidateDefinition(validDefinition(), nil))
+	requireNoError(t, ValidateDefinitionLocal(validDefinition()))
 
 	multi := NewDefinition(
 		identity.Group("control.arcoris.dev"),
@@ -33,7 +33,7 @@ func TestValidateDefinitionAcceptsValidCases(t *testing.T) {
 		NewVersion(identity.Version("v1alpha1"), objectType(), Exposed()),
 		NewVersion(identity.Version("v1"), objectType(), Exposed(), Canonical()),
 	)
-	requireNoError(t, ValidateDefinition(multi, nil))
+	requireNoError(t, ValidateDefinitionLocal(multi))
 }
 
 func TestValidateDefinitionAcceptsResolvedObjectRefs(t *testing.T) {
@@ -62,7 +62,7 @@ func TestValidateDefinitionAcceptsResolvedObjectRefs(t *testing.T) {
 		),
 	)
 
-	requireNoError(t, ValidateDefinition(def, resolver))
+	requireNoError(t, ValidateDefinitionResolved(def, resolver))
 }
 
 func TestValidateDefinitionPreservesNestedIdentityErrors(t *testing.T) {
@@ -74,7 +74,7 @@ func TestValidateDefinitionPreservesNestedIdentityErrors(t *testing.T) {
 		validVersion(),
 	)
 
-	err := ValidateDefinition(def, nil)
+	err := ValidateDefinitionLocal(def)
 	requireResourceError(t, err, ErrInvalidDefinition, pathDefinitionGroup, ErrorReasonInvalidGroup)
 
 	if !errors.Is(err, identity.ErrInvalidIdentifier) {

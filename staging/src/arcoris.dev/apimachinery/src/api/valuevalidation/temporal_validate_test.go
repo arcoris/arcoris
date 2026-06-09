@@ -36,27 +36,27 @@ func TestValidateTemporalAcceptsMatchingKinds(t *testing.T) {
 	tests := []struct {
 		name    string
 		payload value.Value
-		shape   types.Type
+		shape   types.Descriptor
 	}{
 		{
 			name:    "timestamp",
 			payload: value.TimestampValue(time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)),
-			shape:   types.Timestamp().Type(),
+			shape:   types.Timestamp().Descriptor(),
 		},
 		{
 			name:    "date",
 			payload: mustDate(t, 2026, 6, 1),
-			shape:   types.Date().Type(),
+			shape:   types.Date().Descriptor(),
 		},
 		{
 			name:    "time of day",
 			payload: timeOfDayValue,
-			shape:   types.Time().Type(),
+			shape:   types.Time().Descriptor(),
 		},
 		{
 			name:    "duration",
 			payload: value.DurationValue(time.Second),
-			shape:   types.Duration().Type(),
+			shape:   types.Duration().Descriptor(),
 		},
 	}
 
@@ -77,7 +77,7 @@ func TestValidateTemporalAcceptsMatchingKinds(t *testing.T) {
 func TestValidateTemporalRejectsMismatchedKind(t *testing.T) {
 	err := valuevalidation.Validate(
 		value.StringValue("2026-06-01"),
-		types.Date().Type(),
+		types.Date().Descriptor(),
 		valuevalidation.Options{},
 	)
 

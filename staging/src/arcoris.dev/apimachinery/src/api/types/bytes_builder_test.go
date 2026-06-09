@@ -20,5 +20,5 @@ func TestBytesFieldBuilderEntrypoint(t *testing.T) {
 	field := Field("value").Bytes().Required().Field()
 
 	requireEqual(t, field.Name(), FieldName("value"))
-	requireEqual(t, field.Type().Code(), TypeBytes)
+	requireEqual(t, field.Descriptor().Code(), DescriptorBytes)
 }

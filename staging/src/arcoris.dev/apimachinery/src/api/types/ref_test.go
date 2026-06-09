@@ -17,49 +17,49 @@ package types
 import "testing"
 
 func TestRefConstructorAndView(t *testing.T) {
-	typ := Ref("arcoris.meta.Name").Nullable().Type()
+	desc := Ref("arcoris.meta.Name").Nullable().Descriptor()
 
-	requireEqual(t, typ.Code(), TypeRef)
-	requireEqual(t, typ.Nullable(), true)
-	view, ok := typ.Ref()
+	requireEqual(t, desc.Code(), DescriptorRef)
+	requireEqual(t, desc.Nullable(), true)
+	view, ok := desc.AsRef()
 	requireEqual(t, ok, true)
 	requireEqual(t, view.Name(), TypeName("arcoris.meta.Name"))
 }
 
 func TestRefValidationWithAndWithoutResolver(t *testing.T) {
-	typ := Ref("arcoris.meta.Name").Type()
-	requireNoError(t, ValidateType(typ, nil))
+	desc := Ref("arcoris.meta.Name").Descriptor()
+	requireNoError(t, ValidateLocal(desc))
 
-	missing := resolverFunc(func(TypeName) (TypeDefinition, bool) {
-		return TypeDefinition{}, false
+	missing := resolverFunc(func(TypeName) (Definition, bool) {
+		return Definition{}, false
 	})
-	requireErrorIs(t, ValidateType(typ, missing), ErrUnknownTypeReference)
+	requireErrorIs(t, ValidateResolved(desc, missing), ErrUnresolvedDescriptorReference)
 
-	resolver := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		if name == "arcoris.meta.Name" {
-			return Define("arcoris.meta.Name", String().MinLen(1)), true
+			return Define("arcoris.meta.Name", String().MinBytes(1)), true
 		}
-		return TypeDefinition{}, false
+		return Definition{}, false
 	})
-	requireNoError(t, ValidateType(typ, resolver))
+	requireNoError(t, ValidateResolved(desc, resolver))
 }
 
 func TestRefInvalidNameAndCycleRejected(t *testing.T) {
-	requireErrorIs(t, ValidateType(Ref("bad").Type(), nil), ErrInvalidTypeReference)
+	requireErrorIs(t, ValidateLocal(Ref("bad").Descriptor()), ErrInvalidDescriptorReference)
 
-	resolver := resolverFunc(func(name TypeName) (TypeDefinition, bool) {
+	resolver := resolverFunc(func(name TypeName) (Definition, bool) {
 		switch name {
 		case "example.A":
 			return Define("example.A", Ref("example.B")), true
 		case "example.B":
 			return Define("example.B", Ref("example.A")), true
 		default:
-			return TypeDefinition{}, false
+			return Definition{}, false
 		}
 	})
-	requireErrorIs(t, ValidateType(Ref("example.A").Type(), resolver), ErrInvalidTypeReference)
+	requireErrorIs(t, ValidateResolved(Ref("example.A").Descriptor(), resolver), ErrInvalidDescriptorReference)
 }
 
-func TestRefTypeExprMarker(t *testing.T) {
-	Ref("example.Name").typeExpr()
+func TestRefDescriptorExprMarker(t *testing.T) {
+	Ref("example.Name").descriptorExpr()
 }

@@ -29,5 +29,5 @@ package types
 //		Scale(2).
 //		Description("Exact decimal price.")
 func (b FieldBuilder) Decimal() DecimalField {
-	return DecimalField{field: b.state(), typ: Decimal()}
+	return DecimalField{field: b.state(), descriptor: Decimal()}
 }
