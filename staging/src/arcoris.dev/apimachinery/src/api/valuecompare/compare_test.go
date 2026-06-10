@@ -28,7 +28,7 @@ func TestCompareStartsAtRoot(t *testing.T) {
 	got, err := Compare(value.StringValue("old"), value.StringValue("new"), types.String().Descriptor(), Options{})
 	requireNoError(t, err)
 
-	requireResult(t, got, nil, nil, paths(fieldpath.RootPath()))
+	requireResult(t, got, nil, nil, paths(fieldpath.Root()))
 }
 
 func TestCompareAtPreservesBasePath(t *testing.T) {
@@ -38,16 +38,6 @@ func TestCompareAtPreservesBasePath(t *testing.T) {
 	requireNoError(t, err)
 
 	requireResult(t, got, nil, nil, paths(path))
-}
-
-func TestCompareAtInvalidBasePathReturnsInvalidPath(t *testing.T) {
-	path := fieldpath.RootPath().Index(-1)
-
-	_, err := CompareAt(path, value.StringValue("old"), value.StringValue("new"), types.String().Descriptor(), Options{})
-
-	requireErrorIs(t, err, ErrInvalidPath)
-	requireErrorNotIs(t, err, ErrInvalidDescriptor)
-	requireErrorReason(t, err, ErrorReasonInvalidPath)
 }
 
 func TestCompareAtMatchesValidationAndFieldSetPathSemantics(t *testing.T) {
@@ -71,15 +61,15 @@ func TestCompareAtMatchesValidationAndFieldSetPathSemantics(t *testing.T) {
 		valuefieldset.Options{},
 	)
 	requireNoError(t, err)
-	requireSet(t, "fieldset", set, selectorPath.Field("type"), selectorPath.Field("status"))
+	requireSet(t, "fieldset", set, selectorPath.Field(testFieldName("type")), selectorPath.Field(testFieldName("status")))
 
 	got, err := CompareAt(path, oldValue, newValue, descriptor, Options{})
 	requireNoError(t, err)
-	requireResult(t, got, nil, nil, paths(selectorPath.Field("status")))
+	requireResult(t, got, nil, nil, paths(selectorPath.Field(testFieldName("status"))))
 }
 func TestCompareDispatchesScalarDescriptor(t *testing.T) {
 	got, err := newComparer(Options{}).compare(
-		fieldpath.RootPath(),
+		fieldpath.Root(),
 		valuepresence.Present(value.StringValue("old")),
 		valuepresence.Present(value.StringValue("new")),
 		types.String().Descriptor(),
@@ -87,7 +77,7 @@ func TestCompareDispatchesScalarDescriptor(t *testing.T) {
 	)
 	requireNoError(t, err)
 
-	requireResult(t, got, nil, nil, paths(fieldpath.RootPath()))
+	requireResult(t, got, nil, nil, paths(fieldpath.Root()))
 }
 func TestComparePresenceBothAbsentIsEmpty(t *testing.T) {
 	got, done, err := newComparer(Options{}).comparePresence(
@@ -120,7 +110,7 @@ func TestComparePresenceAddedUsesSubtree(t *testing.T) {
 	if !done {
 		t.Fatalf("done = false")
 	}
-	requireResult(t, got, paths(path.Field("image")), nil, nil)
+	requireResult(t, got, paths(path.Field(testFieldName("image"))), nil, nil)
 }
 
 func TestComparePresenceRemovedUsesSubtree(t *testing.T) {
@@ -139,7 +129,7 @@ func TestComparePresenceRemovedUsesSubtree(t *testing.T) {
 	if !done {
 		t.Fatalf("done = false")
 	}
-	requireResult(t, got, nil, paths(path.Field("image")), nil)
+	requireResult(t, got, nil, paths(path.Field(testFieldName("image"))), nil)
 }
 
 func TestComparePresenceBothPresentContinues(t *testing.T) {
@@ -156,21 +146,21 @@ func TestComparePresenceBothPresentContinues(t *testing.T) {
 	}
 }
 func TestRequireComparableInputsRejectsZeroValue(t *testing.T) {
-	err := requireComparableInputs(fieldpath.RootPath(), value.Value{}, value.StringValue("x"), types.String().Descriptor())
+	err := requireComparableInputs(fieldpath.Root(), value.Value{}, value.StringValue("x"), types.String().Descriptor())
 
 	requireErrorIs(t, err, ErrInvalidValue)
 	requireErrorReason(t, err, ErrorReasonInvalidZero)
 }
 
 func TestRequireComparableInputsRejectsInvalidDescriptor(t *testing.T) {
-	err := requireComparableInputs(fieldpath.RootPath(), value.StringValue("x"), value.StringValue("y"), types.Descriptor{})
+	err := requireComparableInputs(fieldpath.Root(), value.StringValue("x"), value.StringValue("y"), types.Descriptor{})
 
 	requireErrorIs(t, err, ErrInvalidDescriptor)
 	requireErrorReason(t, err, ErrorReasonInvalidDescriptor)
 }
 
 func TestRequireKindRejectsMismatch(t *testing.T) {
-	err := requireKind(fieldpath.RootPath(), value.StringValue("x"), value.KindBool, types.DescriptorBool)
+	err := requireKind(fieldpath.Root(), value.StringValue("x"), value.KindBool, types.DescriptorBool)
 
 	requireErrorIs(t, err, ErrKindMismatch)
 	requireErrorReason(t, err, ErrorReasonKindMismatch)

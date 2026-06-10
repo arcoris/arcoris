@@ -19,21 +19,31 @@ import (
 	"strings"
 )
 
-// String returns the canonical diagnostic form of e.
-func (e SelectorEntry) String() string {
-	return strconv.Quote(e.field) + ":" + e.value.String()
+// CanonicalText returns the canonical text form of e.
+func (e SelectorEntry) CanonicalText() string {
+	return strconv.Quote(e.field.String()) + ":" + e.value.CanonicalText()
 }
 
-// String returns the canonical diagnostic form of s.
-func (s Selector) String() string {
+// String returns diagnostic text for e.
+func (e SelectorEntry) String() string {
+	return e.CanonicalText()
+}
+
+// CanonicalText returns the canonical text form of s.
+func (s Selector) CanonicalText() string {
 	if len(s.entries) == 0 {
 		return "{}"
 	}
 
 	parts := make([]string, len(s.entries))
 	for i, entry := range s.entries {
-		parts[i] = entry.String()
+		parts[i] = entry.CanonicalText()
 	}
 
 	return "{" + strings.Join(parts, ",") + "}"
+}
+
+// String returns diagnostic text for s.
+func (s Selector) String() string {
+	return s.CanonicalText()
 }

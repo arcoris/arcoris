@@ -20,7 +20,7 @@ func TestCloneSetPathDetachesElements(t *testing.T) {
 	original := setReplicasPath()
 	cloned := cloneSetPath(original)
 
-	cloned.elements[0] = FieldElement("status")
+	cloned.elements[0] = testFieldElement("status")
 
 	requireEqual(t, original.String(), "$.spec.replicas")
 	requireEqual(t, cloned.String(), "$.status.replicas")

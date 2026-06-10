@@ -28,7 +28,7 @@ func TestCompareRefScalar(t *testing.T) {
 
 	got, err := Compare(value.StringValue("old"), value.StringValue("new"), types.Ref("example.Name").Descriptor(), Options{Resolver: resolver})
 	requireNoError(t, err)
-	requireResult(t, got, nil, nil, paths(fieldpath.RootPath()))
+	requireResult(t, got, nil, nil, paths(fieldpath.Root()))
 }
 
 func TestCompareRefObject(t *testing.T) {

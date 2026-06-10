@@ -62,3 +62,36 @@ func requirePanic(t *testing.T, fn func()) {
 
 	fn()
 }
+
+func testField(name string) FieldName {
+	return MustFieldName(name)
+}
+
+func testKey(key string) MapKey {
+	return MustMapKey(key)
+}
+
+func testFieldElement(name string) Element {
+	return MustFieldElement(name)
+}
+
+func testKeyElement(key string) Element {
+	return MustKeyElement(key)
+}
+
+func testSelectorEntry(field string, value Literal) SelectorEntry {
+	return MustSelectorEntry(field, value)
+}
+
+func testSelectorElement(selector Selector) Element {
+	return MustSelectorElement(selector)
+}
+
+func testPath(fields ...string) Path {
+	path := Root()
+	for _, field := range fields {
+		path = path.Field(testField(field))
+	}
+
+	return path
+}

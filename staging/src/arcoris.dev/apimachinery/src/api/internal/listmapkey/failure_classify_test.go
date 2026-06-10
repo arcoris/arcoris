@@ -22,14 +22,14 @@ import (
 )
 
 func TestIsPayloadFailure(t *testing.T) {
-	err := failure(fieldpath.RootPath(), FailureMissingKey, "missing")
+	err := failure(fieldpath.Root(), FailureMissingKey, "missing")
 
 	requireEqual(t, IsPayloadFailure(err), true)
 	requireEqual(t, IsDescriptorFailure(err), false)
 }
 
 func TestIsDescriptorFailure(t *testing.T) {
-	err := failure(fieldpath.RootPath(), FailureUnresolvedRef, "unresolved")
+	err := failure(fieldpath.Root(), FailureUnresolvedRef, "unresolved")
 
 	requireEqual(t, IsDescriptorFailure(err), true)
 	requireEqual(t, IsPayloadFailure(err), false)
@@ -55,7 +55,7 @@ func TestFailureClassificationCoversAllKinds(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := failure(fieldpath.RootPath(), tt.kind, "detail")
+			err := failure(fieldpath.Root(), tt.kind, "detail")
 
 			requireEqual(t, IsPayloadFailure(err), tt.payload)
 			requireEqual(t, IsDescriptorFailure(err), tt.descriptor)

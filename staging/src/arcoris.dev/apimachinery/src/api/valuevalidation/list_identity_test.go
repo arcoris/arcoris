@@ -49,7 +49,7 @@ func TestValidateListMapMissingKeyStillValidatesItemAtIndexPath(t *testing.T) {
 	)
 
 	err := valuevalidation.ValidateAt(
-		fieldpath.RootPath().Field("conditions"),
+		fieldpath.Root().Field(fieldpath.MustFieldName("conditions")),
 		payload,
 		shape,
 		valuevalidation.Options{},
@@ -83,7 +83,7 @@ func TestValidateListMapWrongKeyKindStillValidatesItemAtIndexPath(t *testing.T) 
 	)
 
 	err := valuevalidation.ValidateAt(
-		fieldpath.RootPath().Field("conditions"),
+		fieldpath.Root().Field(fieldpath.MustFieldName("conditions")),
 		payload,
 		shape,
 		valuevalidation.Options{},
@@ -117,7 +117,7 @@ func TestValidateListMapNullKeyStillValidatesItemAtIndexPath(t *testing.T) {
 	)
 
 	err := valuevalidation.ValidateAt(
-		fieldpath.RootPath().Field("conditions"),
+		fieldpath.Root().Field(fieldpath.MustFieldName("conditions")),
 		payload,
 		shape,
 		valuevalidation.Options{},
@@ -144,7 +144,7 @@ func TestValidateListMapNonObjectItemReportsIndexPathKindMismatch(t *testing.T) 
 	payload := mustList(t, value.StringValue("not-object"))
 
 	err := valuevalidation.ValidateAt(
-		fieldpath.RootPath().Field("conditions"),
+		fieldpath.Root().Field(fieldpath.MustFieldName("conditions")),
 		payload,
 		shape,
 		valuevalidation.Options{},
@@ -164,7 +164,7 @@ func TestValidateListMapDescriptorFailureReportsIdentityError(t *testing.T) {
 	payload := mustList(t, conditionValue(t, "Ready", "True"))
 
 	err := valuevalidation.ValidateAt(
-		fieldpath.RootPath().Field("conditions"),
+		fieldpath.Root().Field(fieldpath.MustFieldName("conditions")),
 		payload,
 		shape,
 		valuevalidation.Options{},
@@ -184,7 +184,7 @@ func TestValidateListMapSelectorSuccessStillUsesSelectorPath(t *testing.T) {
 	payload := mustList(t, conditionValue(t, "Ready", ""))
 
 	err := valuevalidation.ValidateAt(
-		fieldpath.RootPath().Field("conditions"),
+		fieldpath.Root().Field(fieldpath.MustFieldName("conditions")),
 		payload,
 		shape,
 		valuevalidation.Options{},
@@ -208,7 +208,7 @@ func TestValidateListMapDuplicateKeyUsesSelectorPath(t *testing.T) {
 	)
 
 	err := valuevalidation.ValidateAt(
-		fieldpath.RootPath().Field("conditions"),
+		fieldpath.Root().Field(fieldpath.MustFieldName("conditions")),
 		payload,
 		shape,
 		valuevalidation.Options{},
@@ -241,7 +241,7 @@ func TestValidateListMapMultiKeySelectorPath(t *testing.T) {
 	)
 
 	err := valuevalidation.ValidateAt(
-		fieldpath.RootPath().Field("routes"),
+		fieldpath.Root().Field(fieldpath.MustFieldName("routes")),
 		payload,
 		shape,
 		valuevalidation.Options{},

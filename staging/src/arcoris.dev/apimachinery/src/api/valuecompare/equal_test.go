@@ -22,7 +22,7 @@ import (
 
 func TestEqualValueDecimalUsesNumericCompare(t *testing.T) {
 	got, err := newComparer(Options{}).equalValue(
-		fieldpath.RootPath(),
+		fieldpath.Root(),
 		mustDecimal(t, "1.0"),
 		mustDecimal(t, "1.00"),
 		types.Decimal().Descriptor(),

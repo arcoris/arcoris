@@ -167,7 +167,7 @@ func TestMergeOrderedListNestedObjectItemField(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Index(0).Field("image")),
+		pathSet(root().Index(0).Field(testFieldName("image"))),
 		Options{},
 	)
 	if err != nil {

@@ -33,7 +33,7 @@ func Compare(
 	descriptor types.Descriptor,
 	opts Options,
 ) (Result, error) {
-	return CompareAt(fieldpath.RootPath(), oldValue, newValue, descriptor, opts)
+	return CompareAt(fieldpath.Root(), oldValue, newValue, descriptor, opts)
 }
 
 // CompareAt reports semantic changes between two present payload values at path.
@@ -48,7 +48,7 @@ func CompareAt(
 	descriptor types.Descriptor,
 	opts Options,
 ) (Result, error) {
-	if err := path.Validate(); err != nil {
+	if err := path.ValidateStructure(); err != nil {
 		return Result{}, wrapAt(
 			path,
 			ErrInvalidPath,

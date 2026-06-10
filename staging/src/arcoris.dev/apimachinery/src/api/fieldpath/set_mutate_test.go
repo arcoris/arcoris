@@ -30,14 +30,14 @@ func TestSetInsert(t *testing.T) {
 
 func TestSetInsertPanicsOnInvalidPath(t *testing.T) {
 	requirePanic(t, func() {
-		EmptySet().Insert(RootPath().Field(""))
+		EmptySet().Insert(Path{elements: []Element{{kind: ElementField}}})
 	})
 }
 
 func TestSetDelete(t *testing.T) {
 	original := MustSet(setImagePath(), setReplicasPath())
 	updated := original.Delete(setImagePath())
-	missingDeleted := updated.Delete(RootPath().Field("status"))
+	missingDeleted := updated.Delete(Root().Field(testField("status")))
 
 	requireEqual(t, original.Len(), 2)
 	requireEqual(t, updated.Len(), 1)

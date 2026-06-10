@@ -14,10 +14,10 @@
 
 package fieldpath
 
-// RootPath returns the semantic root path.
+// Root returns the semantic root path.
 //
 // The root path contains no elements and formats as "$".
-func RootPath() Path {
+func Root() Path {
 	return Path{}
 }
 
@@ -30,7 +30,7 @@ func NewPath(elements ...Element) (Path, error) {
 		elements: cloneElements(elements),
 	}
 
-	if err := path.Validate(); err != nil {
+	if err := path.ValidateStructure(); err != nil {
 		return Path{}, err
 	}
 

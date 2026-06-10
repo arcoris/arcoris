@@ -20,7 +20,7 @@ package fieldpath
 // receiver. The inserted path must be valid; malformed paths panic because this
 // method has no error return and Set cannot store invalid paths.
 func (s Set) Insert(path Path) Set {
-	if err := path.Validate(); err != nil {
+	if err := path.ValidateStructure(); err != nil {
 		panic(err)
 	}
 

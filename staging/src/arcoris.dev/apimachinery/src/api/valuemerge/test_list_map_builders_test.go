@@ -47,9 +47,9 @@ func conditionItem(conditionType string, status string) value.Value {
 }
 
 func conditionPath(conditionType string) fieldpath.Path {
-	return root().Field("conditions").Select(
+	return root().Field(testFieldName("conditions")).Select(
 		fieldpath.MustSelector(
-			fieldpath.NewSelectorEntry("type", fieldpath.StringLiteral(conditionType)),
+			fieldpath.NewSelectorEntry(testFieldName("type"), fieldpath.StringLiteral(conditionType)),
 		),
 	)
 }
@@ -60,7 +60,7 @@ func mergeConditions(
 	fields fieldpath.Set,
 ) (value.Value, error) {
 	return MergeAt(
-		root().Field("conditions"),
+		root().Field(testFieldName("conditions")),
 		base,
 		overlay,
 		conditionListDescriptor(),

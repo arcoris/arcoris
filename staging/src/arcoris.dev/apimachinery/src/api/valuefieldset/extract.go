@@ -31,7 +31,7 @@ func Extract(
 	descriptor types.Descriptor,
 	opts Options,
 ) (fieldpath.Set, error) {
-	return ExtractAt(fieldpath.RootPath(), val, descriptor, opts)
+	return ExtractAt(fieldpath.Root(), val, descriptor, opts)
 }
 
 // ExtractAt returns the semantic paths explicitly mentioned by v from path.
@@ -45,7 +45,7 @@ func ExtractAt(
 	descriptor types.Descriptor,
 	opts Options,
 ) (fieldpath.Set, error) {
-	if err := path.Validate(); err != nil {
+	if err := path.ValidateStructure(); err != nil {
 		return fieldpath.Set{}, wrapAt(
 			path,
 			ErrInvalidDescriptor,

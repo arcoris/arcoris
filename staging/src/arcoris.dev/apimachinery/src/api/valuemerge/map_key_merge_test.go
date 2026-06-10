@@ -23,11 +23,11 @@ import (
 
 func TestMergeMapMemberPreservesUnselectedKey(t *testing.T) {
 	got, err := newMerger(Options{}).mergeMapMember(
-		root().Key("app"),
+		root().Key(testMapKey("app")),
 		valuepresence.Present(str("old")),
 		valuepresence.Present(str("new")),
 		types.String().Descriptor(),
-		pathSet(root().Key("other")),
+		pathSet(root().Key(testMapKey("other"))),
 		0,
 	)
 	if err != nil {
@@ -39,11 +39,11 @@ func TestMergeMapMemberPreservesUnselectedKey(t *testing.T) {
 
 func TestMergeMapMemberMergesSelectedKey(t *testing.T) {
 	got, err := newMerger(Options{}).mergeMapMember(
-		root().Key("app"),
+		root().Key(testMapKey("app")),
 		valuepresence.Present(str("old")),
 		valuepresence.Present(str("new")),
 		types.String().Descriptor(),
-		pathSet(root().Key("app")),
+		pathSet(root().Key(testMapKey("app"))),
 		0,
 	)
 	if err != nil {

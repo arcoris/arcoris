@@ -22,7 +22,7 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestExtractStartsAtRootPath(t *testing.T) {
+func TestExtractStartsAtRoot(t *testing.T) {
 	got, err := Extract(
 		value.StringValue("api"),
 		types.String().Descriptor(),
@@ -30,7 +30,7 @@ func TestExtractStartsAtRootPath(t *testing.T) {
 	)
 	requireNoError(t, err)
 
-	requireFieldSet(t, got, fieldpath.RootPath())
+	requireFieldSet(t, got, fieldpath.Root())
 }
 
 func TestExtractAtPreservesBasePath(t *testing.T) {
@@ -63,19 +63,6 @@ func TestExtractRejectsInvalidDescriptor(t *testing.T) {
 	requireErrorPath(t, err, "$")
 }
 
-func TestExtractAtRejectsInvalidBasePath(t *testing.T) {
-	_, err := ExtractAt(
-		fieldpath.RootPath().Field(""),
-		value.StringValue("api"),
-		types.String().Descriptor(),
-		Options{},
-	)
-
-	requireErrorIs(t, err, ErrInvalidDescriptor)
-	requireErrorIs(t, err, fieldpath.ErrInvalidPath)
-	requireErrorPath(t, err, `$.""`)
-}
-
 func TestExtractReturnsSortedUniqueSet(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("zeta").String().Optional(),
@@ -92,8 +79,8 @@ func TestExtractReturnsSortedUniqueSet(t *testing.T) {
 	requireFieldSet(
 		t,
 		got,
-		fieldpath.RootPath().Field("alpha"),
-		fieldpath.RootPath().Field("zeta"),
+		fieldpath.Root().Field(testFieldName("alpha")),
+		fieldpath.Root().Field(testFieldName("zeta")),
 	)
 }
 

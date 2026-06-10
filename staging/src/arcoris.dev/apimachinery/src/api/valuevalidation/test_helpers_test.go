@@ -170,9 +170,9 @@ func mustDate(t *testing.T, year int, month time.Month, day int) value.Value {
 }
 
 func rootField(names ...string) fieldpath.Path {
-	path := fieldpath.RootPath()
+	path := fieldpath.Root()
 	for _, name := range names {
-		path = path.Field(name)
+		path = path.Field(fieldpath.MustFieldName(name))
 	}
 
 	return path

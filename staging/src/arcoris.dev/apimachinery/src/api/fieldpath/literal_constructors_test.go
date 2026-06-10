@@ -22,7 +22,7 @@ import (
 func TestBoolLiteral(t *testing.T) {
 	value := BoolLiteral(true)
 
-	got, ok := value.BoolValue()
+	got, ok := value.AsBool()
 	requireEqual(t, ok, true)
 	requireEqual(t, got, true)
 	requireEqual(t, value.Kind(), LiteralBool)
@@ -31,7 +31,7 @@ func TestBoolLiteral(t *testing.T) {
 func TestStringLiteral(t *testing.T) {
 	value := StringLiteral("Ready")
 
-	got, ok := value.StringValue()
+	got, ok := value.AsString()
 	requireEqual(t, ok, true)
 	requireEqual(t, got, "Ready")
 	requireEqual(t, value.Kind(), LiteralString)
@@ -40,7 +40,7 @@ func TestStringLiteral(t *testing.T) {
 func TestStringLiteralAllowsEmptyString(t *testing.T) {
 	value := StringLiteral("")
 
-	got, ok := value.StringValue()
+	got, ok := value.AsString()
 	requireEqual(t, ok, true)
 	requireEqual(t, got, "")
 }
@@ -48,7 +48,7 @@ func TestStringLiteralAllowsEmptyString(t *testing.T) {
 func TestInt64Literal(t *testing.T) {
 	value := Int64Literal(-7)
 
-	got, ok := value.Int64Value()
+	got, ok := value.AsInt64()
 	requireEqual(t, ok, true)
 	requireEqual(t, got, int64(-7))
 }
@@ -56,7 +56,7 @@ func TestInt64Literal(t *testing.T) {
 func TestUint64Literal(t *testing.T) {
 	value := Uint64Literal(7)
 
-	got, ok := value.Uint64Value()
+	got, ok := value.AsUint64()
 	requireEqual(t, ok, true)
 	requireEqual(t, got, uint64(7))
 }
@@ -64,7 +64,7 @@ func TestUint64Literal(t *testing.T) {
 func TestIntegerLiteralMinInt64(t *testing.T) {
 	value := Int64Literal(math.MinInt64)
 
-	got, ok := value.Int64Value()
+	got, ok := value.AsInt64()
 	requireEqual(t, ok, true)
 	requireEqual(t, got, int64(math.MinInt64))
 }
@@ -72,7 +72,7 @@ func TestIntegerLiteralMinInt64(t *testing.T) {
 func TestIntegerLiteralMaxUint64(t *testing.T) {
 	value := Uint64Literal(math.MaxUint64)
 
-	got, ok := value.Uint64Value()
+	got, ok := value.AsUint64()
 	requireEqual(t, ok, true)
 	requireEqual(t, got, uint64(math.MaxUint64))
 }

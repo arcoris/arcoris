@@ -14,8 +14,11 @@
 
 package fieldpath
 
-// Validate checks whether s is a canonical selector with unique field names.
-func (s Selector) Validate() error {
+// ValidateStructure checks whether s is a canonical selector with unique field names.
+//
+// It does not prove that selector fields exist in a descriptor, that they are
+// stable list-map keys, or that the selector matches any concrete payload item.
+func (s Selector) ValidateStructure() error {
 	if len(s.entries) == 0 {
 		return nested(
 			ErrInvalidSelector,
@@ -26,7 +29,7 @@ func (s Selector) Validate() error {
 	}
 
 	for i, entry := range s.entries {
-		if err := entry.Validate(); err != nil {
+		if err := entry.ValidateStructure(); err != nil {
 			return nested(
 				ErrInvalidSelector,
 				ErrorReasonInvalidEntry,
@@ -44,7 +47,7 @@ func (s Selector) Validate() error {
 				ErrInvalidSelector,
 				ErrorReasonDuplicateSelectorField,
 				"selector field name is duplicated",
-				ErrDuplicateField,
+				ErrDuplicateSelectorField,
 			)
 		}
 

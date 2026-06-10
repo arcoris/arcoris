@@ -17,8 +17,8 @@ package fieldpath
 import "testing"
 
 func TestElementCompare(t *testing.T) {
-	requireEqual(t, FieldElement("a").Compare(FieldElement("b")), -1)
-	requireEqual(t, KeyElement("a").Compare(KeyElement("b")), -1)
-	requireEqual(t, IndexElement(0).Compare(IndexElement(1)), -1)
-	requireEqual(t, FieldElement("a").Compare(KeyElement("a")), -1)
+	requireEqual(t, testFieldElement("a").Compare(testFieldElement("b")), -1)
+	requireEqual(t, testKeyElement("a").Compare(testKeyElement("b")), -1)
+	requireEqual(t, MustIndexElement(0).Compare(MustIndexElement(1)), -1)
+	requireEqual(t, testFieldElement("a").Compare(testKeyElement("a")), -1)
 }

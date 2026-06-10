@@ -28,7 +28,7 @@ func TestMergeUnknownRejectSelectedUnknownReturnsUnknownField(t *testing.T) {
 		obj(member("xExtra", str("old"))),
 		obj(member("xExtra", str("new"))),
 		descriptor,
-		pathSet(root().Field("xExtra")),
+		pathSet(root().Field(testFieldName("xExtra"))),
 		Options{},
 	)
 
@@ -44,7 +44,7 @@ func TestMergeUnknownRejectUnselectedBaseUnknownReturnsUnknownField(t *testing.T
 		obj(member("name", str("old")), member("xExtra", str("old"))),
 		obj(member("name", str("new"))),
 		descriptor,
-		pathSet(root().Field("name")),
+		pathSet(root().Field(testFieldName("name"))),
 		Options{},
 	)
 
@@ -60,7 +60,7 @@ func TestMergeUnknownRejectUnselectedOverlayUnknownReturnsUnknownField(t *testin
 		obj(member("name", str("old"))),
 		obj(member("name", str("new")), member("xExtra", str("new"))),
 		descriptor,
-		pathSet(root().Field("name")),
+		pathSet(root().Field(testFieldName("name"))),
 		Options{},
 	)
 
@@ -78,7 +78,7 @@ func TestMergeUnknownPruneIgnoresUnknown(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Field("xExtra")),
+		pathSet(root().Field(testFieldName("xExtra"))),
 		Options{},
 	)
 	if err != nil {
@@ -98,7 +98,7 @@ func TestMergeUnknownPruneUnselectedBaseUnknownPruned(t *testing.T) {
 		obj(member("name", str("old")), member("xExtra", str("old"))),
 		obj(member("name", str("new"))),
 		descriptor,
-		pathSet(root().Field("name")),
+		pathSet(root().Field(testFieldName("name"))),
 		Options{},
 	)
 	if err != nil {
@@ -116,7 +116,7 @@ func TestMergeUnknownPruneSelectedUnknownIgnored(t *testing.T) {
 		obj(member("xExtra", str("old"))),
 		obj(member("xExtra", str("new"))),
 		descriptor,
-		pathSet(root().Field("xExtra")),
+		pathSet(root().Field(testFieldName("xExtra"))),
 		Options{},
 	)
 	if err != nil {
@@ -135,7 +135,7 @@ func TestMergeUnknownPreserveOpaqueUnselectedBaseUnknownPreserveOpaque(t *testin
 		obj(member("name", str("old")), member("xExtra", str("old"))),
 		obj(member("name", str("new"))),
 		descriptor,
-		pathSet(root().Field("name")),
+		pathSet(root().Field(testFieldName("name"))),
 		Options{},
 	)
 	if err != nil {
@@ -154,7 +154,7 @@ func TestMergeUnknownPreserveOpaqueExactCopiesOpaque(t *testing.T) {
 		obj(member("xExtra", obj(member("nested", str("old"))))),
 		obj(member("xExtra", overlayExtra)),
 		descriptor,
-		pathSet(root().Field("xExtra")),
+		pathSet(root().Field(testFieldName("xExtra"))),
 		Options{},
 	)
 	if err != nil {
@@ -176,7 +176,7 @@ func TestMergeUnknownPreserveOpaqueRemovesOpaqueWhenOverlayAbsent(t *testing.T) 
 		obj(member("xExtra", str("old"))),
 		obj(),
 		descriptor,
-		pathSet(root().Field("xExtra")),
+		pathSet(root().Field(testFieldName("xExtra"))),
 		Options{},
 	)
 	if err != nil {
@@ -193,7 +193,7 @@ func TestMergeUnknownPreserveOpaqueDescendantSelectionUnsupported(t *testing.T) 
 		obj(member("xExtra", obj(member("nested", str("old"))))),
 		obj(member("xExtra", obj(member("nested", str("new"))))),
 		descriptor,
-		pathSet(root().Field("xExtra").Field("nested")),
+		pathSet(root().Field(testFieldName("xExtra")).Field(testFieldName("nested"))),
 		Options{},
 	)
 

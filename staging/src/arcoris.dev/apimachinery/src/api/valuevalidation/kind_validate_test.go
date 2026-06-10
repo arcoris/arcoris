@@ -71,7 +71,7 @@ func TestRequireKindAcceptsExpectedKind(t *testing.T) {
 	run := newValidator(Options{})
 
 	ok := run.requireKind(
-		fieldpath.RootPath(),
+		fieldpath.Root(),
 		value.StringValue("main"),
 		value.KindString,
 		types.DescriptorString,
@@ -89,7 +89,7 @@ func TestRequireKindRecordsMismatch(t *testing.T) {
 	run := newValidator(Options{})
 
 	ok := run.requireKind(
-		fieldpath.RootPath(),
+		fieldpath.Root(),
 		value.StringValue("main"),
 		value.KindInteger,
 		types.DescriptorInt32,

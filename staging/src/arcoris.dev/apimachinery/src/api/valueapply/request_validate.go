@@ -17,7 +17,7 @@ package valueapply
 // validateRequestShape checks caller-owned request metadata before invoking
 // lower-level value packages.
 func validateRequestShape(req Request) error {
-	if err := req.Path.Validate(); err != nil {
+	if err := req.Path.ValidateStructure(); err != nil {
 		return wrapAt(
 			req.Path,
 			ErrInvalidPath,

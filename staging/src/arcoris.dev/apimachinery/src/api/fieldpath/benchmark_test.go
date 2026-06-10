@@ -18,11 +18,11 @@ import "testing"
 
 var (
 	benchmarkPathSink Path
-	benchmarkSetSink  PathSet
+	benchmarkSetSink  Set
 	benchmarkBoolSink bool
 )
 
-func BenchmarkParseSelectorPath(b *testing.B) {
+func BenchmarkParseCanonicalSelectorPath(b *testing.B) {
 	text := `$.routes[{"host":"api.example.com","port":443}].backend`
 
 	b.ReportAllocs()
@@ -30,7 +30,7 @@ func BenchmarkParseSelectorPath(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		var err error
-		benchmarkPathSink, err = Parse(text)
+		benchmarkPathSink, err = ParseCanonical(text)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -38,8 +38,8 @@ func BenchmarkParseSelectorPath(b *testing.B) {
 }
 
 func BenchmarkPathAppend(b *testing.B) {
-	base := RootPath().Field("spec").Field("template")
-	element := FieldElement("containers")
+	base := Root().Field(MustFieldName("spec")).Field(MustFieldName("template"))
+	element := MustFieldElement("containers")
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -49,13 +49,13 @@ func BenchmarkPathAppend(b *testing.B) {
 	}
 }
 
-func BenchmarkNewPathSet(b *testing.B) {
+func BenchmarkNewSet(b *testing.B) {
 	paths := []Path{
-		RootPath().Field("status"),
-		RootPath().Field("spec").Field("replicas"),
-		RootPath().Field("metadata").Field("labels").Key("app"),
-		RootPath().Field("spec"),
-		RootPath().Field("status"),
+		Root().Field(MustFieldName("status")),
+		Root().Field(MustFieldName("spec")).Field(MustFieldName("replicas")),
+		Root().Field(MustFieldName("metadata")).Field(MustFieldName("labels")).Key(MustMapKey("app")),
+		Root().Field(MustFieldName("spec")),
+		Root().Field(MustFieldName("status")),
 	}
 
 	b.ReportAllocs()
@@ -63,21 +63,21 @@ func BenchmarkNewPathSet(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		var err error
-		benchmarkSetSink, err = NewPathSet(paths...)
+		benchmarkSetSink, err = NewSet(paths...)
 		if err != nil {
 			b.Fatal(err)
 		}
 	}
 }
 
-func BenchmarkPathSetHas(b *testing.B) {
-	set := MustPathSet(
-		RootPath().Field("metadata").Field("labels").Key("app"),
-		RootPath().Field("spec"),
-		RootPath().Field("spec").Field("replicas"),
-		RootPath().Field("status"),
+func BenchmarkSetHas(b *testing.B) {
+	set := MustSet(
+		Root().Field(MustFieldName("metadata")).Field(MustFieldName("labels")).Key(MustMapKey("app")),
+		Root().Field(MustFieldName("spec")),
+		Root().Field(MustFieldName("spec")).Field(MustFieldName("replicas")),
+		Root().Field(MustFieldName("status")),
 	)
-	target := RootPath().Field("spec").Field("replicas")
+	target := Root().Field(MustFieldName("spec")).Field(MustFieldName("replicas"))
 
 	b.ReportAllocs()
 	b.ResetTimer()

@@ -16,18 +16,12 @@ package fieldpath
 
 import "testing"
 
-func TestPathSetHas(t *testing.T) {
-	set := MustPathSet(
-		RootPath().Field("spec"),
-		RootPath().Field("status"),
-	)
+func TestElementCloneDetachesSelector(t *testing.T) {
+	selector := MustSelector(testSelectorEntry("type", StringLiteral("Ready")))
+	element := testSelectorElement(selector)
 
-	requireEqual(t, set.Has(RootPath().Field("spec")), true)
-	requireEqual(t, set.Has(RootPath().Field("metadata")), false)
-}
+	cloned := element.clone()
+	element.selector.entries[0] = testSelectorEntry("type", StringLiteral("Changed"))
 
-func TestEmptyPathSetHas(t *testing.T) {
-	var set PathSet
-
-	requireEqual(t, set.Has(RootPath()), false)
+	requireEqual(t, cloned.String(), `[{"type":"Ready"}]`)
 }

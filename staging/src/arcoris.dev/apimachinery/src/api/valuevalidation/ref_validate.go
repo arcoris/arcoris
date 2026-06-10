@@ -45,7 +45,7 @@ func (v *validator) addRefError(err error) {
 	refError, ok := typeref.AsError(err)
 	if !ok {
 		v.wrap(
-			fieldpath.RootPath(),
+			fieldpath.Root(),
 			ErrInvalidDescriptor,
 			ErrorReasonInvalidDescriptor,
 			"DescriptorRef traversal failed",

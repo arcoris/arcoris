@@ -26,7 +26,7 @@ import (
 )
 
 func path(text string) fieldpath.Path {
-	p, err := fieldpath.Parse(text)
+	p, err := fieldpath.ParseCanonical(text)
 	if err != nil {
 		panic(err)
 	}
@@ -39,7 +39,15 @@ func fields(paths ...fieldpath.Path) fieldpath.Set {
 }
 
 func root() fieldpath.Path {
-	return fieldpath.RootPath()
+	return fieldpath.Root()
+}
+
+func testFieldName(name string) fieldpath.FieldName {
+	return fieldpath.MustFieldName(name)
+}
+
+func testMapKey(key string) fieldpath.MapKey {
+	return fieldpath.MustMapKey(key)
 }
 
 func owner(name string) fieldownership.Owner {
@@ -272,12 +280,12 @@ func labelPath() fieldpath.Path {
 
 func readySelector() fieldpath.Selector {
 	return fieldpath.MustSelector(
-		fieldpath.NewSelectorEntry("type", fieldpath.StringLiteral("Ready")),
+		fieldpath.NewSelectorEntry(testFieldName("type"), fieldpath.StringLiteral("Ready")),
 	)
 }
 
 func readyStatusPath() fieldpath.Path {
-	return root().Select(readySelector()).Field("status")
+	return root().Select(readySelector()).Field(testFieldName("status"))
 }
 
 func readyCondition(status string) value.Value {

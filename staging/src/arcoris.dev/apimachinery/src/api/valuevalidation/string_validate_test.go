@@ -81,7 +81,7 @@ func TestValidateStringPatternReusesPatternWithinRun(t *testing.T) {
 	payload := mustList(t, value.StringValue("ok"), value.StringValue("bad1"))
 
 	err := valuevalidation.ValidateAt(
-		fieldpath.RootPath().Field("names"),
+		fieldpath.Root().Field(fieldpath.MustFieldName("names")),
 		payload,
 		shape,
 		valuevalidation.Options{},

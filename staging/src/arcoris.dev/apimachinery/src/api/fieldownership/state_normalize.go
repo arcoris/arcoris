@@ -71,7 +71,7 @@ func mergeEntriesByOwner(entries []Entry) []Entry {
 // keeps State robust if a future internal caller receives a malformed set value.
 func validateFields(fields fieldpath.Set, detail string) error {
 	for _, p := range fields.Paths() {
-		if err := p.Validate(); err != nil {
+		if err := p.ValidateStructure(); err != nil {
 			return wrapPathError(
 				p,
 				detail,

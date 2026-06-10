@@ -16,10 +16,13 @@ package fieldpath
 
 import "strconv"
 
-// Validate checks whether p contains only valid semantic path elements.
-func (p Path) Validate() error {
+// ValidateStructure checks whether p contains only valid semantic path elements.
+//
+// It does not check the path against a descriptor, object schema, ownership
+// policy, apply strategy, storage layout, or wire format.
+func (p Path) ValidateStructure() error {
 	for i, element := range p.elements {
-		if err := element.Validate(); err != nil {
+		if err := element.ValidateStructure(); err != nil {
 			return nested(
 				ErrInvalidPath,
 				ErrorReasonInvalidElement,

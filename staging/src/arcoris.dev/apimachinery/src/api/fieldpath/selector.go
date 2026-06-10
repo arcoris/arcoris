@@ -40,18 +40,47 @@ func (s Selector) IsZero() bool {
 }
 
 // Entries returns a detached canonical slice of selector entries.
-//
-// The returned slice belongs to the caller. Mutating it does not affect the
-// selector.
 func (s Selector) Entries() []SelectorEntry {
 	return cloneEntries(s.entries)
+}
+
+// Entry returns one canonical selector entry by index.
+func (s Selector) Entry(index int) (SelectorEntry, bool) {
+	if index < 0 || index >= len(s.entries) {
+		return SelectorEntry{}, false
+	}
+
+	return s.entries[index], true
+}
+
+// Fields returns detached selector field names in canonical entry order.
+func (s Selector) Fields() []FieldName {
+	if s.entries == nil {
+		return nil
+	}
+
+	fields := make([]FieldName, len(s.entries))
+	for i, entry := range s.entries {
+		fields[i] = entry.field
+	}
+
+	return fields
+}
+
+// ForEach visits canonical selector entries in order until fn returns false.
+func (s Selector) ForEach(fn func(index int, entry SelectorEntry) bool) {
+	for i, entry := range s.entries {
+		if !fn(i, entry) {
+			return
+		}
+	}
 }
 
 // Get returns the selector literal associated with field.
 //
 // Selectors model exact associative-list identity, so field lookup is a simple
 // exact-name match and does not interpret wildcards or query expressions.
-func (s Selector) Get(field string) (Literal, bool) {
+func (s Selector) Get(field FieldName) (Literal, bool) {
 	for _, entry := range s.entries {
 		if entry.field == field {
 			return entry.value, true
@@ -62,23 +91,7 @@ func (s Selector) Get(field string) (Literal, bool) {
 }
 
 // Has reports whether s contains field.
-func (s Selector) Has(field string) bool {
+func (s Selector) Has(field FieldName) bool {
 	_, ok := s.Get(field)
 	return ok
-}
-
-// clone returns a detached selector copy.
-func (s Selector) clone() Selector {
-	return Selector{entries: cloneEntries(s.entries)}
-}
-
-// cloneEntries returns a caller-owned entry slice copy.
-func cloneEntries(entries []SelectorEntry) []SelectorEntry {
-	if entries == nil {
-		return nil
-	}
-
-	cloned := make([]SelectorEntry, len(entries))
-	copy(cloned, entries)
-	return cloned
 }

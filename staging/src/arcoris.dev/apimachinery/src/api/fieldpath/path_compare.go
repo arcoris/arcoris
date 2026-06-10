@@ -14,10 +14,7 @@
 
 package fieldpath
 
-import (
-	"cmp"
-	"strings"
-)
+import "cmp"
 
 // Equal reports whether e and other are the same semantic path element.
 func (e Element) Equal(other Element) bool {
@@ -34,8 +31,10 @@ func (e Element) Compare(other Element) int {
 	}
 
 	switch e.kind {
-	case ElementField, ElementKey:
-		return strings.Compare(e.name, other.name)
+	case ElementField:
+		return cmp.Compare(e.field, other.field)
+	case ElementKey:
+		return cmp.Compare(e.key, other.key)
 	case ElementIndex:
 		return cmp.Compare(e.index, other.index)
 	case ElementSelector:

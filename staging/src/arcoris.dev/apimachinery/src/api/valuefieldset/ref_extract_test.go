@@ -58,7 +58,7 @@ func TestExtractRefResolvesObject(t *testing.T) {
 	)
 	requireNoError(t, err)
 
-	requireFieldSet(t, got, path.Field("image"))
+	requireFieldSet(t, got, path.Field(testFieldName("image")))
 }
 
 func TestExtractRefRejectsMissingResolver(t *testing.T) {

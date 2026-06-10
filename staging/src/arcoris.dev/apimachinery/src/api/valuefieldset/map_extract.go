@@ -67,7 +67,7 @@ func (e *extractor) extractMap(
 	out := fieldpath.EmptySet()
 	for _, mapMember := range valueView.Members() {
 		memberSet, err := e.extract(
-			path.Key(mapMember.Name.String()),
+			path.Key(fieldpath.MustMapKey(mapMember.Name.String())),
 			mapMember.Value,
 			valueDescriptor,
 			depth+1,

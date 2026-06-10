@@ -17,8 +17,8 @@ package fieldpath
 import "testing"
 
 func TestSelectorEntryCompare(t *testing.T) {
-	left := NewSelectorEntry("a", StringLiteral("x"))
-	right := NewSelectorEntry("b", StringLiteral("x"))
+	left := testSelectorEntry("a", StringLiteral("x"))
+	right := testSelectorEntry("b", StringLiteral("x"))
 
 	requireEqual(t, left.Compare(right), -1)
 }

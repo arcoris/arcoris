@@ -37,7 +37,7 @@ func (m *merger) mergeBaseObjectMembers(
 	for _, member := range baseMembers {
 		name := member.Name.String()
 		field, known := declared[name]
-		childPath := path.Field(name)
+		childPath := path.Field(fieldpath.MustFieldName(name))
 
 		next, err := m.mergeObjectMember(
 			childPath,
@@ -77,7 +77,7 @@ func (m *merger) appendOverlayObjectMembers(
 		}
 
 		field, known := declared[name]
-		childPath := path.Field(name)
+		childPath := path.Field(fieldpath.MustFieldName(name))
 		next, err := m.mergeObjectMember(
 			childPath,
 			valuepresence.Absent(),

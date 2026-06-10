@@ -22,7 +22,7 @@ import (
 )
 
 func TestFailureBuildsStructuredError(t *testing.T) {
-	err := failure(fieldpath.RootPath(), FailureMissingKey, "missing")
+	err := failure(fieldpath.Root(), FailureMissingKey, "missing")
 
 	requireErrorKind(t, err, FailureMissingKey)
 }
@@ -30,7 +30,7 @@ func TestFailureBuildsStructuredError(t *testing.T) {
 func TestFailureWithCauseBuildsStructuredError(t *testing.T) {
 	cause := errors.New("cause")
 	err := failureWithCause(
-		fieldpath.RootPath(),
+		fieldpath.Root(),
 		FailureInvalidSelector,
 		"invalid selector",
 		cause,

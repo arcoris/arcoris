@@ -23,7 +23,7 @@ import (
 
 func TestLiteralFromValueRejectsUnsupportedDescriptor(t *testing.T) {
 	_, err := literalFromValue(
-		conditionPath(0).Field("key"),
+		conditionPath(0).Field(testFieldName("key")),
 		value.BytesValue([]byte("x")),
 		types.Bytes().Descriptor(),
 		newReferenceResolver(Options{}),

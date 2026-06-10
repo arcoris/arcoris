@@ -65,7 +65,7 @@ func (c *comparer) equalMap(
 			return false, nil
 		}
 
-		equal, err := c.equalValue(path.Key(name), oldMember, newMember.Value, valueDescriptor, depth+1)
+		equal, err := c.equalValue(path.Key(fieldpath.MustMapKey(name)), oldMember, newMember.Value, valueDescriptor, depth+1)
 		if err != nil {
 			return false, err
 		}

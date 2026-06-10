@@ -101,7 +101,7 @@ func TestApplyDroppedParentPreservedWhenOtherOwnerOwnsDescendant(t *testing.T) {
 		Descriptor: typesObjectWithSpec(),
 		Ownership: state(
 			entry("user", specPath()),
-			entry("other", specPath().Field("image")),
+			entry("other", specPath().Field(testFieldName("image"))),
 		),
 	}
 

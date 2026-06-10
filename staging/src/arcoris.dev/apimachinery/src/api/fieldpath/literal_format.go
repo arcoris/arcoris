@@ -18,8 +18,8 @@ import (
 	"strconv"
 )
 
-// String returns the canonical diagnostic form of l.
-func (l Literal) String() string {
+// CanonicalText returns the canonical text form of l.
+func (l Literal) CanonicalText() string {
 	switch l.kind {
 	case LiteralBool:
 		return strconv.FormatBool(l.boolValue)
@@ -30,4 +30,9 @@ func (l Literal) String() string {
 	default:
 		return "<invalid>"
 	}
+}
+
+// String returns diagnostic text for l.
+func (l Literal) String() string {
+	return l.CanonicalText()
 }

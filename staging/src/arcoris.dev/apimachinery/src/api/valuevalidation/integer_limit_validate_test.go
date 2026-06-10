@@ -49,7 +49,7 @@ func TestValidateIntegerLimitsReportsBounds(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			run := newValidator(Options{})
-			validateIntegerLimits(run, fieldpath.RootPath(), tt.got, tt.limits)
+			validateIntegerLimits(run, fieldpath.Root(), tt.got, tt.limits)
 
 			err := run.result()
 			requireInternalError(t, err, ErrValueOutOfRange, tt.reason, "$")
@@ -62,7 +62,7 @@ func TestValidateIntegerLimitsAcceptsValueWithinBounds(t *testing.T) {
 
 	validateIntegerLimits(
 		run,
-		fieldpath.RootPath(),
+		fieldpath.Root(),
 		int64(2),
 		integerLimits[int64]{
 			lower: integerBound[int64]{value: 1, set: true},
@@ -79,7 +79,7 @@ func TestIntegerLimitsUnwrapSentinel(t *testing.T) {
 	run := newValidator(Options{})
 	validateIntegerLimits(
 		run,
-		fieldpath.RootPath(),
+		fieldpath.Root(),
 		int64(0),
 		integerLimits[int64]{
 			lower: integerBound[int64]{value: 1, set: true},

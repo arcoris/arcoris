@@ -23,7 +23,7 @@ import (
 
 func TestErrorAtBuildsStructuredDiagnostic(t *testing.T) {
 	err := errorAt(
-		fieldpath.RootPath().Field("name"),
+		fieldpath.Root().Field(fieldpath.MustFieldName("name")),
 		ErrMissingField,
 		ErrorReasonMissingField,
 		"name is required",
@@ -41,7 +41,7 @@ func TestErrorAtBuildsStructuredDiagnostic(t *testing.T) {
 func TestWrapAtPreservesCause(t *testing.T) {
 	cause := errors.New("nested failure")
 	err := wrapAt(
-		fieldpath.RootPath().Field("name"),
+		fieldpath.Root().Field(fieldpath.MustFieldName("name")),
 		ErrInvalidDescriptor,
 		ErrorReasonInvalidDescriptor,
 		"descriptor failed",

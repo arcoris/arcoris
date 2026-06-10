@@ -22,10 +22,12 @@ func TestPathParserParseBracketElementSelector(t *testing.T) {
 	element, err := p.parseBracketElement()
 	requireNoError(t, err)
 
+	selector, ok := element.AsSelector()
 	requireEqual(t, element.Kind(), ElementSelector)
+	requireEqual(t, ok, true)
 	requireEqual(
 		t,
-		element.Selector().String(),
+		selector.String(),
 		`{"host":"api.example.com","port":443}`,
 	)
 	requireEqual(t, p.done(), true)

@@ -20,14 +20,14 @@ func TestSetHasAnyUnder(t *testing.T) {
 	set := MustSet(
 		setSpecPath(),
 		setReplicasPath(),
-		RootPath().Field("spec").Field("template").Field("metadata").Field("labels").Key("app"),
-		RootPath().Field("metadata").Field("name"),
+		Root().Field(testField("spec")).Field(testField("template")).Field(testField("metadata")).Field(testField("labels")).Key(testKey("app")),
+		Root().Field(testField("metadata")).Field(testField("name")),
 	)
 
 	requireEqual(t, set.Has(setSpecPath()), true)
 	requireEqual(t, set.HasAnyUnder(setSpecPath()), true)
 	requireEqual(t, set.HasAnyUnder(setReplicasPath()), true)
-	requireEqual(t, set.HasAnyUnder(RootPath().Field("status")), false)
+	requireEqual(t, set.HasAnyUnder(Root().Field(testField("status"))), false)
 }
 
 func TestSetHasAnyUnderMatchesDescendantWithoutExactPrefix(t *testing.T) {
@@ -38,7 +38,7 @@ func TestSetHasAnyUnderMatchesDescendantWithoutExactPrefix(t *testing.T) {
 }
 
 func TestSetUnder(t *testing.T) {
-	templateLabel := RootPath().
+	templateLabel := Root().
 		Field("spec").
 		Field("template").
 		Field("metadata").
@@ -48,7 +48,7 @@ func TestSetUnder(t *testing.T) {
 		setSpecPath(),
 		setReplicasPath(),
 		templateLabel,
-		RootPath().Field("metadata").Field("name"),
+		Root().Field(testField("metadata")).Field(testField("name")),
 	)
 
 	underSpec := set.Under(setSpecPath())
@@ -63,7 +63,7 @@ func TestSetUnder(t *testing.T) {
 func TestSetUnderReturnsEmptySetWhenPrefixAbsent(t *testing.T) {
 	set := MustSet(setReplicasPath(), setImagePath())
 
-	underStatus := set.Under(RootPath().Field("status"))
+	underStatus := set.Under(Root().Field(testField("status")))
 
 	requireEqual(t, underStatus.IsEmpty(), true)
 	requireEqual(t, underStatus.String(), "{}")

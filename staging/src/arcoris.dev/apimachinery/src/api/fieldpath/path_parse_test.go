@@ -35,7 +35,7 @@ func TestParseRoundTripExamples(t *testing.T) {
 
 	for _, text := range testCases {
 		t.Run(text, func(t *testing.T) {
-			path, err := Parse(text)
+			path, err := ParseCanonical(text)
 			requireNoError(t, err)
 			requireEqual(t, path.String(), text)
 		})
@@ -59,14 +59,14 @@ func TestParseRejectsInvalidSyntax(t *testing.T) {
 		{
 			name:   "duplicate selector field",
 			text:   `$.conditions[{"type":"Ready","type":"Scheduled"}]`,
-			target: ErrDuplicateField,
+			target: ErrDuplicateSelectorField,
 		},
 		{name: "invalid bool token", text: `$.conditions[{"ready":truthy}]`, target: ErrInvalidSyntax},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			_, err := Parse(testCase.text)
+			_, err := ParseCanonical(testCase.text)
 			requireErrorIs(t, err, ErrInvalidPath)
 			requireErrorIs(t, err, testCase.target)
 		})
@@ -74,7 +74,7 @@ func TestParseRejectsInvalidSyntax(t *testing.T) {
 }
 
 func TestParseReturnsStructuredSyntaxError(t *testing.T) {
-	_, err := Parse(`$.labels["app"`)
+	_, err := ParseCanonical(`$.labels["app"`)
 
 	var pathErr *Error
 	if !errors.As(err, &pathErr) {
@@ -87,7 +87,7 @@ func TestParseReturnsStructuredSyntaxError(t *testing.T) {
 }
 
 func TestParseQuotedFieldAndKeyDistinction(t *testing.T) {
-	path, err := Parse(`$."api-version"["api-version"]`)
+	path, err := ParseCanonical(`$."api-version"["api-version"]`)
 	requireNoError(t, err)
 
 	elements := path.Elements()

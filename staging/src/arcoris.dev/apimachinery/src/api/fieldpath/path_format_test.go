@@ -22,31 +22,31 @@ func TestPathStringExamples(t *testing.T) {
 		path Path
 		want string
 	}{
-		{"root", RootPath(), "$"},
-		{"field", RootPath().Field("spec").Field("replicas"), "$.spec.replicas"},
-		{"key app", RootPath().Field("metadata").Field("labels").Key("app"), `$.metadata.labels["app"]`},
+		{"root", Root(), "$"},
+		{"field", Root().Field(testField("spec")).Field(testField("replicas")), "$.spec.replicas"},
+		{"key app", Root().Field(testField("metadata")).Field(testField("labels")).Key(testKey("app")), `$.metadata.labels["app"]`},
 		{
 			"key dotted",
-			RootPath().Field("metadata").Field("labels").Key("app.kubernetes.io/name"),
+			Root().Field(testField("metadata")).Field(testField("labels")).Key(testKey("app.kubernetes.io/name")),
 			`$.metadata.labels["app.kubernetes.io/name"]`,
 		},
-		{"index", RootPath().Field("containers").Index(0).Field("image"), "$.containers[0].image"},
+		{"index", Root().Field(testField("containers")).Index(0).Field(testField("image")), "$.containers[0].image"},
 		{
 			"selector one key",
-			RootPath().
+			Root().
 				Field("conditions").
-				Select(MustSelector(NewSelectorEntry("type", StringLiteral("Ready")))).
+				Select(MustSelector(testSelectorEntry("type", StringLiteral("Ready")))).
 				Field("status"),
 			`$.conditions[{"type":"Ready"}].status`,
 		},
 		{
 			"selector multi key",
-			RootPath().
+			Root().
 				Field("ports").
 				Select(
 					MustSelector(
-						NewSelectorEntry("protocol", StringLiteral("TCP")),
-						NewSelectorEntry("name", StringLiteral("http")),
+						testSelectorEntry("protocol", StringLiteral("TCP")),
+						testSelectorEntry("name", StringLiteral("http")),
 					),
 				).
 				Field("port"),
@@ -54,23 +54,23 @@ func TestPathStringExamples(t *testing.T) {
 		},
 		{
 			"selector route",
-			RootPath().
+			Root().
 				Field("routes").
 				Select(
 					MustSelector(
-						NewSelectorEntry("port", Uint64Literal(443)),
-						NewSelectorEntry("host", StringLiteral("api.example.com")),
+						testSelectorEntry("port", Uint64Literal(443)),
+						testSelectorEntry("host", StringLiteral("api.example.com")),
 					),
 				).
 				Field("backend"),
 			`$.routes[{"host":"api.example.com","port":443}].backend`,
 		},
-		{"quoted field", RootPath().Field("api-version"), `$."api-version"`},
+		{"quoted field", Root().Field(testField("api-version")), `$."api-version"`},
 		{
 			"quoted field and selector",
-			RootPath().
+			Root().
 				Field("x-y-z").
-				Select(MustSelector(NewSelectorEntry("name", StringLiteral(`a"b`)))),
+				Select(MustSelector(testSelectorEntry("name", StringLiteral(`a"b`)))),
 			`$."x-y-z"[{"name":"a\"b"}]`,
 		},
 	}

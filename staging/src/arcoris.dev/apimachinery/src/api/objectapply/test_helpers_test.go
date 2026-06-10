@@ -96,7 +96,7 @@ func member(name string, val value.Value) value.RecordMember {
 
 // path parses a test path and panics on invalid literals.
 func path(text string) fieldpath.Path {
-	p, err := fieldpath.Parse(text)
+	p, err := fieldpath.ParseCanonical(text)
 	if err != nil {
 		panic(err)
 	}
@@ -219,7 +219,7 @@ func readySelector() fieldpath.Selector {
 
 // readyStatusPath returns the semantic path for Ready.status.
 func readyStatusPath() fieldpath.Path {
-	return fieldpath.RootPath().Select(readySelector()).Field("status")
+	return fieldpath.Root().Select(readySelector()).Field(fieldpath.MustFieldName("status"))
 }
 
 // readyCondition builds a condition item fixture.

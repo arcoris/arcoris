@@ -134,7 +134,7 @@ func TestValidateRejectsKindMismatch(t *testing.T) {
 }
 
 func TestValidateAtUsesBasePath(t *testing.T) {
-	basePath := fieldpath.RootPath().Field("desired").Field("replicas")
+	basePath := fieldpath.Root().Field(fieldpath.MustFieldName("desired")).Field(fieldpath.MustFieldName("replicas"))
 	err := valuevalidation.ValidateAt(
 		basePath,
 		value.StringValue("x"),

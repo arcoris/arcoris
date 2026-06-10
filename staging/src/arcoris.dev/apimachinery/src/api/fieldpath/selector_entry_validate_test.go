@@ -17,7 +17,7 @@ package fieldpath
 import "testing"
 
 func TestSelectorEntryValidateRejectsEmptyFieldName(t *testing.T) {
-	err := NewSelectorEntry("", StringLiteral("Ready")).Validate()
+	err := NewSelectorEntry(FieldName(""), StringLiteral("Ready")).ValidateStructure()
 
 	requireErrorIs(t, err, ErrInvalidEntry)
 	requireErrorIs(t, err, ErrEmptyFieldName)

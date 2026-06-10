@@ -14,25 +14,11 @@
 
 package fieldpath
 
-import "testing"
+// Path returns a detached immutable path for the current builder state.
+func (b *Builder) Path() Path {
+	if b == nil {
+		return Root()
+	}
 
-func TestPathSetEqual(t *testing.T) {
-	left := MustPathSet(
-		RootPath().Field("status"),
-		RootPath().Field("spec"),
-	)
-
-	right := MustPathSet(
-		RootPath().Field("spec"),
-		RootPath().Field("status"),
-	)
-
-	requireEqual(t, left.Equal(right), true)
-}
-
-func TestPathSetCompare(t *testing.T) {
-	left := MustPathSet(RootPath().Field("spec"))
-	right := MustPathSet(RootPath().Field("status"))
-
-	requireEqual(t, left.Compare(right), -1)
+	return Path{elements: cloneElements(b.elements)}
 }

@@ -15,13 +15,34 @@
 package fieldpath
 
 // NewSelectorEntry constructs one selector field/value pair.
-//
-// Entry construction does not validate the field name or literal. Validation is
-// deferred so callers can build composite selectors and receive one structured
-// selector-level error.
-func NewSelectorEntry(field string, value Literal) SelectorEntry {
+func NewSelectorEntry(field FieldName, value Literal) SelectorEntry {
 	return SelectorEntry{
 		field: field,
 		value: value,
 	}
+}
+
+// SelectorEntryFromString constructs one selector entry from a raw field name.
+func SelectorEntryFromString(field string, value Literal) (SelectorEntry, error) {
+	fieldName, err := NewFieldName(field)
+	if err != nil {
+		return SelectorEntry{}, err
+	}
+
+	entry := NewSelectorEntry(fieldName, value)
+	if err := entry.ValidateStructure(); err != nil {
+		return SelectorEntry{}, err
+	}
+
+	return entry, nil
+}
+
+// MustSelectorEntry constructs one selector entry or panics on invalid input.
+func MustSelectorEntry(field string, value Literal) SelectorEntry {
+	entry, err := SelectorEntryFromString(field, value)
+	if err != nil {
+		panic(err)
+	}
+
+	return entry
 }

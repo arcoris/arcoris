@@ -22,8 +22,10 @@ func TestPathParserParseFieldElementQuoted(t *testing.T) {
 	element, err := p.parseFieldElement()
 	requireNoError(t, err)
 
+	name, ok := element.AsField()
 	requireEqual(t, element.Kind(), ElementField)
-	requireEqual(t, element.Name(), "api-version")
+	requireEqual(t, ok, true)
+	requireEqual(t, name, testField("api-version"))
 	requireEqual(t, p.done(), true)
 }
 
@@ -33,8 +35,10 @@ func TestPathParserParseBracketElementKey(t *testing.T) {
 	element, err := p.parseBracketElement()
 	requireNoError(t, err)
 
+	key, ok := element.AsKey()
 	requireEqual(t, element.Kind(), ElementKey)
-	requireEqual(t, element.Name(), "app.kubernetes.io/name")
+	requireEqual(t, ok, true)
+	requireEqual(t, key, testKey("app.kubernetes.io/name"))
 	requireEqual(t, p.done(), true)
 }
 
@@ -44,7 +48,9 @@ func TestPathParserParseBracketElementIndex(t *testing.T) {
 	element, err := p.parseBracketElement()
 	requireNoError(t, err)
 
+	index, ok := element.AsIndex()
 	requireEqual(t, element.Kind(), ElementIndex)
-	requireEqual(t, element.Index(), 17)
+	requireEqual(t, ok, true)
+	requireEqual(t, index, 17)
 	requireEqual(t, p.done(), true)
 }

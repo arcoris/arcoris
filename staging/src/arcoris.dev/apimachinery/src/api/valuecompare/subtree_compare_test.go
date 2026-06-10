@@ -28,7 +28,7 @@ func TestAddSubtreeUsesValueFieldSet(t *testing.T) {
 	got, err := newComparer(Options{}).addSubtree(path, val, descriptor, EmptyResult())
 	requireNoError(t, err)
 
-	requireResult(t, got, paths(path.Field("image")), nil, nil)
+	requireResult(t, got, paths(path.Field(testFieldName("image"))), nil, nil)
 }
 
 func TestRemoveSubtreeUsesValueFieldSet(t *testing.T) {
@@ -39,5 +39,5 @@ func TestRemoveSubtreeUsesValueFieldSet(t *testing.T) {
 	got, err := newComparer(Options{}).removeSubtree(path, val, descriptor, EmptyResult())
 	requireNoError(t, err)
 
-	requireResult(t, got, nil, paths(path.Field("image")), nil)
+	requireResult(t, got, nil, paths(path.Field(testFieldName("image"))), nil)
 }

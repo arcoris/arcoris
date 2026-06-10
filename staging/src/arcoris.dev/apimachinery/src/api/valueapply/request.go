@@ -25,7 +25,7 @@ import (
 type Request struct {
 	// Path is the semantic base path for this value surface.
 	//
-	// Use fieldpath.RootPath() for root value apply.
+	// Use fieldpath.Root() for root value apply.
 	Path fieldpath.Path
 
 	// Owner is the field owner applying Applied.

@@ -19,42 +19,16 @@ package fieldpath
 // It does not describe an arbitrary predicate. Higher layers use entries only
 // for stable associative-list identity, such as {"type":"Ready"}.
 type SelectorEntry struct {
-	field string
+	field FieldName
 	value Literal
 }
 
 // Field returns the selector field name.
-func (e SelectorEntry) Field() string {
+func (e SelectorEntry) Field() FieldName {
 	return e.field
 }
 
 // Value returns the selector literal value.
-//
-// Literals are small value types, so returning them by value preserves the
-// package's immutable-by-convention boundary without extra allocations.
 func (e SelectorEntry) Value() Literal {
 	return e.value
-}
-
-// Validate checks whether e is a valid selector entry.
-func (e SelectorEntry) Validate() error {
-	if e.field == "" {
-		return nested(
-			ErrInvalidEntry,
-			ErrorReasonEmptyFieldName,
-			"selector entry field name is empty",
-			ErrEmptyFieldName,
-		)
-	}
-
-	if err := e.value.Validate(); err != nil {
-		return nested(
-			ErrInvalidEntry,
-			ErrorReasonInvalidLiteral,
-			"selector entry literal is invalid",
-			err,
-		)
-	}
-
-	return nil
 }

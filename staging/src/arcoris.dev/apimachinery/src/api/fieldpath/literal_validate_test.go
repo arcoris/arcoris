@@ -17,7 +17,7 @@ package fieldpath
 import "testing"
 
 func TestLiteralValidateRejectsZeroLiteral(t *testing.T) {
-	err := Literal{}.Validate()
+	err := Literal{}.ValidateStructure()
 
 	requireErrorIs(t, err, ErrInvalidLiteral)
 }

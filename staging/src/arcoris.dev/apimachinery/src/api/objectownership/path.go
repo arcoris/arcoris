@@ -49,7 +49,7 @@ func parsePath(path string, p Path) (fieldpath.Path, error) {
 		)
 	}
 
-	parsed, err := fieldpath.Parse(p.String())
+	parsed, err := fieldpath.ParseCanonical(p.String())
 	if err != nil {
 		return fieldpath.Path{}, wrapAt(
 			path,

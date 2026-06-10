@@ -68,7 +68,7 @@ func cycleResolver() types.Resolver {
 }
 
 func rootPath() fieldpath.Path {
-	return fieldpath.RootPath()
+	return fieldpath.Root()
 }
 
 func refType(name types.TypeName) types.Descriptor {

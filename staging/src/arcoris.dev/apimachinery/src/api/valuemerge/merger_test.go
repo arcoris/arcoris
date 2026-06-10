@@ -31,11 +31,11 @@ func TestNewMergerNormalizesMaxDepth(t *testing.T) {
 
 func TestMergerPreservesUnselectedBase(t *testing.T) {
 	got, err := newMerger(Options{}).merge(
-		root().Field("name"),
+		root().Field(testFieldName("name")),
 		valuepresence.Present(str("old")),
 		valuepresence.Present(str("new")),
 		types.String().Descriptor(),
-		pathSet(root().Field("other")),
+		pathSet(root().Field(testFieldName("other"))),
 		0,
 	)
 	if err != nil {

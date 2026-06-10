@@ -31,3 +31,39 @@ type Literal struct {
 func (l Literal) Kind() LiteralKind {
 	return l.kind
 }
+
+// AsBool returns the stored boolean when l is a bool literal.
+func (l Literal) AsBool() (bool, bool) {
+	if l.kind != LiteralBool {
+		return false, false
+	}
+
+	return l.boolValue, true
+}
+
+// AsString returns the stored string when l is a string literal.
+func (l Literal) AsString() (string, bool) {
+	if l.kind != LiteralString {
+		return "", false
+	}
+
+	return l.stringValue, true
+}
+
+// AsInt64 returns the stored integer when l fits into int64.
+func (l Literal) AsInt64() (int64, bool) {
+	if l.kind != LiteralInteger {
+		return 0, false
+	}
+
+	return l.intValue.int64Value()
+}
+
+// AsUint64 returns the stored integer when l is non-negative.
+func (l Literal) AsUint64() (uint64, bool) {
+	if l.kind != LiteralInteger {
+		return 0, false
+	}
+
+	return l.intValue.uint64Value()
+}

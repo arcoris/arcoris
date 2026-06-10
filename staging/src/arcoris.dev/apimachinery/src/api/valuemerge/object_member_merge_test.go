@@ -25,13 +25,13 @@ func TestMergeObjectMemberPreservesUnselectedKnownField(t *testing.T) {
 	field := types.Field("name").String().Optional().Field()
 
 	got, err := newMerger(Options{}).mergeObjectMember(
-		root().Field("name"),
+		root().Field(testFieldName("name")),
 		valuepresence.Present(str("old")),
 		valuepresence.Present(str("new")),
 		field,
 		true,
 		types.UnknownReject,
-		pathSet(root().Field("other")),
+		pathSet(root().Field(testFieldName("other"))),
 		0,
 	)
 	if err != nil {
@@ -43,13 +43,13 @@ func TestMergeObjectMemberPreservesUnselectedKnownField(t *testing.T) {
 
 func TestMergeObjectMemberPrunesUnselectedUnknownField(t *testing.T) {
 	got, err := newMerger(Options{}).mergeObjectMember(
-		root().Field("xExtra"),
+		root().Field(testFieldName("xExtra")),
 		valuepresence.Present(str("old")),
 		valuepresence.Present(str("new")),
 		types.FieldDescriptor{},
 		false,
 		types.UnknownPrune,
-		pathSet(root().Field("other")),
+		pathSet(root().Field(testFieldName("other"))),
 		0,
 	)
 	if err != nil {

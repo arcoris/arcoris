@@ -51,7 +51,7 @@ func (e *extractor) extractObject(
 
 	for _, objectMember := range valueView.Members() {
 		name := objectMember.Name.String()
-		memberPath := path.Field(name)
+		memberPath := path.Field(fieldpath.MustFieldName(name))
 		fieldDescriptor, declared := fields[name]
 
 		if !declared {

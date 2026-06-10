@@ -23,7 +23,7 @@ import (
 
 func TestKeyKindMismatchDetailNamesKinds(t *testing.T) {
 	err := keyKindMismatch(
-		conditionPath(0).Field("type"),
+		conditionPath(0).Field(testFieldName("type")),
 		value.KindInteger,
 		value.KindString,
 	)

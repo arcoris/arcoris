@@ -17,21 +17,21 @@ package fieldpath
 import "testing"
 
 func TestRootParentIsAbsent(t *testing.T) {
-	_, ok := RootPath().Parent()
+	_, ok := Root().Parent()
 	requireEqual(t, ok, false)
 }
 
 func TestPathParent(t *testing.T) {
-	parent, ok := RootPath().Field("spec").Field("replicas").Parent()
+	parent, ok := Root().Field(testField("spec")).Field(testField("replicas")).Parent()
 
 	requireEqual(t, ok, true)
 	requireEqual(t, parent.String(), "$.spec")
 }
 
 func TestPathHasPrefix(t *testing.T) {
-	path := RootPath().Field("spec").Field("replicas")
+	path := Root().Field(testField("spec")).Field(testField("replicas"))
 
-	requireEqual(t, path.HasPrefix(RootPath()), true)
-	requireEqual(t, path.HasPrefix(RootPath().Field("spec")), true)
-	requireEqual(t, path.HasPrefix(RootPath().Field("status")), false)
+	requireEqual(t, path.HasPrefix(Root()), true)
+	requireEqual(t, path.HasPrefix(Root().Field(testField("spec"))), true)
+	requireEqual(t, path.HasPrefix(Root().Field(testField("status"))), false)
 }

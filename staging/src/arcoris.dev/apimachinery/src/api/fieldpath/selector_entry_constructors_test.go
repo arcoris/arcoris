@@ -17,8 +17,8 @@ package fieldpath
 import "testing"
 
 func TestNewSelectorEntry(t *testing.T) {
-	entry := NewSelectorEntry("type", StringLiteral("Ready"))
+	entry := NewSelectorEntry(testField("type"), StringLiteral("Ready"))
 
-	requireEqual(t, entry.Field(), "type")
+	requireEqual(t, entry.Field(), testField("type"))
 	requireEqual(t, entry.Value().Equal(StringLiteral("Ready")), true)
 }

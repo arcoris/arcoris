@@ -32,7 +32,7 @@ func TestValidatorResultReturnsNilWhenNoDiagnosticsCollected(t *testing.T) {
 func TestValidatorResultReturnsCollectedDiagnostics(t *testing.T) {
 	run := newValidator(Options{})
 	run.add(
-		fieldpath.RootPath(),
+		fieldpath.Root(),
 		ErrInvalidValue,
 		ErrorReasonInvalidZero,
 		"value is invalid",
@@ -46,13 +46,13 @@ func TestValidatorResultReturnsCollectedDiagnostics(t *testing.T) {
 func TestValidatorStopsAtConfiguredDiagnosticBudget(t *testing.T) {
 	run := newValidator(Options{MaxErrors: 1})
 	run.add(
-		fieldpath.RootPath().Field("first"),
+		fieldpath.Root().Field(fieldpath.MustFieldName("first")),
 		ErrMissingField,
 		ErrorReasonMissingField,
 		"first field is missing",
 	)
 	run.add(
-		fieldpath.RootPath().Field("second"),
+		fieldpath.Root().Field(fieldpath.MustFieldName("second")),
 		ErrMissingField,
 		ErrorReasonMissingField,
 		"second field is missing",

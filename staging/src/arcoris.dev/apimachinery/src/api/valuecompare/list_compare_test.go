@@ -207,7 +207,7 @@ func TestCompareOrderedListObjectItemModifiedField(t *testing.T) {
 
 	got, err := CompareAt(path, value.MustListValue(imageContainer("v1")), value.MustListValue(imageContainer("v2")), descriptor, Options{})
 	requireNoError(t, err)
-	requireResult(t, got, nil, nil, paths(path.Index(0).Field("image")))
+	requireResult(t, got, nil, nil, paths(path.Index(0).Field(testFieldName("image"))))
 }
 
 func TestCompareOrderedListObjectItemModifiedFieldUsesIndexedFieldPath(t *testing.T) {
@@ -221,7 +221,7 @@ func TestCompareOrderedListObjectItemModifiedFieldUsesIndexedFieldPath(t *testin
 
 	got, err := CompareAt(path, value.MustListValue(imageContainer("v1")), value.MustListValue(imageContainer("v2")), descriptor, Options{})
 	requireNoError(t, err)
-	requireResult(t, got, nil, nil, paths(path.Index(0).Field("image")))
+	requireResult(t, got, nil, nil, paths(path.Index(0).Field(testFieldName("image"))))
 }
 
 func TestCompareOrderedListObjectItemAddedField(t *testing.T) {
@@ -232,7 +232,7 @@ func TestCompareOrderedListObjectItemAddedField(t *testing.T) {
 
 	got, err := CompareAt(path, value.MustListValue(valueObject()), value.MustListValue(valueObject("image", "v1")), descriptor, Options{})
 	requireNoError(t, err)
-	requireResult(t, got, paths(path.Index(0).Field("image")), nil, nil)
+	requireResult(t, got, paths(path.Index(0).Field(testFieldName("image"))), nil, nil)
 }
 
 func TestCompareOrderedListObjectItemRemovedField(t *testing.T) {
@@ -243,7 +243,7 @@ func TestCompareOrderedListObjectItemRemovedField(t *testing.T) {
 
 	got, err := CompareAt(path, value.MustListValue(valueObject("image", "v1")), value.MustListValue(valueObject()), descriptor, Options{})
 	requireNoError(t, err)
-	requireResult(t, got, nil, paths(path.Index(0).Field("image")), nil)
+	requireResult(t, got, nil, paths(path.Index(0).Field(testFieldName("image"))), nil)
 }
 func TestEqualListOrderedDifferentLengthIsFalse(t *testing.T) {
 	descriptor := types.ListOf(types.String()).Ordered().Descriptor()

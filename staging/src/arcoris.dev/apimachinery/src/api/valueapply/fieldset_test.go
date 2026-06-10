@@ -39,11 +39,11 @@ func TestFieldSetOptions(t *testing.T) {
 
 func TestApplyValueFieldSetErrorWrapped(t *testing.T) {
 	req := Request{
-		Path:       root().Field(""),
+		Path:       root(),
 		Owner:      owner("user"),
 		Live:       str("old"),
 		Applied:    str("new"),
-		Descriptor: types.String().Descriptor(),
+		Descriptor: types.Descriptor{},
 	}
 
 	_, err := newApplier(Options{}).extractAppliedFields(req)

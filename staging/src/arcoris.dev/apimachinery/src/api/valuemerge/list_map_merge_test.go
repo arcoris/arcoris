@@ -24,7 +24,7 @@ func TestMergeListMapSelectedItemField(t *testing.T) {
 	got, err := mergeConditions(
 		list(conditionItem("Ready", "False"), conditionItem("Degraded", "False")),
 		list(conditionItem("Ready", "True")),
-		pathSet(conditionPath("Ready").Field("status")),
+		pathSet(conditionPath("Ready").Field(testFieldName("status"))),
 	)
 	if err != nil {
 		t.Fatalf("Merge returned error: %v", err)
@@ -41,7 +41,7 @@ func TestMergeListMapSameReorderedIsPreserved(t *testing.T) {
 	got, err := mergeConditions(
 		base,
 		overlay,
-		pathSet(conditionPath("Ready").Field("status")),
+		pathSet(conditionPath("Ready").Field(testFieldName("status"))),
 	)
 	if err != nil {
 		t.Fatalf("Merge returned error: %v", err)

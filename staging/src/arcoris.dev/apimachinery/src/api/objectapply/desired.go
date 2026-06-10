@@ -30,7 +30,7 @@ func (a applier) applyDesired(
 	version resource.VersionDefinition,
 ) (valueapply.Result, error) {
 	return valueapply.Apply(valueapply.Request{
-		Path:       fieldpath.RootPath(),
+		Path:       fieldpath.Root(),
 		Owner:      req.Owner,
 		Live:       req.Live.Desired,
 		Applied:    req.Applied.Desired,

@@ -28,21 +28,18 @@ func (p Path) Append(elements ...Element) Path {
 }
 
 // Field appends one fixed-field semantic element.
-//
-// This helper keeps path-building call sites readable while the underlying
-// constructor remains explicit as FieldElement.
-func (p Path) Field(name string) Path {
-	return p.Append(FieldElement(name))
+func (p Path) Field(name FieldName) Path {
+	return p.Append(NewFieldElement(name))
 }
 
 // Key appends one dynamic map-key semantic element.
-func (p Path) Key(key string) Path {
-	return p.Append(KeyElement(key))
+func (p Path) Key(key MapKey) Path {
+	return p.Append(NewKeyElement(key))
 }
 
 // Index appends one positional list-index semantic element.
 func (p Path) Index(index int) Path {
-	return p.Append(IndexElement(index))
+	return p.Append(MustIndexElement(index))
 }
 
 // Select appends one associative-list selector semantic element.
@@ -50,5 +47,5 @@ func (p Path) Index(index int) Path {
 // Selector addressing is intended for associative lists whose identity comes
 // from one or more key fields rather than from unstable positional indexes.
 func (p Path) Select(selector Selector) Path {
-	return p.Append(SelectorElement(selector))
+	return p.Append(MustSelectorElement(selector))
 }

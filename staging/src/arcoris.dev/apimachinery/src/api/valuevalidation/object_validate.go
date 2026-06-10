@@ -43,10 +43,11 @@ func (v *validator) validateObject(
 
 	for _, fieldDescriptor := range fields {
 		name := string(fieldDescriptor.Name())
+		fieldName := fieldpath.MustFieldName(name)
 		declared[name] = fieldDescriptor
 
 		memberValue, found := valueView.Get(value.MemberName(name))
-		fieldPath := path.Field(name)
+		fieldPath := path.Field(fieldName)
 		if !found {
 			if fieldDescriptor.IsRequired() {
 				v.addf(fieldPath, ErrMissingField, ErrorReasonMissingField, "required field %q is missing", name)
@@ -75,7 +76,7 @@ func (v *validator) validateUnknownObjectMembers(
 		}
 
 		v.addf(
-			path.Field(name),
+			path.Field(fieldpath.MustFieldName(name)),
 			ErrUnknownField,
 			ErrorReasonUnknownField,
 			"field %q is not declared by the object descriptor",

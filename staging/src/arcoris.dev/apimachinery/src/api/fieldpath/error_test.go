@@ -20,7 +20,7 @@ import (
 )
 
 func TestErrorIsInvalidElement(t *testing.T) {
-	err := FieldElement("").Validate()
+	err := (Element{kind: ElementField}).ValidateStructure()
 	requireErrorIs(t, err, ErrInvalidElement)
 }
 
@@ -30,12 +30,12 @@ func TestErrorIsInvalidSelector(t *testing.T) {
 }
 
 func TestErrorIsInvalidLiteral(t *testing.T) {
-	err := Literal{}.Validate()
+	err := Literal{}.ValidateStructure()
 	requireErrorIs(t, err, ErrInvalidLiteral)
 }
 
 func TestErrorHasReasonAndDetail(t *testing.T) {
-	err := Literal{}.Validate()
+	err := Literal{}.ValidateStructure()
 
 	var pathErr *Error
 	if !errors.As(err, &pathErr) {

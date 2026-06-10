@@ -19,28 +19,34 @@ import (
 	"strings"
 )
 
-// String returns the canonical diagnostic form of e.
-func (e Element) String() string {
+// CanonicalText returns the canonical text form of e.
+func (e Element) CanonicalText() string {
 	switch e.kind {
 	case ElementField:
-		if isSimpleFieldName(e.name) {
-			return "." + e.name
+		field := e.field.String()
+		if isSimpleFieldName(field) {
+			return "." + field
 		}
 
-		return "." + strconv.Quote(e.name)
+		return "." + strconv.Quote(field)
 	case ElementKey:
-		return "[" + strconv.Quote(e.name) + "]"
+		return "[" + strconv.Quote(e.key.String()) + "]"
 	case ElementIndex:
 		return "[" + strconv.Itoa(e.index) + "]"
 	case ElementSelector:
-		return "[" + e.selector.String() + "]"
+		return "[" + e.selector.CanonicalText() + "]"
 	default:
 		return ".<invalid>"
 	}
 }
 
-// String returns the canonical diagnostic form of p.
-func (p Path) String() string {
+// String returns diagnostic text for e.
+func (e Element) String() string {
+	return e.CanonicalText()
+}
+
+// CanonicalText returns the canonical text form of p.
+func (p Path) CanonicalText() string {
 	if len(p.elements) == 0 {
 		return "$"
 	}
@@ -50,10 +56,15 @@ func (p Path) String() string {
 	builder.WriteByte('$')
 
 	for _, e := range p.elements {
-		builder.WriteString(e.String())
+		builder.WriteString(e.CanonicalText())
 	}
 
 	return builder.String()
+}
+
+// String returns diagnostic text for p.
+func (p Path) String() string {
+	return p.CanonicalText()
 }
 
 // isSimpleFieldName reports whether name can use dot notation.

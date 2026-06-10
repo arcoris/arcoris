@@ -24,7 +24,7 @@ import (
 
 func TestComparerAbsentAbsentIsEmpty(t *testing.T) {
 	got, err := newComparer(Options{}).compare(
-		fieldpath.RootPath(),
+		fieldpath.Root(),
 		valuepresence.Absent(),
 		valuepresence.Absent(),
 		types.String().Descriptor(),
@@ -36,26 +36,26 @@ func TestComparerAbsentAbsentIsEmpty(t *testing.T) {
 
 func TestComparerAbsentPresentIsAddedSubtree(t *testing.T) {
 	got, err := newComparer(Options{}).compare(
-		fieldpath.RootPath(),
+		fieldpath.Root(),
 		valuepresence.Absent(),
 		valuepresence.Present(value.StringValue("new")),
 		types.String().Descriptor(),
 		0,
 	)
 	requireNoError(t, err)
-	requireResult(t, got, paths(fieldpath.RootPath()), nil, nil)
+	requireResult(t, got, paths(fieldpath.Root()), nil, nil)
 }
 
 func TestComparerPresentAbsentIsRemovedSubtree(t *testing.T) {
 	got, err := newComparer(Options{}).compare(
-		fieldpath.RootPath(),
+		fieldpath.Root(),
 		valuepresence.Present(value.StringValue("old")),
 		valuepresence.Absent(),
 		types.String().Descriptor(),
 		0,
 	)
 	requireNoError(t, err)
-	requireResult(t, got, nil, paths(fieldpath.RootPath()), nil)
+	requireResult(t, got, nil, paths(fieldpath.Root()), nil)
 }
 
 func TestCompareInvalidZeroValue(t *testing.T) {

@@ -21,7 +21,7 @@ import (
 )
 
 func TestEqualOpaqueValueDifferentKindsIsFalse(t *testing.T) {
-	got, err := newComparer(Options{}).equalOpaqueValue(fieldpath.RootPath(), value.StringValue("x"), value.BoolValue(true))
+	got, err := newComparer(Options{}).equalOpaqueValue(fieldpath.Root(), value.StringValue("x"), value.BoolValue(true))
 	requireNoError(t, err)
 
 	if got {
@@ -30,7 +30,7 @@ func TestEqualOpaqueValueDifferentKindsIsFalse(t *testing.T) {
 }
 
 func TestEqualOpaqueValueRejectsZeroValue(t *testing.T) {
-	_, err := newComparer(Options{}).equalOpaqueValue(fieldpath.RootPath(), value.Value{}, value.StringValue("x"))
+	_, err := newComparer(Options{}).equalOpaqueValue(fieldpath.Root(), value.Value{}, value.StringValue("x"))
 
 	requireErrorIs(t, err, ErrInvalidValue)
 }

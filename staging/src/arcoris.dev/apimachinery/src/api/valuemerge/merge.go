@@ -29,7 +29,7 @@ func Merge(
 	fields fieldpath.Set,
 	opts Options,
 ) (value.Value, error) {
-	return MergeAt(fieldpath.RootPath(), base, overlay, descriptor, fields, opts)
+	return MergeAt(fieldpath.Root(), base, overlay, descriptor, fields, opts)
 }
 
 // MergeAt copies selected semantic fields from overlay into base below path.
@@ -47,7 +47,7 @@ func MergeAt(
 	fields fieldpath.Set,
 	opts Options,
 ) (value.Value, error) {
-	if err := path.Validate(); err != nil {
+	if err := path.ValidateStructure(); err != nil {
 		return value.Value{}, wrapAt(
 			path,
 			ErrInvalidPath,
@@ -96,7 +96,7 @@ func MergeAt(
 // validateFields rejects malformed selected paths before traversal starts.
 func validateFields(fields fieldpath.Set) error {
 	for _, path := range fields.Paths() {
-		if err := path.Validate(); err != nil {
+		if err := path.ValidateStructure(); err != nil {
 			return wrapAt(
 				path,
 				ErrInvalidPath,

@@ -23,7 +23,7 @@ import (
 )
 
 func TestErrorIsSentinel(t *testing.T) {
-	err := errorAt(fieldpath.RootPath(), ErrInvalidValue, ErrorReasonInvalidZero, "bad")
+	err := errorAt(fieldpath.Root(), ErrInvalidValue, ErrorReasonInvalidZero, "bad")
 
 	if !errors.Is(err, ErrInvalidValue) {
 		t.Fatalf("errors.Is(err, ErrInvalidValue) = false")
@@ -31,7 +31,7 @@ func TestErrorIsSentinel(t *testing.T) {
 }
 
 func TestErrorIsInvalidPath(t *testing.T) {
-	err := errorAt(fieldpath.RootPath(), ErrInvalidPath, ErrorReasonInvalidPath, "bad")
+	err := errorAt(fieldpath.Root(), ErrInvalidPath, ErrorReasonInvalidPath, "bad")
 
 	if !errors.Is(err, ErrInvalidPath) {
 		t.Fatalf("errors.Is(err, ErrInvalidPath) = false")
@@ -39,7 +39,7 @@ func TestErrorIsInvalidPath(t *testing.T) {
 }
 
 func TestErrorAsValueCompareError(t *testing.T) {
-	err := errorAt(fieldpath.RootPath(), ErrInvalidValue, ErrorReasonInvalidZero, "bad")
+	err := errorAt(fieldpath.Root(), ErrInvalidValue, ErrorReasonInvalidZero, "bad")
 
 	var got *Error
 	if !errors.As(err, &got) {
@@ -61,7 +61,7 @@ func TestNilErrorStringAndUnwrap(t *testing.T) {
 	}
 }
 func TestErrorAtBuildsStructuredError(t *testing.T) {
-	err := errorAt(fieldpath.RootPath(), ErrInvalidValue, ErrorReasonInvalidZero, "bad")
+	err := errorAt(fieldpath.Root(), ErrInvalidValue, ErrorReasonInvalidZero, "bad")
 
 	requireErrorIs(t, err, ErrInvalidValue)
 	requireErrorReason(t, err, ErrorReasonInvalidZero)
@@ -70,14 +70,14 @@ func TestErrorAtBuildsStructuredError(t *testing.T) {
 }
 
 func TestErrorfAtBuildsFormattedDetail(t *testing.T) {
-	err := errorfAt(fieldpath.RootPath(), ErrUnknownField, ErrorReasonUnknownField, "field %q", "extra")
+	err := errorfAt(fieldpath.Root(), ErrUnknownField, ErrorReasonUnknownField, "field %q", "extra")
 
 	requireErrorDetailContains(t, err, `field "extra"`)
 }
 
 func TestWrapAtPreservesCause(t *testing.T) {
 	cause := errors.New("cause")
-	err := wrapAt(fieldpath.RootPath(), ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "bad", cause)
+	err := wrapAt(fieldpath.Root(), ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "bad", cause)
 
 	requireErrorIs(t, err, ErrInvalidDescriptor)
 	if !errors.Is(err, cause) {

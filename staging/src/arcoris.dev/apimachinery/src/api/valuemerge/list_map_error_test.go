@@ -84,7 +84,7 @@ func TestMergeListMapKeyErrorUsesSharedErrorPath(t *testing.T) {
 
 func TestMergeListMapKeyUnexpectedErrorAcceptsAnyPath(t *testing.T) {
 	err := mergeListMapKeyError(
-		fieldpath.RootPath(),
+		fieldpath.Root(),
 		errors.New("unexpected failure"),
 	)
 

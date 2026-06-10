@@ -60,7 +60,7 @@ func (c *comparer) compareMap(
 
 	result := EmptyResult()
 	for _, key := range unionSortedKeys(oldMembers, newMembers) {
-		memberPath := path.Key(key)
+		memberPath := path.Key(fieldpath.MustMapKey(key))
 		child, err := c.compare(
 			memberPath,
 			mapOperand(oldMembers, key),

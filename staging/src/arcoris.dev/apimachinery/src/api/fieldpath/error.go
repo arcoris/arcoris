@@ -36,14 +36,14 @@ var (
 
 	// ErrEmptyFieldName classifies empty field names.
 	ErrEmptyFieldName = errors.New("empty field name")
-	// ErrEmptyKey classifies empty map keys.
-	ErrEmptyKey = errors.New("empty key")
+	// ErrEmptyMapKey classifies empty map keys.
+	ErrEmptyMapKey = errors.New("empty map key")
 	// ErrNegativeIndex classifies negative list indexes.
 	ErrNegativeIndex = errors.New("negative index")
 	// ErrEmptySelector classifies selectors with no entries.
 	ErrEmptySelector = errors.New("empty selector")
-	// ErrDuplicateField classifies repeated selector field names.
-	ErrDuplicateField = errors.New("duplicate selector field")
+	// ErrDuplicateSelectorField classifies repeated selector field names.
+	ErrDuplicateSelectorField = errors.New("duplicate selector field")
 )
 
 // Error is the structured diagnostic returned by field-path validation.

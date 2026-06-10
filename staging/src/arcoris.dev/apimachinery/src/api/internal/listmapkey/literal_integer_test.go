@@ -22,7 +22,7 @@ import (
 )
 
 func TestSignedIntegerLiteral(t *testing.T) {
-	gotLiteral, err := signedIntegerLiteral(conditionPath(0).Field("port"), value.Int64Value(-1))
+	gotLiteral, err := signedIntegerLiteral(conditionPath(0).Field(testFieldName("port")), value.Int64Value(-1))
 
 	requireNoError(t, err)
 	requireEqual(t, gotLiteral.String(), "-1")
@@ -30,7 +30,7 @@ func TestSignedIntegerLiteral(t *testing.T) {
 
 func TestSignedIntegerLiteralRejectsUnsignedOverflow(t *testing.T) {
 	_, err := signedIntegerLiteral(
-		conditionPath(0).Field("port"),
+		conditionPath(0).Field(testFieldName("port")),
 		value.Uint64Value(math.MaxUint64),
 	)
 
@@ -38,14 +38,14 @@ func TestSignedIntegerLiteralRejectsUnsignedOverflow(t *testing.T) {
 }
 
 func TestUnsignedIntegerLiteral(t *testing.T) {
-	gotLiteral, err := unsignedIntegerLiteral(conditionPath(0).Field("port"), value.Uint64Value(443))
+	gotLiteral, err := unsignedIntegerLiteral(conditionPath(0).Field(testFieldName("port")), value.Uint64Value(443))
 
 	requireNoError(t, err)
 	requireEqual(t, gotLiteral.String(), "443")
 }
 
 func TestUnsignedIntegerLiteralRejectsNegativeInteger(t *testing.T) {
-	_, err := unsignedIntegerLiteral(conditionPath(0).Field("port"), value.Int64Value(-1))
+	_, err := unsignedIntegerLiteral(conditionPath(0).Field(testFieldName("port")), value.Int64Value(-1))
 
 	requireErrorKind(t, err, FailureKeyIntegerRange)
 }

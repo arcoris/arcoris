@@ -16,28 +16,13 @@ package fieldpath
 
 import "testing"
 
-func TestSelectorEntriesReturnsClone(t *testing.T) {
-	selector := MustSelector(NewSelectorEntry("type", StringLiteral("Ready")))
-	entries := selector.Entries()
+func TestSelectorCloneDetachesEntries(t *testing.T) {
+	selector := MustSelector(testSelectorEntry("type", StringLiteral("Ready")))
 
-	entries[0] = NewSelectorEntry("other", StringLiteral("Other"))
+	cloned := selector.clone()
+	selector.entries[0] = testSelectorEntry("type", StringLiteral("Changed"))
 
-	got, ok := selector.Get("type")
+	got, ok := cloned.Get(testField("type"))
 	requireEqual(t, ok, true)
 	requireEqual(t, got.Equal(StringLiteral("Ready")), true)
-}
-
-func TestSelectorGet(t *testing.T) {
-	selector := MustSelector(NewSelectorEntry("type", StringLiteral("Ready")))
-
-	got, ok := selector.Get("type")
-	requireEqual(t, ok, true)
-	requireEqual(t, got.Equal(StringLiteral("Ready")), true)
-}
-
-func TestSelectorHas(t *testing.T) {
-	selector := MustSelector(NewSelectorEntry("type", StringLiteral("Ready")))
-
-	requireEqual(t, selector.Has("type"), true)
-	requireEqual(t, selector.Has("status"), false)
 }

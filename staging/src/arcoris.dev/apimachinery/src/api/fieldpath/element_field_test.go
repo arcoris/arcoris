@@ -16,31 +16,17 @@ package fieldpath
 
 import "testing"
 
-func TestFieldElement(t *testing.T) {
-	element := FieldElement("spec")
+func TestNewFieldElement(t *testing.T) {
+	element := NewFieldElement(testField("spec"))
+	name, ok := element.AsField()
 
 	requireEqual(t, element.Kind(), ElementField)
-	requireEqual(t, element.Name(), "spec")
+	requireEqual(t, ok, true)
+	requireEqual(t, name, testField("spec"))
 }
 
-func TestKeyElement(t *testing.T) {
-	element := KeyElement("app")
+func TestFieldElementFromStringRejectsEmptyName(t *testing.T) {
+	_, err := FieldElementFromString("")
 
-	requireEqual(t, element.Kind(), ElementKey)
-	requireEqual(t, element.Name(), "app")
-}
-
-func TestIndexElement(t *testing.T) {
-	element := IndexElement(3)
-
-	requireEqual(t, element.Kind(), ElementIndex)
-	requireEqual(t, element.Index(), 3)
-}
-
-func TestSelectorElement(t *testing.T) {
-	selector := MustSelector(NewSelectorEntry("type", StringLiteral("Ready")))
-	element := SelectorElement(selector)
-
-	requireEqual(t, element.Kind(), ElementSelector)
-	requireEqual(t, element.Selector().Equal(selector), true)
+	requireErrorIs(t, err, ErrEmptyFieldName)
 }

@@ -38,11 +38,11 @@ func TestMergeSelectedString(t *testing.T) {
 
 func TestMergeUnselectedStringPreserved(t *testing.T) {
 	got, err := MergeAt(
-		root().Field("name"),
+		root().Field(testFieldName("name")),
 		str("old"),
 		str("new"),
 		types.String().Descriptor(),
-		pathSet(root().Field("other")),
+		pathSet(root().Field(testFieldName("other"))),
 		Options{},
 	)
 	if err != nil {
@@ -103,7 +103,7 @@ func TestMergeDescendantUnderScalarReturnsUnsupported(t *testing.T) {
 		str("old"),
 		str("new"),
 		types.String().Descriptor(),
-		pathSet(root().Field("name")),
+		pathSet(root().Field(testFieldName("name"))),
 		Options{},
 	)
 

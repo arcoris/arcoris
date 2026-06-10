@@ -23,7 +23,7 @@ import (
 
 func TestPreserveWithoutOverlayContainerPreservesBaseNull(t *testing.T) {
 	got, ok, err := preserveWithoutOverlayContainer(
-		root().Field("spec"),
+		root().Field(testFieldName("spec")),
 		valuepresence.Present(value.NullValue()),
 		valuepresence.Absent(),
 		value.KindRecord,
@@ -42,7 +42,7 @@ func TestPreserveWithoutOverlayContainerPreservesBaseNull(t *testing.T) {
 
 func TestPreserveWithoutOverlayContainerReturnsAbsentForAbsentBase(t *testing.T) {
 	got, ok, err := preserveWithoutOverlayContainer(
-		root().Field("spec"),
+		root().Field(testFieldName("spec")),
 		valuepresence.Absent(),
 		valuepresence.Absent(),
 		value.KindRecord,
@@ -61,7 +61,7 @@ func TestPreserveWithoutOverlayContainerReturnsAbsentForAbsentBase(t *testing.T)
 
 func TestPreserveWithoutOverlayContainerContinuesWhenOverlayHasContainer(t *testing.T) {
 	_, ok, err := preserveWithoutOverlayContainer(
-		root().Field("spec"),
+		root().Field(testFieldName("spec")),
 		valuepresence.Absent(),
 		valuepresence.Present(obj()),
 		value.KindRecord,
@@ -77,7 +77,7 @@ func TestPreserveWithoutOverlayContainerContinuesWhenOverlayHasContainer(t *test
 
 func TestPreserveWithoutOverlayContainerRejectsWrongKindBase(t *testing.T) {
 	_, _, err := preserveWithoutOverlayContainer(
-		root().Field("spec"),
+		root().Field(testFieldName("spec")),
 		valuepresence.Present(str("invalid")),
 		valuepresence.Absent(),
 		value.KindRecord,

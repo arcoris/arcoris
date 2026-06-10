@@ -17,7 +17,7 @@ package valuemerge
 import "testing"
 
 func TestSelectionExact(t *testing.T) {
-	path := root().Field("spec")
+	path := root().Field(testFieldName("spec"))
 	got := selectAt(pathSet(path), path)
 
 	if !got.exact || !got.descendants.IsEmpty() {
@@ -26,8 +26,8 @@ func TestSelectionExact(t *testing.T) {
 }
 
 func TestSelectionDescendant(t *testing.T) {
-	path := root().Field("spec")
-	selected := path.Field("replicas")
+	path := root().Field(testFieldName("spec"))
+	selected := path.Field(testFieldName("replicas"))
 	got := selectAt(pathSet(selected), path)
 
 	if got.exact || !got.descendants.Has(selected) {
@@ -36,8 +36,8 @@ func TestSelectionDescendant(t *testing.T) {
 }
 
 func TestSelectionIrrelevant(t *testing.T) {
-	path := root().Field("spec")
-	got := selectAt(pathSet(root().Field("metadata")), path)
+	path := root().Field(testFieldName("spec"))
+	got := selectAt(pathSet(root().Field(testFieldName("metadata"))), path)
 
 	if got.selected() {
 		t.Fatalf("selection = %#v", got)
@@ -45,8 +45,8 @@ func TestSelectionIrrelevant(t *testing.T) {
 }
 
 func TestSelectionAncestorIsNotSelectedLocally(t *testing.T) {
-	path := root().Field("spec").Field("replicas")
-	got := selectAt(pathSet(root().Field("spec")), path)
+	path := root().Field(testFieldName("spec")).Field(testFieldName("replicas"))
+	got := selectAt(pathSet(root().Field(testFieldName("spec"))), path)
 
 	if got.selected() {
 		t.Fatalf("selection = %#v", got)
@@ -54,8 +54,8 @@ func TestSelectionAncestorIsNotSelectedLocally(t *testing.T) {
 }
 
 func TestSelectionMapKey(t *testing.T) {
-	path := root().Field("labels")
-	selected := path.Key("app")
+	path := root().Field(testFieldName("labels"))
+	selected := path.Key(testMapKey("app"))
 	got := selectAt(pathSet(selected), path)
 
 	if !got.descendants.Has(selected) {

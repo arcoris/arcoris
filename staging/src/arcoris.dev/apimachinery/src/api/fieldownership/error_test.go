@@ -32,7 +32,7 @@ func TestErrorIsInvalidEntry(t *testing.T) {
 
 func TestErrorIsInvalidPath(t *testing.T) {
 	err := wrapPathError(
-		fieldpath.RootPath().Field(""),
+		fieldpath.Root(),
 		"bad path",
 		errors.New("cause"),
 	)

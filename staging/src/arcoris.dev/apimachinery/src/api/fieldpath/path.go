@@ -38,23 +38,20 @@ func (p Path) Elements() []Element {
 	return cloneElements(p.elements)
 }
 
-// cloneElements returns a caller-owned element slice copy.
-func cloneElements(elements []Element) []Element {
-	if elements == nil {
-		return nil
+// Element returns one path element by index.
+func (p Path) Element(index int) (Element, bool) {
+	if index < 0 || index >= len(p.elements) {
+		return Element{}, false
 	}
 
-	cloned := make([]Element, 0, len(elements))
-	cloned = appendClonedElements(cloned, elements)
-
-	return cloned
+	return p.elements[index], true
 }
 
-// appendClonedElements appends detached element copies to dst.
-func appendClonedElements(dst []Element, elements []Element) []Element {
-	for _, element := range elements {
-		dst = append(dst, element.clone())
+// ForEach visits path elements in order until fn returns false.
+func (p Path) ForEach(fn func(index int, element Element) bool) {
+	for i, element := range p.elements {
+		if !fn(i, element) {
+			return
+		}
 	}
-
-	return dst
 }

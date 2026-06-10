@@ -44,7 +44,7 @@ func (p *pathParser) parsePath() (Path, error) {
 	}
 
 	path := Path{elements: elements}
-	if err := path.Validate(); err != nil {
+	if err := path.ValidateStructure(); err != nil {
 		return Path{}, err
 	}
 

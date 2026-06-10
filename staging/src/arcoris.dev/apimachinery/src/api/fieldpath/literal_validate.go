@@ -14,8 +14,8 @@
 
 package fieldpath
 
-// Validate accepts supported bool, integer, and string selector literals.
-func (l Literal) Validate() error {
+// ValidateStructure accepts supported bool, integer, and string selector literals.
+func (l Literal) ValidateStructure() error {
 	if !l.kind.IsValid() {
 		return newError(
 			ErrInvalidLiteral,

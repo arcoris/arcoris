@@ -24,7 +24,7 @@ import (
 
 func TestErrorFormatIncludesPathKindAndDetail(t *testing.T) {
 	err := &Error{
-		Path:   fieldpath.RootPath().Field("conditions").Index(0).Field("type"),
+		Path:   fieldpath.Root().Field(testFieldName("conditions")).Index(0).Field(testFieldName("type")),
 		Kind:   FailureMissingKey,
 		Detail: "selector key is missing",
 	}

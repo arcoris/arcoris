@@ -22,10 +22,12 @@ func (p Path) IsDescendantOf(ancestor Path) bool {
 	return p.Len() > ancestor.Len() && p.HasPrefix(ancestor)
 }
 
-// IntersectsSubtree reports whether p and other lie in the same subtree.
-//
-// Two paths intersect structurally when either one is a prefix of the other.
-// This makes the operation symmetric and useful for subtree filtering.
-func (p Path) IntersectsSubtree(other Path) bool {
+// IsAncestorOf reports whether p is a strict ancestor of descendant.
+func (p Path) IsAncestorOf(descendant Path) bool {
+	return descendant.IsDescendantOf(p)
+}
+
+// Overlaps reports whether p and other are equal or one contains the other.
+func (p Path) Overlaps(other Path) bool {
 	return p.HasPrefix(other) || other.HasPrefix(p)
 }

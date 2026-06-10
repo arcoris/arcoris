@@ -71,5 +71,9 @@ func objectWithMembers(members ...value.RecordMember) value.Value {
 }
 
 func conditionPath(index int) fieldpath.Path {
-	return fieldpath.RootPath().Field("conditions").Index(index)
+	return fieldpath.Root().Field(testFieldName("conditions")).Index(index)
+}
+
+func testFieldName(name string) fieldpath.FieldName {
+	return fieldpath.MustFieldName(name)
 }

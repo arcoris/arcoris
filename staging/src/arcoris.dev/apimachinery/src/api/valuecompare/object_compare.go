@@ -59,7 +59,7 @@ func (c *comparer) compareObject(
 
 	for _, field := range objectView.Fields() {
 		name := string(field.Name())
-		fieldPath := path.Field(name)
+		fieldPath := path.Field(fieldpath.MustFieldName(name))
 		oldFieldValue, oldFound := oldObject.Get(value.MemberName(name))
 		newFieldValue, newFound := newObject.Get(value.MemberName(name))
 
@@ -142,7 +142,7 @@ func (c *comparer) rejectUnknownObjectMembers(
 ) (Result, error) {
 	for _, name := range unknownMemberNames(oldObject, newObject, declared) {
 		return Result{}, errorfAt(
-			path.Field(name),
+			path.Field(fieldpath.MustFieldName(name)),
 			ErrUnknownField,
 			ErrorReasonUnknownField,
 			"field %q is rejected by the object descriptor",
@@ -167,7 +167,7 @@ func (c *comparer) comparePreservedUnknownObjectMembers(
 	result := EmptyResult()
 
 	for _, name := range unknownMemberNames(oldObject, newObject, declared) {
-		child, err := c.comparePreservedUnknownObjectMember(path.Field(name), oldObject, newObject, name)
+		child, err := c.comparePreservedUnknownObjectMember(path.Field(fieldpath.MustFieldName(name)), oldObject, newObject, name)
 		if err != nil {
 			return Result{}, err
 		}

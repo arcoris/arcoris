@@ -30,7 +30,7 @@ func (p *pathParser) parseFieldElement() (Element, error) {
 			return Element{}, err
 		}
 
-		return FieldElement(name), nil
+		return FieldElementFromString(name)
 	}
 
 	start := p.pos
@@ -43,7 +43,7 @@ func (p *pathParser) parseFieldElement() (Element, error) {
 		p.pos++
 	}
 
-	return FieldElement(p.text[start:p.pos]), nil
+	return FieldElementFromString(p.text[start:p.pos])
 }
 
 // parseBracketElement decodes one bracketed key, index, or selector step.
@@ -65,14 +65,14 @@ func (p *pathParser) parseBracketElement() (Element, error) {
 
 		key, err = p.parseQuotedString()
 		if err == nil {
-			element = KeyElement(key)
+			element, err = KeyElementFromString(key)
 		}
 	case '{':
 		var selector Selector
 
 		selector, err = p.parseSelector()
 		if err == nil {
-			element = SelectorElement(selector)
+			element, err = NewSelectorElement(selector)
 		}
 	default:
 		element, err = p.parseIndexElement()
@@ -106,5 +106,5 @@ func (p *pathParser) parseIndexElement() (Element, error) {
 		return Element{}, p.syntaxError("index element is out of range")
 	}
 
-	return IndexElement(index), nil
+	return NewIndexElement(index)
 }

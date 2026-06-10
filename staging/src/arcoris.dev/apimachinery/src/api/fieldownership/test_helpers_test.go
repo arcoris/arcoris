@@ -23,7 +23,7 @@ import (
 )
 
 func path(text string) fieldpath.Path {
-	p, err := fieldpath.Parse(text)
+	p, err := fieldpath.ParseCanonical(text)
 	if err != nil {
 		panic(err)
 	}

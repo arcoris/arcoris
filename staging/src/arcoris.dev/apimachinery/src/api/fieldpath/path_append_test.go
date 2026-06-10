@@ -16,29 +16,20 @@ package fieldpath
 
 import "testing"
 
-func TestPathElementsReturnsClone(t *testing.T) {
-	path := RootPath().Field("spec")
-	elements := path.Elements()
-
-	elements[0] = FieldElement("status")
-
-	requireEqual(t, path.String(), "$.spec")
-}
-
 func TestPathAppendDoesNotMutateReceiver(t *testing.T) {
-	root := RootPath().Field("spec")
-	child := root.Append(FieldElement("replicas"))
+	root := Root().Field(testField("spec"))
+	child := root.Append(testFieldElement("replicas"))
 
 	requireEqual(t, root.String(), "$.spec")
 	requireEqual(t, child.String(), "$.spec.replicas")
 }
 
 func TestPathAppendClonesSelectorElement(t *testing.T) {
-	selector := MustSelector(NewSelectorEntry("type", StringLiteral("Ready")))
-	element := SelectorElement(selector)
+	selector := MustSelector(testSelectorEntry("type", StringLiteral("Ready")))
+	element := testSelectorElement(selector)
 
-	path := RootPath().Append(element)
-	element.selector.entries[0] = NewSelectorEntry("type", StringLiteral("Changed"))
+	path := Root().Append(element)
+	element.selector.entries[0] = testSelectorEntry("type", StringLiteral("Changed"))
 
 	requireEqual(t, path.String(), `$[{"type":"Ready"}]`)
 }

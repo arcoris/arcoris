@@ -80,7 +80,7 @@ func fieldOwnershipStateFromDocumentSurface(path string, surface Surface) (field
 // Owner validation and empty-field allowances are delegated to fieldownership so
 // objectownership does not duplicate field-level ownership rules.
 func fieldOwnershipEntryFromDocumentEntry(path string, entry Entry) (fieldownership.Entry, error) {
-	fields, err := fieldPathSetFromDocumentPaths(path, entry.Fields)
+	fields, err := fieldSetFromDocumentPaths(path, entry.Fields)
 	if err != nil {
 		return fieldownership.Entry{}, err
 	}
@@ -99,12 +99,12 @@ func fieldOwnershipEntryFromDocumentEntry(path string, entry Entry) (fieldowners
 	return stateEntry, nil
 }
 
-// fieldPathSetFromDocumentPaths parses document path strings into a canonical
+// fieldSetFromDocumentPaths parses document path strings into a canonical
 // field set.
 //
 // Duplicate fields are allowed in raw documents and are deduplicated by
 // fieldpath.NewSet.
-func fieldPathSetFromDocumentPaths(path string, fields []Path) (fieldpath.Set, error) {
+func fieldSetFromDocumentPaths(path string, fields []Path) (fieldpath.Set, error) {
 	paths := make([]fieldpath.Path, 0, len(fields))
 	for i, field := range fields {
 		parsed, err := parsePath(fieldPath(path, i), field)

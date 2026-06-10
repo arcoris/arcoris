@@ -25,32 +25,84 @@ func TestEmptySet(t *testing.T) {
 	requireEqual(t, set.String(), "{}")
 }
 
+func TestSetPathsReturnsDetachedSlice(t *testing.T) {
+	set := MustSet(setReplicasPath(), setImagePath())
+	paths := set.Paths()
+
+	paths[0] = Root().Field(testField("status"))
+
+	requireEqual(t, set.Has(Root().Field(testField("status"))), false)
+	requireEqual(t, set.Len(), 2)
+}
+
+func TestSetPathsReturnsDetachedPathElements(t *testing.T) {
+	set := MustSet(setReplicasPath())
+	paths := set.Paths()
+
+	paths[0].elements[0] = testFieldElement("status")
+
+	requireEqual(t, set.Has(setReplicasPath()), true)
+	requireEqual(t, set.Has(Root().Field(testField("status")).Field(testField("replicas"))), false)
+}
+
+func TestSetForEachStopsEarly(t *testing.T) {
+	set := MustSet(setReplicasPath(), setImagePath())
+	visited := 0
+
+	set.ForEach(func(index int, path Path) bool {
+		visited++
+		return false
+	})
+
+	requireEqual(t, visited, 1)
+}
+
+func TestSetHas(t *testing.T) {
+	set := MustSet(setReplicasPath(), setImagePath(), setLabelPath())
+
+	requireEqual(t, set.Has(setReplicasPath()), true)
+	requireEqual(t, set.Has(Root().Field(testField("status"))), false)
+}
+
+func TestSetHasUsesStructuralPaths(t *testing.T) {
+	field := Root().Field(testField("api-version"))
+	key := Root().Key(testKey("api-version"))
+	set := MustSet(field)
+
+	requireEqual(t, set.Has(field), true)
+	requireEqual(t, set.Has(key), false)
+}
+
+func TestSetHasOnEmptySet(t *testing.T) {
+	requireEqual(t, EmptySet().Has(Root()), false)
+}
+
 func setSpecPath() Path {
-	return RootPath().Field("spec")
+	return Root().Field(testField("spec"))
 }
 
 func setReplicasPath() Path {
-	return RootPath().Field("spec").Field("replicas")
+	return Root().Field(testField("spec")).Field(testField("replicas"))
 }
 
 func setImagePath() Path {
-	return RootPath().Field("spec").Field("image")
+	return Root().Field(testField("spec")).Field(testField("image"))
 }
 
 func setLabelPath() Path {
-	return RootPath().Field("metadata").Field("labels").Key("app")
+	return Root().Field(testField("metadata")).Field(testField("labels")).Key(testKey("app"))
 }
 
 func setIndexPath() Path {
-	return RootPath().Field("items").Index(0)
+	return Root().Field(testField("items")).Index(0)
 }
 
 func setReadyStatusPath() Path {
 	ready := MustSelector(
-		NewSelectorEntry("type", StringLiteral("Ready")),
+		testSelectorEntry("type", StringLiteral("Ready")),
 	)
 
-	return RootPath().
+	return Root().
 		Field("conditions").
 		Select(ready).
 		Field("status")

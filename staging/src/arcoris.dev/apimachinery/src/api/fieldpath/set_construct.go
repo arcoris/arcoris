@@ -50,7 +50,7 @@ func normalizeSetPaths(paths []Path) ([]Path, error) {
 	canonical := clonePaths(paths)
 
 	for _, path := range canonical {
-		if err := path.Validate(); err != nil {
+		if err := path.ValidateStructure(); err != nil {
 			return nil, err
 		}
 	}

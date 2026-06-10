@@ -17,8 +17,8 @@ package fieldpath
 import "testing"
 
 func TestPathEqual(t *testing.T) {
-	left := RootPath().Field("spec").Field("replicas")
-	right := RootPath().Field("spec").Field("replicas")
+	left := Root().Field(testField("spec")).Field(testField("replicas"))
+	right := Root().Field(testField("spec")).Field(testField("replicas"))
 
 	requireEqual(t, left.Equal(right), true)
 }
@@ -32,26 +32,26 @@ func TestPathCompareStableOrder(t *testing.T) {
 	}{
 		{
 			name:  "shorter before child",
-			left:  RootPath().Field("spec"),
-			right: RootPath().Field("spec").Field("replicas"),
+			left:  Root().Field(testField("spec")),
+			right: Root().Field(testField("spec")).Field(testField("replicas")),
 			want:  -1,
 		},
 		{
 			name:  "field before key",
-			left:  MustPath(FieldElement("a")),
-			right: MustPath(KeyElement("a")),
+			left:  MustPath(testFieldElement("a")),
+			right: MustPath(testKeyElement("a")),
 			want:  -1,
 		},
 		{
 			name:  "key before index",
-			left:  MustPath(KeyElement("a")),
-			right: MustPath(IndexElement(0)),
+			left:  MustPath(testKeyElement("a")),
+			right: MustPath(MustIndexElement(0)),
 			want:  -1,
 		},
 		{
 			name:  "index before selector",
-			left:  MustPath(IndexElement(0)),
-			right: MustPath(SelectorElement(MustSelector(NewSelectorEntry("a", StringLiteral("x"))))),
+			left:  MustPath(MustIndexElement(0)),
+			right: MustPath(testSelectorElement(MustSelector(testSelectorEntry("a", StringLiteral("x"))))),
 			want:  -1,
 		},
 	}
@@ -64,13 +64,13 @@ func TestPathCompareStableOrder(t *testing.T) {
 }
 
 func TestPathCompareOrdersSelectorsDeterministically(t *testing.T) {
-	left := RootPath().
+	left := Root().
 		Field("conditions").
-		Select(MustSelector(NewSelectorEntry("type", StringLiteral("Ready"))))
+		Select(MustSelector(testSelectorEntry("type", StringLiteral("Ready"))))
 
-	right := RootPath().
+	right := Root().
 		Field("conditions").
-		Select(MustSelector(NewSelectorEntry("type", StringLiteral("Scheduled"))))
+		Select(MustSelector(testSelectorEntry("type", StringLiteral("Scheduled"))))
 
 	requireEqual(t, left.Compare(right), -1)
 }

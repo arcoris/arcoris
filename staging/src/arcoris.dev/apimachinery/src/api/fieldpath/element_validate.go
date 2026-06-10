@@ -14,12 +14,12 @@
 
 package fieldpath
 
-// Validate checks whether e is a well-formed semantic path element.
+// ValidateStructure checks whether e is a well-formed semantic path element.
 //
 // Element validation is intentionally local to the element itself. Path
 // validation only walks the element sequence and wraps the failing position,
 // while selector validation remains owned by Selector.
-func (e Element) Validate() error {
+func (e Element) ValidateStructure() error {
 	switch e.kind {
 	case ElementField:
 		return validateFieldElement(e)
@@ -40,30 +40,12 @@ func (e Element) Validate() error {
 
 // validateFieldElement enforces the base grammar for fixed object-field steps.
 func validateFieldElement(e Element) error {
-	if e.name != "" {
-		return nil
-	}
-
-	return nested(
-		ErrInvalidElement,
-		ErrorReasonEmptyFieldName,
-		"field element name is empty",
-		ErrEmptyFieldName,
-	)
+	return e.field.ValidateStructure()
 }
 
 // validateKeyElement enforces the base grammar for dynamic map-key steps.
 func validateKeyElement(e Element) error {
-	if e.name != "" {
-		return nil
-	}
-
-	return nested(
-		ErrInvalidElement,
-		ErrorReasonEmptyKey,
-		"key element is empty",
-		ErrEmptyKey,
-	)
+	return e.key.ValidateStructure()
 }
 
 // validateIndexElement rejects negative physical list positions.
@@ -83,7 +65,7 @@ func validateIndexElement(e Element) error {
 // validateSelectorElement delegates associative-list identity validation to
 // Selector while preserving the element-level error class.
 func validateSelectorElement(e Element) error {
-	if err := e.selector.Validate(); err != nil {
+	if err := e.selector.ValidateStructure(); err != nil {
 		return nested(
 			ErrInvalidElement,
 			ErrorReasonInvalidSelector,

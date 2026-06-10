@@ -16,12 +16,12 @@ package fieldpath
 
 import "testing"
 
-func TestRootPathString(t *testing.T) {
-	requireEqual(t, RootPath().String(), "$")
+func TestRootString(t *testing.T) {
+	requireEqual(t, Root().String(), "$")
 }
 
 func TestMustPathPanicsOnInvalidPath(t *testing.T) {
 	requirePanic(t, func() {
-		MustPath(FieldElement(""))
+		MustPath(Element{kind: ElementField})
 	})
 }

@@ -74,7 +74,7 @@ func (v *validator) validateMap(
 
 	for _, mapMember := range valueView.Members() {
 		name := mapMember.Name.String()
-		memberPath := path.Key(name)
+		memberPath := path.Key(fieldpath.MustMapKey(name))
 		v.validate(memberPath, value.StringValue(name), keyDescriptor, depth+1)
 		v.validate(memberPath, mapMember.Value, valueDescriptor, depth+1)
 	}

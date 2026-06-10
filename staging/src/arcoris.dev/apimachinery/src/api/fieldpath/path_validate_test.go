@@ -17,7 +17,7 @@ package fieldpath
 import "testing"
 
 func TestPathValidateRejectsInvalidElement(t *testing.T) {
-	err := RootPath().Field("").Validate()
+	err := (Path{elements: []Element{{kind: ElementField}}}).ValidateStructure()
 
 	requireErrorIs(t, err, ErrInvalidPath)
 	requireErrorIs(t, err, ErrInvalidElement)

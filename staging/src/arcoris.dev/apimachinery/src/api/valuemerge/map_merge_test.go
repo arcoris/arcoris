@@ -30,7 +30,7 @@ func TestMergeMapSelectedKey(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Key("app")),
+		pathSet(root().Key(testMapKey("app"))),
 		Options{},
 	)
 	if err != nil {
@@ -50,7 +50,7 @@ func TestMergeMapAddsSelectedKey(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Key("app")),
+		pathSet(root().Key(testMapKey("app"))),
 		Options{},
 	)
 	if err != nil {
@@ -70,7 +70,7 @@ func TestMergeMapRemovesSelectedKeyAbsentFromOverlay(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Key("app")),
+		pathSet(root().Key(testMapKey("app"))),
 		Options{},
 	)
 	if err != nil {
@@ -108,7 +108,7 @@ func TestMergeMapNestedObjectValueSelectedField(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Key("api").Field("image")),
+		pathSet(root().Key(testMapKey("api")).Field(testFieldName("image"))),
 		Options{},
 	)
 	if err != nil {
@@ -130,7 +130,7 @@ func TestMergeMapUsesKeyPathNotFieldPath(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Field("app")),
+		pathSet(root().Field(testFieldName("app"))),
 		Options{},
 	)
 	if err != nil {

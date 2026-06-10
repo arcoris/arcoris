@@ -79,7 +79,7 @@ func TestApplyVersionMismatchError(t *testing.T) {
 
 func TestApplyDesiredApplyFailureWrapsDesiredApplyFailed(t *testing.T) {
 	req := testRequest()
-	req.Ownership = desiredOwnership(entry("other", fieldpath.RootPath()))
+	req.Ownership = desiredOwnership(entry("other", fieldpath.Root()))
 
 	_, err := Apply(req, Options{Force: true})
 

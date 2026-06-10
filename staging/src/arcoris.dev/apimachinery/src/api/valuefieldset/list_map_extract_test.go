@@ -48,8 +48,8 @@ func TestExtractListMapUsesSelectorPaths(t *testing.T) {
 	requireFieldSet(
 		t,
 		got,
-		selectorPath.Field("type"),
-		selectorPath.Field("status"),
+		selectorPath.Field(testFieldName("type")),
+		selectorPath.Field(testFieldName("status")),
 	)
 }
 
@@ -160,8 +160,8 @@ func TestExtractListMapRefElementUsesSelectorPaths(t *testing.T) {
 	requireFieldSet(
 		t,
 		got,
-		selectorPath.Field("type"),
-		selectorPath.Field("status"),
+		selectorPath.Field(testFieldName("type")),
+		selectorPath.Field(testFieldName("status")),
 	)
 }
 
@@ -226,8 +226,8 @@ func TestExtractListMapRefKeyUsesSelectorLiteral(t *testing.T) {
 	requireFieldSet(
 		t,
 		got,
-		selectorPath.Field("type"),
-		selectorPath.Field("status"),
+		selectorPath.Field(testFieldName("type")),
+		selectorPath.Field(testFieldName("status")),
 	)
 }
 
@@ -254,9 +254,9 @@ func TestExtractListMapMultiKeySelector(t *testing.T) {
 	requireFieldSet(
 		t,
 		got,
-		selectorPath.Field("host"),
-		selectorPath.Field("port"),
-		selectorPath.Field("backend"),
+		selectorPath.Field(testFieldName("host")),
+		selectorPath.Field(testFieldName("port")),
+		selectorPath.Field(testFieldName("backend")),
 	)
 }
 
@@ -288,7 +288,7 @@ func TestExtractListMapNestedObjectPaths(t *testing.T) {
 	requireFieldSet(
 		t,
 		got,
-		selectorPath.Field("type"),
-		selectorPath.Field("detail").Field("message"),
+		selectorPath.Field(testFieldName("type")),
+		selectorPath.Field(testFieldName("detail")).Field(testFieldName("message")),
 	)
 }

@@ -46,7 +46,7 @@ func TestCompareListMapModifiedItemField(t *testing.T) {
 
 	got, err := CompareAt(path, oldValue, newValue, conditionsDescriptor(), Options{})
 	requireNoError(t, err)
-	requireResult(t, got, nil, nil, paths(path.Select(readySelector()).Field("status")))
+	requireResult(t, got, nil, nil, paths(path.Select(readySelector()).Field(testFieldName("status"))))
 }
 
 func TestCompareListMapModifiedItemFieldUsesSelectorPath(t *testing.T) {
@@ -56,7 +56,7 @@ func TestCompareListMapModifiedItemFieldUsesSelectorPath(t *testing.T) {
 
 	got, err := CompareAt(path, oldValue, newValue, conditionsDescriptor(), Options{})
 	requireNoError(t, err)
-	requireResult(t, got, nil, nil, paths(path.Select(readySelector()).Field("status")))
+	requireResult(t, got, nil, nil, paths(path.Select(readySelector()).Field(testFieldName("status"))))
 	requireNoChangedPathContaining(t, got, "[0]")
 }
 
@@ -66,7 +66,7 @@ func TestCompareListMapAddedItem(t *testing.T) {
 
 	got, err := CompareAt(path, value.MustListValue(), newValue, conditionsDescriptor(), Options{})
 	requireNoError(t, err)
-	requireResult(t, got, paths(path.Select(readySelector()).Field("type"), path.Select(readySelector()).Field("status")), nil, nil)
+	requireResult(t, got, paths(path.Select(readySelector()).Field(testFieldName("type")), path.Select(readySelector()).Field(testFieldName("status"))), nil, nil)
 }
 
 func TestCompareListMapAddedItemUsesSelectorFieldSet(t *testing.T) {
@@ -76,7 +76,7 @@ func TestCompareListMapAddedItemUsesSelectorFieldSet(t *testing.T) {
 
 	got, err := CompareAt(path, value.MustListValue(), newValue, conditionsDescriptor(), Options{})
 	requireNoError(t, err)
-	requireResult(t, got, paths(selectorPath.Field("type"), selectorPath.Field("status")), nil, nil)
+	requireResult(t, got, paths(selectorPath.Field(testFieldName("type")), selectorPath.Field(testFieldName("status"))), nil, nil)
 	requireNoChangedPathContaining(t, got, "[0]")
 }
 
@@ -86,7 +86,7 @@ func TestCompareListMapRemovedItem(t *testing.T) {
 
 	got, err := CompareAt(path, oldValue, value.MustListValue(), conditionsDescriptor(), Options{})
 	requireNoError(t, err)
-	requireResult(t, got, nil, paths(path.Select(readySelector()).Field("type"), path.Select(readySelector()).Field("status")), nil)
+	requireResult(t, got, nil, paths(path.Select(readySelector()).Field(testFieldName("type")), path.Select(readySelector()).Field(testFieldName("status"))), nil)
 }
 
 func TestCompareListMapRemovedItemUsesSelectorFieldSet(t *testing.T) {
@@ -96,7 +96,7 @@ func TestCompareListMapRemovedItemUsesSelectorFieldSet(t *testing.T) {
 
 	got, err := CompareAt(path, oldValue, value.MustListValue(), conditionsDescriptor(), Options{})
 	requireNoError(t, err)
-	requireResult(t, got, nil, paths(selectorPath.Field("type"), selectorPath.Field("status")), nil)
+	requireResult(t, got, nil, paths(selectorPath.Field(testFieldName("type")), selectorPath.Field(testFieldName("status"))), nil)
 	requireNoChangedPathContaining(t, got, "[0]")
 }
 
@@ -117,9 +117,9 @@ func TestCompareListMapAddedRemovedModifiedKeepsBucketsDisjoint(t *testing.T) {
 	got, err := CompareAt(path, oldValue, newValue, conditionsDescriptor(), Options{})
 	requireNoError(t, err)
 	requireResult(t, got,
-		paths(progressingPath.Field("type"), progressingPath.Field("status")),
-		paths(degradedPath.Field("type"), degradedPath.Field("status")),
-		paths(readyPath.Field("status")),
+		paths(progressingPath.Field(testFieldName("type")), progressingPath.Field(testFieldName("status"))),
+		paths(degradedPath.Field(testFieldName("type")), degradedPath.Field(testFieldName("status"))),
+		paths(readyPath.Field(testFieldName("status"))),
 	)
 }
 
@@ -137,7 +137,7 @@ func TestCompareListMapMultiKeySelector(t *testing.T) {
 
 	got, err := CompareAt(path, oldValue, newValue, descriptor, Options{})
 	requireNoError(t, err)
-	requireResult(t, got, nil, nil, paths(path.Select(routeSelector()).Field("backend")))
+	requireResult(t, got, nil, nil, paths(path.Select(routeSelector()).Field(testFieldName("backend"))))
 }
 
 func TestCompareListMapDuplicateOldSelectorReturnsError(t *testing.T) {
@@ -210,7 +210,7 @@ func TestCompareListMapDoesNotUseIndexPathForSuccessfulSelector(t *testing.T) {
 
 	got, err := CompareAt(path, oldValue, newValue, conditionsDescriptor(), Options{})
 	requireNoError(t, err)
-	requireResult(t, got, nil, nil, paths(path.Select(readySelector()).Field("status")))
+	requireResult(t, got, nil, nil, paths(path.Select(readySelector()).Field(testFieldName("status"))))
 	requireNoChangedPathContaining(t, got, "[0]")
 }
 
@@ -225,7 +225,7 @@ func TestCompareListMapRefElement(t *testing.T) {
 
 	got, err := CompareAt(path, oldValue, newValue, descriptor, Options{Resolver: resolver})
 	requireNoError(t, err)
-	requireResult(t, got, nil, nil, paths(path.Select(readySelector()).Field("status")))
+	requireResult(t, got, nil, nil, paths(path.Select(readySelector()).Field(testFieldName("status"))))
 }
 
 func TestCompareListMapRefKeyType(t *testing.T) {
@@ -244,7 +244,7 @@ func TestCompareListMapRefKeyType(t *testing.T) {
 
 	got, err := CompareAt(path, oldValue, newValue, descriptor, Options{Resolver: resolver})
 	requireNoError(t, err)
-	requireResult(t, got, nil, nil, paths(path.Select(readySelector()).Field("status")))
+	requireResult(t, got, nil, nil, paths(path.Select(readySelector()).Field(testFieldName("status"))))
 }
 
 func routeValue(backend string) value.Value {
@@ -347,7 +347,7 @@ func TestDuplicateListMapEntryErrorIncludesBothIndexes(t *testing.T) {
 
 func TestCompareListMapKeyErrorMapsInternalError(t *testing.T) {
 	err := compareListMapKeyError(&listmapkey.Error{
-		Path:   rootField("conditions").Index(0).Field("type"),
+		Path:   rootField("conditions").Index(0).Field(testFieldName("type")),
 		Kind:   listmapkey.FailureMissingKey,
 		Detail: "missing",
 	})

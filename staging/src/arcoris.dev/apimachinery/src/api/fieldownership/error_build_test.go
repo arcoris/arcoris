@@ -54,8 +54,8 @@ func TestWrapAtPreservesCause(t *testing.T) {
 }
 
 func TestWrapPathErrorPreservesInvalidPathCause(t *testing.T) {
-	invalidPath := fieldpath.RootPath().Field("")
-	cause := invalidPath.Validate()
+	invalidPath := fieldpath.Root()
+	_, cause := fieldpath.NewPath(fieldpath.Element{})
 	err := wrapPathError(invalidPath, "path is invalid", cause)
 
 	requireErrorIs(t, err, ErrInvalidPath)

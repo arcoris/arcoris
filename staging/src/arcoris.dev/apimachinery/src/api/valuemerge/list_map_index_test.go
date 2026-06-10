@@ -23,7 +23,7 @@ import (
 
 func TestListMapIndexPreservesPhysicalOrder(t *testing.T) {
 	index, err := newMerger(Options{}).listMapIndex(
-		root().Field("conditions"),
+		root().Field(testFieldName("conditions")),
 		valuepresence.Present(list(
 			conditionItem("Ready", "True"),
 			conditionItem("Degraded", "False"),
@@ -45,7 +45,7 @@ func TestListMapIndexPreservesPhysicalOrder(t *testing.T) {
 
 func TestListMapIndexRejectsDuplicateSelector(t *testing.T) {
 	_, err := newMerger(Options{}).listMapIndex(
-		root().Field("conditions"),
+		root().Field(testFieldName("conditions")),
 		valuepresence.Present(list(
 			conditionItem("Ready", "True"),
 			conditionItem("Ready", "False"),

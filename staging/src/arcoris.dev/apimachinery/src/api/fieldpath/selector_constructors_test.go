@@ -18,14 +18,14 @@ import "testing"
 
 func TestNewSelectorSortsEntriesByField(t *testing.T) {
 	selector, err := NewSelector(
-		NewSelectorEntry("port", Uint64Literal(443)),
-		NewSelectorEntry("host", StringLiteral("api.example.com")),
+		testSelectorEntry("port", Uint64Literal(443)),
+		testSelectorEntry("host", StringLiteral("api.example.com")),
 	)
 	requireNoError(t, err)
 
 	entries := selector.Entries()
-	requireEqual(t, entries[0].Field(), "host")
-	requireEqual(t, entries[1].Field(), "port")
+	requireEqual(t, entries[0].Field(), testField("host"))
+	requireEqual(t, entries[1].Field(), testField("port"))
 }
 
 func TestNewSelectorRejectsEmptySelector(t *testing.T) {
@@ -36,7 +36,7 @@ func TestNewSelectorRejectsEmptySelector(t *testing.T) {
 }
 
 func TestNewSelectorRejectsEmptyEntryField(t *testing.T) {
-	_, err := NewSelector(NewSelectorEntry("", StringLiteral("Ready")))
+	_, err := NewSelector(NewSelectorEntry(FieldName(""), StringLiteral("Ready")))
 
 	requireErrorIs(t, err, ErrInvalidSelector)
 	requireErrorIs(t, err, ErrInvalidEntry)
@@ -45,12 +45,12 @@ func TestNewSelectorRejectsEmptyEntryField(t *testing.T) {
 
 func TestNewSelectorRejectsDuplicateEntryField(t *testing.T) {
 	_, err := NewSelector(
-		NewSelectorEntry("type", StringLiteral("Ready")),
-		NewSelectorEntry("type", StringLiteral("Scheduled")),
+		testSelectorEntry("type", StringLiteral("Ready")),
+		testSelectorEntry("type", StringLiteral("Scheduled")),
 	)
 
 	requireErrorIs(t, err, ErrInvalidSelector)
-	requireErrorIs(t, err, ErrDuplicateField)
+	requireErrorIs(t, err, ErrDuplicateSelectorField)
 }
 
 func TestMustSelectorPanicsOnInvalidSelector(t *testing.T) {

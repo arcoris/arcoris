@@ -82,5 +82,10 @@ func (p *pathParser) parseSelectorEntry() (SelectorEntry, error) {
 		return SelectorEntry{}, err
 	}
 
-	return NewSelectorEntry(field, value), nil
+	entry, err := SelectorEntryFromString(field, value)
+	if err != nil {
+		return SelectorEntry{}, err
+	}
+
+	return entry, nil
 }

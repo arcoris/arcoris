@@ -19,25 +19,27 @@ type ErrorReason string
 
 const (
 	// ErrorReasonInvalidPath identifies a path that contains an invalid element.
-	ErrorReasonInvalidPath ErrorReason = "invalidPath"
+	ErrorReasonInvalidPath ErrorReason = "invalid_path"
 	// ErrorReasonInvalidSyntax identifies malformed field-path text.
-	ErrorReasonInvalidSyntax ErrorReason = "invalidSyntax"
+	ErrorReasonInvalidSyntax ErrorReason = "invalid_syntax"
 	// ErrorReasonInvalidElement identifies a malformed path element.
-	ErrorReasonInvalidElement ErrorReason = "invalidElement"
+	ErrorReasonInvalidElement ErrorReason = "invalid_element"
 	// ErrorReasonInvalidSelector identifies a malformed selector.
-	ErrorReasonInvalidSelector ErrorReason = "invalidSelector"
+	ErrorReasonInvalidSelector ErrorReason = "invalid_selector"
 	// ErrorReasonInvalidEntry identifies a malformed selector entry.
-	ErrorReasonInvalidEntry ErrorReason = "invalidEntry"
+	ErrorReasonInvalidEntry ErrorReason = "invalid_entry"
 	// ErrorReasonInvalidLiteral identifies an unsupported or uninitialized literal.
-	ErrorReasonInvalidLiteral ErrorReason = "invalidLiteral"
+	ErrorReasonInvalidLiteral ErrorReason = "invalid_literal"
 	// ErrorReasonEmptyFieldName identifies an empty field name.
-	ErrorReasonEmptyFieldName ErrorReason = "emptyFieldName"
-	// ErrorReasonEmptyKey identifies an empty map key.
-	ErrorReasonEmptyKey ErrorReason = "emptyKey"
+	ErrorReasonEmptyFieldName ErrorReason = "empty_field_name"
+	// ErrorReasonEmptyMapKey identifies an empty map key.
+	ErrorReasonEmptyMapKey ErrorReason = "empty_map_key"
 	// ErrorReasonNegativeIndex identifies a negative list index.
-	ErrorReasonNegativeIndex ErrorReason = "negativeIndex"
+	ErrorReasonNegativeIndex ErrorReason = "negative_index"
 	// ErrorReasonEmptySelector identifies a selector with no entries.
-	ErrorReasonEmptySelector ErrorReason = "emptySelector"
+	ErrorReasonEmptySelector ErrorReason = "empty_selector"
 	// ErrorReasonDuplicateSelectorField identifies a repeated selector field name.
-	ErrorReasonDuplicateSelectorField ErrorReason = "duplicateSelectorField"
+	ErrorReasonDuplicateSelectorField ErrorReason = "duplicate_selector_field"
+	// ErrorReasonNonCanonicalText identifies valid path text that is not canonical.
+	ErrorReasonNonCanonicalText ErrorReason = "non_canonical_text"
 )

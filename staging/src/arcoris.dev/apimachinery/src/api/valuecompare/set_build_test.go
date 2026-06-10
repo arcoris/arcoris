@@ -14,23 +14,13 @@
 
 package valuecompare
 
-import (
-	"arcoris.dev/apimachinery/api/fieldpath"
-	"testing"
-)
+import "testing"
 
-func TestSetAtBuildsOnePathSet(t *testing.T) {
+func TestSetAtBuildsOneSet(t *testing.T) {
 	path := rootField("name")
 
 	got, err := setAt(path)
 	requireNoError(t, err)
 
 	requireSet(t, "set", got, path)
-}
-
-func TestSetAtInvalidPathReturnsInvalidPath(t *testing.T) {
-	_, err := setAt(fieldpath.RootPath().Index(-1))
-
-	requireErrorIs(t, err, ErrInvalidPath)
-	requireErrorReason(t, err, ErrorReasonInvalidPath)
 }

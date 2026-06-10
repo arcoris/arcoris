@@ -26,7 +26,7 @@ func NewSelector(entries ...SelectorEntry) (Selector, error) {
 
 	sortSelectorEntries(canonical.entries)
 
-	if err := canonical.Validate(); err != nil {
+	if err := canonical.ValidateStructure(); err != nil {
 		return Selector{}, err
 	}
 

@@ -80,7 +80,7 @@ func TestMergeDoesNotMutateBase(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Field("name")),
+		pathSet(root().Field(testFieldName("name"))),
 		Options{},
 	)
 	if err != nil {
@@ -100,7 +100,7 @@ func TestMergeDoesNotMutateOverlay(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Field("name")),
+		pathSet(root().Field(testFieldName("name"))),
 		Options{},
 	)
 	if err != nil {

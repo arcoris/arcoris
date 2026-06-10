@@ -17,8 +17,6 @@ package valuemerge
 import (
 	"errors"
 	"testing"
-
-	"arcoris.dev/apimachinery/api/types"
 )
 
 func TestErrorIsSentinel(t *testing.T) {
@@ -37,19 +35,4 @@ func TestErrorAsValueMergeError(t *testing.T) {
 	if mergeError.Reason != ErrorReasonUnsupportedMerge {
 		t.Fatalf("reason = %q; want %q", mergeError.Reason, ErrorReasonUnsupportedMerge)
 	}
-}
-
-func TestMergeAtInvalidBasePathReturnsInvalidPath(t *testing.T) {
-	badPath := root().Index(-1)
-
-	_, err := MergeAt(
-		badPath,
-		str("old"),
-		str("new"),
-		types.String().Descriptor(),
-		pathSet(root()),
-		Options{},
-	)
-
-	requireErrorIs(t, err, ErrInvalidPath)
 }

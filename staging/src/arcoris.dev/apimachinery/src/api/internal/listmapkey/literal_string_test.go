@@ -21,14 +21,14 @@ import (
 )
 
 func TestStringLiteral(t *testing.T) {
-	gotLiteral, err := stringLiteral(conditionPath(0).Field("type"), value.StringValue("Ready"))
+	gotLiteral, err := stringLiteral(conditionPath(0).Field(testFieldName("type")), value.StringValue("Ready"))
 
 	requireNoError(t, err)
 	requireEqual(t, gotLiteral.String(), `"Ready"`)
 }
 
 func TestStringLiteralRejectsWrongKind(t *testing.T) {
-	_, err := stringLiteral(conditionPath(0).Field("type"), value.BoolValue(true))
+	_, err := stringLiteral(conditionPath(0).Field(testFieldName("type")), value.BoolValue(true))
 
 	requireErrorKind(t, err, FailureKeyKindMismatch)
 }

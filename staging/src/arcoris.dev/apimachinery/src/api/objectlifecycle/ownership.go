@@ -36,7 +36,7 @@ func (e *Executor) initialOwnership(
 	resolved resolvedResource,
 ) (objectownership.State, error) {
 	fields, err := valuefieldset.ExtractAt(
-		fieldpath.RootPath(),
+		fieldpath.Root(),
 		desired,
 		resolved.version.Desired(),
 		valuefieldset.Options{

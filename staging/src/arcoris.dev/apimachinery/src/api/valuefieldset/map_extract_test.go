@@ -30,7 +30,7 @@ func TestExtractMapEntriesUseKeyPaths(t *testing.T) {
 	got, err := ExtractAt(path, val, types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 
-	requireFieldSet(t, got, path.Key("app"))
+	requireFieldSet(t, got, path.Key(testMapKey("app")))
 }
 
 func TestExtractMapEmptyIncludesMapPath(t *testing.T) {
@@ -73,5 +73,5 @@ func TestExtractMapNestedObjectValues(t *testing.T) {
 	got, err := ExtractAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
-	requireFieldSet(t, got, path.Key("api").Field("backend"))
+	requireFieldSet(t, got, path.Key(testMapKey("api")).Field(testFieldName("backend")))
 }

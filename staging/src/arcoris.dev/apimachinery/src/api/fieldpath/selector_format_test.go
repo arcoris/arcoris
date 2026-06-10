@@ -19,22 +19,22 @@ import "testing"
 func TestSelectorEntryString(t *testing.T) {
 	requireEqual(
 		t,
-		NewSelectorEntry("type", StringLiteral("Ready")).String(),
+		testSelectorEntry("type", StringLiteral("Ready")).String(),
 		`"type":"Ready"`,
 	)
 }
 
 func TestSelectorString(t *testing.T) {
 	selector := MustSelector(
-		NewSelectorEntry("port", Uint64Literal(443)),
-		NewSelectorEntry("host", StringLiteral("api.example.com")),
+		testSelectorEntry("port", Uint64Literal(443)),
+		testSelectorEntry("host", StringLiteral("api.example.com")),
 	)
 
 	requireEqual(t, selector.String(), `{"host":"api.example.com","port":443}`)
 }
 
 func TestSelectorStringEscapesValues(t *testing.T) {
-	selector := MustSelector(NewSelectorEntry(`na"me`, StringLiteral(`a"b`)))
+	selector := MustSelector(testSelectorEntry(`na"me`, StringLiteral(`a"b`)))
 
 	requireEqual(t, selector.String(), `{"na\"me":"a\"b"}`)
 }

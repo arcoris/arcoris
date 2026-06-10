@@ -23,7 +23,7 @@ import (
 func TestValidateSignedEnumReportsMissingValue(t *testing.T) {
 	run := newValidator(Options{})
 
-	run.validateSignedEnum(fieldpath.RootPath(), 3, []int64{1, 2})
+	run.validateSignedEnum(fieldpath.Root(), 3, []int64{1, 2})
 
 	requireInternalError(
 		t,
@@ -37,7 +37,7 @@ func TestValidateSignedEnumReportsMissingValue(t *testing.T) {
 func TestValidateUnsignedEnumReportsMissingValue(t *testing.T) {
 	run := newValidator(Options{})
 
-	run.validateUnsignedEnum(fieldpath.RootPath(), 3, []uint64{1, 2})
+	run.validateUnsignedEnum(fieldpath.Root(), 3, []uint64{1, 2})
 
 	requireInternalError(
 		t,

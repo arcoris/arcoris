@@ -90,23 +90,31 @@ func requireErrorDetailContains(t *testing.T, err error, want string) {
 }
 
 func rootField(names ...string) fieldpath.Path {
-	path := fieldpath.RootPath()
+	path := fieldpath.Root()
 	for _, name := range names {
-		path = path.Field(name)
+		path = path.Field(testFieldName(name))
 	}
 
 	return path
 }
 
+func testFieldName(name string) fieldpath.FieldName {
+	return fieldpath.MustFieldName(name)
+}
+
+func testMapKey(key string) fieldpath.MapKey {
+	return fieldpath.MustMapKey(key)
+}
+
 func readySelector() fieldpath.Selector {
 	return fieldpath.MustSelector(
-		fieldpath.NewSelectorEntry("type", fieldpath.StringLiteral("Ready")),
+		fieldpath.NewSelectorEntry(testFieldName("type"), fieldpath.StringLiteral("Ready")),
 	)
 }
 
 func routeSelector() fieldpath.Selector {
 	return fieldpath.MustSelector(
-		fieldpath.NewSelectorEntry("port", fieldpath.Uint64Literal(443)),
-		fieldpath.NewSelectorEntry("host", fieldpath.StringLiteral("api.example.com")),
+		fieldpath.NewSelectorEntry(testFieldName("port"), fieldpath.Uint64Literal(443)),
+		fieldpath.NewSelectorEntry(testFieldName("host"), fieldpath.StringLiteral("api.example.com")),
 	)
 }

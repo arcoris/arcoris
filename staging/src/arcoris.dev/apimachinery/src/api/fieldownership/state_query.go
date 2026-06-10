@@ -22,7 +22,7 @@ import "arcoris.dev/apimachinery/api/fieldpath"
 // no error return. Error-returning operations, such as Conflicts, validate
 // caller-supplied paths.
 func (s State) OwnersOf(path fieldpath.Path) []Owner {
-	if path.Validate() != nil {
+	if path.ValidateStructure() != nil {
 		return nil
 	}
 
@@ -42,7 +42,7 @@ func (s State) OwnersOf(path fieldpath.Path) []Owner {
 // Invalid paths are treated as no match because this query API has no error
 // return.
 func (s State) OverlappingOwners(path fieldpath.Path) []Ownership {
-	if path.Validate() != nil {
+	if path.ValidateStructure() != nil {
 		return nil
 	}
 

@@ -30,7 +30,7 @@ func TestMergeObjectSelectedField(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Field("image")),
+		pathSet(root().Field(testFieldName("image"))),
 		Options{},
 	)
 	if err != nil {
@@ -50,7 +50,7 @@ func TestMergeObjectUnselectedFieldPreserved(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Field("replicas")),
+		pathSet(root().Field(testFieldName("replicas"))),
 		Options{},
 	)
 	if err != nil {
@@ -70,7 +70,7 @@ func TestMergeObjectAddsSelectedField(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Field("replicas")),
+		pathSet(root().Field(testFieldName("replicas"))),
 		Options{},
 	)
 	if err != nil {
@@ -90,7 +90,7 @@ func TestMergeObjectRemovesSelectedFieldAbsentFromOverlay(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Field("replicas")),
+		pathSet(root().Field(testFieldName("replicas"))),
 		Options{},
 	)
 	if err != nil {
@@ -128,7 +128,7 @@ func TestMergeObjectNestedSelectedField(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Field("spec").Field("image")),
+		pathSet(root().Field(testFieldName("spec")).Field(testFieldName("image"))),
 		Options{},
 	)
 	if err != nil {
@@ -152,7 +152,7 @@ func TestMergeDescendantIntoWrongKindBaseReturnsKindMismatch(t *testing.T) {
 		obj(member("spec", str("invalid"))),
 		obj(),
 		descriptor,
-		pathSet(root().Field("spec").Field("replicas")),
+		pathSet(root().Field(testFieldName("spec")).Field(testFieldName("replicas"))),
 		Options{},
 	)
 
@@ -170,7 +170,7 @@ func TestMergeDescendantIntoAbsentBaseAndAbsentOverlayNoops(t *testing.T) {
 		obj(),
 		obj(),
 		descriptor,
-		pathSet(root().Field("spec").Field("replicas")),
+		pathSet(root().Field(testFieldName("spec")).Field(testFieldName("replicas"))),
 		Options{},
 	)
 	if err != nil {
@@ -191,7 +191,7 @@ func TestMergeDescendantIntoNullBaseAndAbsentOverlayPreservesNull(t *testing.T) 
 		obj(member("spec", value.NullValue())),
 		obj(),
 		descriptor,
-		pathSet(root().Field("spec").Field("replicas")),
+		pathSet(root().Field(testFieldName("spec")).Field(testFieldName("replicas"))),
 		Options{},
 	)
 	if err != nil {
@@ -216,7 +216,7 @@ func TestMergeDescendantIntoAbsentBaseCreatesFromOverlayContainer(t *testing.T) 
 		obj(),
 		obj(member("spec", obj(member("image", str("ignored")), member("replicas", intValue(5))))),
 		descriptor,
-		pathSet(root().Field("spec").Field("replicas")),
+		pathSet(root().Field(testFieldName("spec")).Field(testFieldName("replicas"))),
 		Options{},
 	)
 	if err != nil {
@@ -240,7 +240,7 @@ func TestMergeObjectRequiredFieldAbsentIsNotValidationError(t *testing.T) {
 		base,
 		overlay,
 		descriptor,
-		pathSet(root().Field("image")),
+		pathSet(root().Field(testFieldName("image"))),
 		Options{},
 	)
 	if err != nil {

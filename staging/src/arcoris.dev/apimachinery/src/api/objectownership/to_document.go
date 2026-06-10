@@ -63,16 +63,16 @@ func fieldOwnershipStateToDocumentSurface(state fieldownership.State) Surface {
 func fieldOwnershipEntryToDocumentEntry(entry fieldownership.Entry) Entry {
 	return Entry{
 		Owner:  entry.Owner(),
-		Fields: fieldPathSetToDocumentPaths(entry.Fields()),
+		Fields: fieldSetToDocumentPaths(entry.Fields()),
 	}
 }
 
-// fieldPathSetToDocumentPaths formats a semantic field set as document paths in
+// fieldSetToDocumentPaths formats a semantic field set as document paths in
 // fieldpath.Set canonical order.
 //
 // Parent and descendant paths remain separate; the document layer does not
 // compact or reinterpret fieldpath.Set semantics.
-func fieldPathSetToDocumentPaths(fields fieldpath.Set) []Path {
+func fieldSetToDocumentPaths(fields fieldpath.Set) []Path {
 	paths := fields.Paths()
 	if len(paths) == 0 {
 		return nil

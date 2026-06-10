@@ -25,18 +25,6 @@ func TestValidateRequestShape(t *testing.T) {
 	requireNoError(t, validateRequestShape(specRequest(owner("user"))))
 }
 
-func TestApplyInvalidPathReturnsInvalidPath(t *testing.T) {
-	_, err := Apply(Request{
-		Path:       root().Field(""),
-		Owner:      owner("user"),
-		Live:       str("old"),
-		Applied:    str("new"),
-		Descriptor: types.String().Descriptor(),
-	}, Options{})
-
-	requireErrorIs(t, err, ErrInvalidPath)
-}
-
 func TestApplyInvalidOwnerReturnsInvalidOwner(t *testing.T) {
 	_, err := Apply(Request{
 		Path:       root(),

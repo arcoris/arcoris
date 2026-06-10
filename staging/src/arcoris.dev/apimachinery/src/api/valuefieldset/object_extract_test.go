@@ -38,8 +38,8 @@ func TestExtractObjectLeaves(t *testing.T) {
 	requireFieldSet(
 		t,
 		got,
-		path.Field("replicas"),
-		path.Field("image"),
+		path.Field(testFieldName("replicas")),
+		path.Field(testFieldName("image")),
 	)
 }
 
@@ -66,7 +66,7 @@ func TestExtractObjectMissingFieldsNotIncluded(t *testing.T) {
 	got, err := ExtractAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
-	requireFieldSet(t, got, path.Field("replicas"))
+	requireFieldSet(t, got, path.Field(testFieldName("replicas")))
 }
 
 func TestExtractObjectUnknownRejectedReturnsError(t *testing.T) {
@@ -99,7 +99,7 @@ func TestExtractObjectUnknownPreserveOpaqueIncludesOpaquePath(t *testing.T) {
 	got, err := ExtractAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
-	requireFieldSet(t, got, path.Field("extra"))
+	requireFieldSet(t, got, path.Field(testFieldName("extra")))
 }
 
 func TestExtractObjectUnknownPreserveOpaqueDoesNotTraverseNestedStructure(t *testing.T) {
@@ -119,7 +119,7 @@ func TestExtractObjectUnknownPreserveOpaqueDoesNotTraverseNestedStructure(t *tes
 	got, err := ExtractAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
-	requireFieldSet(t, got, path.Field("extra"))
+	requireFieldSet(t, got, path.Field(testFieldName("extra")))
 }
 
 func TestExtractObjectUnknownPrunedSkipsPath(t *testing.T) {
@@ -137,7 +137,7 @@ func TestExtractObjectUnknownPrunedSkipsPath(t *testing.T) {
 	got, err := ExtractAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
-	requireFieldSet(t, got, path.Field("name"))
+	requireFieldSet(t, got, path.Field(testFieldName("name")))
 }
 
 func TestExtractObjectOnlyPrunedUnknownFieldsReturnsEmptySet(t *testing.T) {
@@ -174,5 +174,5 @@ func TestExtractObjectNestedPaths(t *testing.T) {
 	got, err := ExtractAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
-	requireFieldSet(t, got, path.Field("template").Field("image"))
+	requireFieldSet(t, got, path.Field(testFieldName("template")).Field(testFieldName("image")))
 }

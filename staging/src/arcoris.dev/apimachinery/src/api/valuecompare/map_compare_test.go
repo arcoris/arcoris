@@ -34,7 +34,7 @@ func TestCompareMapAddedKey(t *testing.T) {
 
 	got, err := CompareAt(path, valueObject(), valueObject("env", "prod"), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
-	requireResult(t, got, paths(path.Key("env")), nil, nil)
+	requireResult(t, got, paths(path.Key(testMapKey("env"))), nil, nil)
 }
 
 func TestCompareMapRemovedKey(t *testing.T) {
@@ -42,7 +42,7 @@ func TestCompareMapRemovedKey(t *testing.T) {
 
 	got, err := CompareAt(path, valueObject("env", "prod"), valueObject(), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
-	requireResult(t, got, nil, paths(path.Key("env")), nil)
+	requireResult(t, got, nil, paths(path.Key(testMapKey("env"))), nil)
 }
 
 func TestCompareMapModifiedKeyValue(t *testing.T) {
@@ -50,7 +50,7 @@ func TestCompareMapModifiedKeyValue(t *testing.T) {
 
 	got, err := CompareAt(path, valueObject("env", "prod"), valueObject("env", "stage"), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
-	requireResult(t, got, nil, nil, paths(path.Key("env")))
+	requireResult(t, got, nil, nil, paths(path.Key(testMapKey("env"))))
 }
 
 func TestCompareMapNestedObjectValue(t *testing.T) {
@@ -63,7 +63,7 @@ func TestCompareMapNestedObjectValue(t *testing.T) {
 
 	got, err := CompareAt(path, oldValue, newValue, descriptor, Options{})
 	requireNoError(t, err)
-	requireResult(t, got, nil, nil, paths(path.Key("http").Field("target")))
+	requireResult(t, got, nil, nil, paths(path.Key(testMapKey("http")).Field(testFieldName("target"))))
 }
 
 func TestCompareMapEmptyToNonEmpty(t *testing.T) {
@@ -71,7 +71,7 @@ func TestCompareMapEmptyToNonEmpty(t *testing.T) {
 
 	got, err := CompareAt(path, valueObject(), valueObject("env", "prod"), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
-	requireResult(t, got, paths(path.Key("env")), nil, nil)
+	requireResult(t, got, paths(path.Key(testMapKey("env"))), nil, nil)
 }
 
 func TestCompareMapNonEmptyToEmpty(t *testing.T) {
@@ -79,7 +79,7 @@ func TestCompareMapNonEmptyToEmpty(t *testing.T) {
 
 	got, err := CompareAt(path, valueObject("env", "prod"), valueObject(), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
-	requireResult(t, got, nil, paths(path.Key("env")), nil)
+	requireResult(t, got, nil, paths(path.Key(testMapKey("env"))), nil)
 }
 func TestMapOperandReportsPresence(t *testing.T) {
 	members := map[string]value.Value{"env": value.StringValue("prod")}

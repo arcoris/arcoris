@@ -59,7 +59,7 @@ func (c *comparer) equalObject(
 			continue
 		}
 
-		equal, err := c.equalValue(path.Field(name), oldMember, newMember, field.Descriptor(), depth+1)
+		equal, err := c.equalValue(path.Field(fieldpath.MustFieldName(name)), oldMember, newMember, field.Descriptor(), depth+1)
 		if err != nil {
 			return false, err
 		}
@@ -112,7 +112,7 @@ func (c *comparer) equalPreservedUnknownObjectMembers(
 			return false, nil
 		}
 
-		equal, err := c.equalOpaqueValue(path.Field(name), oldMember, newMember)
+		equal, err := c.equalOpaqueValue(path.Field(fieldpath.MustFieldName(name)), oldMember, newMember)
 		if err != nil {
 			return false, err
 		}

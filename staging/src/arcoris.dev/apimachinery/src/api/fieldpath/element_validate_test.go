@@ -20,28 +20,28 @@ import (
 )
 
 func TestElementValidateRejectsEmptyFieldName(t *testing.T) {
-	err := FieldElement("").Validate()
+	err := (Element{kind: ElementField}).ValidateStructure()
 
 	requireErrorIs(t, err, ErrInvalidElement)
 	requireErrorIs(t, err, ErrEmptyFieldName)
 }
 
 func TestElementValidateRejectsEmptyKey(t *testing.T) {
-	err := KeyElement("").Validate()
+	err := (Element{kind: ElementKey}).ValidateStructure()
 
 	requireErrorIs(t, err, ErrInvalidElement)
-	requireErrorIs(t, err, ErrEmptyKey)
+	requireErrorIs(t, err, ErrEmptyMapKey)
 }
 
 func TestElementValidateRejectsNegativeIndex(t *testing.T) {
-	err := IndexElement(-1).Validate()
+	err := (Element{kind: ElementIndex, index: -1}).ValidateStructure()
 
 	requireErrorIs(t, err, ErrInvalidElement)
 	requireErrorIs(t, err, ErrNegativeIndex)
 }
 
 func TestElementValidateRejectsInvalidSelector(t *testing.T) {
-	err := SelectorElement(Selector{}).Validate()
+	err := (Element{kind: ElementSelector}).ValidateStructure()
 
 	requireErrorIs(t, err, ErrInvalidElement)
 	requireErrorIs(t, err, ErrInvalidSelector)
@@ -49,7 +49,7 @@ func TestElementValidateRejectsInvalidSelector(t *testing.T) {
 }
 
 func TestElementValidateRejectsInvalidKind(t *testing.T) {
-	err := Element{}.Validate()
+	err := Element{}.ValidateStructure()
 
 	requireErrorIs(t, err, ErrInvalidElement)
 

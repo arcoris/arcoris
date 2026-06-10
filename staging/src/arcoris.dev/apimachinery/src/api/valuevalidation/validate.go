@@ -27,7 +27,7 @@ import (
 // for every payload; it performs local defensive descriptor checks while
 // traversing the value.
 func Validate(v value.Value, descriptor types.Descriptor, opts Options) error {
-	return ValidateAt(fieldpath.RootPath(), v, descriptor, opts)
+	return ValidateAt(fieldpath.Root(), v, descriptor, opts)
 }
 
 // ValidateAt checks v against descriptor starting at path.

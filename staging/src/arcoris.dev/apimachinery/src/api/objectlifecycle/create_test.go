@@ -117,7 +117,7 @@ func TestCreateInitializesNestedDesiredOwnership(t *testing.T) {
 		t,
 		result.State.Ownership,
 		owner("creator"),
-		ownershipPath(fieldpath.RootPath().Field("template").Field("image")),
+		ownershipPath(fieldpath.Root().Field(fieldpath.MustFieldName("template")).Field(fieldpath.MustFieldName("image"))),
 	)
 }
 
@@ -141,7 +141,7 @@ func TestCreateInitializesListMapDesiredOwnership(t *testing.T) {
 		t,
 		result.State.Ownership,
 		owner("creator"),
-		ownershipPath(fieldpath.RootPath().Field("conditions").Select(selector).Field("detail").Field("message")),
+		ownershipPath(fieldpath.Root().Field(fieldpath.MustFieldName("conditions")).Select(selector).Field(fieldpath.MustFieldName("detail")).Field(fieldpath.MustFieldName("message"))),
 	)
 }
 

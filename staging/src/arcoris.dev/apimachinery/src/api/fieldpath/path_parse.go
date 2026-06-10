@@ -14,21 +14,30 @@
 
 package fieldpath
 
-// Parse reconstructs one semantic path from the canonical diagnostic grammar.
+// ParseCanonical reconstructs one semantic path from the canonical text grammar.
 //
 // The parser is intentionally strict. It accepts the grammar emitted by
-// Path.String and rejects query syntax, wildcards, and non-canonical forms that
+// Path.CanonicalText and rejects query syntax, wildcards, and non-canonical forms that
 // would blur the path model's structural semantics.
 //
-// Parse is meant for diagnostics, tests, and future persistence helpers that
-// need a lossless round-trip for the package's canonical text form. It is not a
-// general query language and does not accept wildcard or filter syntax.
-func Parse(text string) (Path, error) {
+// ParseCanonical is meant for diagnostics, tests, and future persistence helpers
+// that need a lossless round-trip for the package's canonical text form. It is
+// not a general query language and does not accept wildcard or filter syntax.
+func ParseCanonical(text string) (Path, error) {
 	p := newPathParser(text)
 
 	path, err := p.parsePath()
 	if err != nil {
 		return Path{}, err
+	}
+
+	if canonical := path.CanonicalText(); canonical != text {
+		return Path{}, nested(
+			ErrInvalidPath,
+			ErrorReasonNonCanonicalText,
+			"path text is not canonical",
+			ErrInvalidSyntax,
+		)
 	}
 
 	return path, nil

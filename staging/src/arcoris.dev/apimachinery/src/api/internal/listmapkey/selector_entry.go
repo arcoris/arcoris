@@ -29,7 +29,16 @@ func (r selectorRequest) selectorEntry(
 	key types.FieldName,
 ) (fieldpath.SelectorEntry, error) {
 	keyName := string(key)
-	keyPath := r.indexPath.Field(keyName)
+	selectorField, err := fieldpath.NewFieldName(keyName)
+	if err != nil {
+		return fieldpath.SelectorEntry{}, failure(
+			r.indexPath,
+			FailureInvalidDescriptor,
+			fmt.Sprintf("ListMap key field %q is not a valid semantic path field", keyName),
+		)
+	}
+
+	keyPath := r.indexPath.Field(selectorField)
 
 	keyFieldDescriptor, ok := fieldDescriptor(elementObjectDescriptor, key)
 	if !ok {
@@ -71,5 +80,5 @@ func (r selectorRequest) selectorEntry(
 		return fieldpath.SelectorEntry{}, err
 	}
 
-	return fieldpath.NewSelectorEntry(keyName, selectorLiteral), nil
+	return fieldpath.NewSelectorEntry(selectorField, selectorLiteral), nil
 }

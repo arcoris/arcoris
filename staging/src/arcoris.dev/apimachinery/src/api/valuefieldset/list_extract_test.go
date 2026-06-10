@@ -59,8 +59,8 @@ func TestExtractOrderedListObjectItemsUseIndexedChildPaths(t *testing.T) {
 	requireFieldSet(
 		t,
 		got,
-		path.Index(0).Field("name"),
-		path.Index(0).Field("image"),
+		path.Index(0).Field(testFieldName("name")),
+		path.Index(0).Field(testFieldName("image")),
 	)
 }
 

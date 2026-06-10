@@ -14,7 +14,7 @@
 
 package fieldpath
 
-import "strings"
+import "cmp"
 
 // Equal reports whether e and other are the same selector entry.
 func (e SelectorEntry) Equal(other SelectorEntry) bool {
@@ -23,8 +23,8 @@ func (e SelectorEntry) Equal(other SelectorEntry) bool {
 
 // Compare imposes deterministic ordering on selector entries.
 func (e SelectorEntry) Compare(other SelectorEntry) int {
-	if cmp := strings.Compare(e.field, other.field); cmp != 0 {
-		return cmp
+	if order := cmp.Compare(e.field, other.field); order != 0 {
+		return order
 	}
 
 	return e.value.Compare(other.value)

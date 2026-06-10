@@ -20,7 +20,7 @@ import (
 )
 
 func TestSelectorValidateReturnsStructuredError(t *testing.T) {
-	err := Selector{}.Validate()
+	err := Selector{}.ValidateStructure()
 
 	var pathErr *Error
 	if !errors.As(err, &pathErr) {
@@ -34,12 +34,12 @@ func TestSelectorValidateReturnsStructuredError(t *testing.T) {
 func TestSelectorValidateRejectsNonCanonicalOrder(t *testing.T) {
 	selector := Selector{
 		entries: []SelectorEntry{
-			NewSelectorEntry("type", StringLiteral("Ready")),
-			NewSelectorEntry("status", StringLiteral("True")),
+			testSelectorEntry("type", StringLiteral("Ready")),
+			testSelectorEntry("status", StringLiteral("True")),
 		},
 	}
 
-	err := selector.Validate()
+	err := selector.ValidateStructure()
 
 	requireErrorIs(t, err, ErrInvalidSelector)
 

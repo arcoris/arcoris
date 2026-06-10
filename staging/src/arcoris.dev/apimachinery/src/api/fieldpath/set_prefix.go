@@ -48,3 +48,72 @@ func (s Set) Under(prefix Path) Set {
 
 	return Set{paths: paths}
 }
+
+// HasDescendant reports whether s contains a strict descendant of prefix.
+func (s Set) HasDescendant(prefix Path) bool {
+	for _, path := range s.paths {
+		if path.IsDescendantOf(prefix) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// RemoveDescendants returns a detached set without strict descendants of prefix.
+//
+// The prefix path itself is preserved when present.
+func (s Set) RemoveDescendants(prefix Path) Set {
+	if len(s.paths) == 0 {
+		return Set{}
+	}
+
+	paths := make([]Path, 0, len(s.paths))
+	for _, path := range s.paths {
+		if path.IsDescendantOf(prefix) {
+			continue
+		}
+
+		paths = appendSetPath(paths, path)
+	}
+
+	return Set{paths: paths}
+}
+
+// Overlaps reports whether any stored path overlaps path.
+func (s Set) Overlaps(path Path) bool {
+	for _, candidate := range s.paths {
+		if candidate.Overlaps(path) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// CompactSubtrees removes descendants whenever an ancestor is already present.
+//
+// Compaction is explicit so callers can choose between exact path-set algebra
+// and subtree-marker semantics.
+func (s Set) CompactSubtrees() Set {
+	if len(s.paths) == 0 {
+		return Set{}
+	}
+
+	paths := make([]Path, 0, len(s.paths))
+	for _, path := range s.paths {
+		hasAncestor := false
+		for _, kept := range paths {
+			if path.IsDescendantOf(kept) {
+				hasAncestor = true
+				break
+			}
+		}
+
+		if !hasAncestor {
+			paths = appendSetPath(paths, path)
+		}
+	}
+
+	return Set{paths: paths}
+}

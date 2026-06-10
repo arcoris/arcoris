@@ -37,7 +37,7 @@ func TestNewSetSortsAndDeduplicates(t *testing.T) {
 }
 
 func TestNewSetRejectsInvalidPath(t *testing.T) {
-	_, err := NewSet(RootPath().Field(""))
+	_, err := NewSet(Path{elements: []Element{{kind: ElementField}}})
 
 	requireErrorIs(t, err, ErrInvalidPath)
 	requireErrorIs(t, err, ErrInvalidElement)
@@ -48,10 +48,10 @@ func TestNewSetDoesNotRetainInputSlice(t *testing.T) {
 	set, err := NewSet(input...)
 	requireNoError(t, err)
 
-	input[0] = RootPath().Field("status")
+	input[0] = Root().Field(testField("status"))
 
 	requireEqual(t, set.Has(setReplicasPath()), true)
-	requireEqual(t, set.Has(RootPath().Field("status")), false)
+	requireEqual(t, set.Has(Root().Field(testField("status"))), false)
 }
 
 func TestNewSetDoesNotRetainInputPathElements(t *testing.T) {
@@ -59,14 +59,14 @@ func TestNewSetDoesNotRetainInputPathElements(t *testing.T) {
 	set, err := NewSet(input)
 	requireNoError(t, err)
 
-	input.elements[0] = FieldElement("status")
+	input.elements[0] = testFieldElement("status")
 
 	requireEqual(t, set.Has(setReplicasPath()), true)
-	requireEqual(t, set.Has(RootPath().Field("status").Field("replicas")), false)
+	requireEqual(t, set.Has(Root().Field(testField("status")).Field(testField("replicas"))), false)
 }
 
 func TestMustSetPanicsOnInvalidPath(t *testing.T) {
 	requirePanic(t, func() {
-		MustSet(RootPath().Field(""))
+		MustSet(Path{elements: []Element{{kind: ElementField}}})
 	})
 }

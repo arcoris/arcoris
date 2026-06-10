@@ -18,21 +18,21 @@ import "testing"
 
 func TestSelectorEqualIgnoresInputOrder(t *testing.T) {
 	left := MustSelector(
-		NewSelectorEntry("port", Uint64Literal(443)),
-		NewSelectorEntry("host", StringLiteral("api.example.com")),
+		testSelectorEntry("port", Uint64Literal(443)),
+		testSelectorEntry("host", StringLiteral("api.example.com")),
 	)
 
 	right := MustSelector(
-		NewSelectorEntry("host", StringLiteral("api.example.com")),
-		NewSelectorEntry("port", Uint64Literal(443)),
+		testSelectorEntry("host", StringLiteral("api.example.com")),
+		testSelectorEntry("port", Uint64Literal(443)),
 	)
 
 	requireEqual(t, left.Equal(right), true)
 }
 
 func TestSelectorCompare(t *testing.T) {
-	left := MustSelector(NewSelectorEntry("a", StringLiteral("x")))
-	right := MustSelector(NewSelectorEntry("b", StringLiteral("x")))
+	left := MustSelector(testSelectorEntry("a", StringLiteral("x")))
+	right := MustSelector(testSelectorEntry("b", StringLiteral("x")))
 
 	requireEqual(t, left.Compare(right), -1)
 }

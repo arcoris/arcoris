@@ -16,13 +16,14 @@ package fieldpath
 
 // Element is one semantic step in a structured field path.
 //
-// Field and key elements both store string names, but they remain distinct
+// Field and key elements both store named tokens, but they remain distinct
 // kinds because descriptor-aware layers know whether a step addresses a fixed
 // object field or a dynamic map key. Index and selector elements model ordered
 // and associative list addressing respectively.
 type Element struct {
 	kind     ElementKind
-	name     string
+	field    FieldName
+	key      MapKey
 	index    int
 	selector Selector
 }
@@ -32,38 +33,38 @@ func (e Element) Kind() ElementKind {
 	return e.kind
 }
 
-// Name returns the field name or key string for name-bearing elements.
-func (e Element) Name() string {
-	if e.kind != ElementField && e.kind != ElementKey {
-		return ""
+// AsField returns the fixed field name for field elements.
+func (e Element) AsField() (FieldName, bool) {
+	if e.kind != ElementField {
+		return "", false
 	}
 
-	return e.name
+	return e.field, true
 }
 
-// Index returns the list index for index elements.
-func (e Element) Index() int {
+// AsKey returns the dynamic map key for key elements.
+func (e Element) AsKey() (MapKey, bool) {
+	if e.kind != ElementKey {
+		return "", false
+	}
+
+	return e.key, true
+}
+
+// AsIndex returns the list index for index elements.
+func (e Element) AsIndex() (int, bool) {
 	if e.kind != ElementIndex {
-		return 0
+		return 0, false
 	}
 
-	return e.index
+	return e.index, true
 }
 
-// Selector returns a detached selector for selector elements.
-func (e Element) Selector() Selector {
+// AsSelector returns a detached selector for selector elements.
+func (e Element) AsSelector() (Selector, bool) {
 	if e.kind != ElementSelector {
-		return Selector{}
+		return Selector{}, false
 	}
 
-	return e.selector.clone()
-}
-
-// clone returns a detached element copy.
-func (e Element) clone() Element {
-	if e.kind == ElementSelector {
-		e.selector = e.selector.clone()
-	}
-
-	return e
+	return e.selector.clone(), true
 }

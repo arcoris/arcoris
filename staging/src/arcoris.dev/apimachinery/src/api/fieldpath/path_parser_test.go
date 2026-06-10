@@ -16,15 +16,9 @@ package fieldpath
 
 import "testing"
 
-func TestLiteralAccessorsRejectWrongKind(t *testing.T) {
-	value := BoolLiteral(true)
+func TestNewPathParser(t *testing.T) {
+	parser := newPathParser("$.spec")
 
-	_, ok := value.StringValue()
-	requireEqual(t, ok, false)
-
-	_, ok = value.Int64Value()
-	requireEqual(t, ok, false)
-
-	_, ok = value.Uint64Value()
-	requireEqual(t, ok, false)
+	requireEqual(t, parser.text, "$.spec")
+	requireEqual(t, parser.pos, 0)
 }

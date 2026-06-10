@@ -63,7 +63,7 @@ func TestApplyForceOtherOwnerDescendantConflictTakesOwnership(t *testing.T) {
 		Live:       obj(member("spec", obj(member("image", str("old"))))),
 		Applied:    obj(member("spec", obj())),
 		Descriptor: typesObjectWithSpec(),
-		Ownership:  state(entry("other", specPath().Field("image"))),
+		Ownership:  state(entry("other", specPath().Field(testFieldName("image")))),
 	}
 
 	result, err := Apply(req, Options{Force: true})
@@ -72,7 +72,7 @@ func TestApplyForceOtherOwnerDescendantConflictTakesOwnership(t *testing.T) {
 	spec := requireMember(t, result.Value, "spec")
 	requireNoMember(t, spec, "image")
 	requireOwners(t, result.Ownership.OwnersOf(specPath()), "user")
-	requireOwners(t, result.Ownership.OwnersOf(specPath().Field("image")))
+	requireOwners(t, result.Ownership.OwnersOf(specPath().Field(testFieldName("image"))))
 }
 
 func TestApplyForceListMapItemOwnerAndFieldAttemptUnsupported(t *testing.T) {

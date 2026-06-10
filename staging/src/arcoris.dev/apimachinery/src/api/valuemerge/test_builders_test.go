@@ -31,7 +31,15 @@ func pathSet(paths ...fieldpath.Path) fieldpath.Set {
 }
 
 func root() fieldpath.Path {
-	return fieldpath.RootPath()
+	return fieldpath.Root()
+}
+
+func testFieldName(name string) fieldpath.FieldName {
+	return fieldpath.MustFieldName(name)
+}
+
+func testMapKey(key string) fieldpath.MapKey {
+	return fieldpath.MustMapKey(key)
 }
 
 func str(text string) value.Value {

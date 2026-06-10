@@ -141,7 +141,7 @@ func (c *comparer) equalOpaqueObject(path fieldpath.Path, oldValue value.Value, 
 			return false, nil
 		}
 
-		equal, err := c.equalOpaqueValue(path.Field(name), oldMember, newMember.Value)
+		equal, err := c.equalOpaqueValue(path.Field(fieldpath.MustFieldName(name)), oldMember, newMember.Value)
 		if err != nil {
 			return false, err
 		}
