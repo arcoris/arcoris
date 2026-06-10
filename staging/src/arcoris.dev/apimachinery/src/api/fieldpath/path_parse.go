@@ -17,8 +17,8 @@ package fieldpath
 // ParseCanonical reconstructs one semantic path from the canonical text grammar.
 //
 // The parser is intentionally strict. It accepts the grammar emitted by
-// Path.CanonicalText and rejects query syntax, wildcards, and non-canonical forms that
-// would blur the path model's structural semantics.
+// Path.CanonicalText and rejects query syntax, wildcards, and non-canonical
+// forms that would blur the path model's structural semantics.
 //
 // ParseCanonical is meant for diagnostics, tests, and future persistence helpers
 // that need a lossless round-trip for the package's canonical text form. It is
@@ -36,7 +36,7 @@ func ParseCanonical(text string) (Path, error) {
 			ErrInvalidPath,
 			ErrorReasonNonCanonicalText,
 			"path text is not canonical",
-			ErrInvalidSyntax,
+			ErrNonCanonicalText,
 		)
 	}
 

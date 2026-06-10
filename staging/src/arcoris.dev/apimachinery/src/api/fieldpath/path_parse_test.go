@@ -51,7 +51,10 @@ func TestParseRejectsInvalidSyntax(t *testing.T) {
 		{name: "missing root", text: `.spec`, target: ErrInvalidSyntax},
 		{name: "truncated field", text: `$.`, target: ErrInvalidSyntax},
 		{name: "empty brackets", text: `$[]`, target: ErrInvalidSyntax},
+		{name: "empty quoted field", text: `$.""`, target: ErrEmptyFieldName},
+		{name: "empty map key", text: `$[""]`, target: ErrEmptyMapKey},
 		{name: "negative index", text: `$.items[-1]`, target: ErrInvalidSyntax},
+		{name: "positive index sign", text: `$.items[+1]`, target: ErrInvalidSyntax},
 		{name: "unclosed key", text: `$.labels["app"`, target: ErrInvalidSyntax},
 		{name: "empty selector", text: `$.conditions[{}]`, target: ErrInvalidSelector},
 		{name: "truncated selector", text: `$.conditions[{"type":"Ready"]`, target: ErrInvalidSyntax},
@@ -69,6 +72,28 @@ func TestParseRejectsInvalidSyntax(t *testing.T) {
 			_, err := ParseCanonical(testCase.text)
 			requireErrorIs(t, err, ErrInvalidPath)
 			requireErrorIs(t, err, testCase.target)
+		})
+	}
+}
+
+func TestParseRejectsNonCanonicalText(t *testing.T) {
+	testCases := []string{
+		`$."spec"`,
+		`$.items[01]`,
+	}
+
+	for _, text := range testCases {
+		t.Run(text, func(t *testing.T) {
+			_, err := ParseCanonical(text)
+
+			requireErrorIs(t, err, ErrInvalidPath)
+			requireErrorIs(t, err, ErrNonCanonicalText)
+
+			var pathErr *Error
+			if !errors.As(err, &pathErr) {
+				t.Fatalf("expected *Error, got %T", err)
+			}
+			requireEqual(t, pathErr.Reason, ErrorReasonNonCanonicalText)
 		})
 	}
 }

@@ -30,7 +30,12 @@ func (p *pathParser) parseFieldElement() (Element, error) {
 			return Element{}, err
 		}
 
-		return FieldElementFromString(name)
+		element, err := FieldElementFromString(name)
+		if err != nil {
+			return Element{}, p.elementError("field element text is invalid", err)
+		}
+
+		return element, nil
 	}
 
 	start := p.pos
@@ -43,7 +48,12 @@ func (p *pathParser) parseFieldElement() (Element, error) {
 		p.pos++
 	}
 
-	return FieldElementFromString(p.text[start:p.pos])
+	element, err := FieldElementFromString(p.text[start:p.pos])
+	if err != nil {
+		return Element{}, p.elementError("field element text is invalid", err)
+	}
+
+	return element, nil
 }
 
 // parseBracketElement decodes one bracketed key, index, or selector step.
@@ -61,25 +71,30 @@ func (p *pathParser) parseBracketElement() (Element, error) {
 
 	switch p.peek() {
 	case '"':
-		var key string
+		key, parseErr := p.parseQuotedString()
+		if parseErr != nil {
+			return Element{}, parseErr
+		}
 
-		key, err = p.parseQuotedString()
-		if err == nil {
-			element, err = KeyElementFromString(key)
+		element, err = KeyElementFromString(key)
+		if err != nil {
+			return Element{}, p.elementError("bracket element text is invalid", err)
 		}
 	case '{':
-		var selector Selector
+		selector, parseErr := p.parseSelector()
+		if parseErr != nil {
+			return Element{}, parseErr
+		}
 
-		selector, err = p.parseSelector()
-		if err == nil {
-			element, err = NewSelectorElement(selector)
+		element, err = NewSelectorElement(selector)
+		if err != nil {
+			return Element{}, p.elementError("bracket element text is invalid", err)
 		}
 	default:
 		element, err = p.parseIndexElement()
-	}
-
-	if err != nil {
-		return Element{}, err
+		if err != nil {
+			return Element{}, err
+		}
 	}
 
 	if !p.consumeByte(']') {
@@ -106,5 +121,10 @@ func (p *pathParser) parseIndexElement() (Element, error) {
 		return Element{}, p.syntaxError("index element is out of range")
 	}
 
-	return NewIndexElement(index)
+	element, err := NewIndexElement(index)
+	if err != nil {
+		return Element{}, p.elementError("index element text is invalid", err)
+	}
+
+	return element, nil
 }

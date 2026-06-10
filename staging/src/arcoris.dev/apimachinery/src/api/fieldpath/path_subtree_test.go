@@ -25,11 +25,21 @@ func TestPathIsDescendantOf(t *testing.T) {
 	requireEqual(t, Root().Field(testField("status")).IsDescendantOf(ancestor), false)
 }
 
+func TestPathIsAncestorOf(t *testing.T) {
+	ancestor := Root().Field(testField("spec"))
+	descendant := Root().Field(testField("spec")).Field(testField("replicas"))
+
+	requireEqual(t, ancestor.IsAncestorOf(descendant), true)
+	requireEqual(t, ancestor.IsAncestorOf(ancestor), false)
+	requireEqual(t, Root().Field(testField("status")).IsAncestorOf(descendant), false)
+}
+
 func TestPathOverlaps(t *testing.T) {
 	left := Root().Field(testField("spec"))
 	right := Root().Field(testField("spec")).Field(testField("replicas"))
 	other := Root().Field(testField("status"))
 
+	requireEqual(t, left.Overlaps(left), true)
 	requireEqual(t, left.Overlaps(right), true)
 	requireEqual(t, right.Overlaps(left), true)
 	requireEqual(t, left.Overlaps(other), false)

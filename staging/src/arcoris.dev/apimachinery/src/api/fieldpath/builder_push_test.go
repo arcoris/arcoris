@@ -36,6 +36,14 @@ func TestBuilderPushIndexRejectsNegativeIndex(t *testing.T) {
 	requireErrorIs(t, err, ErrNegativeIndex)
 }
 
+func TestNilBuilderMutationPanics(t *testing.T) {
+	var builder *Builder
+
+	requirePanic(t, func() {
+		builder.PushField(testField("spec"))
+	})
+}
+
 func TestBuilderPop(t *testing.T) {
 	builder := NewBuilder()
 	builder.PushField(testField("spec"))
@@ -43,4 +51,10 @@ func TestBuilderPop(t *testing.T) {
 	requireEqual(t, builder.Pop(), true)
 	requireEqual(t, builder.Pop(), false)
 	requireEqual(t, builder.Path().String(), "$")
+}
+
+func TestNilBuilderPopReturnsFalse(t *testing.T) {
+	var builder *Builder
+
+	requireEqual(t, builder.Pop(), false)
 }

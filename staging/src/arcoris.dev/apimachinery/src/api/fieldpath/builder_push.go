@@ -15,21 +15,29 @@
 package fieldpath
 
 // Push appends one element.
+//
+// Push requires a non-nil builder.
 func (b *Builder) Push(element Element) {
 	b.elements = append(b.elements, element.clone())
 }
 
 // PushField appends one fixed-field element.
+//
+// PushField requires a non-nil builder.
 func (b *Builder) PushField(name FieldName) {
 	b.Push(NewFieldElement(name))
 }
 
 // PushKey appends one dynamic map-key element.
+//
+// PushKey requires a non-nil builder.
 func (b *Builder) PushKey(key MapKey) {
 	b.Push(NewKeyElement(key))
 }
 
 // PushIndex appends one positional list-index element.
+//
+// PushIndex requires a non-nil builder.
 func (b *Builder) PushIndex(index int) error {
 	element, err := NewIndexElement(index)
 	if err != nil {
@@ -41,6 +49,8 @@ func (b *Builder) PushIndex(index int) error {
 }
 
 // PushSelector appends one associative-list selector element.
+//
+// PushSelector requires a non-nil builder.
 func (b *Builder) PushSelector(selector Selector) error {
 	element, err := NewSelectorElement(selector)
 	if err != nil {
@@ -52,6 +62,8 @@ func (b *Builder) PushSelector(selector Selector) error {
 }
 
 // Pop removes the last element.
+//
+// Pop is nil-safe and returns false for nil builders.
 func (b *Builder) Pop() bool {
 	if b == nil || len(b.elements) == 0 {
 		return false

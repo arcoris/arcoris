@@ -36,6 +36,15 @@ func TestNewSetSortsAndDeduplicates(t *testing.T) {
 	})
 }
 
+func TestNewSetKeepsAncestorAndDescendant(t *testing.T) {
+	set := MustSet(setSpecPath(), setReplicasPath())
+
+	requireStringSliceEqual(t, setPathStrings(set.Paths()), []string{
+		"$.spec",
+		"$.spec.replicas",
+	})
+}
+
 func TestNewSetRejectsInvalidPath(t *testing.T) {
 	_, err := NewSet(Path{elements: []Element{{kind: ElementField}}})
 

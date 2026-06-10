@@ -44,6 +44,8 @@ var (
 	ErrEmptySelector = errors.New("empty selector")
 	// ErrDuplicateSelectorField classifies repeated selector field names.
 	ErrDuplicateSelectorField = errors.New("duplicate selector field")
+	// ErrNonCanonicalText classifies valid path text with a non-canonical spelling.
+	ErrNonCanonicalText = errors.New("non-canonical field path text")
 )
 
 // Error is the structured diagnostic returned by field-path validation.

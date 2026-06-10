@@ -21,5 +21,5 @@ import "arcoris.dev/apimachinery/api/fieldpath"
 // Exact matches overlap. Ancestor/descendant pairs overlap in either direction.
 // Sibling paths do not overlap.
 func pathsOverlap(a fieldpath.Path, b fieldpath.Path) bool {
-	return a.HasPrefix(b) || b.HasPrefix(a)
+	return a.Overlaps(b)
 }

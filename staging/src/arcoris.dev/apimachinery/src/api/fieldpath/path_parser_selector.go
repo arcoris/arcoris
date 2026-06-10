@@ -84,7 +84,12 @@ func (p *pathParser) parseSelectorEntry() (SelectorEntry, error) {
 
 	entry, err := SelectorEntryFromString(field, value)
 	if err != nil {
-		return SelectorEntry{}, err
+		return SelectorEntry{}, nested(
+			ErrInvalidPath,
+			ErrorReasonInvalidEntry,
+			"selector entry text is invalid",
+			err,
+		)
 	}
 
 	return entry, nil

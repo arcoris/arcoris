@@ -28,6 +28,19 @@ func TestNewSelectorSortsEntriesByField(t *testing.T) {
 	requireEqual(t, entries[1].Field(), testField("port"))
 }
 
+func TestNewSelectorClonesEntries(t *testing.T) {
+	entries := []SelectorEntry{testSelectorEntry("type", StringLiteral("Ready"))}
+
+	selector, err := NewSelector(entries...)
+	requireNoError(t, err)
+
+	entries[0] = testSelectorEntry("type", StringLiteral("Changed"))
+
+	got, ok := selector.Get(testField("type"))
+	requireEqual(t, ok, true)
+	requireEqual(t, got.Equal(StringLiteral("Ready")), true)
+}
+
 func TestNewSelectorRejectsEmptySelector(t *testing.T) {
 	_, err := NewSelector()
 

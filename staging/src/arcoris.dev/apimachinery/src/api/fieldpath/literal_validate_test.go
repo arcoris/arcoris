@@ -21,3 +21,9 @@ func TestLiteralValidateRejectsZeroLiteral(t *testing.T) {
 
 	requireErrorIs(t, err, ErrInvalidLiteral)
 }
+
+func TestLiteralValidateRejectsInvalidIntegerRepresentation(t *testing.T) {
+	err := Literal{kind: LiteralInteger, intValue: integer{negative: true}}.ValidateStructure()
+
+	requireErrorIs(t, err, ErrInvalidLiteral)
+}

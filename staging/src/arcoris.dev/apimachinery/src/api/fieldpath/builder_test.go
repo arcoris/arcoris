@@ -33,3 +33,11 @@ func TestNilBuilderLen(t *testing.T) {
 
 	requireEqual(t, builder.Len(), 0)
 }
+
+func TestNilBuilderResetPanics(t *testing.T) {
+	var builder *Builder
+
+	requirePanic(t, func() {
+		builder.Reset()
+	})
+}

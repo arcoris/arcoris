@@ -34,6 +34,13 @@ func TestErrorIsInvalidLiteral(t *testing.T) {
 	requireErrorIs(t, err, ErrInvalidLiteral)
 }
 
+func TestErrorIsNonCanonicalText(t *testing.T) {
+	_, err := ParseCanonical(`$."spec"`)
+
+	requireErrorIs(t, err, ErrInvalidPath)
+	requireErrorIs(t, err, ErrNonCanonicalText)
+}
+
 func TestErrorHasReasonAndDetail(t *testing.T) {
 	err := Literal{}.ValidateStructure()
 

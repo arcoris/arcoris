@@ -26,3 +26,13 @@ func (p *pathParser) syntaxError(detail string) error {
 		ErrInvalidSyntax,
 	)
 }
+
+// elementError wraps structurally invalid parsed elements as invalid paths.
+func (p *pathParser) elementError(detail string, cause error) error {
+	return nested(
+		ErrInvalidPath,
+		ErrorReasonInvalidElement,
+		detail+" at byte "+strconv.Itoa(p.pos),
+		cause,
+	)
+}

@@ -18,7 +18,8 @@ package fieldpath
 //
 // Builder is mutable and not concurrency-safe. It should be kept local to a
 // traversal and converted to an immutable Path with Path when a stable value is
-// needed.
+// needed. Read-like methods are nil-safe; mutation methods require a non-nil
+// builder and panic on nil receivers as programmer errors.
 type Builder struct {
 	elements []Element
 }
@@ -38,6 +39,8 @@ func (b *Builder) Len() int {
 }
 
 // Reset clears the builder while keeping its allocated storage for reuse.
+//
+// Reset requires a non-nil builder.
 func (b *Builder) Reset() {
 	b.elements = b.elements[:0]
 }

@@ -32,3 +32,13 @@ func TestPathParserSyntaxErrorIncludesOffset(t *testing.T) {
 	requireErrorIs(t, err, ErrInvalidSyntax)
 	requireEqual(t, pathErr.Detail, "field element is truncated at byte 2")
 }
+
+func TestPathParserElementErrorPreservesCause(t *testing.T) {
+	p := newPathParser(`[""]`)
+
+	_, err := p.parseBracketElement()
+
+	requireErrorIs(t, err, ErrInvalidPath)
+	requireErrorIs(t, err, ErrInvalidElement)
+	requireErrorIs(t, err, ErrEmptyMapKey)
+}

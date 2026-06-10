@@ -65,18 +65,7 @@ func mergeFields(appliedFields fieldpath.Set, deletedFields fieldpath.Set) field
 
 // overlapsAny reports whether path has structural overlap with any path in set.
 func overlapsAny(set fieldpath.Set, path fieldpath.Path) bool {
-	for _, candidate := range set.Paths() {
-		if pathsOverlap(candidate, path) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// pathsOverlap reports exact, ancestor, or descendant path overlap.
-func pathsOverlap(a fieldpath.Path, b fieldpath.Path) bool {
-	return a.HasPrefix(b) || b.HasPrefix(a)
+	return set.Overlaps(path)
 }
 
 // coveredByApplied reports whether Applied keeps ownership of oldPath.

@@ -37,6 +37,14 @@ func TestSetHasAnyUnderMatchesDescendantWithoutExactPrefix(t *testing.T) {
 	requireEqual(t, set.HasAnyUnder(setSpecPath()), true)
 }
 
+func TestSetHasDescendant(t *testing.T) {
+	exactOnly := MustSet(setSpecPath())
+	withDescendant := MustSet(setSpecPath(), setReplicasPath())
+
+	requireEqual(t, exactOnly.HasDescendant(setSpecPath()), false)
+	requireEqual(t, withDescendant.HasDescendant(setSpecPath()), true)
+}
+
 func TestSetUnder(t *testing.T) {
 	templateLabel := Root().
 		Field("spec").
@@ -58,6 +66,22 @@ func TestSetUnder(t *testing.T) {
 		"$.spec.replicas",
 		`$.spec.template.metadata.labels["app"]`,
 	})
+}
+
+func TestSetRemoveDescendantsPreservesPrefix(t *testing.T) {
+	set := MustSet(setSpecPath(), setReplicasPath(), setImagePath())
+
+	got := set.RemoveDescendants(setSpecPath())
+
+	requireStringSliceEqual(t, setPathStrings(got.Paths()), []string{"$.spec"})
+}
+
+func TestSetCompactSubtreesRemovesDescendants(t *testing.T) {
+	set := MustSet(setSpecPath(), setReplicasPath(), setImagePath())
+
+	got := set.CompactSubtrees()
+
+	requireStringSliceEqual(t, setPathStrings(got.Paths()), []string{"$.spec"})
 }
 
 func TestSetUnderReturnsEmptySetWhenPrefixAbsent(t *testing.T) {

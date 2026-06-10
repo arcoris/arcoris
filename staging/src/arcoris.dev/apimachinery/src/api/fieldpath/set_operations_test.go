@@ -56,6 +56,24 @@ func TestSetDifference(t *testing.T) {
 	})
 }
 
+func TestSetDifferenceRemovesExactMatchesOnly(t *testing.T) {
+	left := MustSet(setSpecPath(), setReplicasPath())
+	right := MustSet(setSpecPath())
+
+	difference := left.Difference(right)
+
+	requireStringSliceEqual(t, setPathStrings(difference.Paths()), []string{"$.spec.replicas"})
+}
+
+func TestSetIntersectionUsesExactMatchesOnly(t *testing.T) {
+	left := MustSet(setSpecPath())
+	right := MustSet(setReplicasPath())
+
+	intersection := left.Intersection(right)
+
+	requireEqual(t, intersection.IsEmpty(), true)
+}
+
 func TestSetOperationsDoNotMutateReceivers(t *testing.T) {
 	left := MustSet(setImagePath())
 	right := MustSet(setReplicasPath())

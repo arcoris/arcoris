@@ -17,6 +17,7 @@ package fieldpath
 import "testing"
 
 func TestLiteralStringFormatting(t *testing.T) {
+	requireEqual(t, BoolLiteral(true).CanonicalText(), "true")
 	requireEqual(t, BoolLiteral(false).String(), "false")
 	requireEqual(t, Int64Literal(-3).String(), "-3")
 	requireEqual(t, Uint64Literal(3).String(), "3")

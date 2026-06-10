@@ -14,7 +14,10 @@
 
 package fieldpath
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestMapKey(t *testing.T) {
 	key, err := NewMapKey("app")
@@ -24,10 +27,28 @@ func TestMapKey(t *testing.T) {
 	requireEqual(t, key.IsZero(), false)
 }
 
+func TestMapKeyAcceptsPathLikeTextAsOpaqueKey(t *testing.T) {
+	key, err := NewMapKey("app.kubernetes.io/name")
+
+	requireNoError(t, err)
+	requireEqual(t, key.String(), "app.kubernetes.io/name")
+}
+
 func TestMapKeyRejectsEmptyKey(t *testing.T) {
 	_, err := NewMapKey("")
 
 	requireErrorIs(t, err, ErrEmptyMapKey)
+}
+
+func TestMapKeyValidateStructureReportsReason(t *testing.T) {
+	err := MapKey("").ValidateStructure()
+
+	var pathErr *Error
+	if !errors.As(err, &pathErr) {
+		t.Fatalf("expected *Error, got %T", err)
+	}
+
+	requireEqual(t, pathErr.Reason, ErrorReasonEmptyMapKey)
 }
 
 func TestMustMapKeyPanicsOnEmptyKey(t *testing.T) {

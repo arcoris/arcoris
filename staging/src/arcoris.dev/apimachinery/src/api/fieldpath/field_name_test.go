@@ -14,7 +14,10 @@
 
 package fieldpath
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestFieldName(t *testing.T) {
 	name, err := NewFieldName("spec")
@@ -24,10 +27,28 @@ func TestFieldName(t *testing.T) {
 	requireEqual(t, name.IsZero(), false)
 }
 
+func TestFieldNameAcceptsQuotedCanonicalNames(t *testing.T) {
+	name, err := NewFieldName("x-y")
+
+	requireNoError(t, err)
+	requireEqual(t, name.String(), "x-y")
+}
+
 func TestFieldNameRejectsEmptyName(t *testing.T) {
 	_, err := NewFieldName("")
 
 	requireErrorIs(t, err, ErrEmptyFieldName)
+}
+
+func TestFieldNameValidateStructureReportsReason(t *testing.T) {
+	err := FieldName("").ValidateStructure()
+
+	var pathErr *Error
+	if !errors.As(err, &pathErr) {
+		t.Fatalf("expected *Error, got %T", err)
+	}
+
+	requireEqual(t, pathErr.Reason, ErrorReasonEmptyFieldName)
 }
 
 func TestMustFieldNamePanicsOnEmptyName(t *testing.T) {

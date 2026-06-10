@@ -28,6 +28,9 @@ func (p Path) IsAncestorOf(descendant Path) bool {
 }
 
 // Overlaps reports whether p and other are equal or one contains the other.
+//
+// Overlaps is a structural path relation only. It does not imply an apply
+// conflict, ownership conflict, descriptor compatibility, or policy decision.
 func (p Path) Overlaps(other Path) bool {
 	return p.HasPrefix(other) || other.HasPrefix(p)
 }

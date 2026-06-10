@@ -28,6 +28,11 @@ func TestErrorReasonStrings(t *testing.T) {
 		{name: "empty map key", reason: ErrorReasonEmptyMapKey, want: "empty_map_key"},
 		{name: "duplicate selector field", reason: ErrorReasonDuplicateSelectorField, want: "duplicate_selector_field"},
 		{name: "non canonical text", reason: ErrorReasonNonCanonicalText, want: "non_canonical_text"},
+		{name: "invalid selector", reason: ErrorReasonInvalidSelector, want: "invalid_selector"},
+		{name: "invalid entry", reason: ErrorReasonInvalidEntry, want: "invalid_entry"},
+		{name: "invalid literal", reason: ErrorReasonInvalidLiteral, want: "invalid_literal"},
+		{name: "negative index", reason: ErrorReasonNegativeIndex, want: "negative_index"},
+		{name: "empty selector", reason: ErrorReasonEmptySelector, want: "empty_selector"},
 	}
 
 	for _, tt := range tests {
