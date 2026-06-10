@@ -62,16 +62,16 @@ func intValue(v int64) value.Value {
 	return value.Int64Value(v)
 }
 
-func obj(members ...value.Member) value.Value {
-	return value.MustObjectValue(members...)
+func obj(members ...value.RecordMember) value.Value {
+	return value.MustRecordValue(members...)
 }
 
 func list(items ...value.Value) value.Value {
 	return value.MustListValue(items...)
 }
 
-func member(name string, v value.Value) value.Member {
-	return value.ObjectMember(name, v)
+func member(name string, v value.Value) value.RecordMember {
+	return value.MustRecordMember(name, v)
 }
 
 func requireErrorIs(t *testing.T, err error, target error) {
@@ -121,7 +121,7 @@ func requireStringMember(t *testing.T, object value.Value, name string, want str
 	t.Helper()
 
 	member := requireMember(t, object, name)
-	got, ok := member.String()
+	got, ok := member.AsString()
 	if !ok {
 		t.Fatalf("member %q kind = %s; want string", name, member.Kind())
 	}
@@ -133,11 +133,11 @@ func requireStringMember(t *testing.T, object value.Value, name string, want str
 func requireNoMember(t *testing.T, object value.Value, name string) {
 	t.Helper()
 
-	view, ok := object.Object()
+	view, ok := object.AsRecord()
 	if !ok {
-		t.Fatalf("value kind = %s; want object", object.Kind())
+		t.Fatalf("value kind = %s; want record", object.Kind())
 	}
-	if view.Has(name) {
+	if view.Has(value.MemberName(name)) {
 		t.Fatalf("member %q is present", name)
 	}
 }
@@ -145,12 +145,12 @@ func requireNoMember(t *testing.T, object value.Value, name string) {
 func requireMember(t *testing.T, object value.Value, name string) value.Value {
 	t.Helper()
 
-	view, ok := object.Object()
+	view, ok := object.AsRecord()
 	if !ok {
-		t.Fatalf("value kind = %s; want object", object.Kind())
+		t.Fatalf("value kind = %s; want record", object.Kind())
 	}
 
-	member, ok := view.Get(name)
+	member, ok := view.Get(value.MemberName(name))
 	if !ok {
 		t.Fatalf("member %q is absent", name)
 	}
@@ -161,7 +161,7 @@ func requireMember(t *testing.T, object value.Value, name string) value.Value {
 func requireListStrings(t *testing.T, got value.Value, want ...string) {
 	t.Helper()
 
-	view, ok := got.List()
+	view, ok := got.AsList()
 	if !ok {
 		t.Fatalf("value kind = %s; want list", got.Kind())
 	}
@@ -171,7 +171,7 @@ func requireListStrings(t *testing.T, got value.Value, want ...string) {
 
 	for i, wantItem := range want {
 		item, _ := view.At(i)
-		gotItem, ok := item.String()
+		gotItem, ok := item.AsString()
 		if !ok {
 			t.Fatalf("list[%d] kind = %s; want string", i, item.Kind())
 		}
@@ -184,7 +184,7 @@ func requireListStrings(t *testing.T, got value.Value, want ...string) {
 func requireListItem(t *testing.T, got value.Value, index int) value.Value {
 	t.Helper()
 
-	view, ok := got.List()
+	view, ok := got.AsList()
 	if !ok {
 		t.Fatalf("value kind = %s; want list", got.Kind())
 	}

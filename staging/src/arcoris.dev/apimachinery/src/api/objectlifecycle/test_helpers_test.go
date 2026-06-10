@@ -164,12 +164,12 @@ func testObservedObject(index int, image string, ready string) object.Object[val
 	)
 }
 
-func objectValue(members ...value.Member) value.Value {
-	return value.MustObjectValue(members...)
+func objectValue(members ...value.RecordMember) value.Value {
+	return value.MustRecordValue(members...)
 }
 
-func member(name string, val value.Value) value.Member {
-	return value.ObjectMember(name, val)
+func member(name string, val value.Value) value.RecordMember {
+	return value.MustRecordMember(name, val)
 }
 
 func owner(name string) fieldownership.Owner {
@@ -228,7 +228,7 @@ func requireEffect(t *testing.T, result Result, op Operation, effect Effect) {
 func requireImage(t *testing.T, state objectstore.State, want string) {
 	t.Helper()
 
-	objectView, ok := state.Object.Desired.Object()
+	objectView, ok := state.Object.Desired.AsRecord()
 	if !ok {
 		t.Fatalf("desired is not object")
 	}
@@ -236,7 +236,7 @@ func requireImage(t *testing.T, state objectstore.State, want string) {
 	if !ok {
 		t.Fatalf("desired.image missing")
 	}
-	text, ok := got.String()
+	text, ok := got.AsString()
 	if !ok || text != want {
 		t.Fatalf("desired.image = %q, %v; want %q, true", text, ok, want)
 	}

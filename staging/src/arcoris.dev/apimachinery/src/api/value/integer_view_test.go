@@ -18,7 +18,7 @@ import "testing"
 
 func TestIntegerAccessor(t *testing.T) {
 	integer := NewIntegerFromInt64(-12)
-	got, ok := IntegerValue(integer).Integer()
+	got, ok := IntegerValue(integer).AsInteger()
 
 	requireEqual(t, ok, true)
 	requireEqual(t, got.Equal(integer), true)

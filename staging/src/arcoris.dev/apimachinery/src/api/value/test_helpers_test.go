@@ -89,6 +89,14 @@ func requireStringsEqual(t *testing.T, got []string, want []string) {
 	}
 }
 
+// requireMemberNamesEqual compares member-name slices while preserving useful output.
+func requireMemberNamesEqual(t *testing.T, got []MemberName, want []MemberName) {
+	t.Helper()
+	if !slices.Equal(got, want) {
+		t.Fatalf("got %#v, want %#v", got, want)
+	}
+}
+
 // requirePanic asserts that fn panics.
 func requirePanic(t *testing.T, fn func()) {
 	t.Helper()
@@ -101,11 +109,11 @@ func requirePanic(t *testing.T, fn func()) {
 	fn()
 }
 
-// mustObject constructs an object value for tests.
-func mustObject(t *testing.T, members ...Member) Value {
+// mustRecord constructs a record value for tests.
+func mustRecord(t *testing.T, members ...RecordMember) Value {
 	t.Helper()
 
-	value, err := ObjectValue(members...)
+	value, err := RecordValue(members...)
 	requireNoError(t, err)
 
 	return value

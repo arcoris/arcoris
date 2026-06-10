@@ -177,9 +177,9 @@ func TestCompareListMapMissingKeyReturnsError(t *testing.T) {
 
 func TestCompareListMapNullKeyReturnsInvalidListKey(t *testing.T) {
 	path := rootField("conditions")
-	newValue := value.MustListValue(value.MustObjectValue(
-		value.ObjectMember("type", value.NullValue()),
-		value.ObjectMember("status", value.StringValue("True")),
+	newValue := value.MustListValue(value.MustRecordValue(
+		value.MustRecordMember("type", value.NullValue()),
+		value.MustRecordMember("status", value.StringValue("True")),
 	))
 
 	_, err := CompareAt(path, value.MustListValue(), newValue, conditionsDescriptor(), Options{})
@@ -191,9 +191,9 @@ func TestCompareListMapNullKeyReturnsInvalidListKey(t *testing.T) {
 
 func TestCompareListMapWrongKeyKindReturnsError(t *testing.T) {
 	path := rootField("conditions")
-	newValue := value.MustListValue(value.MustObjectValue(
-		value.ObjectMember("type", value.BoolValue(true)),
-		value.ObjectMember("status", value.StringValue("True")),
+	newValue := value.MustListValue(value.MustRecordValue(
+		value.MustRecordMember("type", value.BoolValue(true)),
+		value.MustRecordMember("status", value.StringValue("True")),
 	))
 
 	_, err := CompareAt(path, value.MustListValue(), newValue, conditionsDescriptor(), Options{})
@@ -248,16 +248,16 @@ func TestCompareListMapRefKeyType(t *testing.T) {
 }
 
 func routeValue(backend string) value.Value {
-	return value.MustObjectValue(
-		value.ObjectMember("host", value.StringValue("api.example.com")),
-		value.ObjectMember("port", value.Uint64Value(443)),
-		value.ObjectMember("backend", value.StringValue(backend)),
+	return value.MustRecordValue(
+		value.MustRecordMember("host", value.StringValue("api.example.com")),
+		value.MustRecordMember("port", value.Uint64Value(443)),
+		value.MustRecordMember("backend", value.StringValue(backend)),
 	)
 }
 func TestListMapEntriesIndexesBySelector(t *testing.T) {
 	descriptor := conditionsDescriptor()
 	listView, _ := descriptor.AsList()
-	listValue, _ := value.MustListValue(conditionValue("Ready", "True")).List()
+	listValue, _ := value.MustListValue(conditionValue("Ready", "True")).AsList()
 
 	got, err := newComparer(Options{}).listMapEntries(rootField("conditions"), listValue, listView.Element(), listView.MapKeys())
 	requireNoError(t, err)
@@ -274,7 +274,7 @@ func TestListMapEntriesIndexesBySelector(t *testing.T) {
 func TestListMapEntriesRejectsEmptyKeys(t *testing.T) {
 	descriptor := conditionsDescriptor()
 	listView, _ := descriptor.AsList()
-	listValue, _ := value.MustListValue(conditionValue("Ready", "True")).List()
+	listValue, _ := value.MustListValue(conditionValue("Ready", "True")).AsList()
 
 	_, err := newComparer(Options{}).listMapEntries(rootField("conditions"), listValue, listView.Element(), nil)
 
@@ -306,11 +306,11 @@ func TestEqualListMapSameReorderedIsTrue(t *testing.T) {
 	oldList, _ := value.MustListValue(
 		conditionValue("Ready", "True"),
 		conditionValue("Degraded", "False"),
-	).List()
+	).AsList()
 	newList, _ := value.MustListValue(
 		conditionValue("Degraded", "False"),
 		conditionValue("Ready", "True"),
-	).List()
+	).AsList()
 
 	got, err := newComparer(Options{}).equalListMap(rootField("conditions"), oldList, newList, listView.Element(), listView.MapKeys(), 0)
 	requireNoError(t, err)
@@ -323,8 +323,8 @@ func TestEqualListMapSameReorderedIsTrue(t *testing.T) {
 func TestEqualListMapDifferentSelectorSetIsFalse(t *testing.T) {
 	descriptor := conditionsDescriptor()
 	listView, _ := descriptor.AsList()
-	oldList, _ := value.MustListValue(conditionValue("Ready", "True")).List()
-	newList, _ := value.MustListValue(conditionValue("Degraded", "False")).List()
+	oldList, _ := value.MustListValue(conditionValue("Ready", "True")).AsList()
+	newList, _ := value.MustListValue(conditionValue("Degraded", "False")).AsList()
 
 	got, err := newComparer(Options{}).equalListMap(rootField("conditions"), oldList, newList, listView.Element(), listView.MapKeys(), 0)
 	requireNoError(t, err)

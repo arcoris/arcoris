@@ -21,11 +21,11 @@ var (
 	benchmarkOKSink    bool
 )
 
-func BenchmarkObjectViewGet(b *testing.B) {
-	value := benchmarkNestedObjectValue()
-	view, ok := value.Object()
+func BenchmarkRecordViewGet(b *testing.B) {
+	value := benchmarkNestedRecordValue()
+	view, ok := value.AsRecord()
 	if !ok {
-		b.Fatal("expected object view")
+		b.Fatal("expected record view")
 	}
 
 	b.ReportAllocs()
@@ -39,10 +39,10 @@ func BenchmarkObjectViewGet(b *testing.B) {
 func BenchmarkListViewAt(b *testing.B) {
 	value := MustListValue(
 		StringValue("first"),
-		benchmarkNestedObjectValue(),
+		benchmarkNestedRecordValue(),
 		BytesValue([]byte("payload")),
 	)
-	view, ok := value.List()
+	view, ok := value.AsList()
 	if !ok {
 		b.Fatal("expected list view")
 	}
@@ -55,8 +55,8 @@ func BenchmarkListViewAt(b *testing.B) {
 	}
 }
 
-func BenchmarkValueCloneNestedObject(b *testing.B) {
-	value := benchmarkNestedObjectValue()
+func BenchmarkValueCloneNestedRecord(b *testing.B) {
+	value := benchmarkNestedRecordValue()
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -66,18 +66,18 @@ func BenchmarkValueCloneNestedObject(b *testing.B) {
 	}
 }
 
-// benchmarkNestedObjectValue returns a small but nested payload for clone and
+// benchmarkNestedRecordValue returns a small but nested payload for clone and
 // view benchmarks.
-func benchmarkNestedObjectValue() Value {
-	return MustObjectValue(
-		ObjectMember("name", StringValue("worker")),
-		ObjectMember("payload", BytesValue([]byte("payload"))),
-		ObjectMember("tags", MustListValue(
+func benchmarkNestedRecordValue() Value {
+	return MustRecordValue(
+		MustRecordMember("name", StringValue("worker")),
+		MustRecordMember("payload", BytesValue([]byte("payload"))),
+		MustRecordMember("tags", MustListValue(
 			StringValue("control"),
 			StringValue("active"),
-			MustObjectValue(
-				ObjectMember("zone", StringValue("east")),
-				ObjectMember("tier", StringValue("primary")),
+			MustRecordValue(
+				MustRecordMember("zone", StringValue("east")),
+				MustRecordMember("tier", StringValue("primary")),
 			),
 		)),
 	)

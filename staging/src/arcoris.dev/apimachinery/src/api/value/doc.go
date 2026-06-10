@@ -16,32 +16,30 @@
 //
 // The package is the value half of the descriptor/value split:
 // arcoris.dev/apimachinery/api/types describes allowed shapes and constraints,
-// while api/value stores actual payload data. This package deliberately does
-// not import descriptor packages and does not validate values against type
-// descriptors. Descriptor-aware validation belongs to a future valuevalidation
-// package.
+// api/value stores actual concrete payload data, and api/valuevalidation
+// validates values against descriptors. This package deliberately does not
+// import descriptor packages and does not validate values against descriptors.
 //
-// Value is immutable by API convention. Constructors clone mutable inputs, and
-// accessors clone mutable outputs such as byte slices and nested composite
-// values. The zero Value is invalid and represents missing initialization; Null
-// is an explicit API value.
+// Value is immutable to external callers. Constructors copy mutable inputs, and
+// accessors never expose mutable internal storage. The zero Value is invalid and
+// represents missing initialization; Null is an explicit API value.
 //
 // Constructors that return Value use the <Kind>Value naming form, such as
-// StringValue, ObjectValue, and ListValue. Constructors that return supporting
-// domain types keep New<Descriptor> names, such as NewDate and NewDecimal. Must
-// variants exist only for fallible Value or domain constructors.
+// StringValue, RecordValue, and ListValue. Constructors that return supporting
+// domain types keep domain-specific names, such as NewDate and ParseDecimal.
+// Must variants exist only for fallible Value or domain constructors.
 //
-// Value Object is a concrete keyed payload node. It does not decide whether the
+// Value Record is a concrete keyed payload node. It does not decide whether the
 // payload is a descriptor object or descriptor map. Descriptor-aware validation
 // interprets the same concrete payload according to the expected api/types.Descriptor.
 //
-// Object views use linear lookup rather than storing lookup indexes in payloads.
+// Record views use linear lookup rather than storing lookup indexes in payloads.
 // API values are expected to be small, and this keeps construction, cloning, and
-// view creation allocation-light with fewer invariants to maintain. Empty object
+// view creation allocation-light with fewer invariants to maintain. Empty record
 // and list views return non-nil empty slices from bulk accessors even though
 // internal empty payload storage may be nil.
 //
-// Object member names are concrete non-empty strings. Empty name rejection is a
+// Record member names are concrete non-empty strings. Empty name rejection is a
 // base value grammar invariant; name regexes, prefixes, and semantic key
 // constraints belong to descriptor-aware validation outside this package.
 //

@@ -14,11 +14,11 @@
 
 package value
 
-// Integer returns the integer payload when v is KindInteger.
+// AsInteger returns the integer payload when v is KindInteger.
 //
-// For every other kind, Integer returns the zero Integer and ok=false. The zero
+// For every other kind, AsInteger returns the zero Integer and ok=false. The zero
 // Integer is valid payload data, so callers must check ok.
-func (v Value) Integer() (Integer, bool) {
+func (v Value) AsInteger() (Integer, bool) {
 	if v.kind != KindInteger {
 		return Integer{}, false
 	}

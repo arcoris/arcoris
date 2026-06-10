@@ -79,16 +79,16 @@ func scalarKind(code types.DescriptorKind) (value.Kind, bool) {
 func scalarValuesEqual(oldValue value.Value, newValue value.Value, code types.DescriptorKind) (bool, bool) {
 	switch code {
 	case types.DescriptorBool:
-		oldBool, _ := oldValue.Bool()
-		newBool, _ := newValue.Bool()
+		oldBool, _ := oldValue.AsBool()
+		newBool, _ := newValue.AsBool()
 		return oldBool == newBool, true
 	case types.DescriptorString:
-		oldString, _ := oldValue.String()
-		newString, _ := newValue.String()
+		oldString, _ := oldValue.AsString()
+		newString, _ := newValue.AsString()
 		return oldString == newString, true
 	case types.DescriptorBytes:
-		oldBytes, _ := oldValue.Bytes()
-		newBytes, _ := newValue.Bytes()
+		oldBytes, _ := oldValue.AsBytes()
+		newBytes, _ := newValue.AsBytes()
 		return bytes.Equal(oldBytes, newBytes), true
 	case types.DescriptorInt8,
 		types.DescriptorInt16,
@@ -98,33 +98,33 @@ func scalarValuesEqual(oldValue value.Value, newValue value.Value, code types.De
 		types.DescriptorUint16,
 		types.DescriptorUint32,
 		types.DescriptorUint64:
-		oldInteger, _ := oldValue.Integer()
-		newInteger, _ := newValue.Integer()
+		oldInteger, _ := oldValue.AsInteger()
+		newInteger, _ := newValue.AsInteger()
 		return oldInteger.Equal(newInteger), true
 	case types.DescriptorFloat32,
 		types.DescriptorFloat64:
-		oldFloat, _ := oldValue.Float()
-		newFloat, _ := newValue.Float()
+		oldFloat, _ := oldValue.AsFloat()
+		newFloat, _ := newValue.AsFloat()
 		return oldFloat == newFloat, true
 	case types.DescriptorDecimal:
-		oldDecimal, _ := oldValue.Decimal()
-		newDecimal, _ := newValue.Decimal()
+		oldDecimal, _ := oldValue.AsDecimal()
+		newDecimal, _ := newValue.AsDecimal()
 		return oldDecimal.Compare(newDecimal) == 0, true
 	case types.DescriptorTimestamp:
-		oldTimestamp, _ := oldValue.Timestamp()
-		newTimestamp, _ := newValue.Timestamp()
+		oldTimestamp, _ := oldValue.AsTimestamp()
+		newTimestamp, _ := newValue.AsTimestamp()
 		return oldTimestamp.Equal(newTimestamp), true
 	case types.DescriptorDate:
-		oldDate, _ := oldValue.Date()
-		newDate, _ := newValue.Date()
+		oldDate, _ := oldValue.AsDate()
+		newDate, _ := newValue.AsDate()
 		return oldDate.Equal(newDate), true
 	case types.DescriptorTime:
-		oldTime, _ := oldValue.TimeOfDay()
-		newTime, _ := newValue.TimeOfDay()
+		oldTime, _ := oldValue.AsTimeOfDay()
+		newTime, _ := newValue.AsTimeOfDay()
 		return oldTime.Equal(newTime), true
 	case types.DescriptorDuration:
-		oldDuration, _ := oldValue.Duration()
-		newDuration, _ := newValue.Duration()
+		oldDuration, _ := oldValue.AsDuration()
+		newDuration, _ := newValue.AsDuration()
 		return oldDuration == newDuration, true
 	default:
 		return false, false

@@ -79,11 +79,22 @@ func (d Decimal) String() string {
 	return d.formatNonZero()
 }
 
-// Equal reports whether d and other represent the same canonical decimal.
+// Equal reports whether d and other represent the same numeric decimal value.
 //
-// Scale participates in equality, so 1.20 and 1.2 remain distinct payloads in
-// this first-pass value model.
+// Scale does not participate in numeric equality, so 1.20 and 1.2 compare
+// equal. Use EqualRepresentation when scale-preserving payload representation
+// must be compared exactly.
 func (d Decimal) Equal(other Decimal) bool {
+	return d.Compare(other) == 0
+}
+
+// EqualRepresentation reports whether d and other have the same stored decimal
+// representation.
+//
+// Representation equality compares sign, canonical coefficient, and preserved
+// scale exactly. For example, 1.20 and 1.2 are numerically equal but not
+// representation-equal.
+func (d Decimal) EqualRepresentation(other Decimal) bool {
 	return d.IsNegative() == other.IsNegative() &&
 		d.Coefficient() == other.Coefficient() &&
 		d.Scale() == other.Scale()

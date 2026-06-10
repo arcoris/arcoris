@@ -104,8 +104,8 @@ func TestValidateOrderedListNestedObjectUsesIndexPaths(t *testing.T) {
 		t,
 		mustObject(
 			t,
-			value.ObjectMember("name", value.StringValue("api")),
-			value.ObjectMember("image", value.StringValue("")),
+			value.MustRecordMember("name", value.StringValue("api")),
+			value.MustRecordMember("image", value.StringValue("")),
 		),
 	)
 

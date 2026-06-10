@@ -25,21 +25,23 @@ const (
 	pathDate = "date"
 	// pathTimeOfDay identifies time-of-day scalar construction failures.
 	pathTimeOfDay = "timeOfDay"
+	// pathMemberName identifies standalone member-name lexical failures.
+	pathMemberName = "record.memberName"
 )
 
-// objectMemberNamePath returns the diagnostic path for an object member name.
+// recordMemberNamePath returns the diagnostic path for a record member name.
 //
-// Paths use caller order indexes because object payloads preserve member order
+// Paths use caller order indexes because record payloads preserve member order
 // and do not store a lookup index.
-func objectMemberNamePath(index int) string {
-	return "object.members[" + strconv.Itoa(index) + "].name"
+func recordMemberNamePath(index int) string {
+	return "record.members[" + strconv.Itoa(index) + "].name"
 }
 
-// objectMemberValuePath returns the diagnostic path for an object member value.
+// recordMemberValuePath returns the diagnostic path for a record member value.
 //
 // The path points to the nested Value slot, not to descriptor metadata.
-func objectMemberValuePath(index int) string {
-	return "object.members[" + strconv.Itoa(index) + "].value"
+func recordMemberValuePath(index int) string {
+	return "record.members[" + strconv.Itoa(index) + "].value"
 }
 
 // listItemPath returns the diagnostic path for a list item.

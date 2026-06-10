@@ -32,10 +32,10 @@ func (c *comparer) equalObject(
 	descriptor types.Descriptor,
 	depth int,
 ) (bool, error) {
-	if err := requireKind(path, oldValue, value.KindObject, descriptor.Code()); err != nil {
+	if err := requireKind(path, oldValue, value.KindRecord, descriptor.Code()); err != nil {
 		return false, err
 	}
-	if err := requireKind(path, newValue, value.KindObject, descriptor.Code()); err != nil {
+	if err := requireKind(path, newValue, value.KindRecord, descriptor.Code()); err != nil {
 		return false, err
 	}
 
@@ -44,14 +44,14 @@ func (c *comparer) equalObject(
 		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not an object")
 	}
 
-	oldObject, _ := oldValue.Object()
-	newObject, _ := newValue.Object()
+	oldObject, _ := oldValue.AsRecord()
+	newObject, _ := newValue.AsRecord()
 	fields := objectView.Fields()
 
 	for _, field := range fields {
 		name := string(field.Name())
-		oldMember, oldFound := oldObject.Get(name)
-		newMember, newFound := newObject.Get(name)
+		oldMember, oldFound := oldObject.Get(value.MemberName(name))
+		newMember, newFound := newObject.Get(value.MemberName(name))
 		if oldFound != newFound {
 			return false, nil
 		}
@@ -80,8 +80,8 @@ func (c *comparer) equalObject(
 // equalUnknownObjectMembers applies unknown-field policy without producing paths.
 func (c *comparer) equalUnknownObjectMembers(
 	path fieldpath.Path,
-	oldObject value.ObjectView,
-	newObject value.ObjectView,
+	oldObject value.RecordView,
+	newObject value.RecordView,
 	declared map[string]types.FieldDescriptor,
 	policy types.UnknownFieldPolicy,
 ) (bool, error) {
@@ -101,13 +101,13 @@ func (c *comparer) equalUnknownObjectMembers(
 // equalPreservedUnknownObjectMembers compares preserved unknown members as opaque leaves.
 func (c *comparer) equalPreservedUnknownObjectMembers(
 	path fieldpath.Path,
-	oldObject value.ObjectView,
-	newObject value.ObjectView,
+	oldObject value.RecordView,
+	newObject value.RecordView,
 	declared map[string]types.FieldDescriptor,
 ) (bool, error) {
 	for _, name := range unknownMemberNames(oldObject, newObject, declared) {
-		oldMember, oldFound := oldObject.Get(name)
-		newMember, newFound := newObject.Get(name)
+		oldMember, oldFound := oldObject.Get(value.MemberName(name))
+		newMember, newFound := newObject.Get(value.MemberName(name))
 		if oldFound != newFound {
 			return false, nil
 		}

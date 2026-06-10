@@ -51,12 +51,13 @@ const (
 	// KindDuration represents one elapsed interval payload.
 	KindDuration
 
-	// KindObject represents one concrete string-keyed payload node.
+	// KindRecord represents one ordered string-keyed payload node.
 	//
-	// It does not decide whether the payload should be interpreted as a fixed
-	// schema object or as a dynamic map. Descriptor-aware validation makes that
-	// decision using the expected api/types.Descriptor.
-	KindObject
+	// A record is concrete payload data only. It does not decide whether the
+	// value should be interpreted as a fixed descriptor object or a dynamic
+	// descriptor map. Descriptor-aware validation makes that decision from the
+	// expected descriptor.
+	KindRecord
 	// KindList represents an ordered sequence of values.
 	KindList
 )
@@ -99,8 +100,8 @@ func (k Kind) String() string {
 		return "timeOfDay"
 	case KindDuration:
 		return "duration"
-	case KindObject:
-		return "object"
+	case KindRecord:
+		return "record"
 	case KindList:
 		return "list"
 	default:
@@ -108,12 +109,12 @@ func (k Kind) String() string {
 	}
 }
 
-// IsPrimitive reports whether k stores one scalar payload value.
+// IsScalar reports whether k stores one scalar payload value.
 //
-// Primitive here means "not object/list" for the value algebra. It includes
-// numbers and temporal values even though descriptors may classify those more
-// narrowly.
-func (k Kind) IsPrimitive() bool {
+// Scalar means "not record/list" for the concrete value algebra. It includes
+// null, numeric, byte, string, and temporal values even though descriptors may
+// classify those more narrowly.
+func (k Kind) IsScalar() bool {
 	switch k {
 	case KindNull,
 		KindBool,
@@ -153,5 +154,5 @@ func (k Kind) IsTemporal() bool {
 // Composite values preserve caller order and expose read-only views rather than
 // mutable maps or slices.
 func (k Kind) IsComposite() bool {
-	return k == KindObject || k == KindList
+	return k == KindRecord || k == KindList
 }

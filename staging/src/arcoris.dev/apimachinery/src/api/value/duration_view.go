@@ -16,11 +16,11 @@ package value
 
 import "time"
 
-// Duration returns the duration payload when v is KindDuration.
+// AsDuration returns the duration payload when v is KindDuration.
 //
-// For every other kind, Duration returns zero and ok=false. A zero duration is
+// For every other kind, AsDuration returns zero and ok=false. A zero duration is
 // valid payload data, so callers must check ok.
-func (v Value) Duration() (time.Duration, bool) {
+func (v Value) AsDuration() (time.Duration, bool) {
 	if v.kind != KindDuration {
 		return 0, false
 	}

@@ -46,8 +46,8 @@ func TestExtractRefResolvesObject(t *testing.T) {
 			types.Object(types.Field("image").String().Required()),
 		),
 	}
-	val := value.MustObjectValue(
-		value.ObjectMember("image", value.StringValue("api:v1")),
+	val := value.MustRecordValue(
+		value.MustRecordMember("image", value.StringValue("api:v1")),
 	)
 
 	got, err := ExtractAt(

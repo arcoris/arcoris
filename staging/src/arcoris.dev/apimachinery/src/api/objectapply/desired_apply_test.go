@@ -47,7 +47,7 @@ func TestApplyDesiredListMapConditionStatus(t *testing.T) {
 	}, Options{})
 	requireNoError(t, err)
 
-	view, ok := result.Object.Desired.List()
+	view, ok := result.Object.Desired.AsList()
 	if !ok {
 		t.Fatalf("desired kind = %s; want list", result.Object.Desired.Kind())
 	}

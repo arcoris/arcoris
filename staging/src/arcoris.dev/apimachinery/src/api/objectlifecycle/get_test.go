@@ -79,7 +79,7 @@ func TestGetDoesNotValidateDesiredPayload(t *testing.T) {
 	requireNoError(t, err)
 
 	requireEffect(t, result, OperationGet, EffectFound)
-	if got, ok := result.State.Object.Desired.String(); !ok || got != "descriptor-invalid" {
+	if got, ok := result.State.Object.Desired.AsString(); !ok || got != "descriptor-invalid" {
 		t.Fatalf("Desired = %q, %v; want descriptor-invalid, true", got, ok)
 	}
 }

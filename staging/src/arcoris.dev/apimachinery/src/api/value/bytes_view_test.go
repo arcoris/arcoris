@@ -19,18 +19,18 @@ import "testing"
 func TestBytesAccessorReturnsClone(t *testing.T) {
 	value := BytesValue([]byte{1, 2, 3})
 
-	got, ok := value.Bytes()
+	got, ok := value.AsBytes()
 	requireEqual(t, ok, true)
 	requireBytesEqual(t, got, []byte{1, 2, 3})
 
 	got[1] = 9
-	again, ok := value.Bytes()
+	again, ok := value.AsBytes()
 	requireEqual(t, ok, true)
 	requireBytesEqual(t, again, []byte{1, 2, 3})
 }
 
 func TestBytesAccessorPreservesEmptySlice(t *testing.T) {
-	got, ok := BytesValue(nil).Bytes()
+	got, ok := BytesValue(nil).AsBytes()
 
 	requireEqual(t, ok, true)
 	if got == nil {

@@ -77,8 +77,8 @@ func TestExtractSelectorMultiKeyCanonicalSelector(t *testing.T) {
 	gotSelector, err := ExtractSelector(
 		conditionPath(0),
 		objectWithMembers(
-			value.ObjectMember("port", value.Uint64Value(443)),
-			value.ObjectMember("host", value.StringValue("api.example.com")),
+			value.MustRecordMember("port", value.Uint64Value(443)),
+			value.MustRecordMember("host", value.StringValue("api.example.com")),
 		),
 		objectElement(
 			types.Field("port").Uint64().Required(),

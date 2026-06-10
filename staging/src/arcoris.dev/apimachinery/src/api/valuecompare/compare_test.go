@@ -107,7 +107,7 @@ func TestComparePresenceBothAbsentIsEmpty(t *testing.T) {
 func TestComparePresenceAddedUsesSubtree(t *testing.T) {
 	path := rootField("spec")
 	descriptor := types.Object(types.Field("image").String().Optional()).Descriptor()
-	newValue := value.MustObjectValue(value.ObjectMember("image", value.StringValue("v1")))
+	newValue := value.MustRecordValue(value.MustRecordMember("image", value.StringValue("v1")))
 
 	got, done, err := newComparer(Options{}).comparePresence(
 		path,
@@ -126,7 +126,7 @@ func TestComparePresenceAddedUsesSubtree(t *testing.T) {
 func TestComparePresenceRemovedUsesSubtree(t *testing.T) {
 	path := rootField("spec")
 	descriptor := types.Object(types.Field("image").String().Optional()).Descriptor()
-	oldValue := value.MustObjectValue(value.ObjectMember("image", value.StringValue("v1")))
+	oldValue := value.MustRecordValue(value.MustRecordMember("image", value.StringValue("v1")))
 
 	got, done, err := newComparer(Options{}).comparePresence(
 		path,

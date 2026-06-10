@@ -29,7 +29,7 @@ func signedIntegerLiteral(
 		return fieldpath.Literal{}, keyKindMismatch(path, keyValue.Kind(), value.KindInteger)
 	}
 
-	integerPayload, _ := keyValue.Integer()
+	integerPayload, _ := keyValue.AsInteger()
 	signedPayload, ok := integerPayload.Int64()
 	if !ok {
 		return fieldpath.Literal{}, failure(
@@ -52,7 +52,7 @@ func unsignedIntegerLiteral(
 		return fieldpath.Literal{}, keyKindMismatch(path, keyValue.Kind(), value.KindInteger)
 	}
 
-	integerPayload, _ := keyValue.Integer()
+	integerPayload, _ := keyValue.AsInteger()
 	unsignedPayload, ok := integerPayload.Uint64()
 	if !ok {
 		return fieldpath.Literal{}, failure(

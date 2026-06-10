@@ -99,7 +99,7 @@ func requireErrorIs(t *testing.T, err error, target error) {
 func requireDesiredString(t *testing.T, state objectstore.State, want string) {
 	t.Helper()
 
-	got, ok := state.Object.Desired.String()
+	got, ok := state.Object.Desired.AsString()
 	if !ok {
 		t.Fatalf("desired value is not string")
 	}

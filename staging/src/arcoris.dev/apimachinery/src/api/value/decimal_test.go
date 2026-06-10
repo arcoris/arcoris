@@ -67,5 +67,6 @@ func TestDecimalEqual(t *testing.T) {
 	decimal := Decimal{coefficient: "120", scale: 2}
 
 	requireEqual(t, decimal.Equal(Decimal{coefficient: "120", scale: 2}), true)
-	requireEqual(t, decimal.Equal(Decimal{coefficient: "12", scale: 1}), false)
+	requireEqual(t, decimal.Equal(Decimal{coefficient: "12", scale: 1}), true)
+	requireEqual(t, decimal.EqualRepresentation(Decimal{coefficient: "12", scale: 1}), false)
 }

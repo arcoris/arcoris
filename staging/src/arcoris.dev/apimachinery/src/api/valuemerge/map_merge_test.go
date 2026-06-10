@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/types"
+	"arcoris.dev/apimachinery/api/value"
 )
 
 func TestMergeMapSelectedKey(t *testing.T) {
@@ -114,8 +115,8 @@ func TestMergeMapNestedObjectValueSelectedField(t *testing.T) {
 		t.Fatalf("Merge returned error: %v", err)
 	}
 
-	view, _ := got.Object()
-	api, _ := view.Get("api")
+	view, _ := got.AsRecord()
+	api, _ := view.Get(value.MemberName("api"))
 	requireStringMember(t, api, "image", "api:v2")
 	requireIntegerMember(t, api, "replicas", 3)
 }

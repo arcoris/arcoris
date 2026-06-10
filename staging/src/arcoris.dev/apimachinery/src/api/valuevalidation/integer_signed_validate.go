@@ -32,7 +32,7 @@ func (v *validator) validateSignedInteger(
 		return
 	}
 
-	integer, _ := val.Integer()
+	integer, _ := val.AsInteger()
 	got, ok := integer.Int64()
 	if !ok {
 		v.add(

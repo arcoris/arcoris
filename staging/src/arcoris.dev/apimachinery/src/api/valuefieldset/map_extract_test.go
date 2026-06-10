@@ -23,8 +23,8 @@ import (
 
 func TestExtractMapEntriesUseKeyPaths(t *testing.T) {
 	path := rootField("metadata", "labels")
-	val := value.MustObjectValue(
-		value.ObjectMember("app", value.StringValue("api")),
+	val := value.MustRecordValue(
+		value.MustRecordMember("app", value.StringValue("api")),
 	)
 
 	got, err := ExtractAt(path, val, types.MapOf(types.String()).Descriptor(), Options{})
@@ -35,7 +35,7 @@ func TestExtractMapEntriesUseKeyPaths(t *testing.T) {
 
 func TestExtractMapEmptyIncludesMapPath(t *testing.T) {
 	path := rootField("metadata", "labels")
-	val := value.MustObjectValue()
+	val := value.MustRecordValue()
 
 	got, err := ExtractAt(path, val, types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
@@ -61,11 +61,11 @@ func TestExtractMapNestedObjectValues(t *testing.T) {
 			types.Field("backend").String().Required(),
 		),
 	).Descriptor()
-	val := value.MustObjectValue(
-		value.ObjectMember(
+	val := value.MustRecordValue(
+		value.MustRecordMember(
 			"api",
-			value.MustObjectValue(
-				value.ObjectMember("backend", value.StringValue("svc")),
+			value.MustRecordValue(
+				value.MustRecordMember("backend", value.StringValue("svc")),
 			),
 		),
 	)

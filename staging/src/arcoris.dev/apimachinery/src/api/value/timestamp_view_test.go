@@ -21,14 +21,14 @@ import (
 
 func TestTimestampAccessor(t *testing.T) {
 	now := time.Now()
-	got, ok := TimestampValue(now).Timestamp()
+	got, ok := TimestampValue(now).AsTimestamp()
 
 	requireEqual(t, ok, true)
 	requireEqual(t, got, now.Round(0))
 }
 
 func TestTimestampAccessorAcceptsZeroTime(t *testing.T) {
-	got, ok := TimestampValue(time.Time{}).Timestamp()
+	got, ok := TimestampValue(time.Time{}).AsTimestamp()
 
 	requireEqual(t, ok, true)
 	requireEqual(t, got.IsZero(), true)

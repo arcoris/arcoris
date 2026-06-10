@@ -16,12 +16,12 @@ package value
 
 import "strings"
 
-// NewDecimal parses first-pass decimal syntax without exponent notation.
+// ParseDecimal parses first-pass decimal syntax without exponent notation.
 //
 // Supported input is a plain optional negative sign, an integer part, and an
 // optional fractional part. Leading integer zeros are removed, fractional scale
 // is preserved for non-zero values, and negative zero normalizes to "0".
-func NewDecimal(text string) (Decimal, error) {
+func ParseDecimal(text string) (Decimal, error) {
 	negative, unsigned := splitDecimalSign(text)
 	if unsigned == "" {
 		return Decimal{}, invalidDecimal("decimal text is empty or sign-only")
@@ -46,12 +46,12 @@ func NewDecimal(text string) (Decimal, error) {
 	return Decimal{negative: negative, coefficient: coefficient, scale: scale}, nil
 }
 
-// MustDecimal parses a Decimal or panics when text is malformed.
+// MustParseDecimal parses a Decimal or panics when text is malformed.
 //
 // It is intended for fixtures and static definitions where invalid decimal text
-// is a programmer error. Runtime parsing paths should use NewDecimal.
-func MustDecimal(text string) Decimal {
-	decimal, err := NewDecimal(text)
+// is a programmer error. Runtime parsing paths should use ParseDecimal.
+func MustParseDecimal(text string) Decimal {
+	decimal, err := ParseDecimal(text)
 	if err != nil {
 		panic(err)
 	}
@@ -62,7 +62,7 @@ func MustDecimal(text string) Decimal {
 // splitDecimalSign separates the optional negative sign.
 //
 // A plus sign is intentionally not accepted by this first-pass grammar and is
-// left in the unsigned text so NewDecimal can reject it explicitly.
+// left in the unsigned text so ParseDecimal can reject it explicitly.
 func splitDecimalSign(text string) (bool, string) {
 	if strings.HasPrefix(text, "-") {
 		return true, strings.TrimPrefix(text, "-")

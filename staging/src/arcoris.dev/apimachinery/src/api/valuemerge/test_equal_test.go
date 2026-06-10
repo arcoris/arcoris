@@ -25,18 +25,18 @@ func valuesEqual(left value.Value, right value.Value) bool {
 	case value.KindInvalid, value.KindNull:
 		return true
 	case value.KindBool:
-		l, _ := left.Bool()
-		r, _ := right.Bool()
+		l, _ := left.AsBool()
+		r, _ := right.AsBool()
 		return l == r
 	case value.KindString:
-		l, _ := left.String()
-		r, _ := right.String()
+		l, _ := left.AsString()
+		r, _ := right.AsString()
 		return l == r
 	case value.KindInteger:
-		l, _ := left.Integer()
-		r, _ := right.Integer()
+		l, _ := left.AsInteger()
+		r, _ := right.AsInteger()
 		return l.String() == r.String()
-	case value.KindObject:
+	case value.KindRecord:
 		return objectsEqual(left, right)
 	case value.KindList:
 		return listsEqual(left, right)
@@ -46,8 +46,8 @@ func valuesEqual(left value.Value, right value.Value) bool {
 }
 
 func objectsEqual(left value.Value, right value.Value) bool {
-	leftView, _ := left.Object()
-	rightView, _ := right.Object()
+	leftView, _ := left.AsRecord()
+	rightView, _ := right.AsRecord()
 	leftMembers := leftView.Members()
 	rightMembers := rightView.Members()
 	if len(leftMembers) != len(rightMembers) {
@@ -67,8 +67,8 @@ func objectsEqual(left value.Value, right value.Value) bool {
 }
 
 func listsEqual(left value.Value, right value.Value) bool {
-	leftView, _ := left.List()
-	rightView, _ := right.List()
+	leftView, _ := left.AsList()
+	rightView, _ := right.AsList()
 	leftItems := leftView.Items()
 	rightItems := rightView.Items()
 	if len(leftItems) != len(rightItems) {

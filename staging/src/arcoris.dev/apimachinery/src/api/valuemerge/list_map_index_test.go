@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/internal/valuepresence"
+	"arcoris.dev/apimachinery/api/value"
 )
 
 func TestListMapIndexPreservesPhysicalOrder(t *testing.T) {
@@ -37,8 +38,8 @@ func TestListMapIndexPreservesPhysicalOrder(t *testing.T) {
 	if len(index.order) != 2 {
 		t.Fatalf("order length = %d; want 2", len(index.order))
 	}
-	if index.lookup[index.order[0]].item.Kind().String() != "object" {
-		t.Fatalf("first item is not object")
+	if index.lookup[index.order[0]].item.Kind() != value.KindRecord {
+		t.Fatalf("first item kind = %s; want record", index.lookup[index.order[0]].item.Kind())
 	}
 }
 

@@ -20,13 +20,13 @@ import (
 )
 
 func TestMembersByNameBuildsLookup(t *testing.T) {
-	got := membersByName([]value.Member{
-		value.ObjectMember("env", value.StringValue("prod")),
-		value.ObjectMember("tier", value.StringValue("frontend")),
+	got := membersByName([]value.RecordMember{
+		value.MustRecordMember("env", value.StringValue("prod")),
+		value.MustRecordMember("tier", value.StringValue("frontend")),
 	})
 
-	env, _ := got["env"].String()
-	tier, _ := got["tier"].String()
+	env, _ := got["env"].AsString()
+	tier, _ := got["tier"].AsString()
 	if env != "prod" || tier != "frontend" {
 		t.Fatalf("membersByName() = %#v", got)
 	}

@@ -26,7 +26,7 @@ func (v *validator) validateBytes(path fieldpath.Path, val value.Value, descript
 		return
 	}
 
-	bytes, _ := val.Bytes()
+	bytes, _ := val.AsBytes()
 	bytesView, ok := descriptor.AsBytes()
 	if !ok {
 		v.add(

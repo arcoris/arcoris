@@ -20,25 +20,25 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// objectMembers returns detached object members for present object operands.
-func objectMembers(o operand) []value.Member {
+// objectMembers returns detached record members for present record operands.
+func objectMembers(o operand) []value.RecordMember {
 	if o.Absent() || o.Value().IsNull() {
 		return nil
 	}
 
-	view, _ := o.Value().Object()
+	view, _ := o.Value().AsRecord()
 	return view.Members()
 }
 
-// memberLookup stores object members by concrete name.
+// memberLookup stores record members by concrete name.
 type memberLookup map[string]value.Value
 
 // newMemberLookup indexes members while preserving member values as clones.
-func newMemberLookup(members []value.Member) memberLookup {
+func newMemberLookup(members []value.RecordMember) memberLookup {
 	lookup := make(memberLookup, len(members))
 
 	for _, member := range members {
-		lookup[member.Name] = member.Value.Clone()
+		lookup[member.Name.String()] = member.Value.Clone()
 	}
 
 	return lookup
@@ -55,13 +55,13 @@ func (l memberLookup) Operand(name string) operand {
 	return valuepresence.From(l[name], l.Has(name))
 }
 
-// appendMember appends a cloned object member when value is present.
-func appendMember(members []value.Member, name string, item operand) []value.Member {
+// appendMember appends a cloned record member when value is present.
+func appendMember(members []value.RecordMember, name string, item operand) []value.RecordMember {
 	if item.Absent() {
 		return members
 	}
 
-	return append(members, value.ObjectMember(name, item.Value()))
+	return append(members, value.MustRecordMember(name, item.Value()))
 }
 
 // objectFieldLookup stores declared object field descriptors by API field name.

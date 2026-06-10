@@ -27,16 +27,16 @@ import (
 var (
 	// ErrInvalidValue classifies malformed concrete API values.
 	ErrInvalidValue = errors.New("invalid API value")
-	// ErrInvalidObject classifies malformed object payload values.
-	ErrInvalidObject = errors.New("invalid object value")
+	// ErrInvalidRecord classifies malformed record payload values.
+	ErrInvalidRecord = errors.New("invalid record value")
 	// ErrInvalidList classifies malformed list payload values.
 	ErrInvalidList = errors.New("invalid list value")
-	// ErrInvalidMember classifies malformed object member inputs.
-	ErrInvalidMember = errors.New("invalid object member")
-	// ErrDuplicateName classifies repeated object member names.
-	ErrDuplicateName = errors.New("duplicate object member name")
-	// ErrEmptyName classifies empty object member names.
-	ErrEmptyName = errors.New("empty object member name")
+	// ErrInvalidRecordMember classifies malformed record member inputs.
+	ErrInvalidRecordMember = errors.New("invalid record member")
+	// ErrDuplicateMemberName classifies repeated record member names.
+	ErrDuplicateMemberName = errors.New("duplicate record member name")
+	// ErrEmptyMemberName classifies empty record member names.
+	ErrEmptyMemberName = errors.New("empty record member name")
 	// ErrInvalidFloat classifies NaN and infinity float inputs.
 	ErrInvalidFloat = errors.New("invalid float value")
 	// ErrInvalidDecimal classifies malformed decimal text inputs.
@@ -71,8 +71,8 @@ func (e *Error) Error() string {
 
 // Unwrap preserves both broad value classification and nested causes.
 //
-// For example, a duplicate object member unwraps to ErrDuplicateName,
-// ErrInvalidObject, and ErrInvalidValue. This keeps callers free to handle
+// For example, a duplicate record member unwraps to ErrDuplicateMemberName,
+// ErrInvalidRecord, and ErrInvalidValue. This keeps callers free to handle
 // either specific failures or broad value-construction failures.
 func (e *Error) Unwrap() error {
 	if e == nil {
@@ -83,8 +83,8 @@ func (e *Error) Unwrap() error {
 	if isInvalidValueFailure(e.Err) {
 		base = errors.Join(ErrInvalidValue, e.Err)
 	}
-	if isInvalidObjectFailure(e.Err) {
-		base = errors.Join(base, ErrInvalidObject)
+	if isInvalidRecordFailure(e.Err) {
+		base = errors.Join(base, ErrInvalidRecord)
 	}
 
 	return diagnostic.JoinRecord[ErrorReason](base, e.Cause).Unwrap()
@@ -96,11 +96,11 @@ func (e *Error) Unwrap() error {
 // failures with one sentinel.
 func isInvalidValueFailure(err error) bool {
 	switch err {
-	case ErrInvalidObject,
+	case ErrInvalidRecord,
 		ErrInvalidList,
-		ErrInvalidMember,
-		ErrDuplicateName,
-		ErrEmptyName,
+		ErrInvalidRecordMember,
+		ErrDuplicateMemberName,
+		ErrEmptyMemberName,
 		ErrInvalidFloat,
 		ErrInvalidDecimal,
 		ErrInvalidDate,
@@ -111,14 +111,14 @@ func isInvalidValueFailure(err error) bool {
 	}
 }
 
-// isInvalidObjectFailure reports whether err belongs to object construction.
+// isInvalidRecordFailure reports whether err belongs to record construction.
 //
-// Object member-specific failures also unwrap to ErrInvalidObject.
-func isInvalidObjectFailure(err error) bool {
+// Record member-specific failures also unwrap to ErrInvalidRecord.
+func isInvalidRecordFailure(err error) bool {
 	switch err {
-	case ErrInvalidMember,
-		ErrDuplicateName,
-		ErrEmptyName:
+	case ErrInvalidRecordMember,
+		ErrDuplicateMemberName,
+		ErrEmptyMemberName:
 		return true
 	default:
 		return false

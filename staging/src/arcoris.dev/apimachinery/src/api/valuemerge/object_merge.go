@@ -36,7 +36,7 @@ func (m *merger) mergeObject(
 	if err := requireObjectOperand(path, overlay); err != nil {
 		return operand{}, err
 	}
-	preserved, ok, err := preserveWithoutOverlayContainer(path, base, overlay, value.KindObject)
+	preserved, ok, err := preserveWithoutOverlayContainer(path, base, overlay, value.KindRecord)
 	if err != nil {
 		return operand{}, err
 	}
@@ -100,7 +100,7 @@ func (m *merger) mergeObjectView(
 		return operand{}, err
 	}
 
-	merged, err := value.ObjectValue(members...)
+	merged, err := value.RecordValue(members...)
 	if err != nil {
 		return operand{}, wrapAt(
 			path,

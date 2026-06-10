@@ -31,19 +31,19 @@ func valueToNode(path jsonPath, v value.Value, config resolvedEncodeConfig) (jso
 	case value.KindNull:
 		return jsonNode{kind: jsonKindNull}, nil
 	case value.KindBool:
-		payload, _ := v.Bool()
+		payload, _ := v.AsBool()
 		return jsonNode{kind: jsonKindBool, boolValue: payload}, nil
 	case value.KindString:
-		payload, _ := v.String()
+		payload, _ := v.AsString()
 		return jsonNode{kind: jsonKindString, stringValue: payload}, nil
 	case value.KindInteger:
-		payload, _ := v.Integer()
+		payload, _ := v.AsInteger()
 		return jsonNode{kind: jsonKindNumber, numberText: payload.String()}, nil
 	case value.KindDecimal:
-		payload, _ := v.Decimal()
+		payload, _ := v.AsDecimal()
 		return jsonNode{kind: jsonKindNumber, numberText: payload.String()}, nil
 	case value.KindFloat:
-		payload, _ := v.Float()
+		payload, _ := v.AsFloat()
 		text, err := finiteFloatText(path, payload, config)
 		if err != nil {
 			return jsonNode{}, err
@@ -51,8 +51,8 @@ func valueToNode(path jsonPath, v value.Value, config resolvedEncodeConfig) (jso
 		return jsonNode{kind: jsonKindNumber, numberText: text}, nil
 	case value.KindList:
 		return listValueToNode(path, v, config)
-	case value.KindObject:
-		return objectValueToNode(path, v, config)
+	case value.KindRecord:
+		return recordValueToNode(path, v, config)
 	case value.KindInvalid,
 		value.KindBytes,
 		value.KindTimestamp,
@@ -70,7 +70,7 @@ func valueToNode(path jsonPath, v value.Value, config resolvedEncodeConfig) (jso
 // List order is semantic JSON order and is never changed by deterministic
 // output. Deterministic only affects object member ordering.
 func listValueToNode(path jsonPath, v value.Value, config resolvedEncodeConfig) (jsonNode, error) {
-	list, _ := v.List()
+	list, _ := v.AsList()
 	items := list.Items()
 	nodes := make([]jsonNode, 0, len(items))
 	for i, item := range items {
@@ -84,21 +84,22 @@ func listValueToNode(path jsonPath, v value.Value, config resolvedEncodeConfig) 
 	return jsonNode{kind: jsonKindArray, items: nodes}, nil
 }
 
-// objectValueToNode converts a value object into an ordered JSON object.
+// recordValueToNode converts a value record into an ordered JSON object.
 //
-// Default output preserves value.ObjectView member order. Deterministic output
+// Default output preserves value.RecordView member order. Deterministic output
 // sorts the private JSON members after conversion so nested diagnostics still
 // use the original semantic member path while output ordering becomes stable.
-func objectValueToNode(path jsonPath, v value.Value, config resolvedEncodeConfig) (jsonNode, error) {
-	object, _ := v.Object()
-	members := object.Members()
+func recordValueToNode(path jsonPath, v value.Value, config resolvedEncodeConfig) (jsonNode, error) {
+	record, _ := v.AsRecord()
+	members := record.Members()
 	jsonMembers := make([]jsonMember, 0, len(members))
 	for _, member := range members {
-		node, err := valueToNode(path.Member(member.Name), member.Value, config)
+		name := member.Name.String()
+		node, err := valueToNode(path.Member(name), member.Value, config)
 		if err != nil {
 			return jsonNode{}, err
 		}
-		jsonMembers = append(jsonMembers, jsonMember{name: member.Name, value: node})
+		jsonMembers = append(jsonMembers, jsonMember{name: name, value: node})
 	}
 	if config.deterministic {
 		jsonMembers = sortedMembers(jsonMembers)

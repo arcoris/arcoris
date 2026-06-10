@@ -22,9 +22,9 @@ func TestErrorReasonStrings(t *testing.T) {
 		want   string
 	}{
 		{reason: ErrorReasonInvalidValue, want: "invalid_value"},
-		{reason: ErrorReasonInvalidMember, want: "invalid_member"},
-		{reason: ErrorReasonDuplicateName, want: "duplicate_name"},
-		{reason: ErrorReasonEmptyName, want: "empty_name"},
+		{reason: ErrorReasonInvalidRecordMember, want: "invalid_record_member"},
+		{reason: ErrorReasonDuplicateMemberName, want: "duplicate_member_name"},
+		{reason: ErrorReasonEmptyMemberName, want: "empty_member_name"},
 		{reason: ErrorReasonInvalidFloat, want: "invalid_float"},
 		{reason: ErrorReasonInvalidDecimal, want: "invalid_decimal"},
 		{reason: ErrorReasonInvalidDate, want: "invalid_date"},

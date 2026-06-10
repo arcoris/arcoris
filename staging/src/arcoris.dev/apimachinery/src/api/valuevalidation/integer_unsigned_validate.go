@@ -32,7 +32,7 @@ func (v *validator) validateUnsignedInteger(
 		return
 	}
 
-	integer, _ := val.Integer()
+	integer, _ := val.AsInteger()
 	got, ok := integer.Uint64()
 	if !ok {
 		v.add(

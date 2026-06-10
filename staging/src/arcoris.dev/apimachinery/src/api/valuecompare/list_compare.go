@@ -50,8 +50,8 @@ func (c *comparer) compareList(
 		return Result{}, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "list element descriptor is invalid")
 	}
 
-	oldList, _ := oldValue.List()
-	newList, _ := newValue.List()
+	oldList, _ := oldValue.AsList()
+	newList, _ := newValue.AsList()
 
 	switch listView.Semantics() {
 	case types.ListAtomic,
@@ -153,8 +153,8 @@ func (c *comparer) equalList(
 		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not a list")
 	}
 
-	oldList, _ := oldValue.List()
-	newList, _ := newValue.List()
+	oldList, _ := oldValue.AsList()
+	newList, _ := newValue.AsList()
 	element := listView.Element()
 
 	switch listView.Semantics() {

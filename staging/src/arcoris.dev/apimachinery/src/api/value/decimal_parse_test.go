@@ -16,7 +16,7 @@ package value
 
 import "testing"
 
-func TestNewDecimalCanonicalizesValidInput(t *testing.T) {
+func TestParseDecimalCanonicalizesValidInput(t *testing.T) {
 	tests := []struct {
 		input string
 		text  string
@@ -35,15 +35,15 @@ func TestNewDecimalCanonicalizesValidInput(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			decimal, err := NewDecimal(tt.input)
+			decimal, err := ParseDecimal(tt.input)
 			requireNoError(t, err)
 			requireEqual(t, decimal.String(), tt.text)
 		})
 	}
 }
 
-func TestMustDecimalPanicsOnMalformedInput(t *testing.T) {
+func TestMustParseDecimalPanicsOnMalformedInput(t *testing.T) {
 	requirePanic(t, func() {
-		MustDecimal("1e3")
+		MustParseDecimal("1e3")
 	})
 }

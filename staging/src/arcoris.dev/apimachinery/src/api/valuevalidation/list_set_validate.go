@@ -136,7 +136,7 @@ func (v *validator) validateListSetDuplicates(
 func listSetElementKeyForValue(item value.Value, descriptor types.Descriptor) (listSetElementKey, bool) {
 	switch descriptor.Code() {
 	case types.DescriptorBool:
-		payload, ok := item.Bool()
+		payload, ok := item.AsBool()
 		if !ok {
 			return listSetElementKey{}, false
 		}
@@ -145,7 +145,7 @@ func listSetElementKeyForValue(item value.Value, descriptor types.Descriptor) (l
 		}
 		return listSetElementKey{kind: value.KindBool, text: "false"}, true
 	case types.DescriptorString:
-		payload, ok := item.String()
+		payload, ok := item.AsString()
 		if !ok {
 			return listSetElementKey{}, false
 		}
@@ -158,7 +158,7 @@ func listSetElementKeyForValue(item value.Value, descriptor types.Descriptor) (l
 		types.DescriptorUint16,
 		types.DescriptorUint32,
 		types.DescriptorUint64:
-		payload, ok := item.Integer()
+		payload, ok := item.AsInteger()
 		if !ok {
 			return listSetElementKey{}, false
 		}

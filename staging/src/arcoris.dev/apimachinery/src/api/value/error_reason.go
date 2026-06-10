@@ -21,12 +21,12 @@ type ErrorReason string
 const (
 	// ErrorReasonInvalidValue identifies an invalid nested Value input.
 	ErrorReasonInvalidValue ErrorReason = "invalid_value"
-	// ErrorReasonInvalidMember identifies a malformed object member input.
-	ErrorReasonInvalidMember ErrorReason = "invalid_member"
-	// ErrorReasonDuplicateName identifies a repeated object member name.
-	ErrorReasonDuplicateName ErrorReason = "duplicate_name"
-	// ErrorReasonEmptyName identifies an empty object member name.
-	ErrorReasonEmptyName ErrorReason = "empty_name"
+	// ErrorReasonInvalidRecordMember identifies a malformed record member input.
+	ErrorReasonInvalidRecordMember ErrorReason = "invalid_record_member"
+	// ErrorReasonDuplicateMemberName identifies a repeated record member name.
+	ErrorReasonDuplicateMemberName ErrorReason = "duplicate_member_name"
+	// ErrorReasonEmptyMemberName identifies an empty record member name.
+	ErrorReasonEmptyMemberName ErrorReason = "empty_member_name"
 	// ErrorReasonInvalidFloat identifies a non-finite float input.
 	ErrorReasonInvalidFloat ErrorReason = "invalid_float"
 	// ErrorReasonInvalidDecimal identifies malformed decimal text.

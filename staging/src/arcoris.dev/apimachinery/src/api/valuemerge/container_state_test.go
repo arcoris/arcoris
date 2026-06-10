@@ -26,7 +26,7 @@ func TestPreserveWithoutOverlayContainerPreservesBaseNull(t *testing.T) {
 		root().Field("spec"),
 		valuepresence.Present(value.NullValue()),
 		valuepresence.Absent(),
-		value.KindObject,
+		value.KindRecord,
 	)
 	if err != nil {
 		t.Fatalf("preserveWithoutOverlayContainer returned error: %v", err)
@@ -45,7 +45,7 @@ func TestPreserveWithoutOverlayContainerReturnsAbsentForAbsentBase(t *testing.T)
 		root().Field("spec"),
 		valuepresence.Absent(),
 		valuepresence.Absent(),
-		value.KindObject,
+		value.KindRecord,
 	)
 	if err != nil {
 		t.Fatalf("preserveWithoutOverlayContainer returned error: %v", err)
@@ -64,7 +64,7 @@ func TestPreserveWithoutOverlayContainerContinuesWhenOverlayHasContainer(t *test
 		root().Field("spec"),
 		valuepresence.Absent(),
 		valuepresence.Present(obj()),
-		value.KindObject,
+		value.KindRecord,
 	)
 	if err != nil {
 		t.Fatalf("preserveWithoutOverlayContainer returned error: %v", err)
@@ -80,7 +80,7 @@ func TestPreserveWithoutOverlayContainerRejectsWrongKindBase(t *testing.T) {
 		root().Field("spec"),
 		valuepresence.Present(str("invalid")),
 		valuepresence.Absent(),
-		value.KindObject,
+		value.KindRecord,
 	)
 
 	requireErrorIs(t, err, ErrKindMismatch)

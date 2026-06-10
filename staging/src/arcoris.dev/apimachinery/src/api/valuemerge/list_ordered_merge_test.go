@@ -174,7 +174,7 @@ func TestMergeOrderedListNestedObjectItemField(t *testing.T) {
 		t.Fatalf("Merge returned error: %v", err)
 	}
 
-	view, _ := got.List()
+	view, _ := got.AsList()
 	item, _ := view.At(0)
 	requireStringMember(t, item, "name", "api")
 	requireStringMember(t, item, "image", "api:v2")

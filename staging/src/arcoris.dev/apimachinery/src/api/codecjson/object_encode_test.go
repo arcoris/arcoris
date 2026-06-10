@@ -23,8 +23,8 @@ import (
 )
 
 func TestEncodeObjectEnvelope(t *testing.T) {
-	desired := value.MustObjectValue(value.ObjectMember("replicas", value.Int64Value(3)))
-	observed := value.MustObjectValue(value.ObjectMember("ready", value.BoolValue(true)))
+	desired := value.MustRecordValue(value.MustRecordMember("replicas", value.Int64Value(3)))
+	observed := value.MustRecordValue(value.MustRecordMember("ready", value.BoolValue(true)))
 	obj := codec.Object{
 		TypeMeta:   testTypeMeta(t),
 		ObjectMeta: testObjectMeta(),
@@ -81,9 +81,9 @@ func TestEncodeObjectDeterministicDesired(t *testing.T) {
 	c := newTestCodecWith(t, func(config *jsonconfig.Config) {
 		config.Encode.Ordering.Mode = jsonconfig.OrderingDeterministic
 	})
-	obj := codec.Object{Desired: value.MustObjectValue(
-		value.ObjectMember("b", value.Int64Value(1)),
-		value.ObjectMember("a", value.Int64Value(2)),
+	obj := codec.Object{Desired: value.MustRecordValue(
+		value.MustRecordMember("b", value.Int64Value(1)),
+		value.MustRecordMember("a", value.Int64Value(2)),
 	)}
 
 	data, err := c.EncodeObject(obj)

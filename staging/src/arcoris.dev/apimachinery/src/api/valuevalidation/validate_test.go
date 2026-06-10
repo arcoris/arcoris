@@ -87,7 +87,7 @@ func TestValidateRejectsInvalidZeroDescriptorDefensively(t *testing.T) {
 
 func TestValidateRejectsMapWithInvalidValueDescriptorDefensively(t *testing.T) {
 	err := valuevalidation.Validate(
-		mustObject(t, value.ObjectMember("name", value.StringValue("main"))),
+		mustObject(t, value.MustRecordMember("name", value.StringValue("main"))),
 		types.MapOf(nil).Descriptor(),
 		valuevalidation.Options{},
 	)
@@ -207,8 +207,8 @@ func TestValidateHonorsMaxErrorsWithListMapFallback(t *testing.T) {
 	).Map("type").Descriptor()
 	payload := mustList(
 		t,
-		mustObject(t, value.ObjectMember("status", value.StringValue(""))),
-		mustObject(t, value.ObjectMember("status", value.StringValue(""))),
+		mustObject(t, value.MustRecordMember("status", value.StringValue(""))),
+		mustObject(t, value.MustRecordMember("status", value.StringValue(""))),
 	)
 
 	err := valuevalidation.Validate(
@@ -227,12 +227,12 @@ func TestValidateHonorsMaxErrorsWithObjectAndMapErrors(t *testing.T) {
 	).Descriptor()
 	payload := mustObject(
 		t,
-		value.ObjectMember(
+		value.MustRecordMember(
 			"labels",
 			mustObject(
 				t,
-				value.ObjectMember("app", value.StringValue("")),
-				value.ObjectMember("tier", value.StringValue("")),
+				value.MustRecordMember("app", value.StringValue("")),
+				value.MustRecordMember("tier", value.StringValue("")),
 			),
 		),
 	)

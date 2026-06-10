@@ -14,11 +14,11 @@
 
 package value
 
-// Date returns the date payload when v is KindDate.
+// AsDate returns the date payload when v is KindDate.
 //
-// For every other kind, Date returns the zero Date and ok=false. The zero Date
+// For every other kind, AsDate returns the zero Date and ok=false. The zero Date
 // is not a constructed date value, so callers must check ok before using it.
-func (v Value) Date() (Date, bool) {
+func (v Value) AsDate() (Date, bool) {
 	if v.kind != KindDate {
 		return Date{}, false
 	}

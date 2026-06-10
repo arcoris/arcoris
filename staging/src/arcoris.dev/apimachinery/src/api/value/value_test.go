@@ -32,37 +32,37 @@ func TestValueCoreState(t *testing.T) {
 func TestWrongKindAccessorsReturnFalse(t *testing.T) {
 	value := StringValue("worker")
 
-	if _, ok := value.Bool(); ok {
+	if _, ok := value.AsBool(); ok {
 		t.Fatal("BoolValue() ok = true for string value")
 	}
-	if _, ok := value.Bytes(); ok {
+	if _, ok := value.AsBytes(); ok {
 		t.Fatal("BytesValue() ok = true for string value")
 	}
-	if _, ok := value.Integer(); ok {
+	if _, ok := value.AsInteger(); ok {
 		t.Fatal("Integer() ok = true for string value")
 	}
-	if _, ok := value.Float(); ok {
+	if _, ok := value.AsFloat(); ok {
 		t.Fatal("Float() ok = true for string value")
 	}
-	if _, ok := value.Decimal(); ok {
+	if _, ok := value.AsDecimal(); ok {
 		t.Fatal("Decimal() ok = true for string value")
 	}
-	if _, ok := value.Timestamp(); ok {
+	if _, ok := value.AsTimestamp(); ok {
 		t.Fatal("TimestampValue() ok = true for string value")
 	}
-	if _, ok := value.Date(); ok {
+	if _, ok := value.AsDate(); ok {
 		t.Fatal("Date() ok = true for string value")
 	}
-	if _, ok := value.TimeOfDay(); ok {
+	if _, ok := value.AsTimeOfDay(); ok {
 		t.Fatal("TimeOfDay() ok = true for string value")
 	}
-	if _, ok := value.Duration(); ok {
+	if _, ok := value.AsDuration(); ok {
 		t.Fatal("DurationValue() ok = true for string value")
 	}
-	if _, ok := value.Object(); ok {
-		t.Fatal("Object() ok = true for string value")
+	if _, ok := value.AsRecord(); ok {
+		t.Fatal("AsRecord() ok = true for string value")
 	}
-	if _, ok := value.List(); ok {
-		t.Fatal("List() ok = true for string value")
+	if _, ok := value.AsList(); ok {
+		t.Fatal("AsList() ok = true for string value")
 	}
 }

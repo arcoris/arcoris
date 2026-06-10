@@ -31,9 +31,9 @@ func conditionDescriptor() types.Descriptor {
 }
 
 func readyConditionValue(status string) value.Value {
-	return value.MustObjectValue(
-		value.ObjectMember("type", value.StringValue("Ready")),
-		value.ObjectMember("status", value.StringValue(status)),
+	return value.MustRecordValue(
+		value.MustRecordMember("type", value.StringValue("Ready")),
+		value.MustRecordMember("status", value.StringValue(status)),
 	)
 }
 
@@ -82,8 +82,8 @@ func TestExtractListMapDuplicateSelectorReturnsError(t *testing.T) {
 func TestExtractListMapMissingKeyReturnsError(t *testing.T) {
 	path := rootField("conditions")
 	val := value.MustListValue(
-		value.MustObjectValue(
-			value.ObjectMember("status", value.StringValue("True")),
+		value.MustRecordValue(
+			value.MustRecordMember("status", value.StringValue("True")),
 		),
 	)
 
@@ -97,9 +97,9 @@ func TestExtractListMapMissingKeyReturnsError(t *testing.T) {
 func TestExtractListMapNullKeyReturnsError(t *testing.T) {
 	path := rootField("conditions")
 	val := value.MustListValue(
-		value.MustObjectValue(
-			value.ObjectMember("type", value.NullValue()),
-			value.ObjectMember("status", value.StringValue("True")),
+		value.MustRecordValue(
+			value.MustRecordMember("type", value.NullValue()),
+			value.MustRecordMember("status", value.StringValue("True")),
 		),
 	)
 
@@ -113,9 +113,9 @@ func TestExtractListMapNullKeyReturnsError(t *testing.T) {
 func TestExtractListMapWrongKeyKindReturnsError(t *testing.T) {
 	path := rootField("conditions")
 	val := value.MustListValue(
-		value.MustObjectValue(
-			value.ObjectMember("type", value.BoolValue(true)),
-			value.ObjectMember("status", value.StringValue("True")),
+		value.MustRecordValue(
+			value.MustRecordMember("type", value.BoolValue(true)),
+			value.MustRecordMember("status", value.StringValue("True")),
 		),
 	)
 
@@ -240,10 +240,10 @@ func TestExtractListMapMultiKeySelector(t *testing.T) {
 	)
 	descriptor := types.ListOf(route).Map("host", "port").Descriptor()
 	val := value.MustListValue(
-		value.MustObjectValue(
-			value.ObjectMember("host", value.StringValue("api.example.com")),
-			value.ObjectMember("port", value.Uint64Value(443)),
-			value.ObjectMember("backend", value.StringValue("svc")),
+		value.MustRecordValue(
+			value.MustRecordMember("host", value.StringValue("api.example.com")),
+			value.MustRecordMember("port", value.Uint64Value(443)),
+			value.MustRecordMember("backend", value.StringValue("svc")),
 		),
 	)
 	selectorPath := path.Select(routeSelector())
@@ -270,12 +270,12 @@ func TestExtractListMapNestedObjectPaths(t *testing.T) {
 	)
 	descriptor := types.ListOf(condition).Map("type").Descriptor()
 	val := value.MustListValue(
-		value.MustObjectValue(
-			value.ObjectMember("type", value.StringValue("Ready")),
-			value.ObjectMember(
+		value.MustRecordValue(
+			value.MustRecordMember("type", value.StringValue("Ready")),
+			value.MustRecordMember(
 				"detail",
-				value.MustObjectValue(
-					value.ObjectMember("message", value.StringValue("ok")),
+				value.MustRecordValue(
+					value.MustRecordMember("message", value.StringValue("ok")),
 				),
 			),
 		),

@@ -18,29 +18,29 @@ import "testing"
 
 func TestCloneDeepCopiesBytes(t *testing.T) {
 	clone := BytesValue([]byte{1, 2, 3}).Clone()
-	bytes, ok := clone.Bytes()
+	bytes, ok := clone.AsBytes()
 	requireEqual(t, ok, true)
 
 	bytes[0] = 9
-	again, ok := clone.Bytes()
+	again, ok := clone.AsBytes()
 	requireEqual(t, ok, true)
 	requireBytesEqual(t, again, []byte{1, 2, 3})
 }
 
-func TestCloneDeepCopiesObjectMembers(t *testing.T) {
-	original := mustObject(t, ObjectMember("payload", BytesValue([]byte{1, 2})))
+func TestCloneDeepCopiesRecordMembers(t *testing.T) {
+	original := mustRecord(t, MustRecordMember("payload", BytesValue([]byte{1, 2})))
 	clone := original.Clone()
 
-	members := clone.objectValue.members
+	members := clone.recordValue.members
 	members[0].Value.bytesValue[0] = 9
 
-	view, ok := original.Object()
+	view, ok := original.AsRecord()
 	requireEqual(t, ok, true)
 
 	value, ok := view.Get("payload")
 	requireEqual(t, ok, true)
 
-	bytes, ok := value.Bytes()
+	bytes, ok := value.AsBytes()
 	requireEqual(t, ok, true)
 	requireBytesEqual(t, bytes, []byte{1, 2})
 }
@@ -51,13 +51,13 @@ func TestCloneDeepCopiesListItems(t *testing.T) {
 
 	clone.listValue.items[0].bytesValue[0] = 9
 
-	view, ok := original.List()
+	view, ok := original.AsList()
 	requireEqual(t, ok, true)
 
 	value, ok := view.At(0)
 	requireEqual(t, ok, true)
 
-	bytes, ok := value.Bytes()
+	bytes, ok := value.AsBytes()
 	requireEqual(t, ok, true)
 	requireBytesEqual(t, bytes, []byte{1, 2})
 }

@@ -148,7 +148,7 @@ func requireStateAliasesIntact(t *testing.T, state objectstore.State, text strin
 	}
 	requireDesiredString(t, state, text)
 
-	observed, ok := state.Object.Observed.String()
+	observed, ok := state.Object.Observed.AsString()
 	if !ok || observed != "observed-"+text {
 		t.Fatalf("observed = %q, %v; want observed-%s, true", observed, ok, text)
 	}

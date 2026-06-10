@@ -14,11 +14,11 @@
 
 package value
 
-// Decimal returns the decimal payload when v is KindDecimal.
+// AsDecimal returns the decimal payload when v is KindDecimal.
 //
-// For every other kind, Decimal returns the zero Decimal and ok=false. The zero
+// For every other kind, AsDecimal returns the zero Decimal and ok=false. The zero
 // Decimal is a valid payload value, so callers must check ok.
-func (v Value) Decimal() (Decimal, bool) {
+func (v Value) AsDecimal() (Decimal, bool) {
 	if v.kind != KindDecimal {
 		return Decimal{}, false
 	}

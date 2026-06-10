@@ -64,7 +64,7 @@ func (m *merger) requireReplacementKind(
 
 		return m.requireReplacementKind(path, overlay, resolved, depth+1)
 	case types.DescriptorObject, types.DescriptorMap:
-		return requireKind(path, overlay, value.KindObject)
+		return requireKind(path, overlay, value.KindRecord)
 	case types.DescriptorList:
 		return requireKind(path, overlay, value.KindList)
 	default:

@@ -16,7 +16,7 @@ package value
 
 import "testing"
 
-func TestNewDecimalRejectsMalformedInput(t *testing.T) {
+func TestParseDecimalRejectsMalformedInput(t *testing.T) {
 	tests := []string{
 		"",
 		"+",
@@ -39,14 +39,14 @@ func TestNewDecimalRejectsMalformedInput(t *testing.T) {
 
 	for _, input := range tests {
 		t.Run(input, func(t *testing.T) {
-			_, err := NewDecimal(input)
+			_, err := ParseDecimal(input)
 			requireValueError(t, err, ErrInvalidDecimal, pathDecimal, ErrorReasonInvalidDecimal)
 			requireErrorIs(t, err, ErrInvalidValue)
 		})
 	}
 }
 
-func TestNewDecimalRejectsTrailingDecimalPoint(t *testing.T) {
+func TestParseDecimalRejectsTrailingDecimalPoint(t *testing.T) {
 	tests := []string{
 		"1.",
 		"0.",
@@ -57,7 +57,7 @@ func TestNewDecimalRejectsTrailingDecimalPoint(t *testing.T) {
 
 	for _, input := range tests {
 		t.Run(input, func(t *testing.T) {
-			_, err := NewDecimal(input)
+			_, err := ParseDecimal(input)
 
 			requireValueError(
 				t,

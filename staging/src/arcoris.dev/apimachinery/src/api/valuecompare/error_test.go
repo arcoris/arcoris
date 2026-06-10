@@ -112,7 +112,7 @@ func TestErrorReasonInvalidPath(t *testing.T) {
 }
 func TestAddedSubtreeErrorUsesValueCompareErrorModel(t *testing.T) {
 	descriptor := types.Object(types.Field("name").String().Optional()).Descriptor()
-	newValue := value.MustObjectValue(value.ObjectMember("name", value.BoolValue(true)))
+	newValue := value.MustRecordValue(value.MustRecordMember("name", value.BoolValue(true)))
 
 	_, err := Compare(valueObject(), newValue, descriptor, Options{})
 
@@ -123,7 +123,7 @@ func TestAddedSubtreeErrorUsesValueCompareErrorModel(t *testing.T) {
 
 func TestCompareAddedSubtreeWrapsValueFieldSetUnknownField(t *testing.T) {
 	descriptor := types.Object(types.Field("child").Object().Optional()).Descriptor()
-	newValue := value.MustObjectValue(value.ObjectMember("child", valueObject("extra", "new")))
+	newValue := value.MustRecordValue(value.MustRecordMember("child", valueObject("extra", "new")))
 
 	_, err := Compare(valueObject(), newValue, descriptor, Options{})
 
@@ -134,7 +134,7 @@ func TestCompareAddedSubtreeWrapsValueFieldSetUnknownField(t *testing.T) {
 
 func TestCompareRemovedSubtreeWrapsValueFieldSetUnknownField(t *testing.T) {
 	descriptor := types.Object(types.Field("child").Object().Optional()).Descriptor()
-	oldValue := value.MustObjectValue(value.ObjectMember("child", valueObject("extra", "old")))
+	oldValue := value.MustRecordValue(value.MustRecordMember("child", valueObject("extra", "old")))
 
 	_, err := Compare(oldValue, valueObject(), descriptor, Options{})
 
@@ -147,7 +147,7 @@ func TestCompareAddedSubtreeWrapsInvalidListKey(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("conditions").ListOf(conditionExpr()).Map("type").Optional(),
 	).Descriptor()
-	newValue := value.MustObjectValue(value.ObjectMember(
+	newValue := value.MustRecordValue(value.MustRecordMember(
 		"conditions",
 		value.MustListValue(valueObject("status", "True")),
 	))
@@ -163,7 +163,7 @@ func TestCompareRemovedSubtreeWrapsInvalidListKey(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("conditions").ListOf(conditionExpr()).Map("type").Optional(),
 	).Descriptor()
-	oldValue := value.MustObjectValue(value.ObjectMember(
+	oldValue := value.MustRecordValue(value.MustRecordMember(
 		"conditions",
 		value.MustListValue(valueObject("status", "True")),
 	))
@@ -177,7 +177,7 @@ func TestCompareRemovedSubtreeWrapsInvalidListKey(t *testing.T) {
 
 func TestCompareAddedSubtreeWrapsUnresolvedRef(t *testing.T) {
 	descriptor := types.Object(types.Field("name").Ref("example.Name").Optional()).Descriptor()
-	newValue := value.MustObjectValue(value.ObjectMember("name", value.StringValue("api")))
+	newValue := value.MustRecordValue(value.MustRecordMember("name", value.StringValue("api")))
 
 	_, err := Compare(valueObject(), newValue, descriptor, Options{})
 
@@ -192,7 +192,7 @@ func TestCompareRemovedSubtreeWrapsReferenceCycle(t *testing.T) {
 		"example.B": types.Define("example.B", types.Ref("example.A")),
 	}
 	descriptor := types.Object(types.Field("name").Ref("example.A").Optional()).Descriptor()
-	oldValue := value.MustObjectValue(value.ObjectMember("name", value.StringValue("api")))
+	oldValue := value.MustRecordValue(value.MustRecordMember("name", value.StringValue("api")))
 
 	_, err := Compare(oldValue, valueObject(), descriptor, Options{Resolver: resolver})
 

@@ -16,11 +16,11 @@ package value
 
 import "time"
 
-// Timestamp returns the timestamp payload when v is KindTimestamp.
+// AsTimestamp returns the timestamp payload when v is KindTimestamp.
 //
-// For every other kind, Timestamp returns the zero time and ok=false. Timestamp
+// For every other kind, AsTimestamp returns the zero time and ok=false. Timestamp
 // values returned by constructors have already had monotonic clock data stripped.
-func (v Value) Timestamp() (time.Time, bool) {
+func (v Value) AsTimestamp() (time.Time, bool) {
 	if v.kind != KindTimestamp {
 		return time.Time{}, false
 	}

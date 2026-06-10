@@ -97,7 +97,7 @@ func TestObjectValidationUsesValueSurfaceValidator(t *testing.T) {
 		resource.ScopeNamespaced,
 		resource.NewVersion(apiidentity.Version("v1"), desired),
 	)
-	payload := mustObject(t, value.ObjectMember("replicas", value.StringValue("three")))
+	payload := mustObject(t, value.MustRecordMember("replicas", value.StringValue("three")))
 	obj := object.New[value.Value, value.Value](
 		meta.FromGroupVersionKind(apiidentity.GroupVersionKind{
 			Group:   "control.arcoris.dev",

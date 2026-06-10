@@ -20,14 +20,14 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// validateMap interprets value.KindObject as a dynamic string-keyed map descriptor.
+// validateMap interprets value.KindRecord as a dynamic string-keyed map descriptor.
 func (v *validator) validateMap(
 	path fieldpath.Path,
 	val value.Value,
 	descriptor types.Descriptor,
 	depth int,
 ) {
-	if !v.requireKind(path, val, value.KindObject, descriptor.Code()) {
+	if !v.requireKind(path, val, value.KindRecord, descriptor.Code()) {
 		return
 	}
 
@@ -49,7 +49,7 @@ func (v *validator) validateMap(
 		return
 	}
 
-	valueView, _ := val.Object()
+	valueView, _ := val.AsRecord()
 	length := valueView.Len()
 	if minEntries, ok := mapView.MinEntries(); ok && length < minEntries {
 		v.addf(
@@ -73,8 +73,9 @@ func (v *validator) validateMap(
 	}
 
 	for _, mapMember := range valueView.Members() {
-		memberPath := path.Key(mapMember.Name)
-		v.validate(memberPath, value.StringValue(mapMember.Name), keyDescriptor, depth+1)
+		name := mapMember.Name.String()
+		memberPath := path.Key(name)
+		v.validate(memberPath, value.StringValue(name), keyDescriptor, depth+1)
 		v.validate(memberPath, mapMember.Value, valueDescriptor, depth+1)
 	}
 }

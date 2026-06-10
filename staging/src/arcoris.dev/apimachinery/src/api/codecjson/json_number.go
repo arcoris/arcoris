@@ -45,7 +45,7 @@ func parseJSONNumber(path jsonPath, text string, config resolvedDecodeConfig) (v
 	if err != nil {
 		return value.Value{}, wrapAt(path, ErrInvalidNumber, codec.ErrInvalidNumber, ErrorReasonInvalidNumber, "invalid JSON decimal", err)
 	}
-	decimal, err := value.NewDecimal(plain)
+	decimal, err := value.ParseDecimal(plain)
 	if err != nil {
 		return value.Value{}, wrapAt(path, ErrInvalidNumber, codec.ErrInvalidNumber, ErrorReasonInvalidNumber, "invalid JSON decimal", err)
 	}

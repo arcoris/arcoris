@@ -114,7 +114,7 @@ func requireStringValue(t *testing.T, got value.Value, want string) {
 	t.Helper()
 
 	requireKind(t, got, value.KindString)
-	text, ok := got.String()
+	text, ok := got.AsString()
 	if !ok || text != want {
 		t.Fatalf("string = %q ok=%v; want %q", text, ok, want)
 	}
@@ -126,7 +126,7 @@ func requireIntegerText(t *testing.T, got value.Value, want string) {
 	t.Helper()
 
 	requireKind(t, got, value.KindInteger)
-	integer, ok := got.Integer()
+	integer, ok := got.AsInteger()
 	if !ok || integer.String() != want {
 		t.Fatalf("integer = %q ok=%v; want %q", integer.String(), ok, want)
 	}
@@ -137,7 +137,7 @@ func requireDecimalText(t *testing.T, got value.Value, want string) {
 	t.Helper()
 
 	requireKind(t, got, value.KindDecimal)
-	decimal, ok := got.Decimal()
+	decimal, ok := got.AsDecimal()
 	if !ok || decimal.String() != want {
 		t.Fatalf("decimal = %q ok=%v; want %q", decimal.String(), ok, want)
 	}
@@ -150,12 +150,16 @@ func requireDecimalText(t *testing.T, got value.Value, want string) {
 func requireObjectMemberNames(t *testing.T, got value.Value, want ...string) {
 	t.Helper()
 
-	requireKind(t, got, value.KindObject)
-	object, ok := got.Object()
+	requireKind(t, got, value.KindRecord)
+	object, ok := got.AsRecord()
 	if !ok {
 		t.Fatalf("object view unavailable")
 	}
-	if names := object.Names(); !reflect.DeepEqual(names, want) {
+	wantNames := make([]value.MemberName, 0, len(want))
+	for _, name := range want {
+		wantNames = append(wantNames, value.MemberName(name))
+	}
+	if names := object.Names(); !reflect.DeepEqual(names, wantNames) {
 		t.Fatalf("object names = %#v; want %#v", names, want)
 	}
 }
@@ -164,7 +168,7 @@ func requireObjectMemberNames(t *testing.T, got value.Value, want ...string) {
 func mustDecimalValue(t *testing.T, text string) value.Value {
 	t.Helper()
 
-	decimal, err := value.NewDecimal(text)
+	decimal, err := value.ParseDecimal(text)
 	requireNoError(t, err)
 
 	return value.DecimalValue(decimal)

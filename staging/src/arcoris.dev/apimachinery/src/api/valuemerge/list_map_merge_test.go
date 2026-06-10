@@ -140,7 +140,7 @@ func requireConditionStatus(t *testing.T, listValue value.Value, conditionType s
 func requireConditionOrder(t *testing.T, listValue value.Value, want ...string) {
 	t.Helper()
 
-	view, ok := listValue.List()
+	view, ok := listValue.AsList()
 	if !ok {
 		t.Fatalf("value kind = %s; want list", listValue.Kind())
 	}
@@ -157,14 +157,14 @@ func requireConditionOrder(t *testing.T, listValue value.Value, want ...string) 
 func requireCondition(t *testing.T, listValue value.Value, conditionType string) value.Value {
 	t.Helper()
 
-	view, ok := listValue.List()
+	view, ok := listValue.AsList()
 	if !ok {
 		t.Fatalf("value kind = %s; want list", listValue.Kind())
 	}
 
 	for i := 0; i < view.Len(); i++ {
 		item, _ := view.At(i)
-		got, ok := requireMember(t, item, "type").String()
+		got, ok := requireMember(t, item, "type").AsString()
 		if ok && got == conditionType {
 			return item
 		}

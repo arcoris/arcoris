@@ -46,14 +46,14 @@ func intValue(v int64) value.Value {
 	return value.IntegerValue(value.NewIntegerFromInt64(v))
 }
 
-func obj(members ...value.Member) value.Value {
-	return value.MustObjectValue(members...)
+func obj(members ...value.RecordMember) value.Value {
+	return value.MustRecordValue(members...)
 }
 
 func list(items ...value.Value) value.Value {
 	return value.MustListValue(items...)
 }
 
-func member(name string, v value.Value) value.Member {
-	return value.ObjectMember(name, v)
+func member(name string, v value.Value) value.RecordMember {
+	return value.MustRecordMember(name, v)
 }

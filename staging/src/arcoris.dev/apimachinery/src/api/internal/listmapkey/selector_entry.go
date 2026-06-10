@@ -24,7 +24,7 @@ import (
 
 // selectorEntry extracts one declared ListMap key field into a selector entry.
 func (r selectorRequest) selectorEntry(
-	itemObjectView value.ObjectView,
+	itemRecordView value.RecordView,
 	elementObjectDescriptor types.ObjectView,
 	key types.FieldName,
 ) (fieldpath.SelectorEntry, error) {
@@ -43,7 +43,7 @@ func (r selectorRequest) selectorEntry(
 		)
 	}
 
-	keyMemberValue, ok := itemObjectView.Get(keyName)
+	keyMemberValue, ok := itemRecordView.Get(value.MemberName(keyName))
 	if !ok {
 		return fieldpath.SelectorEntry{}, failure(
 			keyPath,

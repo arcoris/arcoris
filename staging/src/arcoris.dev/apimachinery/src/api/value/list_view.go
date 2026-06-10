@@ -16,19 +16,19 @@ package value
 
 // ListView exposes read-only list payload data.
 //
-// A view references private immutable-by-convention payload data. Methods that
-// return items clone those results, so callers cannot mutate the source Value or
-// the view through returned data.
+// A view references private payload data owned by an immutable Value. Read
+// methods return nested Values by value; explicit Clone methods deep-copy nested
+// payloads when a caller needs a detached ownership boundary.
 type ListView struct {
 	// payload is the private list payload the view reads from.
 	payload listPayload
 }
 
-// List returns a read-only list view when v is KindList.
+// AsList returns a read-only list view when v is KindList.
 //
-// For every other kind, List returns ok=false. The returned view preserves item
+// For every other kind, AsList returns ok=false. The returned view preserves item
 // order without eagerly deep-cloning the whole list payload.
-func (v Value) List() (ListView, bool) {
+func (v Value) AsList() (ListView, bool) {
 	if v.kind != KindList {
 		return ListView{}, false
 	}
@@ -46,26 +46,55 @@ func (l ListView) IsEmpty() bool {
 	return len(l.payload.items) == 0
 }
 
-// At returns a cloned item at index.
+// At returns an item at index without deep-cloning it.
 //
-// Out-of-range indexes return the zero Value and ok=false. Returned items are
-// detached clones.
+// Out-of-range indexes return the zero Value and ok=false.
 func (l ListView) At(index int) (Value, bool) {
 	if index < 0 || index >= len(l.payload.items) {
 		return Value{}, false
 	}
 
-	return l.payload.items[index].Clone(), true
+	return l.payload.items[index], true
 }
 
-// Items returns detached list items in original order.
+// CloneAt returns a deep-cloned item at index.
+func (l ListView) CloneAt(index int) (Value, bool) {
+	item, ok := l.At(index)
+	if !ok {
+		return Value{}, false
+	}
+
+	return item.Clone(), true
+}
+
+// Items returns a detached item slice in original order.
 //
-// The slice and every nested Value are cloned, preserving immutable-by-
-// convention behavior for list views.
+// The slice is caller-owned. Nested Values are returned by value without deep
+// cloning; use CloneItems when a recursive copy is required.
 func (l ListView) Items() []Value {
 	if len(l.payload.items) == 0 {
 		return []Value{}
 	}
 
+	items := make([]Value, len(l.payload.items))
+	copy(items, l.payload.items)
+	return items
+}
+
+// CloneItems returns detached list items with deep-cloned nested Values.
+func (l ListView) CloneItems() []Value {
+	if len(l.payload.items) == 0 {
+		return []Value{}
+	}
+
 	return cloneValues(l.payload.items)
+}
+
+// ForEach visits items in original order until fn returns false.
+func (l ListView) ForEach(fn func(index int, value Value) bool) {
+	for i, item := range l.payload.items {
+		if !fn(i, item) {
+			return
+		}
+	}
 }

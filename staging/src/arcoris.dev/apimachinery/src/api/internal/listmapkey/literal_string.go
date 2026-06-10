@@ -25,7 +25,7 @@ func stringLiteral(path fieldpath.Path, keyValue value.Value) (fieldpath.Literal
 		return fieldpath.Literal{}, keyKindMismatch(path, keyValue.Kind(), value.KindString)
 	}
 
-	stringPayload, _ := keyValue.String()
+	stringPayload, _ := keyValue.AsString()
 
 	return fieldpath.StringLiteral(stringPayload), nil
 }

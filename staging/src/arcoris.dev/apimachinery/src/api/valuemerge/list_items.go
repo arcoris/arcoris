@@ -25,7 +25,7 @@ func listItems(o operand) []value.Value {
 		return nil
 	}
 
-	view, _ := o.Value().List()
+	view, _ := o.Value().AsList()
 	return view.Items()
 }
 

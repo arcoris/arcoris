@@ -39,12 +39,29 @@ type Integer struct {
 	magnitude uint64
 }
 
+// IsZero reports whether i represents integer zero.
+func (i Integer) IsZero() bool {
+	return i.magnitude == 0
+}
+
 // IsNegative reports whether i is strictly less than zero.
 //
 // A malformed private value with negative=true and magnitude=0 is treated as
 // zero so externally observed behavior remains canonical.
 func (i Integer) IsNegative() bool {
 	return i.negative && i.magnitude != 0
+}
+
+// Sign returns -1 for negative, 0 for zero, and 1 for positive integers.
+func (i Integer) Sign() int {
+	switch {
+	case i.IsNegative():
+		return -1
+	case i.IsZero():
+		return 0
+	default:
+		return 1
+	}
 }
 
 // Magnitude returns the absolute value of i.

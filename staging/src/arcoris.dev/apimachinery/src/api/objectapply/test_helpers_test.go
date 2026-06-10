@@ -80,8 +80,8 @@ func str(text string) value.Value {
 }
 
 // obj builds an object value fixture.
-func obj(members ...value.Member) value.Value {
-	return value.MustObjectValue(members...)
+func obj(members ...value.RecordMember) value.Value {
+	return value.MustRecordValue(members...)
 }
 
 // list builds a list value fixture.
@@ -90,8 +90,8 @@ func list(items ...value.Value) value.Value {
 }
 
 // member builds one object member fixture.
-func member(name string, val value.Value) value.Member {
-	return value.ObjectMember(name, val)
+func member(name string, val value.Value) value.RecordMember {
+	return value.MustRecordMember(name, val)
 }
 
 // path parses a test path and panics on invalid literals.
@@ -269,7 +269,7 @@ func requireStringMember(t *testing.T, objectValue value.Value, name string, wan
 	t.Helper()
 
 	memberValue := requireMember(t, objectValue, name)
-	got, ok := memberValue.String()
+	got, ok := memberValue.AsString()
 	if !ok {
 		t.Fatalf("member %q kind = %s; want string", name, memberValue.Kind())
 	}
@@ -282,12 +282,12 @@ func requireStringMember(t *testing.T, objectValue value.Value, name string, wan
 func requireMember(t *testing.T, objectValue value.Value, name string) value.Value {
 	t.Helper()
 
-	view, ok := objectValue.Object()
+	view, ok := objectValue.AsRecord()
 	if !ok {
-		t.Fatalf("value kind = %s; want object", objectValue.Kind())
+		t.Fatalf("value kind = %s; want record", objectValue.Kind())
 	}
 
-	memberValue, ok := view.Get(name)
+	memberValue, ok := view.Get(value.MemberName(name))
 	if !ok {
 		t.Fatalf("member %q is absent", name)
 	}
@@ -299,11 +299,11 @@ func requireMember(t *testing.T, objectValue value.Value, name string) value.Val
 func requireNoMember(t *testing.T, objectValue value.Value, name string) {
 	t.Helper()
 
-	view, ok := objectValue.Object()
+	view, ok := objectValue.AsRecord()
 	if !ok {
-		t.Fatalf("value kind = %s; want object", objectValue.Kind())
+		t.Fatalf("value kind = %s; want record", objectValue.Kind())
 	}
-	if view.Has(name) {
+	if view.Has(value.MemberName(name)) {
 		t.Fatalf("member %q is present", name)
 	}
 }

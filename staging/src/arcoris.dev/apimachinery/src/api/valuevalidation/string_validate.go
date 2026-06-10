@@ -28,7 +28,7 @@ func (v *validator) validateString(path fieldpath.Path, val value.Value, descrip
 		return
 	}
 
-	text, _ := val.String()
+	text, _ := val.AsString()
 	stringView, ok := descriptor.AsString()
 	if !ok {
 		v.add(

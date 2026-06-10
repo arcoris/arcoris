@@ -17,12 +17,12 @@ package value
 import "testing"
 
 func TestPackageProvidesConcreteValuesWithoutDescriptors(t *testing.T) {
-	payload := mustObject(t,
-		ObjectMember("name", StringValue("worker")),
-		ObjectMember("replicas", Int64Value(3)),
+	payload := mustRecord(t,
+		MustRecordMember("name", StringValue("worker")),
+		MustRecordMember("replicas", Int64Value(3)),
 	)
 
-	view, ok := payload.Object()
+	view, ok := payload.AsRecord()
 	requireEqual(t, ok, true)
 	requireEqual(t, view.Has("name"), true)
 	requireEqual(t, view.Has("replicas"), true)

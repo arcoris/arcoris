@@ -55,8 +55,8 @@ type Value struct {
 	// durationValue stores KindDuration payload data.
 	durationValue time.Duration
 
-	// objectValue stores KindObject payload data.
-	objectValue objectPayload
+	// recordValue stores KindRecord payload data.
+	recordValue recordPayload
 	// listValue stores KindList payload data.
 	listValue listPayload
 }
@@ -88,15 +88,15 @@ func (v Value) IsNull() bool {
 
 // IsScalar reports whether v stores a non-composite payload category.
 //
-// Scalars include primitive, numeric, and temporal values. The invalid zero
+// Scalars are all value categories except records and lists. The invalid zero
 // Value is not considered scalar.
 func (v Value) IsScalar() bool {
-	return v.kind.IsPrimitive()
+	return v.kind.IsScalar()
 }
 
 // IsComposite reports whether v stores nested payload values.
 //
-// Composite values are object and list payloads. The method does not inspect
+// Composite values are record and list payloads. The method does not inspect
 // nested values because constructors already reject invalid children.
 func (v Value) IsComposite() bool {
 	return v.kind.IsComposite()

@@ -17,7 +17,7 @@ package value
 // Clone returns a deep copy of v.
 //
 // Scalar payloads are copied by value. Mutable payloads and every nested Value
-// inside object/list payloads are copied recursively. Clone never validates
+// inside record/list payloads are copied recursively. Clone never validates
 // payloads because Values can only be built through constructors that already
 // enforce construction invariants.
 func (v Value) Clone() Value {
@@ -26,8 +26,8 @@ func (v Value) Clone() Value {
 	switch v.kind {
 	case KindBytes:
 		clone.bytesValue = cloneBytes(v.bytesValue)
-	case KindObject:
-		clone.objectValue = cloneObjectPayload(v.objectValue)
+	case KindRecord:
+		clone.recordValue = cloneRecordPayload(v.recordValue)
 	case KindList:
 		clone.listValue = cloneListPayload(v.listValue)
 	}
@@ -35,12 +35,12 @@ func (v Value) Clone() Value {
 	return clone
 }
 
-// cloneObjectPayload deep-copies object members.
+// cloneRecordPayload deep-copies record members.
 //
-// No member-name index is rebuilt because object payloads intentionally use
+// No member-name index is rebuilt because record payloads intentionally use
 // linear lookup.
-func cloneObjectPayload(payload objectPayload) objectPayload {
-	return objectPayload{members: cloneMembers(payload.members)}
+func cloneRecordPayload(payload recordPayload) recordPayload {
+	return recordPayload{members: cloneMembers(payload.members)}
 }
 
 // cloneListPayload deep-copies list items.
@@ -50,18 +50,15 @@ func cloneListPayload(payload listPayload) listPayload {
 	return listPayload{items: cloneValues(payload.items)}
 }
 
-// cloneMembers deep-copies object members and nested values.
-//
-// ObjectMember performs the nested Value clone, keeping clone semantics aligned
-// with object construction semantics.
-func cloneMembers(members []Member) []Member {
+// cloneMembers deep-copies record members and nested values.
+func cloneMembers(members []RecordMember) []RecordMember {
 	if members == nil {
 		return nil
 	}
 
-	cloned := make([]Member, len(members))
+	cloned := make([]RecordMember, len(members))
 	for i, member := range members {
-		cloned[i] = ObjectMember(member.Name, member.Value)
+		cloned[i] = cloneRecordMember(member)
 	}
 
 	return cloned

@@ -27,9 +27,9 @@ func TestExtractObjectLeaves(t *testing.T) {
 		types.Field("replicas").Int32().Required(),
 		types.Field("image").String().Required(),
 	).Descriptor()
-	val := value.MustObjectValue(
-		value.ObjectMember("replicas", value.Int64Value(3)),
-		value.ObjectMember("image", value.StringValue("api:v1")),
+	val := value.MustRecordValue(
+		value.MustRecordMember("replicas", value.Int64Value(3)),
+		value.MustRecordMember("image", value.StringValue("api:v1")),
 	)
 
 	got, err := ExtractAt(path, val, descriptor, Options{})
@@ -45,7 +45,7 @@ func TestExtractObjectLeaves(t *testing.T) {
 
 func TestExtractObjectEmptyIncludesObjectPath(t *testing.T) {
 	path := rootField("spec")
-	val := value.MustObjectValue()
+	val := value.MustRecordValue()
 
 	got, err := ExtractAt(path, val, types.Object().Descriptor(), Options{})
 	requireNoError(t, err)
@@ -59,8 +59,8 @@ func TestExtractObjectMissingFieldsNotIncluded(t *testing.T) {
 		types.Field("replicas").Int32().Required(),
 		types.Field("image").String().Required(),
 	).Descriptor()
-	val := value.MustObjectValue(
-		value.ObjectMember("replicas", value.Int64Value(3)),
+	val := value.MustRecordValue(
+		value.MustRecordMember("replicas", value.Int64Value(3)),
 	)
 
 	got, err := ExtractAt(path, val, descriptor, Options{})
@@ -71,8 +71,8 @@ func TestExtractObjectMissingFieldsNotIncluded(t *testing.T) {
 
 func TestExtractObjectUnknownRejectedReturnsError(t *testing.T) {
 	path := rootField("spec")
-	val := value.MustObjectValue(
-		value.ObjectMember("extra", value.StringValue("debug")),
+	val := value.MustRecordValue(
+		value.MustRecordMember("extra", value.StringValue("debug")),
 	)
 
 	_, err := ExtractAt(path, val, types.Object().Descriptor(), Options{})
@@ -87,11 +87,11 @@ func TestExtractObjectUnknownPreserveOpaqueIncludesOpaquePath(t *testing.T) {
 	descriptor := types.Object().
 		UnknownFields(types.UnknownPreserveOpaque).
 		Descriptor()
-	val := value.MustObjectValue(
-		value.ObjectMember(
+	val := value.MustRecordValue(
+		value.MustRecordMember(
 			"extra",
-			value.MustObjectValue(
-				value.ObjectMember("nested", value.StringValue("debug")),
+			value.MustRecordValue(
+				value.MustRecordMember("nested", value.StringValue("debug")),
 			),
 		),
 	)
@@ -107,11 +107,11 @@ func TestExtractObjectUnknownPreserveOpaqueDoesNotTraverseNestedStructure(t *tes
 	descriptor := types.Object().
 		UnknownFields(types.UnknownPreserveOpaque).
 		Descriptor()
-	val := value.MustObjectValue(
-		value.ObjectMember(
+	val := value.MustRecordValue(
+		value.MustRecordMember(
 			"extra",
-			value.MustObjectValue(
-				value.ObjectMember("nested", value.StringValue("debug")),
+			value.MustRecordValue(
+				value.MustRecordMember("nested", value.StringValue("debug")),
 			),
 		),
 	)
@@ -129,9 +129,9 @@ func TestExtractObjectUnknownPrunedSkipsPath(t *testing.T) {
 	).
 		UnknownFields(types.UnknownPrune).
 		Descriptor()
-	val := value.MustObjectValue(
-		value.ObjectMember("name", value.StringValue("api")),
-		value.ObjectMember("extra", value.StringValue("debug")),
+	val := value.MustRecordValue(
+		value.MustRecordMember("name", value.StringValue("api")),
+		value.MustRecordMember("extra", value.StringValue("debug")),
 	)
 
 	got, err := ExtractAt(path, val, descriptor, Options{})
@@ -145,8 +145,8 @@ func TestExtractObjectOnlyPrunedUnknownFieldsReturnsEmptySet(t *testing.T) {
 	descriptor := types.Object().
 		UnknownFields(types.UnknownPrune).
 		Descriptor()
-	val := value.MustObjectValue(
-		value.ObjectMember("x-extra", value.StringValue("value")),
+	val := value.MustRecordValue(
+		value.MustRecordMember("x-extra", value.StringValue("value")),
 	)
 
 	got, err := ExtractAt(path, val, descriptor, Options{})
@@ -162,11 +162,11 @@ func TestExtractObjectNestedPaths(t *testing.T) {
 			types.Field("image").String().Required(),
 		).Required(),
 	).Descriptor()
-	val := value.MustObjectValue(
-		value.ObjectMember(
+	val := value.MustRecordValue(
+		value.MustRecordMember(
 			"template",
-			value.MustObjectValue(
-				value.ObjectMember("image", value.StringValue("api:v1")),
+			value.MustRecordValue(
+				value.MustRecordMember("image", value.StringValue("api:v1")),
 			),
 		),
 	)

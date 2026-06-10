@@ -26,7 +26,7 @@ func TestListItemsReturnsDetachedItems(t *testing.T) {
 	if len(got) != 1 {
 		t.Fatalf("items length = %d; want 1", len(got))
 	}
-	text, _ := got[0].String()
+	text, _ := got[0].AsString()
 	if text != "a" {
 		t.Fatalf("item = %q; want a", text)
 	}

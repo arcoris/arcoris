@@ -14,11 +14,11 @@
 
 package value
 
-// Bool returns the boolean payload when v is KindBool.
+// AsBool returns the boolean payload when v is KindBool.
 //
-// For every other kind, Bool returns false and ok=false. The false value is
+// For every other kind, AsBool returns false and ok=false. The false value is
 // only meaningful when ok is true.
-func (v Value) Bool() (bool, bool) {
+func (v Value) AsBool() (bool, bool) {
 	if v.kind != KindBool {
 		return false, false
 	}

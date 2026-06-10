@@ -20,14 +20,14 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// extractMap interprets value.KindObject as a dynamic string-keyed map descriptor.
+// extractMap interprets value.KindRecord as a dynamic string-keyed map descriptor.
 func (e *extractor) extractMap(
 	path fieldpath.Path,
 	val value.Value,
 	descriptor types.Descriptor,
 	depth int,
 ) (fieldpath.Set, error) {
-	if err := requireKind(path, val, value.KindObject, descriptor.Code()); err != nil {
+	if err := requireKind(path, val, value.KindRecord, descriptor.Code()); err != nil {
 		return fieldpath.Set{}, err
 	}
 
@@ -59,7 +59,7 @@ func (e *extractor) extractMap(
 		)
 	}
 
-	valueView, _ := val.Object()
+	valueView, _ := val.AsRecord()
 	if valueView.IsEmpty() {
 		return setAt(path)
 	}
@@ -67,7 +67,7 @@ func (e *extractor) extractMap(
 	out := fieldpath.EmptySet()
 	for _, mapMember := range valueView.Members() {
 		memberSet, err := e.extract(
-			path.Key(mapMember.Name),
+			path.Key(mapMember.Name.String()),
 			mapMember.Value,
 			valueDescriptor,
 			depth+1,

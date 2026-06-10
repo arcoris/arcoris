@@ -14,11 +14,11 @@
 
 package value
 
-// Float returns the float64 payload when v is KindFloat.
+// AsFloat returns the float64 payload when v is KindFloat.
 //
-// For every other kind, Float returns zero and ok=false. The zero value is a
+// For every other kind, AsFloat returns zero and ok=false. The zero value is a
 // valid float payload, so callers must check ok.
-func (v Value) Float() (float64, bool) {
+func (v Value) AsFloat() (float64, bool) {
 	if v.kind != KindFloat {
 		return 0, false
 	}

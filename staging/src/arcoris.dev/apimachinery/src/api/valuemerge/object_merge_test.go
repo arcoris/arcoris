@@ -135,7 +135,7 @@ func TestMergeObjectNestedSelectedField(t *testing.T) {
 		t.Fatalf("Merge returned error: %v", err)
 	}
 
-	specView, _ := got.Object()
+	specView, _ := got.AsRecord()
 	spec, _ := specView.Get("spec")
 	requireStringMember(t, spec, "image", "api:v2")
 	requireIntegerMember(t, spec, "replicas", 3)

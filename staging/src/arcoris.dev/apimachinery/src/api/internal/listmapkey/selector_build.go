@@ -29,11 +29,11 @@ func (r selectorRequest) build() (fieldpath.Selector, error) {
 		)
 	}
 
-	if r.item.Kind() != value.KindObject {
+	if r.item.Kind() != value.KindRecord {
 		return fieldpath.Selector{}, failure(
 			r.indexPath,
 			FailureItemKindMismatch,
-			"ListMap item is not an object",
+			"ListMap item is not a record",
 		)
 	}
 
@@ -42,12 +42,12 @@ func (r selectorRequest) build() (fieldpath.Selector, error) {
 		return fieldpath.Selector{}, err
 	}
 
-	itemObjectView, _ := r.item.Object()
+	itemRecordView, _ := r.item.AsRecord()
 	selectorEntries := make([]fieldpath.SelectorEntry, 0, len(r.keys))
 
 	for _, key := range r.keys {
 		selectorEntryValue, err := r.selectorEntry(
-			itemObjectView,
+			itemRecordView,
 			elementObjectDescriptor,
 			key,
 		)

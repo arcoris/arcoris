@@ -26,8 +26,8 @@ func TestValidateMapAcceptsDynamicEntries(t *testing.T) {
 	shape := types.MapOf(types.String().MinBytes(1)).Descriptor()
 	payload := mustObject(
 		t,
-		value.ObjectMember("app", value.StringValue("api")),
-		value.ObjectMember("tier", value.StringValue("backend")),
+		value.MustRecordMember("app", value.StringValue("api")),
+		value.MustRecordMember("tier", value.StringValue("backend")),
 	)
 
 	requireNoError(
@@ -42,7 +42,7 @@ func TestValidateMapAcceptsDynamicEntries(t *testing.T) {
 
 func TestValidateMapRejectsInvalidEntryValue(t *testing.T) {
 	shape := types.MapOf(types.String().MinBytes(1)).Descriptor()
-	payload := mustObject(t, value.ObjectMember("app", value.StringValue("")))
+	payload := mustObject(t, value.MustRecordMember("app", value.StringValue("")))
 
 	err := valuevalidation.Validate(
 		payload,
@@ -63,7 +63,7 @@ func TestValidateMapRejectsInvalidEntryKey(t *testing.T) {
 	shape := types.MapOf(types.String()).
 		Keys(types.String().Pattern(`^[a-z]+$`)).
 		Descriptor()
-	payload := mustObject(t, value.ObjectMember("INVALID", value.StringValue("ok")))
+	payload := mustObject(t, value.MustRecordMember("INVALID", value.StringValue("ok")))
 
 	err := valuevalidation.Validate(
 		payload,
@@ -84,7 +84,7 @@ func TestValidateMapRejectsInvalidEntryKeyLength(t *testing.T) {
 	shape := types.MapOf(types.String()).
 		Keys(types.String().MinBytes(2)).
 		Descriptor()
-	payload := mustObject(t, value.ObjectMember("a", value.StringValue("ok")))
+	payload := mustObject(t, value.MustRecordMember("a", value.StringValue("ok")))
 
 	err := valuevalidation.Validate(
 		payload,
@@ -105,7 +105,7 @@ func TestValidateMapValidatesEntryValueWhenKeyIsInvalid(t *testing.T) {
 	shape := types.MapOf(types.Int32()).
 		Keys(types.String().MinBytes(2)).
 		Descriptor()
-	payload := mustObject(t, value.ObjectMember("a", value.StringValue("not-int")))
+	payload := mustObject(t, value.MustRecordMember("a", value.StringValue("not-int")))
 
 	err := valuevalidation.Validate(
 		payload,
@@ -132,7 +132,7 @@ func TestValidateMapValidatesEntryValueWhenKeyIsInvalid(t *testing.T) {
 
 func TestValidateMapUsesKeyPath(t *testing.T) {
 	shape := types.MapOf(types.Int32()).Descriptor()
-	payload := mustObject(t, value.ObjectMember("app.kubernetes.io/name", value.StringValue("api")))
+	payload := mustObject(t, value.MustRecordMember("app.kubernetes.io/name", value.StringValue("api")))
 
 	err := valuevalidation.Validate(
 		payload,

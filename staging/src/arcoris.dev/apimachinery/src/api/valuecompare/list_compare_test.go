@@ -280,8 +280,8 @@ func TestEqualListMapIgnoresPhysicalOrder(t *testing.T) {
 	}
 }
 func TestEqualListByIndexSameItemsIsTrue(t *testing.T) {
-	oldList, _ := value.MustListValue(value.StringValue("one")).List()
-	newList, _ := value.MustListValue(value.StringValue("one")).List()
+	oldList, _ := value.MustListValue(value.StringValue("one")).AsList()
+	newList, _ := value.MustListValue(value.StringValue("one")).AsList()
 
 	got, err := newComparer(Options{}).equalListByIndex(rootField("args"), oldList, newList, types.String().Descriptor(), 0)
 	requireNoError(t, err)
@@ -292,8 +292,8 @@ func TestEqualListByIndexSameItemsIsTrue(t *testing.T) {
 }
 
 func TestEqualListByIndexInvalidElementDescriptorReturnsError(t *testing.T) {
-	oldList, _ := value.MustListValue(value.StringValue("one")).List()
-	newList, _ := value.MustListValue(value.StringValue("one")).List()
+	oldList, _ := value.MustListValue(value.StringValue("one")).AsList()
+	newList, _ := value.MustListValue(value.StringValue("one")).AsList()
 
 	_, err := newComparer(Options{}).equalListByIndex(rootField("args"), oldList, newList, types.Descriptor{}, 0)
 

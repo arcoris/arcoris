@@ -37,7 +37,7 @@ func TestDecodeValueFromMatchesDecodeValue(t *testing.T) {
 
 func TestEncodeValueToMatchesEncodeValue(t *testing.T) {
 	c := newTestCodec(t)
-	v := value.MustObjectValue(value.ObjectMember("a", value.Int64Value(1)))
+	v := value.MustRecordValue(value.MustRecordMember("a", value.Int64Value(1)))
 
 	fromBytes, err := c.EncodeValue(v)
 	requireNoError(t, err)

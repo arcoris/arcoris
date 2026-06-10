@@ -14,11 +14,11 @@
 
 package value
 
-// TimeOfDay returns the time-of-day payload when v is KindTimeOfDay.
+// AsTimeOfDay returns the time-of-day payload when v is KindTimeOfDay.
 //
-// For every other kind, TimeOfDay returns the zero TimeOfDay and ok=false.
+// For every other kind, AsTimeOfDay returns the zero TimeOfDay and ok=false.
 // Callers must check ok before interpreting the returned components.
-func (v Value) TimeOfDay() (TimeOfDay, bool) {
+func (v Value) AsTimeOfDay() (TimeOfDay, bool) {
 	if v.kind != KindTimeOfDay {
 		return TimeOfDay{}, false
 	}

@@ -47,9 +47,9 @@ func TestExtractOrderedListObjectItemsUseIndexedChildPaths(t *testing.T) {
 	)
 	descriptor := types.ListOf(item).Ordered().Descriptor()
 	val := value.MustListValue(
-		value.MustObjectValue(
-			value.ObjectMember("name", value.StringValue("api")),
-			value.ObjectMember("image", value.StringValue("api:v1")),
+		value.MustRecordValue(
+			value.MustRecordMember("name", value.StringValue("api")),
+			value.MustRecordMember("image", value.StringValue("api:v1")),
 		),
 	)
 

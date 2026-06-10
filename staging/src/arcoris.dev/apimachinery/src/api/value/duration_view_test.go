@@ -20,7 +20,7 @@ import (
 )
 
 func TestDurationAccessor(t *testing.T) {
-	got, ok := DurationValue(-time.Second).Duration()
+	got, ok := DurationValue(-time.Second).AsDuration()
 
 	requireEqual(t, ok, true)
 	requireEqual(t, got, -time.Second)

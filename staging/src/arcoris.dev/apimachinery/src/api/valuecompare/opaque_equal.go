@@ -33,12 +33,12 @@ func (c *comparer) equalOpaqueValue(path fieldpath.Path, oldValue value.Value, n
 		return false, nil
 	}
 
-	if oldValue.Kind().IsPrimitive() {
+	if oldValue.Kind().IsScalar() {
 		return opaqueScalarValuesEqual(oldValue, newValue), nil
 	}
 
 	switch oldValue.Kind() {
-	case value.KindObject:
+	case value.KindRecord:
 		return c.equalOpaqueObject(path, oldValue, newValue)
 	case value.KindList:
 		return c.equalOpaqueList(path, oldValue, newValue)
@@ -53,44 +53,44 @@ func opaqueScalarValuesEqual(oldValue value.Value, newValue value.Value) bool {
 	case value.KindNull:
 		return true
 	case value.KindBool:
-		oldBool, _ := oldValue.Bool()
-		newBool, _ := newValue.Bool()
+		oldBool, _ := oldValue.AsBool()
+		newBool, _ := newValue.AsBool()
 		return oldBool == newBool
 	case value.KindString:
-		oldString, _ := oldValue.String()
-		newString, _ := newValue.String()
+		oldString, _ := oldValue.AsString()
+		newString, _ := newValue.AsString()
 		return oldString == newString
 	case value.KindBytes:
-		oldBytes, _ := oldValue.Bytes()
-		newBytes, _ := newValue.Bytes()
+		oldBytes, _ := oldValue.AsBytes()
+		newBytes, _ := newValue.AsBytes()
 		return bytes.Equal(oldBytes, newBytes)
 	case value.KindInteger:
-		oldInteger, _ := oldValue.Integer()
-		newInteger, _ := newValue.Integer()
+		oldInteger, _ := oldValue.AsInteger()
+		newInteger, _ := newValue.AsInteger()
 		return oldInteger.Equal(newInteger)
 	case value.KindFloat:
-		oldFloat, _ := oldValue.Float()
-		newFloat, _ := newValue.Float()
+		oldFloat, _ := oldValue.AsFloat()
+		newFloat, _ := newValue.AsFloat()
 		return oldFloat == newFloat
 	case value.KindDecimal:
-		oldDecimal, _ := oldValue.Decimal()
-		newDecimal, _ := newValue.Decimal()
+		oldDecimal, _ := oldValue.AsDecimal()
+		newDecimal, _ := newValue.AsDecimal()
 		return oldDecimal.Compare(newDecimal) == 0
 	case value.KindTimestamp:
-		oldTimestamp, _ := oldValue.Timestamp()
-		newTimestamp, _ := newValue.Timestamp()
+		oldTimestamp, _ := oldValue.AsTimestamp()
+		newTimestamp, _ := newValue.AsTimestamp()
 		return oldTimestamp.Equal(newTimestamp)
 	case value.KindDate:
-		oldDate, _ := oldValue.Date()
-		newDate, _ := newValue.Date()
+		oldDate, _ := oldValue.AsDate()
+		newDate, _ := newValue.AsDate()
 		return oldDate.Equal(newDate)
 	case value.KindTimeOfDay:
-		oldTime, _ := oldValue.TimeOfDay()
-		newTime, _ := newValue.TimeOfDay()
+		oldTime, _ := oldValue.AsTimeOfDay()
+		newTime, _ := newValue.AsTimeOfDay()
 		return oldTime.Equal(newTime)
 	case value.KindDuration:
-		oldDuration, _ := oldValue.Duration()
-		newDuration, _ := newValue.Duration()
+		oldDuration, _ := oldValue.AsDuration()
+		newDuration, _ := newValue.AsDuration()
 		return oldDuration == newDuration
 	default:
 		return false
@@ -99,8 +99,8 @@ func opaqueScalarValuesEqual(oldValue value.Value, newValue value.Value) bool {
 
 // equalOpaqueList compares unknown list payloads by exact physical order.
 func (c *comparer) equalOpaqueList(path fieldpath.Path, oldValue value.Value, newValue value.Value) (bool, error) {
-	oldList, _ := oldValue.List()
-	newList, _ := newValue.List()
+	oldList, _ := oldValue.AsList()
+	newList, _ := newValue.AsList()
 	n := oldList.Len()
 	if n != newList.Len() {
 		return false, nil
@@ -121,26 +121,27 @@ func (c *comparer) equalOpaqueList(path fieldpath.Path, oldValue value.Value, ne
 	return true, nil
 }
 
-// equalOpaqueObject compares unknown object payloads by member name.
+// equalOpaqueObject compares unknown record payloads by member name.
 //
-// Unknown-preserved object members have no descriptor, so equality is purely
+// Unknown-preserved record members have no descriptor, so equality is purely
 // structural and exact. Missing or extra members are enough to mark the opaque
 // parent leaf as changed.
 func (c *comparer) equalOpaqueObject(path fieldpath.Path, oldValue value.Value, newValue value.Value) (bool, error) {
-	oldObject, _ := oldValue.Object()
-	newObject, _ := newValue.Object()
+	oldObject, _ := oldValue.AsRecord()
+	newObject, _ := newValue.AsRecord()
 	if oldObject.Len() != newObject.Len() {
 		return false, nil
 	}
 
 	oldMembers := membersByName(oldObject.Members())
 	for _, newMember := range newObject.Members() {
-		oldMember, found := oldMembers[newMember.Name]
+		name := newMember.Name.String()
+		oldMember, found := oldMembers[name]
 		if !found {
 			return false, nil
 		}
 
-		equal, err := c.equalOpaqueValue(path.Field(newMember.Name), oldMember, newMember.Value)
+		equal, err := c.equalOpaqueValue(path.Field(name), oldMember, newMember.Value)
 		if err != nil {
 			return false, err
 		}

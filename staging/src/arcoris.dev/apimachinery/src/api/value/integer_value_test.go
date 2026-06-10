@@ -24,7 +24,7 @@ func TestIntegerValueConstructors(t *testing.T) {
 	}
 
 	for _, value := range tests {
-		integer, ok := value.Integer()
+		integer, ok := value.AsInteger()
 		requireEqual(t, ok, true)
 		requireEqual(t, value.Kind(), KindInteger)
 		requireEqual(t, integer.Magnitude() >= 0, true)

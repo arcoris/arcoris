@@ -16,22 +16,23 @@ package value
 
 import "testing"
 
-func TestFindObjectMember(t *testing.T) {
-	members := []Member{
-		ObjectMember("first", StringValue("one")),
-		ObjectMember("second", StringValue("two")),
-	}
+func TestNewMemberNameValidatesNonEmptyNames(t *testing.T) {
+	name, err := NewMemberName("payload")
+	requireNoError(t, err)
 
-	requireEqual(t, findObjectMember(members, "first"), 0)
-	requireEqual(t, findObjectMember(members, "second"), 1)
-	requireEqual(t, findObjectMember(members, "missing"), -1)
+	requireEqual(t, name.String(), "payload")
+	requireEqual(t, name.IsZero(), false)
 }
 
-func TestHasObjectMemberName(t *testing.T) {
-	members := []Member{
-		ObjectMember("name", StringValue("worker")),
-	}
+func TestNewMemberNameRejectsEmptyName(t *testing.T) {
+	err := MemberName("").ValidateLexical()
 
-	requireEqual(t, hasObjectMemberName(members, "name"), true)
-	requireEqual(t, hasObjectMemberName(members, "missing"), false)
+	requireValueError(
+		t,
+		err,
+		ErrEmptyMemberName,
+		pathMemberName,
+		ErrorReasonEmptyMemberName,
+	)
+	requireErrorIs(t, err, ErrInvalidRecord)
 }

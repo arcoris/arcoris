@@ -14,11 +14,11 @@
 
 package value
 
-// Bytes returns a detached bytes payload when v is KindBytes.
+// AsBytes returns a detached bytes payload when v is KindBytes.
 //
 // The returned slice has its own backing array. Mutating it cannot affect the
-// stored Value. For non-byte values, Bytes returns nil and ok=false.
-func (v Value) Bytes() ([]byte, bool) {
+// stored Value. For non-byte values, AsBytes returns nil and ok=false.
+func (v Value) AsBytes() ([]byte, bool) {
 	if v.kind != KindBytes {
 		return nil, false
 	}

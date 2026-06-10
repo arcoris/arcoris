@@ -45,7 +45,7 @@ func TestValidateListMapMissingKeyStillValidatesItemAtIndexPath(t *testing.T) {
 	shape := conditionListShape()
 	payload := mustList(
 		t,
-		mustObject(t, value.ObjectMember("status", value.StringValue(""))),
+		mustObject(t, value.MustRecordMember("status", value.StringValue(""))),
 	)
 
 	err := valuevalidation.ValidateAt(
@@ -77,8 +77,8 @@ func TestValidateListMapWrongKeyKindStillValidatesItemAtIndexPath(t *testing.T) 
 		t,
 		mustObject(
 			t,
-			value.ObjectMember("type", value.BoolValue(true)),
-			value.ObjectMember("status", value.StringValue("")),
+			value.MustRecordMember("type", value.BoolValue(true)),
+			value.MustRecordMember("status", value.StringValue("")),
 		),
 	)
 
@@ -111,8 +111,8 @@ func TestValidateListMapNullKeyStillValidatesItemAtIndexPath(t *testing.T) {
 		t,
 		mustObject(
 			t,
-			value.ObjectMember("type", value.NullValue()),
-			value.ObjectMember("status", value.StringValue("")),
+			value.MustRecordMember("type", value.NullValue()),
+			value.MustRecordMember("status", value.StringValue("")),
 		),
 	)
 
@@ -234,9 +234,9 @@ func TestValidateListMapMultiKeySelectorPath(t *testing.T) {
 		t,
 		mustObject(
 			t,
-			value.ObjectMember("host", value.StringValue("api.example.com")),
-			value.ObjectMember("port", value.Uint64Value(443)),
-			value.ObjectMember("backend", value.StringValue("")),
+			value.MustRecordMember("host", value.StringValue("api.example.com")),
+			value.MustRecordMember("port", value.Uint64Value(443)),
+			value.MustRecordMember("backend", value.StringValue("")),
 		),
 	)
 
@@ -270,7 +270,7 @@ func conditionValue(t *testing.T, conditionType string, status string) value.Val
 
 	return mustObject(
 		t,
-		value.ObjectMember("type", value.StringValue(conditionType)),
-		value.ObjectMember("status", value.StringValue(status)),
+		value.MustRecordMember("type", value.StringValue(conditionType)),
+		value.MustRecordMember("status", value.StringValue(status)),
 	)
 }

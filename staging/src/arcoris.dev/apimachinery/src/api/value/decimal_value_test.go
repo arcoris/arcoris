@@ -17,7 +17,7 @@ package value
 import "testing"
 
 func TestDecimalValue(t *testing.T) {
-	decimal := MustDecimal("1.20")
+	decimal := MustParseDecimal("1.20")
 	value := DecimalValue(decimal)
 
 	requireEqual(t, value.Kind(), KindDecimal)

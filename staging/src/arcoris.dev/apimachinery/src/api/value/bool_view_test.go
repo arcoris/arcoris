@@ -18,7 +18,7 @@ import "testing"
 
 func TestBoolAccessor(t *testing.T) {
 	for _, want := range []bool{false, true} {
-		got, ok := BoolValue(want).Bool()
+		got, ok := BoolValue(want).AsBool()
 
 		requireEqual(t, ok, true)
 		requireEqual(t, got, want)

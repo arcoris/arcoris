@@ -14,11 +14,11 @@
 
 package value
 
-// String returns the string payload when v is KindString.
+// AsString returns the string payload when v is KindString.
 //
-// For every other kind, String returns the empty string and ok=false. The empty
+// For every other kind, AsString returns the empty string and ok=false. The empty
 // string is a valid string payload, so callers must check ok.
-func (v Value) String() (string, bool) {
+func (v Value) AsString() (string, bool) {
 	if v.kind != KindString {
 		return "", false
 	}

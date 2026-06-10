@@ -45,7 +45,7 @@ func TestValidateRefResolvesObject(t *testing.T) {
 		),
 	}
 
-	payload := mustObject(t, value.ObjectMember("name", value.StringValue("main")))
+	payload := mustObject(t, value.MustRecordMember("name", value.StringValue("main")))
 
 	requireNoError(
 		t,

@@ -31,10 +31,10 @@ func (c *comparer) equalMap(
 	descriptor types.Descriptor,
 	depth int,
 ) (bool, error) {
-	if err := requireKind(path, oldValue, value.KindObject, descriptor.Code()); err != nil {
+	if err := requireKind(path, oldValue, value.KindRecord, descriptor.Code()); err != nil {
 		return false, err
 	}
-	if err := requireKind(path, newValue, value.KindObject, descriptor.Code()); err != nil {
+	if err := requireKind(path, newValue, value.KindRecord, descriptor.Code()); err != nil {
 		return false, err
 	}
 
@@ -51,20 +51,21 @@ func (c *comparer) equalMap(
 		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map value descriptor is invalid")
 	}
 
-	oldObject, _ := oldValue.Object()
-	newObject, _ := newValue.Object()
+	oldObject, _ := oldValue.AsRecord()
+	newObject, _ := newValue.AsRecord()
 	if oldObject.Len() != newObject.Len() {
 		return false, nil
 	}
 
 	oldMembers := membersByName(oldObject.Members())
 	for _, newMember := range newObject.Members() {
-		oldMember, found := oldMembers[newMember.Name]
+		name := newMember.Name.String()
+		oldMember, found := oldMembers[name]
 		if !found {
 			return false, nil
 		}
 
-		equal, err := c.equalValue(path.Key(newMember.Name), oldMember, newMember.Value, valueDescriptor, depth+1)
+		equal, err := c.equalValue(path.Key(name), oldMember, newMember.Value, valueDescriptor, depth+1)
 		if err != nil {
 			return false, err
 		}

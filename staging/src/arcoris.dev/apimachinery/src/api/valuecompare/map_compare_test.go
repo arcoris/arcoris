@@ -58,8 +58,8 @@ func TestCompareMapNestedObjectValue(t *testing.T) {
 	descriptor := types.MapOf(
 		types.Object(types.Field("target").String().Optional()),
 	).Descriptor()
-	oldValue := value.MustObjectValue(value.ObjectMember("http", valueObject("target", "8080")))
-	newValue := value.MustObjectValue(value.ObjectMember("http", valueObject("target", "8081")))
+	oldValue := value.MustRecordValue(value.MustRecordMember("http", valueObject("target", "8080")))
+	newValue := value.MustRecordValue(value.MustRecordMember("http", valueObject("target", "8081")))
 
 	got, err := CompareAt(path, oldValue, newValue, descriptor, Options{})
 	requireNoError(t, err)
@@ -86,7 +86,7 @@ func TestMapOperandReportsPresence(t *testing.T) {
 
 	got := mapOperand(members, "env")
 	val, ok := got.ValueOK()
-	text, _ := val.String()
+	text, _ := val.AsString()
 	if !ok || text != "prod" {
 		t.Fatalf("mapOperand(existing) = %#v", got)
 	}

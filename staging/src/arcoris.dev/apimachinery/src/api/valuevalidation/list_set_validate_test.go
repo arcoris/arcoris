@@ -175,7 +175,7 @@ func TestValidateListSetRejectsObjectElementDescriptor(t *testing.T) {
 	descriptor := types.ListOf(types.Object(
 		types.Field("name").String().Required(),
 	)).Set().Descriptor()
-	payload := mustList(t, mustObject(t, value.ObjectMember("name", value.StringValue("api"))))
+	payload := mustList(t, mustObject(t, value.MustRecordMember("name", value.StringValue("api"))))
 
 	err := valuevalidation.Validate(payload, descriptor, valuevalidation.Options{})
 
@@ -196,7 +196,7 @@ func TestValidateListSetRejectsRefResolvingToObject(t *testing.T) {
 		),
 	}
 	descriptor := types.ListOf(types.Ref("meta.arcoris.dev.Condition")).Set().Descriptor()
-	payload := mustList(t, mustObject(t, value.ObjectMember("type", value.StringValue("Ready"))))
+	payload := mustList(t, mustObject(t, value.MustRecordMember("type", value.StringValue("Ready"))))
 
 	err := valuevalidation.Validate(payload, descriptor, valuevalidation.Options{Resolver: resolver})
 

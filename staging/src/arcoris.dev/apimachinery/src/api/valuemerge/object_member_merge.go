@@ -24,24 +24,25 @@ import (
 // mergeBaseObjectMembers walks base order, preserving unselected fields.
 func (m *merger) mergeBaseObjectMembers(
 	path fieldpath.Path,
-	baseMembers []value.Member,
+	baseMembers []value.RecordMember,
 	baseLookup memberLookup,
 	overlayLookup memberLookup,
 	declared objectFieldLookup,
 	unknown types.UnknownFieldPolicy,
 	fields fieldpath.Set,
 	depth int,
-) ([]value.Member, error) {
-	members := make([]value.Member, 0, len(baseMembers))
+) ([]value.RecordMember, error) {
+	members := make([]value.RecordMember, 0, len(baseMembers))
 
 	for _, member := range baseMembers {
-		field, known := declared[member.Name]
-		childPath := path.Field(member.Name)
+		name := member.Name.String()
+		field, known := declared[name]
+		childPath := path.Field(name)
 
 		next, err := m.mergeObjectMember(
 			childPath,
-			baseLookup.Operand(member.Name),
-			overlayLookup.Operand(member.Name),
+			baseLookup.Operand(name),
+			overlayLookup.Operand(name),
 			field,
 			known,
 			unknown,
@@ -52,7 +53,7 @@ func (m *merger) mergeBaseObjectMembers(
 			return nil, err
 		}
 
-		members = appendMember(members, member.Name, next)
+		members = appendMember(members, name, next)
 	}
 
 	return members, nil
@@ -61,21 +62,22 @@ func (m *merger) mergeBaseObjectMembers(
 // appendOverlayObjectMembers appends selected overlay members absent from base.
 func (m *merger) appendOverlayObjectMembers(
 	path fieldpath.Path,
-	members []value.Member,
+	members []value.RecordMember,
 	baseLookup memberLookup,
-	overlayMembers []value.Member,
+	overlayMembers []value.RecordMember,
 	declared objectFieldLookup,
 	unknown types.UnknownFieldPolicy,
 	fields fieldpath.Set,
 	depth int,
-) ([]value.Member, error) {
+) ([]value.RecordMember, error) {
 	for _, member := range overlayMembers {
-		if baseLookup.Has(member.Name) {
+		name := member.Name.String()
+		if baseLookup.Has(name) {
 			continue
 		}
 
-		field, known := declared[member.Name]
-		childPath := path.Field(member.Name)
+		field, known := declared[name]
+		childPath := path.Field(name)
 		next, err := m.mergeObjectMember(
 			childPath,
 			valuepresence.Absent(),
@@ -90,7 +92,7 @@ func (m *merger) appendOverlayObjectMembers(
 			return nil, err
 		}
 
-		members = appendMember(members, member.Name, next)
+		members = appendMember(members, name, next)
 	}
 
 	return members, nil

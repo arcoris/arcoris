@@ -20,14 +20,14 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// validateObject interprets value.KindObject as a fixed-field object descriptor.
+// validateObject interprets value.KindRecord as a fixed-field object descriptor.
 func (v *validator) validateObject(
 	path fieldpath.Path,
 	val value.Value,
 	descriptor types.Descriptor,
 	depth int,
 ) {
-	if !v.requireKind(path, val, value.KindObject, descriptor.Code()) {
+	if !v.requireKind(path, val, value.KindRecord, descriptor.Code()) {
 		return
 	}
 
@@ -37,7 +37,7 @@ func (v *validator) validateObject(
 		return
 	}
 
-	valueView, _ := val.Object()
+	valueView, _ := val.AsRecord()
 	fields := objectView.Fields()
 	declared := make(map[string]types.FieldDescriptor, len(fields))
 
@@ -45,7 +45,7 @@ func (v *validator) validateObject(
 		name := string(fieldDescriptor.Name())
 		declared[name] = fieldDescriptor
 
-		memberValue, found := valueView.Get(name)
+		memberValue, found := valueView.Get(value.MemberName(name))
 		fieldPath := path.Field(name)
 		if !found {
 			if fieldDescriptor.IsRequired() {
@@ -65,20 +65,21 @@ func (v *validator) validateObject(
 // validateUnknownObjectMembers reports undeclared members under reject policy.
 func (v *validator) validateUnknownObjectMembers(
 	path fieldpath.Path,
-	valueView value.ObjectView,
+	valueView value.RecordView,
 	declared map[string]types.FieldDescriptor,
 ) {
 	for _, objectMember := range valueView.Members() {
-		if _, ok := declared[objectMember.Name]; ok {
+		name := objectMember.Name.String()
+		if _, ok := declared[name]; ok {
 			continue
 		}
 
 		v.addf(
-			path.Field(objectMember.Name),
+			path.Field(name),
 			ErrUnknownField,
 			ErrorReasonUnknownField,
 			"field %q is not declared by the object descriptor",
-			objectMember.Name,
+			name,
 		)
 	}
 }

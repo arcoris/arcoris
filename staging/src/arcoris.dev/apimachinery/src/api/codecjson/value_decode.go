@@ -66,21 +66,27 @@ func nodeToListValue(path jsonPath, node jsonNode, config resolvedDecodeConfig) 
 	return converted, nil
 }
 
-// nodeToObjectValue converts an ordered JSON object into a value object.
+// nodeToObjectValue converts an ordered JSON object into a value record.
 //
 // Duplicate names have already been rejected by the node parser, so this helper
 // can preserve source member order without needing a lossy map intermediary.
 func nodeToObjectValue(path jsonPath, node jsonNode, config resolvedDecodeConfig) (value.Value, error) {
-	members := make([]value.Member, 0, len(node.members))
+	members := make([]value.RecordMember, 0, len(node.members))
 	for _, member := range node.members {
-		converted, err := nodeToValue(path.Member(member.name), member.value, config)
+		memberPath := path.Member(member.name)
+		name, err := value.NewMemberName(member.name)
+		if err != nil {
+			return value.Value{}, wrapAt(memberPath, ErrInvalidJSON, codec.ErrDecodeFailed, ErrorReasonInvalidJSON, "invalid JSON object member name", err)
+		}
+
+		converted, err := nodeToValue(memberPath, member.value, config)
 		if err != nil {
 			return value.Value{}, err
 		}
-		members = append(members, value.ObjectMember(member.name, converted))
+		members = append(members, value.NewRecordMember(name, converted))
 	}
 
-	converted, err := value.ObjectValue(members...)
+	converted, err := value.RecordValue(members...)
 	if err != nil {
 		return value.Value{}, wrapAt(path, ErrInvalidJSON, codec.ErrDecodeFailed, ErrorReasonInvalidJSON, "invalid JSON object value", err)
 	}

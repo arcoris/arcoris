@@ -58,7 +58,7 @@ func requireKind(path fieldpath.Path, operand operand, expected value.Kind) erro
 
 // requireObjectOperand checks object/map concrete payload shape.
 func requireObjectOperand(path fieldpath.Path, operand operand) error {
-	return requireKind(path, operand, value.KindObject)
+	return requireKind(path, operand, value.KindRecord)
 }
 
 // requireListOperand checks list concrete payload shape.

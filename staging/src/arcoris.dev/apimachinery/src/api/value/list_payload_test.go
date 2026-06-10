@@ -23,11 +23,11 @@ func TestListPayloadPreservesOrder(t *testing.T) {
 	})
 	requireNoError(t, err)
 
-	first, ok := payload.items[0].String()
+	first, ok := payload.items[0].AsString()
 	requireEqual(t, ok, true)
 	requireEqual(t, first, "first")
 
-	second, ok := payload.items[1].String()
+	second, ok := payload.items[1].AsString()
 	requireEqual(t, ok, true)
 	requireEqual(t, second, "second")
 }

@@ -54,8 +54,8 @@ func TestCompareObjectNestedModifiedField(t *testing.T) {
 			types.Field("image").String().Optional(),
 		).Optional(),
 	).Descriptor()
-	oldValue := value.MustObjectValue(value.ObjectMember("spec", valueObject("image", "v1")))
-	newValue := value.MustObjectValue(value.ObjectMember("spec", valueObject("image", "v2")))
+	oldValue := value.MustRecordValue(value.MustRecordMember("spec", valueObject("image", "v1")))
+	newValue := value.MustRecordValue(value.MustRecordMember("spec", valueObject("image", "v2")))
 
 	got, err := Compare(oldValue, newValue, descriptor, Options{})
 	requireNoError(t, err)
@@ -70,7 +70,7 @@ func TestCompareObjectMissingBothFieldIsEmpty(t *testing.T) {
 
 func TestCompareObjectAddedNullField(t *testing.T) {
 	descriptor := types.Object(types.Field("name").String().Optional().Nullable()).Descriptor()
-	newValue := value.MustObjectValue(value.ObjectMember("name", value.NullValue()))
+	newValue := value.MustRecordValue(value.MustRecordMember("name", value.NullValue()))
 
 	got, err := Compare(valueObject(), newValue, descriptor, Options{})
 	requireNoError(t, err)
@@ -79,7 +79,7 @@ func TestCompareObjectAddedNullField(t *testing.T) {
 
 func TestCompareObjectRemovedNullField(t *testing.T) {
 	descriptor := types.Object(types.Field("name").String().Optional().Nullable()).Descriptor()
-	oldValue := value.MustObjectValue(value.ObjectMember("name", value.NullValue()))
+	oldValue := value.MustRecordValue(value.MustRecordMember("name", value.NullValue()))
 
 	got, err := Compare(oldValue, valueObject(), descriptor, Options{})
 	requireNoError(t, err)
@@ -90,8 +90,8 @@ func TestCompareObjectNullToSubtreeKeepsBucketsDisjoint(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("spec").Object(types.Field("image").String().Optional()).Optional().Nullable(),
 	).Descriptor()
-	oldValue := value.MustObjectValue(value.ObjectMember("spec", value.NullValue()))
-	newValue := value.MustObjectValue(value.ObjectMember("spec", valueObject("image", "v1")))
+	oldValue := value.MustRecordValue(value.MustRecordMember("spec", value.NullValue()))
+	newValue := value.MustRecordValue(value.MustRecordMember("spec", valueObject("image", "v1")))
 
 	got, err := Compare(oldValue, newValue, descriptor, Options{})
 	requireNoError(t, err)
@@ -102,8 +102,8 @@ func TestCompareObjectSubtreeToNullKeepsBucketsDisjoint(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("spec").Object(types.Field("image").String().Optional()).Optional().Nullable(),
 	).Descriptor()
-	oldValue := value.MustObjectValue(value.ObjectMember("spec", valueObject("image", "v1")))
-	newValue := value.MustObjectValue(value.ObjectMember("spec", value.NullValue()))
+	oldValue := value.MustRecordValue(value.MustRecordMember("spec", valueObject("image", "v1")))
+	newValue := value.MustRecordValue(value.MustRecordMember("spec", value.NullValue()))
 
 	got, err := Compare(oldValue, newValue, descriptor, Options{})
 	requireNoError(t, err)
@@ -114,7 +114,7 @@ func TestCompareObjectEmptyToNonEmpty(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("spec").Object(types.Field("image").String().Optional()).Optional(),
 	).Descriptor()
-	newValue := value.MustObjectValue(value.ObjectMember("spec", valueObject("image", "v1")))
+	newValue := value.MustRecordValue(value.MustRecordMember("spec", valueObject("image", "v1")))
 
 	got, err := Compare(valueObject(), newValue, descriptor, Options{})
 	requireNoError(t, err)
@@ -125,7 +125,7 @@ func TestCompareObjectNonEmptyToEmpty(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("spec").Object(types.Field("image").String().Optional()).Optional(),
 	).Descriptor()
-	oldValue := value.MustObjectValue(value.ObjectMember("spec", valueObject("image", "v1")))
+	oldValue := value.MustRecordValue(value.MustRecordMember("spec", valueObject("image", "v1")))
 
 	got, err := Compare(oldValue, valueObject(), descriptor, Options{})
 	requireNoError(t, err)
@@ -201,8 +201,8 @@ func TestObjectFieldsByNameBuildsLookup(t *testing.T) {
 	}
 }
 func TestCompareUnknownObjectMembersPruneIgnoresUnknowns(t *testing.T) {
-	oldObject, _ := valueObject("extra", "old").Object()
-	newObject, _ := valueObject("extra", "new").Object()
+	oldObject, _ := valueObject("extra", "old").AsRecord()
+	newObject, _ := valueObject("extra", "new").AsRecord()
 
 	got, err := newComparer(Options{}).compareUnknownObjectMembers(rootField("spec"), oldObject, newObject, nil, types.UnknownPrune)
 	requireNoError(t, err)
@@ -227,8 +227,8 @@ func TestCompareObjectUnknownPrunedNewIgnored(t *testing.T) {
 }
 
 func TestCompareUnknownObjectMembersInvalidPolicy(t *testing.T) {
-	oldObject, _ := valueObject().Object()
-	newObject, _ := valueObject().Object()
+	oldObject, _ := valueObject().AsRecord()
+	newObject, _ := valueObject().AsRecord()
 
 	_, err := newComparer(Options{}).compareUnknownObjectMembers(rootField("spec"), oldObject, newObject, nil, types.UnknownFieldPolicy(99))
 
@@ -238,8 +238,8 @@ func TestUnknownMemberNamesReturnsSortedUndeclaredNames(t *testing.T) {
 	descriptor := types.Object(types.Field("known").String().Optional()).Descriptor()
 	objectView, _ := descriptor.AsObject()
 	declared := objectFieldsByName(objectView.Fields())
-	oldObject, _ := valueObject("known", "x", "zeta", "old").Object()
-	newObject, _ := valueObject("alpha", "new").Object()
+	oldObject, _ := valueObject("known", "x", "zeta", "old").AsRecord()
+	newObject, _ := valueObject("alpha", "new").AsRecord()
 
 	got := unknownMemberNames(oldObject, newObject, declared)
 
@@ -248,8 +248,8 @@ func TestUnknownMemberNamesReturnsSortedUndeclaredNames(t *testing.T) {
 	}
 }
 func TestComparePreservedUnknownObjectMemberAdded(t *testing.T) {
-	oldObject, _ := valueObject().Object()
-	newObject, _ := valueObject("extra", "new").Object()
+	oldObject, _ := valueObject().AsRecord()
+	newObject, _ := valueObject("extra", "new").AsRecord()
 
 	got, err := newComparer(Options{}).comparePreservedUnknownObjectMember(rootField("extra"), oldObject, newObject, "extra")
 	requireNoError(t, err)
@@ -266,8 +266,8 @@ func TestCompareOpaqueLeafModified(t *testing.T) {
 
 func TestCompareObjectUnknownPreserveOpaqueDoesNotDescendIntoNestedObject(t *testing.T) {
 	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
-	oldValue := value.MustObjectValue(value.ObjectMember("x-extra", valueObject("nested", "old")))
-	newValue := value.MustObjectValue(value.ObjectMember("x-extra", valueObject("nested", "new")))
+	oldValue := value.MustRecordValue(value.MustRecordMember("x-extra", valueObject("nested", "old")))
+	newValue := value.MustRecordValue(value.MustRecordMember("x-extra", valueObject("nested", "new")))
 
 	got, err := Compare(oldValue, newValue, descriptor, Options{})
 	requireNoError(t, err)
@@ -276,16 +276,16 @@ func TestCompareObjectUnknownPreserveOpaqueDoesNotDescendIntoNestedObject(t *tes
 
 func TestCompareObjectUnknownPreserveOpaqueDoesNotDescendIntoNestedList(t *testing.T) {
 	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
-	oldValue := value.MustObjectValue(value.ObjectMember("x-extra", value.MustListValue(value.StringValue("old"))))
-	newValue := value.MustObjectValue(value.ObjectMember("x-extra", value.MustListValue(value.StringValue("new"))))
+	oldValue := value.MustRecordValue(value.MustRecordMember("x-extra", value.MustListValue(value.StringValue("old"))))
+	newValue := value.MustRecordValue(value.MustRecordMember("x-extra", value.MustListValue(value.StringValue("new"))))
 
 	got, err := Compare(oldValue, newValue, descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(rootField("x-extra")))
 }
 func TestRejectUnknownObjectMembersReturnsUnknownField(t *testing.T) {
-	oldObject, _ := valueObject("extra", "old").Object()
-	newObject, _ := valueObject().Object()
+	oldObject, _ := valueObject("extra", "old").AsRecord()
+	newObject, _ := valueObject().AsRecord()
 
 	_, err := newComparer(Options{}).rejectUnknownObjectMembers(rootField("spec"), oldObject, newObject, nil)
 

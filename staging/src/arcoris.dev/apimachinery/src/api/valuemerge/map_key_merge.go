@@ -24,20 +24,21 @@ import (
 // mergeBaseMapMembers walks base keys, preserving unselected keys.
 func (m *merger) mergeBaseMapMembers(
 	path fieldpath.Path,
-	baseMembers []value.Member,
+	baseMembers []value.RecordMember,
 	overlayLookup memberLookup,
 	valueDescriptor types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
-) ([]value.Member, error) {
-	members := make([]value.Member, 0, len(baseMembers))
+) ([]value.RecordMember, error) {
+	members := make([]value.RecordMember, 0, len(baseMembers))
 
 	for _, member := range baseMembers {
-		childPath := path.Key(member.Name)
+		name := member.Name.String()
+		childPath := path.Key(name)
 		next, err := m.mergeMapMember(
 			childPath,
 			valuepresence.Present(member.Value),
-			overlayLookup.Operand(member.Name),
+			overlayLookup.Operand(name),
 			valueDescriptor,
 			fields,
 			depth,
@@ -46,7 +47,7 @@ func (m *merger) mergeBaseMapMembers(
 			return nil, err
 		}
 
-		members = appendMember(members, member.Name, next)
+		members = appendMember(members, name, next)
 	}
 
 	return members, nil
@@ -55,19 +56,20 @@ func (m *merger) mergeBaseMapMembers(
 // appendOverlayMapMembers appends selected overlay keys absent from base.
 func (m *merger) appendOverlayMapMembers(
 	path fieldpath.Path,
-	members []value.Member,
+	members []value.RecordMember,
 	baseLookup memberLookup,
-	overlayMembers []value.Member,
+	overlayMembers []value.RecordMember,
 	valueDescriptor types.Descriptor,
 	fields fieldpath.Set,
 	depth int,
-) ([]value.Member, error) {
+) ([]value.RecordMember, error) {
 	for _, member := range overlayMembers {
-		if baseLookup.Has(member.Name) {
+		name := member.Name.String()
+		if baseLookup.Has(name) {
 			continue
 		}
 
-		childPath := path.Key(member.Name)
+		childPath := path.Key(name)
 		next, err := m.mergeMapMember(
 			childPath,
 			valuepresence.Absent(),
@@ -80,7 +82,7 @@ func (m *merger) appendOverlayMapMembers(
 			return nil, err
 		}
 
-		members = appendMember(members, member.Name, next)
+		members = appendMember(members, name, next)
 	}
 
 	return members, nil

@@ -34,7 +34,7 @@ func TestDecodeValueBool(t *testing.T) {
 	requireNoError(t, err)
 
 	requireKind(t, got, value.KindBool)
-	payload, _ := got.Bool()
+	payload, _ := got.AsBool()
 	if !payload {
 		t.Fatalf("bool = false; want true")
 	}
@@ -88,7 +88,7 @@ func TestDecodeValueArrayPreservesOrder(t *testing.T) {
 	requireNoError(t, err)
 
 	requireKind(t, got, value.KindList)
-	list, _ := got.List()
+	list, _ := got.AsList()
 	items := list.Items()
 	requireIntegerText(t, items[0], "1")
 	requireStringValue(t, items[1], "two")

@@ -81,9 +81,9 @@ func TestExtractReturnsSortedUniqueSet(t *testing.T) {
 		types.Field("zeta").String().Optional(),
 		types.Field("alpha").String().Optional(),
 	).Descriptor()
-	val := value.MustObjectValue(
-		value.ObjectMember("zeta", value.StringValue("last")),
-		value.ObjectMember("alpha", value.StringValue("first")),
+	val := value.MustRecordValue(
+		value.MustRecordMember("zeta", value.StringValue("last")),
+		value.MustRecordMember("alpha", value.StringValue("first")),
 	)
 
 	got, err := Extract(val, descriptor, Options{})
@@ -98,8 +98,8 @@ func TestExtractReturnsSortedUniqueSet(t *testing.T) {
 }
 
 func TestExtractDoesNotMutateValue(t *testing.T) {
-	val := value.MustObjectValue(
-		value.ObjectMember("name", value.StringValue("api")),
+	val := value.MustRecordValue(
+		value.MustRecordMember("name", value.StringValue("api")),
 	)
 
 	_, err := Extract(
@@ -109,7 +109,7 @@ func TestExtractDoesNotMutateValue(t *testing.T) {
 	)
 	requireNoError(t, err)
 
-	objectView, ok := val.Object()
+	objectView, ok := val.AsRecord()
 	if !ok {
 		t.Fatalf("Object() ok = false")
 	}
@@ -117,7 +117,7 @@ func TestExtractDoesNotMutateValue(t *testing.T) {
 	if !ok {
 		t.Fatalf("member name missing after extraction")
 	}
-	text, ok := memberValue.String()
+	text, ok := memberValue.AsString()
 	if !ok || text != "api" {
 		t.Fatalf("member value = %q, %v; want api, true", text, ok)
 	}

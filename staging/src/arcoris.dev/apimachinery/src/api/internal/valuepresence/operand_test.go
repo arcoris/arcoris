@@ -64,7 +64,7 @@ func TestFromPresent(t *testing.T) {
 		t.Fatalf("ValueOK ok = false")
 	}
 
-	got, _ := val.String()
+	got, _ := val.AsString()
 	if got != "x" {
 		t.Fatalf("ValueOK value = %q, want x", got)
 	}
@@ -91,13 +91,13 @@ func TestClonePresent(t *testing.T) {
 	operand := Present(value.BytesValue([]byte{1, 2, 3}))
 	cloned := operand.Clone()
 
-	got, ok := cloned.Value().Bytes()
+	got, ok := cloned.Value().AsBytes()
 	if !ok {
 		t.Fatalf("Clone().Value() is not bytes")
 	}
 	got[0] = 9
 
-	original, _ := operand.Value().Bytes()
+	original, _ := operand.Value().AsBytes()
 	if original[0] != 1 {
 		t.Fatalf("Clone aliased original bytes")
 	}

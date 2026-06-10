@@ -41,6 +41,13 @@ func FloatValue(v float64) (Value, error) {
 		)
 	}
 
+	if v == 0 {
+		// Canonicalize -0.0 to +0.0. IEEE-754 signed zero compares equal
+		// to +0.0 but has a different bit representation, which would make
+		// deterministic encoding, hashing, and golden tests unstable.
+		v = 0
+	}
+
 	return Value{kind: KindFloat, floatValue: v}, nil
 }
 

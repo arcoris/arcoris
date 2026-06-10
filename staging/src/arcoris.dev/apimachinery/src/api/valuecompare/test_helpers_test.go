@@ -157,9 +157,9 @@ func paths(values ...fieldpath.Path) []fieldpath.Path {
 func mustDecimal(t *testing.T, text string) value.Value {
 	t.Helper()
 
-	decimal, err := value.NewDecimal(text)
+	decimal, err := value.ParseDecimal(text)
 	if err != nil {
-		t.Fatalf("NewDecimal(%q) error = %v", text, err)
+		t.Fatalf("ParseDecimal(%q) error = %v", text, err)
 	}
 
 	return value.DecimalValue(decimal)
@@ -222,19 +222,19 @@ func conditionsDescriptor() types.Descriptor {
 }
 
 func conditionValue(conditionType string, status string) value.Value {
-	return value.MustObjectValue(
-		value.ObjectMember("type", value.StringValue(conditionType)),
-		value.ObjectMember("status", value.StringValue(status)),
+	return value.MustRecordValue(
+		value.MustRecordMember("type", value.StringValue(conditionType)),
+		value.MustRecordMember("status", value.StringValue(status)),
 	)
 }
 
 func valueObject(fields ...string) value.Value {
-	members := make([]value.Member, 0, len(fields)/2)
+	members := make([]value.RecordMember, 0, len(fields)/2)
 	for i := 0; i < len(fields); i += 2 {
-		members = append(members, value.ObjectMember(fields[i], value.StringValue(fields[i+1])))
+		members = append(members, value.MustRecordMember(fields[i], value.StringValue(fields[i+1])))
 	}
 
-	return value.MustObjectValue(members...)
+	return value.MustRecordValue(members...)
 }
 
 func typesObject(fields ...string) types.Descriptor {
@@ -247,8 +247,8 @@ func typesObject(fields ...string) types.Descriptor {
 }
 
 func imageContainer(image string) value.Value {
-	return value.MustObjectValue(
-		value.ObjectMember("name", value.StringValue("main")),
-		value.ObjectMember("image", value.StringValue(image)),
+	return value.MustRecordValue(
+		value.MustRecordMember("name", value.StringValue("main")),
+		value.MustRecordMember("image", value.StringValue(image)),
 	)
 }

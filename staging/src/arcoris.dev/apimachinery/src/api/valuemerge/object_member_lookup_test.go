@@ -22,7 +22,7 @@ import (
 )
 
 func TestMemberLookupOperandPresent(t *testing.T) {
-	lookup := newMemberLookup([]value.Member{
+	lookup := newMemberLookup([]value.RecordMember{
 		member("name", str("api")),
 	})
 
@@ -31,7 +31,7 @@ func TestMemberLookupOperandPresent(t *testing.T) {
 		t.Fatalf("operand is absent")
 	}
 
-	text, _ := got.Value().String()
+	text, _ := got.Value().AsString()
 	if text != "api" {
 		t.Fatalf("value = %q; want api", text)
 	}

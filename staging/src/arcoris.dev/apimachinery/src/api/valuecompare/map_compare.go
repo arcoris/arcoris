@@ -21,7 +21,7 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// compareMap interprets value.KindObject as a dynamic string-keyed map.
+// compareMap interprets value.KindRecord as a dynamic string-keyed map.
 //
 // DescriptorMap shares the concrete object payload with DescriptorObject, but uses
 // path.Key(key) rather than path.Field(name). Dynamic keys are sorted before
@@ -33,10 +33,10 @@ func (c *comparer) compareMap(
 	descriptor types.Descriptor,
 	depth int,
 ) (Result, error) {
-	if err := requireKind(path, oldValue, value.KindObject, descriptor.Code()); err != nil {
+	if err := requireKind(path, oldValue, value.KindRecord, descriptor.Code()); err != nil {
 		return Result{}, err
 	}
-	if err := requireKind(path, newValue, value.KindObject, descriptor.Code()); err != nil {
+	if err := requireKind(path, newValue, value.KindRecord, descriptor.Code()); err != nil {
 		return Result{}, err
 	}
 
@@ -53,8 +53,8 @@ func (c *comparer) compareMap(
 		return Result{}, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map value descriptor is invalid")
 	}
 
-	oldObject, _ := oldValue.Object()
-	newObject, _ := newValue.Object()
+	oldObject, _ := oldValue.AsRecord()
+	newObject, _ := newValue.AsRecord()
 	oldMembers := membersByName(oldObject.Members())
 	newMembers := membersByName(newObject.Members())
 

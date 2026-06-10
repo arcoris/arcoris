@@ -25,7 +25,7 @@ func boolLiteral(path fieldpath.Path, keyValue value.Value) (fieldpath.Literal, 
 		return fieldpath.Literal{}, keyKindMismatch(path, keyValue.Kind(), value.KindBool)
 	}
 
-	boolPayload, _ := keyValue.Bool()
+	boolPayload, _ := keyValue.AsBool()
 
 	return fieldpath.BoolLiteral(boolPayload), nil
 }

@@ -17,37 +17,37 @@ package value
 import "testing"
 
 func TestDecimalCompareEqualDifferentScale(t *testing.T) {
-	requireEqual(t, MustDecimal("1.0").Compare(MustDecimal("1.00")), 0)
-	requireEqual(t, MustDecimal("-1.0").Compare(MustDecimal("-1.00")), 0)
+	requireEqual(t, MustParseDecimal("1.0").Compare(MustParseDecimal("1.00")), 0)
+	requireEqual(t, MustParseDecimal("-1.0").Compare(MustParseDecimal("-1.00")), 0)
 }
 
 func TestDecimalCompareLessGreater(t *testing.T) {
-	requireEqual(t, MustDecimal("1.23").Compare(MustDecimal("1.24")), -1)
-	requireEqual(t, MustDecimal("10").Compare(MustDecimal("2")), 1)
-	requireEqual(t, MustDecimal("0.001").Compare(MustDecimal("0.01")), -1)
+	requireEqual(t, MustParseDecimal("1.23").Compare(MustParseDecimal("1.24")), -1)
+	requireEqual(t, MustParseDecimal("10").Compare(MustParseDecimal("2")), 1)
+	requireEqual(t, MustParseDecimal("0.001").Compare(MustParseDecimal("0.01")), -1)
 }
 
 func TestDecimalCompareNegativeValues(t *testing.T) {
-	requireEqual(t, MustDecimal("-2").Compare(MustDecimal("-1")), -1)
-	requireEqual(t, MustDecimal("-0.01").Compare(MustDecimal("0")), -1)
-	requireEqual(t, MustDecimal("1").Compare(MustDecimal("-1")), 1)
+	requireEqual(t, MustParseDecimal("-2").Compare(MustParseDecimal("-1")), -1)
+	requireEqual(t, MustParseDecimal("-0.01").Compare(MustParseDecimal("0")), -1)
+	requireEqual(t, MustParseDecimal("1").Compare(MustParseDecimal("-1")), 1)
 }
 
 func TestDecimalCompareSmallFractions(t *testing.T) {
-	requireEqual(t, MustDecimal("0.000000001").Compare(MustDecimal("0.000000002")), -1)
-	requireEqual(t, MustDecimal("0.000000010").Compare(MustDecimal("0.00000001")), 0)
-	requireEqual(t, MustDecimal("-0.000000002").Compare(MustDecimal("-0.000000001")), -1)
+	requireEqual(t, MustParseDecimal("0.000000001").Compare(MustParseDecimal("0.000000002")), -1)
+	requireEqual(t, MustParseDecimal("0.000000010").Compare(MustParseDecimal("0.00000001")), 0)
+	requireEqual(t, MustParseDecimal("-0.000000002").Compare(MustParseDecimal("-0.000000001")), -1)
 }
 
 func TestDecimalCompareLargeCoefficient(t *testing.T) {
-	left := MustDecimal("123456789012345678901234567890.01")
-	right := MustDecimal("123456789012345678901234567890.02")
+	left := MustParseDecimal("123456789012345678901234567890.01")
+	right := MustParseDecimal("123456789012345678901234567890.02")
 
 	requireEqual(t, left.Compare(right), -1)
 	requireEqual(t, right.Compare(left), 1)
 }
 
 func TestDecimalCompareZero(t *testing.T) {
-	requireEqual(t, MustDecimal("0").Compare(MustDecimal("-0")), 0)
-	requireEqual(t, Decimal{}.Compare(MustDecimal("0")), 0)
+	requireEqual(t, MustParseDecimal("0").Compare(MustParseDecimal("-0")), 0)
+	requireEqual(t, Decimal{}.Compare(MustParseDecimal("0")), 0)
 }

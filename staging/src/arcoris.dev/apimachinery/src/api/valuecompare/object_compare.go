@@ -35,10 +35,10 @@ func (c *comparer) compareObject(
 	descriptor types.Descriptor,
 	depth int,
 ) (Result, error) {
-	if err := requireKind(path, oldValue, value.KindObject, descriptor.Code()); err != nil {
+	if err := requireKind(path, oldValue, value.KindRecord, descriptor.Code()); err != nil {
 		return Result{}, err
 	}
-	if err := requireKind(path, newValue, value.KindObject, descriptor.Code()); err != nil {
+	if err := requireKind(path, newValue, value.KindRecord, descriptor.Code()); err != nil {
 		return Result{}, err
 	}
 
@@ -52,16 +52,16 @@ func (c *comparer) compareObject(
 		)
 	}
 
-	oldObject, _ := oldValue.Object()
-	newObject, _ := newValue.Object()
+	oldObject, _ := oldValue.AsRecord()
+	newObject, _ := newValue.AsRecord()
 	fields := objectFieldsByName(objectView.Fields())
 	result := EmptyResult()
 
 	for _, field := range objectView.Fields() {
 		name := string(field.Name())
 		fieldPath := path.Field(name)
-		oldFieldValue, oldFound := oldObject.Get(name)
-		newFieldValue, newFound := newObject.Get(name)
+		oldFieldValue, oldFound := oldObject.Get(value.MemberName(name))
+		newFieldValue, newFound := newObject.Get(value.MemberName(name))
 
 		child, err := c.compare(
 			fieldPath,
@@ -111,8 +111,8 @@ func objectFieldsByName(fields []types.FieldDescriptor) map[string]types.FieldDe
 // opaque leaf, and UnknownPrune ignores unknown members completely.
 func (c *comparer) compareUnknownObjectMembers(
 	path fieldpath.Path,
-	oldObject value.ObjectView,
-	newObject value.ObjectView,
+	oldObject value.RecordView,
+	newObject value.RecordView,
 	declared map[string]types.FieldDescriptor,
 	policy types.UnknownFieldPolicy,
 ) (Result, error) {
@@ -136,8 +136,8 @@ func (c *comparer) compareUnknownObjectMembers(
 // rejectUnknownObjectMembers reports the first rejected unknown field deterministically.
 func (c *comparer) rejectUnknownObjectMembers(
 	path fieldpath.Path,
-	oldObject value.ObjectView,
-	newObject value.ObjectView,
+	oldObject value.RecordView,
+	newObject value.RecordView,
 	declared map[string]types.FieldDescriptor,
 ) (Result, error) {
 	for _, name := range unknownMemberNames(oldObject, newObject, declared) {
@@ -160,8 +160,8 @@ func (c *comparer) rejectUnknownObjectMembers(
 // or modified.
 func (c *comparer) comparePreservedUnknownObjectMembers(
 	path fieldpath.Path,
-	oldObject value.ObjectView,
-	newObject value.ObjectView,
+	oldObject value.RecordView,
+	newObject value.RecordView,
 	declared map[string]types.FieldDescriptor,
 ) (Result, error) {
 	result := EmptyResult()
@@ -181,12 +181,12 @@ func (c *comparer) comparePreservedUnknownObjectMembers(
 // comparePreservedUnknownObjectMember compares one preserved unknown member.
 func (c *comparer) comparePreservedUnknownObjectMember(
 	path fieldpath.Path,
-	oldObject value.ObjectView,
-	newObject value.ObjectView,
+	oldObject value.RecordView,
+	newObject value.RecordView,
 	name string,
 ) (Result, error) {
-	oldMember, oldFound := oldObject.Get(name)
-	newMember, newFound := newObject.Get(name)
+	oldMember, oldFound := oldObject.Get(value.MemberName(name))
+	newMember, newFound := newObject.Get(value.MemberName(name))
 
 	switch {
 	case !oldFound && newFound:
@@ -223,8 +223,8 @@ func (c *comparer) compareOpaqueLeaf(path fieldpath.Path, oldMember value.Value,
 
 // unknownMemberNames returns deterministic undeclared names present on either side.
 func unknownMemberNames(
-	oldObject value.ObjectView,
-	newObject value.ObjectView,
+	oldObject value.RecordView,
+	newObject value.RecordView,
 	declared map[string]types.FieldDescriptor,
 ) []string {
 	seen := make(map[string]bool, oldObject.Len()+newObject.Len())
@@ -243,12 +243,13 @@ func unknownMemberNames(
 // addUnknownNames records object member names that are not declared by descriptor.
 func addUnknownNames(
 	seen map[string]bool,
-	object value.ObjectView,
+	object value.RecordView,
 	declared map[string]types.FieldDescriptor,
 ) {
 	for _, member := range object.Members() {
-		if _, ok := declared[member.Name]; !ok {
-			seen[member.Name] = true
+		name := member.Name.String()
+		if _, ok := declared[name]; !ok {
+			seen[name] = true
 		}
 	}
 }

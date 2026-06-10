@@ -31,7 +31,7 @@ func (v *validator) validateDecimal(path fieldpath.Path, val value.Value, descri
 		return
 	}
 
-	got, _ := val.Decimal()
+	got, _ := val.AsDecimal()
 	view, ok := descriptor.AsDecimal()
 	if !ok {
 		v.add(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not decimal")

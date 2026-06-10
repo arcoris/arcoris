@@ -65,8 +65,8 @@ func TestValidateObjectNullability(t *testing.T) {
 
 	payload := mustObject(
 		t,
-		value.ObjectMember("name", value.StringValue("main")),
-		value.ObjectMember("note", value.NullValue()),
+		value.MustRecordMember("name", value.StringValue("main")),
+		value.MustRecordMember("note", value.NullValue()),
 	)
 
 	requireNoError(
@@ -86,8 +86,8 @@ func TestValidateObjectUnknownFieldRejected(t *testing.T) {
 
 	payload := mustObject(
 		t,
-		value.ObjectMember("name", value.StringValue("main")),
-		value.ObjectMember("extra", value.StringValue("x")),
+		value.MustRecordMember("name", value.StringValue("main")),
+		value.MustRecordMember("extra", value.StringValue("x")),
 	)
 
 	err := valuevalidation.Validate(
@@ -112,8 +112,8 @@ func TestValidateObjectUnknownFieldPruneAllowed(t *testing.T) {
 
 	payload := mustObject(
 		t,
-		value.ObjectMember("name", value.StringValue("main")),
-		value.ObjectMember("extra", value.StringValue("x")),
+		value.MustRecordMember("name", value.StringValue("main")),
+		value.MustRecordMember("extra", value.StringValue("x")),
 	)
 
 	requireNoError(
@@ -133,8 +133,8 @@ func TestValidateObjectUnknownFieldPreserveOpaqueAllowed(t *testing.T) {
 
 	payload := mustObject(
 		t,
-		value.ObjectMember("name", value.StringValue("main")),
-		value.ObjectMember("extra", mustObject(t, value.ObjectMember("nested", value.StringValue("x")))),
+		value.MustRecordMember("name", value.StringValue("main")),
+		value.MustRecordMember("extra", mustObject(t, value.MustRecordMember("nested", value.StringValue("x")))),
 	)
 
 	requireNoError(
@@ -156,9 +156,9 @@ func TestValidateObjectNestedPath(t *testing.T) {
 
 	payload := mustObject(
 		t,
-		value.ObjectMember("spec", mustObject(
+		value.MustRecordMember("spec", mustObject(
 			t,
-			value.ObjectMember("replicas", value.StringValue("three")),
+			value.MustRecordMember("replicas", value.StringValue("three")),
 		)),
 	)
 

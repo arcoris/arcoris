@@ -16,20 +16,13 @@ package value
 
 import "testing"
 
-func TestObjectPayloadPreservesOrder(t *testing.T) {
-	payload, err := newObjectPayload([]Member{
-		ObjectMember("first", StringValue("one")),
-		ObjectMember("second", StringValue("two")),
-	})
-	requireNoError(t, err)
+func TestNewRecordMemberDoesNotDeepCloneValue(t *testing.T) {
+	source := BytesValue([]byte{1, 2})
+	member := NewRecordMember(MustMemberName("payload"), source)
 
-	requireEqual(t, payload.members[0].Name, "first")
-	requireEqual(t, payload.members[1].Name, "second")
-}
+	source.bytesValue[0] = 9
 
-func TestObjectPayloadEmptyObjectUsesNilStorage(t *testing.T) {
-	payload, err := newObjectPayload(nil)
-	requireNoError(t, err)
-
-	requireEqual(t, payload.members == nil, true)
+	bytes, ok := member.Value.AsBytes()
+	requireEqual(t, ok, true)
+	requireBytesEqual(t, bytes, []byte{9, 2})
 }

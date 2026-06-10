@@ -24,10 +24,10 @@ import (
 func TestErrorStringIncludesStructuredMembers(t *testing.T) {
 	err := &Error{
 		Record: diagnostic.NewRecord(
-			"object.members[0].name",
-			ErrEmptyName,
-			ErrorReasonEmptyName,
-			"object member name is empty",
+			"record.members[0].name",
+			ErrEmptyMemberName,
+			ErrorReasonEmptyMemberName,
+			"record member name is empty",
 		),
 	}
 
@@ -36,14 +36,14 @@ func TestErrorStringIncludesStructuredMembers(t *testing.T) {
 	if got == "" {
 		t.Fatal("Error() returned empty string")
 	}
-	if !errors.Is(err, ErrEmptyName) {
+	if !errors.Is(err, ErrEmptyMemberName) {
 		t.Fatal("errors.Is did not preserve sentinel")
 	}
 	if !errors.Is(err, ErrInvalidValue) {
 		t.Fatal("errors.Is did not preserve broad value sentinel")
 	}
-	if !errors.Is(err, ErrInvalidObject) {
-		t.Fatal("errors.Is did not preserve broad object sentinel")
+	if !errors.Is(err, ErrInvalidRecord) {
+		t.Fatal("errors.Is did not preserve broad record sentinel")
 	}
 }
 
@@ -58,16 +58,16 @@ func TestErrorUnwrapPreservesMemberAndCause(t *testing.T) {
 	cause := errors.New("nested")
 	err := &Error{
 		Record: diagnostic.WrapRecord(
-			"object.members[0].value",
-			ErrInvalidMember,
+			"record.members[0].value",
+			ErrInvalidRecordMember,
 			ErrorReasonInvalidValue,
-			"object member has invalid value",
+			"record member has invalid value",
 			cause,
 		),
 	}
 
 	requireErrorIs(t, err, ErrInvalidValue)
-	requireErrorIs(t, err, ErrInvalidObject)
-	requireErrorIs(t, err, ErrInvalidMember)
+	requireErrorIs(t, err, ErrInvalidRecord)
+	requireErrorIs(t, err, ErrInvalidRecordMember)
 	requireErrorIs(t, err, cause)
 }

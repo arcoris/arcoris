@@ -91,9 +91,9 @@ func TestEncodeValueList(t *testing.T) {
 }
 
 func TestEncodeValueObjectPreservesOrderByDefault(t *testing.T) {
-	object := value.MustObjectValue(
-		value.ObjectMember("b", value.Int64Value(1)),
-		value.ObjectMember("a", value.Int64Value(2)),
+	object := value.MustRecordValue(
+		value.MustRecordMember("b", value.Int64Value(1)),
+		value.MustRecordMember("a", value.Int64Value(2)),
 	)
 
 	data, err := newTestCodec(t).EncodeValue(object)
@@ -108,9 +108,9 @@ func TestEncodeValueObjectSortsWhenDeterministic(t *testing.T) {
 	c := newTestCodecWith(t, func(config *jsonconfig.Config) {
 		config.Encode.Ordering.Mode = jsonconfig.OrderingDeterministic
 	})
-	object := value.MustObjectValue(
-		value.ObjectMember("b", value.Int64Value(1)),
-		value.ObjectMember("a", value.Int64Value(2)),
+	object := value.MustRecordValue(
+		value.MustRecordMember("b", value.Int64Value(1)),
+		value.MustRecordMember("a", value.Int64Value(2)),
 	)
 
 	data, err := c.EncodeValue(object)
@@ -125,7 +125,7 @@ func TestEncodeValuePretty(t *testing.T) {
 	c := newTestCodecWith(t, func(config *jsonconfig.Config) {
 		config.Encode.Output.Layout = jsonconfig.LayoutPretty
 	})
-	object := value.MustObjectValue(value.ObjectMember("a", value.NullValue()))
+	object := value.MustRecordValue(value.MustRecordMember("a", value.NullValue()))
 
 	data, err := c.EncodeValue(object)
 	requireNoError(t, err)
@@ -178,14 +178,17 @@ func TestEncodeValueRejectsFloatWhenConfigured(t *testing.T) {
 	requireErrorIs(t, err, ErrUnsupportedValue)
 }
 
-func TestEncodeValueRejectsNegativeZeroWhenConfigured(t *testing.T) {
+func TestEncodeValueNormalizesNegativeZeroBeforeEncoding(t *testing.T) {
 	c := newTestCodecWith(t, func(config *jsonconfig.Config) {
 		config.Encode.Numbers.NegativeZero = jsonconfig.NegativeZeroReject
 	})
 
-	_, err := c.EncodeValue(mustFloatValue(t, math.Copysign(0, -1)))
+	data, err := c.EncodeValue(mustFloatValue(t, math.Copysign(0, -1)))
+	requireNoError(t, err)
 
-	requireErrorIs(t, err, ErrInvalidNumber)
+	if string(data) != `0` {
+		t.Fatalf("encoded = %s; want 0", data)
+	}
 }
 
 func TestEncodeValueRejectsInvalidZeroValue(t *testing.T) {

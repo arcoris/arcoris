@@ -17,8 +17,8 @@ package value
 import "testing"
 
 func TestDecimalAccessor(t *testing.T) {
-	decimal := MustDecimal("1.20")
-	got, ok := DecimalValue(decimal).Decimal()
+	decimal := MustParseDecimal("1.20")
+	got, ok := DecimalValue(decimal).AsDecimal()
 
 	requireEqual(t, ok, true)
 	requireEqual(t, got.Equal(decimal), true)

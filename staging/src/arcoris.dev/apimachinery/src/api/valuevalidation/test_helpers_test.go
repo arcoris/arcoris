@@ -109,12 +109,12 @@ func requireErrorCount(t *testing.T, err error, want int) {
 	}
 }
 
-func mustObject(t *testing.T, members ...value.Member) value.Value {
+func mustObject(t *testing.T, members ...value.RecordMember) value.Value {
 	t.Helper()
 
-	v, err := value.ObjectValue(members...)
+	v, err := value.RecordValue(members...)
 	if err != nil {
-		t.Fatalf("ObjectValue() error = %v", err)
+		t.Fatalf("RecordValue() error = %v", err)
 	}
 
 	return v
@@ -145,9 +145,9 @@ func mustFloat(t *testing.T, f float64) value.Value {
 func mustDecimal(t *testing.T, text string) value.Value {
 	t.Helper()
 
-	decimal, err := value.NewDecimal(text)
+	decimal, err := value.ParseDecimal(text)
 	if err != nil {
-		t.Fatalf("NewDecimal(%q) error = %v", text, err)
+		t.Fatalf("ParseDecimal(%q) error = %v", text, err)
 	}
 
 	return value.DecimalValue(decimal)

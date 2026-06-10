@@ -56,7 +56,7 @@ func (e *extractor) extractList(
 		)
 	}
 
-	valueView, _ := val.List()
+	valueView, _ := val.AsList()
 	if valueView.IsEmpty() {
 		return setAt(path)
 	}

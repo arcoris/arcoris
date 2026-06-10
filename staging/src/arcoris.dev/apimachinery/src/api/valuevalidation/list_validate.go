@@ -44,7 +44,7 @@ func (v *validator) validateList(
 		return
 	}
 
-	valueView, _ := val.List()
+	valueView, _ := val.AsList()
 	length := valueView.Len()
 	if minItems, ok := listView.MinItems(); ok && length < minItems {
 		v.addf(

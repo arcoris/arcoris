@@ -63,11 +63,11 @@ func objectElement(fields ...types.FieldExpr) types.Descriptor {
 }
 
 func objectWith(name string, val value.Value) value.Value {
-	return value.MustObjectValue(value.ObjectMember(name, val))
+	return value.MustRecordValue(value.MustRecordMember(name, val))
 }
 
-func objectWithMembers(members ...value.Member) value.Value {
-	return value.MustObjectValue(members...)
+func objectWithMembers(members ...value.RecordMember) value.Value {
+	return value.MustRecordValue(members...)
 }
 
 func conditionPath(index int) fieldpath.Path {

@@ -28,7 +28,7 @@ func (v *validator) validateFloat32(path fieldpath.Path, val value.Value, descri
 		return
 	}
 
-	got, _ := val.Float()
+	got, _ := val.AsFloat()
 	if math.Abs(got) > math.MaxFloat32 {
 		v.add(path, ErrValueOutOfRange, ErrorReasonAboveMaximum, "float does not fit float32")
 		return
@@ -71,7 +71,7 @@ func (v *validator) validateFloat64(path fieldpath.Path, val value.Value, descri
 		return
 	}
 
-	got, _ := val.Float()
+	got, _ := val.AsFloat()
 	view, ok := descriptor.AsFloat64()
 	if !ok {
 		v.add(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not float64")

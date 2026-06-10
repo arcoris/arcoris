@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/types"
+	"arcoris.dev/apimachinery/api/value"
 )
 
 func TestMergeUnknownRejectSelectedUnknownReturnsUnknownField(t *testing.T) {
@@ -160,8 +161,8 @@ func TestMergeUnknownPreserveOpaqueExactCopiesOpaque(t *testing.T) {
 		t.Fatalf("Merge returned error: %v", err)
 	}
 
-	view, _ := got.Object()
-	extra, ok := view.Get("xExtra")
+	view, _ := got.AsRecord()
+	extra, ok := view.Get(value.MemberName("xExtra"))
 	if !ok {
 		t.Fatalf("xExtra is absent")
 	}

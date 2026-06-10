@@ -18,7 +18,7 @@ import "testing"
 
 func TestTimeOfDayAccessor(t *testing.T) {
 	timeOfDay := TimeOfDay{hour: 1, minute: 2, second: 3, nanosecond: 4}
-	got, ok := MustTimeOfDayValue(timeOfDay).TimeOfDay()
+	got, ok := MustTimeOfDayValue(timeOfDay).AsTimeOfDay()
 
 	requireEqual(t, ok, true)
 	requireEqual(t, got.Equal(timeOfDay), true)

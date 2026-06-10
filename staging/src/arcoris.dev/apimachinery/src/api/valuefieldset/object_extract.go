@@ -20,14 +20,14 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// extractObject interprets value.KindObject as a fixed-field object descriptor.
+// extractObject interprets value.KindRecord as a fixed-field object descriptor.
 func (e *extractor) extractObject(
 	path fieldpath.Path,
 	val value.Value,
 	descriptor types.Descriptor,
 	depth int,
 ) (fieldpath.Set, error) {
-	if err := requireKind(path, val, value.KindObject, descriptor.Code()); err != nil {
+	if err := requireKind(path, val, value.KindRecord, descriptor.Code()); err != nil {
 		return fieldpath.Set{}, err
 	}
 
@@ -41,7 +41,7 @@ func (e *extractor) extractObject(
 		)
 	}
 
-	valueView, _ := val.Object()
+	valueView, _ := val.AsRecord()
 	if valueView.IsEmpty() {
 		return setAt(path)
 	}
@@ -50,13 +50,14 @@ func (e *extractor) extractObject(
 	out := fieldpath.EmptySet()
 
 	for _, objectMember := range valueView.Members() {
-		memberPath := path.Field(objectMember.Name)
-		fieldDescriptor, declared := fields[objectMember.Name]
+		name := objectMember.Name.String()
+		memberPath := path.Field(name)
+		fieldDescriptor, declared := fields[name]
 
 		if !declared {
 			memberSet, err := e.extractUnknownObjectMember(
 				memberPath,
-				objectMember.Name,
+				name,
 				objectView.UnknownFields(),
 			)
 			if err != nil {

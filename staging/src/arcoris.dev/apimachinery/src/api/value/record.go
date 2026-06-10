@@ -14,28 +14,28 @@
 
 package value
 
-// ObjectValue constructs a KindObject Value from uniquely named members.
+// RecordValue constructs a KindRecord Value from uniquely named members.
 //
-// Object values are concrete keyed payload nodes with caller-ordered members.
+// Record values are concrete keyed payload nodes with caller-ordered members.
 // They intentionally do not decide whether the data will satisfy a descriptor
 // object or descriptor map. Member values are cloned during construction so
-// later mutations of caller-owned values cannot affect the stored object.
-func ObjectValue(members ...Member) (Value, error) {
-	payload, err := newObjectPayload(members)
+// later mutations of caller-owned values cannot affect the stored record.
+func RecordValue(members ...RecordMember) (Value, error) {
+	payload, err := newRecordPayload(members)
 	if err != nil {
 		return Value{}, err
 	}
 
-	return Value{kind: KindObject, objectValue: payload}, nil
+	return Value{kind: KindRecord, recordValue: payload}, nil
 }
 
-// MustObjectValue constructs an object Value or panics when members are malformed.
+// MustRecordValue constructs a record Value or panics when members are malformed.
 //
 // It is intended for tests and static fixtures where malformed member data is a
-// programmer error. Runtime construction paths should use ObjectValue and return
+// programmer error. Runtime construction paths should use RecordValue and return
 // its structured error.
-func MustObjectValue(members ...Member) Value {
-	value, err := ObjectValue(members...)
+func MustRecordValue(members ...RecordMember) Value {
+	value, err := RecordValue(members...)
 	if err != nil {
 		panic(err)
 	}
