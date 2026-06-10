@@ -18,4 +18,7 @@
 // objects. The package does not perform garbage collection, resolve
 // references, or check object existence. At most one owner reference may be
 // marked as controller.
+//
+// Nil and empty lists are both zero at the metadata value layer. Patch/apply
+// field presence is represented by higher layers, not by this slice value.
 package owner

@@ -18,4 +18,7 @@
 // only owns the data model and grammar. Selector parsing and matching belong to
 // a future package. Labels and annotations intentionally use different public
 // types even where their key grammar overlaps.
+//
+// Nil and empty sets are both zero at the metadata value layer. Patch/apply
+// field presence is represented by higher layers, not by this map value.
 package labels

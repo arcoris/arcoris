@@ -14,7 +14,10 @@
 
 package meta
 
-// Validate checks list metadata without interpreting pagination policy.
+// Validate checks list metadata scalar form only.
+//
+// It does not interpret pagination policy, storage cursor internals, list
+// consistency guarantees, watch state, or remaining-count accuracy.
 func (m ListMeta) Validate() error {
 	if !m.ResourceVersion.IsZero() {
 		if err := m.ResourceVersion.Validate(); err != nil {

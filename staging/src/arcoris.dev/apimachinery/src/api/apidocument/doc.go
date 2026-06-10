@@ -19,8 +19,12 @@
 // fields. It does not implement codecs, parsers, serializers, schema generation,
 // validation, storage, resource catalog lookup, admission, or runtime behavior.
 //
-// These constants are the source of truth for hand-written codec
-// implementations. Go struct tags in object and metadata packages remain string
-// literals because struct tags cannot reference constants; tests in this package
-// verify that those tags stay aligned with the constants.
+// These constants are the single source of truth for document-layout vocabulary
+// used by hand-written codecs. Changing a field constant is an API
+// compatibility change. api/meta owns metadata semantics and validation;
+// api/apidocument owns spelling only.
+//
+// Go struct tags in object and metadata packages remain string literals because
+// struct tags cannot reference constants. Tests in this package verify that
+// those tags stay aligned with the constants.
 package apidocument

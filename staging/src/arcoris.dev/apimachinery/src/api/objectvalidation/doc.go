@@ -16,9 +16,10 @@
 // resolved resource contracts.
 //
 // The package checks contract conformance, not request admissibility. It
-// coordinates object metadata validation, object GVK to resource group/kind
-// matching, resource version lookup, minimal scope compatibility, and desired
-// or observed surface validation through typed SurfaceValidator implementations.
+// delegates metadata lexical validation to api/meta, checks object GVK to
+// resource group/kind matching, checks resource version lookup, checks minimal
+// scope compatibility, and validates desired or observed surfaces through typed
+// SurfaceValidator implementations.
 //
 // Resource definitions supplied through Plan are expected to have been
 // validated at construction, registration, or catalog boundaries. This package

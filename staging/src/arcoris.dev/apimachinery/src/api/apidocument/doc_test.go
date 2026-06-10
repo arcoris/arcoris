@@ -27,4 +27,7 @@ func TestPackageHasFormatNeutralFieldNames(t *testing.T) {
 	if apidocument.OwnershipFieldVersion.IsZero() {
 		t.Fatalf("OwnershipFieldVersion is zero")
 	}
+	if apidocument.ListMetaFieldContinue.IsZero() {
+		t.Fatalf("ListMetaFieldContinue is zero")
+	}
 }

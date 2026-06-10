@@ -14,10 +14,13 @@
 
 package meta
 
-// Validate checks metadata-level invariants only.
+// Validate checks metadata lexical form only.
 //
-// Scope-specific rules such as requiring or forbidding Namespace belong to
-// resource-aware validation outside api/meta.
+// It validates nested metadata values but does not decide whether the metadata is
+// valid for create, update, storage, apply, delete, or list-response phases.
+// Scope-specific namespace rules, server-assigned field requirements, UID
+// generation, resourceVersion assignment, generation transitions, and deletion
+// lifecycle rules belong to resource-aware and lifecycle-aware layers.
 func (m ObjectMeta) Validate() error {
 	if !m.Name.IsZero() {
 		if err := m.Name.Validate(); err != nil {

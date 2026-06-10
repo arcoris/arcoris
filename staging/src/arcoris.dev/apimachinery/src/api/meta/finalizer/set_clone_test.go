@@ -21,10 +21,24 @@ func TestSetClone(t *testing.T) {
 		t.Fatal("nil clone is non-nil")
 	}
 
+	empty := Set{}
+	emptyClone := empty.Clone()
+	if emptyClone == nil {
+		t.Fatal("empty clone is nil")
+	}
+	emptyClone = append(emptyClone, "cleanup")
+	if len(empty) != 0 {
+		t.Fatal("empty clone aliases original slice")
+	}
+
 	set := Set{"cleanup"}
 	cloned := set.Clone()
 	cloned[0] = "archive"
 	if set[0] != "cleanup" {
 		t.Fatal("Clone() did not detach slice storage")
+	}
+	set[0] = "restore"
+	if cloned[0] != "archive" {
+		t.Fatal("original mutation changed clone")
 	}
 }

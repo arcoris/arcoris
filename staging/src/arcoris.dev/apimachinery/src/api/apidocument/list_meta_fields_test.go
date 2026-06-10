@@ -12,11 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package annotations defines non-indexed tool and integration metadata.
-//
-// Annotations are separate from labels even where key grammar overlaps. This
-// package does not implement selectors or indexing policy.
-//
-// Nil and empty sets are both zero at the metadata value layer. Patch/apply
-// field presence is represented by higher layers, not by this map value.
-package annotations
+package apidocument_test
+
+import (
+	"testing"
+
+	"arcoris.dev/apimachinery/api/apidocument"
+)
+
+func TestListMetaFieldNames(t *testing.T) {
+	assertFieldName(t, "ListMetaFieldResourceVersion", apidocument.ListMetaFieldResourceVersion, "resourceVersion")
+	assertFieldName(t, "ListMetaFieldContinue", apidocument.ListMetaFieldContinue, "continue")
+	assertFieldName(t, "ListMetaFieldRemainingItemCount", apidocument.ListMetaFieldRemainingItemCount, "remainingItemCount")
+}

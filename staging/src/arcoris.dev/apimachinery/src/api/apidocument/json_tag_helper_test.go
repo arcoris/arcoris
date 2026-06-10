@@ -55,6 +55,10 @@ const (
 	objectMetaGoFieldAnnotations     = "Annotations"
 	objectMetaGoFieldOwnerReferences = "OwnerReferences"
 	objectMetaGoFieldFinalizers      = "Finalizers"
+
+	listMetaGoFieldResourceVersion    = "ResourceVersion"
+	listMetaGoFieldContinueToken      = "ContinueToken"
+	listMetaGoFieldRemainingItemCount = "RemainingItemCount"
 )
 
 // parsedJSONTag is a test-only view of one Go json struct tag.

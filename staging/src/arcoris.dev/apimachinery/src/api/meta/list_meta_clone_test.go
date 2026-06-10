@@ -26,4 +26,15 @@ func TestListMetaClone(t *testing.T) {
 	if *meta.RemainingItemCount != 3 {
 		t.Fatal("RemainingItemCount pointer was not detached")
 	}
+	*meta.RemainingItemCount = 4
+	if *cloned.RemainingItemCount != 9 {
+		t.Fatal("original RemainingItemCount mutation changed clone")
+	}
+}
+
+func TestListMetaCloneNilRemainingItemCount(t *testing.T) {
+	meta := ListMeta{}
+	if meta.Clone().RemainingItemCount != nil {
+		t.Fatal("nil RemainingItemCount clone is non-nil")
+	}
 }

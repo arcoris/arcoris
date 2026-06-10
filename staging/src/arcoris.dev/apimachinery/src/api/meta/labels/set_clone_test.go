@@ -21,11 +21,25 @@ func TestSetClone(t *testing.T) {
 		t.Fatal("nil clone is non-nil")
 	}
 
+	empty := Set{}
+	emptyClone := empty.Clone()
+	if emptyClone == nil {
+		t.Fatal("empty clone is nil")
+	}
+	emptyClone["role"] = "worker"
+	if len(empty) != 0 {
+		t.Fatal("empty clone aliases original map")
+	}
+
 	set := Set{"role": "worker"}
 	cloned := set.Clone()
 	cloned["role"] = "manager"
 
 	if set["role"] != "worker" {
 		t.Fatal("Clone() did not detach map storage")
+	}
+	set["tier"] = "backend"
+	if _, ok := cloned["tier"]; ok {
+		t.Fatal("original mutation changed clone")
 	}
 }

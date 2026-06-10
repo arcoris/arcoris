@@ -19,5 +19,7 @@ func (s Set) Clone() Set {
 	if s == nil {
 		return nil
 	}
-	return append(Set(nil), s...)
+	out := make(Set, len(s))
+	copy(out, s)
+	return out
 }

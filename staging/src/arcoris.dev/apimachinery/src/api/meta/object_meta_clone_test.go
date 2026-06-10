@@ -17,6 +17,10 @@ package meta
 import (
 	"testing"
 
+	"arcoris.dev/apimachinery/api/meta/annotations"
+	"arcoris.dev/apimachinery/api/meta/finalizer"
+	"arcoris.dev/apimachinery/api/meta/labels"
+	"arcoris.dev/apimachinery/api/meta/owner"
 	"arcoris.dev/apimachinery/api/meta/stamp"
 )
 
@@ -46,5 +50,53 @@ func TestObjectMetaClone(t *testing.T) {
 	}
 	if meta.Deletion.GracePeriodSeconds != 0 {
 		t.Fatal("deletion pointer was not detached")
+	}
+
+	meta.Labels["role"] = "lead"
+	meta.Annotations["note"] = "original changed"
+	meta.OwnerReferences[0].Ref.Name = "changed"
+	meta.Finalizers[0] = "original"
+	meta.Deletion.GracePeriodSeconds = 1
+
+	if cloned.Labels["role"] != "manager" {
+		t.Fatal("original label mutation changed clone")
+	}
+	if cloned.Annotations["note"] != "changed" {
+		t.Fatal("original annotation mutation changed clone")
+	}
+	if cloned.OwnerReferences[0].Ref.Name == "changed" {
+		t.Fatal("original owner reference mutation changed clone")
+	}
+	if cloned.Finalizers[0] != "changed" {
+		t.Fatal("original finalizer mutation changed clone")
+	}
+	if cloned.Deletion.GracePeriodSeconds != 99 {
+		t.Fatal("original deletion mutation changed clone")
+	}
+}
+
+func TestObjectMetaClonePreservesEmptyCollections(t *testing.T) {
+	meta := ObjectMeta{
+		Labels:          labels.Set{},
+		Annotations:     annotations.Set{},
+		OwnerReferences: owner.List{},
+		Finalizers:      finalizer.Set{},
+	}
+
+	cloned := meta.Clone()
+	if cloned.Labels == nil {
+		t.Fatal("empty labels clone is nil")
+	}
+	if cloned.Annotations == nil {
+		t.Fatal("empty annotations clone is nil")
+	}
+	if cloned.OwnerReferences == nil {
+		t.Fatal("empty owner references clone is nil")
+	}
+	if cloned.Finalizers == nil {
+		t.Fatal("empty finalizers clone is nil")
+	}
+	if cloned.Deletion != nil {
+		t.Fatal("nil deletion clone is non-nil")
 	}
 }

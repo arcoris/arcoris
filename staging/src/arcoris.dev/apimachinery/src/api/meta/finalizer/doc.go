@@ -17,4 +17,7 @@
 // Finalizers block physical deletion until external cleanup is complete. This
 // package models names and sets only; it does not execute cleanup, delete
 // objects, or assign lifecycle meaning to order.
+//
+// Nil and empty sets are both zero at the metadata value layer. Patch/apply
+// field presence is represented by higher layers, not by this slice value.
 package finalizer

@@ -21,10 +21,24 @@ func TestListClone(t *testing.T) {
 		t.Fatal("nil clone is non-nil")
 	}
 
+	empty := List{}
+	emptyClone := empty.Clone()
+	if emptyClone == nil {
+		t.Fatal("empty clone is nil")
+	}
+	emptyClone = append(emptyClone, validReference(true))
+	if len(empty) != 0 {
+		t.Fatal("empty clone aliases original slice")
+	}
+
 	owners := List{validReference(true)}
 	cloned := owners.Clone()
 	cloned[0].Controller = false
 	if !owners[0].Controller {
 		t.Fatal("Clone() did not detach slice storage")
+	}
+	owners[0].Ref.Name = "changed"
+	if cloned[0].Ref.Name == "changed" {
+		t.Fatal("original mutation changed clone")
 	}
 }
