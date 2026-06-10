@@ -21,29 +21,29 @@ import (
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 )
 
-func TestListMeta(t *testing.T) {
-	if !(ListMeta{}).IsZero() {
-		t.Fatal("zero ListMeta IsZero() = false")
+func TestPageMeta(t *testing.T) {
+	if !(PageMeta{}).IsZero() {
+		t.Fatal("zero PageMeta IsZero() = false")
 	}
 
 	count := uint64(3)
-	meta := ListMeta{
+	meta := PageMeta{
 		ResourceVersion:    "rv-1",
 		ContinueToken:      "page-1",
 		RemainingItemCount: &count,
 	}
 	if meta.IsZero() {
-		t.Fatal("non-zero ListMeta IsZero() = true")
+		t.Fatal("non-zero PageMeta IsZero() = true")
 	}
 }
 
-func TestListMetaJSONFields(t *testing.T) {
+func TestPageMetaJSONFields(t *testing.T) {
 	type testWorker struct {
 		TypeMeta `json:",inline"`
 	}
 	type testWorkerList struct {
 		TypeMeta `json:",inline"`
-		ListMeta `json:"metadata,omitempty"`
+		PageMeta `json:"metadata,omitempty"`
 
 		Items []testWorker `json:"items"`
 	}
@@ -55,7 +55,7 @@ func TestListMetaJSONFields(t *testing.T) {
 			Version: "v1",
 			Kind:    "WorkerList",
 		}),
-		ListMeta: ListMeta{
+		PageMeta: PageMeta{
 			ResourceVersion:    "rv-1",
 			ContinueToken:      "token-1",
 			RemainingItemCount: &count,

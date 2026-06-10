@@ -16,19 +16,19 @@ package owner
 
 import "testing"
 
-func TestListValidate(t *testing.T) {
-	requireNoError(t, List(nil).Validate())
-	requireNoError(t, List{validReference(true)}.Validate())
+func TestListValidateLexical(t *testing.T) {
+	requireNoError(t, List(nil).ValidateLexical())
+	requireNoError(t, List{validReference(true)}.ValidateLexical())
 
-	requireErrorIs(t, List{validReference(true), validReference(true)}.Validate(), ErrMultipleControllers)
-	requireErrorIs(t, List{validReference(false), validReference(false)}.Validate(), ErrDuplicateReference)
-	requireErrorIs(t, List{{}}.Validate(), ErrInvalidList)
+	requireErrorIs(t, List{validReference(true), validReference(true)}.ValidateLexical(), ErrMultipleControllers)
+	requireErrorIs(t, List{validReference(false), validReference(false)}.ValidateLexical(), ErrDuplicateReference)
+	requireErrorIs(t, List{{}}.ValidateLexical(), ErrInvalidList)
 }
 
-func TestListValidateRejectsDuplicateReferenceWithDifferentController(t *testing.T) {
+func TestListValidateLexicalRejectsDuplicateReferenceWithDifferentController(t *testing.T) {
 	ref := validReference(false)
 	controller := ref
 	controller.Controller = true
 
-	requireErrorIs(t, List{ref, controller}.Validate(), ErrDuplicateReference)
+	requireErrorIs(t, List{ref, controller}.ValidateLexical(), ErrDuplicateReference)
 }

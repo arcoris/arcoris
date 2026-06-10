@@ -19,7 +19,7 @@ import (
 	"testing"
 )
 
-func TestUIDValidate(t *testing.T) {
+func TestUIDValidateLexical(t *testing.T) {
 	tests := []string{
 		"uid-1",
 		"abc.DEF_123",
@@ -28,7 +28,7 @@ func TestUIDValidate(t *testing.T) {
 	}
 	for _, value := range tests {
 		t.Run("valid/"+value, func(t *testing.T) {
-			requireNoError(t, UID(value).Validate())
+			requireNoError(t, UID(value).ValidateLexical())
 		})
 	}
 
@@ -41,7 +41,7 @@ func TestUIDValidate(t *testing.T) {
 		strings.Repeat("a", 129),
 	} {
 		t.Run("invalid/"+value, func(t *testing.T) {
-			requireErrorIs(t, UID(value).Validate(), ErrInvalidUID)
+			requireErrorIs(t, UID(value).ValidateLexical(), ErrInvalidUID)
 		})
 	}
 }

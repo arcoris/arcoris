@@ -20,7 +20,7 @@ func BenchmarkObjectMetaValidate(b *testing.B) {
 	meta := validObjectMeta()
 
 	for b.Loop() {
-		if err := meta.Validate(); err != nil {
+		if err := meta.ValidateLexical(); err != nil {
 			b.Fatal(err)
 		}
 	}

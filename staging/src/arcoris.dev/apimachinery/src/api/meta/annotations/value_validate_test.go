@@ -19,15 +19,15 @@ import (
 	"testing"
 )
 
-func TestValueValidate(t *testing.T) {
-	requireNoError(t, Value("").Validate())
-	requireNoError(t, Value("human readable note").Validate())
+func TestValueValidateLexical(t *testing.T) {
+	requireNoError(t, Value("").ValidateLexical())
+	requireNoError(t, Value("human readable note").ValidateLexical())
 
-	requireErrorIs(t, Value("bad\nnote").Validate(), ErrInvalidValue)
+	requireErrorIs(t, Value("bad\nnote").ValidateLexical(), ErrInvalidValue)
 }
 
-func TestValueValidateStructuredError(t *testing.T) {
-	err := Value("bad\nnote").Validate()
+func TestValueValidateLexicalStructuredError(t *testing.T) {
+	err := Value("bad\nnote").ValidateLexical()
 	requireErrorIs(t, err, ErrInvalidValue)
 
 	var annotationErr *Error

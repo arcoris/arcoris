@@ -24,7 +24,7 @@ import (
 func TestListValidateMeta(t *testing.T) {
 	list := NewList(
 		validListTypeMeta(),
-		validListMeta(),
+		validPageMeta(),
 		[]uninspectedPayload{{Value: "item"}},
 	)
 
@@ -42,7 +42,7 @@ func TestListValidateMetaRejectsInvalidMetadata(t *testing.T) {
 			name: "type meta",
 			list: List[int]{
 				TypeMeta: meta.TypeMeta{Kind: "WorkerList"},
-				ListMeta: validListMeta(),
+				PageMeta: validPageMeta(),
 			},
 			target: meta.ErrInvalidTypeMeta,
 			path:   "list.typeMeta",
@@ -51,9 +51,9 @@ func TestListValidateMetaRejectsInvalidMetadata(t *testing.T) {
 			name: "list meta",
 			list: List[int]{
 				TypeMeta: validListTypeMeta(),
-				ListMeta: meta.ListMeta{ContinueToken: "bad token"},
+				PageMeta: meta.PageMeta{ContinueToken: "bad token"},
 			},
-			target: meta.ErrInvalidListMeta,
+			target: meta.ErrInvalidPageMeta,
 			path:   "list.metadata",
 		},
 	}
@@ -88,7 +88,7 @@ func TestListValidateMetaDoesNotInspectItems(t *testing.T) {
 	called := false
 	list := NewList(
 		validListTypeMeta(),
-		validListMeta(),
+		validPageMeta(),
 		[]payloadWithValidate{{Called: &called}},
 	)
 

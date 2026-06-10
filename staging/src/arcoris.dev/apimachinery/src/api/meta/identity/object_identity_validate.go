@@ -14,9 +14,9 @@
 
 package identity
 
-// Validate checks that an object identity has a valid object name and UID.
-func (i ObjectIdentity) Validate() error {
-	if err := i.ObjectName().Validate(); err != nil {
+// ValidateLexical checks that an object identity has a valid object name and UID.
+func (i ObjectIdentity) ValidateLexical() error {
+	if err := i.ObjectName().ValidateLexical(); err != nil {
 		return nested("objectIdentity.objectName", i.String(), ErrInvalidObjectIdentity, err)
 	}
 
@@ -30,7 +30,7 @@ func (i ObjectIdentity) Validate() error {
 		)
 	}
 
-	if err := i.UID.Validate(); err != nil {
+	if err := i.UID.ValidateLexical(); err != nil {
 		return nested("objectIdentity.uid", i.String(), ErrInvalidObjectIdentity, err)
 	}
 

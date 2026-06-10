@@ -14,10 +14,10 @@
 
 package identity
 
-// ParseNamePrefix parses and validates a generated-name prefix.
+// ParseNamePrefix parses and validates a name prefix.
 func ParseNamePrefix(value string) (NamePrefix, error) {
 	prefix := NamePrefix(value)
-	if err := prefix.Validate(); err != nil {
+	if err := prefix.ValidateLexical(); err != nil {
 		return "", err
 	}
 

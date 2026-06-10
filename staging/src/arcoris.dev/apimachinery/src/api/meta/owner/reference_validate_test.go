@@ -16,7 +16,7 @@ package owner
 
 import "testing"
 
-func TestReferenceValidate(t *testing.T) {
-	requireNoError(t, validReference(false).Validate())
-	requireErrorIs(t, (Reference{}).Validate(), ErrInvalidReference)
+func TestReferenceValidateLexical(t *testing.T) {
+	requireNoError(t, validReference(false).ValidateLexical())
+	requireErrorIs(t, (Reference{}).ValidateLexical(), ErrInvalidReference)
 }

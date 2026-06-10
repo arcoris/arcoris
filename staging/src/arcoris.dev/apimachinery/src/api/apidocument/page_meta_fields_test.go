@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package apidocument
+package apidocument_test
 
-const (
-	// ListMetaFieldResourceVersion is the list metadata resourceVersion field.
-	ListMetaFieldResourceVersion FieldName = "resourceVersion"
+import (
+	"testing"
 
-	// ListMetaFieldContinue is the list metadata continuation-token field.
-	ListMetaFieldContinue FieldName = "continue"
-
-	// ListMetaFieldRemainingItemCount is the list metadata remainingItemCount field.
-	ListMetaFieldRemainingItemCount FieldName = "remainingItemCount"
+	"arcoris.dev/apimachinery/api/apidocument"
 )
+
+func TestPageMetaFieldNames(t *testing.T) {
+	assertFieldName(t, "PageMetaFieldResourceVersion", apidocument.PageMetaFieldResourceVersion, "resourceVersion")
+	assertFieldName(t, "PageMetaFieldContinue", apidocument.PageMetaFieldContinue, "continue")
+	assertFieldName(t, "PageMetaFieldRemainingItemCount", apidocument.PageMetaFieldRemainingItemCount, "remainingItemCount")
+}

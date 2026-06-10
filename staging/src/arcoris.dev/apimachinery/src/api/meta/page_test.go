@@ -22,7 +22,7 @@ import (
 )
 
 func TestPageToken(t *testing.T) {
-	requireNoError(t, PageToken("").Validate())
+	requireNoError(t, PageToken("").ValidateLexical())
 
 	token, err := ParsePageToken("page-1")
 	requireNoError(t, err)
@@ -30,6 +30,14 @@ func TestPageToken(t *testing.T) {
 		t.Fatalf("token = %q zero=%v", token, token.IsZero())
 	}
 
+	optional, err := ParseOptionalPageToken("")
+	requireNoError(t, err)
+	if !optional.IsZero() {
+		t.Fatalf("optional token = %q", optional)
+	}
+
+	_, err = ParsePageToken("")
+	requireErrorIs(t, err, ErrInvalidPageToken)
 	_, err = ParsePageToken("page 1")
 	requireErrorIs(t, err, ErrInvalidPageToken)
 	_, err = ParsePageToken("page/1")
@@ -62,7 +70,7 @@ func TestPageToken(t *testing.T) {
 }
 
 func TestPageTokenValidateStructuredLengthError(t *testing.T) {
-	err := PageToken(strings.Repeat("x", maxPageTokenLength+1)).Validate()
+	err := PageToken(strings.Repeat("x", maxPageTokenLength+1)).ValidateLexical()
 	requireErrorIs(t, err, ErrInvalidPageToken)
 
 	var metaErr *Error

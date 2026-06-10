@@ -19,6 +19,6 @@ package stamp
 // Generation is a uint64 scalar. Zero is a valid absent or unassigned value at
 // the metadata layer. Persisted-object lifecycle requirements belong to higher
 // layers.
-func (g Generation) Validate() error {
+func (g Generation) ValidateLexical() error {
 	return nil
 }

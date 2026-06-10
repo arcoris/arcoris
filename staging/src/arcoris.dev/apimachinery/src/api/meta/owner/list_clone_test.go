@@ -37,8 +37,8 @@ func TestListClone(t *testing.T) {
 	if !owners[0].Controller {
 		t.Fatal("Clone() did not detach slice storage")
 	}
-	owners[0].Ref.Name = "changed"
-	if cloned[0].Ref.Name == "changed" {
+	owners[0].Object.Name = "changed"
+	if cloned[0].Object.Name == "changed" {
 		t.Fatal("original mutation changed clone")
 	}
 }

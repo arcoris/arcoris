@@ -20,15 +20,15 @@ import (
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 )
 
-func TestTypeMetaValidate(t *testing.T) {
-	requireNoError(t, (TypeMeta{}).Validate())
+func TestTypeMetaValidateLexical(t *testing.T) {
+	requireNoError(t, (TypeMeta{}).ValidateLexical())
 	requireNoError(t, TypeMeta{
 		APIVersion: apiidentity.GroupVersion{Group: "control.arcoris.dev", Version: "v1"},
 		Kind:       "Worker",
-	}.Validate())
+	}.ValidateLexical())
 
-	requireErrorIs(t, TypeMeta{Kind: "Worker"}.Validate(), ErrInvalidTypeMeta)
+	requireErrorIs(t, TypeMeta{Kind: "Worker"}.ValidateLexical(), ErrInvalidTypeMeta)
 	requireErrorIs(t, TypeMeta{
 		APIVersion: apiidentity.GroupVersion{Group: "control.arcoris.dev", Version: "v1"},
-	}.Validate(), ErrInvalidTypeMeta)
+	}.ValidateLexical(), ErrInvalidTypeMeta)
 }

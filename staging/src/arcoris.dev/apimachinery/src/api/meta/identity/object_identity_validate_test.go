@@ -16,9 +16,9 @@ package identity
 
 import "testing"
 
-func TestObjectIdentityValidate(t *testing.T) {
-	requireNoError(t, ObjectIdentity{Name: "worker", UID: "uid-1"}.Validate())
+func TestObjectIdentityValidateLexical(t *testing.T) {
+	requireNoError(t, ObjectIdentity{Name: "worker", UID: "uid-1"}.ValidateLexical())
 
-	requireErrorIs(t, ObjectIdentity{Name: "worker"}.Validate(), ErrInvalidObjectIdentity)
-	requireErrorIs(t, ObjectIdentity{UID: "uid-1"}.Validate(), ErrInvalidObjectIdentity)
+	requireErrorIs(t, ObjectIdentity{Name: "worker"}.ValidateLexical(), ErrInvalidObjectIdentity)
+	requireErrorIs(t, ObjectIdentity{UID: "uid-1"}.ValidateLexical(), ErrInvalidObjectIdentity)
 }

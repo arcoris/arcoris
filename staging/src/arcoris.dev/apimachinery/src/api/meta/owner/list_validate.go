@@ -20,15 +20,15 @@ import (
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 )
 
-// Validate checks owner references and enforces owner-list invariants.
-func (l List) Validate() error {
+// ValidateLexical checks owner references and enforces owner-list invariants.
+func (l List) ValidateLexical() error {
 	controllerCount := 0
 	seenRefs := make(map[metaidentity.ObjectIdentityReference]struct{}, len(l))
 
 	for i, reference := range l {
 		path := fmt.Sprintf("ownerReferences[%d]", i)
 
-		if err := reference.Validate(); err != nil {
+		if err := reference.ValidateLexical(); err != nil {
 			return nested(path, ErrInvalidList, err)
 		}
 
@@ -44,7 +44,7 @@ func (l List) Validate() error {
 			}
 		}
 
-		if _, ok := seenRefs[reference.Ref]; ok {
+		if _, ok := seenRefs[reference.Object]; ok {
 			return invalid(
 				path,
 				ErrDuplicateReference,
@@ -53,7 +53,7 @@ func (l List) Validate() error {
 			)
 		}
 
-		seenRefs[reference.Ref] = struct{}{}
+		seenRefs[reference.Object] = struct{}{}
 	}
 
 	return nil

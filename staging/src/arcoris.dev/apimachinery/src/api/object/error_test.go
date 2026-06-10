@@ -48,7 +48,7 @@ func TestErrorFormatting(t *testing.T) {
 }
 
 func TestNestedErrorDetailDoesNotRepeatCause(t *testing.T) {
-	cause := meta.TypeMeta{Kind: "Worker"}.Validate()
+	cause := meta.TypeMeta{Kind: "Worker"}.ValidateLexical()
 	err := nested("object.typeMeta", ErrInvalidObject, cause)
 
 	var objectErr *Error
@@ -64,7 +64,7 @@ func TestNestedErrorDetailDoesNotRepeatCause(t *testing.T) {
 }
 
 func TestErrorUnwrapPreservesSentinelAndCause(t *testing.T) {
-	cause := meta.TypeMeta{Kind: "Worker"}.Validate()
+	cause := meta.TypeMeta{Kind: "Worker"}.ValidateLexical()
 	err := nested("object.typeMeta", ErrInvalidObject, cause)
 
 	if !errors.Is(err, ErrInvalidObject) {

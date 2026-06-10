@@ -23,7 +23,7 @@ import (
 
 // MarshalText validates and encodes the generation as decimal text.
 func (g Generation) MarshalText() ([]byte, error) {
-	return marshalText(g.String(), g.Validate)
+	return marshalText(g.String(), g.ValidateLexical)
 }
 
 // UnmarshalText decodes and validates a decimal generation.
@@ -48,7 +48,7 @@ func (g *Generation) UnmarshalText(data []byte) error {
 
 // MarshalJSON validates and encodes the generation as one JSON number.
 func (g Generation) MarshalJSON() ([]byte, error) {
-	if err := g.Validate(); err != nil {
+	if err := g.ValidateLexical(); err != nil {
 		return nil, err
 	}
 

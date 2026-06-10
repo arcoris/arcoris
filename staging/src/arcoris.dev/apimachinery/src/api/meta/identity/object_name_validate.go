@@ -14,8 +14,8 @@
 
 package identity
 
-// Validate checks that an object name has a name and optional valid namespace.
-func (n ObjectName) Validate() error {
+// ValidateLexical checks that an object name has a name and optional valid namespace.
+func (n ObjectName) ValidateLexical() error {
 	if n.Name.IsZero() {
 		return invalid(
 			"objectName.name",
@@ -26,11 +26,11 @@ func (n ObjectName) Validate() error {
 		)
 	}
 
-	if err := n.Namespace.Validate(); err != nil {
+	if err := n.Namespace.ValidateLexical(); err != nil {
 		return nested("objectName.namespace", n.String(), ErrInvalidObjectName, err)
 	}
 
-	if err := n.Name.Validate(); err != nil {
+	if err := n.Name.ValidateLexical(); err != nil {
 		return nested("objectName.name", n.String(), ErrInvalidObjectName, err)
 	}
 

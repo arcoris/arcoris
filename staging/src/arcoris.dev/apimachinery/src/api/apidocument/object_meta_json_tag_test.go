@@ -30,7 +30,7 @@ func TestObjectMetaJSONTagsMatchAPIDocument(t *testing.T) {
 		api    apidocument.FieldName
 	}{
 		{goName: objectMetaGoFieldName, api: apidocument.ObjectMetaFieldName},
-		{goName: objectMetaGoFieldGenerateName, api: apidocument.ObjectMetaFieldGenerateName},
+		{goName: objectMetaGoFieldNamePrefix, api: apidocument.ObjectMetaFieldGenerateName},
 		{goName: objectMetaGoFieldNamespace, api: apidocument.ObjectMetaFieldNamespace},
 		{goName: objectMetaGoFieldUID, api: apidocument.ObjectMetaFieldUID},
 		{goName: objectMetaGoFieldResourceVersion, api: apidocument.ObjectMetaFieldResourceVersion},

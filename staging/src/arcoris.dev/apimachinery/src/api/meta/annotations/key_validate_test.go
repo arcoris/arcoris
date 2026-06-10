@@ -16,10 +16,10 @@ package annotations
 
 import "testing"
 
-func TestKeyValidate(t *testing.T) {
-	requireNoError(t, Key("note").Validate())
-	requireNoError(t, Key("control.arcoris.dev/note").Validate())
+func TestKeyValidateLexical(t *testing.T) {
+	requireNoError(t, Key("note").ValidateLexical())
+	requireNoError(t, Key("control.arcoris.dev/note").ValidateLexical())
 
-	requireErrorIs(t, Key("").Validate(), ErrInvalidKey)
-	requireErrorIs(t, Key("note_name").Validate(), ErrInvalidKey)
+	requireErrorIs(t, Key("").ValidateLexical(), ErrInvalidKey)
+	requireErrorIs(t, Key("note_name").ValidateLexical(), ErrInvalidKey)
 }

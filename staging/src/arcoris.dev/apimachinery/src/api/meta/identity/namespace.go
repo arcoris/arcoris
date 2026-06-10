@@ -30,7 +30,7 @@ func (n Namespace) String() string {
 // The empty namespace is valid and returns an empty string because namespace
 // absence is part of the object-name domain.
 func (n Namespace) CanonicalText() (string, error) {
-	if err := n.Validate(); err != nil {
+	if err := n.ValidateLexical(); err != nil {
 		return "", err
 	}
 

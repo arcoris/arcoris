@@ -16,7 +16,7 @@ package identity
 
 // MarshalText validates and encodes the name prefix as text.
 func (p NamePrefix) MarshalText() ([]byte, error) {
-	return marshalText(p.String(), p.Validate)
+	return marshalText(p.String(), p.ValidateLexical)
 }
 
 // UnmarshalText decodes and validates a text name prefix.
@@ -36,7 +36,7 @@ func (p *NamePrefix) UnmarshalText(data []byte) error {
 
 // MarshalJSON validates and encodes the name prefix as one JSON string.
 func (p NamePrefix) MarshalJSON() ([]byte, error) {
-	return marshalJSONString(p.String(), p.Validate)
+	return marshalJSONString(p.String(), p.ValidateLexical)
 }
 
 // UnmarshalJSON decodes and validates a JSON string name prefix.

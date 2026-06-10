@@ -16,7 +16,7 @@ package identity
 
 // MarshalText validates and encodes the name as text.
 func (n Name) MarshalText() ([]byte, error) {
-	return marshalText(n.String(), n.Validate)
+	return marshalText(n.String(), n.ValidateLexical)
 }
 
 // UnmarshalText decodes and validates a text name.
@@ -36,7 +36,7 @@ func (n *Name) UnmarshalText(data []byte) error {
 
 // MarshalJSON validates and encodes the name as one JSON string.
 func (n Name) MarshalJSON() ([]byte, error) {
-	return marshalJSONString(n.String(), n.Validate)
+	return marshalJSONString(n.String(), n.ValidateLexical)
 }
 
 // UnmarshalJSON decodes and validates a JSON string name.

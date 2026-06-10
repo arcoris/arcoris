@@ -14,10 +14,10 @@
 
 package owner
 
-// Validate checks the nested object reference without resolving it.
-func (r Reference) Validate() error {
-	if err := r.Ref.Validate(); err != nil {
-		return nested("owner.ref", ErrInvalidReference, err)
+// ValidateLexical checks the nested object reference without resolving it.
+func (r Reference) ValidateLexical() error {
+	if err := r.Object.ValidateLexical(); err != nil {
+		return nested("owner.object", ErrInvalidReference, err)
 	}
 	return nil
 }

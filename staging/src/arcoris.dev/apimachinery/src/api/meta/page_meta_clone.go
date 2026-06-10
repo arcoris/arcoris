@@ -12,16 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package apidocument_test
+package meta
 
-import (
-	"testing"
-
-	"arcoris.dev/apimachinery/api/apidocument"
-)
-
-func TestListMetaFieldNames(t *testing.T) {
-	assertFieldName(t, "ListMetaFieldResourceVersion", apidocument.ListMetaFieldResourceVersion, "resourceVersion")
-	assertFieldName(t, "ListMetaFieldContinue", apidocument.ListMetaFieldContinue, "continue")
-	assertFieldName(t, "ListMetaFieldRemainingItemCount", apidocument.ListMetaFieldRemainingItemCount, "remainingItemCount")
+// Clone returns an independent copy of page metadata.
+func (m PageMeta) Clone() PageMeta {
+	if m.RemainingItemCount != nil {
+		value := *m.RemainingItemCount
+		m.RemainingItemCount = &value
+	}
+	return m
 }

@@ -22,7 +22,7 @@ import "arcoris.dev/apimachinery/api/meta"
 // another API object representation. The list envelope validates only metadata.
 type List[T any] struct {
 	meta.TypeMeta `json:",inline"`
-	meta.ListMeta `json:"metadata,omitempty,omitzero"`
+	meta.PageMeta `json:"metadata,omitempty,omitzero"`
 
 	// Items are the list payload values. api/object does not validate them.
 	Items []T `json:"items"`
@@ -36,12 +36,12 @@ type List[T any] struct {
 // API responses later if they require empty lists to encode as [].
 func NewList[T any](
 	typeMeta meta.TypeMeta,
-	listMeta meta.ListMeta,
+	pageMeta meta.PageMeta,
 	items []T,
 ) List[T] {
 	return List[T]{
 		TypeMeta: typeMeta.Clone(),
-		ListMeta: listMeta.Clone(),
+		PageMeta: pageMeta.Clone(),
 		Items:    copyItems(items),
 	}
 }
@@ -56,6 +56,6 @@ func (l List[T]) Len() int {
 // It checks only slice length, not generic item contents.
 func (l List[T]) IsZero() bool {
 	return l.TypeMeta.IsZero() &&
-		l.ListMeta.IsZero() &&
+		l.PageMeta.IsZero() &&
 		len(l.Items) == 0
 }

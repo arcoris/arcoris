@@ -20,22 +20,22 @@ import (
 	"testing"
 )
 
-func TestResourceVersionValidate(t *testing.T) {
-	requireNoError(t, ResourceVersion("").Validate())
-	requireNoError(t, ResourceVersion("rv-1").Validate())
+func TestResourceVersionValidateLexical(t *testing.T) {
+	requireNoError(t, ResourceVersion("").ValidateLexical())
+	requireNoError(t, ResourceVersion("rv-1").ValidateLexical())
 
-	requireErrorIs(t, ResourceVersion("rv 1").Validate(), ErrInvalidResourceVersion)
-	requireErrorIs(t, ResourceVersion("rv/1").Validate(), ErrInvalidResourceVersion)
-	requireErrorIs(t, ResourceVersion("rv\n1").Validate(), ErrInvalidResourceVersion)
+	requireErrorIs(t, ResourceVersion("rv 1").ValidateLexical(), ErrInvalidResourceVersion)
+	requireErrorIs(t, ResourceVersion("rv/1").ValidateLexical(), ErrInvalidResourceVersion)
+	requireErrorIs(t, ResourceVersion("rv\n1").ValidateLexical(), ErrInvalidResourceVersion)
 	requireErrorIs(
 		t,
-		ResourceVersion(strings.Repeat("x", maxResourceVersionLength+1)).Validate(),
+		ResourceVersion(strings.Repeat("x", maxResourceVersionLength+1)).ValidateLexical(),
 		ErrInvalidResourceVersion,
 	)
 }
 
-func TestResourceVersionValidateStructuredLengthError(t *testing.T) {
-	err := ResourceVersion(strings.Repeat("x", maxResourceVersionLength+1)).Validate()
+func TestResourceVersionValidateLexicalStructuredLengthError(t *testing.T) {
+	err := ResourceVersion(strings.Repeat("x", maxResourceVersionLength+1)).ValidateLexical()
 	requireErrorIs(t, err, ErrInvalidResourceVersion)
 
 	var stampErr *Error

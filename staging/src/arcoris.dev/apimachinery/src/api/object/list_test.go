@@ -22,13 +22,13 @@ import (
 
 func TestNewList(t *testing.T) {
 	items := []int{1, 2}
-	list := NewList(validListTypeMeta(), validListMeta(), items)
+	list := NewList(validListTypeMeta(), validPageMeta(), items)
 
 	if list.TypeMeta != validListTypeMeta() {
 		t.Fatalf("TypeMeta = %#v", list.TypeMeta)
 	}
-	if list.ListMeta.ResourceVersion != "rv-1" {
-		t.Fatalf("ListMeta = %#v", list.ListMeta)
+	if list.PageMeta.ResourceVersion != "rv-1" {
+		t.Fatalf("PageMeta = %#v", list.PageMeta)
 	}
 	if list.Len() != 2 {
 		t.Fatalf("Len() = %d", list.Len())
@@ -41,12 +41,12 @@ func TestNewList(t *testing.T) {
 }
 
 func TestNewListPreservesNilAndEmptyItems(t *testing.T) {
-	nilList := NewList[int](validListTypeMeta(), validListMeta(), nil)
+	nilList := NewList[int](validListTypeMeta(), validPageMeta(), nil)
 	if nilList.Items != nil {
 		t.Fatalf("nil items became %#v", nilList.Items)
 	}
 
-	emptyList := NewList(validListTypeMeta(), validListMeta(), []int{})
+	emptyList := NewList(validListTypeMeta(), validPageMeta(), []int{})
 	if emptyList.Items == nil || len(emptyList.Items) != 0 {
 		t.Fatalf("empty items became %#v", emptyList.Items)
 	}
@@ -58,7 +58,7 @@ func TestNewListItemCopyIsShallow(t *testing.T) {
 	}
 
 	items := []item{{Values: []int{1}}}
-	list := NewList(validListTypeMeta(), validListMeta(), items)
+	list := NewList(validListTypeMeta(), validPageMeta(), items)
 	items[0].Values[0] = 9
 
 	if list.Items[0].Values[0] != 9 {
@@ -74,7 +74,7 @@ func TestListIsZero(t *testing.T) {
 	}{
 		{name: "zero", list: List[int]{}, want: true},
 		{name: "type meta", list: List[int]{TypeMeta: validListTypeMeta()}, want: false},
-		{name: "list meta", list: List[int]{ListMeta: meta.ListMeta{ResourceVersion: "rv-1"}}, want: false},
+		{name: "list meta", list: List[int]{PageMeta: meta.PageMeta{ResourceVersion: "rv-1"}}, want: false},
 		{name: "items", list: List[int]{Items: []int{0}}, want: false},
 	}
 

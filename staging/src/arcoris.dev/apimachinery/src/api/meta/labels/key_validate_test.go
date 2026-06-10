@@ -19,16 +19,16 @@ import (
 	"testing"
 )
 
-func TestKeyValidate(t *testing.T) {
-	requireNoError(t, Key("role").Validate())
-	requireNoError(t, Key("control.arcoris.dev/role").Validate())
+func TestKeyValidateLexical(t *testing.T) {
+	requireNoError(t, Key("role").ValidateLexical())
+	requireNoError(t, Key("control.arcoris.dev/role").ValidateLexical())
 
-	requireErrorIs(t, Key("").Validate(), ErrInvalidKey)
-	requireErrorIs(t, Key("role_name").Validate(), ErrInvalidKey)
+	requireErrorIs(t, Key("").ValidateLexical(), ErrInvalidKey)
+	requireErrorIs(t, Key("role_name").ValidateLexical(), ErrInvalidKey)
 }
 
-func TestKeyValidateStructuredError(t *testing.T) {
-	err := Key("Role").Validate()
+func TestKeyValidateLexicalStructuredError(t *testing.T) {
+	err := Key("Role").ValidateLexical()
 	requireErrorIs(t, err, ErrInvalidKey)
 
 	var labelErr *Error

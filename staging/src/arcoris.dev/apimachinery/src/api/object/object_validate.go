@@ -20,11 +20,11 @@ package object
 // scope checks, and surface descriptor checks require resource-aware context
 // outside api/object.
 func (o Object[D, O]) ValidateMeta() error {
-	if err := o.TypeMeta.Validate(); err != nil {
+	if err := o.TypeMeta.ValidateLexical(); err != nil {
 		return nested("object.typeMeta", ErrInvalidObject, err)
 	}
 
-	if err := o.ObjectMeta.Validate(); err != nil {
+	if err := o.ObjectMeta.ValidateLexical(); err != nil {
 		return nested("object.metadata", ErrInvalidObject, err)
 	}
 

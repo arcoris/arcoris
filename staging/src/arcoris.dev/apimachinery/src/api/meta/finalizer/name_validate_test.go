@@ -19,16 +19,16 @@ import (
 	"testing"
 )
 
-func TestNameValidate(t *testing.T) {
-	requireNoError(t, Name("cleanup").Validate())
-	requireNoError(t, Name("control.arcoris.dev/cleanup").Validate())
+func TestNameValidateLexical(t *testing.T) {
+	requireNoError(t, Name("cleanup").ValidateLexical())
+	requireNoError(t, Name("control.arcoris.dev/cleanup").ValidateLexical())
 
-	requireErrorIs(t, Name("").Validate(), ErrInvalidName)
-	requireErrorIs(t, Name("cleanup_name").Validate(), ErrInvalidName)
+	requireErrorIs(t, Name("").ValidateLexical(), ErrInvalidName)
+	requireErrorIs(t, Name("cleanup_name").ValidateLexical(), ErrInvalidName)
 }
 
-func TestNameValidateStructuredError(t *testing.T) {
-	err := Name("cleanup_name").Validate()
+func TestNameValidateLexicalStructuredError(t *testing.T) {
+	err := Name("cleanup_name").ValidateLexical()
 	requireErrorIs(t, err, ErrInvalidName)
 
 	var finalizerErr *Error

@@ -16,9 +16,9 @@ package identity
 
 import "testing"
 
-func TestNamespaceValidate(t *testing.T) {
-	requireNoError(t, Namespace("").Validate())
-	requireNoError(t, Namespace("system").Validate())
+func TestNamespaceValidateLexical(t *testing.T) {
+	requireNoError(t, Namespace("").ValidateLexical())
+	requireNoError(t, Namespace("system").ValidateLexical())
 
-	requireErrorIs(t, Namespace("System").Validate(), ErrInvalidNamespace)
+	requireErrorIs(t, Namespace("System").ValidateLexical(), ErrInvalidNamespace)
 }

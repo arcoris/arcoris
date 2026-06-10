@@ -102,10 +102,10 @@ func wireObjectMeta() meta.ObjectMeta {
 	}
 }
 
-func validListMeta() meta.ListMeta {
+func validPageMeta() meta.PageMeta {
 	count := uint64(1)
 
-	return meta.ListMeta{
+	return meta.PageMeta{
 		ResourceVersion:    "rv-1",
 		ContinueToken:      "token-1",
 		RemainingItemCount: &count,

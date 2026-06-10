@@ -28,8 +28,8 @@ var (
 	ErrInvalidTypeMeta = errors.New("invalid API type metadata")
 	// ErrInvalidObjectMeta classifies malformed object metadata.
 	ErrInvalidObjectMeta = errors.New("invalid API object metadata")
-	// ErrInvalidListMeta classifies malformed list/page metadata.
-	ErrInvalidListMeta = errors.New("invalid API list metadata")
+	// ErrInvalidPageMeta classifies malformed page metadata.
+	ErrInvalidPageMeta = errors.New("invalid API page metadata")
 	// ErrInvalidPageToken classifies malformed opaque pagination tokens.
 	ErrInvalidPageToken = errors.New("invalid API page token")
 	// ErrInvalidJSON classifies malformed JSON scalar metadata values.

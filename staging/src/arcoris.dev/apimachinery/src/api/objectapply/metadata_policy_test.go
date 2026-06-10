@@ -88,7 +88,7 @@ func TestApplyRejectsUnsupportedAppliedMetadataFields(t *testing.T) {
 		{
 			name: "generateName",
 			mutate: func(obj *ValueObject) {
-				obj.ObjectMeta.GenerateName = metaidentity.NamePrefix("worker-")
+				obj.ObjectMeta.NamePrefix = metaidentity.NamePrefix("worker-")
 			},
 		},
 		{
@@ -192,7 +192,7 @@ func metadataTimestamp() stamp.Timestamp {
 
 func metadataOwnerReference() metaowner.Reference {
 	return metaowner.Reference{
-		Ref: metaidentity.ObjectIdentityReference{
+		Object: metaidentity.ObjectIdentityReference{
 			APIVersion: apiidentity.GroupVersion{
 				Group:   "control.arcoris.dev",
 				Version: "v1",

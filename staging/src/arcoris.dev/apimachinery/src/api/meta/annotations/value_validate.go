@@ -16,8 +16,8 @@ package annotations
 
 import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 
-// Validate checks the annotation value grammar.
-func (v Value) Validate() error {
+// ValidateLexical checks the annotation value grammar.
+func (v Value) ValidateLexical() error {
 	return fromGrammar(
 		"annotation.value",
 		ErrInvalidValue,

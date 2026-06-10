@@ -19,11 +19,11 @@ import (
 	"testing"
 )
 
-func TestValueValidate(t *testing.T) {
+func TestValueValidateLexical(t *testing.T) {
 	valid := []Value{"", "worker", "worker-1", "worker_1", "worker.1", "1"}
 	for _, value := range valid {
 		t.Run("valid/"+value.String(), func(t *testing.T) {
-			requireNoError(t, value.Validate())
+			requireNoError(t, value.ValidateLexical())
 		})
 	}
 
@@ -43,13 +43,13 @@ func TestValueValidate(t *testing.T) {
 
 	for _, value := range invalid {
 		t.Run("invalid/"+value.String(), func(t *testing.T) {
-			requireErrorIs(t, value.Validate(), ErrInvalidValue)
+			requireErrorIs(t, value.ValidateLexical(), ErrInvalidValue)
 		})
 	}
 }
 
-func TestValueValidateStructuredError(t *testing.T) {
-	err := Value("-worker").Validate()
+func TestValueValidateLexicalStructuredError(t *testing.T) {
+	err := Value("-worker").ValidateLexical()
 	requireErrorIs(t, err, ErrInvalidValue)
 
 	var labelErr *Error

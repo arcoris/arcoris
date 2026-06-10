@@ -26,7 +26,7 @@ import (
 var (
 	// ErrInvalidName classifies malformed object names.
 	ErrInvalidName = errors.New("invalid metadata name")
-	// ErrInvalidNamePrefix classifies malformed generated-name prefixes.
+	// ErrInvalidNamePrefix classifies malformed metadata name prefixes.
 	ErrInvalidNamePrefix = errors.New("invalid metadata name prefix")
 	// ErrInvalidNamespace classifies malformed namespaces.
 	ErrInvalidNamespace = errors.New("invalid metadata namespace")

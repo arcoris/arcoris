@@ -19,8 +19,8 @@ import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 // maxResourceVersionLength bounds opaque resource versions at metadata edges.
 const maxResourceVersionLength = 512
 
-// Validate checks the resource version token without interpreting it.
-func (v ResourceVersion) Validate() error {
+// ValidateLexical checks the resource version token without interpreting it.
+func (v ResourceVersion) ValidateLexical() error {
 	return fromGrammar(
 		"resourceVersion",
 		ErrInvalidResourceVersion,

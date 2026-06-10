@@ -17,7 +17,7 @@ package stamp
 // ParseResourceVersion parses and validates a resource version token.
 func ParseResourceVersion(value string) (ResourceVersion, error) {
 	version := ResourceVersion(value)
-	if err := version.Validate(); err != nil {
+	if err := version.ValidateLexical(); err != nil {
 		return "", err
 	}
 

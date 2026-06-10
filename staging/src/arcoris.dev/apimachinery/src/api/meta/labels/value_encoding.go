@@ -16,7 +16,7 @@ package labels
 
 // MarshalText validates and encodes the value as text.
 func (v Value) MarshalText() ([]byte, error) {
-	return marshalText(v.String(), v.Validate)
+	return marshalText(v.String(), v.ValidateLexical)
 }
 
 // UnmarshalText decodes and validates a text value.
@@ -26,7 +26,7 @@ func (v *Value) UnmarshalText(data []byte) error {
 	}
 
 	value := Value(string(data))
-	if err := value.Validate(); err != nil {
+	if err := value.ValidateLexical(); err != nil {
 		return err
 	}
 
@@ -36,7 +36,7 @@ func (v *Value) UnmarshalText(data []byte) error {
 
 // MarshalJSON validates and encodes the value as one JSON string.
 func (v Value) MarshalJSON() ([]byte, error) {
-	return marshalJSONString(v.String(), v.Validate)
+	return marshalJSONString(v.String(), v.ValidateLexical)
 }
 
 // UnmarshalJSON decodes and validates a JSON string value.
@@ -51,7 +51,7 @@ func (v *Value) UnmarshalJSON(data []byte) error {
 	}
 
 	parsed := Value(value)
-	if err := parsed.Validate(); err != nil {
+	if err := parsed.ValidateLexical(); err != nil {
 		return err
 	}
 

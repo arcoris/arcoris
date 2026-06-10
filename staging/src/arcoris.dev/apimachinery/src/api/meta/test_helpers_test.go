@@ -43,7 +43,7 @@ func requireErrorIs(t *testing.T, err error, target error) {
 
 func validOwnerReference() owner.Reference {
 	return owner.Reference{
-		Ref: metaidentity.ObjectIdentityReference{
+		Object: metaidentity.ObjectIdentityReference{
 			APIVersion: apiidentity.GroupVersion{Group: "control.arcoris.dev", Version: "v1"},
 			Kind:       "Worker",
 			Namespace:  "system",
@@ -57,7 +57,7 @@ func validOwnerReference() owner.Reference {
 func validObjectMeta() ObjectMeta {
 	return ObjectMeta{
 		Name:            "worker",
-		GenerateName:    "worker-",
+		NamePrefix:      "worker-",
 		Namespace:       "system",
 		UID:             "uid-1",
 		ResourceVersion: "rv-1",

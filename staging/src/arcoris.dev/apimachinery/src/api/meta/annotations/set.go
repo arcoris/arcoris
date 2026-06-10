@@ -14,8 +14,10 @@
 
 package annotations
 
+import "sort"
+
 // Set stores annotation key/value metadata.
-type Set map[string]string
+type Set map[Key]Value
 
 // IsZero reports whether the set has no entries.
 func (s Set) IsZero() bool {
@@ -29,12 +31,53 @@ func (s Set) Len() int {
 
 // Get returns the value for key.
 func (s Set) Get(key Key) (Value, bool) {
-	value, ok := s[key.String()]
-	return Value(value), ok
+	value, ok := s[key]
+	return value, ok
 }
 
 // Has reports whether key is present.
 func (s Set) Has(key Key) bool {
-	_, ok := s[key.String()]
+	_, ok := s[key]
 	return ok
+}
+
+// Keys returns annotation keys in deterministic lexical order.
+func (s Set) Keys() []Key {
+	keys := make([]Key, 0, len(s))
+	for key := range s {
+		keys = append(keys, key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+	return keys
+}
+
+// FromStrings validates and converts raw string annotation metadata into a typed set.
+func FromStrings(values map[string]string) (Set, error) {
+	if values == nil {
+		return nil, nil
+	}
+
+	set := make(Set, len(values))
+	for key, value := range values {
+		set[Key(key)] = Value(value)
+	}
+	if err := set.ValidateLexical(); err != nil {
+		return nil, err
+	}
+	return set, nil
+}
+
+// Strings returns a detached raw string map for codec and interop boundaries.
+func (s Set) Strings() map[string]string {
+	if s == nil {
+		return nil
+	}
+
+	values := make(map[string]string, len(s))
+	for key, value := range s {
+		values[key.String()] = value.String()
+	}
+	return values
 }

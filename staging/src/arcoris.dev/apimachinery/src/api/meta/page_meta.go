@@ -16,12 +16,12 @@ package meta
 
 import "arcoris.dev/apimachinery/api/meta/stamp"
 
-// ListMeta represents metadata for list and page responses.
+// PageMeta represents metadata for paginated collection responses.
 //
-// It does not contain list items, selectors, query filters, storage cursor
+// It does not contain items, selectors, query filters, storage cursor
 // internals, watch state, or route information.
-type ListMeta struct {
-	// ResourceVersion is the opaque consistency/change token for the list response.
+type PageMeta struct {
+	// ResourceVersion is the opaque consistency/change token for the collection page.
 	ResourceVersion stamp.ResourceVersion `json:"resourceVersion,omitempty"`
 	// ContinueToken is the opaque pagination token encoded as "continue" on the wire.
 	ContinueToken PageToken `json:"continue,omitempty"`
@@ -29,8 +29,8 @@ type ListMeta struct {
 	RemainingItemCount *uint64 `json:"remainingItemCount,omitempty"`
 }
 
-// IsZero reports whether all list metadata is absent.
-func (m ListMeta) IsZero() bool {
+// IsZero reports whether all page metadata is absent.
+func (m PageMeta) IsZero() bool {
 	return m.ResourceVersion.IsZero() &&
 		m.ContinueToken.IsZero() &&
 		m.RemainingItemCount == nil

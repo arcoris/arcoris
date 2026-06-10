@@ -23,15 +23,15 @@ import (
 	"arcoris.dev/apimachinery/api/meta"
 )
 
-func TestListMetaJSONTagsMatchAPIDocument(t *testing.T) {
-	goType := reflect.TypeOf(meta.ListMeta{})
+func TestPageMetaJSONTagsMatchAPIDocument(t *testing.T) {
+	goType := reflect.TypeOf(meta.PageMeta{})
 	fields := []struct {
 		goName string
 		api    apidocument.FieldName
 	}{
-		{goName: listMetaGoFieldResourceVersion, api: apidocument.ListMetaFieldResourceVersion},
-		{goName: listMetaGoFieldContinueToken, api: apidocument.ListMetaFieldContinue},
-		{goName: listMetaGoFieldRemainingItemCount, api: apidocument.ListMetaFieldRemainingItemCount},
+		{goName: pageMetaGoFieldResourceVersion, api: apidocument.PageMetaFieldResourceVersion},
+		{goName: pageMetaGoFieldContinueToken, api: apidocument.PageMetaFieldContinue},
+		{goName: pageMetaGoFieldRemainingItemCount, api: apidocument.PageMetaFieldRemainingItemCount},
 	}
 
 	for _, field := range fields {
@@ -42,16 +42,16 @@ func TestListMetaJSONTagsMatchAPIDocument(t *testing.T) {
 	}
 }
 
-func TestListMetaFlattenedJSONFieldsMatchAPIDocument(t *testing.T) {
-	goType := reflect.TypeOf(meta.ListMeta{})
+func TestPageMetaFlattenedJSONFieldsMatchAPIDocument(t *testing.T) {
+	goType := reflect.TypeOf(meta.PageMeta{})
 	got := collectFlattenedJSONFieldNames(t, goType)
 	want := []string{
-		apidocument.ListMetaFieldResourceVersion.String(),
-		apidocument.ListMetaFieldContinue.String(),
-		apidocument.ListMetaFieldRemainingItemCount.String(),
+		apidocument.PageMetaFieldResourceVersion.String(),
+		apidocument.PageMetaFieldContinue.String(),
+		apidocument.PageMetaFieldRemainingItemCount.String(),
 	}
 
 	if !slices.Equal(got, want) {
-		t.Fatalf("list metadata fields = %#v; want %#v", got, want)
+		t.Fatalf("page metadata fields = %#v; want %#v", got, want)
 	}
 }

@@ -14,73 +14,73 @@
 
 package meta
 
-// Validate checks metadata lexical form only.
+// ValidateLexical checks metadata lexical form only.
 //
 // It validates nested metadata values but does not decide whether the metadata is
 // valid for create, update, storage, apply, delete, or list-response phases.
 // Scope-specific namespace rules, server-assigned field requirements, UID
 // generation, resourceVersion assignment, generation transitions, and deletion
 // lifecycle rules belong to resource-aware and lifecycle-aware layers.
-func (m ObjectMeta) Validate() error {
+func (m ObjectMeta) ValidateLexical() error {
 	if !m.Name.IsZero() {
-		if err := m.Name.Validate(); err != nil {
+		if err := m.Name.ValidateLexical(); err != nil {
 			return nested("objectMeta.name", ErrInvalidObjectMeta, err)
 		}
 	}
 
-	if !m.GenerateName.IsZero() {
-		if err := m.GenerateName.Validate(); err != nil {
-			return nested("objectMeta.generateName", ErrInvalidObjectMeta, err)
+	if !m.NamePrefix.IsZero() {
+		if err := m.NamePrefix.ValidateLexical(); err != nil {
+			return nested("objectMeta.namePrefix", ErrInvalidObjectMeta, err)
 		}
 	}
 
 	if !m.Namespace.IsZero() {
-		if err := m.Namespace.Validate(); err != nil {
+		if err := m.Namespace.ValidateLexical(); err != nil {
 			return nested("objectMeta.namespace", ErrInvalidObjectMeta, err)
 		}
 	}
 
 	if !m.UID.IsZero() {
-		if err := m.UID.Validate(); err != nil {
+		if err := m.UID.ValidateLexical(); err != nil {
 			return nested("objectMeta.uid", ErrInvalidObjectMeta, err)
 		}
 	}
 
 	if !m.ResourceVersion.IsZero() {
-		if err := m.ResourceVersion.Validate(); err != nil {
+		if err := m.ResourceVersion.ValidateLexical(); err != nil {
 			return nested("objectMeta.resourceVersion", ErrInvalidObjectMeta, err)
 		}
 	}
 
-	if err := m.Generation.Validate(); err != nil {
+	if err := m.Generation.ValidateLexical(); err != nil {
 		return nested("objectMeta.generation", ErrInvalidObjectMeta, err)
 	}
 
 	if !m.CreatedAt.IsZero() {
-		if err := m.CreatedAt.Validate(); err != nil {
+		if err := m.CreatedAt.ValidateLexical(); err != nil {
 			return nested("objectMeta.createdAt", ErrInvalidObjectMeta, err)
 		}
 	}
 
 	if m.Deletion != nil {
-		if err := m.Deletion.Validate(); err != nil {
+		if err := m.Deletion.ValidateLexical(); err != nil {
 			return nested("objectMeta.deletion", ErrInvalidObjectMeta, err)
 		}
 	}
 
-	if err := m.Labels.Validate(); err != nil {
+	if err := m.Labels.ValidateLexical(); err != nil {
 		return nested("objectMeta.labels", ErrInvalidObjectMeta, err)
 	}
 
-	if err := m.Annotations.Validate(); err != nil {
+	if err := m.Annotations.ValidateLexical(); err != nil {
 		return nested("objectMeta.annotations", ErrInvalidObjectMeta, err)
 	}
 
-	if err := m.OwnerReferences.Validate(); err != nil {
+	if err := m.OwnerReferences.ValidateLexical(); err != nil {
 		return nested("objectMeta.ownerReferences", ErrInvalidObjectMeta, err)
 	}
 
-	if err := m.Finalizers.Validate(); err != nil {
+	if err := m.Finalizers.ValidateLexical(); err != nil {
 		return nested("objectMeta.finalizers", ErrInvalidObjectMeta, err)
 	}
 

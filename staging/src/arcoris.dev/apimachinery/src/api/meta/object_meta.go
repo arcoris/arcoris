@@ -32,8 +32,8 @@ import (
 type ObjectMeta struct {
 	// Name is the concrete metadata name of the object.
 	Name metaidentity.Name `json:"name,omitempty"`
-	// GenerateName is a server-side generation prefix, not a generated name.
-	GenerateName metaidentity.NamePrefix `json:"generateName,omitempty"`
+	// NamePrefix is a generation prefix stored in the generateName document field.
+	NamePrefix metaidentity.NamePrefix `json:"generateName,omitempty"`
 	// Namespace is absent when empty; this package does not default it.
 	Namespace metaidentity.Namespace `json:"namespace,omitempty"`
 	// UID identifies one concrete object incarnation.
@@ -63,7 +63,7 @@ type ObjectMeta struct {
 // IsZero reports whether all object metadata fields are absent.
 func (m ObjectMeta) IsZero() bool {
 	return m.Name.IsZero() &&
-		m.GenerateName.IsZero() &&
+		m.NamePrefix.IsZero() &&
 		m.Namespace.IsZero() &&
 		m.UID.IsZero() &&
 		m.ResourceVersion.IsZero() &&
@@ -76,12 +76,12 @@ func (m ObjectMeta) IsZero() bool {
 		m.Finalizers.IsZero()
 }
 
-// ObjectName returns the namespace/name portion of object metadata.
+// ObjectName returns the namespace/name projection without validating completeness.
 func (m ObjectMeta) ObjectName() metaidentity.ObjectName {
 	return metaidentity.ObjectName{Namespace: m.Namespace, Name: m.Name}
 }
 
-// ObjectIdentity returns the namespace/name/UID portion of object metadata.
+// ObjectIdentity returns the namespace/name/UID projection without validating completeness.
 func (m ObjectMeta) ObjectIdentity() metaidentity.ObjectIdentity {
 	return metaidentity.ObjectIdentity{Namespace: m.Namespace, Name: m.Name, UID: m.UID}
 }

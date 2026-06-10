@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-func TestTimestampValidate(t *testing.T) {
-	requireNoError(t, (Timestamp{}).Validate())
-	requireNoError(t, NewTimestamp(time.Date(2026, 5, 30, 12, 0, 0, 0, time.UTC)).Validate())
+func TestTimestampValidateLexical(t *testing.T) {
+	requireNoError(t, (Timestamp{}).ValidateLexical())
+	requireNoError(t, NewTimestamp(time.Date(2026, 5, 30, 12, 0, 0, 0, time.UTC)).ValidateLexical())
 }

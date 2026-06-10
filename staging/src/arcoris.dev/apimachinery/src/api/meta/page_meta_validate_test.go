@@ -16,25 +16,10 @@ package meta
 
 import "testing"
 
-func TestListMetaClone(t *testing.T) {
-	count := uint64(3)
-	meta := ListMeta{RemainingItemCount: &count}
+func TestPageMetaValidateLexical(t *testing.T) {
+	requireNoError(t, (PageMeta{}).ValidateLexical())
+	requireNoError(t, PageMeta{ResourceVersion: "rv-1", ContinueToken: "page-1"}.ValidateLexical())
 
-	cloned := meta.Clone()
-	*cloned.RemainingItemCount = 9
-
-	if *meta.RemainingItemCount != 3 {
-		t.Fatal("RemainingItemCount pointer was not detached")
-	}
-	*meta.RemainingItemCount = 4
-	if *cloned.RemainingItemCount != 9 {
-		t.Fatal("original RemainingItemCount mutation changed clone")
-	}
-}
-
-func TestListMetaCloneNilRemainingItemCount(t *testing.T) {
-	meta := ListMeta{}
-	if meta.Clone().RemainingItemCount != nil {
-		t.Fatal("nil RemainingItemCount clone is non-nil")
-	}
+	requireErrorIs(t, PageMeta{ResourceVersion: "rv 1"}.ValidateLexical(), ErrInvalidPageMeta)
+	requireErrorIs(t, PageMeta{ContinueToken: "page 1"}.ValidateLexical(), ErrInvalidPageMeta)
 }

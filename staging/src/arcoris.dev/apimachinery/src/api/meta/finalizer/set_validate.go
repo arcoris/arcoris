@@ -16,11 +16,11 @@ package finalizer
 
 import "fmt"
 
-// Validate checks finalizer names and enforces set-like uniqueness.
-func (s Set) Validate() error {
+// ValidateLexical checks finalizer names and enforces set-like uniqueness.
+func (s Set) ValidateLexical() error {
 	seen := make(map[Name]struct{}, len(s))
 	for i, name := range s {
-		if err := name.Validate(); err != nil {
+		if err := name.ValidateLexical(); err != nil {
 			return nested(fmt.Sprintf("finalizers[%d]", i), ErrInvalidSet, err)
 		}
 		if _, ok := seen[name]; ok {

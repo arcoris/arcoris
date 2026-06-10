@@ -16,10 +16,10 @@ package annotations
 
 import "testing"
 
-func TestSetValidate(t *testing.T) {
-	requireNoError(t, Set(nil).Validate())
-	requireNoError(t, Set{"note": "human readable"}.Validate())
+func TestSetValidateLexical(t *testing.T) {
+	requireNoError(t, Set(nil).ValidateLexical())
+	requireNoError(t, Set{"note": "human readable"}.ValidateLexical())
 
-	requireErrorIs(t, Set{"Note": "value"}.Validate(), ErrInvalidSet)
-	requireErrorIs(t, Set{"note": "bad\nvalue"}.Validate(), ErrInvalidSet)
+	requireErrorIs(t, Set{"Note": "value"}.ValidateLexical(), ErrInvalidSet)
+	requireErrorIs(t, Set{"note": "bad\nvalue"}.ValidateLexical(), ErrInvalidSet)
 }

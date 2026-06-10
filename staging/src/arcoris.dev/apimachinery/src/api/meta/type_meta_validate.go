@@ -14,8 +14,11 @@
 
 package meta
 
-// Validate checks metadata-level apiVersion/kind consistency.
-func (m TypeMeta) Validate() error {
+// ValidateLexical checks apiVersion/kind lexical form and pair consistency only.
+//
+// It does not check whether the kind is registered, served, storage-backed,
+// convertible, resource-scoped, or supported by a runtime scheme.
+func (m TypeMeta) ValidateLexical() error {
 	if m.IsZero() {
 		return nil
 	}

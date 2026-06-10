@@ -25,19 +25,19 @@ import (
 	"arcoris.dev/apimachinery/api/meta/stamp"
 )
 
-func TestObjectMetaValidate(t *testing.T) {
-	requireNoError(t, (ObjectMeta{}).Validate())
-	requireNoError(t, validObjectMeta().Validate())
+func TestObjectMetaValidateLexical(t *testing.T) {
+	requireNoError(t, (ObjectMeta{}).ValidateLexical())
+	requireNoError(t, validObjectMeta().ValidateLexical())
 }
 
-func TestObjectMetaValidateRejectsNonNilZeroDeletion(t *testing.T) {
-	requireErrorIs(t, (ObjectMeta{Deletion: &stamp.Deletion{}}).Validate(), ErrInvalidObjectMeta)
+func TestObjectMetaValidateLexicalRejectsNonNilZeroDeletion(t *testing.T) {
+	requireErrorIs(t, (ObjectMeta{Deletion: &stamp.Deletion{}}).ValidateLexical(), ErrInvalidObjectMeta)
 }
 
-func TestObjectMetaValidateNestedErrorShape(t *testing.T) {
+func TestObjectMetaValidateLexicalNestedErrorShape(t *testing.T) {
 	err := (ObjectMeta{
 		Labels: labels.Set{"Role": "worker"},
-	}).Validate()
+	}).ValidateLexical()
 
 	requireErrorIs(t, err, ErrInvalidObjectMeta)
 	requireErrorIs(t, err, labels.ErrInvalidSet)
@@ -57,13 +57,13 @@ func TestObjectMetaValidateNestedErrorShape(t *testing.T) {
 	}
 }
 
-func TestObjectMetaValidateRejectsInvalidNestedMetadata(t *testing.T) {
+func TestObjectMetaValidateLexicalRejectsInvalidNestedMetadata(t *testing.T) {
 	tests := []struct {
 		name string
 		meta ObjectMeta
 	}{
 		{name: "name", meta: ObjectMeta{Name: "Worker"}},
-		{name: "generateName", meta: ObjectMeta{GenerateName: "-worker"}},
+		{name: "namePrefix", meta: ObjectMeta{NamePrefix: "-worker"}},
 		{name: "namespace", meta: ObjectMeta{Namespace: "System"}},
 		{name: "uid", meta: ObjectMeta{UID: "uid 1"}},
 		{name: "resourceVersion", meta: ObjectMeta{ResourceVersion: "rv 1"}},
@@ -76,7 +76,7 @@ func TestObjectMetaValidateRejectsInvalidNestedMetadata(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			requireErrorIs(t, tt.meta.Validate(), ErrInvalidObjectMeta)
+			requireErrorIs(t, tt.meta.ValidateLexical(), ErrInvalidObjectMeta)
 		})
 	}
 }

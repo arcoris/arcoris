@@ -20,23 +20,23 @@ import (
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 )
 
-func TestObjectReferenceValidate(t *testing.T) {
+func TestObjectReferenceValidateLexical(t *testing.T) {
 	ref := ObjectReference{
 		APIVersion: apiidentity.GroupVersion{Group: "control.arcoris.dev", Version: "v1"},
 		Kind:       "Worker",
 		Name:       "worker",
 	}
-	requireNoError(t, ref.Validate())
+	requireNoError(t, ref.ValidateLexical())
 
-	requireErrorIs(t, ObjectReference{Kind: "Worker", Name: "worker"}.Validate(), ErrInvalidObjectReference)
+	requireErrorIs(t, ObjectReference{Kind: "Worker", Name: "worker"}.ValidateLexical(), ErrInvalidObjectReference)
 	requireErrorIs(
 		t,
-		ObjectReference{APIVersion: ref.APIVersion, Name: "worker"}.Validate(),
+		ObjectReference{APIVersion: ref.APIVersion, Name: "worker"}.ValidateLexical(),
 		ErrInvalidObjectReference,
 	)
 	requireErrorIs(
 		t,
-		ObjectReference{APIVersion: ref.APIVersion, Kind: "Worker"}.Validate(),
+		ObjectReference{APIVersion: ref.APIVersion, Kind: "Worker"}.ValidateLexical(),
 		ErrInvalidObjectReference,
 	)
 }

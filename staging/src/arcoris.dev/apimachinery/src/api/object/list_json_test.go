@@ -29,7 +29,7 @@ func TestListJSONShape(t *testing.T) {
 	)
 	list := NewList(
 		validListTypeMeta(),
-		validListMeta(),
+		validPageMeta(),
 		[]Object[testDesired, testObserved]{item},
 	)
 
@@ -67,7 +67,7 @@ func TestListJSONShape(t *testing.T) {
 func TestListJSONEncodesNilItems(t *testing.T) {
 	list := NewList[testDesired](
 		meta.TypeMeta{},
-		meta.ListMeta{},
+		meta.PageMeta{},
 		nil,
 	)
 
@@ -93,7 +93,7 @@ func TestListJSONEncodesNilItems(t *testing.T) {
 func TestListJSONEncodesEmptyItems(t *testing.T) {
 	list := NewList(
 		meta.TypeMeta{},
-		meta.ListMeta{},
+		meta.PageMeta{},
 		[]testDesired{},
 	)
 

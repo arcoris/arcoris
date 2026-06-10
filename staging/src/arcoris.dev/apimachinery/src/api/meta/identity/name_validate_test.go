@@ -16,9 +16,9 @@ package identity
 
 import "testing"
 
-func TestNameValidate(t *testing.T) {
-	requireNoError(t, Name("worker").Validate())
+func TestNameValidateLexical(t *testing.T) {
+	requireNoError(t, Name("worker").ValidateLexical())
 
-	requireErrorIs(t, Name("").Validate(), ErrInvalidName)
-	requireErrorIs(t, Name("worker_name").Validate(), ErrInvalidName)
+	requireErrorIs(t, Name("").ValidateLexical(), ErrInvalidName)
+	requireErrorIs(t, Name("worker_name").ValidateLexical(), ErrInvalidName)
 }

@@ -60,7 +60,7 @@ func TestErrorPreservesStructuredIdentityDiagnostics(t *testing.T) {
 }
 
 func TestErrorRecordsRejectedValue(t *testing.T) {
-	err := Name("Bad").Validate()
+	err := Name("Bad").ValidateLexical()
 	requireErrorIs(t, err, ErrInvalidName)
 
 	var got *Error

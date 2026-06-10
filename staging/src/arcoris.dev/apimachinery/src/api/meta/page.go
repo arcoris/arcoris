@@ -25,10 +25,28 @@ const maxPageTokenLength = 2048
 // structure or impose pagination policy.
 type PageToken string
 
-// ParsePageToken validates and returns an opaque pagination token.
+// ParsePageToken validates and returns a non-empty opaque pagination token.
 func ParsePageToken(value string) (PageToken, error) {
 	token := PageToken(value)
-	if err := token.Validate(); err != nil {
+	if token.IsZero() {
+		return "", invalid(
+			"pageToken",
+			ErrInvalidPageToken,
+			ErrorReasonEmptyValue,
+			"page token is required",
+		)
+	}
+	if err := token.ValidateLexical(); err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+// ParseOptionalPageToken validates and returns an optional opaque pagination token.
+func ParseOptionalPageToken(value string) (PageToken, error) {
+	token := PageToken(value)
+	if err := token.ValidateLexical(); err != nil {
 		return "", err
 	}
 
@@ -45,8 +63,8 @@ func (t PageToken) IsZero() bool {
 	return t == ""
 }
 
-// Validate checks only scalar safety and deliberately ignores token internals.
-func (t PageToken) Validate() error {
+// ValidateLexical checks only scalar safety and deliberately ignores token internals.
+func (t PageToken) ValidateLexical() error {
 	return fromGrammar(
 		"pageToken",
 		ErrInvalidPageToken,
@@ -63,7 +81,7 @@ func (t PageToken) Validate() error {
 
 // MarshalText validates and encodes the token as scalar text.
 func (t PageToken) MarshalText() ([]byte, error) {
-	return marshalText(t.String(), t.Validate)
+	return marshalText(t.String(), t.ValidateLexical)
 }
 
 // UnmarshalText decodes and validates scalar token text.
@@ -72,7 +90,7 @@ func (t *PageToken) UnmarshalText(data []byte) error {
 		return nilReceiver("pageToken")
 	}
 
-	value, err := ParsePageToken(string(data))
+	value, err := ParseOptionalPageToken(string(data))
 	if err != nil {
 		return err
 	}
@@ -83,7 +101,7 @@ func (t *PageToken) UnmarshalText(data []byte) error {
 
 // MarshalJSON validates and encodes the token as one JSON string.
 func (t PageToken) MarshalJSON() ([]byte, error) {
-	return marshalJSONString(t.String(), t.Validate)
+	return marshalJSONString(t.String(), t.ValidateLexical)
 }
 
 // UnmarshalJSON decodes one JSON string and rejects null or non-string input.
@@ -97,7 +115,7 @@ func (t *PageToken) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	parsed, err := ParsePageToken(value)
+	parsed, err := ParseOptionalPageToken(value)
 	if err != nil {
 		return err
 	}

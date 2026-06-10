@@ -17,7 +17,7 @@ package annotations
 // ParseKey parses and validates an annotation key.
 func ParseKey(value string) (Key, error) {
 	key := Key(value)
-	if err := key.Validate(); err != nil {
+	if err := key.ValidateLexical(); err != nil {
 		return "", err
 	}
 

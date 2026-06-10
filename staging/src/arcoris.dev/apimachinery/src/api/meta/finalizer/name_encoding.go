@@ -16,7 +16,7 @@ package finalizer
 
 // MarshalText validates and encodes the finalizer name as scalar text.
 func (n Name) MarshalText() ([]byte, error) {
-	return marshalText(n.String(), n.Validate)
+	return marshalText(n.String(), n.ValidateLexical)
 }
 
 // UnmarshalText decodes and validates scalar finalizer name text.
@@ -36,7 +36,7 @@ func (n *Name) UnmarshalText(data []byte) error {
 
 // MarshalJSON validates and encodes the finalizer name as one JSON string.
 func (n Name) MarshalJSON() ([]byte, error) {
-	return marshalJSONString(n.String(), n.Validate)
+	return marshalJSONString(n.String(), n.ValidateLexical)
 }
 
 // UnmarshalJSON decodes one JSON string and rejects null or non-string input.

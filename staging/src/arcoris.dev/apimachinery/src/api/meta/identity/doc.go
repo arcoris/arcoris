@@ -14,7 +14,7 @@
 
 // Package identity defines concrete object metadata identity primitives.
 //
-// The package owns lexical metadata names, generated-name prefixes, namespace
+// The package owns lexical metadata names, name prefixes, namespace
 // markers, opaque UIDs, namespace/name object names, UID-bearing object
 // identities, and typed object references. It does not define storage keys,
 // route keys, cache keys, resource collection keys, watch keys, authorization
@@ -35,7 +35,7 @@
 //
 // Metadata identity values are small comparable Go values. Trusted declarations
 // and tests may use direct literals, but trust boundaries should use Parse,
-// Validate, MarshalText, MarshalJSON, or CanonicalText. String returns
+// ValidateLexical, MarshalText, MarshalJSON, or CanonicalText. String returns
 // diagnostic text without validation. CanonicalText validates first and returns
 // an error for malformed direct literals.
 //

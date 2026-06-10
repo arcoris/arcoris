@@ -20,8 +20,8 @@ import (
 )
 
 func TestReference(t *testing.T) {
-	ref := validReference(true)
-	if ref.IsZero() {
+	object := validReference(true)
+	if object.IsZero() {
 		t.Fatal("non-zero Reference IsZero() = true")
 	}
 	if !(Reference{}).IsZero() {
@@ -36,13 +36,13 @@ func TestReferenceJSONFields(t *testing.T) {
 	var got map[string]any
 	requireNoError(t, json.Unmarshal(data, &got))
 
-	if _, ok := got["ref"].(map[string]any); !ok {
-		t.Fatalf("ref = %#v", got["ref"])
+	if _, ok := got["object"].(map[string]any); !ok {
+		t.Fatalf("object = %#v", got["object"])
 	}
 	if got["controller"] != true {
 		t.Fatalf("controller = %#v", got["controller"])
 	}
-	if _, ok := got["Ref"]; ok {
+	if _, ok := got["Object"]; ok {
 		t.Fatalf("unexpected Go field name in JSON: %s", data)
 	}
 }

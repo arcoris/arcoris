@@ -44,7 +44,7 @@ const (
 	objectGoFieldObserved   = "Observed"
 
 	objectMetaGoFieldName            = "Name"
-	objectMetaGoFieldGenerateName    = "GenerateName"
+	objectMetaGoFieldNamePrefix      = "NamePrefix"
 	objectMetaGoFieldNamespace       = "Namespace"
 	objectMetaGoFieldUID             = "UID"
 	objectMetaGoFieldResourceVersion = "ResourceVersion"
@@ -56,9 +56,9 @@ const (
 	objectMetaGoFieldOwnerReferences = "OwnerReferences"
 	objectMetaGoFieldFinalizers      = "Finalizers"
 
-	listMetaGoFieldResourceVersion    = "ResourceVersion"
-	listMetaGoFieldContinueToken      = "ContinueToken"
-	listMetaGoFieldRemainingItemCount = "RemainingItemCount"
+	pageMetaGoFieldResourceVersion    = "ResourceVersion"
+	pageMetaGoFieldContinueToken      = "ContinueToken"
+	pageMetaGoFieldRemainingItemCount = "RemainingItemCount"
 )
 
 // parsedJSONTag is a test-only view of one Go json struct tag.

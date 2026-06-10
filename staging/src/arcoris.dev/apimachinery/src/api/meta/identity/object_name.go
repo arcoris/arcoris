@@ -43,7 +43,7 @@ func (n ObjectName) String() string {
 
 // CanonicalText validates the object name and returns its canonical text.
 func (n ObjectName) CanonicalText() (string, error) {
-	if err := n.Validate(); err != nil {
+	if err := n.ValidateLexical(); err != nil {
 		return "", err
 	}
 

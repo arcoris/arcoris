@@ -12,24 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package meta
+package apidocument
 
-// Validate checks list metadata scalar form only.
-//
-// It does not interpret pagination policy, storage cursor internals, list
-// consistency guarantees, watch state, or remaining-count accuracy.
-func (m ListMeta) Validate() error {
-	if !m.ResourceVersion.IsZero() {
-		if err := m.ResourceVersion.Validate(); err != nil {
-			return nested("listMeta.resourceVersion", ErrInvalidListMeta, err)
-		}
-	}
+const (
+	// PageMetaFieldResourceVersion is the page metadata resourceVersion field.
+	PageMetaFieldResourceVersion FieldName = "resourceVersion"
 
-	if !m.ContinueToken.IsZero() {
-		if err := m.ContinueToken.Validate(); err != nil {
-			return nested("listMeta.continue", ErrInvalidListMeta, err)
-		}
-	}
+	// PageMetaFieldContinue is the page metadata continuation-token field.
+	PageMetaFieldContinue FieldName = "continue"
 
-	return nil
-}
+	// PageMetaFieldRemainingItemCount is the page metadata remainingItemCount field.
+	PageMetaFieldRemainingItemCount FieldName = "remainingItemCount"
+)

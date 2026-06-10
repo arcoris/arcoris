@@ -16,8 +16,8 @@ package identity
 
 import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 
-// Validate checks the strict metadata name grammar.
-func (n Name) Validate() error {
+// ValidateLexical checks the strict metadata name grammar.
+func (n Name) ValidateLexical() error {
 	return fromGrammar(
 		"name",
 		n.String(),

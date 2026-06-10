@@ -14,8 +14,8 @@
 
 package identity
 
-// Validate checks the typed name-only object reference metadata.
-func (r ObjectReference) Validate() error {
+// ValidateLexical checks the typed name-only object reference metadata.
+func (r ObjectReference) ValidateLexical() error {
 	if r.APIVersion.IsZero() {
 		return invalid(
 			"objectReference.apiVersion",
@@ -44,7 +44,7 @@ func (r ObjectReference) Validate() error {
 		return nested("objectReference.kind", r.String(), ErrInvalidObjectReference, err)
 	}
 
-	if err := r.ObjectName().Validate(); err != nil {
+	if err := r.ObjectName().ValidateLexical(); err != nil {
 		return nested("objectReference.objectName", r.String(), ErrInvalidObjectReference, err)
 	}
 

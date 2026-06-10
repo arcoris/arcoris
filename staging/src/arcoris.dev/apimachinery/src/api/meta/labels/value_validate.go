@@ -19,8 +19,8 @@ import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 // maxLabelValueLength keeps labels compact enough for indexing-oriented metadata.
 const maxLabelValueLength = 63
 
-// Validate checks the label value grammar.
-func (v Value) Validate() error {
+// ValidateLexical checks the label value grammar.
+func (v Value) ValidateLexical() error {
 	return fromGrammar(
 		"label.value",
 		ErrInvalidValue,

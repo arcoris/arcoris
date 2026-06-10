@@ -16,11 +16,11 @@ package meta
 
 import apiidentity "arcoris.dev/apimachinery/api/identity"
 
-// TypeMeta represents object representation fields apiVersion and kind.
+// TypeMeta represents the top-level apiVersion/kind identity fields of an API object.
 //
-// It bridges object metadata representation to api/identity.GroupVersionKind.
-// It does not contain resource, plural, scope, subresource, storage, or routing
-// information.
+// It bridges object document representation to api/identity.GroupVersionKind.
+// It does not contain resource, plural, scope, subresource, storage, routing,
+// discovery, conversion, or runtime-scheme information.
 type TypeMeta struct {
 	// APIVersion is the canonical API group/version of the represented object.
 	APIVersion apiidentity.GroupVersion `json:"apiVersion,omitempty,omitzero"`
@@ -43,7 +43,7 @@ func (m TypeMeta) IsZero() bool {
 	return m.APIVersion.IsZero() && m.Kind.IsZero()
 }
 
-// String returns canonical diagnostic text for the represented kind identity.
+// String returns diagnostic text for the represented kind identity.
 func (m TypeMeta) String() string {
 	if m.IsZero() {
 		return ""

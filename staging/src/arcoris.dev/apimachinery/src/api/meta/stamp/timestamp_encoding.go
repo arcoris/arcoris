@@ -22,7 +22,7 @@ import (
 
 // MarshalText validates and encodes the timestamp as RFC3339Nano text.
 func (t Timestamp) MarshalText() ([]byte, error) {
-	if err := t.Validate(); err != nil {
+	if err := t.ValidateLexical(); err != nil {
 		return nil, err
 	}
 
@@ -68,7 +68,7 @@ func (t Timestamp) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	return marshalJSONString(string(text), t.Validate)
+	return marshalJSONString(string(text), t.ValidateLexical)
 }
 
 // UnmarshalJSON decodes and validates a JSON string timestamp.

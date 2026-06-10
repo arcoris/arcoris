@@ -16,10 +16,10 @@ package finalizer
 
 import "testing"
 
-func TestSetValidate(t *testing.T) {
-	requireNoError(t, Set(nil).Validate())
-	requireNoError(t, Set{"cleanup"}.Validate())
+func TestSetValidateLexical(t *testing.T) {
+	requireNoError(t, Set(nil).ValidateLexical())
+	requireNoError(t, Set{"cleanup"}.ValidateLexical())
 
-	requireErrorIs(t, Set{"cleanup", "cleanup"}.Validate(), ErrDuplicateName)
-	requireErrorIs(t, Set{"Cleanup"}.Validate(), ErrInvalidSet)
+	requireErrorIs(t, Set{"cleanup", "cleanup"}.ValidateLexical(), ErrDuplicateName)
+	requireErrorIs(t, Set{"Cleanup"}.ValidateLexical(), ErrInvalidSet)
 }

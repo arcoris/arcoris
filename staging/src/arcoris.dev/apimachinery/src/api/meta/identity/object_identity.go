@@ -48,7 +48,7 @@ func (i ObjectIdentity) String() string {
 
 // CanonicalText validates the object identity and returns its canonical text.
 func (i ObjectIdentity) CanonicalText() (string, error) {
-	if err := i.Validate(); err != nil {
+	if err := i.ValidateLexical(); err != nil {
 		return "", err
 	}
 

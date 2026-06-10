@@ -14,7 +14,7 @@
 
 // Package object defines generic ARCORIS API object envelopes.
 //
-// The package composes api/meta TypeMeta, ObjectMeta, and ListMeta with
+// The package composes api/meta TypeMeta, ObjectMeta, and PageMeta with
 // resource-specific desired and observed payload values. It is intentionally
 // generic: desired and observed values may be handwritten structs, generated
 // structs, decoded adapter values, or test fixtures.

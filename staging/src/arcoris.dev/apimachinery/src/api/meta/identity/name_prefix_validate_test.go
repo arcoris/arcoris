@@ -16,9 +16,9 @@ package identity
 
 import "testing"
 
-func TestNamePrefixValidate(t *testing.T) {
-	requireNoError(t, NamePrefix("worker-").Validate())
+func TestNamePrefixValidateLexical(t *testing.T) {
+	requireNoError(t, NamePrefix("worker-").ValidateLexical())
 
-	requireErrorIs(t, NamePrefix("").Validate(), ErrInvalidNamePrefix)
-	requireErrorIs(t, NamePrefix("-worker").Validate(), ErrInvalidNamePrefix)
+	requireErrorIs(t, NamePrefix("").ValidateLexical(), ErrInvalidNamePrefix)
+	requireErrorIs(t, NamePrefix("-worker").ValidateLexical(), ErrInvalidNamePrefix)
 }

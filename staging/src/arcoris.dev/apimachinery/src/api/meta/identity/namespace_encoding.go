@@ -16,7 +16,7 @@ package identity
 
 // MarshalText validates and encodes the namespace as text.
 func (n Namespace) MarshalText() ([]byte, error) {
-	return marshalText(n.String(), n.Validate)
+	return marshalText(n.String(), n.ValidateLexical)
 }
 
 // UnmarshalText decodes and validates a text namespace.
@@ -36,7 +36,7 @@ func (n *Namespace) UnmarshalText(data []byte) error {
 
 // MarshalJSON validates and encodes the namespace as one JSON string.
 func (n Namespace) MarshalJSON() ([]byte, error) {
-	return marshalJSONString(n.String(), n.Validate)
+	return marshalJSONString(n.String(), n.ValidateLexical)
 }
 
 // UnmarshalJSON decodes and validates a JSON string namespace.

@@ -14,7 +14,10 @@
 
 package annotations
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func TestSet(t *testing.T) {
 	var nilSet Set
@@ -38,4 +41,54 @@ func TestSet(t *testing.T) {
 	if value, ok := set.Get("note"); !ok || value != "human readable" {
 		t.Fatalf("Get() = %q, %v", value, ok)
 	}
+}
+
+func TestSetUsesTypedKeysAndValues(t *testing.T) {
+	var set Set = map[Key]Value{
+		Key("note"): Value("human readable"),
+	}
+
+	value, ok := set.Get(Key("note"))
+	if !ok || value != Value("human readable") {
+		t.Fatalf("Get() = %q, %v", value, ok)
+	}
+}
+
+func TestSetKeysReturnsSortedKeys(t *testing.T) {
+	set := Set{
+		"tool": "cli",
+		"note": "human readable",
+		"app":  "scheduler",
+	}
+
+	got := set.Keys()
+	want := []Key{"app", "note", "tool"}
+	if !slices.Equal(got, want) {
+		t.Fatalf("Keys() = %#v; want %#v", got, want)
+	}
+}
+
+func TestSetStringConversionsDetachStorage(t *testing.T) {
+	raw := map[string]string{"note": "human readable"}
+	set, err := FromStrings(raw)
+	requireNoError(t, err)
+
+	raw["note"] = "changed"
+	if set["note"] != "human readable" {
+		t.Fatal("FromStrings result aliases input map")
+	}
+
+	strings := set.Strings()
+	strings["note"] = "changed"
+	if set["note"] != "human readable" {
+		t.Fatal("Strings result aliases typed set")
+	}
+}
+
+func TestSetFromStringsValidatesValues(t *testing.T) {
+	_, err := FromStrings(map[string]string{"Note": "human readable"})
+	requireErrorIs(t, err, ErrInvalidSet)
+
+	_, err = FromStrings(map[string]string{"note": "bad\nvalue"})
+	requireErrorIs(t, err, ErrInvalidSet)
 }

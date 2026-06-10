@@ -16,8 +16,8 @@ package identity
 
 import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 
-// Validate checks the opaque UID grammar.
-func (u UID) Validate() error {
+// ValidateLexical checks the opaque UID grammar.
+func (u UID) ValidateLexical() error {
 	return fromGrammar(
 		"uid",
 		u.String(),

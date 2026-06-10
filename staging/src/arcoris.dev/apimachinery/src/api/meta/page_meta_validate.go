@@ -14,12 +14,22 @@
 
 package meta
 
-import "testing"
+// ValidateLexical checks page metadata scalar form only.
+//
+// It does not interpret pagination policy, storage cursor internals, list
+// consistency guarantees, watch state, or remaining-count accuracy.
+func (m PageMeta) ValidateLexical() error {
+	if !m.ResourceVersion.IsZero() {
+		if err := m.ResourceVersion.ValidateLexical(); err != nil {
+			return nested("pageMeta.resourceVersion", ErrInvalidPageMeta, err)
+		}
+	}
 
-func TestListMetaValidate(t *testing.T) {
-	requireNoError(t, (ListMeta{}).Validate())
-	requireNoError(t, ListMeta{ResourceVersion: "rv-1", ContinueToken: "page-1"}.Validate())
+	if !m.ContinueToken.IsZero() {
+		if err := m.ContinueToken.ValidateLexical(); err != nil {
+			return nested("pageMeta.continue", ErrInvalidPageMeta, err)
+		}
+	}
 
-	requireErrorIs(t, ListMeta{ResourceVersion: "rv 1"}.Validate(), ErrInvalidListMeta)
-	requireErrorIs(t, ListMeta{ContinueToken: "page 1"}.Validate(), ErrInvalidListMeta)
+	return nil
 }

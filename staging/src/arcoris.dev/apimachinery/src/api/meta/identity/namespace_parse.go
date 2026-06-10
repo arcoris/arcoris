@@ -17,7 +17,7 @@ package identity
 // ParseNamespace parses and validates a namespace.
 func ParseNamespace(value string) (Namespace, error) {
 	namespace := Namespace(value)
-	if err := namespace.Validate(); err != nil {
+	if err := namespace.ValidateLexical(); err != nil {
 		return "", err
 	}
 

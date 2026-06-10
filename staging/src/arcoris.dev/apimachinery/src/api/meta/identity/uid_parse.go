@@ -17,7 +17,7 @@ package identity
 // ParseUID parses and validates an object UID.
 func ParseUID(value string) (UID, error) {
 	uid := UID(value)
-	if err := uid.Validate(); err != nil {
+	if err := uid.ValidateLexical(); err != nil {
 		return "", err
 	}
 

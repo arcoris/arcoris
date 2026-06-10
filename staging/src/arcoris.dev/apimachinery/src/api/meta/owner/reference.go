@@ -22,13 +22,13 @@ import metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 // points at one concrete owner incarnation. Controller and deletion semantics
 // live in this package and higher lifecycle layers, not in raw meta/identity.
 type Reference struct {
-	// Ref is the UID-pinned object reference stored as ownership metadata.
-	Ref metaidentity.ObjectIdentityReference `json:"ref"`
+	// Object is the UID-pinned object reference stored as ownership metadata.
+	Object metaidentity.ObjectIdentityReference `json:"object"`
 	// Controller marks the single controlling owner when true.
 	Controller bool `json:"controller,omitempty"`
 }
 
 // IsZero reports whether the owner reference entry is absent.
 func (r Reference) IsZero() bool {
-	return r.Ref.IsZero() && !r.Controller
+	return r.Object.IsZero() && !r.Controller
 }

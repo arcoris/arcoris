@@ -16,10 +16,10 @@ package identity
 
 import "testing"
 
-func TestObjectNameValidate(t *testing.T) {
-	requireNoError(t, ObjectName{Name: "worker"}.Validate())
-	requireNoError(t, ObjectName{Namespace: "system", Name: "worker"}.Validate())
+func TestObjectNameValidateLexical(t *testing.T) {
+	requireNoError(t, ObjectName{Name: "worker"}.ValidateLexical())
+	requireNoError(t, ObjectName{Namespace: "system", Name: "worker"}.ValidateLexical())
 
-	requireErrorIs(t, (ObjectName{}).Validate(), ErrInvalidObjectName)
-	requireErrorIs(t, ObjectName{Namespace: "System", Name: "worker"}.Validate(), ErrInvalidObjectName)
+	requireErrorIs(t, (ObjectName{}).ValidateLexical(), ErrInvalidObjectName)
+	requireErrorIs(t, ObjectName{Namespace: "System", Name: "worker"}.ValidateLexical(), ErrInvalidObjectName)
 }

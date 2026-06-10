@@ -26,7 +26,7 @@ func ValidateKey(key Key) error {
 	if err := key.Resource.Validate(); err != nil {
 		return errorFor(ErrorReasonInvalidKey, key, 0, 0, errors.Join(ErrInvalidKey, err))
 	}
-	if err := key.Object.Validate(); err != nil {
+	if err := key.Object.ValidateLexical(); err != nil {
 		return errorFor(ErrorReasonInvalidKey, key, 0, 0, errors.Join(ErrInvalidKey, err))
 	}
 

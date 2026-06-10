@@ -18,6 +18,6 @@ package stamp
 //
 // Zero is a valid absent timestamp at the metadata layer. Clock-source,
 // monotonicity, and persistence lifecycle checks belong to higher layers.
-func (t Timestamp) Validate() error {
+func (t Timestamp) ValidateLexical() error {
 	return nil
 }

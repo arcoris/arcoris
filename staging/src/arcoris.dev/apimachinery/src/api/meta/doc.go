@@ -15,7 +15,7 @@
 // Package meta defines the canonical metadata semantics used by ARCORIS API
 // objects.
 //
-// The package owns TypeMeta, ObjectMeta, ListMeta, PageToken, and metadata
+// The package owns TypeMeta, ObjectMeta, PageMeta, PageToken, and metadata
 // subpackages for object identity, stamps, labels, annotations, owner
 // references, and finalizers. Concrete resource packages embed or compose these
 // metadata values and define their own desired and observed payload fields.
@@ -40,9 +40,9 @@
 // storage validation, or apply behavior.
 //
 // Metadata validation is lexical metadata validation, not lifecycle-phase
-// validation. ObjectMeta.Validate and ListMeta.Validate do not decide whether
-// metadata is valid for create, update, storage, apply, delete, list response,
-// or pagination phases.
+// validation. ObjectMeta.ValidateLexical and PageMeta.ValidateLexical do not
+// decide whether metadata is valid for create, update, storage, apply, delete,
+// list response, or pagination phases.
 //
 // api/meta is a metadata foundation layer, not a full object model. It does not
 // define resource contracts, structural descriptors, selectors, status

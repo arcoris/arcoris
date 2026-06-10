@@ -14,16 +14,16 @@
 
 package object
 
-// ValidateMeta validates only TypeMeta and ListMeta.
+// ValidateMeta validates only TypeMeta and PageMeta.
 //
 // Items are intentionally ignored. Item validation requires item-specific or
 // resource-aware context outside api/object.
 func (l List[T]) ValidateMeta() error {
-	if err := l.TypeMeta.Validate(); err != nil {
+	if err := l.TypeMeta.ValidateLexical(); err != nil {
 		return nested("list.typeMeta", ErrInvalidList, err)
 	}
 
-	if err := l.ListMeta.Validate(); err != nil {
+	if err := l.PageMeta.ValidateLexical(); err != nil {
 		return nested("list.metadata", ErrInvalidList, err)
 	}
 

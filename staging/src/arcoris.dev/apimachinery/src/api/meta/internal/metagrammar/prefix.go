@@ -20,10 +20,10 @@ import (
 	"arcoris.dev/apimachinery/api/internal/lexical"
 )
 
-// maxNamePrefixLength bounds server-side generated-name prefixes in bytes.
+// maxNamePrefixLength bounds metadata name prefixes in bytes.
 const maxNamePrefixLength = 63
 
-// ValidateNamePrefix validates a server-side name generation prefix.
+// ValidateNamePrefix validates a metadata name prefix.
 //
 // Prefixes use the same safe byte set as object names, but they may end in a
 // hyphen so callers can use values such as "worker-".

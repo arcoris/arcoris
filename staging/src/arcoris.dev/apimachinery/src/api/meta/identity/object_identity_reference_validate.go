@@ -14,8 +14,8 @@
 
 package identity
 
-// Validate checks the complete UID-pinned object reference metadata.
-func (r ObjectIdentityReference) Validate() error {
+// ValidateLexical checks the complete UID-pinned object reference metadata.
+func (r ObjectIdentityReference) ValidateLexical() error {
 	if r.APIVersion.IsZero() {
 		return invalid(
 			"objectIdentityReference.apiVersion",
@@ -44,7 +44,7 @@ func (r ObjectIdentityReference) Validate() error {
 		return nested("objectIdentityReference.kind", r.String(), ErrInvalidObjectIdentityReference, err)
 	}
 
-	if err := r.ObjectIdentity().Validate(); err != nil {
+	if err := r.ObjectIdentity().ValidateLexical(); err != nil {
 		return nested("objectIdentityReference.objectIdentity", r.String(), ErrInvalidObjectIdentityReference, err)
 	}
 

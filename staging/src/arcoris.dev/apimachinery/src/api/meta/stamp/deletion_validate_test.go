@@ -19,10 +19,10 @@ import (
 	"time"
 )
 
-func TestDeletionValidate(t *testing.T) {
-	requireErrorIs(t, (Deletion{}).Validate(), ErrInvalidDeletion)
+func TestDeletionValidateLexical(t *testing.T) {
+	requireErrorIs(t, (Deletion{}).ValidateLexical(), ErrInvalidDeletion)
 
 	requireNoError(t, Deletion{
 		DeletedAt: NewTimestamp(time.Date(2026, 5, 30, 12, 0, 0, 0, time.UTC)),
-	}.Validate())
+	}.ValidateLexical())
 }

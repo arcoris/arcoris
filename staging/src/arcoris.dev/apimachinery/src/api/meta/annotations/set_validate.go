@@ -16,14 +16,14 @@ package annotations
 
 import "fmt"
 
-// Validate checks every annotation key and value in the set.
-func (s Set) Validate() error {
+// ValidateLexical checks every annotation key and value in the set.
+func (s Set) ValidateLexical() error {
 	for key, value := range s {
-		if err := Key(key).Validate(); err != nil {
-			return nested(fmt.Sprintf("annotations[%q].key", key), ErrInvalidSet, err)
+		if err := key.ValidateLexical(); err != nil {
+			return nested(fmt.Sprintf("annotations[%q].key", key.String()), ErrInvalidSet, err)
 		}
-		if err := Value(value).Validate(); err != nil {
-			return nested(fmt.Sprintf("annotations[%q].value", key), ErrInvalidSet, err)
+		if err := value.ValidateLexical(); err != nil {
+			return nested(fmt.Sprintf("annotations[%q].value", key.String()), ErrInvalidSet, err)
 		}
 	}
 	return nil

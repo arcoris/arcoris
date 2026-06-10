@@ -17,7 +17,7 @@ package finalizer
 // ParseName validates and returns a finalizer name.
 func ParseName(value string) (Name, error) {
 	name := Name(value)
-	if err := name.Validate(); err != nil {
+	if err := name.ValidateLexical(); err != nil {
 		return "", err
 	}
 

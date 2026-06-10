@@ -20,29 +20,29 @@ import (
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 )
 
-func TestObjectIdentityReferenceValidate(t *testing.T) {
+func TestObjectIdentityReferenceValidateLexical(t *testing.T) {
 	ref := ObjectIdentityReference{
 		APIVersion: apiidentity.GroupVersion{Group: "control.arcoris.dev", Version: "v1"},
 		Kind:       "Worker",
 		Name:       "worker",
 		UID:        "uid-1",
 	}
-	requireNoError(t, ref.Validate())
+	requireNoError(t, ref.ValidateLexical())
 
-	requireErrorIs(t, ObjectIdentityReference{Kind: "Worker", Name: "worker", UID: "uid-1"}.Validate(), ErrInvalidObjectIdentityReference)
+	requireErrorIs(t, ObjectIdentityReference{Kind: "Worker", Name: "worker", UID: "uid-1"}.ValidateLexical(), ErrInvalidObjectIdentityReference)
 	requireErrorIs(
 		t,
-		ObjectIdentityReference{APIVersion: ref.APIVersion, Name: "worker", UID: "uid-1"}.Validate(),
+		ObjectIdentityReference{APIVersion: ref.APIVersion, Name: "worker", UID: "uid-1"}.ValidateLexical(),
 		ErrInvalidObjectIdentityReference,
 	)
 	requireErrorIs(
 		t,
-		ObjectIdentityReference{APIVersion: ref.APIVersion, Kind: "Worker", UID: "uid-1"}.Validate(),
+		ObjectIdentityReference{APIVersion: ref.APIVersion, Kind: "Worker", UID: "uid-1"}.ValidateLexical(),
 		ErrInvalidObjectIdentityReference,
 	)
 	requireErrorIs(
 		t,
-		ObjectIdentityReference{APIVersion: ref.APIVersion, Kind: "Worker", Name: "worker"}.Validate(),
+		ObjectIdentityReference{APIVersion: ref.APIVersion, Kind: "Worker", Name: "worker"}.ValidateLexical(),
 		ErrInvalidObjectIdentityReference,
 	)
 }

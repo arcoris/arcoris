@@ -16,7 +16,7 @@ package finalizer
 
 import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 
-// Validate checks the finalizer name grammar without interpreting semantics.
-func (n Name) Validate() error {
+// ValidateLexical checks the finalizer name grammar without interpreting semantics.
+func (n Name) ValidateLexical() error {
 	return fromGrammar("finalizer.name", ErrInvalidName, metagrammar.ValidateQualifiedName(n.String()))
 }

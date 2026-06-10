@@ -16,7 +16,7 @@ package annotations
 
 import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 
-// Validate checks the annotation key grammar.
-func (k Key) Validate() error {
+// ValidateLexical checks the annotation key grammar.
+func (k Key) ValidateLexical() error {
 	return fromGrammar("annotation.key", ErrInvalidKey, metagrammar.ValidateMapKey(k.String()))
 }

@@ -16,8 +16,8 @@ package identity
 
 import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 
-// Validate checks the namespace grammar.
-func (n Namespace) Validate() error {
+// ValidateLexical checks the namespace grammar.
+func (n Namespace) ValidateLexical() error {
 	if n.IsZero() {
 		return nil
 	}

@@ -16,7 +16,7 @@ package stamp
 
 // MarshalText validates and encodes the resource version as text.
 func (v ResourceVersion) MarshalText() ([]byte, error) {
-	return marshalText(v.String(), v.Validate)
+	return marshalText(v.String(), v.ValidateLexical)
 }
 
 // UnmarshalText decodes and validates a text resource version.
@@ -36,7 +36,7 @@ func (v *ResourceVersion) UnmarshalText(data []byte) error {
 
 // MarshalJSON validates and encodes the resource version as one JSON string.
 func (v ResourceVersion) MarshalJSON() ([]byte, error) {
-	return marshalJSONString(v.String(), v.Validate)
+	return marshalJSONString(v.String(), v.ValidateLexical)
 }
 
 // UnmarshalJSON decodes and validates a JSON string resource version.

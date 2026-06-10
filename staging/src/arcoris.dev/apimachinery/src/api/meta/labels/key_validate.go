@@ -16,7 +16,7 @@ package labels
 
 import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 
-// Validate checks the label key grammar.
-func (k Key) Validate() error {
+// ValidateLexical checks the label key grammar.
+func (k Key) ValidateLexical() error {
 	return fromGrammar("label.key", ErrInvalidKey, metagrammar.ValidateMapKey(k.String()))
 }

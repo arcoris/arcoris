@@ -27,7 +27,7 @@ func (u UID) String() string {
 
 // CanonicalText validates the UID and returns its canonical text.
 func (u UID) CanonicalText() (string, error) {
-	if err := u.Validate(); err != nil {
+	if err := u.ValidateLexical(); err != nil {
 		return "", err
 	}
 

@@ -17,7 +17,7 @@ package identity
 // ParseName parses and validates a metadata name.
 func ParseName(value string) (Name, error) {
 	name := Name(value)
-	if err := name.Validate(); err != nil {
+	if err := name.ValidateLexical(); err != nil {
 		return "", err
 	}
 

@@ -16,7 +16,7 @@ package identity
 
 // MarshalText validates and encodes the UID as text.
 func (u UID) MarshalText() ([]byte, error) {
-	return marshalText(u.String(), u.Validate)
+	return marshalText(u.String(), u.ValidateLexical)
 }
 
 // UnmarshalText decodes and validates a text UID.
@@ -36,7 +36,7 @@ func (u *UID) UnmarshalText(data []byte) error {
 
 // MarshalJSON validates and encodes the UID as one JSON string.
 func (u UID) MarshalJSON() ([]byte, error) {
-	return marshalJSONString(u.String(), u.Validate)
+	return marshalJSONString(u.String(), u.ValidateLexical)
 }
 
 // UnmarshalJSON decodes and validates a JSON string UID.

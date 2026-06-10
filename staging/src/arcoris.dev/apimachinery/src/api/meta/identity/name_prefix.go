@@ -14,7 +14,7 @@
 
 package identity
 
-// NamePrefix is a server-side name generation prefix.
+// NamePrefix is metadata used by higher layers to generate a concrete object name.
 //
 // The metadata package never expands a prefix into a concrete name. Generation
 // policy belongs to higher layers that own persistence and uniqueness.
@@ -27,7 +27,7 @@ func (p NamePrefix) String() string {
 
 // CanonicalText validates the name prefix and returns its canonical text.
 func (p NamePrefix) CanonicalText() (string, error) {
-	if err := p.Validate(); err != nil {
+	if err := p.ValidateLexical(); err != nil {
 		return "", err
 	}
 
@@ -39,7 +39,7 @@ func (p NamePrefix) IsZero() bool {
 	return p == ""
 }
 
-// IsAbsent reports whether the generated-name prefix is absent.
+// IsAbsent reports whether the name prefix is absent.
 func (p NamePrefix) IsAbsent() bool {
 	return p == ""
 }

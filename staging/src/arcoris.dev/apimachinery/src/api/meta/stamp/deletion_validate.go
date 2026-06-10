@@ -14,8 +14,8 @@
 
 package stamp
 
-// Validate checks deletion request metadata.
-func (d Deletion) Validate() error {
+// ValidateLexical checks deletion request metadata.
+func (d Deletion) ValidateLexical() error {
 	if d.DeletedAt.IsZero() {
 		return invalid(
 			"deletion.deletedAt",
@@ -25,7 +25,7 @@ func (d Deletion) Validate() error {
 		)
 	}
 
-	if err := d.DeletedAt.Validate(); err != nil {
+	if err := d.DeletedAt.ValidateLexical(); err != nil {
 		return nested("deletion.deletedAt", ErrInvalidDeletion, err)
 	}
 

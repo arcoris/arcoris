@@ -54,7 +54,7 @@ func TestObjectMetaClone(t *testing.T) {
 
 	meta.Labels["role"] = "lead"
 	meta.Annotations["note"] = "original changed"
-	meta.OwnerReferences[0].Ref.Name = "changed"
+	meta.OwnerReferences[0].Object.Name = "changed"
 	meta.Finalizers[0] = "original"
 	meta.Deletion.GracePeriodSeconds = 1
 
@@ -64,7 +64,7 @@ func TestObjectMetaClone(t *testing.T) {
 	if cloned.Annotations["note"] != "changed" {
 		t.Fatal("original annotation mutation changed clone")
 	}
-	if cloned.OwnerReferences[0].Ref.Name == "changed" {
+	if cloned.OwnerReferences[0].Object.Name == "changed" {
 		t.Fatal("original owner reference mutation changed clone")
 	}
 	if cloned.Finalizers[0] != "changed" {

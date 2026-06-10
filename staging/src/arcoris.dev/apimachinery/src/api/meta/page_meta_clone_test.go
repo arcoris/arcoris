@@ -14,11 +14,27 @@
 
 package meta
 
-// Clone returns an independent copy of list metadata.
-func (m ListMeta) Clone() ListMeta {
-	if m.RemainingItemCount != nil {
-		value := *m.RemainingItemCount
-		m.RemainingItemCount = &value
+import "testing"
+
+func TestPageMetaClone(t *testing.T) {
+	count := uint64(3)
+	meta := PageMeta{RemainingItemCount: &count}
+
+	cloned := meta.Clone()
+	*cloned.RemainingItemCount = 9
+
+	if *meta.RemainingItemCount != 3 {
+		t.Fatal("RemainingItemCount pointer was not detached")
 	}
-	return m
+	*meta.RemainingItemCount = 4
+	if *cloned.RemainingItemCount != 9 {
+		t.Fatal("original RemainingItemCount mutation changed clone")
+	}
+}
+
+func TestPageMetaCloneNilRemainingItemCount(t *testing.T) {
+	meta := PageMeta{}
+	if meta.Clone().RemainingItemCount != nil {
+		t.Fatal("nil RemainingItemCount clone is non-nil")
+	}
 }

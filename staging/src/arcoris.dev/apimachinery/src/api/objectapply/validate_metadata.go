@@ -48,7 +48,7 @@ func normalizeAppliedMetadata(applied ValueObject) ValueObject {
 // an object metadata mutation, so it is rejected instead of silently ignored.
 func rejectAppliedNonIdentityMetadata(m meta.ObjectMeta) error {
 	switch {
-	case !m.GenerateName.IsZero():
+	case !m.NamePrefix.IsZero():
 		return unsupportedMetadata("generateName")
 	case !m.ResourceVersion.IsZero():
 		return unsupportedMetadata("resourceVersion")

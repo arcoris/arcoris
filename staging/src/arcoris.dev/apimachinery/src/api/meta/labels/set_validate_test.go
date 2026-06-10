@@ -16,10 +16,10 @@ package labels
 
 import "testing"
 
-func TestSetValidate(t *testing.T) {
-	requireNoError(t, Set(nil).Validate())
-	requireNoError(t, Set{"role": "worker"}.Validate())
+func TestSetValidateLexical(t *testing.T) {
+	requireNoError(t, Set(nil).ValidateLexical())
+	requireNoError(t, Set{"role": "worker"}.ValidateLexical())
 
-	requireErrorIs(t, Set{"Role": "worker"}.Validate(), ErrInvalidSet)
-	requireErrorIs(t, Set{"role": "worker value"}.Validate(), ErrInvalidSet)
+	requireErrorIs(t, Set{"Role": "worker"}.ValidateLexical(), ErrInvalidSet)
+	requireErrorIs(t, Set{"role": "worker value"}.ValidateLexical(), ErrInvalidSet)
 }

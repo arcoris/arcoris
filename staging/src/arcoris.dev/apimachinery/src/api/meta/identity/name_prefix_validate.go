@@ -16,8 +16,8 @@ package identity
 
 import "arcoris.dev/apimachinery/api/meta/internal/metagrammar"
 
-// Validate checks the strict generated-name prefix grammar.
-func (p NamePrefix) Validate() error {
+// ValidateLexical checks the strict name-prefix grammar.
+func (p NamePrefix) ValidateLexical() error {
 	return fromGrammar(
 		"namePrefix",
 		p.String(),

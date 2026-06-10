@@ -16,7 +16,7 @@ package stamp
 
 import "testing"
 
-func TestGenerationValidate(t *testing.T) {
-	requireNoError(t, Generation(0).Validate())
-	requireNoError(t, Generation(1).Validate())
+func TestGenerationValidateLexical(t *testing.T) {
+	requireNoError(t, Generation(0).ValidateLexical())
+	requireNoError(t, Generation(1).ValidateLexical())
 }

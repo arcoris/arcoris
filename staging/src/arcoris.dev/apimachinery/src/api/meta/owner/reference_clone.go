@@ -16,6 +16,6 @@ package owner
 
 // Clone returns a value copy of the owner reference entry.
 func (r Reference) Clone() Reference {
-	r.Ref = r.Ref.Clone()
+	r.Object = r.Object.Clone()
 	return r
 }
