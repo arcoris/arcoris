@@ -25,13 +25,43 @@ type OwnedPath struct {
 	Path fieldpath.Path
 }
 
+// ValidateStructure checks whether p is a well-formed owner/path record.
+//
+// It validates only the ownership record shape. Root paths are allowed, and the
+// method does not check object surfaces, descriptors, admission, storage, or
+// policy.
+func (p OwnedPath) ValidateStructure() error {
+	return validateOwnedPath(p)
+}
+
 // OwnedPathSet is a deterministic immutable-by-convention owner/path collection.
 type OwnedPathSet struct {
 	paths []OwnedPath
 }
 
-// NewOwnedPathSet constructs a deterministic owner/path set.
-func NewOwnedPathSet(paths ...OwnedPath) OwnedPathSet {
+// NewOwnedPathSet constructs a validated deterministic owner/path set.
+func NewOwnedPathSet(paths ...OwnedPath) (OwnedPathSet, error) {
+	for _, path := range paths {
+		if err := path.ValidateStructure(); err != nil {
+			return OwnedPathSet{}, err
+		}
+	}
+
+	return newOwnedPathSetUnchecked(paths...), nil
+}
+
+// MustOwnedPathSet constructs an owner/path set or panics when any record is invalid.
+func MustOwnedPathSet(paths ...OwnedPath) OwnedPathSet {
+	set, err := NewOwnedPathSet(paths...)
+	if err != nil {
+		panic(err)
+	}
+
+	return set
+}
+
+// newOwnedPathSetUnchecked constructs a deterministic owner/path set from trusted records.
+func newOwnedPathSetUnchecked(paths ...OwnedPath) OwnedPathSet {
 	if len(paths) == 0 {
 		return OwnedPathSet{}
 	}
@@ -66,6 +96,8 @@ func (s OwnedPathSet) Paths() []OwnedPath {
 }
 
 // ForEach visits owner/path records in deterministic order until fn returns false.
+//
+// fn must be non-nil. Passing nil is programmer error and may panic.
 func (s OwnedPathSet) ForEach(fn func(index int, path OwnedPath) bool) {
 	for i, path := range s.paths {
 		if !fn(i, path) {

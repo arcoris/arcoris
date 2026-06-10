@@ -38,6 +38,8 @@ func (s State) Entries() []Entry {
 }
 
 // ForEach visits entries in deterministic owner order until fn returns false.
+//
+// fn must be non-nil. Passing nil is programmer error and may panic.
 func (s State) ForEach(fn func(index int, entry Entry) bool) {
 	for i, entry := range s.entries {
 		if !fn(i, entry) {
@@ -71,6 +73,8 @@ func (s State) Fields() fieldpath.Set {
 }
 
 // FieldsFor returns fields owned by owner, or an empty set when owner is absent.
+//
+// A zero Owner behaves as absent.
 func (s State) FieldsFor(owner Owner) fieldpath.Set {
 	for _, entry := range s.entries {
 		if entry.owner == owner {

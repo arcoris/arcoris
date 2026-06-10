@@ -130,7 +130,7 @@ func TestApplyUnsupportedForceTakeoverPreservesFieldOwnershipConflictCause(t *te
 }
 
 func TestUnsupportedTakeoverConflictsKeepsOnlyOwnedAncestors(t *testing.T) {
-	conflicts := fieldownership.NewConflictSet(
+	conflicts := fieldownership.MustConflictSet(
 		fieldownership.Conflict{
 			Owner:         owner("ancestor"),
 			OwnedPath:     path("$.spec"),
@@ -148,7 +148,8 @@ func TestUnsupportedTakeoverConflictsKeepsOnlyOwnedAncestors(t *testing.T) {
 		},
 	)
 
-	got := unsupportedTakeoverConflicts(conflicts)
+	got, err := unsupportedTakeoverConflicts(conflicts)
+	requireNoError(t, err)
 
 	if got.Len() != 1 {
 		t.Fatalf("unsupported conflicts = %d; want 1", got.Len())

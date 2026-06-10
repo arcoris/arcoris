@@ -26,7 +26,16 @@ func (a *applier) rejectUnsupportedForceTakeover(req Request, result Result) err
 		return nil
 	}
 
-	unsupported := unsupportedTakeoverConflicts(result.Conflicts)
+	unsupported, err := unsupportedTakeoverConflicts(result.Conflicts)
+	if err != nil {
+		return wrapAt(
+			req.Path,
+			ErrConflict,
+			ErrorReasonConflict,
+			"unsupported takeover conflict filtering failed",
+			err,
+		)
+	}
 	if unsupported.IsEmpty() {
 		return nil
 	}
@@ -38,7 +47,7 @@ func (a *applier) rejectUnsupportedForceTakeover(req Request, result Result) err
 // contains the attempted path.
 func unsupportedTakeoverConflicts(
 	conflicts fieldownership.ConflictSet,
-) fieldownership.ConflictSet {
+) (fieldownership.ConflictSet, error) {
 	unsupported := make([]fieldownership.Conflict, 0, conflicts.Len())
 
 	for _, conflict := range conflicts.Conflicts() {

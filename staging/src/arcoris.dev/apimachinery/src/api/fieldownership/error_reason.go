@@ -63,8 +63,26 @@ const (
 	// ErrorReasonInvalidOwnedPath reports a malformed stored owned path.
 	ErrorReasonInvalidOwnedPath ErrorReason = "invalid_owned_path"
 
+	// ErrorReasonInvalidOwnedPathOwner reports a malformed OwnedPath owner.
+	ErrorReasonInvalidOwnedPathOwner ErrorReason = "invalid_owned_path_owner"
+
+	// ErrorReasonInvalidOwnedPathPath reports a malformed OwnedPath path.
+	ErrorReasonInvalidOwnedPathPath ErrorReason = "invalid_owned_path_path"
+
 	// ErrorReasonInvalidAttemptedPath reports a malformed attempted path.
 	ErrorReasonInvalidAttemptedPath ErrorReason = "invalid_attempted_path"
+
+	// ErrorReasonInvalidConflict reports malformed conflict state.
+	ErrorReasonInvalidConflict ErrorReason = "invalid_conflict"
+
+	// ErrorReasonInvalidConflictOwner reports a malformed conflict owner.
+	ErrorReasonInvalidConflictOwner ErrorReason = "invalid_conflict_owner"
+
+	// ErrorReasonInvalidConflictOwnedPath reports a malformed conflict owned path.
+	ErrorReasonInvalidConflictOwnedPath ErrorReason = "invalid_conflict_owned_path"
+
+	// ErrorReasonInvalidConflictAttemptedPath reports a malformed conflict attempted path.
+	ErrorReasonInvalidConflictAttemptedPath ErrorReason = "invalid_conflict_attempted_path"
 
 	// ErrorReasonConflict reports overlapping ownership for an attempted field set.
 	ErrorReasonConflict ErrorReason = "conflict"

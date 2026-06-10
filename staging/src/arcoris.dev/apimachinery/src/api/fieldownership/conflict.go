@@ -30,3 +30,12 @@ type Conflict struct {
 	// AttemptedPath is the caller-supplied attempted path that overlaps OwnedPath.
 	AttemptedPath fieldpath.Path
 }
+
+// ValidateStructure checks whether c is a well-formed conflict record.
+//
+// This method validates record structure only. It does not require OwnedPath
+// and AttemptedPath to overlap; conflicts produced by State.Conflicts carry that
+// stronger semantic guarantee.
+func (c Conflict) ValidateStructure() error {
+	return validateConflict(c)
+}

@@ -20,13 +20,13 @@ import (
 )
 
 func TestConflictErrorIsErrConflict(t *testing.T) {
-	err := NewConflictError(NewConflictSet(Conflict{Owner: owner("autoscaler")}))
+	err := NewConflictError(MustConflictSet(Conflict{Owner: owner("autoscaler")}))
 
 	requireEqual(t, errors.Is(err, ErrConflict), true)
 }
 
 func TestConflictErrorAs(t *testing.T) {
-	err := NewConflictError(NewConflictSet(Conflict{Owner: owner("autoscaler")}))
+	err := NewConflictError(MustConflictSet(Conflict{Owner: owner("autoscaler")}))
 
 	var conflictError *ConflictError
 	if !errors.As(err, &conflictError) {
@@ -46,7 +46,7 @@ func TestNewConflictErrorEmptyReturnsNil(t *testing.T) {
 }
 
 func TestNewConflictErrorNonEmptyReturnsErrConflict(t *testing.T) {
-	err := NewConflictError(NewConflictSet(
+	err := NewConflictError(MustConflictSet(
 		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: replicasPath()},
 	))
 
@@ -54,7 +54,7 @@ func TestNewConflictErrorNonEmptyReturnsErrConflict(t *testing.T) {
 }
 
 func TestNewConflictErrorSortsConflicts(t *testing.T) {
-	err := NewConflictError(NewConflictSet(
+	err := NewConflictError(MustConflictSet(
 		Conflict{Owner: owner("user-cli"), OwnedPath: imagePath(), AttemptedPath: specPath()},
 		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: specPath()},
 	))
@@ -68,4 +68,26 @@ func TestNewConflictErrorSortsConflicts(t *testing.T) {
 		"autoscaler:$.spec.replicas->$.spec",
 		"user-cli:$.spec.image->$.spec",
 	)
+}
+
+func TestConflictErrorConflictsReturnsDetachedSet(t *testing.T) {
+	err := NewConflictError(MustConflictSet(
+		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: replicasPath()},
+	))
+
+	var conflictError *ConflictError
+	if !errors.As(err, &conflictError) {
+		t.Fatalf("errors.As did not find ConflictError")
+	}
+
+	conflicts := conflictError.Conflicts().Conflicts()
+	conflicts[0].Owner = owner("mutated")
+
+	requireConflictStrings(t, conflictError.Conflicts(), "autoscaler:$.spec.replicas->$.spec.replicas")
+}
+
+func TestNilConflictErrorConflictsIsEmpty(t *testing.T) {
+	var err *ConflictError
+
+	requireEqual(t, err.Conflicts().IsEmpty(), true)
 }

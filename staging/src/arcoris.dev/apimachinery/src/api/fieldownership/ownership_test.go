@@ -23,8 +23,15 @@ func TestOwnedPathStoresOwnerAndPath(t *testing.T) {
 	requireEqual(t, ownedPath.Path.String(), "$.spec.image")
 }
 
+func TestNewOwnedPathSetAcceptsValidOwnedPath(t *testing.T) {
+	ownedPaths, err := NewOwnedPathSet(OwnedPath{Owner: owner("user-cli"), Path: imagePath()})
+
+	requireNoError(t, err)
+	requireEqual(t, ownedPaths.Len(), 1)
+}
+
 func TestOwnedPathSetSortsDeduplicatesAndDetaches(t *testing.T) {
-	ownedPaths := NewOwnedPathSet(
+	ownedPaths := MustOwnedPathSet(
 		OwnedPath{Owner: owner("user-cli"), Path: imagePath()},
 		OwnedPath{Owner: owner("autoscaler"), Path: replicasPath()},
 		OwnedPath{Owner: owner("autoscaler"), Path: replicasPath()},
@@ -38,8 +45,29 @@ func TestOwnedPathSetSortsDeduplicatesAndDetaches(t *testing.T) {
 	requireSet(t, ownedPaths.FieldPaths(), "$.spec.image", "$.spec.replicas")
 }
 
+func TestOwnedPathSetPreservesSamePathWithDifferentOwners(t *testing.T) {
+	ownedPaths := MustOwnedPathSet(
+		OwnedPath{Owner: owner("user-cli"), Path: replicasPath()},
+		OwnedPath{Owner: owner("autoscaler"), Path: replicasPath()},
+	)
+
+	requireEqual(t, ownedPaths.Len(), 2)
+	requireOwners(t, ownedPaths.Owners(), "autoscaler", "user-cli")
+	requireSet(t, ownedPaths.FieldPaths(), "$.spec.replicas")
+}
+
+func TestOwnedPathSetPreservesOverlappingPaths(t *testing.T) {
+	ownedPaths := MustOwnedPathSet(
+		OwnedPath{Owner: owner("user-cli"), Path: specPath()},
+		OwnedPath{Owner: owner("user-cli"), Path: replicasPath()},
+	)
+
+	requireEqual(t, ownedPaths.Len(), 2)
+	requireSet(t, ownedPaths.FieldPaths(), "$.spec", "$.spec.replicas")
+}
+
 func TestOwnedPathSetForEachStopsEarly(t *testing.T) {
-	ownedPaths := NewOwnedPathSet(
+	ownedPaths := MustOwnedPathSet(
 		OwnedPath{Owner: owner("a"), Path: imagePath()},
 		OwnedPath{Owner: owner("b"), Path: replicasPath()},
 	)
@@ -51,4 +79,16 @@ func TestOwnedPathSetForEachStopsEarly(t *testing.T) {
 	})
 
 	requireOwners(t, visited, "a")
+}
+
+func TestNewOwnedPathSetRejectsInvalidOwnedPath(t *testing.T) {
+	_, err := NewOwnedPathSet(OwnedPath{Owner: Owner{}, Path: imagePath()})
+
+	requireErrorIs(t, err, ErrInvalidOwnedPath)
+}
+
+func TestMustOwnedPathSetPanicsOnInvalidOwnedPath(t *testing.T) {
+	requirePanic(t, func() {
+		MustOwnedPathSet(OwnedPath{Owner: Owner{}, Path: imagePath()})
+	})
 }

@@ -36,24 +36,29 @@ func removeExactTransform(current fieldpath.Set, fields fieldpath.Set) fieldpath
 // removeOverlapTransform removes current paths that structurally overlap fields.
 func removeOverlapTransform(current fieldpath.Set, fields fieldpath.Set) fieldpath.Set {
 	result := fieldpath.EmptySet()
-	for _, p := range current.Paths() {
+	current.ForEach(func(_ int, p fieldpath.Path) bool {
 		if overlapsAny(p, fields) {
-			continue
+			return true
 		}
 
 		result = result.Insert(p)
-	}
+		return true
+	})
 
 	return result
 }
 
 // overlapsAny reports whether path overlaps any path in fields.
 func overlapsAny(path fieldpath.Path, fields fieldpath.Set) bool {
-	for _, candidate := range fields.Paths() {
+	overlaps := false
+	fields.ForEach(func(_ int, candidate fieldpath.Path) bool {
 		if path.Overlaps(candidate) {
-			return true
+			overlaps = true
+			return false
 		}
-	}
 
-	return false
+		return true
+	})
+
+	return overlaps
 }

@@ -30,11 +30,12 @@ func (s State) Conflicts(owner Owner, attempted fieldpath.Set) (ConflictSet, err
 	}
 
 	conflicts := make([]Conflict, 0)
-	for _, attemptedPath := range attempted.Paths() {
+	attempted.ForEach(func(_ int, attemptedPath fieldpath.Path) bool {
 		conflicts = append(conflicts, s.conflictsForPath(owner, attemptedPath)...)
-	}
+		return true
+	})
 
-	return NewConflictSet(conflicts...), nil
+	return newConflictSetUnchecked(conflicts...), nil
 }
 
 // conflictsForPath collects overlaps for one already-validated attempted path.
@@ -45,7 +46,7 @@ func (s State) conflictsForPath(owner Owner, attemptedPath fieldpath.Path) []Con
 			continue
 		}
 
-		for _, ownedPath := range entry.fields.Paths() {
+		entry.fields.ForEach(func(_ int, ownedPath fieldpath.Path) bool {
 			if ownedPath.Overlaps(attemptedPath) {
 				conflicts = append(conflicts, Conflict{
 					Owner:         entry.owner,
@@ -53,7 +54,8 @@ func (s State) conflictsForPath(owner Owner, attemptedPath fieldpath.Path) []Con
 					AttemptedPath: attemptedPath,
 				})
 			}
-		}
+			return true
+		})
 	}
 
 	return conflicts

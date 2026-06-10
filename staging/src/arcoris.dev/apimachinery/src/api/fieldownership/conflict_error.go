@@ -30,7 +30,7 @@ func NewConflictError(conflicts ConflictSet) error {
 	}
 
 	return &ConflictError{
-		conflicts: NewConflictSet(conflicts.Conflicts()...),
+		conflicts: newConflictSetUnchecked(conflicts.Conflicts()...),
 	}
 }
 
@@ -54,5 +54,5 @@ func (e *ConflictError) Conflicts() ConflictSet {
 		return ConflictSet{}
 	}
 
-	return NewConflictSet(e.conflicts.Conflicts()...)
+	return newConflictSetUnchecked(e.conflicts.Conflicts()...)
 }

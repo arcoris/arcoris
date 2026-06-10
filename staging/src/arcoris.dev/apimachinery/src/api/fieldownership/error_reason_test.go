@@ -32,6 +32,12 @@ func TestErrorReasons(t *testing.T) {
 	requireEqual(t, string(ErrorReasonEmptyStateEntry), "empty_state_entry")
 	requireEqual(t, string(ErrorReasonInvalidPath), "invalid_path")
 	requireEqual(t, string(ErrorReasonInvalidOwnedPath), "invalid_owned_path")
+	requireEqual(t, string(ErrorReasonInvalidOwnedPathOwner), "invalid_owned_path_owner")
+	requireEqual(t, string(ErrorReasonInvalidOwnedPathPath), "invalid_owned_path_path")
 	requireEqual(t, string(ErrorReasonInvalidAttemptedPath), "invalid_attempted_path")
+	requireEqual(t, string(ErrorReasonInvalidConflict), "invalid_conflict")
+	requireEqual(t, string(ErrorReasonInvalidConflictOwner), "invalid_conflict_owner")
+	requireEqual(t, string(ErrorReasonInvalidConflictOwnedPath), "invalid_conflict_owned_path")
+	requireEqual(t, string(ErrorReasonInvalidConflictAttemptedPath), "invalid_conflict_attempted_path")
 	requireEqual(t, string(ErrorReasonConflict), "conflict")
 }

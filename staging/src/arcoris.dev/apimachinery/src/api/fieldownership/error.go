@@ -30,6 +30,12 @@ var (
 	// ErrInvalidState classifies malformed ownership state representation.
 	ErrInvalidState = errors.New("invalid field ownership state")
 
+	// ErrInvalidOwnedPath classifies malformed owner/path query records.
+	ErrInvalidOwnedPath = errors.New("invalid owned field path")
+
+	// ErrInvalidConflict classifies malformed conflict records.
+	ErrInvalidConflict = errors.New("invalid field ownership conflict record")
+
 	// ErrInvalidPath classifies malformed semantic field paths.
 	ErrInvalidPath = errors.New("invalid field path")
 

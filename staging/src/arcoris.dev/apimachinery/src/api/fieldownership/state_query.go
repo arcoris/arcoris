@@ -42,12 +42,13 @@ func (s State) OverlappingPaths(path fieldpath.Path) (OwnedPathSet, error) {
 
 	ownedPaths := make([]OwnedPath, 0)
 	for _, entry := range s.entries {
-		for _, owned := range entry.fields.Paths() {
+		entry.fields.ForEach(func(_ int, owned fieldpath.Path) bool {
 			if owned.Overlaps(path) {
 				ownedPaths = append(ownedPaths, OwnedPath{Owner: entry.owner, Path: owned})
 			}
-		}
+			return true
+		})
 	}
 
-	return NewOwnedPathSet(ownedPaths...), nil
+	return newOwnedPathSetUnchecked(ownedPaths...), nil
 }

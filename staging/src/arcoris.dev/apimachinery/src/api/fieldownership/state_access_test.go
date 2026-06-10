@@ -47,7 +47,7 @@ func TestStateFieldsForUnknownOwnerIsEmpty(t *testing.T) {
 	requireEqual(t, baseState().FieldsFor(owner("missing")).IsEmpty(), true)
 }
 
-func TestStateFieldsForInvalidOwnerIsEmpty(t *testing.T) {
+func TestStateFieldsForZeroOwnerIsEmpty(t *testing.T) {
 	requireEqual(t, baseState().FieldsFor(Owner{}).IsEmpty(), true)
 }
 

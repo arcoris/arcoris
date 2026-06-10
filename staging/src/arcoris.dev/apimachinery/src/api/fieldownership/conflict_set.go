@@ -27,8 +27,29 @@ type ConflictSet struct {
 	conflicts []Conflict
 }
 
-// NewConflictSet constructs a deterministic conflict set.
-func NewConflictSet(conflicts ...Conflict) ConflictSet {
+// NewConflictSet constructs a validated deterministic conflict set.
+func NewConflictSet(conflicts ...Conflict) (ConflictSet, error) {
+	for _, conflict := range conflicts {
+		if err := conflict.ValidateStructure(); err != nil {
+			return ConflictSet{}, err
+		}
+	}
+
+	return newConflictSetUnchecked(conflicts...), nil
+}
+
+// MustConflictSet constructs a conflict set or panics when any conflict is invalid.
+func MustConflictSet(conflicts ...Conflict) ConflictSet {
+	set, err := NewConflictSet(conflicts...)
+	if err != nil {
+		panic(err)
+	}
+
+	return set
+}
+
+// newConflictSetUnchecked constructs a deterministic conflict set from trusted conflicts.
+func newConflictSetUnchecked(conflicts ...Conflict) ConflictSet {
 	if len(conflicts) == 0 {
 		return ConflictSet{}
 	}
@@ -63,6 +84,8 @@ func (c ConflictSet) Conflicts() []Conflict {
 }
 
 // ForEach visits conflicts in deterministic order until fn returns false.
+//
+// fn must be non-nil. Passing nil is programmer error and may panic.
 func (c ConflictSet) ForEach(fn func(index int, conflict Conflict) bool) {
 	for i, conflict := range c.conflicts {
 		if !fn(i, conflict) {

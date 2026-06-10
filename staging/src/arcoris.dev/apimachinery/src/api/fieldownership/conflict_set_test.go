@@ -18,18 +18,29 @@ import "testing"
 
 func TestConflictSetIsEmpty(t *testing.T) {
 	requireEqual(t, ConflictSet{}.IsEmpty(), true)
-	requireEqual(t, NewConflictSet(Conflict{Owner: owner("a")}).IsEmpty(), false)
+	requireEqual(t, MustConflictSet(Conflict{Owner: owner("a")}).IsEmpty(), false)
 }
 
 func TestConflictSetLen(t *testing.T) {
-	requireEqual(t, NewConflictSet(
+	requireEqual(t, MustConflictSet(
 		Conflict{Owner: owner("a")},
 		Conflict{Owner: owner("b")},
 	).Len(), 2)
 }
 
+func TestNewConflictSetAcceptsValidConflict(t *testing.T) {
+	conflicts, err := NewConflictSet(Conflict{
+		Owner:         owner("autoscaler"),
+		OwnedPath:     replicasPath(),
+		AttemptedPath: replicasPath(),
+	})
+
+	requireNoError(t, err)
+	requireEqual(t, conflicts.Len(), 1)
+}
+
 func TestConflictSetOwnersSortedUnique(t *testing.T) {
-	conflicts := NewConflictSet(
+	conflicts := MustConflictSet(
 		Conflict{Owner: owner("user-cli"), OwnedPath: imagePath(), AttemptedPath: imagePath()},
 		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: replicasPath()},
 		Conflict{Owner: owner("autoscaler"), OwnedPath: specPath(), AttemptedPath: replicasPath()},
@@ -39,8 +50,17 @@ func TestConflictSetOwnersSortedUnique(t *testing.T) {
 	requireOwners(t, conflicts.Owners(), "autoscaler", "user-cli")
 }
 
+func TestConflictSetCompactsExactDuplicates(t *testing.T) {
+	conflicts := MustConflictSet(
+		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: replicasPath()},
+		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: replicasPath()},
+	)
+
+	requireEqual(t, conflicts.Len(), 1)
+}
+
 func TestConflictSetOwnedPaths(t *testing.T) {
-	conflicts := NewConflictSet(
+	conflicts := MustConflictSet(
 		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: specPath()},
 		Conflict{Owner: owner("user-cli"), OwnedPath: imagePath(), AttemptedPath: specPath()},
 	)
@@ -49,7 +69,7 @@ func TestConflictSetOwnedPaths(t *testing.T) {
 }
 
 func TestConflictSetAttemptedPaths(t *testing.T) {
-	conflicts := NewConflictSet(
+	conflicts := MustConflictSet(
 		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: specPath()},
 		Conflict{Owner: owner("user-cli"), OwnedPath: imagePath(), AttemptedPath: specPath()},
 	)
@@ -58,7 +78,7 @@ func TestConflictSetAttemptedPaths(t *testing.T) {
 }
 
 func TestConflictSetErrorDeterministic(t *testing.T) {
-	conflicts := NewConflictSet(
+	conflicts := MustConflictSet(
 		Conflict{Owner: owner("user-cli"), OwnedPath: imagePath(), AttemptedPath: specPath()},
 		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: specPath()},
 	)
@@ -70,7 +90,7 @@ func TestConflictSetErrorDeterministic(t *testing.T) {
 }
 
 func TestConflictSetConflictsReturnsDetachedSlice(t *testing.T) {
-	conflicts := NewConflictSet(
+	conflicts := MustConflictSet(
 		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: specPath()},
 	)
 	got := conflicts.Conflicts()
@@ -81,7 +101,7 @@ func TestConflictSetConflictsReturnsDetachedSlice(t *testing.T) {
 }
 
 func TestConflictSetForEachStopsEarly(t *testing.T) {
-	conflicts := NewConflictSet(
+	conflicts := MustConflictSet(
 		Conflict{Owner: owner("a"), OwnedPath: imagePath(), AttemptedPath: specPath()},
 		Conflict{Owner: owner("b"), OwnedPath: replicasPath(), AttemptedPath: specPath()},
 	)
@@ -93,4 +113,16 @@ func TestConflictSetForEachStopsEarly(t *testing.T) {
 	})
 
 	requireOwners(t, visited, "a")
+}
+
+func TestNewConflictSetRejectsInvalidConflict(t *testing.T) {
+	_, err := NewConflictSet(Conflict{Owner: Owner{}})
+
+	requireErrorIs(t, err, ErrInvalidConflict)
+}
+
+func TestMustConflictSetPanicsOnInvalidConflict(t *testing.T) {
+	requirePanic(t, func() {
+		MustConflictSet(Conflict{Owner: Owner{}})
+	})
 }

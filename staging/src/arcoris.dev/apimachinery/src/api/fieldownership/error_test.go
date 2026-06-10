@@ -36,6 +36,18 @@ func TestErrorIsInvalidState(t *testing.T) {
 	requireErrorIs(t, state.ValidateStructure(), ErrInvalidState)
 }
 
+func TestErrorIsInvalidOwnedPath(t *testing.T) {
+	err := OwnedPath{Owner: Owner{}, Path: imagePath()}.ValidateStructure()
+
+	requireErrorIs(t, err, ErrInvalidOwnedPath)
+}
+
+func TestErrorIsInvalidConflict(t *testing.T) {
+	err := Conflict{Owner: Owner{}, OwnedPath: imagePath(), AttemptedPath: imagePath()}.ValidateStructure()
+
+	requireErrorIs(t, err, ErrInvalidConflict)
+}
+
 func TestErrorIsInvalidPath(t *testing.T) {
 	err := wrapPathError(
 		fieldpath.Root(),
