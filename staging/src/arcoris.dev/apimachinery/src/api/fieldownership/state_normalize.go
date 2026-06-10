@@ -14,18 +14,13 @@
 
 package fieldownership
 
-import (
-	"cmp"
-	"slices"
+import "slices"
 
-	"arcoris.dev/apimachinery/api/fieldpath"
-)
-
-// normalizeEntries validates, sorts, merges, and prunes ownership entries.
+// normalizeEntries sorts, merges, and prunes ownership entries.
 func normalizeEntries(entries []Entry) (State, error) {
 	normalized := make([]Entry, 0, len(entries))
 	for _, entry := range entries {
-		if err := entry.Validate(); err != nil {
+		if err := validateNormalizeEntry(entry); err != nil {
 			return State{}, err
 		}
 		if entry.IsEmpty() {
@@ -41,7 +36,7 @@ func normalizeEntries(entries []Entry) (State, error) {
 
 // compareEntriesByOwner orders entries for canonical State storage.
 func compareEntriesByOwner(left Entry, right Entry) int {
-	return cmp.Compare(left.owner.String(), right.owner.String())
+	return left.owner.Compare(right.owner)
 }
 
 // mergeEntriesByOwner unions adjacent entries with the same owner.
@@ -63,22 +58,4 @@ func mergeEntriesByOwner(entries []Entry) []Entry {
 	}
 
 	return append(merged, current)
-}
-
-// validateFields defensively validates every path contained in fields.
-//
-// Public fieldpath.Set constructors already validate paths. This extra check
-// keeps State robust if a future internal caller receives a malformed set value.
-func validateFields(fields fieldpath.Set, detail string) error {
-	for _, p := range fields.Paths() {
-		if err := p.ValidateStructure(); err != nil {
-			return wrapPathError(
-				p,
-				detail,
-				err,
-			)
-		}
-	}
-
-	return nil
 }

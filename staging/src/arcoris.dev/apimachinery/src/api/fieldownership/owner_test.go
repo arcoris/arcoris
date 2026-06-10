@@ -17,10 +17,37 @@ package fieldownership
 import "testing"
 
 func TestOwnerString(t *testing.T) {
-	requireEqual(t, Owner("user-cli").String(), "user-cli")
+	requireEqual(t, owner("user-cli").String(), "user-cli")
 }
 
 func TestOwnerIsZero(t *testing.T) {
-	requireEqual(t, Owner("").IsZero(), true)
-	requireEqual(t, Owner("user-cli").IsZero(), false)
+	requireEqual(t, Owner{}.IsZero(), true)
+	requireEqual(t, owner("user-cli").IsZero(), false)
+}
+
+func TestOwnerCompare(t *testing.T) {
+	requireEqual(t, owner("a").Compare(owner("b")), -1)
+	requireEqual(t, owner("b").Compare(owner("a")), 1)
+	requireEqual(t, owner("a").Compare(owner("a")), 0)
+}
+
+func TestNewOwnerAcceptsValidExamples(t *testing.T) {
+	for _, value := range []string{
+		"user-cli",
+		"terraform",
+		"status-controller",
+		"arcoris.dev/controller",
+		"user:anton",
+	} {
+		owner, err := NewOwner(value)
+
+		requireNoError(t, err)
+		requireEqual(t, owner.String(), value)
+	}
+}
+
+func TestMustOwnerPanicsOnInvalidOwner(t *testing.T) {
+	requirePanic(t, func() {
+		MustOwner("")
+	})
 }

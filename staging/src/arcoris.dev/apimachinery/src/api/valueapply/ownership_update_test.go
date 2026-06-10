@@ -42,11 +42,12 @@ func TestUpdateOwnershipForceRemovesConflictingOthers(t *testing.T) {
 	got, err := newApplier(Options{Force: true}).updateOwnership(req, result)
 	requireNoError(t, err)
 
-	requireOwners(t, got.OwnersOf(imagePath()), "user")
+	requireOwnersOf(t, got, imagePath(), "user")
 }
 
 func TestUpdateOwnershipWrapsInvalidOwner(t *testing.T) {
-	req := specRequest(owner(" "))
+	req := specRequest(owner("user"))
+	req.Owner = fieldownership.Owner{}
 	result := Result{AppliedFields: fields(imagePath())}
 
 	_, err := newApplier(Options{}).updateOwnership(req, result)

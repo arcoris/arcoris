@@ -14,11 +14,16 @@
 
 package fieldownership
 
-import "cmp"
+import "slices"
 
 // compareOwners orders owner identities lexicographically by stable text form.
 func compareOwners(left Owner, right Owner) int {
-	return cmp.Compare(left.String(), right.String())
+	return left.Compare(right)
+}
+
+// sortOwners orders owner slices lexicographically.
+func sortOwners(owners []Owner) {
+	slices.SortFunc(owners, compareOwners)
 }
 
 // compactSortedOwners removes adjacent duplicate owners from an already-sorted slice.

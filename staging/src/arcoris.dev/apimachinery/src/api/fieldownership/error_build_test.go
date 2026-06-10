@@ -22,9 +22,8 @@ import (
 )
 
 func TestErrorAtBuildsStructuredError(t *testing.T) {
-	err := errorAt("owners[0]", ErrInvalidOwner, ErrorReasonInvalidOwner, "owner is empty")
-	want := "fieldownership: owners[0]: " +
-		"invalid field owner: invalid_owner: owner is empty"
+	err := errorAt("owner", ErrInvalidOwner, ErrorReasonEmptyOwner, "owner is empty")
+	want := "fieldownership: owner: invalid field owner: empty_owner: owner is empty"
 
 	requireErrorIs(t, err, ErrInvalidOwner)
 	requireEqual(t, err.Error(), want)
@@ -34,12 +33,12 @@ func TestErrorfAtFormatsDetail(t *testing.T) {
 	err := errorfAt(
 		"",
 		ErrInvalidOwner,
-		ErrorReasonInvalidOwner,
+		ErrorReasonOwnerTooLong,
 		"owner exceeds %d bytes",
 		MaxOwnerLength,
 	)
 	want := "fieldownership: " +
-		"invalid field owner: invalid_owner: owner exceeds 128 bytes"
+		"invalid field owner: owner_too_long: owner exceeds 128 bytes"
 
 	requireErrorIs(t, err, ErrInvalidOwner)
 	requireEqual(t, err.Error(), want)

@@ -75,7 +75,7 @@ func TestApplyOutputDoesNotMutateOwnership(t *testing.T) {
 	_, err := Apply(req, Options{})
 	requireNoError(t, err)
 
-	requireOwners(t, req.Ownership.Desired().OwnersOf(path("$.replicas")), "old")
+	requireOwnersOf(t, req.Ownership.Desired(), path("$.replicas"), "old")
 }
 
 func TestBuildOutputObjectPreservesDesiredAndObservedValues(t *testing.T) {

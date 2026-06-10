@@ -25,7 +25,7 @@ func (a *applier) updateOwnership(req Request, result Result) (fieldownership.St
 	var err error
 
 	if a.opts.Force && !result.Conflicts.IsEmpty() {
-		ownership, err = ownership.RemoveOverlapsFromOthers(
+		ownership, err = ownership.RemoveOverlappingFieldsFromOthers(
 			req.Owner,
 			result.Conflicts.AttemptedPaths(),
 		)
@@ -40,7 +40,7 @@ func (a *applier) updateOwnership(req Request, result Result) (fieldownership.St
 		}
 	}
 
-	ownership, err = ownership.WithFields(req.Owner, result.AppliedFields)
+	ownership, err = ownership.SetFields(req.Owner, result.AppliedFields)
 	if err != nil {
 		return fieldownership.State{}, wrapAt(
 			req.Path,

@@ -48,7 +48,12 @@ func hasOtherOverlappingOwner(
 	owner fieldownership.Owner,
 	path fieldpath.Path,
 ) bool {
-	for _, record := range ownership.OverlappingOwners(path) {
+	records, err := ownership.OverlappingPaths(path)
+	if err != nil {
+		return false
+	}
+
+	for _, record := range records.Paths() {
 		if record.Owner != owner {
 			return true
 		}

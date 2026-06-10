@@ -151,7 +151,7 @@ func nodeToOwnershipEntry(path jsonPath, node jsonNode, config resolvedDecodeCon
 func nodeToRequiredOwnershipOwner(path jsonPath, node jsonNode) (fieldownership.Owner, error) {
 	ownerNode, ok := node.member(apidocument.OwnershipFieldOwner.String())
 	if !ok {
-		return "", errorAt(
+		return fieldownership.Owner{}, errorAt(
 			path.Member(apidocument.OwnershipFieldOwner.String()),
 			ErrInvalidEnvelope,
 			codec.ErrInvalidDocument,
@@ -161,10 +161,22 @@ func nodeToRequiredOwnershipOwner(path jsonPath, node jsonNode) (fieldownership.
 	}
 	owner, err := expectString(path.Member(apidocument.OwnershipFieldOwner.String()), ownerNode, "object ownership entry owner must be a JSON string")
 	if err != nil {
-		return "", err
+		return fieldownership.Owner{}, err
 	}
 
-	return fieldownership.Owner(owner), nil
+	parsed, err := fieldownership.NewOwner(owner)
+	if err != nil {
+		return fieldownership.Owner{}, wrapAt(
+			path.Member(apidocument.OwnershipFieldOwner.String()),
+			ErrInvalidEnvelope,
+			codec.ErrInvalidDocument,
+			ErrorReasonInvalidEnvelope,
+			"object ownership entry owner is invalid",
+			err,
+		)
+	}
+
+	return parsed, nil
 }
 
 // nodeToOwnershipFields extracts an optional fields array.

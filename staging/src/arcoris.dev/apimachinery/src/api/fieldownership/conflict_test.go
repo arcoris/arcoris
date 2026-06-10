@@ -18,12 +18,12 @@ import "testing"
 
 func TestConflictStoresOwnerAndPaths(t *testing.T) {
 	conflict := Conflict{
-		Owner:         "autoscaler",
+		Owner:         owner("autoscaler"),
 		OwnedPath:     replicasPath(),
 		AttemptedPath: specPath(),
 	}
 
-	requireEqual(t, conflict.Owner, Owner("autoscaler"))
+	requireEqual(t, conflict.Owner, owner("autoscaler"))
 	requireEqual(t, conflict.OwnedPath.String(), "$.spec.replicas")
 	requireEqual(t, conflict.AttemptedPath.String(), "$.spec")
 }

@@ -40,16 +40,29 @@ func set(paths ...fieldpath.Path) fieldpath.Set {
 	return fields
 }
 
-func entry(owner Owner, paths ...fieldpath.Path) Entry {
-	return MustEntry(owner, set(paths...))
+func owner(text string) Owner {
+	return MustOwner(text)
 }
 
-func emptyEntry(owner Owner) Entry {
-	return MustEntry(owner, fieldpath.EmptySet())
+func invalidOwner(text string) Owner {
+	return Owner{text: text}
 }
 
-func owners(values ...Owner) []Owner {
-	return values
+func entry(ownerText string, paths ...fieldpath.Path) Entry {
+	return MustEntry(owner(ownerText), set(paths...))
+}
+
+func emptyEntry(ownerText string) Entry {
+	return MustEntry(owner(ownerText), fieldpath.EmptySet())
+}
+
+func owners(values ...string) []Owner {
+	out := make([]Owner, 0, len(values))
+	for _, value := range values {
+		out = append(out, owner(value))
+	}
+
+	return out
 }
 
 func requireNoError(t *testing.T, err error) {
@@ -68,6 +81,21 @@ func requireErrorIs(t *testing.T, err error, target error) {
 	}
 }
 
+func requireFieldOwnershipError(t *testing.T, err error, path string, reason ErrorReason) {
+	t.Helper()
+
+	var fieldError *Error
+	if !errors.As(err, &fieldError) {
+		t.Fatalf("errors.As(%v, *fieldownership.Error) = false", err)
+	}
+	if fieldError.Path != path {
+		t.Fatalf("error path = %q; want %q", fieldError.Path, path)
+	}
+	if fieldError.Reason != reason {
+		t.Fatalf("error reason = %q; want %q", fieldError.Reason, reason)
+	}
+}
+
 func requireEqual[T comparable](t *testing.T, got T, want T) {
 	t.Helper()
 
@@ -76,15 +104,16 @@ func requireEqual[T comparable](t *testing.T, got T, want T) {
 	}
 }
 
-func requireOwners(t *testing.T, got []Owner, want ...Owner) {
+func requireOwners(t *testing.T, got []Owner, want ...string) {
 	t.Helper()
 
-	if len(got) == 0 && len(want) == 0 {
+	expected := owners(want...)
+	if len(got) == 0 && len(expected) == 0 {
 		return
 	}
 
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("owners = %#v; want %#v", got, want)
+	if !reflect.DeepEqual(got, expected) {
+		t.Fatalf("owners = %#v; want %#v", got, expected)
 	}
 }
 

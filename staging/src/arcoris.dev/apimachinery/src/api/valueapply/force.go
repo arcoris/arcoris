@@ -39,15 +39,15 @@ func (a *applier) rejectUnsupportedForceTakeover(req Request, result Result) err
 func unsupportedTakeoverConflicts(
 	conflicts fieldownership.ConflictSet,
 ) fieldownership.ConflictSet {
-	unsupported := make(fieldownership.ConflictSet, 0, conflicts.Len())
+	unsupported := make([]fieldownership.Conflict, 0, conflicts.Len())
 
-	for _, conflict := range conflicts {
+	for _, conflict := range conflicts.Conflicts() {
 		if ownedPathStrictlyContainsAttempted(conflict) {
 			unsupported = append(unsupported, conflict)
 		}
 	}
 
-	return unsupported
+	return fieldownership.NewConflictSet(unsupported...)
 }
 
 // ownedPathStrictlyContainsAttempted reports whether force would over-remove

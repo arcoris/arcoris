@@ -26,16 +26,50 @@ const MaxOwnerLength = 128
 // Owner identifies one field-ownership participant.
 //
 // Owner is not an admission role, authorization subject, RBAC principal,
-// runtime component instance, or request actor. It is local ownership identity
-// used only inside State.
-type Owner string
+// runtime component instance, request actor, storage key, or audit identity.
+// Higher layers decide which request subject may act as which Owner.
+type Owner struct {
+	text string
+}
+
+// NewOwner validates text and returns a controlled owner identity.
+func NewOwner(text string) (Owner, error) {
+	owner := Owner{text: text}
+	if err := validateNewOwner(owner); err != nil {
+		return Owner{}, err
+	}
+
+	return owner, nil
+}
+
+// MustOwner returns a valid owner or panics for invalid static fixtures.
+func MustOwner(text string) Owner {
+	owner, err := NewOwner(text)
+	if err != nil {
+		panic(err)
+	}
+
+	return owner
+}
 
 // String returns o as plain text.
 func (o Owner) String() string {
-	return string(o)
+	return o.text
 }
 
 // IsZero reports whether o is the empty owner identity.
 func (o Owner) IsZero() bool {
-	return o == ""
+	return o.text == ""
+}
+
+// Compare orders owner identities lexicographically by stable text.
+func (o Owner) Compare(other Owner) int {
+	switch {
+	case o.text < other.text:
+		return -1
+	case o.text > other.text:
+		return 1
+	default:
+		return 0
+	}
 }

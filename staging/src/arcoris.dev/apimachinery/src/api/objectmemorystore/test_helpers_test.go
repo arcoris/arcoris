@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldownership"
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 	"arcoris.dev/apimachinery/api/meta"
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
@@ -73,7 +74,7 @@ func testState(text string) objectstore.State {
 			Desired: objectownership.Surface{
 				Entries: []objectownership.Entry{
 					{
-						Owner:  "manager",
+						Owner:  fieldownership.MustOwner("manager"),
 						Fields: []objectownership.Path{"$.desired"},
 					},
 				},

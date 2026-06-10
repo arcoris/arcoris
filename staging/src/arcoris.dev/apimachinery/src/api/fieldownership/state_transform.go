@@ -16,10 +16,10 @@ package fieldownership
 
 import "arcoris.dev/apimachinery/api/fieldpath"
 
-// WithFields replaces owner fields with fields exactly.
+// SetFields replaces owner fields with fields exactly.
 //
 // Empty fields remove owner from the state. Other owners are preserved unchanged.
-func (s State) WithFields(owner Owner, fields fieldpath.Set) (State, error) {
+func (s State) SetFields(owner Owner, fields fieldpath.Set) (State, error) {
 	if err := validateOwnerFields(
 		owner,
 		fields,
@@ -43,8 +43,8 @@ func (s State) AddFields(owner Owner, fields fieldpath.Set) (State, error) {
 
 // RemoveFields removes exact fields from owner only.
 //
-// Ancestor and descendant paths are left intact. Use RemoveOverlaps when the
-// caller has explicitly chosen structural-overlap removal semantics.
+// Ancestor and descendant paths are left intact. Use RemoveOverlappingFields
+// when the caller has explicitly chosen structural-overlap removal semantics.
 func (s State) RemoveFields(owner Owner, fields fieldpath.Set) (State, error) {
 	return s.transformOwnerFields(
 		owner,
@@ -54,11 +54,11 @@ func (s State) RemoveFields(owner Owner, fields fieldpath.Set) (State, error) {
 	)
 }
 
-// RemoveOverlaps removes owner paths that structurally overlap fields.
+// RemoveOverlappingFields removes owner paths that structurally overlap fields.
 //
 // Exact matches, owned ancestors, and owned descendants of the supplied fields
 // are removed from owner only.
-func (s State) RemoveOverlaps(owner Owner, fields fieldpath.Set) (State, error) {
+func (s State) RemoveOverlappingFields(owner Owner, fields fieldpath.Set) (State, error) {
 	return s.transformOwnerFields(
 		owner,
 		fields,
@@ -80,10 +80,10 @@ func (s State) RemoveFieldsFromOthers(owner Owner, fields fieldpath.Set) (State,
 	)
 }
 
-// RemoveOverlapsFromOthers removes overlapping paths from every owner except owner.
+// RemoveOverlappingFieldsFromOthers removes overlapping paths from every owner except owner.
 //
 // This is the structural-overlap counterpart to RemoveFieldsFromOthers.
-func (s State) RemoveOverlapsFromOthers(owner Owner, fields fieldpath.Set) (State, error) {
+func (s State) RemoveOverlappingFieldsFromOthers(owner Owner, fields fieldpath.Set) (State, error) {
 	return s.transformOtherOwnerFields(
 		owner,
 		fields,
@@ -92,9 +92,9 @@ func (s State) RemoveOverlapsFromOthers(owner Owner, fields fieldpath.Set) (Stat
 	)
 }
 
-// WithoutOwner removes owner entirely from s.
-func (s State) WithoutOwner(owner Owner) (State, error) {
-	if err := owner.Validate(); err != nil {
+// RemoveOwner removes owner entirely from s.
+func (s State) RemoveOwner(owner Owner) (State, error) {
+	if err := validateTransformOwner(owner); err != nil {
 		return State{}, err
 	}
 

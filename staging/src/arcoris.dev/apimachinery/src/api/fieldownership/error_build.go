@@ -48,7 +48,7 @@ func wrapAt(path string, err error, reason ErrorReason, detail string, cause err
 // wrapPathError maps a fieldpath validation failure into this package's errors.
 func wrapPathError(path fieldpath.Path, detail string, cause error) error {
 	return wrapAt(
-		path.String(),
+		path.CanonicalText(),
 		ErrInvalidPath,
 		ErrorReasonInvalidPath,
 		detail,

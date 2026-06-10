@@ -19,6 +19,7 @@ import (
 	"errors"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldownership"
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 	"arcoris.dev/apimachinery/api/meta"
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
@@ -74,7 +75,7 @@ func ownershipWithEntry() objectownership.Document {
 		Desired: objectownership.Surface{
 			Entries: []objectownership.Entry{
 				{
-					Owner:  "manager",
+					Owner:  fieldownership.MustOwner("manager"),
 					Fields: []objectownership.Path{"$.spec"},
 				},
 			},

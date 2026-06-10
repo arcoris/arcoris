@@ -18,6 +18,7 @@ import (
 	"context"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldownership"
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
@@ -62,8 +63,8 @@ func TestPrepareCreateReturnsDetachedInputState(t *testing.T) {
 	prepared, err := store.prepareCreate(context.Background(), testKey(1), state)
 	requireNoError(t, err)
 
-	state.Ownership.Desired.Entries[0].Owner = "mutated"
-	if prepared.Ownership.Desired.Entries[0].Owner != "manager" {
+	state.Ownership.Desired.Entries[0].Owner = fieldownership.MustOwner("mutated")
+	if prepared.Ownership.Desired.Entries[0].Owner != fieldownership.MustOwner("manager") {
 		t.Fatalf("prepareCreate retained caller mutation")
 	}
 }

@@ -20,19 +20,19 @@ import (
 )
 
 func TestConflictErrorIsErrConflict(t *testing.T) {
-	err := &ConflictError{Conflicts: ConflictSet{{Owner: "autoscaler"}}}
+	err := NewConflictError(NewConflictSet(Conflict{Owner: owner("autoscaler")}))
 
 	requireEqual(t, errors.Is(err, ErrConflict), true)
 }
 
 func TestConflictErrorAs(t *testing.T) {
-	err := error(&ConflictError{Conflicts: ConflictSet{{Owner: "autoscaler"}}})
+	err := NewConflictError(NewConflictSet(Conflict{Owner: owner("autoscaler")}))
 
 	var conflictError *ConflictError
 	if !errors.As(err, &conflictError) {
 		t.Fatalf("errors.As did not find ConflictError")
 	}
-	requireEqual(t, conflictError.Conflicts.Len(), 1)
+	requireEqual(t, conflictError.Conflicts().Len(), 1)
 }
 
 func TestNilConflictErrorString(t *testing.T) {
@@ -46,25 +46,25 @@ func TestNewConflictErrorEmptyReturnsNil(t *testing.T) {
 }
 
 func TestNewConflictErrorNonEmptyReturnsErrConflict(t *testing.T) {
-	err := NewConflictError(ConflictSet{
-		{Owner: "autoscaler", OwnedPath: replicasPath(), AttemptedPath: replicasPath()},
-	})
+	err := NewConflictError(NewConflictSet(
+		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: replicasPath()},
+	))
 
 	requireErrorIs(t, err, ErrConflict)
 }
 
 func TestNewConflictErrorSortsConflicts(t *testing.T) {
-	err := NewConflictError(ConflictSet{
-		{Owner: "user-cli", OwnedPath: imagePath(), AttemptedPath: specPath()},
-		{Owner: "autoscaler", OwnedPath: replicasPath(), AttemptedPath: specPath()},
-	})
+	err := NewConflictError(NewConflictSet(
+		Conflict{Owner: owner("user-cli"), OwnedPath: imagePath(), AttemptedPath: specPath()},
+		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: specPath()},
+	))
 
 	var conflictError *ConflictError
 	if !errors.As(err, &conflictError) {
 		t.Fatalf("errors.As did not find ConflictError")
 	}
 
-	requireConflictStrings(t, conflictError.Conflicts,
+	requireConflictStrings(t, conflictError.Conflicts(),
 		"autoscaler:$.spec.replicas->$.spec",
 		"user-cli:$.spec.image->$.spec",
 	)

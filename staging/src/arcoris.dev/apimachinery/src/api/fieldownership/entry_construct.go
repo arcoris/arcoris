@@ -23,7 +23,7 @@ import "arcoris.dev/apimachinery/api/fieldpath"
 // state.
 func NewEntry(owner Owner, fields fieldpath.Set) (Entry, error) {
 	entry := Entry{owner: owner, fields: fields}
-	if err := entry.Validate(); err != nil {
+	if err := validateNewEntry(entry); err != nil {
 		return Entry{}, err
 	}
 

@@ -89,7 +89,7 @@ func TestApplyDroppedOwnedFieldPreservedWhenOwnedByOther(t *testing.T) {
 
 	requireStringMember(t, result.Value, "replicas", "3")
 	requireSet(t, result.DeletedFields)
-	requireOwners(t, result.Ownership.OwnersOf(replicasPath()), "other")
+	requireOwnersOf(t, result.Ownership, replicasPath(), "other")
 }
 
 func TestApplyDroppedParentPreservedWhenOtherOwnerOwnsDescendant(t *testing.T) {

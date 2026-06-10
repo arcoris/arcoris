@@ -27,7 +27,7 @@ func ownershipConflicts(
 ) (fieldownership.ConflictSet, error) {
 	conflicts, err := req.Ownership.Conflicts(req.Owner, changed)
 	if err != nil {
-		return nil, wrapAt(
+		return fieldownership.ConflictSet{}, wrapAt(
 			req.Path,
 			ErrConflict,
 			ErrorReasonConflict,

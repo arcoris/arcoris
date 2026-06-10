@@ -45,7 +45,7 @@ func TestNewStateMergesDuplicateOwners(t *testing.T) {
 
 	requireNoError(t, err)
 	requireEqual(t, len(state.Entries()), 1)
-	requireSet(t, state.FieldsFor("user-cli"), "$.spec.image", "$.spec.replicas")
+	requireSet(t, state.FieldsFor(owner("user-cli")), "$.spec.image", "$.spec.replicas")
 }
 
 func TestNewStatePrunesEmptyEntries(t *testing.T) {
@@ -68,7 +68,9 @@ func TestStateAllowsSharedPathOwnership(t *testing.T) {
 	)
 
 	requireNoError(t, err)
-	requireOwners(t, state.OwnersOf(replicasPath()), "autoscaler", "user-cli")
+	owners, err := state.OwnersOf(replicasPath())
+	requireNoError(t, err)
+	requireOwners(t, owners, "autoscaler", "user-cli")
 }
 
 func TestMustStatePanicsOnInvalidEntry(t *testing.T) {
@@ -81,7 +83,7 @@ func TestNewStateAllowsExplicitParentAndChildPaths(t *testing.T) {
 	state, err := NewState(entry("user-cli", specPath(), replicasPath()))
 
 	requireNoError(t, err)
-	requireSet(t, state.FieldsFor("user-cli"), "$.spec", "$.spec.replicas")
+	requireSet(t, state.FieldsFor(owner("user-cli")), "$.spec", "$.spec.replicas")
 }
 
 func TestNewStateAllowsNoEntries(t *testing.T) {
@@ -103,5 +105,5 @@ func TestNewStateDoesNotRetainCallerEntrySlice(t *testing.T) {
 	entries[0] = entry("other", metadataPath())
 
 	requireOwners(t, state.Owners(), "autoscaler", "user-cli")
-	requireSet(t, state.FieldsFor("user-cli"), "$.spec.image")
+	requireSet(t, state.FieldsFor(owner("user-cli")), "$.spec.image")
 }

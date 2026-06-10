@@ -14,12 +14,16 @@
 
 package fieldownership
 
-import "arcoris.dev/apimachinery/api/fieldpath"
+import "testing"
 
-// pathsOverlap reports whether two semantic paths describe overlapping structure.
-//
-// Exact matches overlap. Ancestor/descendant pairs overlap in either direction.
-// Sibling paths do not overlap.
-func pathsOverlap(a fieldpath.Path, b fieldpath.Path) bool {
-	return a.Overlaps(b)
+func TestValidateConflictInputsAcceptsValidOwnerAndFields(t *testing.T) {
+	err := validateConflictInputs(owner("user-cli"), set(replicasPath()))
+
+	requireNoError(t, err)
+}
+
+func TestValidateConflictInputsRejectsInvalidOwner(t *testing.T) {
+	err := validateConflictInputs(Owner{}, set(replicasPath()))
+
+	requireErrorIs(t, err, ErrInvalidOwner)
 }

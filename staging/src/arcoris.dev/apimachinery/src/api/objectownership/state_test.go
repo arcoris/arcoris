@@ -31,13 +31,13 @@ func TestNewState(t *testing.T) {
 
 	got := NewState(desired)
 
-	requireOwners(t, got.Desired().OwnersOf(path("$.image")), "user")
+	requireOwnersOf(t, got.Desired(), path("$.image"), "user")
 }
 
 func TestStateDesired(t *testing.T) {
 	state := NewState(ownershipState(ownershipEntry("user", "$.image")))
 
-	requireOwners(t, state.Desired().OwnersOf(path("$.image")), "user")
+	requireOwnersOf(t, state.Desired(), path("$.image"), "user")
 }
 
 func TestStateWithDesired(t *testing.T) {
@@ -46,8 +46,8 @@ func TestStateWithDesired(t *testing.T) {
 
 	got := original.WithDesired(replacement)
 
-	requireOwners(t, got.Desired().OwnersOf(path("$.replicas")), "new")
-	requireOwners(t, original.Desired().OwnersOf(path("$.image")), "old")
+	requireOwnersOf(t, got.Desired(), path("$.replicas"), "new")
+	requireOwnersOf(t, original.Desired(), path("$.image"), "old")
 }
 
 func TestStateIsEmpty(t *testing.T) {
@@ -62,5 +62,5 @@ func TestStateImmutability(t *testing.T) {
 
 	_ = original.WithDesired(fieldownership.EmptyState())
 
-	requireOwners(t, original.Desired().OwnersOf(path("$.image")), "user")
+	requireOwnersOf(t, original.Desired(), path("$.image"), "user")
 }

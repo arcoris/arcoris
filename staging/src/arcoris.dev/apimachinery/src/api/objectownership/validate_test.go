@@ -58,7 +58,10 @@ func TestValidateAcceptsEmptyFieldEntryWithValidOwner(t *testing.T) {
 }
 
 func TestValidateRejectsInvalidOwner(t *testing.T) {
-	err := Validate(document(documentEntry(" ", "$.image")))
+	err := Validate(document(Entry{
+		Owner:  fieldownership.Owner{},
+		Fields: []Path{"$.image"},
+	}))
 
 	requireErrorIs(t, err, ErrInvalidEntry)
 	requireErrorIs(t, err, fieldownership.ErrInvalidOwner)

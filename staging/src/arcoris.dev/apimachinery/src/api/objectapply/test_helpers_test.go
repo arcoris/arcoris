@@ -111,7 +111,7 @@ func fields(paths ...fieldpath.Path) fieldpath.Set {
 
 // owner builds a field owner fixture.
 func owner(name string) fieldownership.Owner {
-	return fieldownership.Owner(name)
+	return fieldownership.MustOwner(name)
 }
 
 // entry builds one ownership entry fixture.
@@ -339,4 +339,12 @@ func requireOwners(t *testing.T, got []fieldownership.Owner, want ...string) {
 	if !reflect.DeepEqual(gotStrings, want) {
 		t.Fatalf("owners = %#v; want %#v", gotStrings, want)
 	}
+}
+
+func requireOwnersOf(t *testing.T, state fieldownership.State, path fieldpath.Path, want ...string) {
+	t.Helper()
+
+	got, err := state.OwnersOf(path)
+	requireNoError(t, err)
+	requireOwners(t, got, want...)
 }

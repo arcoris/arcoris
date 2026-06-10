@@ -20,8 +20,7 @@ package fieldownership
 // nil for empty conflict sets and stores non-empty conflicts in deterministic
 // order.
 type ConflictError struct {
-	// Conflicts contains the deterministic conflict details.
-	Conflicts ConflictSet
+	conflicts ConflictSet
 }
 
 // NewConflictError returns nil for empty conflicts or a deterministic conflict error.
@@ -31,7 +30,7 @@ func NewConflictError(conflicts ConflictSet) error {
 	}
 
 	return &ConflictError{
-		Conflicts: sortedConflicts(conflicts),
+		conflicts: NewConflictSet(conflicts.Conflicts()...),
 	}
 }
 
@@ -41,10 +40,19 @@ func (e *ConflictError) Error() string {
 		return "<nil>"
 	}
 
-	return e.Conflicts.Error()
+	return e.conflicts.Error()
 }
 
 // Is reports ErrConflict identity for errors.Is.
 func (e *ConflictError) Is(target error) bool {
 	return target == ErrConflict
+}
+
+// Conflicts returns detached deterministic conflict details.
+func (e *ConflictError) Conflicts() ConflictSet {
+	if e == nil {
+		return ConflictSet{}
+	}
+
+	return NewConflictSet(e.conflicts.Conflicts()...)
 }

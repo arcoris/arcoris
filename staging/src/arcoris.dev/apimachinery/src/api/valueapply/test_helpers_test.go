@@ -51,7 +51,7 @@ func testMapKey(key string) fieldpath.MapKey {
 }
 
 func owner(name string) fieldownership.Owner {
-	return fieldownership.Owner(name)
+	return fieldownership.MustOwner(name)
 }
 
 func entry(name string, paths ...fieldpath.Path) fieldownership.Entry {
@@ -123,6 +123,14 @@ func requireOwners(t *testing.T, got []fieldownership.Owner, want ...string) {
 	if !reflect.DeepEqual(gotStrings, want) {
 		t.Fatalf("owners = %#v; want %#v", gotStrings, want)
 	}
+}
+
+func requireOwnersOf(t *testing.T, state fieldownership.State, path fieldpath.Path, want ...string) {
+	t.Helper()
+
+	got, err := state.OwnersOf(path)
+	requireNoError(t, err)
+	requireOwners(t, got, want...)
 }
 
 func requireStringMember(t *testing.T, object value.Value, name string, want string) {

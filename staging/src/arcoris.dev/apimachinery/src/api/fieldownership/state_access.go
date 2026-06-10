@@ -16,6 +16,15 @@ package fieldownership
 
 import "arcoris.dev/apimachinery/api/fieldpath"
 
+// Entry returns the entry at index in deterministic owner order.
+func (s State) Entry(index int) (Entry, bool) {
+	if index < 0 || index >= len(s.entries) {
+		return Entry{}, false
+	}
+
+	return s.entries[index], true
+}
+
 // Entries returns detached entries in deterministic owner order.
 func (s State) Entries() []Entry {
 	if len(s.entries) == 0 {
@@ -26,6 +35,15 @@ func (s State) Entries() []Entry {
 	copy(entries, s.entries)
 
 	return entries
+}
+
+// ForEach visits entries in deterministic owner order until fn returns false.
+func (s State) ForEach(fn func(index int, entry Entry) bool) {
+	for i, entry := range s.entries {
+		if !fn(i, entry) {
+			return
+		}
+	}
 }
 
 // Owners returns sorted owners present in s.
@@ -53,8 +71,6 @@ func (s State) Fields() fieldpath.Set {
 }
 
 // FieldsFor returns fields owned by owner, or an empty set when owner is absent.
-//
-// Invalid owner values behave as absent because this query API has no error return.
 func (s State) FieldsFor(owner Owner) fieldpath.Set {
 	for _, entry := range s.entries {
 		if entry.owner == owner {

@@ -21,11 +21,14 @@ import (
 )
 
 var (
-	// ErrInvalidOwner classifies owner names that cannot identify ownership.
+	// ErrInvalidOwner classifies owner text that cannot identify ownership.
 	ErrInvalidOwner = errors.New("invalid field owner")
 
 	// ErrInvalidEntry classifies owner/field-set records that cannot be stored.
 	ErrInvalidEntry = errors.New("invalid field ownership entry")
+
+	// ErrInvalidState classifies malformed ownership state representation.
+	ErrInvalidState = errors.New("invalid field ownership state")
 
 	// ErrInvalidPath classifies malformed semantic field paths.
 	ErrInvalidPath = errors.New("invalid field path")

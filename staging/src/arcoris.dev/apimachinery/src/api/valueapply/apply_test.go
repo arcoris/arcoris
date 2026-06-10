@@ -87,7 +87,7 @@ func TestApplySameValueOwnedByOtherCreatesSharedOwnership(t *testing.T) {
 	result, err := Apply(req, Options{})
 	requireNoError(t, err)
 
-	requireOwners(t, result.Ownership.OwnersOf(imagePath()), "other", "user")
+	requireOwnersOf(t, result.Ownership, imagePath(), "other", "user")
 }
 
 func TestApplySameValueOwnedByOtherDoesNotRemoveOtherOwnership(t *testing.T) {
@@ -98,8 +98,8 @@ func TestApplySameValueOwnedByOtherDoesNotRemoveOtherOwnership(t *testing.T) {
 	result, err := Apply(req, Options{})
 	requireNoError(t, err)
 
-	requireOwners(t, result.Ownership.OwnersOf(imagePath()), "other", "user")
-	requireOwners(t, result.Ownership.OwnersOf(replicasPath()), "other")
+	requireOwnersOf(t, result.Ownership, imagePath(), "other", "user")
+	requireOwnersOf(t, result.Ownership, replicasPath(), "other")
 }
 
 func TestApplySameValueMapKeyCreatesSharedOwnership(t *testing.T) {
@@ -114,7 +114,7 @@ func TestApplySameValueMapKeyCreatesSharedOwnership(t *testing.T) {
 	requireNoError(t, err)
 
 	requireSet(t, result.ChangedAppliedFields)
-	requireOwners(t, result.Ownership.OwnersOf(labelPath()), "other", "user")
+	requireOwnersOf(t, result.Ownership, labelPath(), "other", "user")
 }
 
 func TestApplyEmptyAppliedFieldsReleasesOwner(t *testing.T) {

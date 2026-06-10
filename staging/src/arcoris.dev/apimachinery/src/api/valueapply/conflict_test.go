@@ -88,7 +88,7 @@ func TestApplyChangedFieldOwnedByOtherForceTakesOwnership(t *testing.T) {
 	result, err := Apply(req, Options{Force: true})
 	requireNoError(t, err)
 
-	requireOwners(t, result.Ownership.OwnersOf(imagePath()), "user")
+	requireOwnersOf(t, result.Ownership, imagePath(), "user")
 	requireStringMember(t, result.Value, "image", "api:v2")
 }
 
@@ -112,7 +112,7 @@ func TestApplyForceResultOwnershipReflectsTakeover(t *testing.T) {
 	result, err := Apply(req, Options{Force: true})
 	requireNoError(t, err)
 
-	requireOwners(t, result.Ownership.OwnersOf(imagePath()), "user")
+	requireOwnersOf(t, result.Ownership, imagePath(), "user")
 }
 
 func TestApplyForceRemovesOnlyConflictingOwnership(t *testing.T) {
@@ -124,8 +124,8 @@ func TestApplyForceRemovesOnlyConflictingOwnership(t *testing.T) {
 	result, err := Apply(req, Options{Force: true})
 	requireNoError(t, err)
 
-	requireOwners(t, result.Ownership.OwnersOf(imagePath()), "user")
-	requireOwners(t, result.Ownership.OwnersOf(replicasPath()), "other")
+	requireOwnersOf(t, result.Ownership, imagePath(), "user")
+	requireOwnersOf(t, result.Ownership, replicasPath(), "other")
 }
 
 func TestApplyForceDoesNotRemoveUnrelatedOwnership(t *testing.T) {
@@ -137,11 +137,12 @@ func TestApplyForceDoesNotRemoveUnrelatedOwnership(t *testing.T) {
 	result, err := Apply(req, Options{Force: true})
 	requireNoError(t, err)
 
-	requireOwners(t, result.Ownership.OwnersOf(replicasPath()), "other")
+	requireOwnersOf(t, result.Ownership, replicasPath(), "other")
 }
 
 func TestOwnershipConflictsWrapsInvalidOwner(t *testing.T) {
-	req := specRequest(owner(" "))
+	req := specRequest(owner("user"))
+	req.Owner = fieldownership.Owner{}
 
 	_, err := ownershipConflicts(req, fields(imagePath()))
 

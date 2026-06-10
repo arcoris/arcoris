@@ -59,7 +59,7 @@ func checkContext(op Operation, ctx context.Context) error {
 
 // validateOwner checks the field manager identity before apply or ownership init.
 func validateOwner(op Operation, owner fieldownership.Owner) error {
-	if err := owner.Validate(); err != nil {
+	if err := owner.ValidateLexical(); err != nil {
 		return errorFor(op, ErrorReasonInvalidRequest, objectstore.Key{}, ErrInvalidRequest, err)
 	}
 

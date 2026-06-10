@@ -27,7 +27,7 @@ func TestEncodeObjectOwnershipDocument(t *testing.T) {
 		Version: objectownership.DocumentVersionV1,
 		Desired: objectownership.Surface{Entries: []objectownership.Entry{
 			{
-				Owner:  fieldownership.Owner("user-cli"),
+				Owner:  fieldownership.MustOwner("user-cli"),
 				Fields: []objectownership.Path{"$.image", "$.replicas"},
 			},
 		}},
@@ -44,7 +44,7 @@ func TestEncodeObjectOwnershipDocument(t *testing.T) {
 
 func TestEncodeObjectOwnershipValidatesBeforeEncode(t *testing.T) {
 	doc := objectownership.Document{Version: objectownership.DocumentVersionV1}
-	doc.Desired.Entries = []objectownership.Entry{{Owner: fieldownership.Owner(""), Fields: []objectownership.Path{"$.image"}}}
+	doc.Desired.Entries = []objectownership.Entry{{Owner: fieldownership.Owner{}, Fields: []objectownership.Path{"$.image"}}}
 
 	_, err := newTestCodec(t).EncodeObjectOwnership(doc)
 
@@ -59,8 +59,8 @@ func TestEncodeObjectOwnershipDeterministicNormalizes(t *testing.T) {
 	doc := objectownership.Document{
 		Version: objectownership.DocumentVersionV1,
 		Desired: objectownership.Surface{Entries: []objectownership.Entry{
-			{Owner: fieldownership.Owner("user-b"), Fields: []objectownership.Path{"$.b"}},
-			{Owner: fieldownership.Owner("user-a"), Fields: []objectownership.Path{"$.b", "$.a"}},
+			{Owner: fieldownership.MustOwner("user-b"), Fields: []objectownership.Path{"$.b"}},
+			{Owner: fieldownership.MustOwner("user-a"), Fields: []objectownership.Path{"$.b", "$.a"}},
 		}},
 	}
 
@@ -77,8 +77,8 @@ func TestEncodeObjectOwnershipPreservesOrderByDefault(t *testing.T) {
 	doc := objectownership.Document{
 		Version: objectownership.DocumentVersionV1,
 		Desired: objectownership.Surface{Entries: []objectownership.Entry{
-			{Owner: fieldownership.Owner("user-b"), Fields: []objectownership.Path{"$.b"}},
-			{Owner: fieldownership.Owner("user-a"), Fields: []objectownership.Path{"$.b", "$.a"}},
+			{Owner: fieldownership.MustOwner("user-b"), Fields: []objectownership.Path{"$.b"}},
+			{Owner: fieldownership.MustOwner("user-a"), Fields: []objectownership.Path{"$.b", "$.a"}},
 		}},
 	}
 

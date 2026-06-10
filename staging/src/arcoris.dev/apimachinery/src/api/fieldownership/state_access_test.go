@@ -40,13 +40,41 @@ func TestStateFieldsReturnsUnion(t *testing.T) {
 }
 
 func TestStateFieldsForOwner(t *testing.T) {
-	requireSet(t, baseState().FieldsFor("user-cli"), "$.spec.image", "$.spec.replicas")
+	requireSet(t, baseState().FieldsFor(owner("user-cli")), "$.spec.image", "$.spec.replicas")
 }
 
 func TestStateFieldsForUnknownOwnerIsEmpty(t *testing.T) {
-	requireEqual(t, baseState().FieldsFor("missing").IsEmpty(), true)
+	requireEqual(t, baseState().FieldsFor(owner("missing")).IsEmpty(), true)
 }
 
 func TestStateFieldsForInvalidOwnerIsEmpty(t *testing.T) {
-	requireEqual(t, baseState().FieldsFor("").IsEmpty(), true)
+	requireEqual(t, baseState().FieldsFor(Owner{}).IsEmpty(), true)
+}
+
+func TestStateLen(t *testing.T) {
+	requireEqual(t, baseState().Len(), 3)
+}
+
+func TestStateEntry(t *testing.T) {
+	entry, ok := baseState().Entry(0)
+
+	requireEqual(t, ok, true)
+	requireEqual(t, entry.Owner(), owner("autoscaler"))
+}
+
+func TestStateEntryOutOfRange(t *testing.T) {
+	_, ok := baseState().Entry(99)
+
+	requireEqual(t, ok, false)
+}
+
+func TestStateForEachStopsEarly(t *testing.T) {
+	var visited []Owner
+
+	baseState().ForEach(func(index int, entry Entry) bool {
+		visited = append(visited, entry.Owner())
+		return false
+	})
+
+	requireOwners(t, visited, "autoscaler")
 }

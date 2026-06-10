@@ -77,12 +77,3 @@ func (s State) replaceOwnerFields(owner Owner, fields fieldpath.Set) (State, err
 
 	return normalizeEntries(entries)
 }
-
-// validateOwnerFields validates the common owner plus field-set input shape.
-func validateOwnerFields(owner Owner, fields fieldpath.Set, detail string) error {
-	if err := owner.Validate(); err != nil {
-		return err
-	}
-
-	return validateFields(fields, detail)
-}

@@ -93,5 +93,5 @@ func TestApplyDesiredSameValueSharedOwnership(t *testing.T) {
 	requireNoError(t, err)
 
 	requireSet(t, result.Desired.ChangedAppliedFields)
-	requireOwners(t, result.Ownership.Desired().OwnersOf(path("$.image")), "other", "user")
+	requireOwnersOf(t, result.Ownership.Desired(), path("$.image"), "other", "user")
 }

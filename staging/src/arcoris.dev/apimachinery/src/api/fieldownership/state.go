@@ -16,11 +16,16 @@ package fieldownership
 
 // State is deterministic immutable-by-convention field ownership state.
 //
-// Entries are sorted by Owner. Multiple owners may own the same path; conflict
-// detection, not state normalization, decides when another attempted field set
-// overlaps existing ownership.
+// Entries are sorted by Owner. Duplicate owners are merged and empty entries are
+// pruned by NewState. Multiple owners may own exact or overlapping paths because
+// conflict checks are contextual to an acting owner and attempted field set.
 type State struct {
 	entries []Entry
+}
+
+// Len returns the number of non-empty owner entries in s.
+func (s State) Len() int {
+	return len(s.entries)
 }
 
 // IsEmpty reports whether s contains no non-empty owner entries.

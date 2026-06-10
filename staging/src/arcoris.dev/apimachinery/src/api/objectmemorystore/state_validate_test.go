@@ -17,6 +17,7 @@ package objectmemorystore
 import (
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldownership"
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
@@ -34,8 +35,8 @@ func TestPrepareInputStateReturnsDetachedState(t *testing.T) {
 	prepared, err := prepareInputState(state)
 	requireNoError(t, err)
 
-	state.Ownership.Desired.Entries[0].Owner = "mutated"
-	if prepared.Ownership.Desired.Entries[0].Owner != "manager" {
+	state.Ownership.Desired.Entries[0].Owner = fieldownership.MustOwner("mutated")
+	if prepared.Ownership.Desired.Entries[0].Owner != fieldownership.MustOwner("manager") {
 		t.Fatalf("prepareInputState retained caller mutation")
 	}
 }

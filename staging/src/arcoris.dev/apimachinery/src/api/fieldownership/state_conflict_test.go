@@ -20,14 +20,14 @@ import (
 )
 
 func TestStateConflictsEmptyAttemptedIsEmpty(t *testing.T) {
-	conflicts, err := baseState().Conflicts("user-cli", set())
+	conflicts, err := baseState().Conflicts(owner("user-cli"), set())
 
 	requireNoError(t, err)
 	requireEqual(t, conflicts.IsEmpty(), true)
 }
 
 func TestStateConflictsUnownedFieldsIsEmpty(t *testing.T) {
-	conflicts, err := baseState().Conflicts("user-cli", set(namePath()))
+	conflicts, err := baseState().Conflicts(owner("user-cli"), set(namePath()))
 
 	requireNoError(t, err)
 	requireEqual(t, conflicts.IsEmpty(), true)
@@ -36,14 +36,14 @@ func TestStateConflictsUnownedFieldsIsEmpty(t *testing.T) {
 func TestStateConflictsIgnoresSameOwner(t *testing.T) {
 	state := MustState(entry("user-cli", specPath()))
 
-	conflicts, err := state.Conflicts("user-cli", set(replicasPath()))
+	conflicts, err := state.Conflicts(owner("user-cli"), set(replicasPath()))
 
 	requireNoError(t, err)
 	requireEqual(t, conflicts.IsEmpty(), true)
 }
 
 func TestStateConflictsExactOwnedPath(t *testing.T) {
-	conflicts, err := baseState().Conflicts("other", set(replicasPath()))
+	conflicts, err := baseState().Conflicts(owner("other"), set(replicasPath()))
 
 	requireNoError(t, err)
 	requireConflictStrings(t, conflicts,
@@ -55,7 +55,7 @@ func TestStateConflictsExactOwnedPath(t *testing.T) {
 func TestStateConflictsOwnedAncestor(t *testing.T) {
 	state := MustState(entry("template-controller", specPath()))
 
-	conflicts, err := state.Conflicts("user-cli", set(replicasPath()))
+	conflicts, err := state.Conflicts(owner("user-cli"), set(replicasPath()))
 
 	requireNoError(t, err)
 	requireConflictStrings(t, conflicts, "template-controller:$.spec->$.spec.replicas")
@@ -64,7 +64,7 @@ func TestStateConflictsOwnedAncestor(t *testing.T) {
 func TestStateConflictsOwnedDescendant(t *testing.T) {
 	state := MustState(entry("label-controller", labelPath()))
 
-	conflicts, err := state.Conflicts("user-cli", set(metadataPath()))
+	conflicts, err := state.Conflicts(owner("user-cli"), set(metadataPath()))
 
 	requireNoError(t, err)
 	requireConflictStrings(t, conflicts, `label-controller:$.metadata.labels["app"]->$.metadata`)
@@ -73,7 +73,7 @@ func TestStateConflictsOwnedDescendant(t *testing.T) {
 func TestStateConflictsMultipleOwners(t *testing.T) {
 	state := MustState(entry("a", specPath()), entry("b", replicasPath()))
 
-	conflicts, err := state.Conflicts("c", set(replicasPath()))
+	conflicts, err := state.Conflicts(owner("c"), set(replicasPath()))
 
 	requireNoError(t, err)
 	requireConflictStrings(t, conflicts,
@@ -85,7 +85,7 @@ func TestStateConflictsMultipleOwners(t *testing.T) {
 func TestStateConflictsSharedPathOwnership(t *testing.T) {
 	state := MustState(entry("a", replicasPath()), entry("b", replicasPath()))
 
-	conflicts, err := state.Conflicts("c", set(replicasPath()))
+	conflicts, err := state.Conflicts(owner("c"), set(replicasPath()))
 
 	requireNoError(t, err)
 	requireConflictStrings(t, conflicts,
@@ -97,7 +97,7 @@ func TestStateConflictsSharedPathOwnership(t *testing.T) {
 func TestStateConflictsDeterministicOrder(t *testing.T) {
 	state := MustState(entry("b", specPath()), entry("a", replicasPath()))
 
-	conflicts, err := state.Conflicts("c", set(specPath(), replicasPath()))
+	conflicts, err := state.Conflicts(owner("c"), set(specPath(), replicasPath()))
 
 	requireNoError(t, err)
 	requireConflictStrings(t, conflicts,
@@ -109,7 +109,7 @@ func TestStateConflictsDeterministicOrder(t *testing.T) {
 }
 
 func TestStateConflictsRejectsInvalidOwner(t *testing.T) {
-	_, err := baseState().Conflicts("", set(replicasPath()))
+	_, err := baseState().Conflicts(Owner{}, set(replicasPath()))
 
 	requireErrorIs(t, err, ErrInvalidOwner)
 }
@@ -117,8 +117,8 @@ func TestStateConflictsRejectsInvalidOwner(t *testing.T) {
 func requireConflictStrings(t *testing.T, conflicts ConflictSet, want ...string) {
 	t.Helper()
 
-	got := make([]string, 0, len(conflicts))
-	for _, conflict := range conflicts {
+	got := make([]string, 0, conflicts.Len())
+	for _, conflict := range conflicts.Conflicts() {
 		got = append(
 			got,
 			conflict.Owner.String()+":"+

@@ -29,7 +29,7 @@ func TestApplyForceExactConflictTakesOwnership(t *testing.T) {
 	result, err := Apply(req, Options{Force: true})
 	requireNoError(t, err)
 
-	requireOwners(t, result.Ownership.OwnersOf(imagePath()), "user")
+	requireOwnersOf(t, result.Ownership, imagePath(), "user")
 	requireStringMember(t, result.Value, "image", "api:v2")
 }
 
@@ -71,8 +71,8 @@ func TestApplyForceOtherOwnerDescendantConflictTakesOwnership(t *testing.T) {
 
 	spec := requireMember(t, result.Value, "spec")
 	requireNoMember(t, spec, "image")
-	requireOwners(t, result.Ownership.OwnersOf(specPath()), "user")
-	requireOwners(t, result.Ownership.OwnersOf(specPath().Field(testFieldName("image"))))
+	requireOwnersOf(t, result.Ownership, specPath(), "user")
+	requireOwnersOf(t, result.Ownership, specPath().Field(testFieldName("image")))
 }
 
 func TestApplyForceListMapItemOwnerAndFieldAttemptUnsupported(t *testing.T) {
@@ -130,23 +130,23 @@ func TestApplyUnsupportedForceTakeoverPreservesFieldOwnershipConflictCause(t *te
 }
 
 func TestUnsupportedTakeoverConflictsKeepsOnlyOwnedAncestors(t *testing.T) {
-	conflicts := fieldownership.ConflictSet{
-		{
+	conflicts := fieldownership.NewConflictSet(
+		fieldownership.Conflict{
 			Owner:         owner("ancestor"),
 			OwnedPath:     path("$.spec"),
 			AttemptedPath: path("$.spec.image"),
 		},
-		{
+		fieldownership.Conflict{
 			Owner:         owner("exact"),
 			OwnedPath:     path("$.spec.image"),
 			AttemptedPath: path("$.spec.image"),
 		},
-		{
+		fieldownership.Conflict{
 			Owner:         owner("descendant"),
 			OwnedPath:     path("$.spec.image"),
 			AttemptedPath: path("$.spec"),
 		},
-	}
+	)
 
 	got := unsupportedTakeoverConflicts(conflicts)
 
@@ -174,6 +174,6 @@ func TestApplyForceListDescendantConflictTakesOwnership(t *testing.T) {
 
 	args := requireMember(t, result.Value, "args")
 	requireListStrings(t, args, "new")
-	requireOwners(t, result.Ownership.OwnersOf(path("$.args")), "user")
-	requireOwners(t, result.Ownership.OwnersOf(path("$.args[0]")))
+	requireOwnersOf(t, result.Ownership, path("$.args"), "user")
+	requireOwnersOf(t, result.Ownership, path("$.args[0]"))
 }

@@ -39,7 +39,7 @@ func TestRemoveExactTransform(t *testing.T) {
 	requireSet(t, got, "$.spec.replicas")
 }
 
-func TestRemoveExactTransformDoesNotRemoveOverlaps(t *testing.T) {
+func TestRemoveExactTransformDoesNotRemoveOverlappingPaths(t *testing.T) {
 	got := removeExactTransform(set(specPath(), replicasPath()), set(replicasPath()))
 
 	requireSet(t, got, "$.spec")

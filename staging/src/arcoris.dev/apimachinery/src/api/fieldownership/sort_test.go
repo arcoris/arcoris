@@ -20,13 +20,13 @@ import (
 )
 
 func TestCompareOwners(t *testing.T) {
-	requireEqual(t, compareOwners("a", "b") < 0, true)
-	requireEqual(t, compareOwners("b", "a") > 0, true)
-	requireEqual(t, compareOwners("a", "a"), 0)
+	requireEqual(t, compareOwners(owner("a"), owner("b")) < 0, true)
+	requireEqual(t, compareOwners(owner("b"), owner("a")) > 0, true)
+	requireEqual(t, compareOwners(owner("a"), owner("a")), 0)
 }
 
 func TestCompactSortedOwners(t *testing.T) {
-	got := compactSortedOwners([]Owner{"a", "a", "b", "b", "c"})
+	got := compactSortedOwners(owners("a", "a", "b", "b", "c"))
 
 	requireOwners(t, got, "a", "b", "c")
 }
@@ -36,9 +36,9 @@ func TestCompactSortedOwnersEmptyIsNil(t *testing.T) {
 }
 
 func TestSortedOwnersUseCompareOwners(t *testing.T) {
-	owners := []Owner{"z", "a", "m"}
+	values := owners("z", "a", "m")
 
-	slices.SortFunc(owners, compareOwners)
+	slices.SortFunc(values, compareOwners)
 
-	requireOwners(t, owners, "a", "m", "z")
+	requireOwners(t, values, "a", "m", "z")
 }

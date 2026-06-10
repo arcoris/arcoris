@@ -14,7 +14,11 @@
 
 package objectownership
 
-import "testing"
+import (
+	"testing"
+
+	"arcoris.dev/apimachinery/api/fieldownership"
+)
 
 func TestEntryIsEmpty(t *testing.T) {
 	if !documentEntry("user").IsEmpty() {
@@ -26,7 +30,9 @@ func TestEntryIsEmpty(t *testing.T) {
 }
 
 func TestEntryIsEmptyDoesNotValidateOwner(t *testing.T) {
-	if !documentEntry(" ").IsEmpty() {
+	entry := Entry{Owner: fieldownership.Owner{}}
+
+	if !entry.IsEmpty() {
 		t.Fatalf("entry with invalid owner but no fields IsEmpty() = false")
 	}
 }

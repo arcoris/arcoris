@@ -42,21 +42,3 @@ func (e Entry) Fields() fieldpath.Set {
 func (e Entry) IsEmpty() bool {
 	return e.fields.IsEmpty()
 }
-
-// Validate checks whether e can be stored in State.
-func (e Entry) Validate() error {
-	if err := e.owner.Validate(); err != nil {
-		return wrapAt(
-			"",
-			ErrInvalidEntry,
-			ErrorReasonInvalidEntry,
-			"entry owner is invalid",
-			err,
-		)
-	}
-	if err := validateFields(e.fields, "entry field path is invalid"); err != nil {
-		return err
-	}
-
-	return nil
-}

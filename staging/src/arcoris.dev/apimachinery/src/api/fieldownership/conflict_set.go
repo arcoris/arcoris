@@ -22,38 +22,74 @@ import (
 	"arcoris.dev/apimachinery/api/fieldpath"
 )
 
-// ConflictSet is a deterministic collection of ownership conflicts.
-type ConflictSet []Conflict
+// ConflictSet is a deterministic immutable-by-convention collection of conflicts.
+type ConflictSet struct {
+	conflicts []Conflict
+}
+
+// NewConflictSet constructs a deterministic conflict set.
+func NewConflictSet(conflicts ...Conflict) ConflictSet {
+	if len(conflicts) == 0 {
+		return ConflictSet{}
+	}
+
+	ordered := make([]Conflict, len(conflicts))
+	copy(ordered, conflicts)
+	slices.SortFunc(ordered, compareConflicts)
+
+	return ConflictSet{conflicts: compactConflicts(ordered)}
+}
 
 // IsEmpty reports whether c contains no conflicts.
 func (c ConflictSet) IsEmpty() bool {
-	return len(c) == 0
+	return len(c.conflicts) == 0
 }
 
 // Len returns the number of conflicts.
 func (c ConflictSet) Len() int {
-	return len(c)
+	return len(c.conflicts)
+}
+
+// Conflicts returns detached conflicts in deterministic order.
+func (c ConflictSet) Conflicts() []Conflict {
+	if len(c.conflicts) == 0 {
+		return nil
+	}
+
+	conflicts := make([]Conflict, len(c.conflicts))
+	copy(conflicts, c.conflicts)
+
+	return conflicts
+}
+
+// ForEach visits conflicts in deterministic order until fn returns false.
+func (c ConflictSet) ForEach(fn func(index int, conflict Conflict) bool) {
+	for i, conflict := range c.conflicts {
+		if !fn(i, conflict) {
+			return
+		}
+	}
 }
 
 // Owners returns sorted unique conflicting owners.
 func (c ConflictSet) Owners() []Owner {
-	if len(c) == 0 {
+	if len(c.conflicts) == 0 {
 		return nil
 	}
 
-	owners := make([]Owner, 0, len(c))
-	for _, conflict := range c {
+	owners := make([]Owner, 0, len(c.conflicts))
+	for _, conflict := range c.conflicts {
 		owners = append(owners, conflict.Owner)
 	}
 
-	slices.SortFunc(owners, compareOwners)
+	sortOwners(owners)
 	return compactSortedOwners(owners)
 }
 
 // OwnedPaths returns the set of paths already owned by conflicting owners.
 func (c ConflictSet) OwnedPaths() fieldpath.Set {
 	fields := fieldpath.EmptySet()
-	for _, conflict := range c {
+	for _, conflict := range c.conflicts {
 		fields = fields.Insert(conflict.OwnedPath)
 	}
 
@@ -63,7 +99,7 @@ func (c ConflictSet) OwnedPaths() fieldpath.Set {
 // AttemptedPaths returns the set of attempted paths involved in conflicts.
 func (c ConflictSet) AttemptedPaths() fieldpath.Set {
 	fields := fieldpath.EmptySet()
-	for _, conflict := range c {
+	for _, conflict := range c.conflicts {
 		fields = fields.Insert(conflict.AttemptedPath)
 	}
 
@@ -72,13 +108,12 @@ func (c ConflictSet) AttemptedPaths() fieldpath.Set {
 
 // Error returns deterministic compact conflict text.
 func (c ConflictSet) Error() string {
-	if len(c) == 0 {
+	if len(c.conflicts) == 0 {
 		return "field ownership conflicts: none"
 	}
 
-	conflicts := sortedConflicts(c)
-	parts := make([]string, 0, len(conflicts))
-	for _, conflict := range conflicts {
+	parts := make([]string, 0, len(c.conflicts))
+	for _, conflict := range c.conflicts {
 		parts = append(parts, fmt.Sprintf(
 			"%s owns %s, attempted %s",
 			conflict.Owner,
@@ -88,15 +123,6 @@ func (c ConflictSet) Error() string {
 	}
 
 	return "field ownership conflicts: " + strings.Join(parts, "; ")
-}
-
-// sortedConflicts returns conflicts in Owner, AttemptedPath, OwnedPath order.
-func sortedConflicts(conflicts ConflictSet) ConflictSet {
-	sorted := make(ConflictSet, len(conflicts))
-	copy(sorted, conflicts)
-	slices.SortFunc(sorted, compareConflicts)
-
-	return sorted
 }
 
 // compareConflicts orders conflicts by owner, attempted path, then owned path.
@@ -109,4 +135,24 @@ func compareConflicts(left Conflict, right Conflict) int {
 	}
 
 	return left.OwnedPath.Compare(right.OwnedPath)
+}
+
+// compactConflicts removes exact duplicate conflicts from a sorted slice.
+func compactConflicts(conflicts []Conflict) []Conflict {
+	if len(conflicts) == 0 {
+		return nil
+	}
+
+	out := conflicts[:1]
+	for _, conflict := range conflicts[1:] {
+		last := out[len(out)-1]
+		if conflict.Owner == last.Owner &&
+			conflict.AttemptedPath.Equal(last.AttemptedPath) &&
+			conflict.OwnedPath.Equal(last.OwnedPath) {
+			continue
+		}
+		out = append(out, conflict)
+	}
+
+	return out
 }

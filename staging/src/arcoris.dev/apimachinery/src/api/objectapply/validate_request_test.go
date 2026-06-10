@@ -17,6 +17,7 @@ package objectapply
 import (
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldownership"
 	"arcoris.dev/apimachinery/api/resource"
 )
 
@@ -28,7 +29,7 @@ func TestValidateRequest(t *testing.T) {
 
 func TestValidateRequestRejectsInvalidOwner(t *testing.T) {
 	req := testRequest()
-	req.Owner = owner(" ")
+	req.Owner = fieldownership.Owner{}
 
 	err := newApplier(Options{}).validateRequest(req)
 

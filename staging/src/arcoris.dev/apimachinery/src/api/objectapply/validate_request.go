@@ -23,7 +23,7 @@ package objectapply
 func (a applier) validateRequest(req Request) error {
 	// Owner must be valid before it is passed to fieldownership through
 	// valueapply.
-	if err := req.Owner.Validate(); err != nil {
+	if err := req.Owner.ValidateLexical(); err != nil {
 		return wrapAt(
 			pathRequestOwner,
 			ErrInvalidOwner,

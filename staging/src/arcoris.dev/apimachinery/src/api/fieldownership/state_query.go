@@ -17,13 +17,9 @@ package fieldownership
 import "arcoris.dev/apimachinery/api/fieldpath"
 
 // OwnersOf returns owners that own path exactly.
-//
-// Invalid paths are treated as no match because this query API intentionally has
-// no error return. Error-returning operations, such as Conflicts, validate
-// caller-supplied paths.
-func (s State) OwnersOf(path fieldpath.Path) []Owner {
-	if path.ValidateStructure() != nil {
-		return nil
+func (s State) OwnersOf(path fieldpath.Path) ([]Owner, error) {
+	if err := validateOwnedPathQuery(path, "owned path is invalid"); err != nil {
+		return nil, err
 	}
 
 	owners := make([]Owner, 0)
@@ -33,27 +29,25 @@ func (s State) OwnersOf(path fieldpath.Path) []Owner {
 		}
 	}
 
-	return owners
+	return owners, nil
 }
 
-// OverlappingOwners returns owned paths that structurally overlap path.
+// OverlappingPaths returns owned paths that structurally overlap path.
 //
 // Overlap is inclusive: exact matches, ancestors, and descendants all match.
-// Invalid paths are treated as no match because this query API has no error
-// return.
-func (s State) OverlappingOwners(path fieldpath.Path) []Ownership {
-	if path.ValidateStructure() != nil {
-		return nil
+func (s State) OverlappingPaths(path fieldpath.Path) (OwnedPathSet, error) {
+	if err := validateOwnedPathQuery(path, "overlap query path is invalid"); err != nil {
+		return OwnedPathSet{}, err
 	}
 
-	ownerships := make([]Ownership, 0)
+	ownedPaths := make([]OwnedPath, 0)
 	for _, entry := range s.entries {
 		for _, owned := range entry.fields.Paths() {
-			if pathsOverlap(owned, path) {
-				ownerships = append(ownerships, Ownership{Owner: entry.owner, Path: owned})
+			if owned.Overlaps(path) {
+				ownedPaths = append(ownedPaths, OwnedPath{Owner: entry.owner, Path: owned})
 			}
 		}
 	}
 
-	return ownerships
+	return NewOwnedPathSet(ownedPaths...), nil
 }

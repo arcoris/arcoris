@@ -55,7 +55,7 @@ func TestApplyMapKeyForce(t *testing.T) {
 	}, Options{Force: true})
 	requireNoError(t, err)
 
-	requireOwners(t, result.Ownership.OwnersOf(labelPath()), "user")
+	requireOwnersOf(t, result.Ownership, labelPath(), "user")
 }
 
 func TestApplyAtomicListConflictAtListPath(t *testing.T) {
@@ -83,7 +83,7 @@ func TestApplyAtomicListForceReplacesWholeList(t *testing.T) {
 	requireNoError(t, err)
 
 	requireListStrings(t, result.Value, "b")
-	requireOwners(t, result.Ownership.OwnersOf(root()), "user")
+	requireOwnersOf(t, result.Ownership, root(), "user")
 }
 
 func TestApplyOrderedListIndexConflict(t *testing.T) {
@@ -111,7 +111,7 @@ func TestApplyOrderedListIndexForce(t *testing.T) {
 	requireNoError(t, err)
 
 	requireListStrings(t, result.Value, "a", "B")
-	requireOwners(t, result.Ownership.OwnersOf(root().Index(1)), "user")
+	requireOwnersOf(t, result.Ownership, root().Index(1), "user")
 }
 
 func TestApplyListMapConditionStatusNoConflict(t *testing.T) {
@@ -154,7 +154,7 @@ func TestApplyListMapConditionStatusForce(t *testing.T) {
 	}, Options{Force: true})
 	requireNoError(t, err)
 
-	requireOwners(t, result.Ownership.OwnersOf(readyStatusPath()), "user")
+	requireOwnersOf(t, result.Ownership, readyStatusPath(), "user")
 }
 
 func TestApplyListMapSameValueSharedOwnership(t *testing.T) {
@@ -168,5 +168,5 @@ func TestApplyListMapSameValueSharedOwnership(t *testing.T) {
 	}, Options{})
 	requireNoError(t, err)
 
-	requireOwners(t, result.Ownership.OwnersOf(readyStatusPath()), "other", "user")
+	requireOwnersOf(t, result.Ownership, readyStatusPath(), "other", "user")
 }

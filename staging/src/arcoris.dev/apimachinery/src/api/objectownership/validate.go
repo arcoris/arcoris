@@ -65,7 +65,7 @@ func validateSurface(path string, surface Surface) error {
 
 // validateEntry checks owner identity and every document path string.
 func validateEntry(path string, entry Entry) error {
-	if err := entry.Owner.Validate(); err != nil {
+	if err := entry.Owner.ValidateLexical(); err != nil {
 		return wrapAt(
 			path+".owner",
 			ErrInvalidEntry,

@@ -173,7 +173,7 @@ func member(name string, val value.Value) value.RecordMember {
 }
 
 func owner(name string) fieldownership.Owner {
-	return fieldownership.Owner(name)
+	return fieldownership.MustOwner(name)
 }
 
 func createObject(t *testing.T, executor *Executor, index int, image string, owner fieldownership.Owner) Result {

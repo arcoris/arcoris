@@ -20,63 +20,79 @@ import (
 )
 
 func TestStateOwnersOfExact(t *testing.T) {
-	requireOwners(t, baseState().OwnersOf(replicasPath()), "autoscaler", "user-cli")
+	owners, err := baseState().OwnersOf(replicasPath())
+
+	requireNoError(t, err)
+	requireOwners(t, owners, "autoscaler", "user-cli")
 }
 
 func TestStateOwnersOfDoesNotReturnOverlappingAncestor(t *testing.T) {
 	state := MustState(entry("template-controller", specPath()))
+	owners, err := state.OwnersOf(replicasPath())
 
-	requireOwners(t, state.OwnersOf(replicasPath()))
+	requireNoError(t, err)
+	requireOwners(t, owners)
 }
 
 func TestStateOwnersOfUnknownPathIsEmpty(t *testing.T) {
-	requireOwners(t, baseState().OwnersOf(metadataPath()))
+	owners, err := baseState().OwnersOf(metadataPath())
+
+	requireNoError(t, err)
+	requireOwners(t, owners)
 }
 
-func TestStateOverlappingOwnersExact(t *testing.T) {
+func TestStateOverlappingPathsExact(t *testing.T) {
 	state := MustState(entry("autoscaler", replicasPath()))
+	paths, err := state.OverlappingPaths(replicasPath())
 
-	requireOwnerships(t, state.OverlappingOwners(replicasPath()), "autoscaler:$.spec.replicas")
+	requireNoError(t, err)
+	requireOwnedPaths(t, paths, "autoscaler:$.spec.replicas")
 }
 
-func TestStateOverlappingOwnersAncestor(t *testing.T) {
+func TestStateOverlappingPathsAncestor(t *testing.T) {
 	state := MustState(entry("template-controller", specPath()))
+	paths, err := state.OverlappingPaths(replicasPath())
 
-	requireOwnerships(t, state.OverlappingOwners(replicasPath()), "template-controller:$.spec")
+	requireNoError(t, err)
+	requireOwnedPaths(t, paths, "template-controller:$.spec")
 }
 
-func TestStateOverlappingOwnersDescendant(t *testing.T) {
+func TestStateOverlappingPathsDescendant(t *testing.T) {
 	state := MustState(entry("label-controller", labelPath()))
+	paths, err := state.OverlappingPaths(metadataPath())
 
-	requireOwnerships(t,
-		state.OverlappingOwners(metadataPath()),
-		`label-controller:$.metadata.labels["app"]`,
-	)
+	requireNoError(t, err)
+	requireOwnedPaths(t, paths, `label-controller:$.metadata.labels["app"]`)
 }
 
-func TestStateOverlappingOwnersNone(t *testing.T) {
-	requireOwnerships(t, baseState().OverlappingOwners(namePath()))
+func TestStateOverlappingPathsNone(t *testing.T) {
+	paths, err := baseState().OverlappingPaths(namePath())
+
+	requireNoError(t, err)
+	requireOwnedPaths(t, paths)
 }
 
-func TestStateOverlappingOwnersDeterministicOrder(t *testing.T) {
+func TestStateOverlappingPathsDeterministicOrder(t *testing.T) {
 	state := MustState(
 		entry("user-cli", specPath()),
 		entry("autoscaler", replicasPath()),
 	)
+	paths, err := state.OverlappingPaths(replicasPath())
 
-	requireOwnerships(t,
-		state.OverlappingOwners(replicasPath()),
+	requireNoError(t, err)
+	requireOwnedPaths(t,
+		paths,
 		"autoscaler:$.spec.replicas",
 		"user-cli:$.spec",
 	)
 }
 
-func requireOwnerships(t *testing.T, got []Ownership, want ...string) {
+func requireOwnedPaths(t *testing.T, got OwnedPathSet, want ...string) {
 	t.Helper()
 
-	strings := make([]string, 0, len(got))
-	for _, ownership := range got {
-		strings = append(strings, ownership.Owner.String()+":"+ownership.Path.String())
+	strings := make([]string, 0, got.Len())
+	for _, path := range got.Paths() {
+		strings = append(strings, path.Owner.String()+":"+path.Path.String())
 	}
 
 	if len(strings) == 0 && len(want) == 0 {

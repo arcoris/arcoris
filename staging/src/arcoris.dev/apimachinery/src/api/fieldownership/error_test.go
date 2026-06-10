@@ -23,11 +23,17 @@ import (
 )
 
 func TestErrorIsInvalidOwner(t *testing.T) {
-	requireErrorIs(t, Owner("").Validate(), ErrInvalidOwner)
+	requireErrorIs(t, Owner{}.ValidateLexical(), ErrInvalidOwner)
 }
 
 func TestErrorIsInvalidEntry(t *testing.T) {
-	requireErrorIs(t, Entry{}.Validate(), ErrInvalidEntry)
+	requireErrorIs(t, Entry{}.ValidateStructure(), ErrInvalidEntry)
+}
+
+func TestErrorIsInvalidState(t *testing.T) {
+	state := State{entries: []Entry{emptyEntry("user")}}
+
+	requireErrorIs(t, state.ValidateStructure(), ErrInvalidState)
 }
 
 func TestErrorIsInvalidPath(t *testing.T) {
@@ -41,9 +47,9 @@ func TestErrorIsInvalidPath(t *testing.T) {
 }
 
 func TestErrorMessageIncludesReason(t *testing.T) {
-	err := Owner("").Validate()
+	err := Owner{}.ValidateLexical()
 
-	if !strings.Contains(err.Error(), string(ErrorReasonInvalidOwner)) {
+	if !strings.Contains(err.Error(), string(ErrorReasonEmptyOwner)) {
 		t.Fatalf("error %q does not contain reason", err.Error())
 	}
 }

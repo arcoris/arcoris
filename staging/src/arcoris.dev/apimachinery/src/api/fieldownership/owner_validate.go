@@ -20,43 +20,51 @@ import (
 	"unicode/utf8"
 )
 
-// Validate checks whether o can be stored as a field ownership identity.
-func (o Owner) Validate() error {
-	text := string(o)
+// validateNewOwner checks the controlled owner value before construction returns it.
+func validateNewOwner(owner Owner) error {
+	return owner.ValidateLexical()
+}
+
+// ValidateLexical checks whether o can be stored as a field ownership identity.
+//
+// It does not check admission, authorization, request identity, RBAC, runtime
+// component identity, storage presence, or ownership policy.
+func (o Owner) ValidateLexical() error {
+	text := o.text
 	switch {
 	case text == "":
 		return errorAt(
-			"",
+			"owner",
 			ErrInvalidOwner,
-			ErrorReasonInvalidOwner,
+			ErrorReasonEmptyOwner,
 			"owner is empty",
 		)
 	case !utf8.ValidString(text):
 		return errorAt(
-			"",
+			"owner",
 			ErrInvalidOwner,
-			ErrorReasonInvalidOwner,
+			ErrorReasonInvalidOwnerUTF8,
 			"owner is not valid UTF-8",
 		)
 	case strings.TrimSpace(text) == "":
 		return errorAt(
-			"",
+			"owner",
 			ErrInvalidOwner,
-			ErrorReasonInvalidOwner,
+			ErrorReasonWhitespaceOwner,
 			"owner is only whitespace",
 		)
 	case strings.TrimSpace(text) != text:
 		return errorAt(
-			"",
+			"owner",
 			ErrInvalidOwner,
-			ErrorReasonInvalidOwner,
+			ErrorReasonOwnerBoundaryWhitespace,
 			"owner has leading or trailing whitespace",
 		)
 	case len(text) > MaxOwnerLength:
 		return errorfAt(
-			"",
+			"owner",
 			ErrInvalidOwner,
-			ErrorReasonInvalidOwner,
+			ErrorReasonOwnerTooLong,
 			"owner exceeds %d bytes",
 			MaxOwnerLength,
 		)
@@ -65,9 +73,9 @@ func (o Owner) Validate() error {
 	for _, r := range text {
 		if unicode.IsControl(r) {
 			return errorAt(
-				"",
+				"owner",
 				ErrInvalidOwner,
-				ErrorReasonInvalidOwner,
+				ErrorReasonOwnerControlCharacter,
 				"owner contains a control character",
 			)
 		}

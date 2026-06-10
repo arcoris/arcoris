@@ -26,7 +26,7 @@ func validateRequestShape(req Request) error {
 			err,
 		)
 	}
-	if err := req.Owner.Validate(); err != nil {
+	if err := req.Owner.ValidateLexical(); err != nil {
 		return wrapAt(
 			req.Path,
 			ErrInvalidOwner,

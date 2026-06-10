@@ -85,5 +85,5 @@ func TestToDocumentDoesNotMutateState(t *testing.T) {
 	got := ToDocument(state)
 	got.Desired.Entries[0].Owner = owner("other")
 
-	requireOwners(t, state.Desired().OwnersOf(path("$.image")), "user")
+	requireOwnersOf(t, state.Desired(), path("$.image"), "user")
 }

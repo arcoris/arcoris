@@ -50,7 +50,7 @@ func removeOverlapTransform(current fieldpath.Set, fields fieldpath.Set) fieldpa
 // overlapsAny reports whether path overlaps any path in fields.
 func overlapsAny(path fieldpath.Path, fields fieldpath.Set) bool {
 	for _, candidate := range fields.Paths() {
-		if pathsOverlap(path, candidate) {
+		if path.Overlaps(candidate) {
 			return true
 		}
 	}

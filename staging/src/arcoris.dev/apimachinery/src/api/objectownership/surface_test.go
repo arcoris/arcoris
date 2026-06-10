@@ -14,7 +14,11 @@
 
 package objectownership
 
-import "testing"
+import (
+	"testing"
+
+	"arcoris.dev/apimachinery/api/fieldownership"
+)
 
 func TestSurfaceIsEmpty(t *testing.T) {
 	if !(Surface{}).IsEmpty() {
@@ -31,7 +35,7 @@ func TestSurfaceIsEmpty(t *testing.T) {
 func TestSurfaceIsEmptyDoesNotValidateEntries(t *testing.T) {
 	surface := Surface{
 		Entries: []Entry{
-			documentEntry(" ", ""),
+			{Owner: fieldownership.Owner{}, Fields: []Path{""}},
 		},
 	}
 

@@ -29,7 +29,7 @@ func TestApplyDesiredForce(t *testing.T) {
 	requireNoError(t, err)
 
 	requireStringMember(t, result.Object.Desired, "image", "api:v2")
-	requireOwners(t, result.Ownership.Desired().OwnersOf(path("$.image")), "user")
+	requireOwnersOf(t, result.Ownership.Desired(), path("$.image"), "user")
 }
 
 func TestApplyDesiredForceKeepsPreForceConflictsInResult(t *testing.T) {
@@ -51,7 +51,7 @@ func TestApplyDesiredForceUpdatesDesiredOwnership(t *testing.T) {
 	result, err := Apply(req, Options{Force: true})
 	requireNoError(t, err)
 
-	requireOwners(t, result.Ownership.Desired().OwnersOf(path("$.image")), "user")
+	requireOwnersOf(t, result.Ownership.Desired(), path("$.image"), "user")
 }
 
 func TestApplyDesiredUnsupportedForceTakeoverPropagatesValueApplyCause(t *testing.T) {

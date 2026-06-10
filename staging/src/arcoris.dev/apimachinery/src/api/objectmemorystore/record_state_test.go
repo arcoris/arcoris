@@ -14,16 +14,20 @@
 
 package objectmemorystore
 
-import "testing"
+import (
+	"testing"
+
+	"arcoris.dev/apimachinery/api/fieldownership"
+)
 
 func TestRecordVisibleStateReturnsDetachedCopy(t *testing.T) {
 	rec := liveRecord(testState("visible"), 1)
 
 	visible := rec.visibleState()
-	visible.Ownership.Desired.Entries[0].Owner = "mutated"
+	visible.Ownership.Desired.Entries[0].Owner = fieldownership.MustOwner("mutated")
 
 	again := rec.visibleState()
-	if again.Ownership.Desired.Entries[0].Owner != "manager" {
+	if again.Ownership.Desired.Entries[0].Owner != fieldownership.MustOwner("manager") {
 		t.Fatalf("visibleState retained caller mutation")
 	}
 }

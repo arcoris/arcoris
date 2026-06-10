@@ -22,21 +22,21 @@ import (
 )
 
 func TestNewEntry(t *testing.T) {
-	entry, err := NewEntry("user-cli", set(imagePath()))
+	entry, err := NewEntry(owner("user-cli"), set(imagePath()))
 
 	requireNoError(t, err)
-	requireEqual(t, entry.Owner(), Owner("user-cli"))
+	requireEqual(t, entry.Owner(), owner("user-cli"))
 	requireSet(t, entry.Fields(), "$.spec.image")
 }
 
 func TestNewEntryRejectsInvalidOwner(t *testing.T) {
-	_, err := NewEntry("", set(imagePath()))
+	_, err := NewEntry(Owner{}, set(imagePath()))
 
 	requireErrorIs(t, err, ErrInvalidEntry)
 }
 
 func TestNewEntryInvalidOwnerIsInvalidEntryAndInvalidOwner(t *testing.T) {
-	_, err := NewEntry("", set(imagePath()))
+	_, err := NewEntry(Owner{}, set(imagePath()))
 
 	requireErrorIs(t, err, ErrInvalidEntry)
 	requireErrorIs(t, err, ErrInvalidOwner)
@@ -48,7 +48,7 @@ func TestNewEntryInvalidOwnerIsInvalidEntryAndInvalidOwner(t *testing.T) {
 }
 
 func TestNewEntryAllowsEmptyFields(t *testing.T) {
-	entry, err := NewEntry("user-cli", fieldpath.EmptySet())
+	entry, err := NewEntry(owner("user-cli"), fieldpath.EmptySet())
 
 	requireNoError(t, err)
 	requireEqual(t, entry.IsEmpty(), true)
@@ -56,12 +56,6 @@ func TestNewEntryAllowsEmptyFields(t *testing.T) {
 
 func TestMustEntryPanicsOnInvalidOwner(t *testing.T) {
 	requirePanic(t, func() {
-		MustEntry("", set(imagePath()))
+		MustEntry(Owner{}, set(imagePath()))
 	})
-}
-
-func TestEntryValidateWrapsInvalidOwnerAsEntry(t *testing.T) {
-	err := Entry{}.Validate()
-
-	requireEqual(t, errors.Is(err, ErrInvalidEntry), true)
 }

@@ -19,42 +19,56 @@ import (
 	"testing"
 )
 
-func TestOwnerValidateAcceptsSimpleName(t *testing.T) {
-	requireNoError(t, Owner("user-cli").Validate())
+func TestOwnerValidateLexicalAcceptsSimpleName(t *testing.T) {
+	requireNoError(t, owner("user-cli").ValidateLexical())
 }
 
-func TestOwnerValidateAcceptsSlashName(t *testing.T) {
-	requireNoError(t, Owner("arcoris.dev/controller").Validate())
+func TestOwnerValidateLexicalAcceptsSlashName(t *testing.T) {
+	requireNoError(t, owner("arcoris.dev/controller").ValidateLexical())
 }
 
-func TestOwnerValidateAcceptsColonName(t *testing.T) {
-	requireNoError(t, Owner("user:anton").Validate())
+func TestOwnerValidateLexicalAcceptsColonName(t *testing.T) {
+	requireNoError(t, owner("user:anton").ValidateLexical())
 }
 
-func TestOwnerValidateRejectsEmpty(t *testing.T) {
-	requireErrorIs(t, Owner("").Validate(), ErrInvalidOwner)
+func TestValidateNewOwnerRejectsInvalidOwner(t *testing.T) {
+	err := validateNewOwner(Owner{})
+
+	requireErrorIs(t, err, ErrInvalidOwner)
 }
 
-func TestOwnerValidateRejectsWhitespaceOnly(t *testing.T) {
-	requireErrorIs(t, Owner(" \t").Validate(), ErrInvalidOwner)
+func TestOwnerValidateLexicalRejectsEmpty(t *testing.T) {
+	requireOwnerReason(t, invalidOwner(""), ErrorReasonEmptyOwner)
 }
 
-func TestOwnerValidateRejectsLeadingWhitespace(t *testing.T) {
-	requireErrorIs(t, Owner(" user-cli").Validate(), ErrInvalidOwner)
+func TestOwnerValidateLexicalRejectsWhitespaceOnly(t *testing.T) {
+	requireOwnerReason(t, invalidOwner(" \t"), ErrorReasonWhitespaceOwner)
 }
 
-func TestOwnerValidateRejectsTrailingWhitespace(t *testing.T) {
-	requireErrorIs(t, Owner("user-cli ").Validate(), ErrInvalidOwner)
+func TestOwnerValidateLexicalRejectsLeadingWhitespace(t *testing.T) {
+	requireOwnerReason(t, invalidOwner(" user-cli"), ErrorReasonOwnerBoundaryWhitespace)
 }
 
-func TestOwnerValidateRejectsControlCharacter(t *testing.T) {
-	requireErrorIs(t, Owner("user\ncli").Validate(), ErrInvalidOwner)
+func TestOwnerValidateLexicalRejectsTrailingWhitespace(t *testing.T) {
+	requireOwnerReason(t, invalidOwner("user-cli "), ErrorReasonOwnerBoundaryWhitespace)
 }
 
-func TestOwnerValidateRejectsInvalidUTF8(t *testing.T) {
-	requireErrorIs(t, Owner(string([]byte{0xff})).Validate(), ErrInvalidOwner)
+func TestOwnerValidateLexicalRejectsControlCharacter(t *testing.T) {
+	requireOwnerReason(t, invalidOwner("user\ncli"), ErrorReasonOwnerControlCharacter)
 }
 
-func TestOwnerValidateRejectsTooLong(t *testing.T) {
-	requireErrorIs(t, Owner(strings.Repeat("a", MaxOwnerLength+1)).Validate(), ErrInvalidOwner)
+func TestOwnerValidateLexicalRejectsInvalidUTF8(t *testing.T) {
+	requireOwnerReason(t, invalidOwner(string([]byte{0xff})), ErrorReasonInvalidOwnerUTF8)
+}
+
+func TestOwnerValidateLexicalRejectsTooLong(t *testing.T) {
+	requireOwnerReason(t, invalidOwner(strings.Repeat("a", MaxOwnerLength+1)), ErrorReasonOwnerTooLong)
+}
+
+func requireOwnerReason(t *testing.T, owner Owner, reason ErrorReason) {
+	t.Helper()
+
+	err := owner.ValidateLexical()
+	requireErrorIs(t, err, ErrInvalidOwner)
+	requireFieldOwnershipError(t, err, "owner", reason)
 }

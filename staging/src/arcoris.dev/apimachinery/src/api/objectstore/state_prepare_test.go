@@ -17,6 +17,7 @@ package objectstore
 import (
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldownership"
 	"arcoris.dev/apimachinery/api/objectownership"
 )
 
@@ -26,8 +27,8 @@ func TestPrepareInputStateNormalizesOwnership(t *testing.T) {
 		Version: objectownership.DocumentVersionV1,
 		Desired: objectownership.Surface{
 			Entries: []objectownership.Entry{
-				{Owner: "z", Fields: []objectownership.Path{"$.z"}},
-				{Owner: "a", Fields: []objectownership.Path{"$.a"}},
+				{Owner: fieldownership.MustOwner("z"), Fields: []objectownership.Path{"$.z"}},
+				{Owner: fieldownership.MustOwner("a"), Fields: []objectownership.Path{"$.a"}},
 			},
 		},
 	}

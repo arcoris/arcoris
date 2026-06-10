@@ -34,7 +34,7 @@ func TestDecodeObjectOwnershipDocument(t *testing.T) {
 	if len(got.Desired.Entries) != 1 {
 		t.Fatalf("entries = %#v", got.Desired.Entries)
 	}
-	if got.Desired.Entries[0].Owner != fieldownership.Owner("user-cli") {
+	if got.Desired.Entries[0].Owner != fieldownership.MustOwner("user-cli") {
 		t.Fatalf("owner = %q", got.Desired.Entries[0].Owner)
 	}
 }
@@ -125,7 +125,7 @@ func TestDecodeObjectOwnershipRejectsInvalidOwner(t *testing.T) {
 	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"version":"v1","desired":{"entries":[{"owner":"","fields":[]}]}}`))
 
 	requireErrorIs(t, err, ErrInvalidEnvelope)
-	requireErrorIs(t, err, objectownership.ErrInvalidEntry)
+	requireErrorIs(t, err, fieldownership.ErrInvalidOwner)
 }
 
 func TestDecodeObjectOwnershipRejectsInvalidPath(t *testing.T) {

@@ -26,11 +26,5 @@ func TestNormalizeEntriesSortsMergesAndPrunes(t *testing.T) {
 
 	requireNoError(t, err)
 	requireOwners(t, state.Owners(), "autoscaler", "user-cli")
-	requireSet(t, state.FieldsFor("user-cli"), "$.metadata.name", "$.spec.image")
-}
-
-func TestNormalizeEntriesRejectsInvalidEntry(t *testing.T) {
-	_, err := normalizeEntries([]Entry{{}})
-
-	requireErrorIs(t, err, ErrInvalidEntry)
+	requireSet(t, state.FieldsFor(owner("user-cli")), "$.metadata.name", "$.spec.image")
 }

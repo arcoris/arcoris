@@ -22,45 +22,39 @@ import (
 
 func TestTransformOwnerFields(t *testing.T) {
 	state, err := baseState().transformOwnerFields(
-		"user-cli",
+		owner("user-cli"),
 		set(namePath()),
 		"bad path",
 		unionTransform,
 	)
 
 	requireNoError(t, err)
-	requireSet(t, state.FieldsFor("user-cli"), "$.metadata.name", "$.spec.image", "$.spec.replicas")
+	requireSet(t, state.FieldsFor(owner("user-cli")), "$.metadata.name", "$.spec.image", "$.spec.replicas")
 }
 
 func TestTransformOtherOwnerFields(t *testing.T) {
 	state, err := baseState().transformOtherOwnerFields(
-		"user-cli",
+		owner("user-cli"),
 		set(replicasPath()),
 		"bad path",
 		removeExactTransform,
 	)
 
 	requireNoError(t, err)
-	requireSet(t, state.FieldsFor("user-cli"), "$.spec.image", "$.spec.replicas")
-	requireSet(t, state.FieldsFor("autoscaler"))
+	requireSet(t, state.FieldsFor(owner("user-cli")), "$.spec.image", "$.spec.replicas")
+	requireSet(t, state.FieldsFor(owner("autoscaler")))
 }
 
 func TestReplaceOwnerFields(t *testing.T) {
-	state, err := baseState().replaceOwnerFields("user-cli", set(namePath()))
+	state, err := baseState().replaceOwnerFields(owner("user-cli"), set(namePath()))
 
 	requireNoError(t, err)
-	requireSet(t, state.FieldsFor("user-cli"), "$.metadata.name")
+	requireSet(t, state.FieldsFor(owner("user-cli")), "$.metadata.name")
 }
 
 func TestReplaceOwnerFieldsEmptyRemovesOwner(t *testing.T) {
-	state, err := baseState().replaceOwnerFields("user-cli", fieldpath.EmptySet())
+	state, err := baseState().replaceOwnerFields(owner("user-cli"), fieldpath.EmptySet())
 
 	requireNoError(t, err)
-	requireSet(t, state.FieldsFor("user-cli"))
-}
-
-func TestValidateOwnerFieldsRejectsInvalidOwner(t *testing.T) {
-	err := validateOwnerFields("", set(imagePath()), "bad path")
-
-	requireErrorIs(t, err, ErrInvalidOwner)
+	requireSet(t, state.FieldsFor(owner("user-cli")))
 }

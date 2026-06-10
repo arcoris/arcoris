@@ -34,7 +34,7 @@ func TestStateFromDocumentDesiredOwnership(t *testing.T) {
 	got, err := StateFromDocument(document(documentEntry("user", "$.image")))
 	requireNoError(t, err)
 
-	requireOwners(t, got.Desired().OwnersOf(path("$.image")), "user")
+	requireOwnersOf(t, got.Desired(), path("$.image"), "user")
 }
 
 func TestStateFromDocumentRejectsZeroVersion(t *testing.T) {
@@ -50,7 +50,10 @@ func TestStateFromDocumentRejectsUnsupportedVersion(t *testing.T) {
 }
 
 func TestStateFromDocumentRejectsInvalidOwner(t *testing.T) {
-	_, err := StateFromDocument(document(documentEntry(" ", "$.image")))
+	_, err := StateFromDocument(document(Entry{
+		Owner:  fieldownership.Owner{},
+		Fields: []Path{"$.image"},
+	}))
 
 	requireErrorIs(t, err, ErrInvalidEntry)
 	requireErrorIs(t, err, fieldownership.ErrInvalidOwner)
@@ -114,7 +117,7 @@ func TestStateFromDocumentPreservesSharedOwnership(t *testing.T) {
 	got, err := StateFromDocument(document(documentEntry("a", "$.image"), documentEntry("b", "$.image")))
 	requireNoError(t, err)
 
-	requireOwners(t, got.Desired().OwnersOf(path("$.image")), "a", "b")
+	requireOwnersOf(t, got.Desired(), path("$.image"), "a", "b")
 }
 
 func TestStateFromDocumentPreservesAncestorDescendantFields(t *testing.T) {

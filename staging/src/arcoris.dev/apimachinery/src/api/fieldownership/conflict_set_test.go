@@ -18,50 +18,79 @@ import "testing"
 
 func TestConflictSetIsEmpty(t *testing.T) {
 	requireEqual(t, ConflictSet{}.IsEmpty(), true)
-	requireEqual(t, ConflictSet{{Owner: "a"}}.IsEmpty(), false)
+	requireEqual(t, NewConflictSet(Conflict{Owner: owner("a")}).IsEmpty(), false)
 }
 
 func TestConflictSetLen(t *testing.T) {
-	requireEqual(t, ConflictSet{{Owner: "a"}, {Owner: "b"}}.Len(), 2)
+	requireEqual(t, NewConflictSet(
+		Conflict{Owner: owner("a")},
+		Conflict{Owner: owner("b")},
+	).Len(), 2)
 }
 
 func TestConflictSetOwnersSortedUnique(t *testing.T) {
-	conflicts := ConflictSet{
-		{Owner: "user-cli", OwnedPath: imagePath(), AttemptedPath: imagePath()},
-		{Owner: "autoscaler", OwnedPath: replicasPath(), AttemptedPath: replicasPath()},
-		{Owner: "autoscaler", OwnedPath: specPath(), AttemptedPath: replicasPath()},
-		{Owner: "user-cli", OwnedPath: specPath(), AttemptedPath: imagePath()},
-	}
+	conflicts := NewConflictSet(
+		Conflict{Owner: owner("user-cli"), OwnedPath: imagePath(), AttemptedPath: imagePath()},
+		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: replicasPath()},
+		Conflict{Owner: owner("autoscaler"), OwnedPath: specPath(), AttemptedPath: replicasPath()},
+		Conflict{Owner: owner("user-cli"), OwnedPath: specPath(), AttemptedPath: imagePath()},
+	)
 
 	requireOwners(t, conflicts.Owners(), "autoscaler", "user-cli")
 }
 
 func TestConflictSetOwnedPaths(t *testing.T) {
-	conflicts := ConflictSet{
-		{Owner: "autoscaler", OwnedPath: replicasPath(), AttemptedPath: specPath()},
-		{Owner: "user-cli", OwnedPath: imagePath(), AttemptedPath: specPath()},
-	}
+	conflicts := NewConflictSet(
+		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: specPath()},
+		Conflict{Owner: owner("user-cli"), OwnedPath: imagePath(), AttemptedPath: specPath()},
+	)
 
 	requireSet(t, conflicts.OwnedPaths(), "$.spec.image", "$.spec.replicas")
 }
 
 func TestConflictSetAttemptedPaths(t *testing.T) {
-	conflicts := ConflictSet{
-		{Owner: "autoscaler", OwnedPath: replicasPath(), AttemptedPath: specPath()},
-		{Owner: "user-cli", OwnedPath: imagePath(), AttemptedPath: specPath()},
-	}
+	conflicts := NewConflictSet(
+		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: specPath()},
+		Conflict{Owner: owner("user-cli"), OwnedPath: imagePath(), AttemptedPath: specPath()},
+	)
 
 	requireSet(t, conflicts.AttemptedPaths(), "$.spec")
 }
 
 func TestConflictSetErrorDeterministic(t *testing.T) {
-	conflicts := ConflictSet{
-		{Owner: "user-cli", OwnedPath: imagePath(), AttemptedPath: specPath()},
-		{Owner: "autoscaler", OwnedPath: replicasPath(), AttemptedPath: specPath()},
-	}
+	conflicts := NewConflictSet(
+		Conflict{Owner: owner("user-cli"), OwnedPath: imagePath(), AttemptedPath: specPath()},
+		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: specPath()},
+	)
 	want := "field ownership conflicts: " +
 		"autoscaler owns $.spec.replicas, attempted $.spec; " +
 		"user-cli owns $.spec.image, attempted $.spec"
 
 	requireEqual(t, conflicts.Error(), want)
+}
+
+func TestConflictSetConflictsReturnsDetachedSlice(t *testing.T) {
+	conflicts := NewConflictSet(
+		Conflict{Owner: owner("autoscaler"), OwnedPath: replicasPath(), AttemptedPath: specPath()},
+	)
+	got := conflicts.Conflicts()
+
+	got[0].Owner = owner("other")
+
+	requireOwners(t, conflicts.Owners(), "autoscaler")
+}
+
+func TestConflictSetForEachStopsEarly(t *testing.T) {
+	conflicts := NewConflictSet(
+		Conflict{Owner: owner("a"), OwnedPath: imagePath(), AttemptedPath: specPath()},
+		Conflict{Owner: owner("b"), OwnedPath: replicasPath(), AttemptedPath: specPath()},
+	)
+	var visited []Owner
+
+	conflicts.ForEach(func(index int, conflict Conflict) bool {
+		visited = append(visited, conflict.Owner)
+		return false
+	})
+
+	requireOwners(t, visited, "a")
 }

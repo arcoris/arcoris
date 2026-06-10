@@ -28,7 +28,7 @@ func TestValidateRequestShape(t *testing.T) {
 func TestApplyInvalidOwnerReturnsInvalidOwner(t *testing.T) {
 	_, err := Apply(Request{
 		Path:       root(),
-		Owner:      fieldownership.Owner(" "),
+		Owner:      fieldownership.Owner{},
 		Live:       str("old"),
 		Applied:    str("new"),
 		Descriptor: types.String().Descriptor(),

@@ -22,34 +22,31 @@ import "arcoris.dev/apimachinery/api/fieldpath"
 // an empty ConflictSet. This method does not decide force behavior, request
 // admission, or which fields should be attempted; callers provide the policy set.
 func (s State) Conflicts(owner Owner, attempted fieldpath.Set) (ConflictSet, error) {
-	if err := owner.Validate(); err != nil {
-		return nil, err
-	}
-	if err := validateFields(attempted, "attempted field path is invalid"); err != nil {
-		return nil, err
+	if err := validateConflictInputs(owner, attempted); err != nil {
+		return ConflictSet{}, err
 	}
 	if attempted.IsEmpty() || s.IsEmpty() {
 		return ConflictSet{}, nil
 	}
 
-	conflicts := make(ConflictSet, 0)
+	conflicts := make([]Conflict, 0)
 	for _, attemptedPath := range attempted.Paths() {
 		conflicts = append(conflicts, s.conflictsForPath(owner, attemptedPath)...)
 	}
 
-	return sortedConflicts(conflicts), nil
+	return NewConflictSet(conflicts...), nil
 }
 
 // conflictsForPath collects overlaps for one already-validated attempted path.
-func (s State) conflictsForPath(owner Owner, attemptedPath fieldpath.Path) ConflictSet {
-	conflicts := make(ConflictSet, 0)
+func (s State) conflictsForPath(owner Owner, attemptedPath fieldpath.Path) []Conflict {
+	conflicts := make([]Conflict, 0)
 	for _, entry := range s.entries {
 		if entry.owner == owner {
 			continue
 		}
 
 		for _, ownedPath := range entry.fields.Paths() {
-			if pathsOverlap(ownedPath, attemptedPath) {
+			if ownedPath.Overlaps(attemptedPath) {
 				conflicts = append(conflicts, Conflict{
 					Owner:         entry.owner,
 					OwnedPath:     ownedPath,
