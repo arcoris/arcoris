@@ -41,12 +41,12 @@ func ownershipConflicts(
 
 // rejectConflicts converts non-empty conflicts into a valueapply error unless
 // Force has explicitly selected takeover behavior.
-func (a *applier) rejectConflicts(req Request, result Result) error {
-	if result.Conflicts.IsEmpty() || a.opts.Force {
+func (a *applier) rejectConflicts(req Request, prepared preparedApply) error {
+	if prepared.Conflicts.IsEmpty() || a.opts.Force {
 		return nil
 	}
 
-	return conflictError(req.Path, result.Conflicts)
+	return conflictError(req.Path, prepared.Conflicts)
 }
 
 // conflictError wraps a non-empty fieldownership conflict set with the

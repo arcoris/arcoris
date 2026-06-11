@@ -26,13 +26,7 @@ func (a *applier) compare(req Request) (valuecompare.Result, error) {
 		a.compareOptions(),
 	)
 	if err != nil {
-		return valuecompare.Result{}, wrapAt(
-			req.Path,
-			ErrCompareFailed,
-			ErrorReasonCompareFailed,
-			"value comparison failed",
-			err,
-		)
+		return valuecompare.Result{}, wrapCompareError(req.Path, err)
 	}
 
 	return changes, nil

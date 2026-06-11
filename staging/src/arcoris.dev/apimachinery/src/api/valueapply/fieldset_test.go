@@ -128,5 +128,5 @@ func TestApplyValueFieldSetErrorWrapped(t *testing.T) {
 
 	_, err := newApplier(Options{}).extractAppliedFields(req)
 
-	requireErrorIs(t, err, ErrFieldSetFailed)
+	requireErrorIs(t, err, ErrInvalidDescriptor)
 }

@@ -23,9 +23,10 @@ import (
 
 // Result contains the merged value, updated ownership, and apply metadata.
 //
-// Early validation errors may return a zero Result. Conflict errors return the
-// field sets and comparison computed before conflict handling. Merge errors
-// return all pre-merge metadata, but not post-merge ownership.
+// The zero Result is a valid empty result. Early request and value-validation
+// errors return a zero Result. Conflict errors return prepared metadata. Merge
+// errors return prepared metadata but no Value or Ownership. Ownership-update
+// errors return the merged Value but no replacement Ownership.
 type Result struct {
 	// Value is the merged value.
 	Value value.Value
@@ -62,4 +63,27 @@ type Result struct {
 	// may be non-empty on a successful forced apply; in that case they describe
 	// the ownership overlaps that Force resolved.
 	Conflicts fieldownership.ConflictSet
+}
+
+// HasValue reports whether r contains a merged value.
+func (r Result) HasValue() bool {
+	return !r.Value.IsZero()
+}
+
+// HasOwnership reports whether r contains a replacement ownership state.
+func (r Result) HasOwnership() bool {
+	return !r.Ownership.IsEmpty()
+}
+
+// IsZero reports whether r carries no value, ownership, or apply metadata.
+func (r Result) IsZero() bool {
+	return !r.HasValue() &&
+		!r.HasOwnership() &&
+		r.AppliedFields.IsEmpty() &&
+		r.DroppedFields.IsEmpty() &&
+		r.DeletedFields.IsEmpty() &&
+		r.ChangedAppliedFields.IsEmpty() &&
+		r.MergeFields.IsEmpty() &&
+		r.Changes.IsEmpty() &&
+		r.Conflicts.IsEmpty()
 }

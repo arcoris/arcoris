@@ -28,4 +28,30 @@ func TestResultZeroValue(t *testing.T) {
 	if !result.AppliedFields.IsEmpty() {
 		t.Fatalf("AppliedFields is not empty")
 	}
+	if !result.IsZero() {
+		t.Fatalf("IsZero() = false")
+	}
+	if result.HasValue() {
+		t.Fatalf("HasValue() = true")
+	}
+	if result.HasOwnership() {
+		t.Fatalf("HasOwnership() = true")
+	}
+}
+
+func TestResultHasValueAndOwnership(t *testing.T) {
+	result := Result{
+		Value:     str("merged"),
+		Ownership: state(entry("user", root())),
+	}
+
+	if !result.HasValue() {
+		t.Fatalf("HasValue() = false")
+	}
+	if !result.HasOwnership() {
+		t.Fatalf("HasOwnership() = false")
+	}
+	if result.IsZero() {
+		t.Fatalf("IsZero() = true")
+	}
 }

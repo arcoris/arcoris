@@ -14,23 +14,21 @@
 
 package valueapply
 
-import "arcoris.dev/apimachinery/api/fieldownership"
-
 // updateOwnership returns the post-apply ownership state after merge succeeds.
 //
 // Force removes only conflicting attempted paths from other owners. The current
 // owner is then set exactly to AppliedFields, releasing omitted fields.
-func (a *applier) updateOwnership(req Request, result Result) (fieldownership.State, error) {
+func (a *applier) updateOwnership(req Request, merged mergedApply) (completedApply, error) {
 	ownership := req.Ownership
 	var err error
 
-	if a.opts.Force && !result.Conflicts.IsEmpty() {
+	if a.opts.Force && !merged.Conflicts.IsEmpty() {
 		ownership, err = ownership.RemoveOverlappingFieldsFromOthers(
 			req.Owner,
-			result.Conflicts.AttemptedPaths(),
+			merged.Conflicts.AttemptedPaths(),
 		)
 		if err != nil {
-			return fieldownership.State{}, wrapAt(
+			return completedApply{}, wrapAt(
 				req.Path,
 				ErrInvalidRequest,
 				ErrorReasonInvalidRequest,
@@ -40,9 +38,9 @@ func (a *applier) updateOwnership(req Request, result Result) (fieldownership.St
 		}
 	}
 
-	ownership, err = ownership.SetFields(req.Owner, result.AppliedFields)
+	ownership, err = ownership.SetFields(req.Owner, merged.AppliedFields)
 	if err != nil {
-		return fieldownership.State{}, wrapAt(
+		return completedApply{}, wrapAt(
 			req.Path,
 			ErrInvalidRequest,
 			ErrorReasonInvalidRequest,
@@ -51,5 +49,8 @@ func (a *applier) updateOwnership(req Request, result Result) (fieldownership.St
 		)
 	}
 
-	return ownership, nil
+	return completedApply{
+		mergedApply: merged,
+		Ownership:   ownership,
+	}, nil
 }

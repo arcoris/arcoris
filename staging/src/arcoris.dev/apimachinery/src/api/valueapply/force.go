@@ -21,12 +21,12 @@ import (
 
 // rejectUnsupportedForceTakeover rejects forced conflicts that would require
 // subtracting a child path from another owner's ancestor ownership.
-func (a *applier) rejectUnsupportedForceTakeover(req Request, result Result) error {
-	if !a.opts.Force || result.Conflicts.IsEmpty() {
+func (a *applier) rejectUnsupportedForceTakeover(req Request, prepared preparedApply) error {
+	if !a.opts.Force || prepared.Conflicts.IsEmpty() {
 		return nil
 	}
 
-	unsupported, err := unsupportedTakeoverConflicts(result.Conflicts)
+	unsupported, err := unsupportedTakeoverConflicts(prepared.Conflicts)
 	if err != nil {
 		return wrapAt(
 			req.Path,

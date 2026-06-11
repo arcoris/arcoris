@@ -23,12 +23,12 @@ import (
 
 func TestMerge(t *testing.T) {
 	req := specRequest(owner("user"))
-	result := Result{MergeFields: fields(imagePath())}
+	prepared := preparedApply{MergeFields: fields(imagePath())}
 
-	got, err := newApplier(Options{}).merge(req, result)
+	got, err := newApplier(Options{}).merge(req, prepared)
 	requireNoError(t, err)
 
-	requireStringMember(t, got, "image", "api:v2")
+	requireStringMember(t, got.Value, "image", "api:v2")
 }
 
 func TestMergeOptions(t *testing.T) {
@@ -47,10 +47,10 @@ func TestApplyValueMergeErrorWrapped(t *testing.T) {
 		Applied:    str("new"),
 		Descriptor: types.String().Descriptor(),
 	}
-	result := Result{MergeFields: fields(root().Field(testFieldName("nested")))}
+	prepared := preparedApply{MergeFields: fields(root().Field(testFieldName("nested")))}
 
-	_, err := newApplier(Options{}).merge(req, result)
+	_, err := newApplier(Options{}).merge(req, prepared)
 
-	requireErrorIs(t, err, ErrMergeFailed)
+	requireErrorIs(t, err, ErrUnsupportedMerge)
 	requireErrorIs(t, err, valuemerge.ErrUnsupportedMerge)
 }

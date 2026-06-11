@@ -26,3 +26,21 @@ func TestNewApplierStoresOptions(t *testing.T) {
 		t.Fatalf("Force = false")
 	}
 }
+
+func TestNewStoresOptions(t *testing.T) {
+	got := New(Options{MaxDepth: 7, Force: true})
+
+	if got.opts.MaxDepth != 7 {
+		t.Fatalf("MaxDepth = %d; want 7", got.opts.MaxDepth)
+	}
+	if !got.opts.Force {
+		t.Fatalf("Force = false")
+	}
+}
+
+func TestApplierApply(t *testing.T) {
+	got, err := New(Options{}).Apply(specRequest(owner("user")))
+	requireNoError(t, err)
+
+	requireStringMember(t, got.Value, "image", "api:v2")
+}

@@ -12,37 +12,60 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package valueapply applies one concrete API payload value to another under
-// api/types descriptor semantics.
+// Package valueapply orchestrates value-level apply and field ownership policy.
 //
-// The package is a pure value-level orchestration layer. It validates live and
-// applied values, extracts applied field sets, compares live and applied values,
-// checks field ownership conflicts, merges selected fields, and returns updated
-// field ownership state.
+// valueapply coordinates lower-level value packages without taking over their
+// responsibilities. valuevalidation validates concrete values against prepared
+// descriptors. valuefieldset extracts AppliedFields from the applied payload.
+// valuecompare computes descriptor-semantic Changes between live and applied
+// values. valuemerge applies selected MergeFields. fieldownership stores owner
+// state and detects structural ownership conflicts. valueapply decides how
+// those pieces are sequenced and which ownership policy is applied.
 //
-// The pipeline is deliberately staged: validate the request, validate both
-// values, extract applied ownership fields, compare for semantic changes, check
-// ownership conflicts, plan dropped/deleted fields, merge selected fields, and
-// write a replacement ownership state.
+// The pipeline order is fixed:
 //
-// Conflicts are checked only for applied fields whose values would actually
-// change. Applying the same value to a field owned by another owner is not a
-// conflict and can create shared ownership.
+//  1. validate request shape and ownership scope;
+//  2. validate Live and Applied values;
+//  3. extract AppliedFields;
+//  4. compare Live and Applied values;
+//  5. compute ChangedAppliedFields;
+//  6. detect ownership conflicts;
+//  7. enforce force/takeover policy;
+//  8. plan DroppedFields and DeletedFields;
+//  9. compute MergeFields;
+//  10. merge selected fields;
+//  11. replace ownership state;
+//  12. assemble the public Result.
 //
-// Fields previously owned by the applying owner but omitted from the new
-// applied value are released. Such dropped fields are deleted from the live
-// value only if no other owner structurally overlaps them.
+// AppliedFields are ownership fields explicitly mentioned by Applied under
+// descriptor semantics. They are not necessarily changed fields, conflict
+// fields, merge fields, or all fields in the merged value.
 //
-// Force only takes conflicting fields from other owners. It does not remove
-// unrelated ownership or ownership for dropped fields.
+// ChangedAppliedFields are AppliedFields that structurally overlap
+// Changes.Changed(). This set is the conflict-attempt set. Only changed applied
+// fields conflict; applying the same value to a field owned by another owner is
+// allowed and can create shared ownership.
 //
-// valueapply requires both live and applied values to be valid for the
-// descriptor before apply proceeds. It is not a repair, pruning, defaulting, or
-// normalization operation. Invalid live data is rejected even if the applied
-// value would otherwise remove the invalid field.
+// DroppedFields are fields previously owned by Owner but no longer covered by
+// AppliedFields. Dropping releases ownership. DeletedFields are dropped fields
+// that no other owner protects with an exact, ancestor, or descendant overlap.
+// Dropping ownership is therefore distinct from deleting value data.
 //
-// The package does not read or write storage, run admission, authorize request
-// subjects, manage object metadata, serialize managed fields, decode wire
-// formats, emit events, access resource catalogs, or execute runtime lifecycle
-// behavior. Runtime and object-level layers are responsible for those concerns.
+// MergeFields are AppliedFields union DeletedFields. valueapply delegates the
+// actual selected-field merge to valuemerge. Unsupported merge shapes, such as
+// unsafe ordered-list index removals, fail before ownership is updated.
+//
+// Force bypasses conflict failure only for representable conflicting changed
+// applied fields. It removes overlapping ownership from other owners only for
+// conflicting attempted paths. It does not remove unrelated ownership, and it
+// does not remove ownership that protects dropped fields. If a conflict would
+// require subtracting a child path from another owner's ancestor ownership,
+// Force is rejected as an unsupported takeover.
+//
+// Apply is side-effect free. It does not mutate request values or the input
+// ownership state, and it updates ownership only after merge succeeds.
+//
+// The package does not handle object metadata, storage, admission,
+// authorization, codecs, defaulting, pruning, normalization, event emission,
+// resource catalog access, or runtime lifecycle behavior.
 package valueapply

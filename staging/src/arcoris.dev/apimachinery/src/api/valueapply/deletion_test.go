@@ -14,20 +14,25 @@
 
 package valueapply
 
-import "testing"
+import (
+	"testing"
+
+	"arcoris.dev/apimachinery/api/fieldpath"
+)
 
 func TestDeletableDroppedFieldsNoOtherOwner(t *testing.T) {
-	got := deletableDroppedFields(
+	got, err := deletableDroppedFields(
 		state(entry("user", path("$.spec.image"))),
 		owner("user"),
 		fields(path("$.spec.image")),
 	)
+	requireNoError(t, err)
 
 	requireSet(t, got, "$.spec.image")
 }
 
 func TestDeletableDroppedFieldsOtherExactOwnerPreserves(t *testing.T) {
-	got := deletableDroppedFields(
+	got, err := deletableDroppedFields(
 		state(
 			entry("user", path("$.spec.image")),
 			entry("other", path("$.spec.image")),
@@ -35,12 +40,13 @@ func TestDeletableDroppedFieldsOtherExactOwnerPreserves(t *testing.T) {
 		owner("user"),
 		fields(path("$.spec.image")),
 	)
+	requireNoError(t, err)
 
 	requireSet(t, got)
 }
 
 func TestDeletableDroppedFieldsOtherAncestorOwnerPreserves(t *testing.T) {
-	got := deletableDroppedFields(
+	got, err := deletableDroppedFields(
 		state(
 			entry("user", path("$.spec.image")),
 			entry("other", path("$.spec")),
@@ -48,12 +54,13 @@ func TestDeletableDroppedFieldsOtherAncestorOwnerPreserves(t *testing.T) {
 		owner("user"),
 		fields(path("$.spec.image")),
 	)
+	requireNoError(t, err)
 
 	requireSet(t, got)
 }
 
 func TestDeletableDroppedFieldsOtherDescendantOwnerPreserves(t *testing.T) {
-	got := deletableDroppedFields(
+	got, err := deletableDroppedFields(
 		state(
 			entry("user", path("$.spec")),
 			entry("other", path("$.spec.image")),
@@ -61,8 +68,17 @@ func TestDeletableDroppedFieldsOtherDescendantOwnerPreserves(t *testing.T) {
 		owner("user"),
 		fields(path("$.spec")),
 	)
+	requireNoError(t, err)
 
 	requireSet(t, got)
+}
+
+func TestHasOtherOverlappingOwnerInvalidPathReturnsError(t *testing.T) {
+	invalidPath := root().Append(fieldpath.Element{})
+
+	_, err := hasOtherOverlappingOwner(state(entry("user", root())), owner("user"), invalidPath)
+
+	requireErrorIs(t, err, fieldpath.ErrInvalidPath)
 }
 
 func TestApplyDroppedOwnedFieldDeletesWhenUnownedByOthers(t *testing.T) {

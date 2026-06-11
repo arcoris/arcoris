@@ -14,8 +14,8 @@
 
 package valueapply
 
-// apply runs validation, metadata preparation, conflict handling, merge, and
-// ownership update in that order.
+// apply runs request validation, value validation, preparation, conflict
+// handling, merge, and ownership update in that order.
 func (a *applier) apply(req Request) (Result, error) {
 	if err := validateRequestShape(req); err != nil {
 		return Result{}, err
@@ -24,26 +24,31 @@ func (a *applier) apply(req Request) (Result, error) {
 		return Result{}, err
 	}
 
-	result, err := a.prepare(req)
+	prepared, err := a.prepare(req)
 	if err != nil {
-		return result, err
+		return prepared.Result(), err
 	}
-	if err := a.rejectConflicts(req, result); err != nil {
-		return result, err
+	if err := a.rejectConflicts(req, prepared); err != nil {
+		return prepared.Result(), err
 	}
-	if err := a.rejectUnsupportedForceTakeover(req, result); err != nil {
-		return result, err
+	if err := a.rejectUnsupportedForceTakeover(req, prepared); err != nil {
+		return prepared.Result(), err
 	}
 
-	result.Value, err = a.merge(req, result)
+	planned, err := a.planMergeFields(req, prepared)
 	if err != nil {
-		return result, err
+		return prepared.Result(), err
 	}
 
-	result.Ownership, err = a.updateOwnership(req, result)
+	merged, err := a.merge(req, planned)
 	if err != nil {
-		return result, err
+		return planned.Result(), err
 	}
 
-	return result, nil
+	completed, err := a.updateOwnership(req, merged)
+	if err != nil {
+		return merged.Result(), err
+	}
+
+	return completed.Result(), nil
 }

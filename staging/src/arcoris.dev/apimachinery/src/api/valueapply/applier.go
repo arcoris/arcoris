@@ -14,6 +14,25 @@
 
 package valueapply
 
+// Applier stores reusable value-apply options.
+//
+// Applier is immutable by convention. Each Apply call creates fresh internal
+// pipeline state and projects options into lower-level value packages for that
+// call only.
+type Applier struct {
+	opts Options
+}
+
+// New returns a reusable Applier configured with opts.
+func New(opts Options) Applier {
+	return Applier{opts: opts}
+}
+
+// Apply runs one value-level apply operation.
+func (a Applier) Apply(req Request) (Result, error) {
+	return newApplier(a.opts).apply(req)
+}
+
 // applier carries immutable per-run options through the apply pipeline.
 type applier struct {
 	// opts is copied from Apply input once and then projected into lower-level

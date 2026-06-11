@@ -19,6 +19,20 @@ import (
 	"arcoris.dev/apimachinery/api/fieldpath"
 )
 
+// planMergeFields computes deletion and merge fields after conflict and force
+// policy allow the apply to proceed.
+func (a *applier) planMergeFields(req Request, prepared preparedApply) (preparedApply, error) {
+	deleted, err := deletableDroppedFields(req.Ownership, req.Owner, prepared.DroppedFields)
+	if err != nil {
+		return prepared, err
+	}
+
+	prepared.DeletedFields = deleted
+	prepared.MergeFields = mergeFields(prepared.AppliedFields, prepared.DeletedFields)
+
+	return prepared, nil
+}
+
 // deletableDroppedFields filters dropped fields to those not protected by any
 // other owner.
 //
@@ -28,18 +42,34 @@ func deletableDroppedFields(
 	ownership fieldownership.State,
 	owner fieldownership.Owner,
 	dropped fieldpath.Set,
-) fieldpath.Set {
+) (fieldpath.Set, error) {
 	deletable := fieldpath.EmptySet()
+	var overlapErr error
+
 	dropped.ForEach(func(_ int, path fieldpath.Path) bool {
-		if hasOtherOverlappingOwner(ownership, owner, path) {
+		protected, err := hasOtherOverlappingOwner(ownership, owner, path)
+		if err != nil {
+			overlapErr = wrapAt(
+				path,
+				ErrInvalidRequest,
+				ErrorReasonInvalidRequest,
+				"failed to check dropped field ownership overlap",
+				err,
+			)
+			return false
+		}
+		if protected {
 			return true
 		}
 
 		deletable = deletable.Insert(path)
 		return true
 	})
+	if overlapErr != nil {
+		return fieldpath.Set{}, overlapErr
+	}
 
-	return deletable
+	return deletable, nil
 }
 
 // hasOtherOverlappingOwner reports whether path is protected by an owner other
@@ -48,10 +78,10 @@ func hasOtherOverlappingOwner(
 	ownership fieldownership.State,
 	owner fieldownership.Owner,
 	path fieldpath.Path,
-) bool {
+) (bool, error) {
 	records, err := ownership.OverlappingPaths(path)
 	if err != nil {
-		return false
+		return false, err
 	}
 
 	hasOther := false
@@ -63,5 +93,5 @@ func hasOtherOverlappingOwner(
 		return true
 	})
 
-	return hasOther
+	return hasOther, nil
 }

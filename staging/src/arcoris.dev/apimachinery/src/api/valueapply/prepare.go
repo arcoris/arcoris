@@ -14,40 +14,33 @@
 
 package valueapply
 
-// prepare computes the deterministic field metadata needed before conflict
-// handling and merge.
-func (a *applier) prepare(req Request) (Result, error) {
-	result := Result{}
+// prepare computes the deterministic field metadata needed before conflict,
+// merge, and ownership-update policy.
+func (a *applier) prepare(req Request) (preparedApply, error) {
+	prepared := preparedApply{}
 
 	appliedFields, err := a.extractAppliedFields(req)
 	if err != nil {
-		return result, err
+		return prepared, err
 	}
-	result.AppliedFields = appliedFields
+	prepared.AppliedFields = appliedFields
 
 	oldOwnerFields := req.Ownership.FieldsFor(req.Owner)
-	result.DroppedFields = droppedFields(oldOwnerFields, result.AppliedFields)
+	prepared.DroppedFields = droppedFields(oldOwnerFields, prepared.AppliedFields)
 
 	changes, err := a.compare(req)
 	if err != nil {
-		return result, err
+		return prepared, err
 	}
-	result.Changes = changes
+	prepared.Changes = changes
 
-	result.ChangedAppliedFields = changedAppliedFields(result.AppliedFields, result.Changes)
+	prepared.ChangedAppliedFields = changedAppliedFields(prepared.AppliedFields, prepared.Changes)
 
-	conflicts, err := ownershipConflicts(req, result.ChangedAppliedFields)
+	conflicts, err := ownershipConflicts(req, prepared.ChangedAppliedFields)
 	if err != nil {
-		return result, err
+		return prepared, err
 	}
-	result.Conflicts = conflicts
+	prepared.Conflicts = conflicts
 
-	result.DeletedFields = deletableDroppedFields(
-		req.Ownership,
-		req.Owner,
-		result.DroppedFields,
-	)
-	result.MergeFields = mergeFields(result.AppliedFields, result.DeletedFields)
-
-	return result, nil
+	return prepared, nil
 }

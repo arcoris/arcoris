@@ -18,8 +18,9 @@ package valueapply
 //
 // Apply is side-effect free: it does not mutate req.Live, req.Applied, or
 // req.Ownership. Successful calls return the merged value and replacement
-// ownership state. Conflict and merge errors return partial Result metadata
-// computed before the failing stage.
+// ownership state. Conflict errors return pre-force metadata, merge errors
+// return pre-merge metadata, and ownership-update errors return the merged
+// value without a replacement ownership state.
 func Apply(req Request, opts Options) (Result, error) {
-	return newApplier(opts).apply(req)
+	return New(opts).Apply(req)
 }

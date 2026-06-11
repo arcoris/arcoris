@@ -29,13 +29,7 @@ func (a *applier) extractAppliedFields(req Request) (fieldpath.Set, error) {
 		a.fieldSetOptions(),
 	)
 	if err != nil {
-		return fieldpath.Set{}, wrapAt(
-			req.Path,
-			ErrFieldSetFailed,
-			ErrorReasonFieldSetFailed,
-			"applied field extraction failed",
-			err,
-		)
+		return fieldpath.Set{}, wrapFieldSetError(req.Path, err)
 	}
 
 	return fields, nil

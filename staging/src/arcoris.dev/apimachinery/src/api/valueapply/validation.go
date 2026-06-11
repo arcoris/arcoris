@@ -19,12 +19,12 @@ import "arcoris.dev/apimachinery/api/valuevalidation"
 // validateValues rejects invalid live or applied payloads before ownership and
 // merge logic runs.
 func (a *applier) validateValues(req Request) error {
-	opts := a.validationOptions()
-	if err := valuevalidation.ValidateAt(req.Path, req.Live, req.Descriptor, opts); err != nil {
-		return wrapAt(req.Path, ErrInvalidValue, ErrorReasonInvalidValue, "live value is invalid", err)
+	validator := valuevalidation.New(a.validationOptions())
+	if err := validator.ValidateAt(req.Path, req.Live, req.Descriptor); err != nil {
+		return wrapValidationError(req.Path, "live value is invalid", err)
 	}
-	if err := valuevalidation.ValidateAt(req.Path, req.Applied, req.Descriptor, opts); err != nil {
-		return wrapAt(req.Path, ErrInvalidValue, ErrorReasonInvalidValue, "applied value is invalid", err)
+	if err := validator.ValidateAt(req.Path, req.Applied, req.Descriptor); err != nil {
+		return wrapValidationError(req.Path, "applied value is invalid", err)
 	}
 
 	return nil

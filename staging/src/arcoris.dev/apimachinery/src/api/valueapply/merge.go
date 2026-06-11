@@ -14,32 +14,26 @@
 
 package valueapply
 
-import (
-	"arcoris.dev/apimachinery/api/value"
-	"arcoris.dev/apimachinery/api/valuemerge"
-)
+import "arcoris.dev/apimachinery/api/valuemerge"
 
 // merge applies selected merge fields from Applied to Live.
-func (a *applier) merge(req Request, result Result) (value.Value, error) {
+func (a *applier) merge(req Request, prepared preparedApply) (mergedApply, error) {
 	merged, err := valuemerge.MergeAt(
 		req.Path,
 		req.Live,
 		req.Applied,
 		req.Descriptor,
-		result.MergeFields,
+		prepared.MergeFields,
 		a.mergeOptions(),
 	)
 	if err != nil {
-		return value.Value{}, wrapAt(
-			req.Path,
-			ErrMergeFailed,
-			ErrorReasonMergeFailed,
-			"value merge failed",
-			err,
-		)
+		return mergedApply{}, wrapMergeError(req.Path, err)
 	}
 
-	return merged, nil
+	return mergedApply{
+		preparedApply: prepared,
+		Value:         merged,
+	}, nil
 }
 
 // mergeOptions projects apply options into valuemerge.

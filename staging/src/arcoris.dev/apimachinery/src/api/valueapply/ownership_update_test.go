@@ -23,34 +23,43 @@ import (
 
 func TestUpdateOwnershipSetsOwnerFields(t *testing.T) {
 	req := specRequest(owner("user"))
-	result := Result{AppliedFields: fields(imagePath())}
+	merged := mergedApply{
+		preparedApply: preparedApply{AppliedFields: fields(imagePath())},
+		Value:         req.Live,
+	}
 
-	got, err := newApplier(Options{}).updateOwnership(req, result)
+	got, err := newApplier(Options{}).updateOwnership(req, merged)
 	requireNoError(t, err)
 
-	requireSet(t, got.FieldsFor(owner("user")), "$.image")
+	requireSet(t, got.Ownership.FieldsFor(owner("user")), "$.image")
 }
 
 func TestUpdateOwnershipForceRemovesConflictingOthers(t *testing.T) {
 	req := specRequest(owner("user"))
 	req.Ownership = state(entry("other", imagePath()))
-	result := Result{
-		AppliedFields: fields(imagePath()),
-		Conflicts:     mustConflicts(req, fields(imagePath())),
+	merged := mergedApply{
+		preparedApply: preparedApply{
+			AppliedFields: fields(imagePath()),
+			Conflicts:     mustConflicts(req, fields(imagePath())),
+		},
+		Value: req.Live,
 	}
 
-	got, err := newApplier(Options{Force: true}).updateOwnership(req, result)
+	got, err := newApplier(Options{Force: true}).updateOwnership(req, merged)
 	requireNoError(t, err)
 
-	requireOwnersOf(t, got, imagePath(), "user")
+	requireOwnersOf(t, got.Ownership, imagePath(), "user")
 }
 
 func TestUpdateOwnershipWrapsInvalidOwner(t *testing.T) {
 	req := specRequest(owner("user"))
 	req.Owner = fieldownership.Owner{}
-	result := Result{AppliedFields: fields(imagePath())}
+	merged := mergedApply{
+		preparedApply: preparedApply{AppliedFields: fields(imagePath())},
+		Value:         req.Live,
+	}
 
-	_, err := newApplier(Options{}).updateOwnership(req, result)
+	_, err := newApplier(Options{}).updateOwnership(req, merged)
 
 	requireErrorIs(t, err, ErrInvalidRequest)
 }

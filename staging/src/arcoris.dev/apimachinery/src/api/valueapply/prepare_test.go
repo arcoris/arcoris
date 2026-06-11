@@ -26,5 +26,20 @@ func TestPrepareComputesApplyMetadata(t *testing.T) {
 	requireSet(t, got.AppliedFields, "$.image")
 	requireSet(t, got.DroppedFields, "$.replicas")
 	requireSet(t, got.ChangedAppliedFields, "$.image")
+	requireSet(t, got.MergeFields)
+}
+
+func TestPlanMergeFieldsComputesDeletionAndMergeFields(t *testing.T) {
+	req := specRequest(owner("user"))
+	req.Ownership = state(entry("user", imagePath(), replicasPath()))
+	prepared := preparedApply{
+		AppliedFields: fields(imagePath()),
+		DroppedFields: fields(replicasPath()),
+	}
+
+	got, err := newApplier(Options{}).planMergeFields(req, prepared)
+	requireNoError(t, err)
+
+	requireSet(t, got.DeletedFields, "$.replicas")
 	requireSet(t, got.MergeFields, "$.image", "$.replicas")
 }

@@ -30,6 +30,15 @@ const (
 	// ErrorReasonInvalidValue reports validation failure for Live or Applied.
 	ErrorReasonInvalidValue ErrorReason = "invalid_value"
 
+	// ErrorReasonInvalidDescriptor reports descriptor failure from a lower stage.
+	ErrorReasonInvalidDescriptor ErrorReason = "invalid_descriptor"
+
+	// ErrorReasonUnresolvedRef reports an unresolved DescriptorRef.
+	ErrorReasonUnresolvedRef ErrorReason = "unresolved_ref"
+
+	// ErrorReasonReferenceCycle reports recursive or too-deep DescriptorRef traversal.
+	ErrorReasonReferenceCycle ErrorReason = "reference_cycle"
+
 	// ErrorReasonFieldSetFailed reports failure while extracting Applied fields.
 	ErrorReasonFieldSetFailed ErrorReason = "fieldset_failed"
 
@@ -45,4 +54,7 @@ const (
 
 	// ErrorReasonMergeFailed reports failure while running valuemerge.
 	ErrorReasonMergeFailed ErrorReason = "merge_failed"
+
+	// ErrorReasonUnsupportedMerge reports selected merge shapes rejected by valuemerge.
+	ErrorReasonUnsupportedMerge ErrorReason = "unsupported_merge"
 )

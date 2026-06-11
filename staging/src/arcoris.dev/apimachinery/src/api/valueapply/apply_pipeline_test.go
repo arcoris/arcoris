@@ -17,6 +17,7 @@ package valueapply
 import (
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/types"
 )
 
@@ -189,4 +190,80 @@ func TestApplyListMapSameValueSharedOwnership(t *testing.T) {
 	requireNoError(t, err)
 
 	requireOwnersOf(t, result.Ownership, readyStatusPath(), "other", "user")
+}
+
+func TestApplyOrderedListDroppedTailIndexDeletes(t *testing.T) {
+	result, err := Apply(Request{
+		Path:       root(),
+		Owner:      owner("user"),
+		Live:       list(str("a"), str("b"), str("c")),
+		Applied:    list(str("a"), str("b")),
+		Descriptor: orderedStringListDescriptor(),
+		Ownership:  state(entry("user", root().Index(2))),
+	}, Options{})
+	requireNoError(t, err)
+
+	requireListStrings(t, result.Value, "a", "b")
+	requireSet(t, result.DroppedFields, "$[2]")
+	requireSet(t, result.DeletedFields, "$[2]")
+}
+
+func TestApplyOrderedListDroppedMiddleIndexUnsupported(t *testing.T) {
+	result, err := Apply(Request{
+		Path:       root(),
+		Owner:      owner("user"),
+		Live:       list(str("a"), str("b"), str("c")),
+		Applied:    list(str("a")),
+		Descriptor: orderedStringListDescriptor(),
+		Ownership:  state(entry("user", root().Index(1))),
+	}, Options{})
+
+	requireErrorIs(t, err, ErrUnsupportedMerge)
+	if result.HasValue() {
+		t.Fatalf("value was merged")
+	}
+	if result.HasOwnership() {
+		t.Fatalf("ownership was updated")
+	}
+	requireSet(t, result.DroppedFields, "$[1]")
+	requireSet(t, result.DeletedFields, "$[1]")
+}
+
+func TestApplyMapKeyDeletion(t *testing.T) {
+	result, err := Apply(Request{
+		Path:       root(),
+		Owner:      owner("user"),
+		Live:       obj(member("app", str("old")), member("other", str("keep"))),
+		Applied:    obj(member("other", str("keep"))),
+		Descriptor: mapDescriptor(),
+		Ownership:  state(entry("user", labelPath())),
+	}, Options{})
+	requireNoError(t, err)
+
+	requireNoMember(t, result.Value, "app")
+	requireStringMember(t, result.Value, "other", "keep")
+	requireSet(t, result.DeletedFields, `$["app"]`)
+}
+
+func TestApplyListMapSelectorDeletion(t *testing.T) {
+	otherSelector := fieldpath.MustSelector(
+		fieldpath.NewSelectorEntry(testFieldName("type"), fieldpath.StringLiteral("Other")),
+	)
+	otherPath := root().Select(otherSelector)
+
+	result, err := Apply(Request{
+		Path:       root(),
+		Owner:      owner("user"),
+		Live:       list(readyCondition("False")),
+		Applied:    list(obj(member("type", str("Other")), member("status", str("True")))),
+		Descriptor: conditionsDescriptor(),
+		Ownership:  state(entry("user", root().Select(readySelector()))),
+	}, Options{})
+	requireNoError(t, err)
+
+	requireSet(t, result.DeletedFields, `$[{"type":"Ready"}]`)
+	requireOwnersOf(t, result.Ownership, otherPath.Field(testFieldName("status")), "user")
+	requireOwnersOf(t, result.Ownership, root().Select(readySelector()))
+	item := requireListItem(t, result.Value, 0)
+	requireStringMember(t, item, "type", "Other")
 }

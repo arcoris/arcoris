@@ -45,6 +45,21 @@ func TestApplyConflictReturnsPartialResult(t *testing.T) {
 	}
 }
 
+func TestApplyConflictReturnsBeforeDeletionPlanning(t *testing.T) {
+	req := specRequest(owner("user"))
+	req.Ownership = state(
+		entry("user", imagePath(), replicasPath()),
+		entry("other", imagePath()),
+	)
+
+	result, err := Apply(req, Options{})
+	requireErrorIs(t, err, ErrConflict)
+
+	requireSet(t, result.DroppedFields, "$.replicas")
+	requireSet(t, result.DeletedFields)
+	requireSet(t, result.MergeFields)
+}
+
 func TestApplyConflictDoesNotMerge(t *testing.T) {
 	req := specRequest(owner("user"))
 	req.Ownership = state(entry("other", imagePath()))
@@ -138,6 +153,22 @@ func TestApplyForceDoesNotRemoveUnrelatedOwnership(t *testing.T) {
 	requireNoError(t, err)
 
 	requireOwnersOf(t, result.Ownership, replicasPath(), "other")
+}
+
+func TestApplyForceDoesNotRemoveOwnershipProtectingDroppedFields(t *testing.T) {
+	req := specRequest(owner("user"))
+	req.Ownership = state(
+		entry("user", imagePath(), replicasPath()),
+		entry("other", imagePath(), replicasPath()),
+	)
+
+	result, err := Apply(req, Options{Force: true})
+	requireNoError(t, err)
+
+	requireOwnersOf(t, result.Ownership, imagePath(), "user")
+	requireOwnersOf(t, result.Ownership, replicasPath(), "other")
+	requireSet(t, result.DroppedFields, "$.replicas")
+	requireSet(t, result.DeletedFields)
 }
 
 func TestOwnershipConflictsWrapsInvalidOwner(t *testing.T) {

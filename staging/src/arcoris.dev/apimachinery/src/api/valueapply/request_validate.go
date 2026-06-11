@@ -14,6 +14,11 @@
 
 package valueapply
 
+import (
+	"arcoris.dev/apimachinery/api/fieldownership"
+	"arcoris.dev/apimachinery/api/fieldpath"
+)
+
 // validateRequestShape checks caller-owned request metadata before invoking
 // lower-level value packages.
 func validateRequestShape(req Request) error {
@@ -35,6 +40,41 @@ func validateRequestShape(req Request) error {
 			err,
 		)
 	}
+	if err := req.Ownership.ValidateStructure(); err != nil {
+		return wrapAt(
+			req.Path,
+			ErrInvalidRequest,
+			ErrorReasonInvalidRequest,
+			"ownership state is invalid",
+			err,
+		)
+	}
 
-	return nil
+	return validateOwnershipScope(req.Path, req.Ownership)
+}
+
+// validateOwnershipScope rejects ownership paths outside the apply base path.
+func validateOwnershipScope(base fieldpath.Path, ownership fieldownership.State) error {
+	var scopeErr error
+	ownership.ForEach(func(_ int, entry fieldownership.Entry) bool {
+		entry.Fields().ForEach(func(_ int, ownedPath fieldpath.Path) bool {
+			if ownedPath.Equal(base) || ownedPath.IsDescendantOf(base) {
+				return true
+			}
+
+			scopeErr = errorfAt(
+				ownedPath,
+				ErrInvalidRequest,
+				ErrorReasonInvalidRequest,
+				"ownership field path %s is outside apply base path %s",
+				ownedPath.CanonicalText(),
+				base.CanonicalText(),
+			)
+			return false
+		})
+
+		return scopeErr == nil
+	})
+
+	return scopeErr
 }

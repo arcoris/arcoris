@@ -18,11 +18,64 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/fieldownership"
+	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/types"
 )
 
 func TestValidateRequestShape(t *testing.T) {
 	requireNoError(t, validateRequestShape(specRequest(owner("user"))))
+}
+
+func TestValidateRequestShapeInvalidPath(t *testing.T) {
+	req := specRequest(owner("user"))
+	req.Path = root().Append(fieldpath.Element{})
+
+	err := validateRequestShape(req)
+
+	requireErrorIs(t, err, ErrInvalidPath)
+	requireErrorIs(t, err, fieldpath.ErrInvalidPath)
+}
+
+func TestValidateRequestShapeOwnershipEqualToBaseAccepted(t *testing.T) {
+	req := specRequest(owner("user"))
+	req.Path = specPath()
+	req.Ownership = state(entry("user", specPath()))
+
+	requireNoError(t, validateRequestShape(req))
+}
+
+func TestValidateRequestShapeOwnershipDescendantOfBaseAccepted(t *testing.T) {
+	req := specRequest(owner("user"))
+	req.Path = specPath()
+	req.Ownership = state(entry("user", specPath().Field(testFieldName("image"))))
+
+	requireNoError(t, validateRequestShape(req))
+}
+
+func TestValidateRequestShapeOwnershipOutsideBaseRejected(t *testing.T) {
+	req := specRequest(owner("user"))
+	req.Path = specPath()
+	req.Ownership = state(entry("user", path("$.metadata.name")))
+
+	err := validateRequestShape(req)
+
+	requireErrorIs(t, err, ErrInvalidRequest)
+}
+
+func TestApplyOwnershipOutsideBaseReturnsInvalidRequest(t *testing.T) {
+	req := specRequest(owner("user"))
+	req.Path = specPath()
+	req.Live = obj(member("image", str("api:v1")))
+	req.Applied = obj(member("image", str("api:v2")))
+	req.Descriptor = specStringDescriptor()
+	req.Ownership = state(entry("user", path("$.metadata.name")))
+
+	result, err := Apply(req, Options{})
+
+	requireErrorIs(t, err, ErrInvalidRequest)
+	if !result.IsZero() {
+		t.Fatalf("result is not zero")
+	}
 }
 
 func TestApplyInvalidOwnerReturnsInvalidOwner(t *testing.T) {

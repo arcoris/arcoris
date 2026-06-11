@@ -35,6 +35,16 @@ var (
 	// descriptor-aware validation.
 	ErrInvalidValue = errors.New("invalid value")
 
+	// ErrInvalidDescriptor classifies descriptors rejected by lower value
+	// pipeline stages during defensive traversal.
+	ErrInvalidDescriptor = errors.New("invalid descriptor")
+
+	// ErrUnresolvedRef classifies DescriptorRef targets absent from the resolver.
+	ErrUnresolvedRef = errors.New("unresolved descriptor reference")
+
+	// ErrReferenceCycle classifies recursive or too-deep DescriptorRef traversal.
+	ErrReferenceCycle = errors.New("descriptor reference cycle")
+
 	// ErrFieldSetFailed classifies failures while extracting applied semantic
 	// field paths.
 	ErrFieldSetFailed = errors.New("value field set extraction failed")
@@ -53,6 +63,10 @@ var (
 
 	// ErrMergeFailed classifies failures while merging selected fields.
 	ErrMergeFailed = errors.New("value merge failed")
+
+	// ErrUnsupportedMerge classifies selected merge shapes rejected by valuemerge
+	// policy, such as unsafe ordered-list index removal.
+	ErrUnsupportedMerge = errors.New("unsupported value merge")
 )
 
 // Error is the structured diagnostic returned for one apply failure.

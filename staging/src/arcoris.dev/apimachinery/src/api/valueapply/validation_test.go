@@ -45,6 +45,17 @@ func TestApplyInvalidAppliedValueReturnsInvalidValue(t *testing.T) {
 	requireErrorIs(t, err, ErrInvalidValue)
 }
 
+func TestApplyInvalidDescriptorReturnsInvalidDescriptor(t *testing.T) {
+	_, err := Apply(Request{
+		Path:    root(),
+		Owner:   owner("user"),
+		Live:    str("old"),
+		Applied: str("new"),
+	}, Options{})
+
+	requireErrorIs(t, err, ErrInvalidDescriptor)
+}
+
 func TestApplyInvalidLiveValueRejectedBeforeMerge(t *testing.T) {
 	_, err := Apply(Request{
 		Path:       root(),
