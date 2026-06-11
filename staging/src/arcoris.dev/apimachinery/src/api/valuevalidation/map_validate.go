@@ -76,11 +76,12 @@ func (v *validator) validateMap(
 		name := mapMember.Name.String()
 		mapKey, err := fieldpath.NewMapKey(name)
 		if err != nil {
-			v.add(
+			v.addf(
 				path,
 				ErrInvalidValue,
 				ErrorReasonInvalidMapKey,
-				"map member name cannot become a map-key path element",
+				"map member name %q cannot become a map-key path element",
+				name,
 			)
 			return !v.shouldStop()
 		}

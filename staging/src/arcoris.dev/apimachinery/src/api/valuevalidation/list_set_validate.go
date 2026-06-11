@@ -111,6 +111,10 @@ func (v *validator) validateListSetDuplicates(
 ) {
 	seen := make(map[listSetElementKey]int, valueView.Len())
 	for i := 0; i < valueView.Len(); i++ {
+		if v.shouldStop() {
+			return
+		}
+
 		item, _ := valueView.At(i)
 		key, ok := listSetElementKeyForValue(item, element)
 		if !ok {

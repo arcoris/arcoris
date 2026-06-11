@@ -28,6 +28,7 @@ func TestErrorReasonValuesAreStable(t *testing.T) {
 	}{
 		{name: "invalid zero", reason: valuevalidation.ErrorReasonInvalidZero, want: "invalid_zero"},
 		{name: "invalid descriptor", reason: valuevalidation.ErrorReasonInvalidDescriptor, want: "invalid_descriptor"},
+		{name: "invalid path", reason: valuevalidation.ErrorReasonInvalidPath, want: "invalid_path"},
 		{name: "kind mismatch", reason: valuevalidation.ErrorReasonKindMismatch, want: "kind_mismatch"},
 		{name: "null not allowed", reason: valuevalidation.ErrorReasonNullNotAllowed, want: "null_not_allowed"},
 		{name: "missing field", reason: valuevalidation.ErrorReasonMissingField, want: "missing_field"},

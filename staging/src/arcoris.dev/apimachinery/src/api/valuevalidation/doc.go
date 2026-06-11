@@ -13,32 +13,46 @@
 // limitations under the License.
 
 // Package valuevalidation validates concrete ARCORIS API payload values against
-// structural api/types descriptors.
+// api/types descriptors and emits semantic diagnostics.
 //
-// The package is descriptor-aware and path-aware, but side-effect free. It does
-// not decode wire formats, normalize values, apply defaults, prune fields,
-// compare values, merge values, manage ownership, validate API object metadata,
-// access storage, or perform admission.
+// The value pipeline keeps related responsibilities separate:
+// valuevalidation validates values, valuefieldset extracts ownership fields,
+// valuecompare computes semantic changed fields, valuemerge merges values,
+// valueapply orchestrates apply, conflict, deletion, and ownership behavior, and
+// fieldownership stores ownership state.
+//
+// Descriptors are expected to be prepared and structurally validated at
+// construction, registration, or catalog boundaries. valuevalidation does not
+// call types.ValidateResolved on every payload. Local descriptor checks in this
+// package are defensive traversal checks, not full descriptor validation.
+//
+// Validation collects a bounded ordered list of diagnostics. Options.MaxErrors
+// controls the bound. Values <= 0 use the package default, and unlimited
+// collection is intentionally unsupported. MaxErrors = 1 is fail-fast.
 //
 // Validation errors use api/fieldpath semantic paths for payload locations.
-// Object descriptor fields are addressed with field elements, dynamic map
-// entries with key elements, ordered list items with index elements, and
-// ListMap items with selector elements.
+// Record fields validated through object descriptors use field elements. Dynamic
+// map entries use key elements. Ordered list items use index elements. ListMap
+// items use selector elements after stable key extraction. ListSet and
+// ListAtomic validation diagnostics still use indexes because item-level
+// validation errors are useful even when ownership and apply layers treat the
+// whole list as one field.
+//
+// UnknownReject reports unknown record members. UnknownPreserveOpaque accepts
+// unknown members without validating their nested payload. UnknownPrune also
+// accepts unknown members without validating their nested payload. Invalid
+// unknown-field policies are invalid descriptors.
+//
+// Explicit NullValue is present data. Null is accepted only by DescriptorNull or
+// nullable descriptors. DescriptorRef is resolved before applying nullability
+// when the reference descriptor itself is not nullable, so reusable semantic
+// types keep their own nullability contract.
 //
 // Malformed payload-derived record member names are invalid values. Malformed
 // descriptor-declared field names are invalid descriptors. This split keeps
 // concrete payload shape failures separate from schema construction failures.
 //
-// Callers are expected to validate and register descriptors before using them
-// for value validation. This package does not run full descriptor validation on
-// every call. It performs only local defensive checks needed to avoid panics and
-// to report invalid descriptor use encountered during traversal.
-//
-// List diagnostics intentionally use physical indexes for atomic, set-like, and
-// ordered lists because item-level error locations are useful even when a later
-// field-set/apply layer treats the complete list as one semantic field.
-//
-// Validation collects a bounded list of diagnostics. Options.MaxErrors controls
-// the bound, and zero Options use the package default. The package does not try
-// to continue indefinitely after repeated failures.
+// The package does not extract field ownership, compare values, merge values,
+// apply values, validate API object metadata, access storage, decode or encode
+// wire formats, apply defaults, prune payloads, or normalize values.
 package valuevalidation

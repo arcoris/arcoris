@@ -147,6 +147,26 @@ func TestValidateRecordUnknownFieldPreserveOpaqueAllowed(t *testing.T) {
 	)
 }
 
+func TestValidateRecordInvalidUnknownFieldPolicy(t *testing.T) {
+	shape := types.Object(
+		types.Field("name").String().Required(),
+	).UnknownFields(types.UnknownFieldPolicy(255)).Descriptor()
+
+	err := valuevalidation.Validate(
+		mustObject(t, value.MustRecordMember("name", value.StringValue("main"))),
+		shape,
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrInvalidDescriptor,
+		valuevalidation.ErrorReasonInvalidDescriptor,
+		"$",
+	)
+}
+
 func TestValidateRecordNestedPath(t *testing.T) {
 	shape := types.Object(
 		types.Field("spec").Object(

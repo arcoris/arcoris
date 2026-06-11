@@ -25,6 +25,9 @@ const (
 	// ErrorReasonInvalidDescriptor reports a malformed or unsupported descriptor.
 	ErrorReasonInvalidDescriptor ErrorReason = "invalid_descriptor"
 
+	// ErrorReasonInvalidPath reports a malformed caller-supplied semantic path.
+	ErrorReasonInvalidPath ErrorReason = "invalid_path"
+
 	// ErrorReasonKindMismatch reports a concrete value kind that does not match
 	// the descriptor kind.
 	ErrorReasonKindMismatch ErrorReason = "kind_mismatch"

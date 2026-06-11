@@ -41,5 +41,5 @@ func (v SurfaceValidator) ValidateSurface(
 		opts.Resolver = resolver
 	}
 
-	return Validate(val, descriptor, opts)
+	return New(opts).Validate(val, descriptor)
 }

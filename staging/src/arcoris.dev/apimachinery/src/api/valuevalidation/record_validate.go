@@ -42,14 +42,19 @@ func (v *validator) validateRecord(
 	declared := make(map[string]types.FieldDescriptor, len(fields))
 
 	for _, fieldDescriptor := range fields {
+		if v.shouldStop() {
+			return
+		}
+
 		name := string(fieldDescriptor.Name())
 		fieldName, err := fieldpath.NewFieldName(name)
 		if err != nil {
-			v.add(
+			v.addf(
 				path,
 				ErrInvalidDescriptor,
 				ErrorReasonInvalidDescriptor,
-				"object descriptor field name cannot become a field path element",
+				"object descriptor field name %q cannot become a field path element",
+				name,
 			)
 			if v.shouldStop() {
 				return
@@ -70,8 +75,13 @@ func (v *validator) validateRecord(
 		v.validate(fieldPath, memberValue, fieldDescriptor.Descriptor(), depth+1)
 	}
 
-	if objectView.UnknownFields() == types.UnknownReject {
+	switch objectView.UnknownFields() {
+	case types.UnknownReject:
 		v.validateUnknownRecordMembers(path, valueView, declared)
+	case types.UnknownPreserveOpaque, types.UnknownPrune:
+		return
+	default:
+		v.add(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "object unknown-field policy is invalid")
 	}
 }
 
@@ -89,11 +99,12 @@ func (v *validator) validateUnknownRecordMembers(
 
 		fieldName, err := fieldpath.NewFieldName(name)
 		if err != nil {
-			v.add(
+			v.addf(
 				path,
 				ErrInvalidValue,
 				ErrorReasonInvalidFieldName,
-				"record member name cannot become a field path element",
+				"record member name %q cannot become a field path element",
+				name,
 			)
 			return !v.shouldStop()
 		}

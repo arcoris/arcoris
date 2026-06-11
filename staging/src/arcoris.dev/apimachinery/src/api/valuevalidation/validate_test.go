@@ -151,6 +151,24 @@ func TestValidateAtUsesBasePath(t *testing.T) {
 	)
 }
 
+func TestValidateAtRejectsInvalidBasePath(t *testing.T) {
+	basePath := fieldpath.Root().Append(fieldpath.Element{})
+	err := valuevalidation.ValidateAt(
+		basePath,
+		value.StringValue("x"),
+		types.String().Descriptor(),
+		valuevalidation.Options{},
+	)
+
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrInvalidPath,
+		valuevalidation.ErrorReasonInvalidPath,
+		"$.<invalid>",
+	)
+}
+
 func TestValidateCollectsMultipleErrors(t *testing.T) {
 	shape := types.Object(
 		types.Field("name").String().Required(),
@@ -178,6 +196,28 @@ func TestValidateCollectsMultipleErrors(t *testing.T) {
 		valuevalidation.ErrMissingField,
 		valuevalidation.ErrorReasonMissingField,
 		"$.replicas",
+	)
+}
+
+func TestValidateMaxErrorsOneIsFailFast(t *testing.T) {
+	shape := types.Object(
+		types.Field("a").String().Required(),
+		types.Field("b").String().Required(),
+	).Descriptor()
+
+	err := valuevalidation.Validate(
+		mustObject(t),
+		shape,
+		valuevalidation.Options{MaxErrors: 1},
+	)
+
+	requireErrorCount(t, err, 1)
+	requireError(
+		t,
+		err,
+		valuevalidation.ErrMissingField,
+		valuevalidation.ErrorReasonMissingField,
+		"$.a",
 	)
 }
 
