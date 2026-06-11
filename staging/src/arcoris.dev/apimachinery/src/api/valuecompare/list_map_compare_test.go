@@ -166,7 +166,7 @@ func TestCompareListMapDuplicateNewSelectorReturnsError(t *testing.T) {
 
 func TestCompareListMapMissingKeyReturnsError(t *testing.T) {
 	path := rootField("conditions")
-	newValue := value.MustListValue(valueObject("status", "True"))
+	newValue := value.MustListValue(valueRecord("status", "True"))
 
 	_, err := CompareAt(path, value.MustListValue(), newValue, conditionsDescriptor(), Options{})
 
@@ -406,7 +406,7 @@ func TestExtractListMapSelectorSuccess(t *testing.T) {
 func TestExtractListMapSelectorMapsMissingKey(t *testing.T) {
 	_, err := newComparer(Options{}).extractListMapSelector(
 		rootField("conditions").Index(0),
-		valueObject("status", "True"),
+		valueRecord("status", "True"),
 		conditionDescriptor(),
 		[]types.FieldName{"type"},
 	)

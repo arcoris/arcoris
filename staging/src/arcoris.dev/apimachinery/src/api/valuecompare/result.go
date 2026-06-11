@@ -18,34 +18,74 @@ import "arcoris.dev/apimachinery/api/fieldpath"
 
 // Result stores the semantic paths changed by a comparison.
 //
-// Sets are canonical fieldpath.Set values and are immutable by convention. A
-// well-formed comparison result places a path in at most one bucket.
+// Result is immutable to callers. Bucket accessors return fieldpath.Set values,
+// whose contents are canonical and immutable by convention. A structurally valid
+// result places an exact path in at most one bucket.
 type Result struct {
-	// Added contains paths mentioned by the new value but not the old value.
-	Added fieldpath.Set
-	// Removed contains paths mentioned by the old value but not the new value.
-	Removed fieldpath.Set
-	// Modified contains paths present in both values whose payload changed.
-	Modified fieldpath.Set
+	added    fieldpath.Set
+	removed  fieldpath.Set
+	modified fieldpath.Set
 }
 
 // EmptyResult returns a result whose buckets are canonical empty sets.
 func EmptyResult() Result {
 	return Result{
-		Added:    fieldpath.EmptySet(),
-		Removed:  fieldpath.EmptySet(),
-		Modified: fieldpath.EmptySet(),
+		added:    fieldpath.EmptySet(),
+		removed:  fieldpath.EmptySet(),
+		modified: fieldpath.EmptySet(),
 	}
+}
+
+// NewResult constructs a structurally valid comparison result.
+//
+// Added, removed, and modified buckets must be valid fieldpath sets. An exact
+// path may appear in only one bucket.
+func NewResult(added fieldpath.Set, removed fieldpath.Set, modified fieldpath.Set) (Result, error) {
+	result := Result{
+		added:    added,
+		removed:  removed,
+		modified: modified,
+	}
+	if err := result.ValidateStructure(); err != nil {
+		return Result{}, err
+	}
+
+	return result, nil
+}
+
+// MustResult is the panic-on-error form of NewResult for tests and static fixtures.
+func MustResult(added fieldpath.Set, removed fieldpath.Set, modified fieldpath.Set) Result {
+	result, err := NewResult(added, removed, modified)
+	if err != nil {
+		panic(err)
+	}
+
+	return result
+}
+
+// Added returns paths mentioned by the new value but not the old value.
+func (r Result) Added() fieldpath.Set {
+	return r.added
+}
+
+// Removed returns paths mentioned by the old value but not the new value.
+func (r Result) Removed() fieldpath.Set {
+	return r.removed
+}
+
+// Modified returns paths present in both values whose semantic payload changed.
+func (r Result) Modified() fieldpath.Set {
+	return r.modified
 }
 
 // IsEmpty reports whether no semantic changes were found.
 func (r Result) IsEmpty() bool {
-	return r.Added.IsEmpty() && r.Removed.IsEmpty() && r.Modified.IsEmpty()
+	return r.added.IsEmpty() && r.removed.IsEmpty() && r.modified.IsEmpty()
 }
 
 // Changed returns every path mentioned by Added, Removed, or Modified.
 func (r Result) Changed() fieldpath.Set {
-	return unionSets(unionSets(r.Added, r.Removed), r.Modified)
+	return unionSets(unionSets(r.added, r.removed), r.modified)
 }
 
 // merge combines child comparison output into r.
@@ -54,22 +94,22 @@ func (r Result) merge(other Result) Result {
 		return r
 	}
 
-	r.Added = unionSets(r.Added, other.Added)
-	r.Removed = unionSets(r.Removed, other.Removed)
-	r.Modified = unionSets(r.Modified, other.Modified)
+	r.added = unionSets(r.added, other.added)
+	r.removed = unionSets(r.removed, other.removed)
+	r.modified = unionSets(r.modified, other.modified)
 
 	return r
 }
 
 // withAdded returns a copy of r with added paths merged into Added.
 func (r Result) withAdded(set fieldpath.Set) Result {
-	r.Added = unionSets(r.Added, set)
+	r.added = unionSets(r.added, set)
 	return r
 }
 
 // withRemoved returns a copy of r with removed paths merged into Removed.
 func (r Result) withRemoved(set fieldpath.Set) Result {
-	r.Removed = unionSets(r.Removed, set)
+	r.removed = unionSets(r.removed, set)
 	return r
 }
 
@@ -80,7 +120,7 @@ func (r Result) withModified(path fieldpath.Path) (Result, error) {
 		return Result{}, err
 	}
 
-	r.Modified = unionSets(r.Modified, set)
+	r.modified = unionSets(r.modified, set)
 	return r, nil
 }
 

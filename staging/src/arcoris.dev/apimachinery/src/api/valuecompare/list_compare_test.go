@@ -230,7 +230,7 @@ func TestCompareOrderedListObjectItemAddedField(t *testing.T) {
 		types.Object(types.Field("image").String().Optional()),
 	).Ordered().Descriptor()
 
-	got, err := CompareAt(path, value.MustListValue(valueObject()), value.MustListValue(valueObject("image", "v1")), descriptor, Options{})
+	got, err := CompareAt(path, value.MustListValue(valueRecord()), value.MustListValue(valueRecord("image", "v1")), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, paths(path.Index(0).Field(testFieldName("image"))), nil, nil)
 }
@@ -241,7 +241,7 @@ func TestCompareOrderedListObjectItemRemovedField(t *testing.T) {
 		types.Object(types.Field("image").String().Optional()),
 	).Ordered().Descriptor()
 
-	got, err := CompareAt(path, value.MustListValue(valueObject("image", "v1")), value.MustListValue(valueObject()), descriptor, Options{})
+	got, err := CompareAt(path, value.MustListValue(valueRecord("image", "v1")), value.MustListValue(valueRecord()), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, paths(path.Index(0).Field(testFieldName("image"))), nil)
 }

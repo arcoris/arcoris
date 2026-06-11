@@ -20,12 +20,12 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// equalObject reports descriptor-aware object equality without building result sets.
+// equalRecord reports descriptor-aware object equality over record payload members without building result sets.
 //
 // It is used by whole-value decisions, such as atomic list equality. Missing
 // declared members compare as absence on both sides; unknown members follow the
-// same policy as compareObject.
-func (c *comparer) equalObject(
+// same policy as compareRecord.
+func (c *comparer) equalRecord(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
@@ -44,14 +44,14 @@ func (c *comparer) equalObject(
 		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor is not an object")
 	}
 
-	oldObject, _ := oldValue.AsRecord()
-	newObject, _ := newValue.AsRecord()
+	oldRecord, _ := oldValue.AsRecord()
+	newRecord, _ := newValue.AsRecord()
 	fields := objectView.Fields()
 
 	for _, field := range fields {
 		name := string(field.Name())
-		oldMember, oldFound := oldObject.Get(value.MemberName(name))
-		newMember, newFound := newObject.Get(value.MemberName(name))
+		oldMember, oldFound := oldRecord.Get(value.MemberName(name))
+		newMember, newFound := newRecord.Get(value.MemberName(name))
 		if oldFound != newFound {
 			return false, nil
 		}
@@ -59,7 +59,12 @@ func (c *comparer) equalObject(
 			continue
 		}
 
-		equal, err := c.equalValue(path.Field(fieldpath.MustFieldName(name)), oldMember, newMember, field.Descriptor(), depth+1)
+		fieldPath, err := recordFieldPath(path, name)
+		if err != nil {
+			return false, err
+		}
+
+		equal, err := c.equalValue(fieldPath, oldMember, newMember, field.Descriptor(), depth+1)
 		if err != nil {
 			return false, err
 		}
@@ -68,51 +73,56 @@ func (c *comparer) equalObject(
 		}
 	}
 
-	return c.equalUnknownObjectMembers(
+	return c.equalUnknownRecordMembers(
 		path,
-		oldObject,
-		newObject,
-		objectFieldsByName(fields),
+		oldRecord,
+		newRecord,
+		recordFieldsByName(fields),
 		objectView.UnknownFields(),
 	)
 }
 
-// equalUnknownObjectMembers applies unknown-field policy without producing paths.
-func (c *comparer) equalUnknownObjectMembers(
+// equalUnknownRecordMembers applies unknown-field policy without producing paths.
+func (c *comparer) equalUnknownRecordMembers(
 	path fieldpath.Path,
-	oldObject value.RecordView,
-	newObject value.RecordView,
+	oldRecord value.RecordView,
+	newRecord value.RecordView,
 	declared map[string]types.FieldDescriptor,
 	policy types.UnknownFieldPolicy,
 ) (bool, error) {
 	switch policy {
 	case types.UnknownReject:
-		_, err := c.rejectUnknownObjectMembers(path, oldObject, newObject, declared)
+		_, err := c.rejectUnknownRecordMembers(path, oldRecord, newRecord, declared)
 		return err == nil, err
 	case types.UnknownPreserveOpaque:
-		return c.equalPreservedUnknownObjectMembers(path, oldObject, newObject, declared)
+		return c.equalPreservedUnknownRecordMembers(path, oldRecord, newRecord, declared)
 	case types.UnknownPrune:
 		return true, nil
 	default:
-		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "object unknown-field policy is invalid")
+		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "descriptor unknown-field policy is invalid")
 	}
 }
 
-// equalPreservedUnknownObjectMembers compares preserved unknown members as opaque leaves.
-func (c *comparer) equalPreservedUnknownObjectMembers(
+// equalPreservedUnknownRecordMembers compares preserved unknown members as opaque leaves.
+func (c *comparer) equalPreservedUnknownRecordMembers(
 	path fieldpath.Path,
-	oldObject value.RecordView,
-	newObject value.RecordView,
+	oldRecord value.RecordView,
+	newRecord value.RecordView,
 	declared map[string]types.FieldDescriptor,
 ) (bool, error) {
-	for _, name := range unknownMemberNames(oldObject, newObject, declared) {
-		oldMember, oldFound := oldObject.Get(value.MemberName(name))
-		newMember, newFound := newObject.Get(value.MemberName(name))
+	for _, name := range unknownMemberNames(oldRecord, newRecord, declared) {
+		oldMember, oldFound := oldRecord.Get(value.MemberName(name))
+		newMember, newFound := newRecord.Get(value.MemberName(name))
 		if oldFound != newFound {
 			return false, nil
 		}
 
-		equal, err := c.equalOpaqueValue(path.Field(fieldpath.MustFieldName(name)), oldMember, newMember)
+		fieldPath, err := recordFieldPath(path, name)
+		if err != nil {
+			return false, err
+		}
+
+		equal, err := c.equalOpaqueRecord(fieldPath, oldMember, newMember)
 		if err != nil {
 			return false, err
 		}

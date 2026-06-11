@@ -17,15 +17,16 @@ package valuecompare
 import "arcoris.dev/apimachinery/api/value"
 
 // membersByName indexes concrete record members by their string name.
-func membersByName(members []value.RecordMember) map[string]value.Value {
-	if len(members) == 0 {
+func membersByName(view value.RecordView) map[string]value.Value {
+	if view.IsEmpty() {
 		return nil
 	}
 
-	out := make(map[string]value.Value, len(members))
-	for _, member := range members {
+	out := make(map[string]value.Value, view.Len())
+	view.ForEach(func(_ int, member value.RecordMember) bool {
 		out[member.Name.String()] = member.Value
-	}
+		return true
+	})
 
 	return out
 }

@@ -116,7 +116,7 @@ func (c *comparer) compare(
 		types.DescriptorDuration:
 		return c.compareScalar(path, oldValue, newValue, descriptor)
 	case types.DescriptorObject:
-		return c.compareObject(path, oldValue, newValue, descriptor, depth)
+		return c.compareRecord(path, oldValue, newValue, descriptor, depth)
 	case types.DescriptorMap:
 		return c.compareMap(path, oldValue, newValue, descriptor, depth)
 	case types.DescriptorList:

@@ -98,25 +98,25 @@ func requireResult(
 	t.Helper()
 
 	requireDisjointResult(t, got)
-	requireSet(t, "added", got.Added, added...)
-	requireSet(t, "removed", got.Removed, removed...)
-	requireSet(t, "modified", got.Modified, modified...)
+	requireSet(t, "added", got.Added(), added...)
+	requireSet(t, "removed", got.Removed(), removed...)
+	requireSet(t, "modified", got.Modified(), modified...)
 }
 
 func requireDisjointResult(t *testing.T, result Result) {
 	t.Helper()
 
-	if overlap := result.Added.Intersection(result.Removed); !overlap.IsEmpty() {
+	if overlap := result.Added().Intersection(result.Removed()); !overlap.IsEmpty() {
 		t.Fatalf("added/removed overlap = %s", overlap)
 	}
-	if overlap := result.Added.Intersection(result.Modified); !overlap.IsEmpty() {
+	if overlap := result.Added().Intersection(result.Modified()); !overlap.IsEmpty() {
 		t.Fatalf("added/modified overlap = %s", overlap)
 	}
-	if overlap := result.Removed.Intersection(result.Modified); !overlap.IsEmpty() {
+	if overlap := result.Removed().Intersection(result.Modified()); !overlap.IsEmpty() {
 		t.Fatalf("removed/modified overlap = %s", overlap)
 	}
 
-	union := result.Added.Union(result.Removed).Union(result.Modified)
+	union := result.Added().Union(result.Removed()).Union(result.Modified())
 	if !result.Changed().Equal(union) {
 		t.Fatalf("changed = %s, want union %s", result.Changed(), union)
 	}
@@ -236,7 +236,7 @@ func conditionValue(conditionType string, status string) value.Value {
 	)
 }
 
-func valueObject(fields ...string) value.Value {
+func valueRecord(fields ...string) value.Value {
 	members := make([]value.RecordMember, 0, len(fields)/2)
 	for i := 0; i < len(fields); i += 2 {
 		members = append(members, value.MustRecordMember(fields[i], value.StringValue(fields[i+1])))

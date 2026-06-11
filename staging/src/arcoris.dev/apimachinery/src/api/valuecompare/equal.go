@@ -83,7 +83,7 @@ func (c *comparer) equalValue(
 		types.DescriptorDuration:
 		return c.equalScalar(path, oldValue, newValue, descriptor)
 	case types.DescriptorObject:
-		return c.equalObject(path, oldValue, newValue, descriptor, depth)
+		return c.equalRecord(path, oldValue, newValue, descriptor, depth)
 	case types.DescriptorMap:
 		return c.equalMap(path, oldValue, newValue, descriptor, depth)
 	case types.DescriptorList:

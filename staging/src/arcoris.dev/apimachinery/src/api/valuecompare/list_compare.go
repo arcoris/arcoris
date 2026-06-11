@@ -100,7 +100,7 @@ func (c *comparer) compareOrderedList(
 	element types.Descriptor,
 	depth int,
 ) (Result, error) {
-	result := EmptyResult()
+	var result resultBuilder
 	oldLen := oldList.Len()
 	newLen := newList.Len()
 	maxLen := max(oldLen, newLen)
@@ -117,10 +117,10 @@ func (c *comparer) compareOrderedList(
 			return Result{}, err
 		}
 
-		result = result.merge(child)
+		result.AddResult(child)
 	}
 
-	return result, nil
+	return result.Build()
 }
 
 // listOperand converts an index lookup into presence-aware compare input.

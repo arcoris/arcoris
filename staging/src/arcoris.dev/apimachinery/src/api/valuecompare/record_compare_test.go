@@ -21,88 +21,88 @@ import (
 	"testing"
 )
 
-func TestCompareObjectSameIsEmpty(t *testing.T) {
+func TestCompareRecordSameIsEmpty(t *testing.T) {
 	descriptor := typesObject("name")
-	oldValue := valueObject("name", "app")
+	oldValue := valueRecord("name", "app")
 
 	got, err := Compare(oldValue, oldValue, descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, nil)
 }
 
-func TestCompareObjectModifiedField(t *testing.T) {
-	got, err := Compare(valueObject("name", "a"), valueObject("name", "b"), typesObject("name"), Options{})
+func TestCompareRecordModifiedField(t *testing.T) {
+	got, err := Compare(valueRecord("name", "a"), valueRecord("name", "b"), typesObject("name"), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(rootField("name")))
 }
 
-func TestCompareObjectAddedField(t *testing.T) {
-	got, err := Compare(valueObject(), valueObject("name", "app"), typesObject("name"), Options{})
+func TestCompareRecordAddedField(t *testing.T) {
+	got, err := Compare(valueRecord(), valueRecord("name", "app"), typesObject("name"), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, paths(rootField("name")), nil, nil)
 }
 
-func TestCompareObjectRemovedField(t *testing.T) {
-	got, err := Compare(valueObject("name", "app"), valueObject(), typesObject("name"), Options{})
+func TestCompareRecordRemovedField(t *testing.T) {
+	got, err := Compare(valueRecord("name", "app"), valueRecord(), typesObject("name"), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, paths(rootField("name")), nil)
 }
 
-func TestCompareObjectNestedModifiedField(t *testing.T) {
+func TestCompareRecordNestedModifiedField(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("spec").Object(
 			types.Field("image").String().Optional(),
 		).Optional(),
 	).Descriptor()
-	oldValue := value.MustRecordValue(value.MustRecordMember("spec", valueObject("image", "v1")))
-	newValue := value.MustRecordValue(value.MustRecordMember("spec", valueObject("image", "v2")))
+	oldValue := value.MustRecordValue(value.MustRecordMember("spec", valueRecord("image", "v1")))
+	newValue := value.MustRecordValue(value.MustRecordMember("spec", valueRecord("image", "v2")))
 
 	got, err := Compare(oldValue, newValue, descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(rootField("spec", "image")))
 }
 
-func TestCompareObjectMissingBothFieldIsEmpty(t *testing.T) {
-	got, err := Compare(valueObject(), valueObject(), typesObject("name"), Options{})
+func TestCompareRecordMissingBothFieldIsEmpty(t *testing.T) {
+	got, err := Compare(valueRecord(), valueRecord(), typesObject("name"), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, nil)
 }
 
-func TestCompareObjectAddedNullField(t *testing.T) {
+func TestCompareRecordAddedNullField(t *testing.T) {
 	descriptor := types.Object(types.Field("name").String().Optional().Nullable()).Descriptor()
 	newValue := value.MustRecordValue(value.MustRecordMember("name", value.NullValue()))
 
-	got, err := Compare(valueObject(), newValue, descriptor, Options{})
+	got, err := Compare(valueRecord(), newValue, descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, paths(rootField("name")), nil, nil)
 }
 
-func TestCompareObjectRemovedNullField(t *testing.T) {
+func TestCompareRecordRemovedNullField(t *testing.T) {
 	descriptor := types.Object(types.Field("name").String().Optional().Nullable()).Descriptor()
 	oldValue := value.MustRecordValue(value.MustRecordMember("name", value.NullValue()))
 
-	got, err := Compare(oldValue, valueObject(), descriptor, Options{})
+	got, err := Compare(oldValue, valueRecord(), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, paths(rootField("name")), nil)
 }
 
-func TestCompareObjectNullToSubtreeKeepsBucketsDisjoint(t *testing.T) {
+func TestCompareRecordNullToSubtreeKeepsBucketsDisjoint(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("spec").Object(types.Field("image").String().Optional()).Optional().Nullable(),
 	).Descriptor()
 	oldValue := value.MustRecordValue(value.MustRecordMember("spec", value.NullValue()))
-	newValue := value.MustRecordValue(value.MustRecordMember("spec", valueObject("image", "v1")))
+	newValue := value.MustRecordValue(value.MustRecordMember("spec", valueRecord("image", "v1")))
 
 	got, err := Compare(oldValue, newValue, descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(rootField("spec")))
 }
 
-func TestCompareObjectSubtreeToNullKeepsBucketsDisjoint(t *testing.T) {
+func TestCompareRecordSubtreeToNullKeepsBucketsDisjoint(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("spec").Object(types.Field("image").String().Optional()).Optional().Nullable(),
 	).Descriptor()
-	oldValue := value.MustRecordValue(value.MustRecordMember("spec", valueObject("image", "v1")))
+	oldValue := value.MustRecordValue(value.MustRecordMember("spec", valueRecord("image", "v1")))
 	newValue := value.MustRecordValue(value.MustRecordMember("spec", value.NullValue()))
 
 	got, err := Compare(oldValue, newValue, descriptor, Options{})
@@ -110,80 +110,80 @@ func TestCompareObjectSubtreeToNullKeepsBucketsDisjoint(t *testing.T) {
 	requireResult(t, got, nil, nil, paths(rootField("spec")))
 }
 
-func TestCompareObjectEmptyToNonEmpty(t *testing.T) {
+func TestCompareRecordEmptyToNonEmpty(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("spec").Object(types.Field("image").String().Optional()).Optional(),
 	).Descriptor()
-	newValue := value.MustRecordValue(value.MustRecordMember("spec", valueObject("image", "v1")))
+	newValue := value.MustRecordValue(value.MustRecordMember("spec", valueRecord("image", "v1")))
 
-	got, err := Compare(valueObject(), newValue, descriptor, Options{})
+	got, err := Compare(valueRecord(), newValue, descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, paths(rootField("spec", "image")), nil, nil)
 }
 
-func TestCompareObjectNonEmptyToEmpty(t *testing.T) {
+func TestCompareRecordNonEmptyToEmpty(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("spec").Object(types.Field("image").String().Optional()).Optional(),
 	).Descriptor()
-	oldValue := value.MustRecordValue(value.MustRecordMember("spec", valueObject("image", "v1")))
+	oldValue := value.MustRecordValue(value.MustRecordMember("spec", valueRecord("image", "v1")))
 
-	got, err := Compare(oldValue, valueObject(), descriptor, Options{})
+	got, err := Compare(oldValue, valueRecord(), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, paths(rootField("spec", "image")), nil)
 }
 
-func TestCompareObjectUnknownRejectedReturnsUnknownField(t *testing.T) {
-	_, err := Compare(valueObject("extra", "old"), valueObject(), types.Object().Descriptor(), Options{})
+func TestCompareRecordUnknownRejectedReturnsUnknownField(t *testing.T) {
+	_, err := Compare(valueRecord("extra", "old"), valueRecord(), types.Object().Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrUnknownField)
 	requireErrorReason(t, err, ErrorReasonUnknownField)
 	requireErrorPath(t, err, "$.extra")
 }
 
-func TestCompareObjectUnknownPreserveOpaqueSameOpaqueIsEmpty(t *testing.T) {
+func TestCompareRecordUnknownPreserveOpaqueSameOpaqueIsEmpty(t *testing.T) {
 	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 
-	got, err := Compare(valueObject("extra", "same"), valueObject("extra", "same"), descriptor, Options{})
+	got, err := Compare(valueRecord("extra", "same"), valueRecord("extra", "same"), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, nil)
 }
 
-func TestCompareObjectUnknownPreserveOpaqueChangedOpaqueIsModified(t *testing.T) {
+func TestCompareRecordUnknownPreserveOpaqueChangedOpaqueIsModified(t *testing.T) {
 	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 
-	got, err := Compare(valueObject("extra", "old"), valueObject("extra", "new"), descriptor, Options{})
+	got, err := Compare(valueRecord("extra", "old"), valueRecord("extra", "new"), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(rootField("extra")))
 }
 
-func TestCompareObjectUnknownPreserveOpaqueAddedOpaqueIsAdded(t *testing.T) {
+func TestCompareRecordUnknownPreserveOpaqueAddedOpaqueIsAdded(t *testing.T) {
 	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 
-	got, err := Compare(valueObject(), valueObject("extra", "new"), descriptor, Options{})
+	got, err := Compare(valueRecord(), valueRecord("extra", "new"), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, paths(rootField("extra")), nil, nil)
 }
 
-func TestCompareObjectUnknownPreserveOpaqueRemovedOpaqueIsRemoved(t *testing.T) {
+func TestCompareRecordUnknownPreserveOpaqueRemovedOpaqueIsRemoved(t *testing.T) {
 	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 
-	got, err := Compare(valueObject("extra", "old"), valueObject(), descriptor, Options{})
+	got, err := Compare(valueRecord("extra", "old"), valueRecord(), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, paths(rootField("extra")), nil)
 }
 
-func TestCompareObjectUnknownPrunedIgnored(t *testing.T) {
+func TestCompareRecordUnknownPrunedIgnored(t *testing.T) {
 	descriptor := types.Object().UnknownFields(types.UnknownPrune).Descriptor()
 
-	got, err := Compare(valueObject("extra", "old"), valueObject("extra", "new"), descriptor, Options{})
+	got, err := Compare(valueRecord("extra", "old"), valueRecord("extra", "new"), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, nil)
 }
 
-func TestCompareObjectOnlyPrunedUnknownFieldsIsEmpty(t *testing.T) {
+func TestCompareRecordOnlyPrunedUnknownFieldsIsEmpty(t *testing.T) {
 	descriptor := types.Object().UnknownFields(types.UnknownPrune).Descriptor()
 
-	got, err := Compare(valueObject("extra", "old"), valueObject(), descriptor, Options{})
+	got, err := Compare(valueRecord("extra", "old"), valueRecord(), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, nil)
 }
@@ -194,87 +194,87 @@ func TestObjectFieldsByNameBuildsLookup(t *testing.T) {
 	).Descriptor()
 	objectView, _ := descriptor.AsObject()
 
-	got := objectFieldsByName(objectView.Fields())
+	got := recordFieldsByName(objectView.Fields())
 
 	if string(got["name"].Name()) != "name" || string(got["image"].Name()) != "image" {
-		t.Fatalf("objectFieldsByName() = %#v", got)
+		t.Fatalf("recordFieldsByName() = %#v", got)
 	}
 }
-func TestCompareUnknownObjectMembersPruneIgnoresUnknowns(t *testing.T) {
-	oldObject, _ := valueObject("extra", "old").AsRecord()
-	newObject, _ := valueObject("extra", "new").AsRecord()
+func TestCompareUnknownRecordMembersPruneIgnoresUnknowns(t *testing.T) {
+	oldRecord, _ := valueRecord("extra", "old").AsRecord()
+	newRecord, _ := valueRecord("extra", "new").AsRecord()
 
-	got, err := newComparer(Options{}).compareUnknownObjectMembers(rootField("spec"), oldObject, newObject, nil, types.UnknownPrune)
+	got, err := newComparer(Options{}).compareUnknownRecordMembers(rootField("spec"), oldRecord, newRecord, nil, types.UnknownPrune)
 	requireNoError(t, err)
 
 	requireResult(t, got, nil, nil, nil)
 }
 
-func TestCompareObjectUnknownPrunedOldIgnored(t *testing.T) {
+func TestCompareRecordUnknownPrunedOldIgnored(t *testing.T) {
 	descriptor := types.Object().UnknownFields(types.UnknownPrune).Descriptor()
 
-	got, err := Compare(valueObject("x-extra", "old"), valueObject(), descriptor, Options{})
+	got, err := Compare(valueRecord("x-extra", "old"), valueRecord(), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, nil)
 }
 
-func TestCompareObjectUnknownPrunedNewIgnored(t *testing.T) {
+func TestCompareRecordUnknownPrunedNewIgnored(t *testing.T) {
 	descriptor := types.Object().UnknownFields(types.UnknownPrune).Descriptor()
 
-	got, err := Compare(valueObject(), valueObject("x-extra", "new"), descriptor, Options{})
+	got, err := Compare(valueRecord(), valueRecord("x-extra", "new"), descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, nil)
 }
 
-func TestCompareUnknownObjectMembersInvalidPolicy(t *testing.T) {
-	oldObject, _ := valueObject().AsRecord()
-	newObject, _ := valueObject().AsRecord()
+func TestCompareUnknownRecordMembersInvalidPolicy(t *testing.T) {
+	oldRecord, _ := valueRecord().AsRecord()
+	newRecord, _ := valueRecord().AsRecord()
 
-	_, err := newComparer(Options{}).compareUnknownObjectMembers(rootField("spec"), oldObject, newObject, nil, types.UnknownFieldPolicy(99))
+	_, err := newComparer(Options{}).compareUnknownRecordMembers(rootField("spec"), oldRecord, newRecord, nil, types.UnknownFieldPolicy(99))
 
 	requireErrorIs(t, err, ErrInvalidDescriptor)
 }
 func TestUnknownMemberNamesReturnsSortedUndeclaredNames(t *testing.T) {
 	descriptor := types.Object(types.Field("known").String().Optional()).Descriptor()
 	objectView, _ := descriptor.AsObject()
-	declared := objectFieldsByName(objectView.Fields())
-	oldObject, _ := valueObject("known", "x", "zeta", "old").AsRecord()
-	newObject, _ := valueObject("alpha", "new").AsRecord()
+	declared := recordFieldsByName(objectView.Fields())
+	oldRecord, _ := valueRecord("known", "x", "zeta", "old").AsRecord()
+	newRecord, _ := valueRecord("alpha", "new").AsRecord()
 
-	got := unknownMemberNames(oldObject, newObject, declared)
+	got := unknownMemberNames(oldRecord, newRecord, declared)
 
 	if want := []string{"alpha", "zeta"}; !slices.Equal(got, want) {
 		t.Fatalf("unknownMemberNames() = %#v, want %#v", got, want)
 	}
 }
-func TestComparePreservedUnknownObjectMemberAdded(t *testing.T) {
-	oldObject, _ := valueObject().AsRecord()
-	newObject, _ := valueObject("extra", "new").AsRecord()
+func TestComparePreservedUnknownRecordMemberAdded(t *testing.T) {
+	oldRecord, _ := valueRecord().AsRecord()
+	newRecord, _ := valueRecord("extra", "new").AsRecord()
 
-	got, err := newComparer(Options{}).comparePreservedUnknownObjectMember(rootField("extra"), oldObject, newObject, "extra")
+	got, err := newComparer(Options{}).comparePreservedUnknownRecordMember(rootField("extra"), oldRecord, newRecord, "extra")
 	requireNoError(t, err)
 
 	requireResult(t, got, paths(rootField("extra")), nil, nil)
 }
 
 func TestCompareOpaqueLeafModified(t *testing.T) {
-	got, err := newComparer(Options{}).compareOpaqueLeaf(rootField("extra"), valueObject("nested", "old"), valueObject("nested", "new"))
+	got, err := newComparer(Options{}).compareOpaqueLeaf(rootField("extra"), valueRecord("nested", "old"), valueRecord("nested", "new"))
 	requireNoError(t, err)
 
 	requireResult(t, got, nil, nil, paths(rootField("extra")))
 }
 
-func TestCompareObjectUnknownPreserveOpaqueDoesNotDescendIntoNestedObject(t *testing.T) {
+func TestCompareRecordUnknownPreserveOpaqueDoesNotDescendIntoNestedObject(t *testing.T) {
 	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
-	oldValue := value.MustRecordValue(value.MustRecordMember("x-extra", valueObject("nested", "old")))
-	newValue := value.MustRecordValue(value.MustRecordMember("x-extra", valueObject("nested", "new")))
+	oldValue := value.MustRecordValue(value.MustRecordMember("x-extra", valueRecord("nested", "old")))
+	newValue := value.MustRecordValue(value.MustRecordMember("x-extra", valueRecord("nested", "new")))
 
 	got, err := Compare(oldValue, newValue, descriptor, Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(rootField("x-extra")))
 }
 
-func TestCompareObjectUnknownPreserveOpaqueDoesNotDescendIntoNestedList(t *testing.T) {
+func TestCompareRecordUnknownPreserveOpaqueDoesNotDescendIntoNestedList(t *testing.T) {
 	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 	oldValue := value.MustRecordValue(value.MustRecordMember("x-extra", value.MustListValue(value.StringValue("old"))))
 	newValue := value.MustRecordValue(value.MustRecordMember("x-extra", value.MustListValue(value.StringValue("new"))))
@@ -283,26 +283,26 @@ func TestCompareObjectUnknownPreserveOpaqueDoesNotDescendIntoNestedList(t *testi
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(rootField("x-extra")))
 }
-func TestRejectUnknownObjectMembersReturnsUnknownField(t *testing.T) {
-	oldObject, _ := valueObject("extra", "old").AsRecord()
-	newObject, _ := valueObject().AsRecord()
+func TestRejectUnknownRecordMembersReturnsUnknownField(t *testing.T) {
+	oldRecord, _ := valueRecord("extra", "old").AsRecord()
+	newRecord, _ := valueRecord().AsRecord()
 
-	_, err := newComparer(Options{}).rejectUnknownObjectMembers(rootField("spec"), oldObject, newObject, nil)
+	_, err := newComparer(Options{}).rejectUnknownRecordMembers(rootField("spec"), oldRecord, newRecord, nil)
 
 	requireErrorIs(t, err, ErrUnknownField)
 	requireErrorPath(t, err, "$.spec.extra")
 }
 
-func TestCompareObjectUnknownRejectedOldReturnsUnknownField(t *testing.T) {
-	_, err := Compare(valueObject("x-extra", "old"), valueObject(), types.Object().Descriptor(), Options{})
+func TestCompareRecordUnknownRejectedOldReturnsUnknownField(t *testing.T) {
+	_, err := Compare(valueRecord("x-extra", "old"), valueRecord(), types.Object().Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrUnknownField)
 	requireErrorReason(t, err, ErrorReasonUnknownField)
 	requireErrorPath(t, err, rootField("x-extra").String())
 }
 
-func TestCompareObjectUnknownRejectedNewReturnsUnknownField(t *testing.T) {
-	_, err := Compare(valueObject(), valueObject("x-extra", "new"), types.Object().Descriptor(), Options{})
+func TestCompareRecordUnknownRejectedNewReturnsUnknownField(t *testing.T) {
+	_, err := Compare(valueRecord(), valueRecord("x-extra", "new"), types.Object().Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrUnknownField)
 	requireErrorReason(t, err, ErrorReasonUnknownField)

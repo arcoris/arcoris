@@ -15,15 +15,18 @@
 package valuecompare
 
 import (
-	"arcoris.dev/apimachinery/api/value"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/value"
 )
 
 func TestMembersByNameBuildsLookup(t *testing.T) {
-	got := membersByName([]value.RecordMember{
+	record := value.MustRecordValue(
 		value.MustRecordMember("env", value.StringValue("prod")),
 		value.MustRecordMember("tier", value.StringValue("frontend")),
-	})
+	)
+	view, _ := record.AsRecord()
+	got := membersByName(view)
 
 	env, _ := got["env"].AsString()
 	tier, _ := got["tier"].AsString()

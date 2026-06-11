@@ -23,7 +23,7 @@ import (
 
 // compareMap interprets value.KindRecord as a dynamic string-keyed map.
 //
-// DescriptorMap shares the concrete object payload with DescriptorObject, but uses
+// DescriptorMap shares the concrete record payload with DescriptorObject, but uses
 // path.Key(key) rather than path.Field(name). Dynamic keys are sorted before
 // traversal so result construction is deterministic.
 func (c *comparer) compareMap(
@@ -53,14 +53,18 @@ func (c *comparer) compareMap(
 		return Result{}, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map value descriptor is invalid")
 	}
 
-	oldObject, _ := oldValue.AsRecord()
-	newObject, _ := newValue.AsRecord()
-	oldMembers := membersByName(oldObject.Members())
-	newMembers := membersByName(newObject.Members())
+	oldRecord, _ := oldValue.AsRecord()
+	newRecord, _ := newValue.AsRecord()
+	oldMembers := membersByName(oldRecord)
+	newMembers := membersByName(newRecord)
 
-	result := EmptyResult()
+	var result resultBuilder
 	for _, key := range unionSortedKeys(oldMembers, newMembers) {
-		memberPath := path.Key(fieldpath.MustMapKey(key))
+		memberPath, err := mapKeyPath(path, key)
+		if err != nil {
+			return Result{}, err
+		}
+
 		child, err := c.compare(
 			memberPath,
 			mapOperand(oldMembers, key),
@@ -72,10 +76,10 @@ func (c *comparer) compareMap(
 			return Result{}, err
 		}
 
-		result = result.merge(child)
+		result.AddResult(child)
 	}
 
-	return result, nil
+	return result.Build()
 }
 
 // mapOperand converts a dynamic map lookup into presence-aware compare input.

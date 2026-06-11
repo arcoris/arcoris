@@ -22,7 +22,7 @@ import (
 
 func TestCompareMapSameIsEmpty(t *testing.T) {
 	descriptor := types.MapOf(types.String()).Descriptor()
-	oldValue := valueObject("env", "prod")
+	oldValue := valueRecord("env", "prod")
 
 	got, err := Compare(oldValue, oldValue, descriptor, Options{})
 	requireNoError(t, err)
@@ -32,7 +32,7 @@ func TestCompareMapSameIsEmpty(t *testing.T) {
 func TestCompareMapAddedKey(t *testing.T) {
 	path := rootField("labels")
 
-	got, err := CompareAt(path, valueObject(), valueObject("env", "prod"), types.MapOf(types.String()).Descriptor(), Options{})
+	got, err := CompareAt(path, valueRecord(), valueRecord("env", "prod"), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, paths(path.Key(testMapKey("env"))), nil, nil)
 }
@@ -40,7 +40,7 @@ func TestCompareMapAddedKey(t *testing.T) {
 func TestCompareMapRemovedKey(t *testing.T) {
 	path := rootField("labels")
 
-	got, err := CompareAt(path, valueObject("env", "prod"), valueObject(), types.MapOf(types.String()).Descriptor(), Options{})
+	got, err := CompareAt(path, valueRecord("env", "prod"), valueRecord(), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, paths(path.Key(testMapKey("env"))), nil)
 }
@@ -48,7 +48,7 @@ func TestCompareMapRemovedKey(t *testing.T) {
 func TestCompareMapModifiedKeyValue(t *testing.T) {
 	path := rootField("labels")
 
-	got, err := CompareAt(path, valueObject("env", "prod"), valueObject("env", "stage"), types.MapOf(types.String()).Descriptor(), Options{})
+	got, err := CompareAt(path, valueRecord("env", "prod"), valueRecord("env", "stage"), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(path.Key(testMapKey("env"))))
 }
@@ -58,8 +58,8 @@ func TestCompareMapNestedObjectValue(t *testing.T) {
 	descriptor := types.MapOf(
 		types.Object(types.Field("target").String().Optional()),
 	).Descriptor()
-	oldValue := value.MustRecordValue(value.MustRecordMember("http", valueObject("target", "8080")))
-	newValue := value.MustRecordValue(value.MustRecordMember("http", valueObject("target", "8081")))
+	oldValue := value.MustRecordValue(value.MustRecordMember("http", valueRecord("target", "8080")))
+	newValue := value.MustRecordValue(value.MustRecordMember("http", valueRecord("target", "8081")))
 
 	got, err := CompareAt(path, oldValue, newValue, descriptor, Options{})
 	requireNoError(t, err)
@@ -69,7 +69,7 @@ func TestCompareMapNestedObjectValue(t *testing.T) {
 func TestCompareMapEmptyToNonEmpty(t *testing.T) {
 	path := rootField("labels")
 
-	got, err := CompareAt(path, valueObject(), valueObject("env", "prod"), types.MapOf(types.String()).Descriptor(), Options{})
+	got, err := CompareAt(path, valueRecord(), valueRecord("env", "prod"), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, paths(path.Key(testMapKey("env"))), nil, nil)
 }
@@ -77,7 +77,7 @@ func TestCompareMapEmptyToNonEmpty(t *testing.T) {
 func TestCompareMapNonEmptyToEmpty(t *testing.T) {
 	path := rootField("labels")
 
-	got, err := CompareAt(path, valueObject("env", "prod"), valueObject(), types.MapOf(types.String()).Descriptor(), Options{})
+	got, err := CompareAt(path, valueRecord("env", "prod"), valueRecord(), types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 	requireResult(t, got, nil, paths(path.Key(testMapKey("env"))), nil)
 }

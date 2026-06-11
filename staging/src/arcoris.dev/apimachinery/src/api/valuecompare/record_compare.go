@@ -23,12 +23,12 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// compareObject compares fixed object fields with field-path semantics.
+// compareRecord compares declared object fields against record payload members.
 //
 // Declared fields use path.Field(name). Undeclared members are handled after
 // declared fields so UnknownReject, UnknownPreserveOpaque, and UnknownPrune match the
 // descriptor policy without affecting known-field traversal.
-func (c *comparer) compareObject(
+func (c *comparer) compareRecord(
 	path fieldpath.Path,
 	oldValue value.Value,
 	newValue value.Value,
@@ -52,16 +52,19 @@ func (c *comparer) compareObject(
 		)
 	}
 
-	oldObject, _ := oldValue.AsRecord()
-	newObject, _ := newValue.AsRecord()
-	fields := objectFieldsByName(objectView.Fields())
-	result := EmptyResult()
+	oldRecord, _ := oldValue.AsRecord()
+	newRecord, _ := newValue.AsRecord()
+	fields := recordFieldsByName(objectView.Fields())
+	var result resultBuilder
 
 	for _, field := range objectView.Fields() {
 		name := string(field.Name())
-		fieldPath := path.Field(fieldpath.MustFieldName(name))
-		oldFieldValue, oldFound := oldObject.Get(value.MemberName(name))
-		newFieldValue, newFound := newObject.Get(value.MemberName(name))
+		fieldPath, err := recordFieldPath(path, name)
+		if err != nil {
+			return Result{}, err
+		}
+		oldFieldValue, oldFound := oldRecord.Get(value.MemberName(name))
+		newFieldValue, newFound := newRecord.Get(value.MemberName(name))
 
 		child, err := c.compare(
 			fieldPath,
@@ -74,13 +77,13 @@ func (c *comparer) compareObject(
 			return Result{}, err
 		}
 
-		result = result.merge(child)
+		result.AddResult(child)
 	}
 
-	unknown, err := c.compareUnknownObjectMembers(
+	unknown, err := c.compareUnknownRecordMembers(
 		path,
-		oldObject,
-		newObject,
+		oldRecord,
+		newRecord,
 		fields,
 		objectView.UnknownFields(),
 	)
@@ -88,11 +91,12 @@ func (c *comparer) compareObject(
 		return Result{}, err
 	}
 
-	return result.merge(unknown), nil
+	result.AddResult(unknown)
+	return result.Build()
 }
 
-// objectFieldsByName indexes declared fields so unknown-member passes can skip them.
-func objectFieldsByName(fields []types.FieldDescriptor) map[string]types.FieldDescriptor {
+// recordFieldsByName indexes declared fields so unknown-member passes can skip them.
+func recordFieldsByName(fields []types.FieldDescriptor) map[string]types.FieldDescriptor {
 	if len(fields) == 0 {
 		return nil
 	}
@@ -105,22 +109,22 @@ func objectFieldsByName(fields []types.FieldDescriptor) map[string]types.FieldDe
 	return declared
 }
 
-// compareUnknownObjectMembers applies the descriptor's undeclared-member policy.
+// compareUnknownRecordMembers applies the descriptor's undeclared-member policy.
 //
 // UnknownReject fails fast, UnknownPreserveOpaque compares each unknown member as one
 // opaque leaf, and UnknownPrune ignores unknown members completely.
-func (c *comparer) compareUnknownObjectMembers(
+func (c *comparer) compareUnknownRecordMembers(
 	path fieldpath.Path,
-	oldObject value.RecordView,
-	newObject value.RecordView,
+	oldRecord value.RecordView,
+	newRecord value.RecordView,
 	declared map[string]types.FieldDescriptor,
 	policy types.UnknownFieldPolicy,
 ) (Result, error) {
 	switch policy {
 	case types.UnknownReject:
-		return c.rejectUnknownObjectMembers(path, oldObject, newObject, declared)
+		return c.rejectUnknownRecordMembers(path, oldRecord, newRecord, declared)
 	case types.UnknownPreserveOpaque:
-		return c.comparePreservedUnknownObjectMembers(path, oldObject, newObject, declared)
+		return c.comparePreservedUnknownRecordMembers(path, oldRecord, newRecord, declared)
 	case types.UnknownPrune:
 		return EmptyResult(), nil
 	default:
@@ -128,24 +132,29 @@ func (c *comparer) compareUnknownObjectMembers(
 			path,
 			ErrInvalidDescriptor,
 			ErrorReasonInvalidDescriptor,
-			"object unknown-field policy is invalid",
+			"descriptor unknown-field policy is invalid",
 		)
 	}
 }
 
-// rejectUnknownObjectMembers reports the first rejected unknown field deterministically.
-func (c *comparer) rejectUnknownObjectMembers(
+// rejectUnknownRecordMembers reports the first rejected unknown field deterministically.
+func (c *comparer) rejectUnknownRecordMembers(
 	path fieldpath.Path,
-	oldObject value.RecordView,
-	newObject value.RecordView,
+	oldRecord value.RecordView,
+	newRecord value.RecordView,
 	declared map[string]types.FieldDescriptor,
 ) (Result, error) {
-	for _, name := range unknownMemberNames(oldObject, newObject, declared) {
+	for _, name := range unknownMemberNames(oldRecord, newRecord, declared) {
+		fieldPath, err := recordFieldPath(path, name)
+		if err != nil {
+			return Result{}, err
+		}
+
 		return Result{}, errorfAt(
-			path.Field(fieldpath.MustFieldName(name)),
+			fieldPath,
 			ErrUnknownField,
 			ErrorReasonUnknownField,
-			"field %q is rejected by the object descriptor",
+			"record member %q is rejected by the object descriptor",
 			name,
 		)
 	}
@@ -153,40 +162,45 @@ func (c *comparer) rejectUnknownObjectMembers(
 	return EmptyResult(), nil
 }
 
-// comparePreservedUnknownObjectMembers compares each preserved unknown as one leaf.
+// comparePreservedUnknownRecordMembers compares each preserved unknown as one leaf.
 //
 // Unknown values have no descriptor, so nested object or list changes must not
 // produce nested semantic paths. Only the unknown member path is added, removed,
 // or modified.
-func (c *comparer) comparePreservedUnknownObjectMembers(
+func (c *comparer) comparePreservedUnknownRecordMembers(
 	path fieldpath.Path,
-	oldObject value.RecordView,
-	newObject value.RecordView,
+	oldRecord value.RecordView,
+	newRecord value.RecordView,
 	declared map[string]types.FieldDescriptor,
 ) (Result, error) {
-	result := EmptyResult()
+	var result resultBuilder
 
-	for _, name := range unknownMemberNames(oldObject, newObject, declared) {
-		child, err := c.comparePreservedUnknownObjectMember(path.Field(fieldpath.MustFieldName(name)), oldObject, newObject, name)
+	for _, name := range unknownMemberNames(oldRecord, newRecord, declared) {
+		fieldPath, err := recordFieldPath(path, name)
 		if err != nil {
 			return Result{}, err
 		}
 
-		result = result.merge(child)
+		child, err := c.comparePreservedUnknownRecordMember(fieldPath, oldRecord, newRecord, name)
+		if err != nil {
+			return Result{}, err
+		}
+
+		result.AddResult(child)
 	}
 
-	return result, nil
+	return result.Build()
 }
 
-// comparePreservedUnknownObjectMember compares one preserved unknown member.
-func (c *comparer) comparePreservedUnknownObjectMember(
+// comparePreservedUnknownRecordMember compares one preserved unknown member.
+func (c *comparer) comparePreservedUnknownRecordMember(
 	path fieldpath.Path,
-	oldObject value.RecordView,
-	newObject value.RecordView,
+	oldRecord value.RecordView,
+	newRecord value.RecordView,
 	name string,
 ) (Result, error) {
-	oldMember, oldFound := oldObject.Get(value.MemberName(name))
-	newMember, newFound := newObject.Get(value.MemberName(name))
+	oldMember, oldFound := oldRecord.Get(value.MemberName(name))
+	newMember, newFound := newRecord.Get(value.MemberName(name))
 
 	switch {
 	case !oldFound && newFound:
@@ -223,13 +237,13 @@ func (c *comparer) compareOpaqueLeaf(path fieldpath.Path, oldMember value.Value,
 
 // unknownMemberNames returns deterministic undeclared names present on either side.
 func unknownMemberNames(
-	oldObject value.RecordView,
-	newObject value.RecordView,
+	oldRecord value.RecordView,
+	newRecord value.RecordView,
 	declared map[string]types.FieldDescriptor,
 ) []string {
-	seen := make(map[string]bool, oldObject.Len()+newObject.Len())
-	addUnknownNames(seen, oldObject, declared)
-	addUnknownNames(seen, newObject, declared)
+	seen := make(map[string]bool, oldRecord.Len()+newRecord.Len())
+	addUnknownNames(seen, oldRecord, declared)
+	addUnknownNames(seen, newRecord, declared)
 
 	names := make([]string, 0, len(seen))
 	for name := range seen {
@@ -240,16 +254,17 @@ func unknownMemberNames(
 	return names
 }
 
-// addUnknownNames records object member names that are not declared by descriptor.
+// addUnknownNames records record member names that are not declared by descriptor.
 func addUnknownNames(
 	seen map[string]bool,
-	object value.RecordView,
+	record value.RecordView,
 	declared map[string]types.FieldDescriptor,
 ) {
-	for _, member := range object.Members() {
+	record.ForEach(func(_ int, member value.RecordMember) bool {
 		name := member.Name.String()
 		if _, ok := declared[name]; !ok {
 			seen[name] = true
 		}
-	}
+		return true
+	})
 }

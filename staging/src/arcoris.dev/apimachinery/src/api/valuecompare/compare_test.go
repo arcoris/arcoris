@@ -54,7 +54,7 @@ func TestCompareAtMatchesValidationAndFieldSetPathSemantics(t *testing.T) {
 		valuevalidation.Options{},
 	))
 
-	set, err := valuefieldset.ExtractAt(
+	set, err := valuefieldset.ExtractOwnershipFieldsAt(
 		path,
 		newValue,
 		descriptor,

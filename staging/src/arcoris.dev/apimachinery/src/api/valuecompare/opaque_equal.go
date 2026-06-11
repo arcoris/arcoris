@@ -39,11 +39,11 @@ func (c *comparer) equalOpaqueValue(path fieldpath.Path, oldValue value.Value, n
 
 	switch oldValue.Kind() {
 	case value.KindRecord:
-		return c.equalOpaqueObject(path, oldValue, newValue)
+		return c.equalOpaqueRecord(path, oldValue, newValue)
 	case value.KindList:
 		return c.equalOpaqueList(path, oldValue, newValue)
 	default:
-		return false, errorAt(path, ErrInvalidValue, ErrorReasonInvalidZero, "value has invalid kind")
+		return false, errorAt(path, ErrInvalidValue, ErrorReasonInvalidValueKind, "value has invalid kind")
 	}
 }
 
@@ -121,34 +121,50 @@ func (c *comparer) equalOpaqueList(path fieldpath.Path, oldValue value.Value, ne
 	return true, nil
 }
 
-// equalOpaqueObject compares unknown record payloads by member name.
+// equalOpaqueRecord compares unknown record payloads by member name.
 //
 // Unknown-preserved record members have no descriptor, so equality is purely
 // structural and exact. Missing or extra members are enough to mark the opaque
 // parent leaf as changed.
-func (c *comparer) equalOpaqueObject(path fieldpath.Path, oldValue value.Value, newValue value.Value) (bool, error) {
-	oldObject, _ := oldValue.AsRecord()
-	newObject, _ := newValue.AsRecord()
-	if oldObject.Len() != newObject.Len() {
+func (c *comparer) equalOpaqueRecord(path fieldpath.Path, oldValue value.Value, newValue value.Value) (bool, error) {
+	oldRecord, _ := oldValue.AsRecord()
+	newRecord, _ := newValue.AsRecord()
+	if oldRecord.Len() != newRecord.Len() {
 		return false, nil
 	}
 
-	oldMembers := membersByName(oldObject.Members())
-	for _, newMember := range newObject.Members() {
+	oldMembers := membersByName(oldRecord)
+	var compareErr error
+	equal := true
+	newRecord.ForEach(func(_ int, newMember value.RecordMember) bool {
 		name := newMember.Name.String()
 		oldMember, found := oldMembers[name]
 		if !found {
-			return false, nil
+			equal = false
+			return false
 		}
 
-		equal, err := c.equalOpaqueValue(path.Field(fieldpath.MustFieldName(name)), oldMember, newMember.Value)
+		memberPath, err := recordFieldPath(path, name)
 		if err != nil {
-			return false, err
+			compareErr = err
+			return false
 		}
-		if !equal {
-			return false, nil
+
+		memberEqual, err := c.equalOpaqueValue(memberPath, oldMember, newMember.Value)
+		if err != nil {
+			compareErr = err
+			return false
 		}
+		if !memberEqual {
+			equal = false
+			return false
+		}
+
+		return true
+	})
+	if compareErr != nil {
+		return false, compareErr
 	}
 
-	return true, nil
+	return equal, nil
 }

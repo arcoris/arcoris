@@ -16,11 +16,8 @@ package valuecompare
 
 import (
 	"errors"
-	"fmt"
 
-	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/internal/diagnostic"
-	"arcoris.dev/apimachinery/api/valuefieldset"
 )
 
 var (
@@ -37,7 +34,7 @@ var (
 	// ErrKindMismatch classifies concrete value kind / descriptor kind mismatches.
 	ErrKindMismatch = errors.New("value kind mismatch")
 
-	// ErrUnknownField classifies object members rejected by UnknownReject.
+	// ErrUnknownField classifies record members rejected by an object descriptor.
 	ErrUnknownField = errors.New("unknown field")
 
 	// ErrUnresolvedRef classifies DescriptorRef descriptors that cannot be resolved.
@@ -51,6 +48,9 @@ var (
 
 	// ErrDuplicateListKey classifies repeated ListMap selector identities.
 	ErrDuplicateListKey = errors.New("duplicate list map key")
+
+	// ErrInvalidResult classifies malformed comparison result values.
+	ErrInvalidResult = errors.New("invalid comparison result")
 )
 
 // Error is the structured diagnostic returned for one fail-fast comparison blocker.
@@ -75,122 +75,4 @@ func (e *Error) Unwrap() error {
 	}
 
 	return e.Record.Unwrap()
-}
-
-// ErrorReason gives stable machine-readable detail inside a broad error category.
-type ErrorReason string
-
-const (
-	// ErrorReasonInvalidZero reports the uninitialized zero value.Value.
-	ErrorReasonInvalidZero ErrorReason = "invalid_zero"
-
-	// ErrorReasonInvalidDescriptor reports a malformed or unsupported descriptor.
-	ErrorReasonInvalidDescriptor ErrorReason = "invalid_descriptor"
-
-	// ErrorReasonInvalidPath reports a malformed semantic field path.
-	ErrorReasonInvalidPath ErrorReason = "invalid_path"
-
-	// ErrorReasonKindMismatch reports descriptor/value kind incompatibility.
-	ErrorReasonKindMismatch ErrorReason = "kind_mismatch"
-
-	// ErrorReasonUnknownField reports an undeclared object member rejected by policy.
-	ErrorReasonUnknownField ErrorReason = "unknown_field"
-
-	// ErrorReasonUnresolvedRef reports a DescriptorRef the resolver cannot load.
-	ErrorReasonUnresolvedRef ErrorReason = "unresolved_ref"
-
-	// ErrorReasonReferenceCycle reports recursive or over-depth DescriptorRef traversal.
-	ErrorReasonReferenceCycle ErrorReason = "reference_cycle"
-
-	// ErrorReasonMissingListKey reports a ListMap item missing a key field.
-	ErrorReasonMissingListKey ErrorReason = "missing_list_key"
-
-	// ErrorReasonInvalidListKey reports a ListMap key that cannot form a selector.
-	ErrorReasonInvalidListKey ErrorReason = "invalid_list_key"
-
-	// ErrorReasonDuplicateListKey reports repeated ListMap selector identity.
-	ErrorReasonDuplicateListKey ErrorReason = "duplicate_list_key"
-)
-
-// errorAt creates a compare diagnostic at the canonical semantic payload path.
-func errorAt(path fieldpath.Path, err error, reason ErrorReason, detail string) error {
-	return &Error{
-		Record: diagnostic.NewRecord(path.String(), err, reason, detail),
-	}
-}
-
-// errorfAt creates a compare diagnostic with formatted detail text.
-func errorfAt(path fieldpath.Path, err error, reason ErrorReason, format string, args ...any) error {
-	return errorAt(path, err, reason, fmt.Sprintf(format, args...))
-}
-
-// wrapAt attaches valuecompare classification while preserving a lower-level cause.
-func wrapAt(
-	path fieldpath.Path,
-	err error,
-	reason ErrorReason,
-	detail string,
-	cause error,
-) error {
-	return &Error{
-		Record: diagnostic.WrapRecord(path.String(), err, reason, detail, cause),
-	}
-}
-
-// compareFieldSetError translates valuefieldset subtree failures into this package's error model.
-func compareFieldSetError(path fieldpath.Path, err error) error {
-	var fieldSetError *valuefieldset.Error
-	if !errors.As(err, &fieldSetError) {
-		return wrapAt(
-			path,
-			ErrInvalidValue,
-			ErrorReasonInvalidZero,
-			"field-set extraction failed",
-			err,
-		)
-	}
-
-	sentinel, reason := compareFieldSetErrorKind(fieldSetError.Record.Err, fieldSetError.Reason)
-	return &Error{
-		Record: diagnostic.WrapRecord(
-			fieldSetError.Path,
-			sentinel,
-			reason,
-			fieldSetError.Detail,
-			fieldSetError.Cause,
-		),
-	}
-}
-
-// compareFieldSetErrorKind maps public field-set sentinels to compare sentinels.
-func compareFieldSetErrorKind(err error, reason valuefieldset.ErrorReason) (error, ErrorReason) {
-	switch {
-	case errors.Is(err, valuefieldset.ErrInvalidValue):
-		return ErrInvalidValue, ErrorReasonInvalidZero
-	case errors.Is(err, valuefieldset.ErrInvalidDescriptor):
-		return ErrInvalidDescriptor, ErrorReasonInvalidDescriptor
-	case errors.Is(err, valuefieldset.ErrKindMismatch):
-		return ErrKindMismatch, ErrorReasonKindMismatch
-	case errors.Is(err, valuefieldset.ErrUnknownField):
-		return ErrUnknownField, ErrorReasonUnknownField
-	case errors.Is(err, valuefieldset.ErrUnresolvedRef):
-		return ErrUnresolvedRef, ErrorReasonUnresolvedRef
-	case errors.Is(err, valuefieldset.ErrReferenceCycle):
-		return ErrReferenceCycle, ErrorReasonReferenceCycle
-	case errors.Is(err, valuefieldset.ErrDuplicateListKey):
-		return ErrDuplicateListKey, ErrorReasonDuplicateListKey
-	case errors.Is(err, valuefieldset.ErrInvalidListKey):
-		return ErrInvalidListKey, compareFieldSetListKeyReason(reason)
-	default:
-		return ErrInvalidValue, ErrorReasonInvalidZero
-	}
-}
-
-// compareFieldSetListKeyReason preserves the more specific missing-key reason.
-func compareFieldSetListKeyReason(reason valuefieldset.ErrorReason) ErrorReason {
-	if reason == valuefieldset.ErrorReasonMissingListKey {
-		return ErrorReasonMissingListKey
-	}
-
-	return ErrorReasonInvalidListKey
 }

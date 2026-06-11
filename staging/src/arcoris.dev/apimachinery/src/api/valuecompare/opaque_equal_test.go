@@ -58,23 +58,23 @@ func TestEqualOpaqueListDifferentLengthIsFalse(t *testing.T) {
 	}
 }
 func TestEqualOpaqueObjectComparesStructure(t *testing.T) {
-	oldValue := valueObject("nested", "one")
-	newValue := valueObject("nested", "two")
+	oldValue := valueRecord("nested", "one")
+	newValue := valueRecord("nested", "two")
 
-	got, err := newComparer(Options{}).equalOpaqueObject(rootField("extra"), oldValue, newValue)
+	got, err := newComparer(Options{}).equalOpaqueRecord(rootField("extra"), oldValue, newValue)
 	requireNoError(t, err)
 
 	if got {
-		t.Fatalf("equalOpaqueObject() = true")
+		t.Fatalf("equalOpaqueRecord() = true")
 	}
 }
 
 func TestEqualOpaqueObjectMissingMemberIsFalse(t *testing.T) {
-	got, err := newComparer(Options{}).equalOpaqueObject(rootField("extra"), valueObject("nested", "one"), valueObject())
+	got, err := newComparer(Options{}).equalOpaqueRecord(rootField("extra"), valueRecord("nested", "one"), valueRecord())
 	requireNoError(t, err)
 
 	if got {
-		t.Fatalf("equalOpaqueObject() = true")
+		t.Fatalf("equalOpaqueRecord() = true")
 	}
 }
 func TestOpaqueScalarValuesEqualBytes(t *testing.T) {

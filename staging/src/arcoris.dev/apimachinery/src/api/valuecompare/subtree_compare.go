@@ -61,7 +61,7 @@ func (c *comparer) extractSubtree(
 	val value.Value,
 	descriptor types.Descriptor,
 ) (fieldpath.Set, error) {
-	set, err := valuefieldset.ExtractAt(
+	set, err := valuefieldset.ExtractOwnershipFieldsAt(
 		path,
 		val,
 		descriptor,

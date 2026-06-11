@@ -46,7 +46,7 @@ func (c *comparer) compareListMap(
 		return Result{}, err
 	}
 
-	result := EmptyResult()
+	var result resultBuilder
 	for _, key := range unionSortedListMapKeys(oldEntries, newEntries) {
 		oldEntry, oldFound := oldEntries[key]
 		newEntry, newFound := newEntries[key]
@@ -66,10 +66,10 @@ func (c *comparer) compareListMap(
 			return Result{}, err
 		}
 
-		result = result.merge(child)
+		result.AddResult(child)
 	}
 
-	return result, nil
+	return result.Build()
 }
 
 // equalListMap compares ListMap items by selector identity.
@@ -125,10 +125,9 @@ type listMapEntry struct {
 	item value.Value
 }
 
-// listMapEntries indexes ListMap items by canonical selector string.
+// listMapEntries indexes ListMap items by canonical selector text.
 //
-// The stored key is selector.String() only for deterministic map lookup. The
-// original selector is retained for semantic path construction.
+// The original selector is retained for semantic path construction.
 func (c *comparer) listMapEntries(
 	path fieldpath.Path,
 	list value.ListView,
@@ -151,7 +150,7 @@ func (c *comparer) listMapEntries(
 			return nil, err
 		}
 
-		key := entry.selector.String()
+		key := entry.selector.CanonicalText()
 		if previous, exists := entries[key]; exists {
 			return nil, duplicateListMapEntryError(path.Select(entry.selector), previous.indexPath, entry.indexPath)
 		}

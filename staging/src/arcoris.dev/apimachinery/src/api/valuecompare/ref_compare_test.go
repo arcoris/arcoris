@@ -39,7 +39,7 @@ func TestCompareRefObject(t *testing.T) {
 		),
 	}
 
-	got, err := Compare(valueObject("image", "v1"), valueObject("image", "v2"), types.Ref("example.Spec").Descriptor(), Options{Resolver: resolver})
+	got, err := Compare(valueRecord("image", "v1"), valueRecord("image", "v2"), types.Ref("example.Spec").Descriptor(), Options{Resolver: resolver})
 	requireNoError(t, err)
 	requireResult(t, got, nil, nil, paths(rootField("image")))
 }

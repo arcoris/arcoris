@@ -51,28 +51,44 @@ func (c *comparer) equalMap(
 		return false, errorAt(path, ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "map value descriptor is invalid")
 	}
 
-	oldObject, _ := oldValue.AsRecord()
-	newObject, _ := newValue.AsRecord()
-	if oldObject.Len() != newObject.Len() {
+	oldRecord, _ := oldValue.AsRecord()
+	newRecord, _ := newValue.AsRecord()
+	if oldRecord.Len() != newRecord.Len() {
 		return false, nil
 	}
 
-	oldMembers := membersByName(oldObject.Members())
-	for _, newMember := range newObject.Members() {
+	oldMembers := membersByName(oldRecord)
+	var compareErr error
+	equal := true
+	newRecord.ForEach(func(_ int, newMember value.RecordMember) bool {
 		name := newMember.Name.String()
 		oldMember, found := oldMembers[name]
 		if !found {
-			return false, nil
+			equal = false
+			return false
 		}
 
-		equal, err := c.equalValue(path.Key(fieldpath.MustMapKey(name)), oldMember, newMember.Value, valueDescriptor, depth+1)
+		memberPath, err := mapKeyPath(path, name)
 		if err != nil {
-			return false, err
+			compareErr = err
+			return false
 		}
-		if !equal {
-			return false, nil
+
+		memberEqual, err := c.equalValue(memberPath, oldMember, newMember.Value, valueDescriptor, depth+1)
+		if err != nil {
+			compareErr = err
+			return false
 		}
+		if !memberEqual {
+			equal = false
+			return false
+		}
+
+		return true
+	})
+	if compareErr != nil {
+		return false, compareErr
 	}
 
-	return true, nil
+	return equal, nil
 }

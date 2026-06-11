@@ -19,37 +19,37 @@ import (
 	"testing"
 )
 
-func TestEqualObjectSameIsTrue(t *testing.T) {
-	got, err := newComparer(Options{}).equalObject(rootField("spec"), valueObject("image", "v1"), valueObject("image", "v1"), typesObject("image"), 0)
+func TestEqualRecordSameIsTrue(t *testing.T) {
+	got, err := newComparer(Options{}).equalRecord(rootField("spec"), valueRecord("image", "v1"), valueRecord("image", "v1"), typesObject("image"), 0)
 	requireNoError(t, err)
 
 	if !got {
-		t.Fatalf("equalObject() = false")
+		t.Fatalf("equalRecord() = false")
 	}
 }
 
-func TestEqualObjectDifferentFieldIsFalse(t *testing.T) {
-	got, err := newComparer(Options{}).equalObject(rootField("spec"), valueObject("image", "v1"), valueObject("image", "v2"), typesObject("image"), 0)
+func TestEqualRecordDifferentFieldIsFalse(t *testing.T) {
+	got, err := newComparer(Options{}).equalRecord(rootField("spec"), valueRecord("image", "v1"), valueRecord("image", "v2"), typesObject("image"), 0)
 	requireNoError(t, err)
 
 	if got {
-		t.Fatalf("equalObject() = true")
+		t.Fatalf("equalRecord() = true")
 	}
 }
 
-func TestEqualObjectPreservedUnknownSameIsTrue(t *testing.T) {
+func TestEqualRecordPreservedUnknownSameIsTrue(t *testing.T) {
 	descriptor := types.Object().UnknownFields(types.UnknownPreserveOpaque).Descriptor()
 
-	got, err := newComparer(Options{}).equalObject(rootField("spec"), valueObject("extra", "same"), valueObject("extra", "same"), descriptor, 0)
+	got, err := newComparer(Options{}).equalRecord(rootField("spec"), valueRecord("extra", "same"), valueRecord("extra", "same"), descriptor, 0)
 	requireNoError(t, err)
 
 	if !got {
-		t.Fatalf("equalObject() = false")
+		t.Fatalf("equalRecord() = false")
 	}
 }
 
-func TestEqualObjectRejectedUnknownReturnsError(t *testing.T) {
-	_, err := newComparer(Options{}).equalObject(rootField("spec"), valueObject("extra", "old"), valueObject(), types.Object().Descriptor(), 0)
+func TestEqualRecordRejectedUnknownReturnsError(t *testing.T) {
+	_, err := newComparer(Options{}).equalRecord(rootField("spec"), valueRecord("extra", "old"), valueRecord(), types.Object().Descriptor(), 0)
 
 	requireErrorIs(t, err, ErrUnknownField)
 }

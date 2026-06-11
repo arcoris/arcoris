@@ -19,9 +19,9 @@ import "strings"
 // Compare orders decimal numeric values exactly.
 //
 // Compare ignores representational scale differences that do not change the
-// numeric value, so 1.0 and 1.00 compare equal even though Equal keeps payload
-// representation equality strict. The comparison never converts through binary
-// floating point.
+// numeric value, so 1.0 and 1.00 compare equal. Equal uses the same numeric
+// semantics; EqualRepresentation is available for scale-preserving payload
+// comparison. Compare never converts through binary floating point.
 func (d Decimal) Compare(other Decimal) int {
 	left := decimalComparisonParts(d)
 	right := decimalComparisonParts(other)

@@ -25,6 +25,13 @@ func TestEmptyResult(t *testing.T) {
 	requireResult(t, got, nil, nil, nil)
 }
 
+func TestZeroResultIsValid(t *testing.T) {
+	var got Result
+
+	requireNoError(t, got.ValidateStructure())
+	requireResult(t, got, nil, nil, nil)
+}
+
 func TestResultIsEmpty(t *testing.T) {
 	empty := EmptyResult()
 	if !empty.IsEmpty() {
@@ -50,10 +57,21 @@ func TestResultChangedIsUnion(t *testing.T) {
 	added := fieldpath.MustSet(rootField("new"))
 	removed := fieldpath.MustSet(rootField("old"))
 	modified := fieldpath.MustSet(rootField("same"))
-	result := Result{Added: added, Removed: removed, Modified: modified}
+	result := MustResult(added, removed, modified)
 
 	requireDisjointResult(t, result)
 	requireSet(t, "changed", result.Changed(), rootField("new"), rootField("old"), rootField("same"))
+}
+
+func TestResultAccessorsReturnExpectedSets(t *testing.T) {
+	added := fieldpath.MustSet(rootField("new"))
+	removed := fieldpath.MustSet(rootField("old"))
+	modified := fieldpath.MustSet(rootField("same"))
+	result := MustResult(added, removed, modified)
+
+	requireSet(t, "added", result.Added(), rootField("new"))
+	requireSet(t, "removed", result.Removed(), rootField("old"))
+	requireSet(t, "modified", result.Modified(), rootField("same"))
 }
 
 func TestUnionSetsReturnsNonEmptySide(t *testing.T) {
@@ -61,22 +79,4 @@ func TestUnionSetsReturnsNonEmptySide(t *testing.T) {
 
 	requireSet(t, "left empty", unionSets(fieldpath.EmptySet(), set), rootField("name"))
 	requireSet(t, "right empty", unionSets(set, fieldpath.EmptySet()), rootField("name"))
-}
-
-func TestResultBucketsAreDisjoint(t *testing.T) {
-	got, err := Compare(
-		valueObject(
-			"same", "old",
-			"removed", "gone",
-		),
-		valueObject(
-			"same", "new",
-			"added", "here",
-		),
-		typesObject("same", "removed", "added"),
-		Options{},
-	)
-	requireNoError(t, err)
-
-	requireDisjointResult(t, got)
 }
