@@ -54,7 +54,26 @@ func (m *merger) mergeMap(
 		)
 	}
 
-	return m.mergeMapView(path, base, overlay, view.Value(), fields, depth)
+	if !view.Key().IsValid() {
+		return operand{}, errorAt(
+			path,
+			ErrInvalidDescriptor,
+			ErrorReasonInvalidDescriptor,
+			"map key descriptor is invalid",
+		)
+	}
+
+	valueDescriptor := view.Value()
+	if !valueDescriptor.IsValid() {
+		return operand{}, errorAt(
+			path,
+			ErrInvalidDescriptor,
+			ErrorReasonInvalidDescriptor,
+			"map value descriptor is invalid",
+		)
+	}
+
+	return m.mergeMapView(path, base, overlay, valueDescriptor, fields, depth)
 }
 
 // mergeMapView merges one dynamic map while preserving base member order.
@@ -101,7 +120,7 @@ func (m *merger) mergeMapView(
 		return operand{}, wrapAt(
 			path,
 			ErrInvalidValue,
-			ErrorReasonInvalidZero,
+			ErrorReasonInvalidMergedValue,
 			"merged map is invalid",
 			err,
 		)

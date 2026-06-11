@@ -17,6 +17,7 @@ package valuemerge
 import (
 	"testing"
 
+	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
 
@@ -112,6 +113,73 @@ func TestMergeListMapWrongKeyKindReturnsInvalidListKey(t *testing.T) {
 		list(obj(member("type", intValue(1)), member("status", str("True")))),
 		list(conditionItem("Ready", "True")),
 		pathSet(conditionPath("Ready")),
+	)
+
+	requireErrorIs(t, err, ErrInvalidListKey)
+}
+
+func TestMergeListMapNullKeyReturnsInvalidListKey(t *testing.T) {
+	_, err := mergeConditions(
+		list(obj(member("type", value.NullValue()), member("status", str("True")))),
+		list(conditionItem("Ready", "True")),
+		pathSet(conditionPath("Ready")),
+	)
+
+	requireErrorIs(t, err, ErrInvalidListKey)
+}
+
+func TestMergeListMapUnresolvedRefInKeyReturnsUnresolvedRef(t *testing.T) {
+	descriptor := types.ListOf(
+		types.Object(
+			types.Field("type").Ref("example.Key").Required(),
+			types.Field("status").String().Optional(),
+		),
+	).Map("type").Descriptor()
+
+	_, err := MergeAt(
+		root().Field(testFieldName("conditions")),
+		list(conditionItem("Ready", "False")),
+		list(conditionItem("Ready", "True")),
+		descriptor,
+		pathSet(conditionPath("Ready").Field(testFieldName("status"))),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrUnresolvedRef)
+}
+
+func TestMergeListMapReferenceCycleInKeyReturnsReferenceCycle(t *testing.T) {
+	descriptor := types.ListOf(
+		types.Object(
+			types.Field("type").Ref("example.A").Required(),
+			types.Field("status").String().Optional(),
+		),
+	).Map("type").Descriptor()
+	resolver := resolverFunc(func(name types.TypeName) (types.Definition, bool) {
+		if name == "example.A" {
+			return types.Define("example.A", types.Ref("example.A")), true
+		}
+
+		return types.Definition{}, false
+	})
+
+	_, err := MergeAt(
+		root().Field(testFieldName("conditions")),
+		list(conditionItem("Ready", "False")),
+		list(conditionItem("Ready", "True")),
+		descriptor,
+		pathSet(conditionPath("Ready").Field(testFieldName("status"))),
+		Options{Resolver: resolver},
+	)
+
+	requireErrorIs(t, err, ErrReferenceCycle)
+}
+
+func TestMergeListMapInvalidUnselectedOverlayKeyReturnsInvalidListKey(t *testing.T) {
+	_, err := mergeConditions(
+		list(conditionItem("Ready", "False")),
+		list(conditionItem("Ready", "True"), obj(member("status", str("Ignored")))),
+		pathSet(conditionPath("Ready").Field(testFieldName("status"))),
 	)
 
 	requireErrorIs(t, err, ErrInvalidListKey)

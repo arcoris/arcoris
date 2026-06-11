@@ -103,6 +103,24 @@ func requireListStrings(t *testing.T, got value.Value, want ...string) {
 	}
 }
 
+func requireRecordMemberOrder(t *testing.T, got value.Value, want ...string) {
+	t.Helper()
+
+	view, ok := got.AsRecord()
+	if !ok {
+		t.Fatalf("value kind = %s; want record", got.Kind())
+	}
+	if view.Len() != len(want) {
+		t.Fatalf("record length = %d; want %d", view.Len(), len(want))
+	}
+
+	for i, member := range view.Members() {
+		if member.Name.String() != want[i] {
+			t.Fatalf("member[%d] = %q; want %q", i, member.Name, want[i])
+		}
+	}
+}
+
 func requireMember(t *testing.T, object value.Value, name string) value.Value {
 	t.Helper()
 

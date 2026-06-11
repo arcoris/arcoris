@@ -17,6 +17,7 @@ package valuemerge
 import (
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -36,13 +37,13 @@ func TestMergeSelectedString(t *testing.T) {
 	requireValue(t, got, str("new"))
 }
 
-func TestMergeUnselectedStringPreserved(t *testing.T) {
+func TestMergeAtEmptyFieldsPreservesString(t *testing.T) {
 	got, err := MergeAt(
 		root().Field(testFieldName("name")),
 		str("old"),
 		str("new"),
 		types.String().Descriptor(),
-		pathSet(root().Field(testFieldName("other"))),
+		fieldpath.EmptySet(),
 		Options{},
 	)
 	if err != nil {
@@ -99,13 +100,55 @@ func TestMergeSelectedNullReplacesValue(t *testing.T) {
 }
 
 func TestMergeDescendantUnderScalarReturnsUnsupported(t *testing.T) {
-	_, err := Merge(
-		str("old"),
-		str("new"),
-		types.String().Descriptor(),
-		pathSet(root().Field(testFieldName("name"))),
-		Options{},
-	)
+	tests := []struct {
+		name       string
+		base       value.Value
+		overlay    value.Value
+		descriptor types.Descriptor
+	}{
+		{
+			name:       "string",
+			base:       str("old"),
+			overlay:    str("new"),
+			descriptor: types.String().Descriptor(),
+		},
+		{
+			name:       "integer",
+			base:       intValue(1),
+			overlay:    intValue(2),
+			descriptor: types.Int64().Descriptor(),
+		},
+		{
+			name:       "bool",
+			base:       boolValue(false),
+			overlay:    boolValue(true),
+			descriptor: types.Bool().Descriptor(),
+		},
+		{
+			name:       "decimal",
+			base:       decimalValue("1.0"),
+			overlay:    decimalValue("2.0"),
+			descriptor: types.Decimal().Descriptor(),
+		},
+		{
+			name:       "null",
+			base:       value.NullValue(),
+			overlay:    value.NullValue(),
+			descriptor: types.Null().Descriptor(),
+		},
+	}
 
-	requireErrorIs(t, err, ErrUnsupportedMerge)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := Merge(
+				tt.base,
+				tt.overlay,
+				tt.descriptor,
+				pathSet(root().Field(testFieldName("name"))),
+				Options{},
+			)
+
+			requireErrorIs(t, err, ErrUnsupportedMerge)
+		})
+	}
 }

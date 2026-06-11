@@ -105,7 +105,7 @@ func (m *merger) mergeRecordView(
 		return operand{}, wrapAt(
 			path,
 			ErrInvalidValue,
-			ErrorReasonInvalidZero,
+			ErrorReasonInvalidMergedValue,
 			"merged record is invalid",
 			err,
 		)

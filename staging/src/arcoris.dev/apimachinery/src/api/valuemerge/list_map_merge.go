@@ -56,7 +56,7 @@ func (m *merger) mergeListMap(
 		return operand{}, wrapAt(
 			path,
 			ErrInvalidValue,
-			ErrorReasonInvalidZero,
+			ErrorReasonInvalidMergedValue,
 			"merged list map is invalid",
 			err,
 		)

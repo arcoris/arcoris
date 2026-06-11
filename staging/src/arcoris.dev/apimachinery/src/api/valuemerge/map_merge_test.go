@@ -81,6 +81,28 @@ func TestMergeMapRemovesSelectedKeyAbsentFromOverlay(t *testing.T) {
 	requireStringMember(t, got, "tier", "backend")
 }
 
+func TestMergeMapPreservesBaseOrderThenAppendsSelectedOverlayKeys(t *testing.T) {
+	descriptor := types.MapOf(types.String()).Descriptor()
+	base := obj(member("first", str("1")), member("second", str("2")))
+	overlay := obj(member("third", str("3")), member("second", str("22")), member("fourth", str("4")))
+
+	got, err := Merge(
+		base,
+		overlay,
+		descriptor,
+		pathSet(root().Key(testMapKey("third")), root().Key(testMapKey("fourth"))),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireRecordMemberOrder(t, got, "first", "second", "third", "fourth")
+	requireStringMember(t, got, "second", "2")
+	requireStringMember(t, got, "third", "3")
+	requireStringMember(t, got, "fourth", "4")
+}
+
 func TestMergeMapExactSelectedReplacesWholeMap(t *testing.T) {
 	descriptor := types.MapOf(types.String()).Descriptor()
 	base := obj(member("app", str("old")))
@@ -92,6 +114,34 @@ func TestMergeMapExactSelectedReplacesWholeMap(t *testing.T) {
 	}
 
 	requireValue(t, got, overlay)
+}
+
+func TestMergeMapInvalidKeyDescriptorReturnsInvalidDescriptor(t *testing.T) {
+	descriptor := types.MapOf(types.String()).Keys(nil).Descriptor()
+
+	_, err := Merge(
+		obj(member("app", str("old"))),
+		obj(member("app", str("new"))),
+		descriptor,
+		pathSet(root().Key(testMapKey("app"))),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrInvalidDescriptor)
+}
+
+func TestMergeMapInvalidValueDescriptorReturnsInvalidDescriptor(t *testing.T) {
+	descriptor := types.MapOf(nil).Descriptor()
+
+	_, err := Merge(
+		obj(member("app", str("old"))),
+		obj(member("app", str("new"))),
+		descriptor,
+		pathSet(root().Key(testMapKey("app"))),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrInvalidDescriptor)
 }
 
 func TestMergeMapNestedObjectValueSelectedField(t *testing.T) {

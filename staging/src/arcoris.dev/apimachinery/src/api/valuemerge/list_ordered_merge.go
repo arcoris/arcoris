@@ -35,6 +35,9 @@ func (m *merger) mergeOrderedList(
 	if err := validateOrderedAppendContiguous(path, len(baseItems), len(overlayItems), fields); err != nil {
 		return operand{}, err
 	}
+	if err := validateOrderedRemovalContiguous(path, len(baseItems), len(overlayItems), fields); err != nil {
+		return operand{}, err
+	}
 
 	items := make([]value.Value, 0, orderedListCapacity(baseItems, overlayItems))
 
@@ -77,7 +80,7 @@ func (m *merger) mergeOrderedList(
 		return operand{}, wrapAt(
 			path,
 			ErrInvalidValue,
-			ErrorReasonInvalidZero,
+			ErrorReasonInvalidMergedValue,
 			"merged list is invalid",
 			err,
 		)
@@ -138,6 +141,43 @@ func validateOrderedAppendContiguous(
 		}
 
 		return nil
+	}
+
+	return nil
+}
+
+// validateOrderedRemovalContiguous rejects middle removals that shift later
+// semantic indexes. Exact missing indexes may be removed only as a tail suffix.
+func validateOrderedRemovalContiguous(
+	path fieldpath.Path,
+	baseLen int,
+	overlayLen int,
+	fields fieldpath.Set,
+) error {
+	firstDeleted := -1
+	for i := overlayLen; i < baseLen; i++ {
+		if fields.Has(path.Index(i)) {
+			firstDeleted = i
+			break
+		}
+	}
+	if firstDeleted < 0 {
+		return nil
+	}
+
+	for i := firstDeleted; i < baseLen; i++ {
+		if fields.Has(path.Index(i)) {
+			continue
+		}
+
+		return errorfAt(
+			path.Index(i),
+			ErrUnsupportedMerge,
+			ErrorReasonUnsupportedMerge,
+			"ordered-list deletion at index %d requires deleting later index %d",
+			firstDeleted,
+			i,
+		)
 	}
 
 	return nil

@@ -54,6 +54,15 @@ func intValue(v int64) value.Value {
 	return value.IntegerValue(value.NewIntegerFromInt64(v))
 }
 
+func decimalValue(text string) value.Value {
+	decimal, err := value.ParseDecimal(text)
+	if err != nil {
+		panic(err)
+	}
+
+	return value.DecimalValue(decimal)
+}
+
 func obj(members ...value.RecordMember) value.Value {
 	return value.MustRecordValue(members...)
 }

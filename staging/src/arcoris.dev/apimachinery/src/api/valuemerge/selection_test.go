@@ -20,7 +20,7 @@ func TestSelectionExact(t *testing.T) {
 	path := root().Field(testFieldName("spec"))
 	got := selectAt(pathSet(path), path)
 
-	if !got.exact || !got.descendants.IsEmpty() {
+	if !got.exact || got.hasDescendant {
 		t.Fatalf("selection = %#v", got)
 	}
 }
@@ -30,7 +30,7 @@ func TestSelectionDescendant(t *testing.T) {
 	selected := path.Field(testFieldName("replicas"))
 	got := selectAt(pathSet(selected), path)
 
-	if got.exact || !got.descendants.Has(selected) {
+	if got.exact || !got.hasDescendant {
 		t.Fatalf("selection = %#v", got)
 	}
 }
@@ -58,8 +58,8 @@ func TestSelectionMapKey(t *testing.T) {
 	selected := path.Key(testMapKey("app"))
 	got := selectAt(pathSet(selected), path)
 
-	if !got.descendants.Has(selected) {
-		t.Fatalf("selection descendants = %s", got.descendants)
+	if !got.hasDescendant {
+		t.Fatalf("selection = %#v", got)
 	}
 }
 
@@ -68,7 +68,7 @@ func TestSelectionListIndex(t *testing.T) {
 	selected := path.Index(1)
 	got := selectAt(pathSet(selected), path)
 
-	if !got.descendants.Has(selected) {
-		t.Fatalf("selection descendants = %s", got.descendants)
+	if !got.hasDescendant {
+		t.Fatalf("selection = %#v", got)
 	}
 }

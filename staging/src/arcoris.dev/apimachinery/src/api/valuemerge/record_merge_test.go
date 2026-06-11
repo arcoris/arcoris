@@ -81,6 +81,26 @@ func TestMergeRecordAddsSelectedField(t *testing.T) {
 	requireIntegerMember(t, got, "replicas", 5)
 }
 
+func TestMergeRecordUnselectedOverlayOnlyFieldNotInspected(t *testing.T) {
+	descriptor := simpleSpecDescriptor()
+	base := obj(member("image", str("api:v1")))
+	overlay := obj(member("image", str("api:v2")), member("replicas", str("wrong-kind")))
+
+	got, err := Merge(
+		base,
+		overlay,
+		descriptor,
+		pathSet(root().Field(testFieldName("image"))),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireStringMember(t, got, "image", "api:v2")
+	requireNoMember(t, got, "replicas")
+}
+
 func TestMergeRecordRemovesSelectedFieldAbsentFromOverlay(t *testing.T) {
 	descriptor := simpleSpecDescriptor()
 	base := obj(member("image", str("api:v1")), member("replicas", intValue(3)))

@@ -51,6 +51,18 @@ func TestMergeEmptyFieldsDoesNotRequireValidOverlay(t *testing.T) {
 	requireValue(t, got, base)
 }
 
+func TestMergeEmptyFieldsStillRejectsInvalidBase(t *testing.T) {
+	_, err := Merge(
+		value.Value{},
+		value.Value{},
+		types.String().Descriptor(),
+		fieldpath.EmptySet(),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrInvalidValue)
+}
+
 func TestMergeEmptyFieldsClonesBase(t *testing.T) {
 	base := obj(member("name", str("old")))
 
@@ -69,6 +81,107 @@ func TestMergeEmptyFieldsClonesBase(t *testing.T) {
 	if got.IsZero() {
 		t.Fatalf("got is zero")
 	}
+}
+
+func TestMergeAtEmptyFieldsRejectsInvalidBasePath(t *testing.T) {
+	invalidPath := root().Append(fieldpath.Element{})
+
+	_, err := MergeAt(
+		invalidPath,
+		str("old"),
+		value.Value{},
+		types.String().Descriptor(),
+		fieldpath.EmptySet(),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrInvalidPath)
+}
+
+func TestMergeAtEmptyFieldsPreservesNestedBase(t *testing.T) {
+	path := root().Field(testFieldName("spec"))
+	base := obj(member("name", str("old")))
+
+	got, err := MergeAt(
+		path,
+		base,
+		value.Value{},
+		types.Object(types.Field("name").String().Optional()).Descriptor(),
+		fieldpath.EmptySet(),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("MergeAt returned error: %v", err)
+	}
+
+	requireValue(t, got, base)
+}
+
+func TestMergeAtRejectsSelectedRootOutsideNestedBase(t *testing.T) {
+	path := root().Field(testFieldName("spec"))
+
+	_, err := MergeAt(
+		path,
+		str("old"),
+		str("new"),
+		types.String().Descriptor(),
+		pathSet(root()),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrInvalidPath)
+}
+
+func TestMergeAtRejectsUnrelatedSelectedPath(t *testing.T) {
+	path := root().Field(testFieldName("spec"))
+
+	_, err := MergeAt(
+		path,
+		str("old"),
+		str("new"),
+		types.String().Descriptor(),
+		pathSet(root().Field(testFieldName("metadata"))),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrInvalidPath)
+}
+
+func TestMergeAtAcceptsExactBasePath(t *testing.T) {
+	path := root().Field(testFieldName("spec"))
+
+	got, err := MergeAt(
+		path,
+		str("old"),
+		str("new"),
+		types.String().Descriptor(),
+		pathSet(path),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("MergeAt returned error: %v", err)
+	}
+
+	requireValue(t, got, str("new"))
+}
+
+func TestMergeAtAcceptsDescendantOfBasePath(t *testing.T) {
+	path := root().Field(testFieldName("spec"))
+	descriptor := types.Object(types.Field("name").String().Optional()).Descriptor()
+
+	got, err := MergeAt(
+		path,
+		obj(member("name", str("old"))),
+		obj(member("name", str("new"))),
+		descriptor,
+		pathSet(path.Field(testFieldName("name"))),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("MergeAt returned error: %v", err)
+	}
+
+	requireStringMember(t, got, "name", "new")
 }
 
 func TestMergeDoesNotMutateBase(t *testing.T) {

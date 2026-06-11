@@ -21,13 +21,13 @@ type mergeSelection struct {
 	// exact reports that the current path itself is selected.
 	exact bool
 
-	// descendants contains selected paths strictly below the current path.
-	descendants fieldpath.Set
+	// hasDescendant reports that at least one selected path is below this path.
+	hasDescendant bool
 }
 
 // selected reports whether the current node must do merge work.
 func (s mergeSelection) selected() bool {
-	return s.exact || !s.descendants.IsEmpty()
+	return s.exact || s.hasDescendant
 }
 
 // selectAt classifies the selected field set for one semantic path.
@@ -39,7 +39,7 @@ func selectAt(fields fieldpath.Set, path fieldpath.Path) mergeSelection {
 		case selected.Equal(path):
 			selection.exact = true
 		case selected.IsDescendantOf(path):
-			selection.descendants = selection.descendants.Insert(selected)
+			selection.hasDescendant = true
 		}
 		return true
 	})

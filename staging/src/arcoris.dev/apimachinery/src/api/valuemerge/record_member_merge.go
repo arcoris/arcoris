@@ -119,7 +119,9 @@ func (m *merger) mergeRecordMember(
 	selection := selectAt(fields, path)
 	if !selection.selected() {
 		switch {
-		case known || unknown == types.UnknownPreserveOpaque:
+		case known:
+			return base.Clone(), nil
+		case unknown == types.UnknownPreserveOpaque:
 			return base.Clone(), nil
 		case unknown == types.UnknownReject:
 			return operand{}, errorAt(
@@ -128,8 +130,15 @@ func (m *merger) mergeRecordMember(
 				ErrorReasonUnknownField,
 				"record member is not declared by the object descriptor",
 			)
-		default:
+		case unknown == types.UnknownPrune:
 			return valuepresence.Absent(), nil
+		default:
+			return operand{}, errorAt(
+				path,
+				ErrInvalidDescriptor,
+				ErrorReasonInvalidDescriptor,
+				"unknown-field policy is invalid",
+			)
 		}
 	}
 

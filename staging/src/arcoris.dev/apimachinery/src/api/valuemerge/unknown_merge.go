@@ -57,7 +57,7 @@ func mergePreservedUnknownMember(
 	overlay operand,
 	selection mergeSelection,
 ) (operand, error) {
-	if !selection.exact && !selection.descendants.IsEmpty() {
+	if !selection.exact && selection.hasDescendant {
 		return operand{}, errorAt(
 			path,
 			ErrUnsupportedMerge,

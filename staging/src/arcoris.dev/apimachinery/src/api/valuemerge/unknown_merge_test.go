@@ -126,6 +126,26 @@ func TestMergeUnknownPruneSelectedUnknownIgnored(t *testing.T) {
 	requireNoMember(t, got, "xExtra")
 }
 
+func TestMergeUnknownPruneUnselectedOverlayUnknownPruned(t *testing.T) {
+	descriptor := types.Object(
+		types.Field("name").String().Optional(),
+	).UnknownFields(types.UnknownPrune).Descriptor()
+
+	got, err := Merge(
+		obj(member("name", str("old"))),
+		obj(member("name", str("new")), member("xExtra", str("new"))),
+		descriptor,
+		pathSet(root().Field(testFieldName("name"))),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireStringMember(t, got, "name", "new")
+	requireNoMember(t, got, "xExtra")
+}
+
 func TestMergeUnknownPreserveOpaqueUnselectedBaseUnknownPreserveOpaque(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("name").String().Optional(),
@@ -198,4 +218,34 @@ func TestMergeUnknownPreserveOpaqueDescendantSelectionUnsupported(t *testing.T) 
 	)
 
 	requireErrorIs(t, err, ErrUnsupportedMerge)
+}
+
+func TestMergeInvalidUnknownPolicyUnselectedUnknownReturnsInvalidDescriptor(t *testing.T) {
+	descriptor := types.Object(
+		types.Field("name").String().Optional(),
+	).UnknownFields(types.UnknownFieldPolicy(255)).Descriptor()
+
+	_, err := Merge(
+		obj(member("name", str("old")), member("xExtra", str("old"))),
+		obj(member("name", str("new"))),
+		descriptor,
+		pathSet(root().Field(testFieldName("name"))),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrInvalidDescriptor)
+}
+
+func TestMergeInvalidUnknownPolicySelectedUnknownReturnsInvalidDescriptor(t *testing.T) {
+	descriptor := types.Object().UnknownFields(types.UnknownFieldPolicy(255)).Descriptor()
+
+	_, err := Merge(
+		obj(member("xExtra", str("old"))),
+		obj(member("xExtra", str("new"))),
+		descriptor,
+		pathSet(root().Field(testFieldName("xExtra"))),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrInvalidDescriptor)
 }

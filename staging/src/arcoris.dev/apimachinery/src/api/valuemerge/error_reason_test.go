@@ -20,6 +20,9 @@ func TestErrorReasonValues(t *testing.T) {
 	if ErrorReasonInvalidPath != "invalid_path" {
 		t.Fatalf("invalid path reason = %q", ErrorReasonInvalidPath)
 	}
+	if ErrorReasonInvalidMergedValue != "invalid_merged_value" {
+		t.Fatalf("invalid merged value reason = %q", ErrorReasonInvalidMergedValue)
+	}
 	if ErrorReasonUnsupportedMerge != "unsupported_merge" {
 		t.Fatalf("unsupported merge reason = %q", ErrorReasonUnsupportedMerge)
 	}

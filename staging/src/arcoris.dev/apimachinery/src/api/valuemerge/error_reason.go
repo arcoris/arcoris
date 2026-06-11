@@ -21,6 +21,10 @@ const (
 	// ErrorReasonInvalidZero reports the uninitialized zero value.Value.
 	ErrorReasonInvalidZero ErrorReason = "invalid_zero"
 
+	// ErrorReasonInvalidMergedValue reports a constructed merge result that
+	// violates api/value construction invariants.
+	ErrorReasonInvalidMergedValue ErrorReason = "invalid_merged_value"
+
 	// ErrorReasonInvalidDescriptor reports a malformed or unsupported descriptor.
 	ErrorReasonInvalidDescriptor ErrorReason = "invalid_descriptor"
 

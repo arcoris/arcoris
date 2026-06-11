@@ -119,7 +119,24 @@ func TestMergeOrderedListExistingIndexSelectionStillWorks(t *testing.T) {
 	requireListStrings(t, got, "a", "B")
 }
 
-func TestMergeOrderedListRemovesSelectedIndex(t *testing.T) {
+func TestMergeOrderedListRemovesLastIndex(t *testing.T) {
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
+
+	got, err := Merge(
+		list(str("a"), str("b"), str("c")),
+		list(str("a"), str("b")),
+		descriptor,
+		pathSet(root().Index(2)),
+		Options{},
+	)
+	if err != nil {
+		t.Fatalf("Merge returned error: %v", err)
+	}
+
+	requireListStrings(t, got, "a", "b")
+}
+
+func TestMergeOrderedListRemovesTailSuffix(t *testing.T) {
 	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
 	got, err := Merge(
@@ -136,21 +153,31 @@ func TestMergeOrderedListRemovesSelectedIndex(t *testing.T) {
 	requireListStrings(t, got, "a")
 }
 
-func TestMergeOrderedListRemovesMultipleIndexes(t *testing.T) {
+func TestMergeOrderedListDeleteMiddleIndexUnsupported(t *testing.T) {
 	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 
-	got, err := Merge(
+	_, err := Merge(
+		list(str("a"), str("b"), str("c")),
+		list(str("a")),
+		descriptor,
+		pathSet(root().Index(1)),
+		Options{},
+	)
+
+	requireErrorIs(t, err, ErrUnsupportedMerge)
+}
+
+func TestMergeOrderedListDeleteNonContiguousIndexesUnsupported(t *testing.T) {
+	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
+
+	_, err := Merge(
 		list(str("a"), str("b"), str("c"), str("d")),
 		list(str("a")),
 		descriptor,
 		pathSet(root().Index(1), root().Index(3)),
 		Options{},
 	)
-	if err != nil {
-		t.Fatalf("Merge returned error: %v", err)
-	}
-
-	requireListStrings(t, got, "a", "c")
+	requireErrorIs(t, err, ErrUnsupportedMerge)
 }
 
 func TestMergeOrderedListNestedObjectItemField(t *testing.T) {

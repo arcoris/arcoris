@@ -56,7 +56,7 @@ func MergeAt(
 			err,
 		)
 	}
-	if err := validateFields(fields); err != nil {
+	if err := validateFieldsAt(path, fields); err != nil {
 		return value.Value{}, err
 	}
 	if err := requireValidValue(path, valuepresence.Present(base)); err != nil {
@@ -93,8 +93,8 @@ func MergeAt(
 	return result.Value(), nil
 }
 
-// validateFields rejects malformed selected paths before traversal starts.
-func validateFields(fields fieldpath.Set) error {
+// validateFieldsAt rejects malformed paths and selections outside base.
+func validateFieldsAt(base fieldpath.Path, fields fieldpath.Set) error {
 	var fieldErr error
 	fields.ForEach(func(_ int, path fieldpath.Path) bool {
 		if err := path.ValidateStructure(); err != nil {
@@ -104,6 +104,17 @@ func validateFields(fields fieldpath.Set) error {
 				ErrorReasonInvalidPath,
 				"selected field path is invalid",
 				err,
+			)
+			return false
+		}
+		if !path.Equal(base) && !path.IsDescendantOf(base) {
+			fieldErr = errorfAt(
+				path,
+				ErrInvalidPath,
+				ErrorReasonInvalidPath,
+				"selected field path %s is outside merge base path %s",
+				path.CanonicalText(),
+				base.CanonicalText(),
 			)
 			return false
 		}
