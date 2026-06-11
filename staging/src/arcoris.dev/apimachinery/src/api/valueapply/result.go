@@ -33,20 +33,26 @@ type Result struct {
 	// Ownership is the updated field ownership state.
 	Ownership fieldownership.State
 
-	// AppliedFields are semantic fields mentioned by Applied.
+	// AppliedFields are ownership field paths explicitly mentioned by Applied.
+	//
+	// They are not necessarily changed fields, conflict fields, merge fields, or
+	// all fields in the resulting value.
 	AppliedFields fieldpath.Set
 
 	// DroppedFields are fields previously owned by Owner but omitted by Applied.
+	// Dropping releases ownership; deletion from Value is decided separately.
 	DroppedFields fieldpath.Set
 
 	// DeletedFields are dropped fields actually removed from Value because no
 	// other owner overlapped them.
 	DeletedFields fieldpath.Set
 
-	// ChangedAppliedFields are applied fields whose value would change Live.
+	// ChangedAppliedFields are the AppliedFields subset whose value would change
+	// Live under descriptor-aware comparison. This is the conflict-attempt set.
 	ChangedAppliedFields fieldpath.Set
 
-	// MergeFields are fields passed to valuemerge.
+	// MergeFields are fields passed to valuemerge after applying valueapply's
+	// release/deletion planning.
 	MergeFields fieldpath.Set
 
 	// Changes is the live/applied semantic comparison.

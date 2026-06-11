@@ -23,6 +23,7 @@ func TestErrorReasonStrings(t *testing.T) {
 	}{
 		{ErrorReasonInvalidZero, "invalid_zero"},
 		{ErrorReasonInvalidDescriptor, "invalid_descriptor"},
+		{ErrorReasonInvalidPath, "invalid_path"},
 		{ErrorReasonKindMismatch, "kind_mismatch"},
 		{ErrorReasonUnknownField, "unknown_field"},
 		{ErrorReasonUnresolvedRef, "unresolved_ref"},
@@ -30,6 +31,8 @@ func TestErrorReasonStrings(t *testing.T) {
 		{ErrorReasonMissingListKey, "missing_list_key"},
 		{ErrorReasonInvalidListKey, "invalid_list_key"},
 		{ErrorReasonDuplicateListKey, "duplicate_list_key"},
+		{ErrorReasonInvalidFieldName, "invalid_field_name"},
+		{ErrorReasonInvalidMapKey, "invalid_map_key"},
 	}
 
 	for _, tt := range tests {

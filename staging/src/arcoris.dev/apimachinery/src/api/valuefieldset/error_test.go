@@ -18,18 +18,79 @@ import (
 	"errors"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 )
 
 func TestErrorIsSentinel(t *testing.T) {
-	_, err := Extract(value.StringValue("api"), types.Int64().Descriptor(), Options{})
+	_, err := ExtractOwnershipFields(value.StringValue("api"), types.Int64().Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrKindMismatch)
 }
 
+func TestErrorIsBroadSentinels(t *testing.T) {
+	tests := []struct {
+		name   string
+		err    error
+		target error
+	}{
+		{
+			name:   "invalid value",
+			err:    errorAt(fieldpath.Root(), ErrInvalidValue, ErrorReasonInvalidZero, "invalid"),
+			target: ErrInvalidValue,
+		},
+		{
+			name:   "invalid descriptor",
+			err:    errorAt(fieldpath.Root(), ErrInvalidDescriptor, ErrorReasonInvalidDescriptor, "invalid"),
+			target: ErrInvalidDescriptor,
+		},
+		{
+			name:   "invalid path",
+			err:    errorAt(fieldpath.Root(), ErrInvalidPath, ErrorReasonInvalidPath, "invalid"),
+			target: ErrInvalidPath,
+		},
+		{
+			name:   "kind mismatch",
+			err:    errorAt(fieldpath.Root(), ErrKindMismatch, ErrorReasonKindMismatch, "invalid"),
+			target: ErrKindMismatch,
+		},
+		{
+			name:   "unknown field",
+			err:    errorAt(fieldpath.Root(), ErrUnknownField, ErrorReasonUnknownField, "invalid"),
+			target: ErrUnknownField,
+		},
+		{
+			name:   "unresolved ref",
+			err:    errorAt(fieldpath.Root(), ErrUnresolvedRef, ErrorReasonUnresolvedRef, "invalid"),
+			target: ErrUnresolvedRef,
+		},
+		{
+			name:   "reference cycle",
+			err:    errorAt(fieldpath.Root(), ErrReferenceCycle, ErrorReasonReferenceCycle, "invalid"),
+			target: ErrReferenceCycle,
+		},
+		{
+			name:   "invalid list key",
+			err:    errorAt(fieldpath.Root(), ErrInvalidListKey, ErrorReasonInvalidListKey, "invalid"),
+			target: ErrInvalidListKey,
+		},
+		{
+			name:   "duplicate list key",
+			err:    errorAt(fieldpath.Root(), ErrDuplicateListKey, ErrorReasonDuplicateListKey, "invalid"),
+			target: ErrDuplicateListKey,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			requireErrorIs(t, tt.err, tt.target)
+		})
+	}
+}
+
 func TestErrorAsValueFieldSetError(t *testing.T) {
-	_, err := Extract(value.StringValue("api"), types.Int64().Descriptor(), Options{})
+	_, err := ExtractOwnershipFields(value.StringValue("api"), types.Int64().Descriptor(), Options{})
 
 	var got *Error
 	if !errors.As(err, &got) {
@@ -46,7 +107,7 @@ func TestErrorAsValueFieldSetError(t *testing.T) {
 func TestErrorPath(t *testing.T) {
 	path := rootField("spec", "replicas")
 
-	_, err := ExtractAt(path, value.StringValue("api"), types.Int64().Descriptor(), Options{})
+	_, err := ExtractOwnershipFieldsAt(path, value.StringValue("api"), types.Int64().Descriptor(), Options{})
 
 	requireErrorPath(t, err, "$.spec.replicas")
 }
@@ -58,7 +119,7 @@ func TestDuplicateListMapKeyErrorIncludesPhysicalOccurrences(t *testing.T) {
 		readyConditionValue("False"),
 	)
 
-	_, err := ExtractAt(path, val, conditionDescriptor(), Options{})
+	_, err := ExtractOwnershipFieldsAt(path, val, conditionDescriptor(), Options{})
 
 	requireErrorDetailContains(t, err, "first occurrence at $.conditions[0]")
 	requireErrorDetailContains(t, err, "duplicate at $.conditions[1]")

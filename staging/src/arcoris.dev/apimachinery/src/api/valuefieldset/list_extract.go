@@ -91,7 +91,7 @@ func (e *extractor) extractIndexedList(
 	element types.Descriptor,
 	depth int,
 ) (fieldpath.Set, error) {
-	out := fieldpath.EmptySet()
+	var out setBuilder
 	for i := 0; i < valueView.Len(); i++ {
 		item, _ := valueView.At(i)
 
@@ -100,10 +100,10 @@ func (e *extractor) extractIndexedList(
 			return fieldpath.Set{}, err
 		}
 
-		out = out.Union(itemSet)
+		out.AddSet(itemSet)
 	}
 
-	return out, nil
+	return out.Build(path)
 }
 
 // extractListMap extracts ListMap items through stable selector paths.
@@ -123,7 +123,7 @@ func (e *extractor) extractListMap(
 		)
 	}
 
-	out := fieldpath.EmptySet()
+	var out setBuilder
 	seen := make(map[string]fieldpath.Path, valueView.Len())
 
 	for i := 0; i < valueView.Len(); i++ {
@@ -136,7 +136,7 @@ func (e *extractor) extractListMap(
 		}
 
 		selectorPath := path.Select(selector)
-		selectorKey := selector.String()
+		selectorKey := selector.CanonicalText()
 		if previous, exists := seen[selectorKey]; exists {
 			return fieldpath.Set{}, errorfAt(
 				selectorPath,
@@ -154,8 +154,8 @@ func (e *extractor) extractListMap(
 			return fieldpath.Set{}, err
 		}
 
-		out = out.Union(itemSet)
+		out.AddSet(itemSet)
 	}
 
-	return out, nil
+	return out.Build(path)
 }

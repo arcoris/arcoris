@@ -12,30 +12,50 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package valuefieldset extracts semantic field paths mentioned by concrete
-// ARCORIS API payload values under api/types descriptor semantics.
+// Package valuefieldset extracts ownership-relevant semantic field paths from
+// concrete ARCORIS API payload values under api/types descriptor semantics.
 //
-// The package is descriptor-aware but side-effect free. It does not perform
-// full value validation, decode wire formats, normalize values, apply defaults,
-// prune fields, compare values, merge values, manage ownership, validate API
-// object metadata, access storage, or perform admission.
+// The value pipeline keeps related but distinct responsibilities separate:
+// api/valuevalidation validates values, valuefieldset extracts ownership fields,
+// api/valuecompare computes semantic changes, api/valuemerge merges values,
+// api/valueapply orchestrates apply and ownership updates, and
+// api/fieldownership stores ownership state and detects ownership conflicts.
 //
-// Callers should validate payloads with api/valuevalidation before extracting
-// field sets. This package performs only defensive checks needed to traverse
-// values and build stable semantic paths.
+// Extracted fields are fields explicitly mentioned by the payload under
+// descriptor semantics. They are suitable as applied ownership fields. They are
+// not necessarily changed fields, conflict fields, merge fields, validation
+// diagnostic paths, all possible leaf fields, or all fields in a live value.
 //
-// Extracted paths use api/fieldpath semantics: object descriptor fields use
-// field elements, map entries use key elements, ordered list items use index
-// elements, and ListMap items use selector elements.
+// Explicit NullValue mentions the current semantic field. Nullability acceptance
+// belongs to api/valuevalidation, not valuefieldset. Empty composite payloads
+// also mention their composite container path: empty object, empty map, empty
+// ordered list, empty ListMap, empty ListSet, and empty atomic list all extract
+// the current path.
 //
-// List extraction follows merge/ownership intent. Atomic lists produce the list
-// path because the whole list is one semantic field. Set-like lists also
-// produce the list path until a stable value-based set identity model exists.
-// Ordered lists produce index paths because item position is part of the
-// descriptor contract. ListMap values produce selector paths based on their
-// declared identity fields.
+// Object descriptor fields produce fieldpath field elements. Unknown preserved
+// fields produce opaque leaf paths because no descriptor exists for nested
+// traversal. Unknown pruned fields are omitted. Unknown rejected fields fail
+// extraction.
 //
-// Unknown preserved object fields are included as opaque leaves because no
-// descriptor exists for nested traversal. Unknown pruned fields are omitted, and
-// rejected unknown fields fail extraction.
+// Map entries produce fieldpath key elements. Concrete API maps are represented
+// as string-keyed api/value records. Map key descriptor validation belongs to
+// api/types and api/valuevalidation; valuefieldset performs only defensive
+// descriptor checks needed for traversal.
+//
+// List extraction follows ownership/apply intent. ListAtomic extracts the list
+// path. ListSet also extracts the list path until a stable value-based set item
+// ownership model exists. ListOrdered extracts index paths because position is
+// part of the semantic contract. ListMap extracts selector paths from declared
+// identity fields using api/internal/listmapkey.
+//
+// Descriptors are expected to have been validated at construction,
+// registration, or catalog boundaries. valuefieldset does not call
+// types.ValidateResolved on every extraction. It performs local defensive checks
+// required for traversal and path construction. DescriptorRef values are
+// resolved through Options.Resolver with MaxDepth recursion protection.
+//
+// The package does not perform full validation, scalar constraint checks,
+// comparison, merging, ownership mutation, conflict detection, force behavior,
+// defaulting, pruning, normalization, wire decoding, object metadata validation,
+// storage access, authorization, or admission.
 package valuefieldset

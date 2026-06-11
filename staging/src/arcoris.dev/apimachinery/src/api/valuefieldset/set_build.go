@@ -16,6 +16,40 @@ package valuefieldset
 
 import "arcoris.dev/apimachinery/api/fieldpath"
 
+// setBuilder collects extracted paths and canonicalizes them once.
+type setBuilder struct {
+	paths []fieldpath.Path
+}
+
+// Add records one extracted path.
+func (b *setBuilder) Add(path fieldpath.Path) {
+	b.paths = append(b.paths, path)
+}
+
+// AddSet records every path from set without allocating a detached slice.
+func (b *setBuilder) AddSet(set fieldpath.Set) {
+	set.ForEach(func(_ int, path fieldpath.Path) bool {
+		b.Add(path)
+		return true
+	})
+}
+
+// Build returns the canonical extracted field set.
+func (b *setBuilder) Build(path fieldpath.Path) (fieldpath.Set, error) {
+	set, err := fieldpath.NewSet(b.paths...)
+	if err != nil {
+		return fieldpath.Set{}, wrapAt(
+			path,
+			ErrInvalidPath,
+			ErrorReasonInvalidPath,
+			"extracted field path cannot be stored in a set",
+			err,
+		)
+	}
+
+	return set, nil
+}
+
 // setAt builds the one-path field set used for scalar, null, empty composite,
 // atomic-list, and opaque-unknown-field extraction.
 func setAt(path fieldpath.Path) (fieldpath.Set, error) {
@@ -23,8 +57,8 @@ func setAt(path fieldpath.Path) (fieldpath.Set, error) {
 	if err != nil {
 		return fieldpath.Set{}, wrapAt(
 			path,
-			ErrInvalidDescriptor,
-			ErrorReasonInvalidDescriptor,
+			ErrInvalidPath,
+			ErrorReasonInvalidPath,
 			"field path cannot be stored in a set",
 			err,
 		)

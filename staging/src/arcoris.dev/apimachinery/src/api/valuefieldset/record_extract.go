@@ -20,8 +20,8 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// extractObject interprets value.KindRecord as a fixed-field object descriptor.
-func (e *extractor) extractObject(
+// extractRecord interprets value.KindRecord under a fixed-field object descriptor.
+func (e *extractor) extractRecord(
 	path fieldpath.Path,
 	val value.Value,
 	descriptor types.Descriptor,
@@ -46,46 +46,58 @@ func (e *extractor) extractObject(
 		return setAt(path)
 	}
 
-	fields := objectFieldsByName(objectView.Fields())
-	out := fieldpath.EmptySet()
+	fields := recordFieldsByName(objectView.Fields())
+	var out setBuilder
 
-	for _, objectMember := range valueView.Members() {
-		name := objectMember.Name.String()
-		memberPath := path.Field(fieldpath.MustFieldName(name))
+	var extractErr error
+	valueView.ForEach(func(_ int, recordMember value.RecordMember) bool {
+		name := recordMember.Name.String()
+		memberPath, err := recordMemberPath(path, name)
+		if err != nil {
+			extractErr = err
+			return false
+		}
+
 		fieldDescriptor, declared := fields[name]
 
 		if !declared {
-			memberSet, err := e.extractUnknownObjectMember(
+			memberSet, err := e.extractUnknownRecordMember(
 				memberPath,
 				name,
 				objectView.UnknownFields(),
 			)
 			if err != nil {
-				return fieldpath.Set{}, err
+				extractErr = err
+				return false
 			}
 
-			out = out.Union(memberSet)
-			continue
+			out.AddSet(memberSet)
+			return true
 		}
 
 		memberSet, err := e.extract(
 			memberPath,
-			objectMember.Value,
+			recordMember.Value,
 			fieldDescriptor.Descriptor(),
 			depth+1,
 		)
 		if err != nil {
-			return fieldpath.Set{}, err
+			extractErr = err
+			return false
 		}
 
-		out = out.Union(memberSet)
+		out.AddSet(memberSet)
+		return true
+	})
+	if extractErr != nil {
+		return fieldpath.Set{}, extractErr
 	}
 
-	return out, nil
+	return out.Build(path)
 }
 
-// objectFieldsByName builds a declaration lookup for actual object members.
-func objectFieldsByName(fields []types.FieldDescriptor) map[string]types.FieldDescriptor {
+// recordFieldsByName builds a declaration lookup for actual record members.
+func recordFieldsByName(fields []types.FieldDescriptor) map[string]types.FieldDescriptor {
 	declared := make(map[string]types.FieldDescriptor, len(fields))
 	for _, fieldDescriptor := range fields {
 		declared[string(fieldDescriptor.Name())] = fieldDescriptor
@@ -94,8 +106,8 @@ func objectFieldsByName(fields []types.FieldDescriptor) map[string]types.FieldDe
 	return declared
 }
 
-// extractUnknownObjectMember handles an actual member not declared by an object descriptor.
-func (e *extractor) extractUnknownObjectMember(
+// extractUnknownRecordMember handles a record member not declared by an object descriptor.
+func (e *extractor) extractUnknownRecordMember(
 	path fieldpath.Path,
 	name string,
 	policy types.UnknownFieldPolicy,
@@ -106,7 +118,7 @@ func (e *extractor) extractUnknownObjectMember(
 			path,
 			ErrUnknownField,
 			ErrorReasonUnknownField,
-			"field %q is rejected by the object descriptor",
+			"record member %q is rejected by the object descriptor",
 			name,
 		)
 	case types.UnknownPreserveOpaque:

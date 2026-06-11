@@ -27,10 +27,13 @@ var (
 	// ErrInvalidDescriptor classifies malformed descriptors encountered defensively.
 	ErrInvalidDescriptor = errors.New("invalid descriptor")
 
+	// ErrInvalidPath classifies malformed caller-supplied or derived field paths.
+	ErrInvalidPath = errors.New("invalid field path")
+
 	// ErrKindMismatch classifies value kind / descriptor kind mismatches.
 	ErrKindMismatch = errors.New("value kind mismatch")
 
-	// ErrUnknownField classifies actual object members rejected by descriptor policy.
+	// ErrUnknownField classifies actual record members rejected by descriptor policy.
 	ErrUnknownField = errors.New("unknown field")
 
 	// ErrUnresolvedRef classifies DescriptorRef descriptors that cannot resolve.

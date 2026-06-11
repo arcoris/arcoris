@@ -19,6 +19,10 @@
 // values for list items whose stable identity comes from one or more declared
 // object fields. In api/types this descriptor shape is ListMap.
 //
+// ListSet scalar uniqueness is intentionally outside this package today:
+// api/valuevalidation owns concrete set duplicate checks, while compare, merge,
+// and apply currently treat ListSet as a whole-list semantic field.
+//
 // The package does not validate complete values, extract field sets, compare
 // values, apply changes, manage ownership, normalize payloads, or interpret API
 // objects/resources. Callers wrap key extraction failures into their own public

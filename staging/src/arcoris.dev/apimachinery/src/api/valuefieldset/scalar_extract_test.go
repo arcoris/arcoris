@@ -21,10 +21,10 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestExtractScalarIncludesCurrentPath(t *testing.T) {
+func TestExtractOwnershipFieldsScalarIncludesCurrentPath(t *testing.T) {
 	path := rootField("spec", "replicas")
 
-	got, err := ExtractAt(
+	got, err := ExtractOwnershipFieldsAt(
 		path,
 		value.Int64Value(3),
 		types.Int64().Descriptor(),
@@ -35,10 +35,10 @@ func TestExtractScalarIncludesCurrentPath(t *testing.T) {
 	requireFieldSet(t, got, path)
 }
 
-func TestExtractScalarMismatchReturnsError(t *testing.T) {
+func TestExtractOwnershipFieldsScalarMismatchReturnsError(t *testing.T) {
 	path := rootField("spec", "replicas")
 
-	_, err := ExtractAt(
+	_, err := ExtractOwnershipFieldsAt(
 		path,
 		value.StringValue("three"),
 		types.Int64().Descriptor(),

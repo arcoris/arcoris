@@ -25,11 +25,14 @@ const (
 	// ErrorReasonInvalidDescriptor reports a malformed or unsupported descriptor.
 	ErrorReasonInvalidDescriptor ErrorReason = "invalid_descriptor"
 
+	// ErrorReasonInvalidPath reports a malformed field path.
+	ErrorReasonInvalidPath ErrorReason = "invalid_path"
+
 	// ErrorReasonKindMismatch reports a concrete value kind that does not match
 	// the descriptor kind.
 	ErrorReasonKindMismatch ErrorReason = "kind_mismatch"
 
-	// ErrorReasonUnknownField reports an actual object member rejected by the
+	// ErrorReasonUnknownField reports an actual record member rejected by the
 	// descriptor's unknown-field policy.
 	ErrorReasonUnknownField ErrorReason = "unknown_field"
 
@@ -49,4 +52,12 @@ const (
 
 	// ErrorReasonDuplicateListKey reports repeated ListMap selectors.
 	ErrorReasonDuplicateListKey ErrorReason = "duplicate_list_key"
+
+	// ErrorReasonInvalidFieldName reports a record member name that cannot
+	// become a fieldpath field element.
+	ErrorReasonInvalidFieldName ErrorReason = "invalid_field_name"
+
+	// ErrorReasonInvalidMapKey reports a map member name that cannot become a
+	// fieldpath map-key element.
+	ErrorReasonInvalidMapKey ErrorReason = "invalid_map_key"
 )

@@ -20,6 +20,11 @@
 // checks field ownership conflicts, merges selected fields, and returns updated
 // field ownership state.
 //
+// The pipeline is deliberately staged: validate the request, validate both
+// values, extract applied ownership fields, compare for semantic changes, check
+// ownership conflicts, plan dropped/deleted fields, merge selected fields, and
+// write a replacement ownership state.
+//
 // Conflicts are checked only for applied fields whose values would actually
 // change. Applying the same value to a field owned by another owner is not a
 // conflict and can create shared ownership.

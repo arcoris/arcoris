@@ -17,15 +17,16 @@ package valueapply
 import (
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/valuecompare"
 )
 
 func TestChangedAppliedFieldsExactMatch(t *testing.T) {
-	changes := valuecompare.Result{
-		Added:    fields(path("$.image")),
-		Modified: fields(path("$.replicas")),
-		Removed:  fields(path("$.old")),
-	}
+	changes := valuecompare.MustResult(
+		fields(path("$.image")),
+		fields(path("$.old")),
+		fields(path("$.replicas")),
+	)
 
 	got := changedAppliedFields(fields(path("$.replicas"), path("$.same")), changes)
 
@@ -33,9 +34,7 @@ func TestChangedAppliedFieldsExactMatch(t *testing.T) {
 }
 
 func TestChangedAppliedFieldsAppliedAncestorOfChanged(t *testing.T) {
-	changes := valuecompare.Result{
-		Modified: fields(path("$.spec.replicas")),
-	}
+	changes := valuecompare.MustResult(fieldpath.EmptySet(), fieldpath.EmptySet(), fields(path("$.spec.replicas")))
 
 	got := changedAppliedFields(fields(path("$.spec")), changes)
 
@@ -43,9 +42,7 @@ func TestChangedAppliedFieldsAppliedAncestorOfChanged(t *testing.T) {
 }
 
 func TestChangedAppliedFieldsAppliedDescendantOfChanged(t *testing.T) {
-	changes := valuecompare.Result{
-		Modified: fields(path("$.spec")),
-	}
+	changes := valuecompare.MustResult(fieldpath.EmptySet(), fieldpath.EmptySet(), fields(path("$.spec")))
 
 	got := changedAppliedFields(fields(path("$.spec.replicas")), changes)
 
@@ -53,9 +50,7 @@ func TestChangedAppliedFieldsAppliedDescendantOfChanged(t *testing.T) {
 }
 
 func TestChangedAppliedFieldsSiblingIgnored(t *testing.T) {
-	changes := valuecompare.Result{
-		Modified: fields(path("$.spec.image")),
-	}
+	changes := valuecompare.MustResult(fieldpath.EmptySet(), fieldpath.EmptySet(), fields(path("$.spec.image")))
 
 	got := changedAppliedFields(fields(path("$.metadata.name")), changes)
 
@@ -64,9 +59,7 @@ func TestChangedAppliedFieldsSiblingIgnored(t *testing.T) {
 
 func TestChangedAppliedFieldsListMapItemAndFieldOverlap(t *testing.T) {
 	itemPath := root().Select(readySelector())
-	changes := valuecompare.Result{
-		Modified: fields(readyStatusPath()),
-	}
+	changes := valuecompare.MustResult(fieldpath.EmptySet(), fieldpath.EmptySet(), fields(readyStatusPath()))
 
 	got := changedAppliedFields(fields(itemPath), changes)
 
@@ -74,9 +67,7 @@ func TestChangedAppliedFieldsListMapItemAndFieldOverlap(t *testing.T) {
 }
 
 func TestChangedAppliedFieldsDoesNotReturnUnappliedChangedPath(t *testing.T) {
-	changes := valuecompare.Result{
-		Modified: fields(path("$.spec.image")),
-	}
+	changes := valuecompare.MustResult(fieldpath.EmptySet(), fieldpath.EmptySet(), fields(path("$.spec.image")))
 
 	got := changedAppliedFields(fields(path("$.metadata.name")), changes)
 

@@ -20,26 +20,28 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// Extract returns the semantic paths explicitly mentioned by v from "$".
+// ExtractOwnershipFields returns the ownership field paths explicitly mentioned
+// by v from "$".
 //
 // The descriptor is expected to have been validated at construction,
-// registration, or catalog boundaries. Extract does not call types.ValidateResolved
-// on every payload; it performs local defensive checks needed for read-only
-// traversal and stable path construction.
-func Extract(
+// registration, or catalog boundaries. ExtractOwnershipFields does not call
+// types.ValidateResolved on every payload; it performs local defensive checks
+// needed for read-only traversal and stable path construction.
+func ExtractOwnershipFields(
 	val value.Value,
 	descriptor types.Descriptor,
 	opts Options,
 ) (fieldpath.Set, error) {
-	return ExtractAt(fieldpath.Root(), val, descriptor, opts)
+	return ExtractOwnershipFieldsAt(fieldpath.Root(), val, descriptor, opts)
 }
 
-// ExtractAt returns the semantic paths explicitly mentioned by v from path.
+// ExtractOwnershipFieldsAt returns the ownership field paths explicitly
+// mentioned by v from path.
 //
 // The supplied path is preserved in every extracted child path. This lets
 // standalone payload extraction start at "$" while future object/surface layers
 // can start at semantic bases such as "$.desired" or "$.observed".
-func ExtractAt(
+func ExtractOwnershipFieldsAt(
 	path fieldpath.Path,
 	val value.Value,
 	descriptor types.Descriptor,
@@ -48,8 +50,8 @@ func ExtractAt(
 	if err := path.ValidateStructure(); err != nil {
 		return fieldpath.Set{}, wrapAt(
 			path,
-			ErrInvalidDescriptor,
-			ErrorReasonInvalidDescriptor,
+			ErrInvalidPath,
+			ErrorReasonInvalidPath,
 			"base field path is invalid",
 			err,
 		)

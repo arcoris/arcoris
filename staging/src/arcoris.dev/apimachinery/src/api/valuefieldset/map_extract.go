@@ -64,20 +64,32 @@ func (e *extractor) extractMap(
 		return setAt(path)
 	}
 
-	out := fieldpath.EmptySet()
-	for _, mapMember := range valueView.Members() {
+	var out setBuilder
+	var extractErr error
+	valueView.ForEach(func(_ int, mapMember value.RecordMember) bool {
+		memberPath, err := mapMemberPath(path, mapMember.Name.String())
+		if err != nil {
+			extractErr = err
+			return false
+		}
+
 		memberSet, err := e.extract(
-			path.Key(fieldpath.MustMapKey(mapMember.Name.String())),
+			memberPath,
 			mapMember.Value,
 			valueDescriptor,
 			depth+1,
 		)
 		if err != nil {
-			return fieldpath.Set{}, err
+			extractErr = err
+			return false
 		}
 
-		out = out.Union(memberSet)
+		out.AddSet(memberSet)
+		return true
+	})
+	if extractErr != nil {
+		return fieldpath.Set{}, extractErr
 	}
 
-	return out, nil
+	return out.Build(path)
 }

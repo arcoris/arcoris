@@ -21,10 +21,10 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestExtractNullIncludesCurrentPath(t *testing.T) {
+func TestExtractOwnershipFieldsNullIncludesCurrentPath(t *testing.T) {
 	path := rootField("description")
 
-	got, err := ExtractAt(
+	got, err := ExtractOwnershipFieldsAt(
 		path,
 		value.NullValue(),
 		types.String().Descriptor(),

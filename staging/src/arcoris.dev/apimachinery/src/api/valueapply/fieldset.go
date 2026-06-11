@@ -19,10 +19,10 @@ import (
 	"arcoris.dev/apimachinery/api/valuefieldset"
 )
 
-// extractAppliedFields returns the semantic field set explicitly mentioned by
-// the applied payload.
+// extractAppliedFields returns ownership fields explicitly mentioned by the
+// applied payload.
 func (a *applier) extractAppliedFields(req Request) (fieldpath.Set, error) {
-	fields, err := valuefieldset.ExtractAt(
+	fields, err := valuefieldset.ExtractOwnershipFieldsAt(
 		req.Path,
 		req.Applied,
 		req.Descriptor,

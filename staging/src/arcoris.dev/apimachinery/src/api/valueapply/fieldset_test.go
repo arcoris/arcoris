@@ -20,13 +20,93 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
-func TestExtractAppliedFields(t *testing.T) {
+func TestExtractOwnershipFieldsAppliedFields(t *testing.T) {
 	req := specRequest(owner("user"))
 
 	got, err := newApplier(Options{}).extractAppliedFields(req)
 	requireNoError(t, err)
 
 	requireSet(t, got, "$.image")
+}
+
+func TestExtractAppliedFieldsEmptyObjectOwnsParentPath(t *testing.T) {
+	req := Request{
+		Path:       root(),
+		Applied:    obj(),
+		Descriptor: types.Object(types.Field("name").String().Optional()).Descriptor(),
+	}
+
+	got, err := newApplier(Options{}).extractAppliedFields(req)
+	requireNoError(t, err)
+
+	requireSet(t, got, "$")
+}
+
+func TestExtractAppliedFieldsEmptyMapOwnsParentPath(t *testing.T) {
+	req := Request{
+		Path:       root(),
+		Applied:    obj(),
+		Descriptor: mapDescriptor(),
+	}
+
+	got, err := newApplier(Options{}).extractAppliedFields(req)
+	requireNoError(t, err)
+
+	requireSet(t, got, "$")
+}
+
+func TestExtractAppliedFieldsEmptyListOwnsParentPath(t *testing.T) {
+	req := Request{
+		Path:       root(),
+		Applied:    list(),
+		Descriptor: orderedStringListDescriptor(),
+	}
+
+	got, err := newApplier(Options{}).extractAppliedFields(req)
+	requireNoError(t, err)
+
+	requireSet(t, got, "$")
+}
+
+func TestExtractAppliedFieldsListSetOwnsParentPath(t *testing.T) {
+	req := Request{
+		Path:       root(),
+		Applied:    list(str("a"), str("b")),
+		Descriptor: types.ListOf(types.String()).Set().Descriptor(),
+	}
+
+	got, err := newApplier(Options{}).extractAppliedFields(req)
+	requireNoError(t, err)
+
+	requireSet(t, got, "$")
+}
+
+func TestExtractAppliedFieldsUnknownPreserveOpaqueOwnsUnknownLeaf(t *testing.T) {
+	req := Request{
+		Path:    root(),
+		Applied: obj(member("extra", obj(member("nested", str("value"))))),
+		Descriptor: types.Object().
+			UnknownFields(types.UnknownPreserveOpaque).
+			Descriptor(),
+	}
+
+	got, err := newApplier(Options{}).extractAppliedFields(req)
+	requireNoError(t, err)
+
+	requireSet(t, got, "$.extra")
+}
+
+func TestExtractAppliedFieldsUnknownPruneOmitsUnknownField(t *testing.T) {
+	req := Request{
+		Path:       root(),
+		Applied:    obj(member("extra", str("value"))),
+		Descriptor: types.Object().UnknownFields(types.UnknownPrune).Descriptor(),
+	}
+
+	got, err := newApplier(Options{}).extractAppliedFields(req)
+	requireNoError(t, err)
+
+	requireSet(t, got)
 }
 
 func TestFieldSetOptions(t *testing.T) {

@@ -91,7 +91,7 @@ func (e *extractor) extract(
 		types.DescriptorDuration:
 		return e.extractScalar(path, val, descriptor)
 	case types.DescriptorObject:
-		return e.extractObject(path, val, descriptor, depth)
+		return e.extractRecord(path, val, descriptor, depth)
 	case types.DescriptorMap:
 		return e.extractMap(path, val, descriptor, depth)
 	case types.DescriptorList:

@@ -21,40 +21,40 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestExtractMapEntriesUseKeyPaths(t *testing.T) {
+func TestExtractOwnershipFieldsMapEntriesUseKeyPaths(t *testing.T) {
 	path := rootField("metadata", "labels")
 	val := value.MustRecordValue(
 		value.MustRecordMember("app", value.StringValue("api")),
 	)
 
-	got, err := ExtractAt(path, val, types.MapOf(types.String()).Descriptor(), Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path.Key(testMapKey("app")))
 }
 
-func TestExtractMapEmptyIncludesMapPath(t *testing.T) {
+func TestExtractOwnershipFieldsMapEmptyIncludesMapPath(t *testing.T) {
 	path := rootField("metadata", "labels")
 	val := value.MustRecordValue()
 
-	got, err := ExtractAt(path, val, types.MapOf(types.String()).Descriptor(), Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, types.MapOf(types.String()).Descriptor(), Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path)
 }
 
-func TestExtractMapRejectsKindMismatch(t *testing.T) {
+func TestExtractOwnershipFieldsMapRejectsKindMismatch(t *testing.T) {
 	path := rootField("metadata", "labels")
 	val := value.MustListValue(value.StringValue("app"))
 
-	_, err := ExtractAt(path, val, types.MapOf(types.String()).Descriptor(), Options{})
+	_, err := ExtractOwnershipFieldsAt(path, val, types.MapOf(types.String()).Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrKindMismatch)
 	requireErrorReason(t, err, ErrorReasonKindMismatch)
 	requireErrorPath(t, err, `$.metadata.labels`)
 }
 
-func TestExtractMapNestedObjectValues(t *testing.T) {
+func TestExtractOwnershipFieldsMapNestedObjectValues(t *testing.T) {
 	path := rootField("routes")
 	descriptor := types.MapOf(
 		types.Object(
@@ -70,7 +70,7 @@ func TestExtractMapNestedObjectValues(t *testing.T) {
 		),
 	)
 
-	got, err := ExtractAt(path, val, descriptor, Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path.Key(testMapKey("api")).Field(testFieldName("backend")))

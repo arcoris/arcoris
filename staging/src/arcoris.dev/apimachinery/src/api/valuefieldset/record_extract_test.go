@@ -21,7 +21,7 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestExtractObjectLeaves(t *testing.T) {
+func TestExtractOwnershipFieldsRecordLeaves(t *testing.T) {
 	path := rootField("spec")
 	descriptor := types.Object(
 		types.Field("replicas").Int32().Required(),
@@ -32,7 +32,7 @@ func TestExtractObjectLeaves(t *testing.T) {
 		value.MustRecordMember("image", value.StringValue("api:v1")),
 	)
 
-	got, err := ExtractAt(path, val, descriptor, Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(
@@ -43,17 +43,17 @@ func TestExtractObjectLeaves(t *testing.T) {
 	)
 }
 
-func TestExtractObjectEmptyIncludesObjectPath(t *testing.T) {
+func TestExtractOwnershipFieldsRecordEmptyIncludesRecordPath(t *testing.T) {
 	path := rootField("spec")
 	val := value.MustRecordValue()
 
-	got, err := ExtractAt(path, val, types.Object().Descriptor(), Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, types.Object().Descriptor(), Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path)
 }
 
-func TestExtractObjectMissingFieldsNotIncluded(t *testing.T) {
+func TestExtractOwnershipFieldsRecordMissingFieldsNotIncluded(t *testing.T) {
 	path := rootField("spec")
 	descriptor := types.Object(
 		types.Field("replicas").Int32().Required(),
@@ -63,26 +63,26 @@ func TestExtractObjectMissingFieldsNotIncluded(t *testing.T) {
 		value.MustRecordMember("replicas", value.Int64Value(3)),
 	)
 
-	got, err := ExtractAt(path, val, descriptor, Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path.Field(testFieldName("replicas")))
 }
 
-func TestExtractObjectUnknownRejectedReturnsError(t *testing.T) {
+func TestExtractOwnershipFieldsRecordUnknownRejectedReturnsError(t *testing.T) {
 	path := rootField("spec")
 	val := value.MustRecordValue(
 		value.MustRecordMember("extra", value.StringValue("debug")),
 	)
 
-	_, err := ExtractAt(path, val, types.Object().Descriptor(), Options{})
+	_, err := ExtractOwnershipFieldsAt(path, val, types.Object().Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrUnknownField)
 	requireErrorReason(t, err, ErrorReasonUnknownField)
 	requireErrorPath(t, err, "$.spec.extra")
 }
 
-func TestExtractObjectUnknownPreserveOpaqueIncludesOpaquePath(t *testing.T) {
+func TestExtractOwnershipFieldsRecordUnknownPreserveOpaqueIncludesOpaquePath(t *testing.T) {
 	path := rootField("spec")
 	descriptor := types.Object().
 		UnknownFields(types.UnknownPreserveOpaque).
@@ -96,13 +96,13 @@ func TestExtractObjectUnknownPreserveOpaqueIncludesOpaquePath(t *testing.T) {
 		),
 	)
 
-	got, err := ExtractAt(path, val, descriptor, Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path.Field(testFieldName("extra")))
 }
 
-func TestExtractObjectUnknownPreserveOpaqueDoesNotTraverseNestedStructure(t *testing.T) {
+func TestExtractOwnershipFieldsRecordUnknownPreserveOpaqueDoesNotTraverseNestedStructure(t *testing.T) {
 	path := rootField("spec")
 	descriptor := types.Object().
 		UnknownFields(types.UnknownPreserveOpaque).
@@ -116,13 +116,13 @@ func TestExtractObjectUnknownPreserveOpaqueDoesNotTraverseNestedStructure(t *tes
 		),
 	)
 
-	got, err := ExtractAt(path, val, descriptor, Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path.Field(testFieldName("extra")))
 }
 
-func TestExtractObjectUnknownPrunedSkipsPath(t *testing.T) {
+func TestExtractOwnershipFieldsRecordUnknownPrunedSkipsPath(t *testing.T) {
 	path := rootField("spec")
 	descriptor := types.Object(
 		types.Field("name").String().Required(),
@@ -134,13 +134,13 @@ func TestExtractObjectUnknownPrunedSkipsPath(t *testing.T) {
 		value.MustRecordMember("extra", value.StringValue("debug")),
 	)
 
-	got, err := ExtractAt(path, val, descriptor, Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path.Field(testFieldName("name")))
 }
 
-func TestExtractObjectOnlyPrunedUnknownFieldsReturnsEmptySet(t *testing.T) {
+func TestExtractOwnershipFieldsRecordOnlyPrunedUnknownFieldsReturnsEmptySet(t *testing.T) {
 	path := rootField("spec")
 	descriptor := types.Object().
 		UnknownFields(types.UnknownPrune).
@@ -149,13 +149,13 @@ func TestExtractObjectOnlyPrunedUnknownFieldsReturnsEmptySet(t *testing.T) {
 		value.MustRecordMember("x-extra", value.StringValue("value")),
 	)
 
-	got, err := ExtractAt(path, val, descriptor, Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(t, got)
 }
 
-func TestExtractObjectNestedPaths(t *testing.T) {
+func TestExtractOwnershipFieldsRecordNestedPaths(t *testing.T) {
 	path := rootField("spec")
 	descriptor := types.Object(
 		types.Field("template").Object(
@@ -171,7 +171,7 @@ func TestExtractObjectNestedPaths(t *testing.T) {
 		),
 	)
 
-	got, err := ExtractAt(path, val, descriptor, Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path.Field(testFieldName("template")).Field(testFieldName("image")))

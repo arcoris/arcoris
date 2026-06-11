@@ -22,8 +22,8 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestExtractStartsAtRoot(t *testing.T) {
-	got, err := Extract(
+func TestExtractOwnershipFieldsStartsAtRoot(t *testing.T) {
+	got, err := ExtractOwnershipFields(
 		value.StringValue("api"),
 		types.String().Descriptor(),
 		Options{},
@@ -33,10 +33,10 @@ func TestExtractStartsAtRoot(t *testing.T) {
 	requireFieldSet(t, got, fieldpath.Root())
 }
 
-func TestExtractAtPreservesBasePath(t *testing.T) {
+func TestExtractOwnershipFieldsAtPreservesBasePath(t *testing.T) {
 	path := rootField("spec", "image")
 
-	got, err := ExtractAt(
+	got, err := ExtractOwnershipFieldsAt(
 		path,
 		value.StringValue("api:v1"),
 		types.String().Descriptor(),
@@ -47,23 +47,23 @@ func TestExtractAtPreservesBasePath(t *testing.T) {
 	requireFieldSet(t, got, path)
 }
 
-func TestExtractRejectsInvalidZeroValue(t *testing.T) {
-	_, err := Extract(value.Value{}, types.String().Descriptor(), Options{})
+func TestExtractOwnershipFieldsRejectsInvalidZeroValue(t *testing.T) {
+	_, err := ExtractOwnershipFields(value.Value{}, types.String().Descriptor(), Options{})
 
 	requireErrorIs(t, err, ErrInvalidValue)
 	requireErrorReason(t, err, ErrorReasonInvalidZero)
 	requireErrorPath(t, err, "$")
 }
 
-func TestExtractRejectsInvalidDescriptor(t *testing.T) {
-	_, err := Extract(value.StringValue("api"), types.Descriptor{}, Options{})
+func TestExtractOwnershipFieldsRejectsInvalidDescriptor(t *testing.T) {
+	_, err := ExtractOwnershipFields(value.StringValue("api"), types.Descriptor{}, Options{})
 
 	requireErrorIs(t, err, ErrInvalidDescriptor)
 	requireErrorReason(t, err, ErrorReasonInvalidDescriptor)
 	requireErrorPath(t, err, "$")
 }
 
-func TestExtractReturnsSortedUniqueSet(t *testing.T) {
+func TestExtractOwnershipFieldsReturnsSortedUniqueSet(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("zeta").String().Optional(),
 		types.Field("alpha").String().Optional(),
@@ -73,7 +73,7 @@ func TestExtractReturnsSortedUniqueSet(t *testing.T) {
 		value.MustRecordMember("alpha", value.StringValue("first")),
 	)
 
-	got, err := Extract(val, descriptor, Options{})
+	got, err := ExtractOwnershipFields(val, descriptor, Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(
@@ -84,12 +84,12 @@ func TestExtractReturnsSortedUniqueSet(t *testing.T) {
 	)
 }
 
-func TestExtractDoesNotMutateValue(t *testing.T) {
+func TestExtractOwnershipFieldsDoesNotMutateValue(t *testing.T) {
 	val := value.MustRecordValue(
 		value.MustRecordMember("name", value.StringValue("api")),
 	)
 
-	_, err := Extract(
+	_, err := ExtractOwnershipFields(
 		val,
 		types.Object(types.Field("name").String().Required()).Descriptor(),
 		Options{},

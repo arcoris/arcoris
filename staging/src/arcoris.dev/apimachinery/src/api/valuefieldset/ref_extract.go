@@ -34,10 +34,9 @@ func (e *extractor) extractRef(
 	}
 
 	leave := e.refs.Enter(name)
-	set, err := e.extract(path, val, resolved, depth+1)
-	leave()
+	defer leave()
 
-	return set, err
+	return e.extract(path, val, resolved, depth+1)
 }
 
 // resolveRefDescriptor resolves references for selector-descriptor inspection.

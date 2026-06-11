@@ -21,13 +21,13 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestExtractRefResolvesScalar(t *testing.T) {
+func TestExtractOwnershipFieldsRefResolvesScalar(t *testing.T) {
 	path := rootField("name")
 	resolver := testResolver{
 		"example.Name": types.Define("example.Name", types.String()),
 	}
 
-	got, err := ExtractAt(
+	got, err := ExtractOwnershipFieldsAt(
 		path,
 		value.StringValue("api"),
 		types.Ref("example.Name").Descriptor(),
@@ -38,7 +38,7 @@ func TestExtractRefResolvesScalar(t *testing.T) {
 	requireFieldSet(t, got, path)
 }
 
-func TestExtractRefResolvesObject(t *testing.T) {
+func TestExtractOwnershipFieldsRefResolvesObject(t *testing.T) {
 	path := rootField("spec")
 	resolver := testResolver{
 		"example.Spec": types.Define(
@@ -50,7 +50,7 @@ func TestExtractRefResolvesObject(t *testing.T) {
 		value.MustRecordMember("image", value.StringValue("api:v1")),
 	)
 
-	got, err := ExtractAt(
+	got, err := ExtractOwnershipFieldsAt(
 		path,
 		val,
 		types.Ref("example.Spec").Descriptor(),
@@ -61,8 +61,8 @@ func TestExtractRefResolvesObject(t *testing.T) {
 	requireFieldSet(t, got, path.Field(testFieldName("image")))
 }
 
-func TestExtractRefRejectsMissingResolver(t *testing.T) {
-	_, err := Extract(
+func TestExtractOwnershipFieldsRefRejectsMissingResolver(t *testing.T) {
+	_, err := ExtractOwnershipFields(
 		value.StringValue("api"),
 		types.Ref("example.Name").Descriptor(),
 		Options{},
@@ -72,8 +72,8 @@ func TestExtractRefRejectsMissingResolver(t *testing.T) {
 	requireErrorReason(t, err, ErrorReasonUnresolvedRef)
 }
 
-func TestExtractRefRejectsUnresolvedReference(t *testing.T) {
-	_, err := Extract(
+func TestExtractOwnershipFieldsRefRejectsUnresolvedReference(t *testing.T) {
+	_, err := ExtractOwnershipFields(
 		value.StringValue("api"),
 		types.Ref("example.Missing").Descriptor(),
 		Options{Resolver: testResolver{}},
@@ -83,13 +83,13 @@ func TestExtractRefRejectsUnresolvedReference(t *testing.T) {
 	requireErrorReason(t, err, ErrorReasonUnresolvedRef)
 }
 
-func TestExtractRefRejectsReferenceCycle(t *testing.T) {
+func TestExtractOwnershipFieldsRefRejectsReferenceCycle(t *testing.T) {
 	resolver := testResolver{
 		"example.A": types.Define("example.A", types.Ref("example.B")),
 		"example.B": types.Define("example.B", types.Ref("example.A")),
 	}
 
-	_, err := Extract(
+	_, err := ExtractOwnershipFields(
 		value.StringValue("api"),
 		types.Ref("example.A").Descriptor(),
 		Options{Resolver: resolver},
@@ -99,13 +99,13 @@ func TestExtractRefRejectsReferenceCycle(t *testing.T) {
 	requireErrorReason(t, err, ErrorReasonReferenceCycle)
 }
 
-func TestExtractRefHonorsMaxDepth(t *testing.T) {
+func TestExtractOwnershipFieldsRefHonorsMaxDepth(t *testing.T) {
 	resolver := testResolver{
 		"example.A": types.Define("example.A", types.Ref("example.B")),
 		"example.B": types.Define("example.B", types.String()),
 	}
 
-	_, err := Extract(
+	_, err := ExtractOwnershipFields(
 		value.StringValue("api"),
 		types.Ref("example.A").Descriptor(),
 		Options{Resolver: resolver, MaxDepth: 1},

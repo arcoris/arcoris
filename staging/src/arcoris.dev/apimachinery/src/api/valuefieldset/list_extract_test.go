@@ -21,14 +21,14 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestExtractOrderedListUsesIndexPaths(t *testing.T) {
+func TestExtractOwnershipFieldsOrderedListUsesIndexPaths(t *testing.T) {
 	path := rootField("args")
 	val := value.MustListValue(
 		value.StringValue("a"),
 		value.StringValue("b"),
 	)
 
-	got, err := ExtractAt(
+	got, err := ExtractOwnershipFieldsAt(
 		path,
 		val,
 		types.ListOf(types.String()).Ordered().Descriptor(),
@@ -39,7 +39,7 @@ func TestExtractOrderedListUsesIndexPaths(t *testing.T) {
 	requireFieldSet(t, got, path.Index(0), path.Index(1))
 }
 
-func TestExtractOrderedListObjectItemsUseIndexedChildPaths(t *testing.T) {
+func TestExtractOwnershipFieldsOrderedListObjectItemsUseIndexedChildPaths(t *testing.T) {
 	path := rootField("containers")
 	item := types.Object(
 		types.Field("name").String().Required(),
@@ -53,7 +53,7 @@ func TestExtractOrderedListObjectItemsUseIndexedChildPaths(t *testing.T) {
 		),
 	)
 
-	got, err := ExtractAt(path, val, descriptor, Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(
@@ -64,11 +64,11 @@ func TestExtractOrderedListObjectItemsUseIndexedChildPaths(t *testing.T) {
 	)
 }
 
-func TestExtractOrderedListEmptyIncludesListPath(t *testing.T) {
+func TestExtractOwnershipFieldsOrderedListEmptyIncludesListPath(t *testing.T) {
 	path := rootField("args")
 	val := value.MustListValue()
 
-	got, err := ExtractAt(
+	got, err := ExtractOwnershipFieldsAt(
 		path,
 		val,
 		types.ListOf(types.String()).Ordered().Descriptor(),
@@ -79,14 +79,14 @@ func TestExtractOrderedListEmptyIncludesListPath(t *testing.T) {
 	requireFieldSet(t, got, path)
 }
 
-func TestExtractAtomicListIncludesOnlyListPath(t *testing.T) {
+func TestExtractOwnershipFieldsAtomicListIncludesOnlyListPath(t *testing.T) {
 	path := rootField("args")
 	val := value.MustListValue(
 		value.StringValue("a"),
 		value.StringValue("b"),
 	)
 
-	got, err := ExtractAt(
+	got, err := ExtractOwnershipFieldsAt(
 		path,
 		val,
 		types.ListOf(types.String()).Atomic().Descriptor(),
@@ -97,14 +97,44 @@ func TestExtractAtomicListIncludesOnlyListPath(t *testing.T) {
 	requireFieldSet(t, got, path)
 }
 
-func TestExtractSetListIncludesOnlyListPath(t *testing.T) {
+func TestExtractOwnershipFieldsAtomicListEmptyIncludesListPath(t *testing.T) {
+	path := rootField("args")
+	val := value.MustListValue()
+
+	got, err := ExtractOwnershipFieldsAt(
+		path,
+		val,
+		types.ListOf(types.String()).Atomic().Descriptor(),
+		Options{},
+	)
+	requireNoError(t, err)
+
+	requireFieldSet(t, got, path)
+}
+
+func TestExtractOwnershipFieldsSetListIncludesOnlyListPath(t *testing.T) {
 	path := rootField("args")
 	val := value.MustListValue(
 		value.StringValue("a"),
 		value.StringValue("b"),
 	)
 
-	got, err := ExtractAt(
+	got, err := ExtractOwnershipFieldsAt(
+		path,
+		val,
+		types.ListOf(types.String()).Set().Descriptor(),
+		Options{},
+	)
+	requireNoError(t, err)
+
+	requireFieldSet(t, got, path)
+}
+
+func TestExtractOwnershipFieldsSetListEmptyIncludesListPath(t *testing.T) {
+	path := rootField("args")
+	val := value.MustListValue()
+
+	got, err := ExtractOwnershipFieldsAt(
 		path,
 		val,
 		types.ListOf(types.String()).Set().Descriptor(),

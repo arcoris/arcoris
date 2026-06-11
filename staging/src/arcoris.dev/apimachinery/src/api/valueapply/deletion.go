@@ -30,13 +30,14 @@ func deletableDroppedFields(
 	dropped fieldpath.Set,
 ) fieldpath.Set {
 	deletable := fieldpath.EmptySet()
-	for _, path := range dropped.Paths() {
+	dropped.ForEach(func(_ int, path fieldpath.Path) bool {
 		if hasOtherOverlappingOwner(ownership, owner, path) {
-			continue
+			return true
 		}
 
 		deletable = deletable.Insert(path)
-	}
+		return true
+	})
 
 	return deletable
 }
@@ -53,11 +54,14 @@ func hasOtherOverlappingOwner(
 		return false
 	}
 
-	for _, record := range records.Paths() {
+	hasOther := false
+	records.ForEach(func(_ int, record fieldownership.OwnedPath) bool {
 		if record.Owner != owner {
-			return true
+			hasOther = true
+			return false
 		}
-	}
+		return true
+	})
 
-	return false
+	return hasOther
 }

@@ -29,11 +29,12 @@ func changedAppliedFields(applied fieldpath.Set, changes valuecompare.Result) fi
 	changed := changes.Changed()
 	result := fieldpath.EmptySet()
 
-	for _, appliedPath := range applied.Paths() {
+	applied.ForEach(func(_ int, appliedPath fieldpath.Path) bool {
 		if overlapsAny(changed, appliedPath) {
 			result = result.Insert(appliedPath)
 		}
-	}
+		return true
+	})
 
 	return result
 }
@@ -46,13 +47,14 @@ func changedAppliedFields(applied fieldpath.Set, changes valuecompare.Result) fi
 func droppedFields(oldOwnerFields fieldpath.Set, appliedFields fieldpath.Set) fieldpath.Set {
 	dropped := fieldpath.EmptySet()
 
-	for _, oldPath := range oldOwnerFields.Paths() {
+	oldOwnerFields.ForEach(func(_ int, oldPath fieldpath.Path) bool {
 		if coveredByApplied(oldPath, appliedFields) {
-			continue
+			return true
 		}
 
 		dropped = dropped.Insert(oldPath)
-	}
+		return true
+	})
 
 	return dropped
 }
@@ -70,11 +72,14 @@ func overlapsAny(set fieldpath.Set, path fieldpath.Path) bool {
 
 // coveredByApplied reports whether Applied keeps ownership of oldPath.
 func coveredByApplied(oldPath fieldpath.Path, appliedFields fieldpath.Set) bool {
-	for _, appliedPath := range appliedFields.Paths() {
+	covered := false
+	appliedFields.ForEach(func(_ int, appliedPath fieldpath.Path) bool {
 		if oldPath.HasPrefix(appliedPath) {
-			return true
+			covered = true
+			return false
 		}
-	}
+		return true
+	})
 
-	return false
+	return covered
 }

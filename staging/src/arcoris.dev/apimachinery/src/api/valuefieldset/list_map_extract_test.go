@@ -37,12 +37,12 @@ func readyConditionValue(status string) value.Value {
 	)
 }
 
-func TestExtractListMapUsesSelectorPaths(t *testing.T) {
+func TestExtractOwnershipFieldsListMapUsesSelectorPaths(t *testing.T) {
 	path := rootField("conditions")
 	val := value.MustListValue(readyConditionValue("True"))
 	selectorPath := path.Select(readySelector())
 
-	got, err := ExtractAt(path, val, conditionDescriptor(), Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, conditionDescriptor(), Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(
@@ -53,24 +53,24 @@ func TestExtractListMapUsesSelectorPaths(t *testing.T) {
 	)
 }
 
-func TestExtractListMapEmptyIncludesListPath(t *testing.T) {
+func TestExtractOwnershipFieldsListMapEmptyIncludesListPath(t *testing.T) {
 	path := rootField("conditions")
 	val := value.MustListValue()
 
-	got, err := ExtractAt(path, val, conditionDescriptor(), Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, conditionDescriptor(), Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(t, got, path)
 }
 
-func TestExtractListMapDuplicateSelectorReturnsError(t *testing.T) {
+func TestExtractOwnershipFieldsListMapDuplicateSelectorReturnsError(t *testing.T) {
 	path := rootField("conditions")
 	val := value.MustListValue(
 		readyConditionValue("True"),
 		readyConditionValue("False"),
 	)
 
-	_, err := ExtractAt(path, val, conditionDescriptor(), Options{})
+	_, err := ExtractOwnershipFieldsAt(path, val, conditionDescriptor(), Options{})
 
 	requireErrorIs(t, err, ErrDuplicateListKey)
 	requireErrorReason(t, err, ErrorReasonDuplicateListKey)
@@ -79,7 +79,7 @@ func TestExtractListMapDuplicateSelectorReturnsError(t *testing.T) {
 	requireErrorDetailContains(t, err, "duplicate at $.conditions[1]")
 }
 
-func TestExtractListMapMissingKeyReturnsError(t *testing.T) {
+func TestExtractOwnershipFieldsListMapMissingKeyReturnsError(t *testing.T) {
 	path := rootField("conditions")
 	val := value.MustListValue(
 		value.MustRecordValue(
@@ -87,14 +87,14 @@ func TestExtractListMapMissingKeyReturnsError(t *testing.T) {
 		),
 	)
 
-	_, err := ExtractAt(path, val, conditionDescriptor(), Options{})
+	_, err := ExtractOwnershipFieldsAt(path, val, conditionDescriptor(), Options{})
 
 	requireErrorIs(t, err, ErrInvalidListKey)
 	requireErrorReason(t, err, ErrorReasonMissingListKey)
 	requireErrorPath(t, err, "$.conditions[0].type")
 }
 
-func TestExtractListMapNullKeyReturnsError(t *testing.T) {
+func TestExtractOwnershipFieldsListMapNullKeyReturnsError(t *testing.T) {
 	path := rootField("conditions")
 	val := value.MustListValue(
 		value.MustRecordValue(
@@ -103,14 +103,14 @@ func TestExtractListMapNullKeyReturnsError(t *testing.T) {
 		),
 	)
 
-	_, err := ExtractAt(path, val, conditionDescriptor(), Options{})
+	_, err := ExtractOwnershipFieldsAt(path, val, conditionDescriptor(), Options{})
 
 	requireErrorIs(t, err, ErrInvalidListKey)
 	requireErrorReason(t, err, ErrorReasonInvalidListKey)
 	requireErrorPath(t, err, "$.conditions[0].type")
 }
 
-func TestExtractListMapWrongKeyKindReturnsError(t *testing.T) {
+func TestExtractOwnershipFieldsListMapWrongKeyKindReturnsError(t *testing.T) {
 	path := rootField("conditions")
 	val := value.MustListValue(
 		value.MustRecordValue(
@@ -119,25 +119,25 @@ func TestExtractListMapWrongKeyKindReturnsError(t *testing.T) {
 		),
 	)
 
-	_, err := ExtractAt(path, val, conditionDescriptor(), Options{})
+	_, err := ExtractOwnershipFieldsAt(path, val, conditionDescriptor(), Options{})
 
 	requireErrorIs(t, err, ErrInvalidListKey)
 	requireErrorReason(t, err, ErrorReasonInvalidListKey)
 	requireErrorPath(t, err, "$.conditions[0].type")
 }
 
-func TestExtractListMapNonObjectItemReturnsError(t *testing.T) {
+func TestExtractOwnershipFieldsListMapNonObjectItemReturnsError(t *testing.T) {
 	path := rootField("conditions")
 	val := value.MustListValue(value.StringValue("Ready"))
 
-	_, err := ExtractAt(path, val, conditionDescriptor(), Options{})
+	_, err := ExtractOwnershipFieldsAt(path, val, conditionDescriptor(), Options{})
 
 	requireErrorIs(t, err, ErrInvalidListKey)
 	requireErrorReason(t, err, ErrorReasonInvalidListKey)
 	requireErrorPath(t, err, "$.conditions[0]")
 }
 
-func TestExtractListMapRefElementUsesSelectorPaths(t *testing.T) {
+func TestExtractOwnershipFieldsListMapRefElementUsesSelectorPaths(t *testing.T) {
 	path := rootField("conditions")
 	resolver := testResolver{
 		"example.dev.Condition": types.Define(
@@ -154,7 +154,7 @@ func TestExtractListMapRefElementUsesSelectorPaths(t *testing.T) {
 	val := value.MustListValue(readyConditionValue("True"))
 	selectorPath := path.Select(readySelector())
 
-	got, err := ExtractAt(path, val, descriptor, Options{Resolver: resolver})
+	got, err := ExtractOwnershipFieldsAt(path, val, descriptor, Options{Resolver: resolver})
 	requireNoError(t, err)
 
 	requireFieldSet(
@@ -165,21 +165,21 @@ func TestExtractListMapRefElementUsesSelectorPaths(t *testing.T) {
 	)
 }
 
-func TestExtractListMapUnresolvedRefReturnsUnresolvedRef(t *testing.T) {
+func TestExtractOwnershipFieldsListMapUnresolvedRefReturnsUnresolvedRef(t *testing.T) {
 	path := rootField("conditions")
 	descriptor := types.ListOf(types.Ref("example.dev.Condition")).
 		Map("type").
 		Descriptor()
 	val := value.MustListValue(readyConditionValue("True"))
 
-	_, err := ExtractAt(path, val, descriptor, Options{})
+	_, err := ExtractOwnershipFieldsAt(path, val, descriptor, Options{})
 
 	requireErrorIs(t, err, ErrUnresolvedRef)
 	requireErrorReason(t, err, ErrorReasonUnresolvedRef)
 	requireErrorPath(t, err, "$.conditions[0]")
 }
 
-func TestExtractListMapReferenceCycleReturnsReferenceCycle(t *testing.T) {
+func TestExtractOwnershipFieldsListMapReferenceCycleReturnsReferenceCycle(t *testing.T) {
 	path := rootField("conditions")
 	resolver := testResolver{
 		"example.dev.Condition": types.Define(
@@ -192,7 +192,7 @@ func TestExtractListMapReferenceCycleReturnsReferenceCycle(t *testing.T) {
 		Descriptor()
 	val := value.MustListValue(readyConditionValue("True"))
 
-	_, err := ExtractAt(
+	_, err := ExtractOwnershipFieldsAt(
 		path,
 		val,
 		descriptor,
@@ -204,7 +204,7 @@ func TestExtractListMapReferenceCycleReturnsReferenceCycle(t *testing.T) {
 	requireErrorPath(t, err, "$.conditions[0]")
 }
 
-func TestExtractListMapRefKeyUsesSelectorLiteral(t *testing.T) {
+func TestExtractOwnershipFieldsListMapRefKeyUsesSelectorLiteral(t *testing.T) {
 	path := rootField("conditions")
 	resolver := testResolver{
 		"example.dev.ConditionType": types.Define(
@@ -220,7 +220,7 @@ func TestExtractListMapRefKeyUsesSelectorLiteral(t *testing.T) {
 	val := value.MustListValue(readyConditionValue("True"))
 	selectorPath := path.Select(readySelector())
 
-	got, err := ExtractAt(path, val, descriptor, Options{Resolver: resolver})
+	got, err := ExtractOwnershipFieldsAt(path, val, descriptor, Options{Resolver: resolver})
 	requireNoError(t, err)
 
 	requireFieldSet(
@@ -231,7 +231,7 @@ func TestExtractListMapRefKeyUsesSelectorLiteral(t *testing.T) {
 	)
 }
 
-func TestExtractListMapMultiKeySelector(t *testing.T) {
+func TestExtractOwnershipFieldsListMapMultiKeySelector(t *testing.T) {
 	path := rootField("routes")
 	route := types.Object(
 		types.Field("host").String().Required(),
@@ -248,7 +248,7 @@ func TestExtractListMapMultiKeySelector(t *testing.T) {
 	)
 	selectorPath := path.Select(routeSelector())
 
-	got, err := ExtractAt(path, val, descriptor, Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(
@@ -260,7 +260,7 @@ func TestExtractListMapMultiKeySelector(t *testing.T) {
 	)
 }
 
-func TestExtractListMapNestedObjectPaths(t *testing.T) {
+func TestExtractOwnershipFieldsListMapNestedObjectPaths(t *testing.T) {
 	path := rootField("conditions")
 	condition := types.Object(
 		types.Field("type").String().Required(),
@@ -282,7 +282,7 @@ func TestExtractListMapNestedObjectPaths(t *testing.T) {
 	)
 	selectorPath := path.Select(readySelector())
 
-	got, err := ExtractAt(path, val, descriptor, Options{})
+	got, err := ExtractOwnershipFieldsAt(path, val, descriptor, Options{})
 	requireNoError(t, err)
 
 	requireFieldSet(
