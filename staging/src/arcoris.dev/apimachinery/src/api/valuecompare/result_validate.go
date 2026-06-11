@@ -18,6 +18,11 @@ import "arcoris.dev/apimachinery/api/fieldpath"
 
 // ValidateStructure checks result bucket well-formedness.
 //
+// Bucket disjointness is exact-path disjointness. ValidateStructure rejects the
+// same path in multiple buckets, but it does not interpret ancestor/descendant
+// relations as invalid because that would be an apply or ownership policy
+// decision.
+//
 // It does not validate either compared value, descriptor semantics, apply
 // policy, ownership state, or conflict behavior.
 func (r Result) ValidateStructure() error {
@@ -65,7 +70,7 @@ func validateResultBucket(name string, set fieldpath.Set) error {
 	return resultErr
 }
 
-// rejectOverlappingResultBuckets rejects the same path appearing in two buckets.
+// rejectOverlappingResultBuckets rejects the same exact path in two buckets.
 func rejectOverlappingResultBuckets(
 	leftName string,
 	left fieldpath.Set,

@@ -30,7 +30,7 @@ func TestNewResultValidatesBuckets(t *testing.T) {
 	requireResult(t, got, paths(rootField("new")), paths(rootField("old")), paths(rootField("same")))
 }
 
-func TestNewResultRejectsOverlappingBuckets(t *testing.T) {
+func TestNewResultRejectsExactPathAcrossBuckets(t *testing.T) {
 	_, err := NewResult(
 		fieldpath.MustSet(rootField("shared")),
 		fieldpath.MustSet(rootField("shared")),
@@ -40,6 +40,16 @@ func TestNewResultRejectsOverlappingBuckets(t *testing.T) {
 	requireErrorIs(t, err, ErrInvalidResult)
 	requireErrorReason(t, err, ErrorReasonOverlappingResultPath)
 	requireErrorPath(t, err, "$.shared")
+}
+
+func TestNewResultAllowsStructurallyOverlappingBuckets(t *testing.T) {
+	added := fieldpath.MustSet(rootField("spec"))
+	modified := fieldpath.MustSet(rootField("spec", "replicas"))
+
+	got, err := NewResult(added, fieldpath.EmptySet(), modified)
+	requireNoError(t, err)
+
+	requireResult(t, got, paths(rootField("spec")), nil, paths(rootField("spec", "replicas")))
 }
 
 func TestMustResultPanicsOnInvalidResult(t *testing.T) {

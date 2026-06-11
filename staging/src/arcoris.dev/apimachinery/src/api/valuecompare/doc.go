@@ -32,6 +32,11 @@
 // are not applied fields, ownership fields, merge fields, validation diagnostic
 // paths, or representation-level diffs.
 //
+// Malformed payload-derived names that cannot become semantic paths are reported
+// as invalid paths by valuecompare. When subtree expansion fails inside
+// valuefieldset, valuecompare preserves its precise reason while mapping the
+// failure into the comparison error taxonomy.
+//
 // Absent and explicit null are different. Absent-to-present produces Added.
 // Present-to-absent produces Removed. Null-to-null produces no change. Null to
 // non-null, and non-null to null, produce Modified at the current path.

@@ -38,6 +38,11 @@
 // resolution, and descriptor/value kind compatibility; it does not fully
 // validate the replacement subtree.
 //
+// Malformed payload-derived record member names that cannot become semantic
+// field or map-key path elements are reported as invalid paths. The merge layer
+// is constructing selected semantic paths; full payload validation remains in
+// api/valuevalidation.
+//
 // Higher layers decide which fields are selected for merge. For example,
 // api/valueapply combines valuevalidation, valuefieldset, valuecompare,
 // fieldownership, and valuemerge into one value-level apply pipeline.

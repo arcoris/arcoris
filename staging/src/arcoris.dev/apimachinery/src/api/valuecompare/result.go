@@ -20,7 +20,11 @@ import "arcoris.dev/apimachinery/api/fieldpath"
 //
 // Result is immutable to callers. Bucket accessors return fieldpath.Set values,
 // whose contents are canonical and immutable by convention. A structurally valid
-// result places an exact path in at most one bucket.
+// result places an exact path in at most one bucket. Ancestor and descendant
+// paths may appear in different buckets because bucket disjointness is an
+// exact-path invariant, not an ownership or apply-conflict decision.
+//
+// The zero Result is equivalent to EmptyResult.
 type Result struct {
 	added    fieldpath.Set
 	removed  fieldpath.Set
@@ -39,7 +43,8 @@ func EmptyResult() Result {
 // NewResult constructs a structurally valid comparison result.
 //
 // Added, removed, and modified buckets must be valid fieldpath sets. An exact
-// path may appear in only one bucket.
+// path may appear in only one bucket; structural overlap between different paths
+// is allowed.
 func NewResult(added fieldpath.Set, removed fieldpath.Set, modified fieldpath.Set) (Result, error) {
 	result := Result{
 		added:    added,

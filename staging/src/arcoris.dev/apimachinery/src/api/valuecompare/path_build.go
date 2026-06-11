@@ -16,6 +16,7 @@ package valuecompare
 
 import "arcoris.dev/apimachinery/api/fieldpath"
 
+// recordFieldPath converts a concrete record member name into a semantic field path.
 func recordFieldPath(base fieldpath.Path, name string) (fieldpath.Path, error) {
 	fieldName, err := fieldpath.NewFieldName(name)
 	if err != nil {
@@ -31,6 +32,7 @@ func recordFieldPath(base fieldpath.Path, name string) (fieldpath.Path, error) {
 	return base.Field(fieldName), nil
 }
 
+// mapKeyPath converts a concrete record member name into a semantic map-key path.
 func mapKeyPath(base fieldpath.Path, key string) (fieldpath.Path, error) {
 	mapKey, err := fieldpath.NewMapKey(key)
 	if err != nil {

@@ -14,7 +14,11 @@
 
 package valueapply
 
-import "testing"
+import (
+	"testing"
+
+	"arcoris.dev/apimachinery/api/types"
+)
 
 func TestApplyMapKeyNoConflict(t *testing.T) {
 	result, err := Apply(Request{
@@ -83,6 +87,22 @@ func TestApplyAtomicListForceReplacesWholeList(t *testing.T) {
 	requireNoError(t, err)
 
 	requireListStrings(t, result.Value, "b")
+	requireOwnersOf(t, result.Ownership, root(), "user")
+}
+
+func TestApplyListSetOwnsParentPath(t *testing.T) {
+	result, err := Apply(Request{
+		Path:       root(),
+		Owner:      owner("user"),
+		Live:       list(str("old")),
+		Applied:    list(str("new")),
+		Descriptor: types.ListOf(types.String()).Set().Descriptor(),
+		Ownership:  state(),
+	}, Options{})
+	requireNoError(t, err)
+
+	requireSet(t, result.AppliedFields, "$")
+	requireSet(t, result.ChangedAppliedFields, "$")
 	requireOwnersOf(t, result.Ownership, root(), "user")
 }
 

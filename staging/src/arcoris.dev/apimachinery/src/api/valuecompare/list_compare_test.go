@@ -121,6 +121,21 @@ func TestCompareSetListAddedItemIsModifiedAtListPath(t *testing.T) {
 	requireResult(t, got, nil, nil, paths(path))
 }
 
+func TestCompareSetListDifferentItemIsModifiedAtListPath(t *testing.T) {
+	path := rootField("tags")
+	descriptor := types.ListOf(types.String()).Set().Descriptor()
+
+	got, err := CompareAt(
+		path,
+		value.MustListValue(value.StringValue("a"), value.StringValue("b")),
+		value.MustListValue(value.StringValue("a"), value.StringValue("c")),
+		descriptor,
+		Options{},
+	)
+	requireNoError(t, err)
+	requireResult(t, got, nil, nil, paths(path))
+}
+
 func TestCompareOrderedListSameIsEmpty(t *testing.T) {
 	descriptor := types.ListOf(types.String()).Ordered().Descriptor()
 	oldValue := value.MustListValue(value.StringValue("one"))

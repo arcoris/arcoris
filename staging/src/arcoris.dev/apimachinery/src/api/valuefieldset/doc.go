@@ -42,6 +42,11 @@
 // api/types and api/valuevalidation; valuefieldset performs only defensive
 // descriptor checks needed for traversal.
 //
+// Malformed payload-derived record member names are reported as invalid values:
+// this package extracts from a concrete payload and the malformed name is part
+// of that payload. Malformed descriptor-declared field names remain invalid
+// descriptors.
+//
 // List extraction follows ownership/apply intent. ListAtomic extracts the list
 // path. ListSet also extracts the list path until a stable value-based set item
 // ownership model exists. ListOrdered extracts index paths because position is

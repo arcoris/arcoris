@@ -85,11 +85,14 @@ func buildResultSet(paths []fieldpath.Path) (fieldpath.Set, error) {
 
 	set, err := fieldpath.NewSet(paths...)
 	if err != nil {
+		// fieldpath.NewSet validates the transient bucket as a whole but does
+		// not expose the specific failing element. Root anchors the construction
+		// diagnostic without pretending the root path itself failed.
 		return fieldpath.Set{}, wrapAt(
 			fieldpath.Root(),
 			ErrInvalidPath,
 			ErrorReasonInvalidPath,
-			"result field path cannot be stored in a set",
+			"transient result bucket contains a field path that cannot be stored in a set",
 			err,
 		)
 	}

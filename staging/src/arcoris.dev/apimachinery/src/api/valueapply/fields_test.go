@@ -49,6 +49,22 @@ func TestChangedAppliedFieldsAppliedDescendantOfChanged(t *testing.T) {
 	requireSet(t, got, "$.spec.replicas")
 }
 
+func TestChangedAppliedFieldsAppliedDescendantOfAdded(t *testing.T) {
+	changes := valuecompare.MustResult(fields(path("$.spec")), fieldpath.EmptySet(), fieldpath.EmptySet())
+
+	got := changedAppliedFields(fields(path("$.spec.replicas")), changes)
+
+	requireSet(t, got, "$.spec.replicas")
+}
+
+func TestChangedAppliedFieldsAppliedAncestorOfRemoved(t *testing.T) {
+	changes := valuecompare.MustResult(fieldpath.EmptySet(), fields(path("$.spec.replicas")), fieldpath.EmptySet())
+
+	got := changedAppliedFields(fields(path("$.spec")), changes)
+
+	requireSet(t, got, "$.spec")
+}
+
 func TestChangedAppliedFieldsSiblingIgnored(t *testing.T) {
 	changes := valuecompare.MustResult(fieldpath.EmptySet(), fieldpath.EmptySet(), fields(path("$.spec.image")))
 

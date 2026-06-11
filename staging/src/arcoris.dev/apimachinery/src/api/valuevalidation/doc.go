@@ -25,6 +25,10 @@
 // entries with key elements, ordered list items with index elements, and
 // ListMap items with selector elements.
 //
+// Malformed payload-derived record member names are invalid values. Malformed
+// descriptor-declared field names are invalid descriptors. This split keeps
+// concrete payload shape failures separate from schema construction failures.
+//
 // Callers are expected to validate and register descriptors before using them
 // for value validation. This package does not run full descriptor validation on
 // every call. It performs only local defensive checks needed to avoid panics and
