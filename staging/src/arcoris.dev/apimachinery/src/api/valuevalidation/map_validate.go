@@ -72,10 +72,22 @@ func (v *validator) validateMap(
 		)
 	}
 
-	for _, mapMember := range valueView.Members() {
+	valueView.ForEach(func(_ int, mapMember value.RecordMember) bool {
 		name := mapMember.Name.String()
-		memberPath := path.Key(fieldpath.MustMapKey(name))
+		mapKey, err := fieldpath.NewMapKey(name)
+		if err != nil {
+			v.add(
+				path,
+				ErrInvalidValue,
+				ErrorReasonInvalidMapKey,
+				"map member name cannot become a map-key path element",
+			)
+			return !v.shouldStop()
+		}
+
+		memberPath := path.Key(mapKey)
 		v.validate(memberPath, value.StringValue(name), keyDescriptor, depth+1)
 		v.validate(memberPath, mapMember.Value, valueDescriptor, depth+1)
-	}
+		return !v.shouldStop()
+	})
 }

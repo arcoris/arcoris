@@ -21,13 +21,13 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// mergeBaseObjectMembers walks base order, preserving unselected fields.
-func (m *merger) mergeBaseObjectMembers(
+// mergeBaseRecordMembers walks base order, preserving unselected fields.
+func (m *merger) mergeBaseRecordMembers(
 	path fieldpath.Path,
 	baseMembers []value.RecordMember,
 	baseLookup memberLookup,
 	overlayLookup memberLookup,
-	declared objectFieldLookup,
+	declared recordFieldLookup,
 	unknown types.UnknownFieldPolicy,
 	fields fieldpath.Set,
 	depth int,
@@ -37,9 +37,12 @@ func (m *merger) mergeBaseObjectMembers(
 	for _, member := range baseMembers {
 		name := member.Name.String()
 		field, known := declared[name]
-		childPath := path.Field(fieldpath.MustFieldName(name))
+		childPath, err := recordFieldPath(path, name)
+		if err != nil {
+			return nil, err
+		}
 
-		next, err := m.mergeObjectMember(
+		next, err := m.mergeRecordMember(
 			childPath,
 			baseLookup.Operand(name),
 			overlayLookup.Operand(name),
@@ -59,13 +62,13 @@ func (m *merger) mergeBaseObjectMembers(
 	return members, nil
 }
 
-// appendOverlayObjectMembers appends selected overlay members absent from base.
-func (m *merger) appendOverlayObjectMembers(
+// appendOverlayRecordMembers appends selected overlay members absent from base.
+func (m *merger) appendOverlayRecordMembers(
 	path fieldpath.Path,
 	members []value.RecordMember,
 	baseLookup memberLookup,
 	overlayMembers []value.RecordMember,
-	declared objectFieldLookup,
+	declared recordFieldLookup,
 	unknown types.UnknownFieldPolicy,
 	fields fieldpath.Set,
 	depth int,
@@ -77,8 +80,12 @@ func (m *merger) appendOverlayObjectMembers(
 		}
 
 		field, known := declared[name]
-		childPath := path.Field(fieldpath.MustFieldName(name))
-		next, err := m.mergeObjectMember(
+		childPath, err := recordFieldPath(path, name)
+		if err != nil {
+			return nil, err
+		}
+
+		next, err := m.mergeRecordMember(
 			childPath,
 			valuepresence.Absent(),
 			valuepresence.Present(member.Value),
@@ -98,8 +105,8 @@ func (m *merger) appendOverlayObjectMembers(
 	return members, nil
 }
 
-// mergeObjectMember applies object unknown-field policy before recursion.
-func (m *merger) mergeObjectMember(
+// mergeRecordMember applies descriptor unknown-field policy before recursion.
+func (m *merger) mergeRecordMember(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
@@ -119,7 +126,7 @@ func (m *merger) mergeObjectMember(
 				path,
 				ErrUnknownField,
 				ErrorReasonUnknownField,
-				"object field is not declared",
+				"record member is not declared by the object descriptor",
 			)
 		default:
 			return valuepresence.Absent(), nil
@@ -130,5 +137,5 @@ func (m *merger) mergeObjectMember(
 		return m.merge(path, base, overlay, field.Descriptor(), fields, depth+1)
 	}
 
-	return mergeUnknownObjectMember(path, base, overlay, unknown, selection)
+	return mergeUnknownRecordMember(path, base, overlay, unknown, selection)
 }

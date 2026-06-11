@@ -34,7 +34,7 @@ var (
 	// ErrKindMismatch classifies concrete value kind / descriptor mismatches.
 	ErrKindMismatch = errors.New("value kind mismatch")
 
-	// ErrUnknownField classifies object members rejected by UnknownReject.
+	// ErrUnknownField classifies record members rejected by an object descriptor.
 	ErrUnknownField = errors.New("unknown field")
 
 	// ErrUnresolvedRef classifies DescriptorRef descriptors that cannot be resolved.

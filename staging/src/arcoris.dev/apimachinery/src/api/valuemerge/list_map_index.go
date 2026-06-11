@@ -79,7 +79,7 @@ func emptyListMapIndex() listMapIndex {
 
 // insert adds entry or reports duplicate selector identity.
 func (i *listMapIndex) insert(path fieldpath.Path, entry listMapEntry) error {
-	key := entry.selector.String()
+	key := entry.selector.CanonicalText()
 	if previous, exists := i.lookup[key]; exists {
 		return duplicateListMapEntryError(
 			path.Select(entry.selector),

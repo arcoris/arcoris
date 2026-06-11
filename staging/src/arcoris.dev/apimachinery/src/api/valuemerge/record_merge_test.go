@@ -21,7 +21,7 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestMergeObjectSelectedField(t *testing.T) {
+func TestMergeRecordSelectedField(t *testing.T) {
 	descriptor := simpleSpecDescriptor()
 	base := obj(member("image", str("api:v1")), member("replicas", intValue(3)))
 	overlay := obj(member("image", str("api:v2")), member("replicas", intValue(5)))
@@ -41,7 +41,7 @@ func TestMergeObjectSelectedField(t *testing.T) {
 	requireIntegerMember(t, got, "replicas", 3)
 }
 
-func TestMergeObjectUnselectedFieldPreserved(t *testing.T) {
+func TestMergeRecordUnselectedFieldPreserved(t *testing.T) {
 	descriptor := simpleSpecDescriptor()
 	base := obj(member("image", str("api:v1")), member("replicas", intValue(3)))
 	overlay := obj(member("image", str("api:v2")), member("replicas", intValue(5)))
@@ -61,7 +61,7 @@ func TestMergeObjectUnselectedFieldPreserved(t *testing.T) {
 	requireIntegerMember(t, got, "replicas", 5)
 }
 
-func TestMergeObjectAddsSelectedField(t *testing.T) {
+func TestMergeRecordAddsSelectedField(t *testing.T) {
 	descriptor := simpleSpecDescriptor()
 	base := obj(member("image", str("api:v1")))
 	overlay := obj(member("image", str("api:v2")), member("replicas", intValue(5)))
@@ -81,7 +81,7 @@ func TestMergeObjectAddsSelectedField(t *testing.T) {
 	requireIntegerMember(t, got, "replicas", 5)
 }
 
-func TestMergeObjectRemovesSelectedFieldAbsentFromOverlay(t *testing.T) {
+func TestMergeRecordRemovesSelectedFieldAbsentFromOverlay(t *testing.T) {
 	descriptor := simpleSpecDescriptor()
 	base := obj(member("image", str("api:v1")), member("replicas", intValue(3)))
 	overlay := obj(member("image", str("api:v2")))
@@ -101,7 +101,7 @@ func TestMergeObjectRemovesSelectedFieldAbsentFromOverlay(t *testing.T) {
 	requireNoMember(t, got, "replicas")
 }
 
-func TestMergeObjectExactSelectedReplacesWholeObject(t *testing.T) {
+func TestMergeRecordExactSelectedReplacesWholeObject(t *testing.T) {
 	descriptor := simpleSpecDescriptor()
 	base := obj(member("image", str("api:v1")), member("replicas", intValue(3)))
 	overlay := obj(member("image", str("api:v2")))
@@ -114,7 +114,7 @@ func TestMergeObjectExactSelectedReplacesWholeObject(t *testing.T) {
 	requireValue(t, got, overlay)
 }
 
-func TestMergeObjectNestedSelectedField(t *testing.T) {
+func TestMergeRecordNestedSelectedField(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("spec").Object(
 			types.Field("image").String().Optional(),
@@ -228,7 +228,7 @@ func TestMergeDescendantIntoAbsentBaseCreatesFromOverlayContainer(t *testing.T) 
 	requireNoMember(t, spec, "image")
 }
 
-func TestMergeObjectRequiredFieldAbsentIsNotValidationError(t *testing.T) {
+func TestMergeRecordRequiredFieldAbsentIsNotValidationError(t *testing.T) {
 	descriptor := types.Object(
 		types.Field("image").String().Required(),
 		types.Field("replicas").Int64().Optional(),

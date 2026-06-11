@@ -30,8 +30,14 @@ const (
 	// ErrorReasonKindMismatch reports descriptor/value kind incompatibility.
 	ErrorReasonKindMismatch ErrorReason = "kind_mismatch"
 
-	// ErrorReasonUnknownField reports an undeclared object member rejected by policy.
+	// ErrorReasonUnknownField reports an undeclared record member rejected by policy.
 	ErrorReasonUnknownField ErrorReason = "unknown_field"
+
+	// ErrorReasonInvalidFieldName reports a payload name that cannot become a field element.
+	ErrorReasonInvalidFieldName ErrorReason = "invalid_field_name"
+
+	// ErrorReasonInvalidMapKey reports a payload name that cannot become a map-key element.
+	ErrorReasonInvalidMapKey ErrorReason = "invalid_map_key"
 
 	// ErrorReasonUnresolvedRef reports a DescriptorRef the resolver cannot load.
 	ErrorReasonUnresolvedRef ErrorReason = "unresolved_ref"

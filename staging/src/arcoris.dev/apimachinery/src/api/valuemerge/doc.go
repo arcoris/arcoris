@@ -23,6 +23,7 @@
 // descendant path recursively merges only that descendant. An unselected path
 // preserves the base value. A selected path absent from the overlay removes the
 // corresponding base field where the descriptor node supports removal.
+// Explicit null is concrete payload data, not a deletion marker.
 //
 // The package is descriptor-aware and path-aware, but policy-free. It does not
 // validate complete values, extract field sets, compare values, detect ownership
@@ -37,7 +38,7 @@
 // resolution, and descriptor/value kind compatibility; it does not fully
 // validate the replacement subtree.
 //
-// Higher layers decide which fields are selected for merge. For example, a
-// future apply layer may combine valuevalidation, valuefieldset, valuecompare,
-// fieldownership, and valuemerge.
+// Higher layers decide which fields are selected for merge. For example,
+// api/valueapply combines valuevalidation, valuefieldset, valuecompare,
+// fieldownership, and valuemerge into one value-level apply pipeline.
 package valuemerge

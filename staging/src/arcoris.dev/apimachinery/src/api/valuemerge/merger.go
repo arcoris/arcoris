@@ -67,7 +67,7 @@ func (m *merger) merge(
 	case types.DescriptorRef:
 		return m.mergeRef(path, base, overlay, descriptor, fields, depth)
 	case types.DescriptorObject:
-		return m.mergeObject(path, base, overlay, descriptor, fields, depth)
+		return m.mergeRecord(path, base, overlay, descriptor, fields, depth)
 	case types.DescriptorMap:
 		return m.mergeMap(path, base, overlay, descriptor, fields, depth)
 	case types.DescriptorList:

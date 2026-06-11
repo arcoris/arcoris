@@ -21,8 +21,8 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// mergeObject recursively merges fixed-schema object fields.
-func (m *merger) mergeObject(
+// mergeRecord recursively merges record payload members under a fixed object descriptor.
+func (m *merger) mergeRecord(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
@@ -54,11 +54,11 @@ func (m *merger) mergeObject(
 		)
 	}
 
-	return m.mergeObjectView(path, base, overlay, view, fields, depth)
+	return m.mergeRecordView(path, base, overlay, view, fields, depth)
 }
 
-// mergeObjectView merges one object using its descriptor view.
-func (m *merger) mergeObjectView(
+// mergeRecordView merges one record payload using its object descriptor view.
+func (m *merger) mergeRecordView(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
@@ -66,13 +66,13 @@ func (m *merger) mergeObjectView(
 	fields fieldpath.Set,
 	depth int,
 ) (operand, error) {
-	baseMembers := objectMembers(base)
-	overlayMembers := objectMembers(overlay)
+	baseMembers := recordMembers(base)
+	overlayMembers := recordMembers(overlay)
 	baseLookup := newMemberLookup(baseMembers)
 	overlayLookup := newMemberLookup(overlayMembers)
-	declared := newObjectFieldLookup(view.Fields())
+	declared := newRecordFieldLookup(view.Fields())
 
-	members, err := m.mergeBaseObjectMembers(
+	members, err := m.mergeBaseRecordMembers(
 		path,
 		baseMembers,
 		baseLookup,
@@ -86,7 +86,7 @@ func (m *merger) mergeObjectView(
 		return operand{}, err
 	}
 
-	members, err = m.appendOverlayObjectMembers(
+	members, err = m.appendOverlayRecordMembers(
 		path,
 		members,
 		baseLookup,
@@ -106,7 +106,7 @@ func (m *merger) mergeObjectView(
 			path,
 			ErrInvalidValue,
 			ErrorReasonInvalidZero,
-			"merged object is invalid",
+			"merged record is invalid",
 			err,
 		)
 	}

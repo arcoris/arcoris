@@ -20,8 +20,8 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
-// mergeUnknownObjectMember handles undeclared object fields as policy leaves.
-func mergeUnknownObjectMember(
+// mergeUnknownRecordMember handles undeclared record members as policy leaves.
+func mergeUnknownRecordMember(
 	path fieldpath.Path,
 	base operand,
 	overlay operand,
@@ -34,7 +34,7 @@ func mergeUnknownObjectMember(
 			path,
 			ErrUnknownField,
 			ErrorReasonUnknownField,
-			"object field is not declared",
+			"record member is not declared by the object descriptor",
 		)
 	case types.UnknownPrune:
 		return valuepresence.Absent(), nil

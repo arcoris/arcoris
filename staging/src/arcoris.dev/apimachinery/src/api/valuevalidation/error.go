@@ -36,7 +36,7 @@ var (
 	// ErrMissingField classifies absent required object fields.
 	ErrMissingField = errors.New("missing required field")
 
-	// ErrUnknownField classifies undeclared object members rejected by descriptor policy.
+	// ErrUnknownField classifies undeclared record members rejected by descriptor policy.
 	ErrUnknownField = errors.New("unknown field")
 
 	// ErrLengthOutOfRange classifies string, bytes, list, or map length violations.

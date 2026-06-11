@@ -23,4 +23,10 @@ func TestErrorReasonValues(t *testing.T) {
 	if ErrorReasonUnsupportedMerge != "unsupported_merge" {
 		t.Fatalf("unsupported merge reason = %q", ErrorReasonUnsupportedMerge)
 	}
+	if ErrorReasonInvalidFieldName != "invalid_field_name" {
+		t.Fatalf("invalid field name reason = %q", ErrorReasonInvalidFieldName)
+	}
+	if ErrorReasonInvalidMapKey != "invalid_map_key" {
+		t.Fatalf("invalid map key reason = %q", ErrorReasonInvalidMapKey)
+	}
 }

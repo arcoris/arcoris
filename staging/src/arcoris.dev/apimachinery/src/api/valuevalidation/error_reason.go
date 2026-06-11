@@ -36,9 +36,17 @@ const (
 	// ErrorReasonMissingField reports a required object field that is absent.
 	ErrorReasonMissingField ErrorReason = "missing_field"
 
-	// ErrorReasonUnknownField reports an undeclared object member under reject
+	// ErrorReasonUnknownField reports an undeclared record member under reject
 	// unknown-field policy.
 	ErrorReasonUnknownField ErrorReason = "unknown_field"
+
+	// ErrorReasonInvalidFieldName reports a record member name that cannot
+	// become a semantic field path element.
+	ErrorReasonInvalidFieldName ErrorReason = "invalid_field_name"
+
+	// ErrorReasonInvalidMapKey reports a record member name that cannot become
+	// a semantic map-key path element.
+	ErrorReasonInvalidMapKey ErrorReason = "invalid_map_key"
 
 	// ErrorReasonBelowMinimum reports a value or length below an inclusive lower
 	// bound.

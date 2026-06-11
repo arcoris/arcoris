@@ -33,4 +33,8 @@
 // List diagnostics intentionally use physical indexes for atomic, set-like, and
 // ordered lists because item-level error locations are useful even when a later
 // field-set/apply layer treats the complete list as one semantic field.
+//
+// Validation collects a bounded list of diagnostics. Options.MaxErrors controls
+// the bound, and zero Options use the package default. The package does not try
+// to continue indefinitely after repeated failures.
 package valuevalidation

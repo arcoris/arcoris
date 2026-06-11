@@ -32,6 +32,8 @@ func TestErrorReasonValuesAreStable(t *testing.T) {
 		{name: "null not allowed", reason: valuevalidation.ErrorReasonNullNotAllowed, want: "null_not_allowed"},
 		{name: "missing field", reason: valuevalidation.ErrorReasonMissingField, want: "missing_field"},
 		{name: "unknown field", reason: valuevalidation.ErrorReasonUnknownField, want: "unknown_field"},
+		{name: "invalid field name", reason: valuevalidation.ErrorReasonInvalidFieldName, want: "invalid_field_name"},
+		{name: "invalid map key", reason: valuevalidation.ErrorReasonInvalidMapKey, want: "invalid_map_key"},
 		{name: "below minimum", reason: valuevalidation.ErrorReasonBelowMinimum, want: "below_minimum"},
 		{name: "above maximum", reason: valuevalidation.ErrorReasonAboveMaximum, want: "above_maximum"},
 		{name: "too short", reason: valuevalidation.ErrorReasonTooShort, want: "too_short"},

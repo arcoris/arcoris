@@ -66,8 +66,8 @@ func (m *merger) mergeMapView(
 	fields fieldpath.Set,
 	depth int,
 ) (operand, error) {
-	baseMembers := objectMembers(base)
-	overlayMembers := objectMembers(overlay)
+	baseMembers := recordMembers(base)
+	overlayMembers := recordMembers(overlay)
 	baseLookup := newMemberLookup(baseMembers)
 	overlayLookup := newMemberLookup(overlayMembers)
 

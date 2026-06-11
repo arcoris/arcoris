@@ -20,8 +20,8 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// objectMembers returns detached record members for present record operands.
-func objectMembers(o operand) []value.RecordMember {
+// recordMembers returns detached record members for present record operands.
+func recordMembers(o operand) []value.RecordMember {
 	if o.Absent() || o.Value().IsNull() {
 		return nil
 	}
@@ -64,12 +64,12 @@ func appendMember(members []value.RecordMember, name string, item operand) []val
 	return append(members, value.MustRecordMember(name, item.Value()))
 }
 
-// objectFieldLookup stores declared object field descriptors by API field name.
-type objectFieldLookup map[string]types.FieldDescriptor
+// recordFieldLookup stores declared record field descriptors by API field name.
+type recordFieldLookup map[string]types.FieldDescriptor
 
-// newObjectFieldLookup indexes declared object fields.
-func newObjectFieldLookup(fields []types.FieldDescriptor) objectFieldLookup {
-	lookup := make(objectFieldLookup, len(fields))
+// newRecordFieldLookup indexes declared record fields.
+func newRecordFieldLookup(fields []types.FieldDescriptor) recordFieldLookup {
+	lookup := make(recordFieldLookup, len(fields))
 
 	for _, field := range fields {
 		lookup[field.Name().String()] = field

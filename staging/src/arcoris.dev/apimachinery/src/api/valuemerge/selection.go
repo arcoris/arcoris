@@ -34,14 +34,15 @@ func (s mergeSelection) selected() bool {
 func selectAt(fields fieldpath.Set, path fieldpath.Path) mergeSelection {
 	selection := mergeSelection{}
 
-	for _, selected := range fields.Paths() {
+	fields.ForEach(func(_ int, selected fieldpath.Path) bool {
 		switch {
 		case selected.Equal(path):
 			selection.exact = true
 		case selected.IsDescendantOf(path):
 			selection.descendants = selection.descendants.Insert(selected)
 		}
-	}
+		return true
+	})
 
 	return selection
 }

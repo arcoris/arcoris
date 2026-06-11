@@ -20,8 +20,8 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// validateObject interprets value.KindRecord as a fixed-field object descriptor.
-func (v *validator) validateObject(
+// validateRecord interprets value.KindRecord under a fixed-field object descriptor.
+func (v *validator) validateRecord(
 	path fieldpath.Path,
 	val value.Value,
 	descriptor types.Descriptor,
@@ -43,7 +43,19 @@ func (v *validator) validateObject(
 
 	for _, fieldDescriptor := range fields {
 		name := string(fieldDescriptor.Name())
-		fieldName := fieldpath.MustFieldName(name)
+		fieldName, err := fieldpath.NewFieldName(name)
+		if err != nil {
+			v.add(
+				path,
+				ErrInvalidDescriptor,
+				ErrorReasonInvalidDescriptor,
+				"object descriptor field name cannot become a field path element",
+			)
+			if v.shouldStop() {
+				return
+			}
+			continue
+		}
 		declared[name] = fieldDescriptor
 
 		memberValue, found := valueView.Get(value.MemberName(name))
@@ -59,28 +71,40 @@ func (v *validator) validateObject(
 	}
 
 	if objectView.UnknownFields() == types.UnknownReject {
-		v.validateUnknownObjectMembers(path, valueView, declared)
+		v.validateUnknownRecordMembers(path, valueView, declared)
 	}
 }
 
-// validateUnknownObjectMembers reports undeclared members under reject policy.
-func (v *validator) validateUnknownObjectMembers(
+// validateUnknownRecordMembers reports undeclared record members under reject policy.
+func (v *validator) validateUnknownRecordMembers(
 	path fieldpath.Path,
 	valueView value.RecordView,
 	declared map[string]types.FieldDescriptor,
 ) {
-	for _, objectMember := range valueView.Members() {
-		name := objectMember.Name.String()
+	valueView.ForEach(func(_ int, recordMember value.RecordMember) bool {
+		name := recordMember.Name.String()
 		if _, ok := declared[name]; ok {
-			continue
+			return true
+		}
+
+		fieldName, err := fieldpath.NewFieldName(name)
+		if err != nil {
+			v.add(
+				path,
+				ErrInvalidValue,
+				ErrorReasonInvalidFieldName,
+				"record member name cannot become a field path element",
+			)
+			return !v.shouldStop()
 		}
 
 		v.addf(
-			path.Field(fieldpath.MustFieldName(name)),
+			path.Field(fieldName),
 			ErrUnknownField,
 			ErrorReasonUnknownField,
-			"field %q is not declared by the object descriptor",
+			"record member %q is not declared by the object descriptor",
 			name,
 		)
-	}
+		return !v.shouldStop()
+	})
 }

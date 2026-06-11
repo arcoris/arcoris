@@ -34,7 +34,10 @@ func (m *merger) mergeBaseMapMembers(
 
 	for _, member := range baseMembers {
 		name := member.Name.String()
-		childPath := path.Key(fieldpath.MustMapKey(name))
+		childPath, err := mapKeyPath(path, name)
+		if err != nil {
+			return nil, err
+		}
 		next, err := m.mergeMapMember(
 			childPath,
 			valuepresence.Present(member.Value),
@@ -69,7 +72,11 @@ func (m *merger) appendOverlayMapMembers(
 			continue
 		}
 
-		childPath := path.Key(fieldpath.MustMapKey(name))
+		childPath, err := mapKeyPath(path, name)
+		if err != nil {
+			return nil, err
+		}
+
 		next, err := m.mergeMapMember(
 			childPath,
 			valuepresence.Absent(),

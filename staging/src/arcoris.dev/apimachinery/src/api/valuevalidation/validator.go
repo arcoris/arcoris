@@ -122,7 +122,7 @@ func (v *validator) validate(
 		types.DescriptorDuration:
 		v.validateTemporal(path, val, descriptor)
 	case types.DescriptorObject:
-		v.validateObject(path, val, descriptor, depth)
+		v.validateRecord(path, val, descriptor, depth)
 	case types.DescriptorMap:
 		v.validateMap(path, val, descriptor, depth)
 	case types.DescriptorList:

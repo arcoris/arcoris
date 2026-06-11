@@ -22,7 +22,7 @@ import (
 	"arcoris.dev/apimachinery/api/valuevalidation"
 )
 
-func TestValidateObjectRequiredFields(t *testing.T) {
+func TestValidateRecordRequiredFields(t *testing.T) {
 	shape := types.Object(
 		types.Field("name").String().Required(),
 	).Descriptor()
@@ -42,7 +42,7 @@ func TestValidateObjectRequiredFields(t *testing.T) {
 	)
 }
 
-func TestValidateObjectOptionalFields(t *testing.T) {
+func TestValidateRecordOptionalFields(t *testing.T) {
 	shape := types.Object(
 		types.Field("name").String().Optional(),
 	).Descriptor()
@@ -57,7 +57,7 @@ func TestValidateObjectOptionalFields(t *testing.T) {
 	)
 }
 
-func TestValidateObjectNullability(t *testing.T) {
+func TestValidateRecordNullability(t *testing.T) {
 	shape := types.Object(
 		types.Field("name").String().Required(),
 		types.Field("note").String().Nullable().Optional(),
@@ -79,7 +79,7 @@ func TestValidateObjectNullability(t *testing.T) {
 	)
 }
 
-func TestValidateObjectUnknownFieldRejected(t *testing.T) {
+func TestValidateRecordUnknownFieldRejected(t *testing.T) {
 	shape := types.Object(
 		types.Field("name").String().Required(),
 	).UnknownFields(types.UnknownReject).Descriptor()
@@ -105,7 +105,7 @@ func TestValidateObjectUnknownFieldRejected(t *testing.T) {
 	)
 }
 
-func TestValidateObjectUnknownFieldPruneAllowed(t *testing.T) {
+func TestValidateRecordUnknownFieldPruneAllowed(t *testing.T) {
 	shape := types.Object(
 		types.Field("name").String().Required(),
 	).UnknownFields(types.UnknownPrune).Descriptor()
@@ -126,7 +126,7 @@ func TestValidateObjectUnknownFieldPruneAllowed(t *testing.T) {
 	)
 }
 
-func TestValidateObjectUnknownFieldPreserveOpaqueAllowed(t *testing.T) {
+func TestValidateRecordUnknownFieldPreserveOpaqueAllowed(t *testing.T) {
 	shape := types.Object(
 		types.Field("name").String().Required(),
 	).UnknownFields(types.UnknownPreserveOpaque).Descriptor()
@@ -147,7 +147,7 @@ func TestValidateObjectUnknownFieldPreserveOpaqueAllowed(t *testing.T) {
 	)
 }
 
-func TestValidateObjectNestedPath(t *testing.T) {
+func TestValidateRecordNestedPath(t *testing.T) {
 	shape := types.Object(
 		types.Field("spec").Object(
 			types.Field("replicas").Int32().Required(),

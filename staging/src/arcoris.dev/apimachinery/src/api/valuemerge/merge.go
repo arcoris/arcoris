@@ -95,17 +95,21 @@ func MergeAt(
 
 // validateFields rejects malformed selected paths before traversal starts.
 func validateFields(fields fieldpath.Set) error {
-	for _, path := range fields.Paths() {
+	var fieldErr error
+	fields.ForEach(func(_ int, path fieldpath.Path) bool {
 		if err := path.ValidateStructure(); err != nil {
-			return wrapAt(
+			fieldErr = wrapAt(
 				path,
 				ErrInvalidPath,
 				ErrorReasonInvalidPath,
 				"selected field path is invalid",
 				err,
 			)
+			return false
 		}
-	}
 
-	return nil
+		return true
+	})
+
+	return fieldErr
 }

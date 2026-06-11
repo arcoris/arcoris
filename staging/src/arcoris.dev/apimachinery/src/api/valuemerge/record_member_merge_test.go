@@ -21,10 +21,10 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
-func TestMergeObjectMemberPreservesUnselectedKnownField(t *testing.T) {
+func TestMergeRecordMemberPreservesUnselectedKnownField(t *testing.T) {
 	field := types.Field("name").String().Optional().Field()
 
-	got, err := newMerger(Options{}).mergeObjectMember(
+	got, err := newMerger(Options{}).mergeRecordMember(
 		root().Field(testFieldName("name")),
 		valuepresence.Present(str("old")),
 		valuepresence.Present(str("new")),
@@ -35,14 +35,14 @@ func TestMergeObjectMemberPreservesUnselectedKnownField(t *testing.T) {
 		0,
 	)
 	if err != nil {
-		t.Fatalf("mergeObjectMember returned error: %v", err)
+		t.Fatalf("mergeRecordMember returned error: %v", err)
 	}
 
 	requireValue(t, got.Value(), str("old"))
 }
 
-func TestMergeObjectMemberPrunesUnselectedUnknownField(t *testing.T) {
-	got, err := newMerger(Options{}).mergeObjectMember(
+func TestMergeRecordMemberPrunesUnselectedUnknownField(t *testing.T) {
+	got, err := newMerger(Options{}).mergeRecordMember(
 		root().Field(testFieldName("xExtra")),
 		valuepresence.Present(str("old")),
 		valuepresence.Present(str("new")),
@@ -53,7 +53,7 @@ func TestMergeObjectMemberPrunesUnselectedUnknownField(t *testing.T) {
 		0,
 	)
 	if err != nil {
-		t.Fatalf("mergeObjectMember returned error: %v", err)
+		t.Fatalf("mergeRecordMember returned error: %v", err)
 	}
 	if got.Present() {
 		t.Fatalf("unknown pruned field is present")
