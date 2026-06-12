@@ -45,7 +45,7 @@ func (e *Executor) initialOwnership(
 		},
 	)
 	if err != nil {
-		return objectownership.State{}, errorFor(op, ErrorReasonApplyFailed, key, ErrApplyFailed, err)
+		return objectownership.State{}, errorFor(op, ErrorReasonOwnershipInitFailed, key, ErrApplyFailed, err)
 	}
 
 	entry, err := fieldownership.NewEntry(owner, fields)

@@ -63,7 +63,9 @@ func WithObservedValidator(validator objectvalidation.SurfaceValidator[value.Val
 // WithApplyOptions sets objectapply options used by Apply.
 //
 // ApplyRequest.Force is per-request state and replaces the Force field from
-// these options for each Apply call. Resolver and MaxDepth are preserved.
+// these options for each Apply call. MaxDepth is preserved. Resolver is always
+// replaced by WithTypeResolver's value so validation, ownership extraction, and
+// apply traversal use one structural resolver.
 func WithApplyOptions(opts objectapply.Options) Option {
 	return func(cfg *config) {
 		cfg.applyOptions = opts

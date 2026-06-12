@@ -30,7 +30,7 @@ func (e *Executor) Apply(ctx context.Context, req ApplyRequest) (ApplyResult, er
 	if err := checkContext(OperationApply, ctx); err != nil {
 		return ApplyResult{}, err
 	}
-	if err := validateOwner(OperationApply, req.Owner); err != nil {
+	if err := e.validateApplyRequest(req); err != nil {
 		return ApplyResult{}, err
 	}
 
@@ -68,7 +68,12 @@ func (e *Executor) applyCreate(
 	}
 
 	return ApplyResult{
-		Result: Result{Operation: OperationApply, Effect: EffectCreated, State: committed},
+		Result: Result{
+			Operation: OperationApply,
+			Effect:    EffectCreated,
+			State:     committed,
+			Revision:  committed.Revision,
+		},
 	}, nil
 }
 
@@ -113,17 +118,20 @@ func (e *Executor) applyExisting(
 	}
 
 	return ApplyResult{
-		Result: Result{Operation: OperationApply, Effect: EffectUpdated, State: committed},
-		Apply:  applied,
+		Result: Result{
+			Operation: OperationApply,
+			Effect:    EffectUpdated,
+			State:     committed,
+			Revision:  committed.Revision,
+		},
+		Apply: applied,
 	}, nil
 }
 
 // optionsForApply combines executor traversal options with request Force.
 func (e *Executor) optionsForApply(force bool) objectapply.Options {
 	opts := e.applyOptions
-	if opts.Resolver == nil {
-		opts.Resolver = e.resolver
-	}
+	opts.Resolver = e.resolver
 	opts.Force = force
 
 	return opts

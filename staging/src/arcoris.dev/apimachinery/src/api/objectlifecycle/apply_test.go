@@ -16,10 +16,12 @@ package objectlifecycle
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectapply"
 	"arcoris.dev/apimachinery/api/objectownership"
+	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/resource"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -34,7 +36,11 @@ func TestApplyMissingObjectCreatesState(t *testing.T) {
 	requireNoError(t, err)
 
 	requireEffect(t, result.Result, OperationApply, EffectCreated)
+	if result.Revision != result.State.Revision {
+		t.Fatalf("result revision = %v; want state revision %v", result.Revision, result.State.Revision)
+	}
 	requireImage(t, result.State, "api:v1")
+	requireNormalizedOwnership(t, result.State.Ownership)
 }
 
 func TestApplyExistingObjectCommitsUpdate(t *testing.T) {
@@ -51,10 +57,14 @@ func TestApplyExistingObjectCommitsUpdate(t *testing.T) {
 	if !created.State.Revision.Before(result.State.Revision) {
 		t.Fatalf("revision = %v; want after %v", result.State.Revision, created.State.Revision)
 	}
+	if result.Revision != result.State.Revision {
+		t.Fatalf("result revision = %v; want state revision %v", result.Revision, result.State.Revision)
+	}
 	requireImage(t, result.State, "api:v2")
 	if result.Apply.Object.Desired.IsZero() {
 		t.Fatalf("Apply metadata is empty")
 	}
+	requireNormalizedOwnership(t, result.State.Ownership)
 }
 
 func TestApplySameObjectCurrentlyCommitsUpdate(t *testing.T) {
@@ -99,6 +109,78 @@ func TestApplyInvalidObjectReturnsValidationFailed(t *testing.T) {
 	)
 
 	requireLifecycleError(t, err, ErrValidationFailed, ErrorReasonValidationFailed)
+}
+
+func TestApplyMissingObjectRejectsObserved(t *testing.T) {
+	executor := testExecutor(
+		t,
+		WithResourceResolver(testCatalog(t, testDefinition(resourceObserved()))),
+	)
+
+	_, err := executor.Apply(
+		context.Background(),
+		ApplyRequest{Object: testObservedObject(1, "api:v1", "true"), Owner: owner("creator")},
+	)
+
+	requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonUnsupportedObservedApply)
+	requireErrorIs(t, err, objectapply.ErrUnsupportedObservedApply)
+}
+
+func TestApplyExistingObjectRejectsObserved(t *testing.T) {
+	executor := testExecutor(
+		t,
+		WithResourceResolver(testCatalog(t, testDefinition(resourceObserved()))),
+	)
+	_, err := executor.Create(
+		context.Background(),
+		CreateRequest{Object: testObservedObject(1, "api:v1", "true"), Owner: owner("creator")},
+	)
+	requireNoError(t, err)
+
+	_, err = executor.Apply(
+		context.Background(),
+		ApplyRequest{Object: testObservedObject(1, "api:v2", "false"), Owner: owner("creator")},
+	)
+
+	requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonUnsupportedObservedApply)
+	requireErrorIs(t, err, objectapply.ErrUnsupportedObservedApply)
+}
+
+func TestApplyRejectsZeroObservedPointer(t *testing.T) {
+	executor := testExecutor(
+		t,
+		WithResourceResolver(testCatalog(t, testDefinition(resourceObserved()))),
+	)
+	obj := testObject(1, "api:v1")
+	observed := value.Value{}
+	obj.Observed = &observed
+
+	_, err := executor.Apply(
+		context.Background(),
+		ApplyRequest{Object: obj, Owner: owner("creator")},
+	)
+
+	requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonUnsupportedObservedApply)
+	requireErrorIs(t, err, objectapply.ErrUnsupportedObservedApply)
+}
+
+func TestApplyRejectsObservedBeforeStoreGet(t *testing.T) {
+	store := &mustNotGetStore{}
+	executor := testExecutor(
+		t,
+		WithStore(store),
+		WithResourceResolver(testCatalog(t, testDefinition(resourceObserved()))),
+	)
+
+	_, err := executor.Apply(
+		context.Background(),
+		ApplyRequest{Object: testObservedObject(1, "api:v1", "true"), Owner: owner("creator")},
+	)
+
+	requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonUnsupportedObservedApply)
+	if store.getCalled {
+		t.Fatalf("store Get was called before rejecting observed apply")
+	}
 }
 
 func TestApplyOwnershipConflictMapsToConflict(t *testing.T) {
@@ -148,6 +230,7 @@ func TestApplyPreservesLiveObservedAndMetadata(t *testing.T) {
 	if result.State.Object.Observed == nil {
 		t.Fatalf("Observed missing")
 	}
+	requireObservedReady(t, result.State, "true")
 	if result.State.Object.ObjectMeta.ResourceVersion != "" {
 		t.Fatalf("ResourceVersion = %q; want empty because lifecycle does not stamp metadata", result.State.Object.ObjectMeta.ResourceVersion)
 	}
@@ -155,4 +238,26 @@ func TestApplyPreservesLiveObservedAndMetadata(t *testing.T) {
 
 func resourceObserved() resource.VersionOption {
 	return resource.Observed(observedDescriptor())
+}
+
+type mustNotGetStore struct {
+	getCalled bool
+}
+
+func (s *mustNotGetStore) Get(context.Context, objectstore.Key) (objectstore.State, bool, error) {
+	s.getCalled = true
+
+	return objectstore.State{}, false, errors.New("unexpected get")
+}
+
+func (s *mustNotGetStore) Create(context.Context, objectstore.Key, objectstore.State) (objectstore.State, error) {
+	return objectstore.State{}, errors.New("unexpected create")
+}
+
+func (s *mustNotGetStore) Update(context.Context, objectstore.Key, objectstore.Revision, objectstore.State) (objectstore.State, error) {
+	return objectstore.State{}, errors.New("unexpected update")
+}
+
+func (s *mustNotGetStore) Delete(context.Context, objectstore.Key, objectstore.Revision) (objectstore.DeleteResult, error) {
+	return objectstore.DeleteResult{}, errors.New("unexpected delete")
 }

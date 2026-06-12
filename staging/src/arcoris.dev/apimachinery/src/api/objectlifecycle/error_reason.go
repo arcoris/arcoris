@@ -20,14 +20,26 @@ type ErrorReason string
 const (
 	// ErrorReasonInvalidRequest reports malformed operation input.
 	ErrorReasonInvalidRequest ErrorReason = "invalid_request"
+	// ErrorReasonInvalidOwner reports malformed field owner input.
+	ErrorReasonInvalidOwner ErrorReason = "invalid_owner"
+	// ErrorReasonInvalidContext reports a nil lifecycle operation context.
+	ErrorReasonInvalidContext ErrorReason = "invalid_context"
+	// ErrorReasonInvalidExpectedRevision reports a missing delete/update revision.
+	ErrorReasonInvalidExpectedRevision ErrorReason = "invalid_expected_revision"
+	// ErrorReasonUnsupportedObservedApply reports attempted Observed apply intent.
+	ErrorReasonUnsupportedObservedApply ErrorReason = "unsupported_observed_apply"
 	// ErrorReasonInvalidExecutor reports missing executor dependencies.
 	ErrorReasonInvalidExecutor ErrorReason = "invalid_executor"
 	// ErrorReasonResourceNotFound reports a resource resolver miss.
 	ErrorReasonResourceNotFound ErrorReason = "resource_not_found"
+	// ErrorReasonInvalidResourceContract reports inconsistent resolved resource data.
+	ErrorReasonInvalidResourceContract ErrorReason = "invalid_resource_contract"
 	// ErrorReasonValidationFailed reports objectvalidation failure.
 	ErrorReasonValidationFailed ErrorReason = "validation_failed"
 	// ErrorReasonApplyFailed reports non-conflict objectapply or ownership-init failure.
 	ErrorReasonApplyFailed ErrorReason = "apply_failed"
+	// ErrorReasonOwnershipInitFailed reports create/apply-create ownership extraction failure.
+	ErrorReasonOwnershipInitFailed ErrorReason = "ownership_init_failed"
 	// ErrorReasonConflict reports field ownership or store compare-and-swap conflict.
 	ErrorReasonConflict ErrorReason = "conflict"
 	// ErrorReasonNotFound reports a missing live object.
@@ -38,21 +50,30 @@ const (
 	ErrorReasonStaleRevision ErrorReason = "stale_revision"
 	// ErrorReasonStoreFailed reports an unexpected objectstore error.
 	ErrorReasonStoreFailed ErrorReason = "store_failed"
+	// ErrorReasonStoreInvalidState reports an invalid state rejected by objectstore.
+	ErrorReasonStoreInvalidState ErrorReason = "store_invalid_state"
 )
 
 // IsValid reports whether r is a known lifecycle reason.
 func (r ErrorReason) IsValid() bool {
 	switch r {
 	case ErrorReasonInvalidRequest,
+		ErrorReasonInvalidOwner,
+		ErrorReasonInvalidContext,
+		ErrorReasonInvalidExpectedRevision,
+		ErrorReasonUnsupportedObservedApply,
 		ErrorReasonInvalidExecutor,
 		ErrorReasonResourceNotFound,
+		ErrorReasonInvalidResourceContract,
 		ErrorReasonValidationFailed,
 		ErrorReasonApplyFailed,
+		ErrorReasonOwnershipInitFailed,
 		ErrorReasonConflict,
 		ErrorReasonNotFound,
 		ErrorReasonAlreadyExists,
 		ErrorReasonStaleRevision,
-		ErrorReasonStoreFailed:
+		ErrorReasonStoreFailed,
+		ErrorReasonStoreInvalidState:
 		return true
 	default:
 		return false

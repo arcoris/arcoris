@@ -47,7 +47,13 @@ func (e *Executor) resolveObjectResource(op Operation, obj objectapply.ValueObje
 
 	gvr, ok := def.GroupVersionResource(version.Version())
 	if !ok {
-		return resolvedResource{}, errorFor(op, ErrorReasonResourceNotFound, objectstore.Key{}, ErrResourceNotFound, nil)
+		return resolvedResource{}, errorFor(
+			op,
+			ErrorReasonInvalidResourceContract,
+			objectstore.Key{},
+			ErrValidationFailed,
+			ErrInvalidResourceContract,
+		)
 	}
 
 	return resolvedResource{definition: def, version: version, gvr: gvr}, nil

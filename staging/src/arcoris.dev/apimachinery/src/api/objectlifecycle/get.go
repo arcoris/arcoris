@@ -26,6 +26,9 @@ func (e *Executor) Get(ctx context.Context, req GetRequest) (Result, error) {
 	if err := checkContext(OperationGet, ctx); err != nil {
 		return Result{}, err
 	}
+	if err := e.validateGetRequest(req); err != nil {
+		return Result{}, err
+	}
 
 	prepared, err := e.prepareKeyRequest(OperationGet, req.Resource, req.Object)
 	if err != nil {
@@ -40,5 +43,10 @@ func (e *Executor) Get(ctx context.Context, req GetRequest) (Result, error) {
 		return Result{}, errorFor(OperationGet, ErrorReasonNotFound, prepared.key, ErrNotFound, nil)
 	}
 
-	return Result{Operation: OperationGet, Effect: EffectFound, State: state}, nil
+	return Result{
+		Operation: OperationGet,
+		Effect:    EffectFound,
+		State:     state,
+		Revision:  state.Revision,
+	}, nil
 }

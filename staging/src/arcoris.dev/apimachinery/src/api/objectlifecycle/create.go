@@ -30,7 +30,7 @@ func (e *Executor) Create(ctx context.Context, req CreateRequest) (Result, error
 	if err := checkContext(OperationCreate, ctx); err != nil {
 		return Result{}, err
 	}
-	if err := validateOwner(OperationCreate, req.Owner); err != nil {
+	if err := e.validateCreateRequest(req); err != nil {
 		return Result{}, err
 	}
 
@@ -49,7 +49,12 @@ func (e *Executor) Create(ctx context.Context, req CreateRequest) (Result, error
 		return Result{}, mapStoreError(OperationCreate, prepared.key, err)
 	}
 
-	return Result{Operation: OperationCreate, Effect: EffectCreated, State: committed}, nil
+	return Result{
+		Operation: OperationCreate,
+		Effect:    EffectCreated,
+		State:     committed,
+		Revision:  committed.Revision,
+	}, nil
 }
 
 // inputState builds zero-revision objectstore input from lifecycle state.

@@ -56,6 +56,7 @@ func newConfig(opts []Option) (config, error) {
 	if err := validateConfig(cfg); err != nil {
 		return config{}, err
 	}
+	cfg.applyOptions.Resolver = cfg.resolver
 
 	return cfg, nil
 }

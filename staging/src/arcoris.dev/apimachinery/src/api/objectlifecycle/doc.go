@@ -15,21 +15,67 @@
 // Package objectlifecycle coordinates local API object lifecycle transitions
 // over api/objectstore.
 //
-// The package is the first descriptor-aware stateful layer above the lower API
-// machinery primitives. It resolves resource contracts, validates value-backed
-// objects with api/objectvalidation, delegates Desired apply semantics to
-// api/objectapply, and commits already-computed state through api/objectstore.
+// # Package responsibility
 //
-// Layering is deliberately narrow:
-// objectvalidation validates object shape against an already resolved resource
-// contract; objectapply computes a pure Desired apply result; objectstore
-// commits object, ownership, and store revision with optimistic concurrency;
-// objectlifecycle composes those pieces into Create, Apply, Delete, and Get
-// operations.
+// objectlifecycle is the descriptor-aware stateful orchestration layer for
+// value-backed API objects. It resolves resource contracts, prepares lifecycle
+// requests, delegates object and value semantics to lower packages, and commits
+// already-computed state through objectstore.
 //
-// The package does not decode wire formats, select codecs, serve HTTP or gRPC,
-// run admission, authorize subjects, list objects, watch resources, compact
-// tombstones, stamp resourceVersion/generation metadata, generate UIDs, run
-// finalizers, default, convert, prune, reconcile controllers, export metrics,
-// log, trace, or start background goroutines.
+// # Relationship to lower layers
+//
+// api/objectvalidation validates object envelopes against resolved resource
+// contracts. api/objectapply computes pure Desired apply output for existing
+// live objects. api/objectownership represents operational ownership state and
+// committed ownership documents. api/objectstore commits already-computed state
+// with optimistic concurrency. objectlifecycle composes these layers into Get,
+// Create, Apply, and Delete operations.
+//
+// # Operation semantics
+//
+// Get resolves an explicit group/version/resource and object identity, reads
+// committed live state, and returns either the found state or ErrNotFound. Get
+// does not revalidate stored Desired or Observed payloads against current
+// descriptors; descriptor-aware validation is a write-path responsibility so
+// reads remain stable under descriptor evolution.
+//
+// Create accepts a value-backed live object envelope, resolves its resource by
+// group/version/kind, validates it against the resource contract, initializes
+// Desired ownership from explicitly present Desired fields, and commits through
+// objectstore.Create. Create may accept Observed when the selected resource
+// version defines an Observed surface because it commits complete live state; it
+// is not an admission-layer user create request.
+//
+// Apply accepts Desired intent. It resolves the resource by group/version/kind,
+// rejects Observed apply intent before checking whether the object exists,
+// validates object shape, and reads live state. Missing-object Apply creates the
+// object by initializing ownership with the same field extraction path as
+// Create. Existing-object Apply delegates Desired merge and ownership semantics
+// to api/objectapply and commits through objectstore.Update.
+//
+// Delete resolves an explicit group/version/resource and object identity,
+// requires a non-zero expected store revision, and commits a tombstone through
+// objectstore.Delete. The returned State is the deleted live state and keeps the
+// previous live revision. Result.Revision is the tombstone commit revision.
+//
+// # Apply create-on-missing policy
+//
+// Apply creates missing objects by design. This is server-side-apply-like
+// behavior. Existing-object Apply delegates to objectapply; missing-object Apply
+// initializes ownership through valuefieldset via the same helper used by
+// Create.
+//
+// # Observed policy
+//
+// ApplyRequest represents Desired apply intent. Applied Observed payloads are
+// rejected even when the resource defines Observed. Live Observed is preserved
+// during existing-object Apply.
+//
+// # Non-goals
+//
+// objectlifecycle does not decode wire formats, select codecs, serve HTTP or
+// gRPC, run admission, authorize subjects, stamp ObjectMeta resourceVersion or
+// generation, generate UIDs, execute finalizers, perform graceful deletion,
+// default, convert, prune, list, watch, compact tombstones, reconcile
+// controllers, emit metrics/logging/tracing, or start background goroutines.
 package objectlifecycle

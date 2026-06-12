@@ -14,11 +14,7 @@
 
 package objectlifecycle
 
-import (
-	"context"
-
-	"arcoris.dev/apimachinery/api/objectstore"
-)
+import "context"
 
 // Delete removes live state after resolving the requested resource identity.
 //
@@ -33,14 +29,17 @@ func (e *Executor) Delete(ctx context.Context, req DeleteRequest) (Result, error
 	if err := checkContext(OperationDelete, ctx); err != nil {
 		return Result{}, err
 	}
+	if err := e.validateDeleteRequest(req); err != nil {
+		return Result{}, err
+	}
 
 	prepared, err := e.prepareKeyRequest(OperationDelete, req.Resource, req.Object)
 	if err != nil {
 		return Result{}, err
 	}
 
-	if err := objectstore.ValidateExpectedRevision(prepared.key, req.Expected); err != nil {
-		return Result{}, errorFor(OperationDelete, ErrorReasonInvalidRequest, prepared.key, ErrInvalidRequest, err)
+	if err := validateExpectedRevision(OperationDelete, prepared.key, req.Expected); err != nil {
+		return Result{}, err
 	}
 
 	deleted, err := e.store.Delete(ctx, prepared.key, req.Expected)
@@ -48,5 +47,10 @@ func (e *Executor) Delete(ctx context.Context, req DeleteRequest) (Result, error
 		return Result{}, mapStoreError(OperationDelete, prepared.key, err)
 	}
 
-	return Result{Operation: OperationDelete, Effect: EffectDeleted, State: deleted.Deleted}, nil
+	return Result{
+		Operation: OperationDelete,
+		Effect:    EffectDeleted,
+		State:     deleted.Deleted,
+		Revision:  deleted.Revision,
+	}, nil
 }

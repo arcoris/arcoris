@@ -24,22 +24,28 @@ import (
 
 func TestMapStoreErrorPreservesObjectstoreSentinels(t *testing.T) {
 	tests := []struct {
-		name string
-		in   error
-		out  error
+		name   string
+		in     error
+		out    error
+		reason ErrorReason
 	}{
-		{name: "not found", in: objectstore.ErrNotFound, out: ErrNotFound},
-		{name: "already exists", in: objectstore.ErrAlreadyExists, out: ErrAlreadyExists},
-		{name: "stale revision", in: objectstore.ErrStaleRevision, out: ErrStaleRevision},
-		{name: "conflict", in: objectstore.ErrConflict, out: ErrConflict},
-		{name: "other", in: errors.New("other"), out: ErrStoreFailed},
+		{name: "not found", in: objectstore.ErrNotFound, out: ErrNotFound, reason: ErrorReasonNotFound},
+		{name: "already exists", in: objectstore.ErrAlreadyExists, out: ErrAlreadyExists, reason: ErrorReasonAlreadyExists},
+		{name: "stale revision", in: objectstore.ErrStaleRevision, out: ErrStaleRevision, reason: ErrorReasonStaleRevision},
+		{name: "conflict", in: objectstore.ErrConflict, out: ErrConflict, reason: ErrorReasonConflict},
+		{name: "invalid key", in: objectstore.ErrInvalidKey, out: ErrInvalidRequest, reason: ErrorReasonInvalidRequest},
+		{name: "invalid revision", in: objectstore.ErrInvalidRevision, out: ErrInvalidRequest, reason: ErrorReasonInvalidExpectedRevision},
+		{name: "invalid state", in: objectstore.ErrInvalidState, out: ErrStoreFailed, reason: ErrorReasonStoreInvalidState},
+		{name: "nil context", in: objectstore.ErrNilContext, out: ErrInvalidRequest, reason: ErrorReasonInvalidContext},
+		{name: "uninitialized store", in: objectstore.ErrUninitializedStore, out: ErrInvalidExecutor, reason: ErrorReasonInvalidExecutor},
+		{name: "other", in: errors.New("other"), out: ErrStoreFailed, reason: ErrorReasonStoreFailed},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := mapStoreError(OperationApply, objectstore.Key{}, tt.in)
 
-			requireErrorIs(t, err, tt.out)
+			requireLifecycleError(t, err, tt.out, tt.reason)
 			requireErrorIs(t, err, tt.in)
 		})
 	}

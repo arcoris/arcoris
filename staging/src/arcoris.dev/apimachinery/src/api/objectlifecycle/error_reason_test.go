@@ -24,15 +24,22 @@ func TestErrorReasonStringAndValidity(t *testing.T) {
 		valid  bool
 	}{
 		{name: "invalid request", reason: ErrorReasonInvalidRequest, text: "invalid_request", valid: true},
+		{name: "invalid owner", reason: ErrorReasonInvalidOwner, text: "invalid_owner", valid: true},
+		{name: "invalid context", reason: ErrorReasonInvalidContext, text: "invalid_context", valid: true},
+		{name: "invalid expected revision", reason: ErrorReasonInvalidExpectedRevision, text: "invalid_expected_revision", valid: true},
+		{name: "unsupported observed apply", reason: ErrorReasonUnsupportedObservedApply, text: "unsupported_observed_apply", valid: true},
 		{name: "invalid executor", reason: ErrorReasonInvalidExecutor, text: "invalid_executor", valid: true},
 		{name: "resource not found", reason: ErrorReasonResourceNotFound, text: "resource_not_found", valid: true},
+		{name: "invalid resource contract", reason: ErrorReasonInvalidResourceContract, text: "invalid_resource_contract", valid: true},
 		{name: "validation failed", reason: ErrorReasonValidationFailed, text: "validation_failed", valid: true},
 		{name: "apply failed", reason: ErrorReasonApplyFailed, text: "apply_failed", valid: true},
+		{name: "ownership init failed", reason: ErrorReasonOwnershipInitFailed, text: "ownership_init_failed", valid: true},
 		{name: "conflict", reason: ErrorReasonConflict, text: "conflict", valid: true},
 		{name: "not found", reason: ErrorReasonNotFound, text: "not_found", valid: true},
 		{name: "already exists", reason: ErrorReasonAlreadyExists, text: "already_exists", valid: true},
 		{name: "stale revision", reason: ErrorReasonStaleRevision, text: "stale_revision", valid: true},
 		{name: "store failed", reason: ErrorReasonStoreFailed, text: "store_failed", valid: true},
+		{name: "store invalid state", reason: ErrorReasonStoreInvalidState, text: "store_invalid_state", valid: true},
 		{name: "unknown", reason: ErrorReason("other"), text: "unknown", valid: false},
 	}
 

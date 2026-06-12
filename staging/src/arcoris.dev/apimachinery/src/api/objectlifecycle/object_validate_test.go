@@ -52,4 +52,5 @@ func TestValidateObjectUsesObservedValidator(t *testing.T) {
 	if result.State.Object.Observed == nil {
 		t.Fatalf("Observed missing")
 	}
+	requireObservedReady(t, result.State, "true")
 }

@@ -33,6 +33,16 @@ func mapStoreError(op Operation, key objectstore.Key, err error) error {
 		return errorFor(op, ErrorReasonStaleRevision, key, ErrStaleRevision, err)
 	case errors.Is(err, objectstore.ErrConflict):
 		return errorFor(op, ErrorReasonConflict, key, ErrConflict, err)
+	case errors.Is(err, objectstore.ErrInvalidKey):
+		return errorFor(op, ErrorReasonInvalidRequest, key, ErrInvalidRequest, err)
+	case errors.Is(err, objectstore.ErrInvalidRevision):
+		return errorFor(op, ErrorReasonInvalidExpectedRevision, key, ErrInvalidRequest, err)
+	case errors.Is(err, objectstore.ErrInvalidState):
+		return errorFor(op, ErrorReasonStoreInvalidState, key, ErrStoreFailed, err)
+	case errors.Is(err, objectstore.ErrNilContext):
+		return errorFor(op, ErrorReasonInvalidContext, key, ErrInvalidRequest, err)
+	case errors.Is(err, objectstore.ErrUninitializedStore):
+		return errorFor(op, ErrorReasonInvalidExecutor, key, ErrInvalidExecutor, err)
 	default:
 		return errorFor(op, ErrorReasonStoreFailed, key, ErrStoreFailed, err)
 	}

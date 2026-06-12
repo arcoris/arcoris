@@ -242,6 +242,26 @@ func requireImage(t *testing.T, state objectstore.State, want string) {
 	}
 }
 
+func requireObservedReady(t *testing.T, state objectstore.State, want string) {
+	t.Helper()
+
+	if state.Object.Observed == nil {
+		t.Fatalf("observed is nil")
+	}
+	objectView, ok := state.Object.Observed.AsRecord()
+	if !ok {
+		t.Fatalf("observed is not object")
+	}
+	got, ok := objectView.Get("ready")
+	if !ok {
+		t.Fatalf("observed.ready missing")
+	}
+	text, ok := got.AsString()
+	if !ok || text != want {
+		t.Fatalf("observed.ready = %q, %v; want %q, true", text, ok, want)
+	}
+}
+
 func requireOwnedPath(t *testing.T, doc objectownership.Document, owner fieldownership.Owner, path objectownership.Path) {
 	t.Helper()
 
@@ -257,6 +277,14 @@ func requireOwnedPath(t *testing.T, doc objectownership.Document, owner fieldown
 	}
 
 	t.Fatalf("ownership path %s for owner %s not found in %#v", path, owner, doc)
+}
+
+func requireNormalizedOwnership(t *testing.T, doc objectownership.Document) {
+	t.Helper()
+
+	if err := objectownership.ValidateNormalized(doc); err != nil {
+		t.Fatalf("ownership is not normalized: %v", err)
+	}
 }
 
 func ownershipPath(path fieldpath.Path) objectownership.Path {

@@ -39,8 +39,12 @@ func TestCreateValidObjectStoresCommittedState(t *testing.T) {
 	if !result.State.Revision.IsValid() {
 		t.Fatalf("revision is invalid")
 	}
+	if result.Revision != result.State.Revision {
+		t.Fatalf("result revision = %v; want state revision %v", result.Revision, result.State.Revision)
+	}
 	requireImage(t, result.State, "api:v1")
 	requireOwnedPath(t, result.State.Ownership, owner("creator"), objectownership.Path("$.image"))
+	requireNormalizedOwnership(t, result.State.Ownership)
 }
 
 func TestCreateExistingReturnsAlreadyExists(t *testing.T) {
@@ -63,6 +67,34 @@ func TestCreateInvalidObjectReturnsValidationFailed(t *testing.T) {
 	_, err := executor.Create(
 		context.Background(),
 		CreateRequest{Object: obj, Owner: owner("creator")},
+	)
+
+	requireLifecycleError(t, err, ErrValidationFailed, ErrorReasonValidationFailed)
+}
+
+func TestCreateWithObservedAndDescriptorCommitsLiveState(t *testing.T) {
+	executor := testExecutor(
+		t,
+		WithResourceResolver(testCatalog(t, testDefinition(resourceObserved()))),
+	)
+
+	result, err := executor.Create(
+		context.Background(),
+		CreateRequest{Object: testObservedObject(1, "api:v1", "true"), Owner: owner("creator")},
+	)
+	requireNoError(t, err)
+
+	requireEffect(t, result, OperationCreate, EffectCreated)
+	requireObservedReady(t, result.State, "true")
+	requireNormalizedOwnership(t, result.State.Ownership)
+}
+
+func TestCreateWithObservedWithoutDescriptorFailsValidation(t *testing.T) {
+	executor := testExecutor(t)
+
+	_, err := executor.Create(
+		context.Background(),
+		CreateRequest{Object: testObservedObject(1, "api:v1", "true"), Owner: owner("creator")},
 	)
 
 	requireLifecycleError(t, err, ErrValidationFailed, ErrorReasonValidationFailed)

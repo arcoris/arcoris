@@ -33,6 +33,10 @@ func TestDeleteExistingRevisionDeletesState(t *testing.T) {
 	if result.State.Revision != created.State.Revision {
 		t.Fatalf("deleted revision = %v; want %v", result.State.Revision, created.State.Revision)
 	}
+	if !result.Revision.IsValid() || !created.State.Revision.Before(result.Revision) {
+		t.Fatalf("delete result revision = %v; want after %v", result.Revision, created.State.Revision)
+	}
+	requireNormalizedOwnership(t, result.State.Ownership)
 
 	_, err = executor.Get(context.Background(), GetRequest{Resource: testGVR(), Object: testName(1)})
 	requireLifecycleError(t, err, ErrNotFound, ErrorReasonNotFound)
@@ -69,5 +73,5 @@ func TestDeleteZeroExpectedRevisionReturnsInvalidRequest(t *testing.T) {
 		DeleteRequest{Resource: testGVR(), Object: testName(1)},
 	)
 
-	requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidRequest)
+	requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidExpectedRevision)
 }

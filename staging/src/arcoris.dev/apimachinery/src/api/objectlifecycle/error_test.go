@@ -21,6 +21,7 @@ func TestErrorSentinelsAreNonNil(t *testing.T) {
 		ErrInvalidRequest,
 		ErrInvalidExecutor,
 		ErrResourceNotFound,
+		ErrInvalidResourceContract,
 		ErrValidationFailed,
 		ErrApplyFailed,
 		ErrConflict,

@@ -26,7 +26,7 @@ func TestCreateRejectsNilContext(t *testing.T) {
 
 	_, err := executor.Create(nil, CreateRequest{Object: testObject(1, "api:v1"), Owner: owner("creator")})
 
-	requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidRequest)
+	requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidContext)
 	requireErrorIs(t, err, ErrNilContext)
 }
 
@@ -38,6 +38,6 @@ func TestCreateRejectsInvalidOwner(t *testing.T) {
 		CreateRequest{Object: testObject(1, "api:v1")},
 	)
 
-	requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidRequest)
+	requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidOwner)
 	requireErrorIs(t, err, fieldownership.ErrInvalidOwner)
 }

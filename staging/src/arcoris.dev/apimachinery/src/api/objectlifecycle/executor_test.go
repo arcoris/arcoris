@@ -17,6 +17,8 @@ package objectlifecycle
 import (
 	"testing"
 
+	"arcoris.dev/apimachinery/api/objectapply"
+	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/valuevalidation"
 )
 
@@ -58,4 +60,43 @@ func TestNewExecutorAcceptsValidDependencies(t *testing.T) {
 	if executor == nil {
 		t.Fatalf("executor is nil")
 	}
+}
+
+func TestWithApplyOptionsResolverDoesNotOverrideTypeResolver(t *testing.T) {
+	lifecycleResolver := &staticTypeResolver{}
+	applyResolver := &staticTypeResolver{}
+	executor, err := NewExecutor(
+		WithStore(testStore(t)),
+		WithResourceResolver(testCatalog(t)),
+		WithDesiredValidator(valuevalidation.SurfaceValidator{}),
+		WithTypeResolver(lifecycleResolver),
+		WithApplyOptions(objectapply.Options{
+			Resolver: applyResolver,
+			MaxDepth: 7,
+			Force:    true,
+		}),
+	)
+	requireNoError(t, err)
+
+	options := executor.optionsForApply(false)
+	if options.Resolver != lifecycleResolver {
+		t.Fatalf("Resolver = %T; want lifecycle resolver", options.Resolver)
+	}
+	if options.MaxDepth != 7 {
+		t.Fatalf("MaxDepth = %d; want 7", options.MaxDepth)
+	}
+	if options.Force {
+		t.Fatalf("Force = true; want request override false")
+	}
+
+	options = executor.optionsForApply(true)
+	if !options.Force {
+		t.Fatalf("Force = false; want request override true")
+	}
+}
+
+type staticTypeResolver struct{}
+
+func (r *staticTypeResolver) Resolve(types.TypeName) (types.Definition, bool) {
+	return types.Definition{}, false
 }

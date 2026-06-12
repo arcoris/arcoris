@@ -22,9 +22,8 @@ import (
 // Result is the common successful lifecycle operation result.
 //
 // State is populated with committed store state for found, created, updated,
-// and deleted effects. Delete returns the deleted live state; the store-level
-// tombstone revision stays in objectstore.DeleteResult for lower layers that
-// need commit-event detail.
+// and deleted effects. Delete returns the deleted live state in State and the
+// tombstone commit revision in Revision.
 type Result struct {
 	// Operation is the lifecycle operation that succeeded.
 	Operation Operation
@@ -34,6 +33,13 @@ type Result struct {
 
 	// State is the committed or deleted live object state associated with Effect.
 	State objectstore.State
+
+	// Revision is the store-local revision associated with this result.
+	//
+	// For Get, Create, and Apply it is the live State revision. For Delete it
+	// is the tombstone commit revision while State.Revision remains the deleted
+	// live revision.
+	Revision objectstore.Revision
 }
 
 // IsValid reports whether r has a known operation and effect.

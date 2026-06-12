@@ -25,6 +25,8 @@ var (
 	ErrInvalidExecutor = errors.New("objectlifecycle: invalid executor")
 	// ErrResourceNotFound classifies resource resolver misses.
 	ErrResourceNotFound = errors.New("objectlifecycle: resource not found")
+	// ErrInvalidResourceContract classifies inconsistent resolved resource data.
+	ErrInvalidResourceContract = errors.New("objectlifecycle: invalid resource contract")
 	// ErrValidationFailed classifies objectvalidation failures.
 	ErrValidationFailed = errors.New("objectlifecycle: validation failed")
 	// ErrApplyFailed classifies non-conflict objectapply or ownership failures.
