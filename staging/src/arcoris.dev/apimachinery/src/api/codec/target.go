@@ -16,9 +16,9 @@ package codec
 
 // Target names an API document model supported by a codec.
 //
-// Target is closed-world in v1 because targets are framework document models,
-// not codec implementation names. Adding a target means the framework has a new
-// API document model, not merely that a new format implementation exists.
+// Target is closed-world because targets are framework document models, not
+// codec implementation names. Adding a target means the framework has a new API
+// document model, not merely that a new format implementation exists.
 type Target string
 
 const (

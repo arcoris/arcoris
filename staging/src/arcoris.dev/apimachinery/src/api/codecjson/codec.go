@@ -26,7 +26,7 @@ var (
 	_ codec.StreamingCodec = Codec{}
 )
 
-// Codec implements JSON byte-slice and stream codecs for all v1 targets.
+// Codec implements JSON byte-slice and stream codecs for all current targets.
 //
 // Codec is immutable after construction and carries only normalized local
 // configuration. It does not register itself globally.

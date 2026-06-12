@@ -21,11 +21,23 @@ import (
 )
 
 func TestAllowOwnershipStateField(t *testing.T) {
-	if !allowOwnershipStateField(apidocument.OwnershipFieldDesired.String()) || !allowOwnershipStateField(apidocument.OwnershipFieldMetadata.String()) {
+	if !allowOwnershipStateField(apidocument.OwnershipFieldDesired.String()) ||
+		!allowOwnershipStateField(apidocument.OwnershipFieldObserved.String()) ||
+		!allowOwnershipStateField(apidocument.OwnershipFieldMetadata.String()) {
 		t.Fatalf("state field allow-list rejected known fields")
 	}
 	if allowOwnershipStateField(apidocument.OwnershipFieldEntries.String()) {
 		t.Fatalf("state field allow-list accepted surface field")
+	}
+}
+
+func TestAllowOwnershipMetadataField(t *testing.T) {
+	if !allowOwnershipMetadataField(apidocument.OwnershipFieldLabels.String()) ||
+		!allowOwnershipMetadataField(apidocument.OwnershipFieldAnnotations.String()) {
+		t.Fatalf("metadata field allow-list rejected known fields")
+	}
+	if allowOwnershipMetadataField(apidocument.OwnershipFieldDesired.String()) {
+		t.Fatalf("metadata field allow-list accepted state field")
 	}
 }
 
@@ -43,6 +55,6 @@ func TestAllowOwnershipEntryField(t *testing.T) {
 		t.Fatalf("entry field allow-list rejected known fields")
 	}
 	if allowOwnershipEntryField(apidocument.OwnershipFieldDesired.String()) {
-		t.Fatalf("entry field allow-list accepted document field")
+		t.Fatalf("entry field allow-list accepted state field")
 	}
 }

@@ -20,7 +20,7 @@ import (
 	"arcoris.dev/apimachinery/api/codec"
 )
 
-// TestPackageDocumentedTargets checks the v1 targets promised by package docs.
+// TestPackageDocumentedTargets checks the targets promised by package docs.
 func TestPackageDocumentedTargets(t *testing.T) {
 	info := newTestCodec(t).Info()
 

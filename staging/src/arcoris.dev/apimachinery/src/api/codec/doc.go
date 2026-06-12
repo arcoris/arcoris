@@ -32,12 +32,15 @@
 // instances or by a higher-level selection/profile plan.
 //
 // Codecs transform bytes or streams to and from API document models such as
-// api/value.Value, value-backed api/object envelopes, and
-// api/objectownership.State. Codecs do not validate values against api/types
-// descriptors, perform object validation, apply objects, compute field
-// ownership conflicts, default, prune, convert API versions, perform resource
-// catalog lookup, access storage, run admission, or execute runtime/server
-// lifecycle behavior.
+// api/value.Value, value-backed api/object envelopes, and canonical
+// api/objectownership.State. Object ownership has no domain document version in
+// the codec contract; future storage or wire-envelope versioning belongs
+// outside api/objectownership and outside this format-independent package.
+//
+// Codecs do not validate values against api/types descriptors, perform object
+// validation, apply objects, compute field ownership conflicts, default, prune,
+// convert API versions, perform resource catalog lookup, access storage, run
+// admission, or execute runtime/server lifecycle behavior.
 //
 // Terminology:
 //
@@ -45,10 +48,10 @@
 //     implementations.
 //   - ValueCodec, ObjectCodec, and ObjectOwnershipCodec are byte-slice target
 //     capabilities.
-//   - Codec is the full byte-slice codec interface for all v1 targets.
+//   - Codec is the full byte-slice codec interface for all current targets.
 //   - ValueStreamCodec, ObjectStreamCodec, and ObjectOwnershipStreamCodec are
 //     streaming target capabilities.
-//   - StreamingCodec is the full stream codec interface for all v1 targets.
+//   - StreamingCodec is the full stream codec interface for all current targets.
 //
 // Codec does not imply streaming support. StreamingCodec does not imply
 // byte-slice support. Implementations may expose either surface or both.
@@ -69,6 +72,6 @@
 // float64 when that can change the value.
 //
 // Formats and media types are open-world so custom codecs can exist. Targets
-// are closed-world in v1 because they name API document models understood by the
-// framework.
+// are closed-world because they name API document models understood by the
+// framework, not per-format extension points.
 package codec

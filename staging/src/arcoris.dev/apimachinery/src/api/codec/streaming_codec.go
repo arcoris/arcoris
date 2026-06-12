@@ -14,7 +14,7 @@
 
 package codec
 
-// StreamingCodec is implemented by stream-based codecs supporting every v1 target.
+// StreamingCodec is implemented by stream-based codecs supporting every current target.
 //
 // StreamingCodec is the stream counterpart to Codec. It is intentionally
 // separate from Codec so implementations can support byte slices, streams,

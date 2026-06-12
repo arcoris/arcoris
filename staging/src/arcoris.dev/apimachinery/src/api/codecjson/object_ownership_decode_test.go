@@ -66,35 +66,53 @@ func TestDecodeObjectOwnershipRejectsUnknownMetadataField(t *testing.T) {
 	requireCodecJSONError(t, err, "$.metadata.finalizers", ErrorReasonInvalidEnvelope)
 }
 
-func TestDecodeObjectOwnershipRejectsEntriesNonArray(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":{}}}`))
+func TestDecodeObjectOwnershipRejectsInvalidSurfaceShapes(t *testing.T) {
+	testCases := map[string]struct {
+		json string
+		path string
+	}{
+		"desired entries non-array": {
+			json: `{"desired":{"entries":{}}}`,
+			path: "$.desired.entries",
+		},
+		"observed entries non-array": {
+			json: `{"observed":{"entries":{}}}`,
+			path: "$.observed.entries",
+		},
+		"metadata labels entries non-array": {
+			json: `{"metadata":{"labels":{"entries":{}}}}`,
+			path: "$.metadata.labels.entries",
+		},
+		"metadata annotations entries non-array": {
+			json: `{"metadata":{"annotations":{"entries":{}}}}`,
+			path: "$.metadata.annotations.entries",
+		},
+		"desired entry non-object": {
+			json: `{"desired":{"entries":[1]}}`,
+			path: "$.desired.entries[0]",
+		},
+		"observed missing owner": {
+			json: `{"observed":{"entries":[{"fields":[]}]}}`,
+			path: "$.observed.entries[0].owner",
+		},
+		"metadata labels owner non-string": {
+			json: `{"metadata":{"labels":{"entries":[{"owner":1}]}}}`,
+			path: "$.metadata.labels.entries[0].owner",
+		},
+		"metadata annotations field non-string": {
+			json: `{"metadata":{"annotations":{"entries":[{"owner":"annotator","fields":[1]}]}}}`,
+			path: "$.metadata.annotations.entries[0].fields[0]",
+		},
+	}
 
-	requireErrorIs(t, err, ErrInvalidEnvelope)
-}
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			_, err := newTestCodec(t).DecodeObjectOwnership([]byte(testCase.json))
 
-func TestDecodeObjectOwnershipRejectsEntryNonObject(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":[1]}}`))
-
-	requireErrorIs(t, err, ErrInvalidEnvelope)
-}
-
-func TestDecodeObjectOwnershipRejectsOwnerMissing(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":[{"fields":[]}]}}`))
-
-	requireErrorIs(t, err, ErrInvalidEnvelope)
-	requireCodecJSONError(t, err, "$.desired.entries[0].owner", ErrorReasonInvalidEnvelope)
-}
-
-func TestDecodeObjectOwnershipRejectsOwnerNonString(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":[{"owner":1}]}}`))
-
-	requireErrorIs(t, err, ErrInvalidEnvelope)
-}
-
-func TestDecodeObjectOwnershipRejectsFieldNonString(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":[{"owner":"user-cli","fields":[1]}]}}`))
-
-	requireErrorIs(t, err, ErrInvalidEnvelope)
+			requireErrorIs(t, err, ErrInvalidEnvelope)
+			requireCodecJSONError(t, err, testCase.path, ErrorReasonInvalidEnvelope)
+		})
+	}
 }
 
 func TestDecodeObjectOwnershipRejectsUnknownField(t *testing.T) {
@@ -109,12 +127,10 @@ func TestDecodeObjectOwnershipIgnoresUnknownFieldsWhenConfigured(t *testing.T) {
 		config.Decode.Ownership.UnknownFields = jsonconfig.UnknownFieldIgnore
 	})
 
-	state, err := c.DecodeObjectOwnership([]byte(`{"extra":1}`))
+	state, err := c.DecodeObjectOwnership([]byte(`{"extra":1,"metadata":{"extra":true},"desired":{"entries":[{"owner":"user-cli","fields":["$.image"],"extra":1}]}}`))
 	requireNoError(t, err)
 
-	if !state.IsEmpty() {
-		t.Fatalf("state = %#v; want empty", state)
-	}
+	requireOwnershipFields(t, state.Desired(), "user-cli", "$.image")
 }
 
 func TestDecodeObjectOwnershipRejectsInvalidOwner(t *testing.T) {

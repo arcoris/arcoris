@@ -14,10 +14,10 @@
 
 package codec
 
-// Validate checks that t is one of the v1 framework document targets.
+// Validate checks that t is one of the supported framework document targets.
 //
-// Unlike Format and MediaType, Target is not open-world in v1. Unknown values
-// are rejected even when their text is syntactically safe.
+// Unlike Format and MediaType, Target is not open-world. Unknown values are
+// rejected even when their text is syntactically safe.
 func (t Target) Validate() error {
 	return validateTargetAt(pathCodecTarget, t)
 }

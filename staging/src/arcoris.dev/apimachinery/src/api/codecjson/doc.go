@@ -18,6 +18,10 @@
 // value.Value, value-backed object envelopes, and objectownership.State,
 // including byte-slice and stream encode/decode APIs.
 //
+// Object ownership JSON represents the current canonical objectownership.State
+// shape directly. It does not carry domain model versions, migration markers,
+// or storage-envelope metadata.
+//
 // Codec instances are configured at construction with jsonconfig.Config from
 // api/codecjson/jsonconfig. That subpackage owns JSON-specific public
 // configuration, defaults, modes, and validation. Runtime decode and encode

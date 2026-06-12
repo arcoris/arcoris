@@ -16,7 +16,7 @@ package codecjson
 
 import "arcoris.dev/apimachinery/api/apidocument"
 
-// allowObjectEnvelopeField reports whether name belongs to the v1 object envelope.
+// allowObjectEnvelopeField reports whether name belongs to the object envelope.
 func allowObjectEnvelopeField(name string) bool {
 	switch name {
 	case apidocument.ObjectFieldAPIVersion.String(),

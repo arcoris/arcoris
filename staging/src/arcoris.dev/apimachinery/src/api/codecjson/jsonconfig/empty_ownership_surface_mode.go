@@ -14,17 +14,17 @@
 
 package jsonconfig
 
-// EmptyOwnershipSurfaceMode controls empty surfaces ownership surface emission.
+// EmptyOwnershipSurfaceMode controls empty ownership surface emission.
 type EmptyOwnershipSurfaceMode uint8
 
 const (
 	// EmptyOwnershipSurfaceDefault defers to the package default during Resolve.
 	EmptyOwnershipSurfaceDefault EmptyOwnershipSurfaceMode = iota
 
-	// EmptyOwnershipSurfaceEmit emits desired even when the surface is empty.
+	// EmptyOwnershipSurfaceEmit emits supported surfaces even when they are empty.
 	EmptyOwnershipSurfaceEmit
 
-	// EmptyOwnershipSurfaceOmit omits desired when the surface is empty.
+	// EmptyOwnershipSurfaceOmit omits supported surfaces when they are empty.
 	EmptyOwnershipSurfaceOmit
 )
 

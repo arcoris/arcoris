@@ -18,6 +18,10 @@
 // The package contains JSON-specific configuration structs, modes, defaults,
 // and validation. It does not implement JSON encoding or decoding.
 //
+// Ownership configuration controls JSON representation of canonical
+// objectownership.State values. It does not define storage schema versions or
+// domain ownership-document migration policy.
+//
 // Configuration is resolved when a codecjson.Codec is constructed. Runtime
 // encode/decode calls do not receive per-call options.
 //

@@ -14,7 +14,7 @@
 
 package codec
 
-// Codec is implemented by byte-based codecs supporting every v1 target.
+// Codec is implemented by byte-based codecs supporting every current target.
 //
 // Codec is the full byte-slice convenience interface. Streaming support is
 // intentionally not required here; a codec can be complete for bytes while still
