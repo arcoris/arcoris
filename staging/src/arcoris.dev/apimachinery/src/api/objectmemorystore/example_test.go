@@ -103,6 +103,6 @@ func exampleState(text string) objectstore.State {
 			meta.ObjectMeta{Name: "main", Namespace: "system"},
 			value.StringValue(text),
 		),
-		Ownership: objectownership.Document{Version: objectownership.DocumentVersionV1},
+		Ownership: objectownership.EmptyState(),
 	}
 }

@@ -19,90 +19,86 @@ import (
 
 	"arcoris.dev/apimachinery/api/codecjson/jsonconfig"
 	"arcoris.dev/apimachinery/api/fieldownership"
-	"arcoris.dev/apimachinery/api/objectownership"
+	"arcoris.dev/apimachinery/api/fieldpath"
 )
 
-func TestDecodeObjectOwnershipDocument(t *testing.T) {
-	data := []byte(`{"version":"v1","desired":{"entries":[{"owner":"user-cli","fields":["$.image","$.replicas"]}]}}`)
+func TestDecodeObjectOwnershipState(t *testing.T) {
+	data := []byte(`{"desired":{"entries":[{"owner":"user-cli","fields":["$.image","$.replicas"]}]},"observed":{"entries":[{"owner":"controller","fields":["$.ready"]}]},"metadata":{"labels":{"entries":[{"owner":"labeler","fields":["$[\"scheduler.arcoris.dev/mode\"]"]}]},"annotations":{"entries":[{"owner":"annotator","fields":["$[\"with.dots\"]"]}]}}}`)
 
 	got, err := newTestCodec(t).DecodeObjectOwnership(data)
 	requireNoError(t, err)
 
-	if got.Version != objectownership.DocumentVersionV1 {
-		t.Fatalf("version = %q", got.Version)
-	}
-	if len(got.Desired.Entries) != 1 {
-		t.Fatalf("entries = %#v", got.Desired.Entries)
-	}
-	if got.Desired.Entries[0].Owner != fieldownership.MustOwner("user-cli") {
-		t.Fatalf("owner = %q", got.Desired.Entries[0].Owner)
-	}
+	requireOwnershipFields(t, got.Desired(), "user-cli", "$.image", "$.replicas")
+	requireOwnershipFields(t, got.Observed(), "controller", "$.ready")
+	requireOwnershipFields(t, got.Metadata().Labels(), "labeler", `$["scheduler.arcoris.dev/mode"]`)
+	requireOwnershipFields(t, got.Metadata().Annotations(), "annotator", `$["with.dots"]`)
 }
 
-func TestDecodeObjectOwnershipEmptyDesired(t *testing.T) {
-	got, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"version":"v1","desired":{"entries":[]}}`))
+func TestDecodeObjectOwnershipNormalizesDuplicateEntries(t *testing.T) {
+	got, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":[{"owner":"user-cli","fields":["$.image"]},{"owner":"user-cli","fields":["$.image","$.replicas"]}]}}`))
 	requireNoError(t, err)
 
-	if !got.Desired.IsEmpty() {
-		t.Fatalf("desired = %#v; want empty", got.Desired)
-	}
+	requireOwnershipFields(t, got.Desired(), "user-cli", "$.image", "$.replicas")
 }
 
-func TestDecodeObjectOwnershipMissingDesired(t *testing.T) {
-	got, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"version":"v1"}`))
+func TestDecodeObjectOwnershipEmptySurfaces(t *testing.T) {
+	got, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":[]}}`))
 	requireNoError(t, err)
 
-	if !got.Desired.IsEmpty() {
-		t.Fatalf("desired = %#v; want empty", got.Desired)
+	if !got.Desired().IsEmpty() {
+		t.Fatalf("desired = %#v; want empty", got.Desired())
 	}
 }
 
-func TestDecodeObjectOwnershipRejectsMissingVersion(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{}}`))
+func TestDecodeObjectOwnershipEmptyState(t *testing.T) {
+	got, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{}`))
+	requireNoError(t, err)
 
-	requireErrorIs(t, err, ErrInvalidEnvelope)
-	requireCodecJSONError(t, err, "$.version", ErrorReasonInvalidEnvelope)
+	if !got.IsEmpty() {
+		t.Fatalf("state = %#v; want empty", got)
+	}
 }
 
-func TestDecodeObjectOwnershipRejectsVersionNonString(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"version":1}`))
+func TestDecodeObjectOwnershipRejectsUnknownMetadataField(t *testing.T) {
+	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"metadata":{"finalizers":{}}}`))
 
 	requireErrorIs(t, err, ErrInvalidEnvelope)
+	requireCodecJSONError(t, err, "$.metadata.finalizers", ErrorReasonInvalidEnvelope)
 }
 
 func TestDecodeObjectOwnershipRejectsEntriesNonArray(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"version":"v1","desired":{"entries":{}}}`))
+	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":{}}}`))
 
 	requireErrorIs(t, err, ErrInvalidEnvelope)
 }
 
 func TestDecodeObjectOwnershipRejectsEntryNonObject(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"version":"v1","desired":{"entries":[1]}}`))
+	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":[1]}}`))
 
 	requireErrorIs(t, err, ErrInvalidEnvelope)
 }
 
 func TestDecodeObjectOwnershipRejectsOwnerMissing(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"version":"v1","desired":{"entries":[{"fields":[]}]}}`))
+	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":[{"fields":[]}]}}`))
 
 	requireErrorIs(t, err, ErrInvalidEnvelope)
 	requireCodecJSONError(t, err, "$.desired.entries[0].owner", ErrorReasonInvalidEnvelope)
 }
 
 func TestDecodeObjectOwnershipRejectsOwnerNonString(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"version":"v1","desired":{"entries":[{"owner":1}]}}`))
+	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":[{"owner":1}]}}`))
 
 	requireErrorIs(t, err, ErrInvalidEnvelope)
 }
 
 func TestDecodeObjectOwnershipRejectsFieldNonString(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"version":"v1","desired":{"entries":[{"owner":"user-cli","fields":[1]}]}}`))
+	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":[{"owner":"user-cli","fields":[1]}]}}`))
 
 	requireErrorIs(t, err, ErrInvalidEnvelope)
 }
 
 func TestDecodeObjectOwnershipRejectsUnknownField(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"version":"v1","unknown":true}`))
+	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"unknown":true}`))
 
 	requireErrorIs(t, err, ErrInvalidEnvelope)
 	requireCodecJSONError(t, err, "$.unknown", ErrorReasonInvalidEnvelope)
@@ -113,30 +109,40 @@ func TestDecodeObjectOwnershipIgnoresUnknownFieldsWhenConfigured(t *testing.T) {
 		config.Decode.Ownership.UnknownFields = jsonconfig.UnknownFieldIgnore
 	})
 
-	doc, err := c.DecodeObjectOwnership([]byte(`{"version":"v1","extra":1}`))
+	state, err := c.DecodeObjectOwnership([]byte(`{"extra":1}`))
 	requireNoError(t, err)
 
-	if doc.Version != objectownership.DocumentVersionV1 {
-		t.Fatalf("version = %q; want v1", doc.Version)
+	if !state.IsEmpty() {
+		t.Fatalf("state = %#v; want empty", state)
 	}
 }
 
 func TestDecodeObjectOwnershipRejectsInvalidOwner(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"version":"v1","desired":{"entries":[{"owner":"","fields":[]}]}}`))
+	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":[{"owner":"","fields":[]}]}}`))
 
 	requireErrorIs(t, err, ErrInvalidEnvelope)
 	requireErrorIs(t, err, fieldownership.ErrInvalidOwner)
 }
 
 func TestDecodeObjectOwnershipRejectsInvalidPath(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"version":"v1","desired":{"entries":[{"owner":"user-cli","fields":["not-a-path"]}]}}`))
+	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":[{"owner":"user-cli","fields":["not-a-path"]}]}}`))
 
 	requireErrorIs(t, err, ErrInvalidEnvelope)
-	requireErrorIs(t, err, objectownership.ErrInvalidPath)
+	requireErrorIs(t, err, fieldpath.ErrInvalidPath)
 }
 
 func TestDecodeObjectOwnershipRejectsDuplicateKey(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"version":"v1","version":"v1"}`))
+	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{},"desired":{}}`))
 
 	requireErrorIs(t, err, ErrDuplicateKey)
+}
+
+func requireOwnershipFields(t *testing.T, state fieldownership.State, ownerName string, paths ...string) {
+	t.Helper()
+
+	got := state.FieldsFor(fieldownership.MustOwner(ownerName))
+	want := ownershipFields(paths...)
+	if !got.Equal(want) {
+		t.Fatalf("%s fields = %s; want %s", ownerName, got.String(), want.String())
+	}
 }

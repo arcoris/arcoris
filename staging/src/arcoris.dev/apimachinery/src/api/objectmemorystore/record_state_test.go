@@ -18,16 +18,17 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/fieldownership"
+	"arcoris.dev/apimachinery/api/value"
 )
 
 func TestRecordVisibleStateReturnsDetachedCopy(t *testing.T) {
 	rec := liveRecord(testState("visible"), 1)
 
 	visible := rec.visibleState()
-	visible.Ownership.Desired.Entries[0].Owner = fieldownership.MustOwner("mutated")
+	visible.Object.Desired = value.StringValue("mutated")
 
 	again := rec.visibleState()
-	if again.Ownership.Desired.Entries[0].Owner != fieldownership.MustOwner("manager") {
-		t.Fatalf("visibleState retained caller mutation")
+	if !again.Ownership.Desired().FieldsFor(fieldownership.MustOwner("manager")).Equal(fieldSet("$.desired")) {
+		t.Fatalf("visibleState ownership = %s; want $.desired", again.Ownership.Desired().FieldsFor(fieldownership.MustOwner("manager")))
 	}
 }

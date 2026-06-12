@@ -16,66 +16,19 @@ package objectownership
 
 import "testing"
 
+func TestValidateNormalizedAcceptsEmptyState(t *testing.T) {
+	requireNoError(t, ValidateNormalized(EmptyState()))
+}
+
 func TestValidateNormalizedAcceptsNormalizeOutput(t *testing.T) {
-	normalized, err := Normalize(document(
-		documentEntry("z", "$.z", "$.z"),
-		documentEntry("a", "$.spec.image", "$.spec"),
-		documentEntry("z", "$.a"),
-		documentEntry("empty"),
-	))
-	requireNoError(t, err)
+	state := NewStateWithSurfaces(
+		ownershipState(ownershipEntry("desired", "$.image")),
+		ownershipState(ownershipEntry("observed", "$.ready")),
+		NewMetadataState(
+			ownershipState(ownershipEntry("labels", `$["app"]`)),
+			ownershipState(ownershipEntry("annotations", `$["scheduler.arcoris.dev/mode"]`)),
+		),
+	)
 
-	requireNoError(t, ValidateNormalized(normalized))
-}
-
-func TestValidateNormalizedRejectsUnsortedEntries(t *testing.T) {
-	err := ValidateNormalized(document(documentEntry("z", "$.z"), documentEntry("a", "$.a")))
-
-	requireErrorIs(t, err, ErrNotNormalized)
-	requireObjectOwnershipError(t, err, pathDocument, ErrorReasonNotNormalized)
-}
-
-func TestValidateNormalizedRejectsDuplicateOwnerEntries(t *testing.T) {
-	err := ValidateNormalized(document(documentEntry("user", "$.image"), documentEntry("user", "$.replicas")))
-
-	requireErrorIs(t, err, ErrNotNormalized)
-	requireObjectOwnershipError(t, err, pathDocument, ErrorReasonNotNormalized)
-}
-
-func TestValidateNormalizedRejectsDuplicateFields(t *testing.T) {
-	err := ValidateNormalized(document(documentEntry("user", "$.image", "$.image")))
-
-	requireErrorIs(t, err, ErrNotNormalized)
-	requireObjectOwnershipError(t, err, pathDocument, ErrorReasonNotNormalized)
-}
-
-func TestValidateNormalizedRejectsEmptyEntries(t *testing.T) {
-	err := ValidateNormalized(document(documentEntry("user")))
-
-	requireErrorIs(t, err, ErrNotNormalized)
-	requireObjectOwnershipError(t, err, pathDocument, ErrorReasonNotNormalized)
-}
-
-func TestValidateNormalizedRejectsNonNilEmptySurface(t *testing.T) {
-	err := ValidateNormalized(Document{
-		Version: DocumentVersionV1,
-		Desired: Surface{Entries: []Entry{}},
-	})
-
-	requireErrorIs(t, err, ErrNotNormalized)
-	requireObjectOwnershipError(t, err, pathDocument, ErrorReasonNotNormalized)
-}
-
-func TestValidateNormalizedPreservesValidationErrors(t *testing.T) {
-	err := ValidateNormalized(Document{})
-
-	requireErrorIs(t, err, ErrInvalidDocument)
-	requireObjectOwnershipError(t, err, pathDocumentVersion, ErrorReasonMissingVersion)
-}
-
-func TestValidateNormalizedRejectsUnsupportedVersion(t *testing.T) {
-	err := ValidateNormalized(Document{Version: "v2"})
-
-	requireErrorIs(t, err, ErrUnsupportedVersion)
-	requireObjectOwnershipError(t, err, pathDocumentVersion, ErrorReasonUnsupportedVersion)
+	requireNoError(t, ValidateNormalized(Normalize(state)))
 }

@@ -23,10 +23,12 @@ import (
 	"arcoris.dev/apimachinery/api/fieldpath"
 )
 
+// owner constructs a validated test owner and fails fast on fixture mistakes.
 func owner(name string) fieldownership.Owner {
 	return fieldownership.MustOwner(name)
 }
 
+// path parses a canonical field path used by test fixtures.
 func path(text string) fieldpath.Path {
 	p, err := fieldpath.ParseCanonical(text)
 	if err != nil {
@@ -36,6 +38,7 @@ func path(text string) fieldpath.Path {
 	return p
 }
 
+// fields builds a canonical field set from textual test paths.
 func fields(paths ...string) fieldpath.Set {
 	parsed := make([]fieldpath.Path, 0, len(paths))
 	for _, text := range paths {
@@ -45,35 +48,17 @@ func fields(paths ...string) fieldpath.Set {
 	return fieldpath.MustSet(parsed...)
 }
 
+// ownershipEntry builds one normalized ownership entry for tests.
 func ownershipEntry(name string, paths ...string) fieldownership.Entry {
 	return fieldownership.MustEntry(owner(name), fields(paths...))
 }
 
+// ownershipState builds a normalized fieldownership.State for tests.
 func ownershipState(entries ...fieldownership.Entry) fieldownership.State {
 	return fieldownership.MustState(entries...)
 }
 
-func document(entries ...Entry) Document {
-	return Document{
-		Version: DocumentVersionV1,
-		Desired: Surface{
-			Entries: entries,
-		},
-	}
-}
-
-func documentEntry(owner string, fields ...string) Entry {
-	paths := make([]Path, 0, len(fields))
-	for _, field := range fields {
-		paths = append(paths, Path(field))
-	}
-
-	return Entry{
-		Owner:  fieldownership.MustOwner(owner),
-		Fields: paths,
-	}
-}
-
+// requireNoError fails the test when err is non-nil.
 func requireNoError(t *testing.T, err error) {
 	t.Helper()
 
@@ -82,6 +67,7 @@ func requireNoError(t *testing.T, err error) {
 	}
 }
 
+// requireErrorIs asserts that err unwraps to target.
 func requireErrorIs(t *testing.T, err error, target error) {
 	t.Helper()
 
@@ -90,6 +76,7 @@ func requireErrorIs(t *testing.T, err error, target error) {
 	}
 }
 
+// requireObjectOwnershipError checks the structured objectownership diagnostic.
 func requireObjectOwnershipError(t *testing.T, err error, path string, reason ErrorReason) {
 	t.Helper()
 
@@ -108,14 +95,7 @@ func requireObjectOwnershipError(t *testing.T, err error, path string, reason Er
 	}
 }
 
-func requireDocumentEntries(t *testing.T, got Surface, want ...Entry) {
-	t.Helper()
-
-	if !reflect.DeepEqual(got.Entries, want) {
-		t.Fatalf("entries = %#v; want %#v", got.Entries, want)
-	}
-}
-
+// requireOwners compares owners in deterministic fieldownership order.
 func requireOwners(t *testing.T, got []fieldownership.Owner, want ...string) {
 	t.Helper()
 
@@ -128,6 +108,7 @@ func requireOwners(t *testing.T, got []fieldownership.Owner, want ...string) {
 	}
 }
 
+// requireOwnersOf checks the owners reported for one field path.
 func requireOwnersOf(t *testing.T, state fieldownership.State, path fieldpath.Path, want ...string) {
 	t.Helper()
 
@@ -136,6 +117,7 @@ func requireOwnersOf(t *testing.T, state fieldownership.State, path fieldpath.Pa
 	requireOwners(t, got, want...)
 }
 
+// requirePaths compares a fieldpath.Set against canonical path strings.
 func requirePaths(t *testing.T, got fieldpath.Set, want ...string) {
 	t.Helper()
 

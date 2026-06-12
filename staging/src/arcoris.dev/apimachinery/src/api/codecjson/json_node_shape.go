@@ -19,10 +19,10 @@ import "arcoris.dev/apimachinery/api/codec"
 // fieldAllowed reports whether a JSON object member belongs to a fixed shape.
 type fieldAllowed func(name string) bool
 
-// requireObject verifies that a node is a JSON object at a typed document boundary.
+// requireObject verifies that a node is a JSON object at a typed boundary.
 //
 // The generic value codec accepts any JSON value, but object envelopes and
-// ownership documents have fixed object shapes. Keeping this helper shared makes
+// ownership state have fixed object shapes. Keeping this helper shared makes
 // those diagnostics consistent without introducing a public schema layer.
 func requireObject(path jsonPath, node jsonNode, detail string) error {
 	if node.kind == jsonKindObject {
@@ -32,7 +32,7 @@ func requireObject(path jsonPath, node jsonNode, detail string) error {
 	return errorAt(path, ErrInvalidEnvelope, codec.ErrInvalidDocument, ErrorReasonInvalidEnvelope, detail)
 }
 
-// expectString extracts a JSON string from a typed envelope/document field.
+// expectString extracts a JSON string from a typed envelope/state field.
 func expectString(path jsonPath, node jsonNode, detail string) (string, error) {
 	if node.kind == jsonKindString {
 		return node.stringValue, nil

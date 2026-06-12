@@ -20,24 +20,22 @@ import (
 	"arcoris.dev/apimachinery/api/objectownership"
 )
 
-// DecodeObjectOwnership decodes one object ownership document from JSON bytes.
+// DecodeObjectOwnership decodes one object ownership state from JSON bytes.
 //
-// The byte API delegates to DecodeObjectOwnershipFrom so document-shape checks
-// and objectownership.Validate wrapping are identical for byte and stream
-// callers.
-func (c Codec) DecodeObjectOwnership(data []byte) (objectownership.Document, error) {
+// The byte API delegates to DecodeObjectOwnershipFrom so shape checks and
+// objectownership.Validate wrapping are identical for byte and stream callers.
+func (c Codec) DecodeObjectOwnership(data []byte) (objectownership.State, error) {
 	return c.DecodeObjectOwnershipFrom(bytes.NewReader(data))
 }
 
-// EncodeObjectOwnership encodes one object ownership document into JSON bytes.
+// EncodeObjectOwnership encodes one object ownership state into JSON bytes.
 //
-// Encoding operates on objectownership.Document, not objectownership.State. The
-// JSON codec only renders the stable document representation and leaves
-// semantic state conversion to api/objectownership.
+// Encoding renders the current canonical ownership JSON shape. It does not
+// compute ownership, mutate metadata, or perform lifecycle decisions.
 func (c Codec) EncodeObjectOwnership(
-	doc objectownership.Document,
+	state objectownership.State,
 ) ([]byte, error) {
-	node, err := ownershipDocumentToNode(rootPath(), doc, c.encode)
+	node, err := ownershipStateToNode(rootPath(), state, c.encode)
 	if err != nil {
 		return nil, err
 	}

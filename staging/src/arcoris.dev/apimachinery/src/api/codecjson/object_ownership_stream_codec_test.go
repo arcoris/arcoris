@@ -15,16 +15,17 @@
 package codecjson
 
 import (
-	"arcoris.dev/apimachinery/api/objectownership"
 	"bytes"
 	"reflect"
 	"strings"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/objectownership"
 )
 
 func TestDecodeObjectOwnershipFromMatchesDecodeObjectOwnership(t *testing.T) {
 	c := newTestCodec(t)
-	data := `{"version":"v1","desired":{"entries":[]}}`
+	data := `{"desired":{"entries":[]}}`
 
 	fromBytes, err := c.DecodeObjectOwnership([]byte(data))
 	requireNoError(t, err)
@@ -32,18 +33,18 @@ func TestDecodeObjectOwnershipFromMatchesDecodeObjectOwnership(t *testing.T) {
 	requireNoError(t, err)
 
 	if !reflect.DeepEqual(fromStream, fromBytes) {
-		t.Fatalf("stream document = %#v; bytes document = %#v", fromStream, fromBytes)
+		t.Fatalf("stream state = %#v; bytes state = %#v", fromStream, fromBytes)
 	}
 }
 
 func TestEncodeObjectOwnershipToMatchesEncodeObjectOwnership(t *testing.T) {
 	c := newTestCodec(t)
-	doc := objectownership.Document{Version: objectownership.DocumentVersionV1}
+	state := objectownership.EmptyState()
 
-	fromBytes, err := c.EncodeObjectOwnership(doc)
+	fromBytes, err := c.EncodeObjectOwnership(state)
 	requireNoError(t, err)
 	var buffer bytes.Buffer
-	requireNoError(t, c.EncodeObjectOwnershipTo(&buffer, doc))
+	requireNoError(t, c.EncodeObjectOwnershipTo(&buffer, state))
 
 	if buffer.String() != string(fromBytes) {
 		t.Fatalf("stream = %s; bytes = %s", buffer.String(), fromBytes)

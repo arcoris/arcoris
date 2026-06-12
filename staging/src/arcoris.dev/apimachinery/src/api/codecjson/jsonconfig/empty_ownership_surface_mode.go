@@ -14,7 +14,7 @@
 
 package jsonconfig
 
-// EmptyOwnershipSurfaceMode controls empty desired ownership surface emission.
+// EmptyOwnershipSurfaceMode controls empty surfaces ownership surface emission.
 type EmptyOwnershipSurfaceMode uint8
 
 const (

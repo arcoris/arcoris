@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/meta/stamp"
-	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/value"
 )
 
@@ -59,36 +58,15 @@ func TestStateCloneDetachesObservedValue(t *testing.T) {
 	}
 }
 
-func TestStateCloneDetachesOwnershipDocument(t *testing.T) {
+func TestStateClonePreservesOwnershipState(t *testing.T) {
 	state := validCommittedState()
 	state.Ownership = ownershipWithEntry()
 
 	cloned := state.Clone()
-	state.Ownership.Desired.Entries[0].Fields[0] = "$.other"
 
-	if got, want := cloned.Ownership.Desired.Entries[0].Fields[0], objectownership.Path("$.spec"); got != want {
-		t.Fatalf("cloned ownership field = %q; want %q", got, want)
-	}
-}
-
-func TestStateClonePreservesOwnershipNilVsEmptyShape(t *testing.T) {
-	state := validCommittedState()
-	state.Ownership = objectownership.Document{
-		Version: objectownership.DocumentVersionV1,
-		Desired: objectownership.Surface{
-			Entries: []objectownership.Entry{},
-		},
-	}
-
-	cloned := state.Clone()
-	if cloned.Ownership.Desired.Entries == nil {
-		t.Fatalf("cloned entries = nil; want non-nil empty")
-	}
-
-	state.Ownership.Desired.Entries = nil
-	cloned = state.Clone()
-	if cloned.Ownership.Desired.Entries != nil {
-		t.Fatalf("cloned entries = %#v; want nil", cloned.Ownership.Desired.Entries)
+	got := cloned.Ownership.Desired().FieldsFor(owner("manager"))
+	if got.String() != "{$.spec}" {
+		t.Fatalf("cloned ownership fields = %s; want {$.spec}", got.String())
 	}
 }
 

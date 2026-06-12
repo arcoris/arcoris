@@ -110,6 +110,60 @@ func (e *Executor) validateDeleteRequest(req DeleteRequest) error {
 	return nil
 }
 
+// validateUpdateObservedRequest checks lifecycle-local UpdateObserved request fields.
+func (e *Executor) validateUpdateObservedRequest(req UpdateObservedRequest) error {
+	if err := validateOwner(OperationUpdateObserved, req.Owner); err != nil {
+		return err
+	}
+	if req.Expected.IsZero() {
+		return errorFor(
+			OperationUpdateObserved,
+			ErrorReasonInvalidExpectedRevision,
+			objectstore.Key{},
+			ErrInvalidRequest,
+			objectstore.ErrInvalidRevision,
+		)
+	}
+	if isNilInterface(e.observedValidator) {
+		return errorFor(
+			OperationUpdateObserved,
+			ErrorReasonInvalidExecutor,
+			objectstore.Key{},
+			ErrInvalidExecutor,
+			ErrNilObservedValidator,
+		)
+	}
+
+	return nil
+}
+
+// validatePatchMetadataRequest checks lifecycle-local PatchMetadata request fields.
+func (e *Executor) validatePatchMetadataRequest(req PatchMetadataRequest) error {
+	if err := validateOwner(OperationPatchMetadata, req.Owner); err != nil {
+		return err
+	}
+	if req.Expected.IsZero() {
+		return errorFor(
+			OperationPatchMetadata,
+			ErrorReasonInvalidExpectedRevision,
+			objectstore.Key{},
+			ErrInvalidRequest,
+			objectstore.ErrInvalidRevision,
+		)
+	}
+	if len(req.Labels) == 0 && len(req.Annotations) == 0 {
+		return errorFor(
+			OperationPatchMetadata,
+			ErrorReasonEmptyMetadataPatch,
+			objectstore.Key{},
+			ErrInvalidRequest,
+			nil,
+		)
+	}
+
+	return nil
+}
+
 // validateExpectedRevision maps store revision validation into lifecycle detail.
 func validateExpectedRevision(op Operation, key objectstore.Key, expected objectstore.Revision) error {
 	if err := objectstore.ValidateExpectedRevision(key, expected); err != nil {

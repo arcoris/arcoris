@@ -14,25 +14,7 @@
 
 package objectownership
 
-import (
-	"testing"
-
-	"arcoris.dev/apimachinery/api/fieldownership"
-)
-
-func TestEmptyState(t *testing.T) {
-	if !EmptyState().IsEmpty() {
-		t.Fatalf("EmptyState().IsEmpty() = false")
-	}
-}
-
-func TestNewState(t *testing.T) {
-	desired := ownershipState(ownershipEntry("user", "$.image"))
-
-	got := NewState(desired)
-
-	requireOwnersOf(t, got.Desired(), path("$.image"), "user")
-}
+import "testing"
 
 func TestStateDesired(t *testing.T) {
 	state := NewState(ownershipState(ownershipEntry("user", "$.image")))
@@ -40,14 +22,28 @@ func TestStateDesired(t *testing.T) {
 	requireOwnersOf(t, state.Desired(), path("$.image"), "user")
 }
 
-func TestStateWithDesired(t *testing.T) {
-	original := NewState(ownershipState(ownershipEntry("old", "$.image")))
-	replacement := ownershipState(ownershipEntry("new", "$.replicas"))
+func TestStateObserved(t *testing.T) {
+	state := NewStateWithSurfaces(
+		ownershipState(ownershipEntry("desired", "$.image")),
+		ownershipState(ownershipEntry("observer", "$.ready")),
+		MetadataState{},
+	)
 
-	got := original.WithDesired(replacement)
+	requireOwnersOf(t, state.Observed(), path("$.ready"), "observer")
+}
 
-	requireOwnersOf(t, got.Desired(), path("$.replicas"), "new")
-	requireOwnersOf(t, original.Desired(), path("$.image"), "old")
+func TestStateMetadata(t *testing.T) {
+	state := NewStateWithSurfaces(
+		ownershipState(ownershipEntry("desired", "$.image")),
+		ownershipState(ownershipEntry("observer", "$.ready")),
+		NewMetadataState(
+			ownershipState(ownershipEntry("labeler", `$["app"]`)),
+			ownershipState(ownershipEntry("annotator", `$["note"]`)),
+		),
+	)
+
+	requireOwnersOf(t, state.Metadata().Labels(), path(`$["app"]`), "labeler")
+	requireOwnersOf(t, state.Metadata().Annotations(), path(`$["note"]`), "annotator")
 }
 
 func TestStateIsEmpty(t *testing.T) {
@@ -55,12 +51,4 @@ func TestStateIsEmpty(t *testing.T) {
 	if state.IsEmpty() {
 		t.Fatalf("non-empty state IsEmpty() = true")
 	}
-}
-
-func TestStateImmutability(t *testing.T) {
-	original := NewState(ownershipState(ownershipEntry("user", "$.image")))
-
-	_ = original.WithDesired(fieldownership.EmptyState())
-
-	requireOwnersOf(t, original.Desired(), path("$.image"), "user")
 }

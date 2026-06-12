@@ -34,7 +34,7 @@ type EncodeConfig struct {
 	// Object controls value-backed object envelope shape.
 	Object EncodeObjectConfig
 
-	// Ownership controls object ownership document shape.
+	// Ownership controls object ownership state shape.
 	Ownership EncodeOwnershipConfig
 
 	// Limits bounds output shape and size.

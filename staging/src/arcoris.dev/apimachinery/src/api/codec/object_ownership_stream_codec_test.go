@@ -23,17 +23,17 @@ import (
 var _ ObjectOwnershipStreamDecoder = fakeObjectOwnershipStreamCodec{}
 var _ ObjectOwnershipStreamEncoder = fakeObjectOwnershipStreamCodec{}
 
-// ObjectOwnershipStreamCodec is a partial streaming capability for ownership documents.
+// ObjectOwnershipStreamCodec is a partial streaming capability for ownership state.
 var _ ObjectOwnershipStreamCodec = fakeObjectOwnershipStreamCodec{}
 
 type fakeObjectOwnershipStreamCodec struct {
 	fakeBaseCodec
 }
 
-func (fakeObjectOwnershipStreamCodec) DecodeObjectOwnershipFrom(io.Reader) (objectownership.Document, error) {
-	return objectownership.Document{}, nil
+func (fakeObjectOwnershipStreamCodec) DecodeObjectOwnershipFrom(io.Reader) (objectownership.State, error) {
+	return objectownership.State{}, nil
 }
 
-func (fakeObjectOwnershipStreamCodec) EncodeObjectOwnershipTo(io.Writer, objectownership.Document) error {
+func (fakeObjectOwnershipStreamCodec) EncodeObjectOwnershipTo(io.Writer, objectownership.State) error {
 	return nil
 }

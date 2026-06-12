@@ -21,9 +21,12 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/codecjson/jsonconfig"
+	"arcoris.dev/apimachinery/api/fieldownership"
+	"arcoris.dev/apimachinery/api/fieldpath"
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 	"arcoris.dev/apimachinery/api/meta"
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
+	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/value"
 )
 
@@ -56,6 +59,35 @@ func newTestCodecWith(t *testing.T, mutate func(*jsonconfig.Config)) Codec {
 	requireNoError(t, err)
 
 	return codec
+}
+
+// ownershipState constructs canonical object ownership for codec tests.
+func ownershipState(desired, observed fieldownership.State, metadata objectownership.MetadataState) objectownership.State {
+	return objectownership.NewStateWithSurfaces(desired, observed, metadata)
+}
+
+// ownershipSurface constructs one canonical surface state.
+func ownershipSurface(entries ...fieldownership.Entry) fieldownership.State {
+	return fieldownership.MustState(entries...)
+}
+
+// ownershipEntry constructs one owner entry from canonical field path strings.
+func ownershipEntry(owner string, paths ...string) fieldownership.Entry {
+	return fieldownership.MustEntry(fieldownership.MustOwner(owner), ownershipFields(paths...))
+}
+
+// ownershipFields constructs a deterministic field set from canonical path text.
+func ownershipFields(paths ...string) fieldpath.Set {
+	parsed := make([]fieldpath.Path, 0, len(paths))
+	for _, text := range paths {
+		path, err := fieldpath.ParseCanonical(text)
+		if err != nil {
+			panic(err)
+		}
+		parsed = append(parsed, path)
+	}
+
+	return fieldpath.MustSet(parsed...)
 }
 
 // requireErrorIs asserts errors.Is compatibility for sentinel contracts.

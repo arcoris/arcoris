@@ -20,31 +20,31 @@ import (
 	"arcoris.dev/apimachinery/api/objectownership"
 )
 
-// DecodeObjectOwnershipFrom decodes one object ownership document from r.
+// DecodeObjectOwnershipFrom decodes one object ownership state from r.
 //
-// Decode returns the valid raw document rather than normalized state. Semantic
-// normalization remains owned by api/objectownership.
+// Decode returns the canonical ownership model and validates it through
+// api/objectownership. The codec owns JSON syntax only.
 func (c Codec) DecodeObjectOwnershipFrom(
 	r io.Reader,
-) (objectownership.Document, error) {
+) (objectownership.State, error) {
 	return decodeTargetFrom(r, c.decode, func(
 		path jsonPath,
 		node jsonNode,
 		config resolvedDecodeConfig,
-	) (objectownership.Document, error) {
-		return nodeToOwnershipDocument(path, node, config)
+	) (objectownership.State, error) {
+		return nodeToOwnershipState(path, node, config)
 	})
 }
 
-// EncodeObjectOwnershipTo writes one object ownership document as JSON.
+// EncodeObjectOwnershipTo writes one object ownership state as JSON.
 //
-// Deterministic output normalizes the document before writing; default output
-// preserves caller-provided entry and field order.
+// Deterministic output normalizes the state before writing. The encoder does
+// not compute ownership or interpret lifecycle semantics.
 func (c Codec) EncodeObjectOwnershipTo(
 	w io.Writer,
-	doc objectownership.Document,
+	state objectownership.State,
 ) error {
-	node, err := ownershipDocumentToNode(rootPath(), doc, c.encode)
+	node, err := ownershipStateToNode(rootPath(), state, c.encode)
 	if err != nil {
 		return err
 	}

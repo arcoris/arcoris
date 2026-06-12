@@ -23,8 +23,8 @@ func TestStateCarriesObjectOwnershipAndRevision(t *testing.T) {
 	if string(state.Object.ObjectMeta.Name) != "main" {
 		t.Fatalf("object name = %q; want %q", state.Object.ObjectMeta.Name, "main")
 	}
-	if len(state.Ownership.Desired.Entries) != 1 {
-		t.Fatalf("ownership entries = %d; want 1", len(state.Ownership.Desired.Entries))
+	if state.Ownership.Desired().Len() != 1 {
+		t.Fatalf("ownership entries = %d; want 1", state.Ownership.Desired().Len())
 	}
 	if state.Revision != 1 {
 		t.Fatalf("Revision = %v; want 1", state.Revision)

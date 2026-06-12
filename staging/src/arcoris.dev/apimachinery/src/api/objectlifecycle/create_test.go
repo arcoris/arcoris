@@ -20,7 +20,6 @@ import (
 
 	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/meta/stamp"
-	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/resource"
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
@@ -43,7 +42,7 @@ func TestCreateValidObjectStoresCommittedState(t *testing.T) {
 		t.Fatalf("result revision = %v; want state revision %v", result.Revision, result.State.Revision)
 	}
 	requireImage(t, result.State, "api:v1")
-	requireOwnedPath(t, result.State.Ownership, owner("creator"), objectownership.Path("$.image"))
+	requireOwnedPath(t, result.State.Ownership, owner("creator"), ownershipField("$.image"))
 	requireNormalizedOwnership(t, result.State.Ownership)
 }
 

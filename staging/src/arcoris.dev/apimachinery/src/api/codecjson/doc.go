@@ -15,7 +15,7 @@
 // Package codecjson implements the JSON codec for ARCORIS API documents.
 //
 // The package is a concrete implementation of api/codec for JSON. It supports
-// value.Value, value-backed object envelopes, and objectownership.Document,
+// value.Value, value-backed object envelopes, and objectownership.State,
 // including byte-slice and stream encode/decode APIs.
 //
 // Codec instances are configured at construction with jsonconfig.Config from

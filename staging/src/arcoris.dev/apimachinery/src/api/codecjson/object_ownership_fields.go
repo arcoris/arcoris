@@ -16,11 +16,23 @@ package codecjson
 
 import "arcoris.dev/apimachinery/api/apidocument"
 
-// allowOwnershipDocumentField reports whether name belongs to the root document.
-func allowOwnershipDocumentField(name string) bool {
+// allowOwnershipStateField reports whether name belongs to the ownership root.
+func allowOwnershipStateField(name string) bool {
 	switch name {
-	case apidocument.OwnershipFieldVersion.String(),
-		apidocument.OwnershipFieldDesired.String():
+	case apidocument.OwnershipFieldDesired.String(),
+		apidocument.OwnershipFieldObserved.String(),
+		apidocument.OwnershipFieldMetadata.String():
+		return true
+	default:
+		return false
+	}
+}
+
+// allowOwnershipMetadataField reports whether name belongs to metadata ownership.
+func allowOwnershipMetadataField(name string) bool {
+	switch name {
+	case apidocument.OwnershipFieldLabels.String(),
+		apidocument.OwnershipFieldAnnotations.String():
 		return true
 	default:
 		return false

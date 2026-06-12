@@ -16,28 +16,21 @@ package objectownership
 
 import "reflect"
 
-// ValidateNormalized checks that doc is valid and already canonical.
+// ValidateNormalized checks that state is valid and already canonical.
 //
-// ValidateNormalized preserves raw validation errors from Validate. For valid
-// raw documents, it compares doc with Normalize(doc) and reports
-// ErrNotNormalized when sorting, merging, deduplication, pruning, version
-// canonicalization, or nil-vs-empty canonicalization would change the document.
-func ValidateNormalized(doc Document) error {
-	if err := Validate(doc); err != nil {
+// The check compares state to Normalize(state). It does not stamp or inspect a
+// document version because State is the only ownership model. Stores use this to
+// assert that committed state is already in canonical form.
+func ValidateNormalized(state State) error {
+	if err := Validate(state); err != nil {
 		return err
 	}
-
-	normalized, err := Normalize(doc)
-	if err != nil {
-		return err
-	}
-
-	if !reflect.DeepEqual(doc, normalized) {
+	if !reflect.DeepEqual(state, Normalize(state)) {
 		return errorAt(
-			pathDocument,
+			pathState,
 			ErrNotNormalized,
 			ErrorReasonNotNormalized,
-			"object ownership document is not normalized",
+			"object ownership state is not normalized",
 		)
 	}
 

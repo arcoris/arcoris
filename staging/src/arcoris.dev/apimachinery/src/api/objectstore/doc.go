@@ -15,8 +15,8 @@
 // Package objectstore defines the committed-state contract for value-backed API
 // objects.
 //
-// State contains a value-backed live object envelope, an object ownership
-// document, and a store-local Revision. Revisions are assigned by a Store when
+// State contains a value-backed live object envelope, object ownership state,
+// and a store-local Revision. Revisions are assigned by a Store when
 // Create, Update, or Delete commits. They are not API resourceVersion values,
 // ObjectMeta generations, wall-clock timestamps, durable storage versions, or
 // globally comparable values across stores. They may have gaps.
@@ -30,9 +30,9 @@
 //
 // Input State values for Create and Update must have zero Revision. Committed
 // State values returned by stores have non-zero Revision and normalized
-// ownership documents. ValidateInputState accepts raw valid ownership
-// documents; PrepareInputState clones and normalizes them. ValidateCommittedState
-// requires normalized ownership.
+// ownership state. ValidateInputState accepts valid ownership state;
+// PrepareInputState clones and normalizes it. ValidateCommittedState requires
+// normalized ownership.
 //
 // Delete commits a tombstone and returns DeleteResult. DeleteResult.Deleted is
 // the live state that was deleted and keeps its previous live revision.

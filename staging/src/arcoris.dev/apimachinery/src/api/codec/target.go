@@ -28,7 +28,7 @@ const (
 	// TargetObject names value-backed api/object envelopes.
 	TargetObject Target = "object"
 
-	// TargetObjectOwnership names api/objectownership.Document values.
+	// TargetObjectOwnership names api/objectownership.State values.
 	TargetObjectOwnership Target = "object_ownership"
 )
 

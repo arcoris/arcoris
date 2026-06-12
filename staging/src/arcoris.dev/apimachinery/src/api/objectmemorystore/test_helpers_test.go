@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/fieldownership"
+	"arcoris.dev/apimachinery/api/fieldpath"
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 	"arcoris.dev/apimachinery/api/meta"
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
@@ -69,18 +70,29 @@ func testState(text string) objectstore.State {
 			value.StringValue(text),
 			observed,
 		),
-		Ownership: objectownership.Document{
-			Version: objectownership.DocumentVersionV1,
-			Desired: objectownership.Surface{
-				Entries: []objectownership.Entry{
-					{
-						Owner:  fieldownership.MustOwner("manager"),
-						Fields: []objectownership.Path{"$.desired"},
-					},
-				},
-			},
-		},
+		Ownership: objectownership.NewState(ownershipState(ownershipEntry("manager", "$.desired"))),
 	}
+}
+
+func ownershipEntry(owner string, paths ...string) fieldownership.Entry {
+	return fieldownership.MustEntry(fieldownership.MustOwner(owner), fieldSet(paths...))
+}
+
+func ownershipState(entries ...fieldownership.Entry) fieldownership.State {
+	return fieldownership.MustState(entries...)
+}
+
+func fieldSet(paths ...string) fieldpath.Set {
+	parsed := make([]fieldpath.Path, 0, len(paths))
+	for _, text := range paths {
+		path, err := fieldpath.ParseCanonical(text)
+		if err != nil {
+			panic(err)
+		}
+		parsed = append(parsed, path)
+	}
+
+	return fieldpath.MustSet(parsed...)
 }
 
 func requireNoError(t *testing.T, err error) {

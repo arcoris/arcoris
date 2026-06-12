@@ -18,7 +18,6 @@ import (
 	"context"
 
 	"arcoris.dev/apimachinery/api/objectapply"
-	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
@@ -106,11 +105,11 @@ func (e *Executor) applyExisting(
 
 	// Existing-object Apply always commits objectapply output in this first
 	// lifecycle slice. No-op suppression needs a reliable equality decision for
-	// both the object envelope and ownership document; value equality alone would
+	// both the object envelope and ownership state; value equality alone would
 	// miss ownership-only changes such as another owner applying the same value.
 	next := objectstore.State{
 		Object:    applied.Object,
-		Ownership: objectownership.ToDocument(applied.Ownership),
+		Ownership: applied.Ownership,
 	}
 	committed, err := e.store.Update(ctx, key, live.Revision, next)
 	if err != nil {

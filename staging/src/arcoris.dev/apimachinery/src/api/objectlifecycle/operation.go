@@ -24,6 +24,10 @@ const (
 	OperationCreate
 	// OperationApply applies Desired intent to live state or creates missing state.
 	OperationApply
+	// OperationUpdateObserved replaces the Observed surface of existing live state.
+	OperationUpdateObserved
+	// OperationPatchMetadata patches labels and annotations on existing live state.
+	OperationPatchMetadata
 	// OperationDelete removes committed live state by expected revision.
 	OperationDelete
 )
@@ -42,6 +46,10 @@ func (op Operation) String() string {
 		return "create"
 	case OperationApply:
 		return "apply"
+	case OperationUpdateObserved:
+		return "update_observed"
+	case OperationPatchMetadata:
+		return "patch_metadata"
 	case OperationDelete:
 		return "delete"
 	default:

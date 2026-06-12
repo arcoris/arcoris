@@ -16,89 +16,36 @@ package objectownership
 
 import "testing"
 
-func TestNormalizeWritesDocumentVersionV1(t *testing.T) {
-	got, err := Normalize(document(documentEntry("user", "$.image")))
-	requireNoError(t, err)
+func TestNormalizeEmptyState(t *testing.T) {
+	got := Normalize(EmptyState())
 
-	if got.Version != DocumentVersionV1 {
-		t.Fatalf("Version = %q; want %q", got.Version, DocumentVersionV1)
+	if !got.IsEmpty() {
+		t.Fatalf("Normalize(EmptyState()).IsEmpty() = false")
 	}
 }
 
-func TestNormalizeSortsEntriesByOwner(t *testing.T) {
-	got, err := Normalize(document(documentEntry("z", "$.z"), documentEntry("a", "$.a")))
-	requireNoError(t, err)
+func TestNormalizePreservesEverySurface(t *testing.T) {
+	state := NewStateWithSurfaces(
+		ownershipState(ownershipEntry("desired", "$.image")),
+		ownershipState(ownershipEntry("observed", "$.ready")),
+		NewMetadataState(
+			ownershipState(ownershipEntry("labels", `$["app"]`)),
+			ownershipState(ownershipEntry("annotations", `$["scheduler.arcoris.dev/mode"]`)),
+		),
+	)
 
-	requireDocumentEntries(t, got.Desired, documentEntry("a", "$.a"), documentEntry("z", "$.z"))
-}
+	got := Normalize(state)
 
-func TestNormalizeMergesDuplicateOwners(t *testing.T) {
-	got, err := Normalize(document(documentEntry("user", "$.image"), documentEntry("user", "$.replicas")))
-	requireNoError(t, err)
-
-	requireDocumentEntries(t, got.Desired, documentEntry("user", "$.image", "$.replicas"))
-}
-
-func TestNormalizeDeduplicatesFields(t *testing.T) {
-	got, err := Normalize(document(documentEntry("user", "$.image", "$.image")))
-	requireNoError(t, err)
-
-	requireDocumentEntries(t, got.Desired, documentEntry("user", "$.image"))
-}
-
-func TestNormalizePrunesEmptyEntries(t *testing.T) {
-	got, err := Normalize(document(documentEntry("user")))
-	requireNoError(t, err)
-
-	if !got.Desired.IsEmpty() {
-		t.Fatalf("normalized desired = %#v; want empty", got.Desired)
-	}
-}
-
-func TestNormalizeSortsFields(t *testing.T) {
-	got, err := Normalize(document(documentEntry("user", "$.z", "$.a")))
-	requireNoError(t, err)
-
-	requireDocumentEntries(t, got.Desired, documentEntry("user", "$.a", "$.z"))
-}
-
-func TestNormalizePreservesSharedOwnership(t *testing.T) {
-	got, err := Normalize(document(documentEntry("a", "$.image"), documentEntry("b", "$.image")))
-	requireNoError(t, err)
-
-	requireDocumentEntries(t, got.Desired, documentEntry("a", "$.image"), documentEntry("b", "$.image"))
-}
-
-func TestNormalizePreservesAncestorDescendantFields(t *testing.T) {
-	got, err := Normalize(document(documentEntry("user", "$.spec.image", "$.spec")))
-	requireNoError(t, err)
-
-	requireDocumentEntries(t, got.Desired, documentEntry("user", "$.spec", "$.spec.image"))
+	requireOwnersOf(t, got.Desired(), path("$.image"), "desired")
+	requireOwnersOf(t, got.Observed(), path("$.ready"), "observed")
+	requireOwnersOf(t, got.Metadata().Labels(), path(`$["app"]`), "labels")
+	requireOwnersOf(t, got.Metadata().Annotations(), path(`$["scheduler.arcoris.dev/mode"]`), "annotations")
 }
 
 func TestNormalizeDoesNotMutateInput(t *testing.T) {
-	doc := document(documentEntry("user", "$.z", "$.a"))
+	state := NewState(ownershipState(ownershipEntry("desired", "$.image")))
 
-	_, err := Normalize(doc)
-	requireNoError(t, err)
+	_ = Normalize(state)
 
-	requireDocumentEntries(t, doc.Desired, documentEntry("user", "$.z", "$.a"))
-}
-
-func TestNormalizeRejectsInvalidRawDocument(t *testing.T) {
-	_, err := Normalize(Document{})
-
-	requireErrorIs(t, err, ErrInvalidDocument)
-}
-
-func TestNormalizeOutputPassesValidateNormalized(t *testing.T) {
-	normalized, err := Normalize(document(
-		documentEntry("b", "$.z", "$.z"),
-		documentEntry("a", "$.spec.image", "$.spec"),
-		documentEntry("b", "$.a"),
-		documentEntry("empty"),
-	))
-	requireNoError(t, err)
-
-	requireNoError(t, ValidateNormalized(normalized))
+	requireOwnersOf(t, state.Desired(), path("$.image"), "desired")
 }

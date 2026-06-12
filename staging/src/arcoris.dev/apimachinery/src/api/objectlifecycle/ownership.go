@@ -61,12 +61,12 @@ func (e *Executor) initialOwnership(
 	return objectownership.NewState(state), nil
 }
 
-// stateOwnership converts committed ownership documents back to apply state.
-func stateOwnership(op Operation, key objectstore.Key, doc objectownership.Document) (objectownership.State, error) {
-	state, err := objectownership.StateFromDocument(doc)
-	if err != nil {
+// stateOwnership validates committed ownership state before lifecycle operations
+// pass it to lower orchestration layers.
+func stateOwnership(op Operation, key objectstore.Key, state objectownership.State) (objectownership.State, error) {
+	if err := objectownership.Validate(state); err != nil {
 		return objectownership.State{}, errorFor(op, ErrorReasonStoreFailed, key, ErrStoreFailed, err)
 	}
 
-	return state, nil
+	return objectownership.Normalize(state), nil
 }

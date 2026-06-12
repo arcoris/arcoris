@@ -50,6 +50,8 @@ var (
 	ErrNilResourceResolver = errors.New("objectlifecycle: nil resource resolver")
 	// ErrNilDesiredValidator classifies a missing Desired surface validator.
 	ErrNilDesiredValidator = errors.New("objectlifecycle: nil desired validator")
+	// ErrNilObservedValidator classifies a missing Observed surface validator.
+	ErrNilObservedValidator = errors.New("objectlifecycle: nil observed validator")
 	// ErrNilContext classifies nil operation contexts.
 	ErrNilContext = errors.New("objectlifecycle: nil context")
 )

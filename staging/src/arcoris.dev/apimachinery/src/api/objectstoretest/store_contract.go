@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/fieldownership"
+	"arcoris.dev/apimachinery/api/fieldpath"
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 	"arcoris.dev/apimachinery/api/meta"
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
@@ -253,15 +254,10 @@ func rawState(text string) objectstore.State {
 			value.StringValue(text),
 			observed,
 		),
-		Ownership: objectownership.Document{
-			Version: objectownership.DocumentVersionV1,
-			Desired: objectownership.Surface{
-				Entries: []objectownership.Entry{
-					{Owner: fieldownership.MustOwner("z"), Fields: []objectownership.Path{"$.z"}},
-					{Owner: fieldownership.MustOwner("a"), Fields: []objectownership.Path{"$.a", "$.a"}},
-				},
-			},
-		},
+		Ownership: objectownership.NewState(fieldownership.MustState(
+			fieldownership.MustEntry(fieldownership.MustOwner("z"), fieldSet("$.z")),
+			fieldownership.MustEntry(fieldownership.MustOwner("a"), fieldSet("$.a")),
+		)),
 	}
 }
 
@@ -270,9 +266,19 @@ func mutateState(state *objectstore.State, text string) {
 	if state.Object.Observed != nil {
 		*state.Object.Observed = value.StringValue("observed-" + text)
 	}
-	if len(state.Ownership.Desired.Entries) > 0 && len(state.Ownership.Desired.Entries[0].Fields) > 0 {
-		state.Ownership.Desired.Entries[0].Fields[0] = "$.mutated"
+}
+
+func fieldSet(paths ...string) fieldpath.Set {
+	parsed := make([]fieldpath.Path, 0, len(paths))
+	for _, text := range paths {
+		path, err := fieldpath.ParseCanonical(text)
+		if err != nil {
+			panic(err)
+		}
+		parsed = append(parsed, path)
 	}
+
+	return fieldpath.MustSet(parsed...)
 }
 
 func requireDesired(t *testing.T, state objectstore.State, want string) {

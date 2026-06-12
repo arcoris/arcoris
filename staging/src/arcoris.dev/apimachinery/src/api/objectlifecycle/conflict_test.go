@@ -18,6 +18,8 @@ import (
 	"context"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldownership"
+	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/valuevalidation"
@@ -62,14 +64,9 @@ func TestApplyMapsStoreConflict(t *testing.T) {
 func committedStateForFakeStore() objectstore.State {
 	return objectstore.State{
 		Object: testObject(1, "api:v1"),
-		Ownership: objectownership.Document{
-			Version: objectownership.DocumentVersionV1,
-			Desired: objectownership.Surface{
-				Entries: []objectownership.Entry{
-					{Owner: owner("creator"), Fields: []objectownership.Path{"$.image"}},
-				},
-			},
-		},
+		Ownership: objectownership.NewState(fieldownership.MustState(
+			fieldownership.MustEntry(owner("creator"), fieldpath.MustSet(ownershipField("$.image"))),
+		)),
 		Revision: 1,
 	}
 }

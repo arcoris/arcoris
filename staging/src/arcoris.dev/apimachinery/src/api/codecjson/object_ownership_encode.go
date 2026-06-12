@@ -20,54 +20,55 @@ import (
 	"arcoris.dev/apimachinery/api/apidocument"
 	"arcoris.dev/apimachinery/api/codec"
 	"arcoris.dev/apimachinery/api/codecjson/jsonconfig"
+	"arcoris.dev/apimachinery/api/fieldownership"
 	"arcoris.dev/apimachinery/api/objectownership"
 )
 
-// ownershipDocumentToNode converts an ownership document into lower-camel JSON.
+// ownershipStateToNode converts canonical ownership state into lower-camel JSON.
 //
-// Encoding validates the document before writing. Deterministic encoding uses
-// objectownership.Normalize so owner and field ordering match the semantic
-// ownership package rather than JSON-specific sorting rules.
-func ownershipDocumentToNode(path jsonPath, doc objectownership.Document, config resolvedEncodeConfig) (jsonNode, error) {
-	if err := objectownership.Validate(doc); err != nil {
+// Encoding validates the state before writing. Deterministic encoding may run
+// objectownership.Normalize, which is intentionally idempotent for public
+// objectownership.State values.
+func ownershipStateToNode(path jsonPath, state objectownership.State, config resolvedEncodeConfig) (jsonNode, error) {
+	if err := objectownership.Validate(state); err != nil {
 		return jsonNode{}, wrapAt(
 			path,
 			ErrInvalidEnvelope,
 			errors.Join(codec.ErrEncodeFailed, codec.ErrInvalidDocument),
 			ErrorReasonInvalidEnvelope,
-			"object ownership document is invalid",
+			"object ownership state is invalid",
 			err,
 		)
 	}
 	if shouldNormalizeOwnership(config) {
-		normalized, err := objectownership.Normalize(doc)
-		if err != nil {
-			return jsonNode{}, wrapAt(
-				path,
-				ErrInvalidEnvelope,
-				errors.Join(codec.ErrEncodeFailed, codec.ErrInvalidDocument),
-				ErrorReasonInvalidEnvelope,
-				"object ownership document cannot be normalized",
-				err,
-			)
-		}
-		doc = normalized
+		state = objectownership.Normalize(state)
 	}
 
-	members := []jsonMember{
-		{name: apidocument.OwnershipFieldVersion.String(), value: jsonNode{kind: jsonKindString, stringValue: doc.Version.String()}},
-	}
-	if config.emptyDesired == jsonconfig.EmptyOwnershipSurfaceEmit || !doc.Desired.IsEmpty() {
+	metadata := state.Metadata()
+	members := []jsonMember{}
+	if config.emptySurfaces == jsonconfig.EmptyOwnershipSurfaceEmit || !state.Desired().IsEmpty() {
 		members = append(members, jsonMember{
 			name:  apidocument.OwnershipFieldDesired.String(),
-			value: ownershipSurfaceToNode(path.Member(apidocument.OwnershipFieldDesired.String()), doc.Desired, config),
+			value: ownershipSurfaceToNode(path.Member(apidocument.OwnershipFieldDesired.String()), state.Desired(), config),
+		})
+	}
+	if config.emptySurfaces == jsonconfig.EmptyOwnershipSurfaceEmit || !state.Observed().IsEmpty() {
+		members = append(members, jsonMember{
+			name:  apidocument.OwnershipFieldObserved.String(),
+			value: ownershipSurfaceToNode(path.Member(apidocument.OwnershipFieldObserved.String()), state.Observed(), config),
+		})
+	}
+	if config.emptySurfaces == jsonconfig.EmptyOwnershipSurfaceEmit || !metadata.IsEmpty() {
+		members = append(members, jsonMember{
+			name:  apidocument.OwnershipFieldMetadata.String(),
+			value: ownershipMetadataToNode(path.Member(apidocument.OwnershipFieldMetadata.String()), metadata, config),
 		})
 	}
 
 	return jsonNode{kind: jsonKindObject, members: members}, nil
 }
 
-// shouldNormalizeOwnership reports whether config asks for canonical document order.
+// shouldNormalizeOwnership reports whether config asks for canonical ownership order.
 func shouldNormalizeOwnership(config resolvedEncodeConfig) bool {
 	switch config.ownershipNormalize {
 	case jsonconfig.OwnershipNormalizeAlways:
@@ -79,10 +80,11 @@ func shouldNormalizeOwnership(config resolvedEncodeConfig) bool {
 	}
 }
 
-// ownershipSurfaceToNode converts one surface while preserving entry order.
-func ownershipSurfaceToNode(path jsonPath, surface objectownership.Surface, config resolvedEncodeConfig) jsonNode {
-	items := make([]jsonNode, 0, len(surface.Entries))
-	for i, entry := range surface.Entries {
+// ownershipSurfaceToNode converts one ownership surface into an entries object.
+func ownershipSurfaceToNode(path jsonPath, surface fieldownership.State, config resolvedEncodeConfig) jsonNode {
+	entries := surface.Entries()
+	items := make([]jsonNode, 0, len(entries))
+	for i, entry := range entries {
 		items = append(items, ownershipEntryToNode(path.Member(apidocument.OwnershipFieldEntries.String()).Index(i), entry))
 	}
 
@@ -97,17 +99,37 @@ func ownershipSurfaceToNode(path jsonPath, surface objectownership.Surface, conf
 	return jsonNode{kind: jsonKindObject, members: members}
 }
 
-// ownershipEntryToNode converts one entry while preserving field order.
-func ownershipEntryToNode(path jsonPath, entry objectownership.Entry) jsonNode {
-	fields := make([]jsonNode, 0, len(entry.Fields))
-	for _, field := range entry.Fields {
+// ownershipMetadataToNode converts metadata ownership surfaces.
+func ownershipMetadataToNode(path jsonPath, metadata objectownership.MetadataState, config resolvedEncodeConfig) jsonNode {
+	members := []jsonMember{}
+	if config.emptySurfaces == jsonconfig.EmptyOwnershipSurfaceEmit || !metadata.Labels().IsEmpty() {
+		members = append(members, jsonMember{
+			name:  apidocument.OwnershipFieldLabels.String(),
+			value: ownershipSurfaceToNode(path.Member(apidocument.OwnershipFieldLabels.String()), metadata.Labels(), config),
+		})
+	}
+	if config.emptySurfaces == jsonconfig.EmptyOwnershipSurfaceEmit || !metadata.Annotations().IsEmpty() {
+		members = append(members, jsonMember{
+			name:  apidocument.OwnershipFieldAnnotations.String(),
+			value: ownershipSurfaceToNode(path.Member(apidocument.OwnershipFieldAnnotations.String()), metadata.Annotations(), config),
+		})
+	}
+
+	return jsonNode{kind: jsonKindObject, members: members}
+}
+
+// ownershipEntryToNode converts one owner entry.
+func ownershipEntryToNode(path jsonPath, entry fieldownership.Entry) jsonNode {
+	paths := entry.Fields().Paths()
+	fields := make([]jsonNode, 0, len(paths))
+	for _, field := range paths {
 		fields = append(fields, jsonNode{kind: jsonKindString, stringValue: field.String()})
 	}
 
 	return jsonNode{
 		kind: jsonKindObject,
 		members: []jsonMember{
-			{name: apidocument.OwnershipFieldOwner.String(), value: jsonNode{kind: jsonKindString, stringValue: entry.Owner.String()}},
+			{name: apidocument.OwnershipFieldOwner.String(), value: jsonNode{kind: jsonKindString, stringValue: entry.Owner().String()}},
 			{name: apidocument.OwnershipFieldFields.String(), value: jsonNode{kind: jsonKindArray, items: fields}},
 		},
 	}

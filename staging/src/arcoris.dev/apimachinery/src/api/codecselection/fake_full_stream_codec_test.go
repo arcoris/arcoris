@@ -61,13 +61,13 @@ func (f fakeFullStreamCodec) EncodeObjectTo(w io.Writer, obj codec.Object) error
 
 func (f fakeFullStreamCodec) DecodeObjectOwnershipFrom(
 	r io.Reader,
-) (objectownership.Document, error) {
+) (objectownership.State, error) {
 	return fakeOwnershipStreamCodec{}.DecodeObjectOwnershipFrom(r)
 }
 
 func (f fakeFullStreamCodec) EncodeObjectOwnershipTo(
 	w io.Writer,
-	doc objectownership.Document,
+	state objectownership.State,
 ) error {
-	return fakeOwnershipStreamCodec{}.EncodeObjectOwnershipTo(w, doc)
+	return fakeOwnershipStreamCodec{}.EncodeObjectOwnershipTo(w, state)
 }

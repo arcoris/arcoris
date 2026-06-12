@@ -14,14 +14,14 @@
 
 package jsonconfig
 
-// OwnershipNormalizeMode controls ownership document normalization before encoding.
+// OwnershipNormalizeMode controls ownership state normalization before encoding.
 type OwnershipNormalizeMode uint8
 
 const (
 	// OwnershipNormalizeDefault defers to the package default during Resolve.
 	OwnershipNormalizeDefault OwnershipNormalizeMode = iota
 
-	// OwnershipNormalizeNever preserves document order.
+	// OwnershipNormalizeNever skips pre-encode normalization.
 	OwnershipNormalizeNever
 
 	// OwnershipNormalizeWhenDeterministic normalizes only with deterministic output.

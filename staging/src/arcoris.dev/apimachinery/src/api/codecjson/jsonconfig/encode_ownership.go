@@ -14,24 +14,24 @@
 
 package jsonconfig
 
-// EncodeOwnershipConfig controls object ownership document output.
+// EncodeOwnershipConfig controls object ownership state output.
 type EncodeOwnershipConfig struct {
 	// Normalize controls whether objectownership.Normalize is applied.
 	Normalize OwnershipNormalizeMode
 
-	// EmptyDesired controls the desired field when the desired surface is empty.
-	EmptyDesired EmptyOwnershipSurfaceMode
+	// EmptySurfaces controls ownership surface emission when a surface is empty.
+	EmptySurfaces EmptyOwnershipSurfaceMode
 
 	// EmptyEntries controls entries emission for empty ownership surfaces.
 	EmptyEntries EmptyEntriesMode
 }
 
-// defaultEncodeOwnershipConfig returns stable ownership document output policy.
+// defaultEncodeOwnershipConfig returns stable ownership state output policy.
 func defaultEncodeOwnershipConfig() EncodeOwnershipConfig {
 	return EncodeOwnershipConfig{
-		Normalize:    OwnershipNormalizeWhenDeterministic,
-		EmptyDesired: EmptyOwnershipSurfaceEmit,
-		EmptyEntries: EmptyEntriesEmit,
+		Normalize:     OwnershipNormalizeWhenDeterministic,
+		EmptySurfaces: EmptyOwnershipSurfaceEmit,
+		EmptyEntries:  EmptyEntriesEmit,
 	}
 }
 
@@ -40,21 +40,21 @@ func resolveEncodeOwnershipConfig(config *EncodeOwnershipConfig) {
 	if config.Normalize == OwnershipNormalizeDefault {
 		config.Normalize = OwnershipNormalizeWhenDeterministic
 	}
-	if config.EmptyDesired == EmptyOwnershipSurfaceDefault {
-		config.EmptyDesired = EmptyOwnershipSurfaceEmit
+	if config.EmptySurfaces == EmptyOwnershipSurfaceDefault {
+		config.EmptySurfaces = EmptyOwnershipSurfaceEmit
 	}
 	if config.EmptyEntries == EmptyEntriesDefault {
 		config.EmptyEntries = EmptyEntriesEmit
 	}
 }
 
-// validateEncodeOwnershipConfig checks ownership document output policy.
+// validateEncodeOwnershipConfig checks ownership state output policy.
 func validateEncodeOwnershipConfig(config EncodeOwnershipConfig) error {
 	switch {
 	case !isKnownOwnershipNormalizeMode(config.Normalize):
 		return invalidConfig("encode.ownership.normalize", "unknown normalize mode %d", config.Normalize)
-	case !isKnownEmptyOwnershipSurfaceMode(config.EmptyDesired):
-		return invalidConfig("encode.ownership.empty_desired", "unknown empty desired mode %d", config.EmptyDesired)
+	case !isKnownEmptyOwnershipSurfaceMode(config.EmptySurfaces):
+		return invalidConfig("encode.ownership.empty_surfaces", "unknown empty surfaces mode %d", config.EmptySurfaces)
 	case !isKnownEmptyEntriesMode(config.EmptyEntries):
 		return invalidConfig("encode.ownership.empty_entries", "unknown empty entries mode %d", config.EmptyEntries)
 	default:

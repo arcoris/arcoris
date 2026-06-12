@@ -38,13 +38,13 @@ func newOwnershipStreamCodec(format codec.Format, mediaTypes ...codec.MediaType)
 
 func (f fakeOwnershipStreamCodec) DecodeObjectOwnershipFrom(
 	io.Reader,
-) (objectownership.Document, error) {
-	return objectownership.Document{}, nil
+) (objectownership.State, error) {
+	return objectownership.State{}, nil
 }
 
 func (f fakeOwnershipStreamCodec) EncodeObjectOwnershipTo(
 	io.Writer,
-	objectownership.Document,
+	objectownership.State,
 ) error {
 	return nil
 }

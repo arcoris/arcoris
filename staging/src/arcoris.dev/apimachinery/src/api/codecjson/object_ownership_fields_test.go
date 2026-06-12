@@ -20,12 +20,12 @@ import (
 	"arcoris.dev/apimachinery/api/apidocument"
 )
 
-func TestAllowOwnershipDocumentField(t *testing.T) {
-	if !allowOwnershipDocumentField(apidocument.OwnershipFieldVersion.String()) || !allowOwnershipDocumentField(apidocument.OwnershipFieldDesired.String()) {
-		t.Fatalf("document field allow-list rejected known fields")
+func TestAllowOwnershipStateField(t *testing.T) {
+	if !allowOwnershipStateField(apidocument.OwnershipFieldDesired.String()) || !allowOwnershipStateField(apidocument.OwnershipFieldMetadata.String()) {
+		t.Fatalf("state field allow-list rejected known fields")
 	}
-	if allowOwnershipDocumentField(apidocument.OwnershipFieldEntries.String()) {
-		t.Fatalf("document field allow-list accepted surface field")
+	if allowOwnershipStateField(apidocument.OwnershipFieldEntries.String()) {
+		t.Fatalf("state field allow-list accepted surface field")
 	}
 }
 
@@ -42,7 +42,7 @@ func TestAllowOwnershipEntryField(t *testing.T) {
 	if !allowOwnershipEntryField(apidocument.OwnershipFieldOwner.String()) || !allowOwnershipEntryField(apidocument.OwnershipFieldFields.String()) {
 		t.Fatalf("entry field allow-list rejected known fields")
 	}
-	if allowOwnershipEntryField(apidocument.OwnershipFieldVersion.String()) {
+	if allowOwnershipEntryField(apidocument.OwnershipFieldDesired.String()) {
 		t.Fatalf("entry field allow-list accepted document field")
 	}
 }

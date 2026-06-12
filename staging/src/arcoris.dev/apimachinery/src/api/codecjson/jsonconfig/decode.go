@@ -28,7 +28,7 @@ type DecodeConfig struct {
 	// Objects controls generic object and object-envelope behavior.
 	Objects DecodeObjectConfig
 
-	// Ownership controls object ownership document behavior.
+	// Ownership controls object ownership state behavior.
 	Ownership DecodeOwnershipConfig
 }
 

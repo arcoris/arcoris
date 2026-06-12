@@ -42,11 +42,11 @@ type resolvedDecodeConfig struct {
 	// rejectUnknownEnvelopeFields controls fixed object envelope field checks.
 	rejectUnknownEnvelopeFields bool
 
-	// rejectUnknownOwnershipFields controls fixed ownership document field checks.
+	// rejectUnknownOwnershipFields controls fixed ownership-state field checks.
 	rejectUnknownOwnershipFields bool
 
-	// validateOwnershipDocument controls objectownership.Validate on decode.
-	validateOwnershipDocument bool
+	// validateOwnershipState controls objectownership.Validate on decode.
+	validateOwnershipState bool
 }
 
 // resolvedEncodeConfig contains only encode fields used on the hot path.
@@ -60,7 +60,7 @@ type resolvedEncodeConfig struct {
 	// finalNewline appends a trailing newline after one JSON document.
 	finalNewline bool
 
-	// deterministic sorts value object members and may normalize ownership docs.
+	// deterministic sorts value object members and may normalize ownership state.
 	deterministic bool
 
 	// escapeHTML mirrors encoding/json HTML escaping for JSON strings.
@@ -90,11 +90,11 @@ type resolvedEncodeConfig struct {
 	// observed controls absent observed payload emission.
 	observed jsonconfig.ObservedEncodeMode
 
-	// ownershipNormalize controls pre-encode ownership document normalization.
+	// ownershipNormalize controls pre-encode ownership state normalization.
 	ownershipNormalize jsonconfig.OwnershipNormalizeMode
 
-	// emptyDesired controls empty desired ownership surface emission.
-	emptyDesired jsonconfig.EmptyOwnershipSurfaceMode
+	// emptySurfaces controls empty ownership surface emission.
+	emptySurfaces jsonconfig.EmptyOwnershipSurfaceMode
 
 	// emptyEntries controls empty ownership entries emission.
 	emptyEntries jsonconfig.EmptyEntriesMode

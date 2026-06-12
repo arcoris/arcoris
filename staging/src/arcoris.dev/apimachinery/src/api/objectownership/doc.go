@@ -12,38 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package objectownership bridges object-level ownership state and ownership
-// documents.
+// Package objectownership defines canonical object-level ownership state.
 //
 // Package fieldownership owns owner/path state, owner validation, conflict
 // primitives, and deterministic field-level ownership ordering. Package
 // fieldpath owns semantic path parsing and canonicalization. Package
-// objectownership wraps those lower layers into object-surface ownership state
-// and stable in-memory document shape. Package objectapply consumes State.
-// Package objectstore stores Document. Package codecjson encodes and decodes
-// Document. Package objectlifecycle decides when documents are stored,
-// normalized, or committed.
+// objectsurface names the stable object surface taxonomy. Package
+// objectownership wraps those lower layers into multi-surface object ownership
+// state. Package objectapply consumes the Desired portion of State. Package
+// objectstore stores State. Package codecjson encodes and decodes State. Package
+// objectlifecycle decides when ownership state is initialized, updated, or
+// committed.
 //
-// The package has three separate models. State is the operational object
-// ownership state used by objectapply and lifecycle code. Document is stable,
-// versioned, mutable in-memory document data used by stores and codecs. Normalize
-// canonicalizes valid raw documents into deterministic document form. State is
-// not a codec type. Document is not a wire format by itself.
+// State is the single canonical ownership model. There is no separate ownership
+// document model, document version, or migration layer in this package. Stores,
+// codecs, lifecycle code, and apply code all exchange State directly.
 //
-// Validate accepts valid raw documents. Raw documents may contain duplicate
-// owners, duplicate fields, unsorted entries, and empty entries. Normalize sorts
-// owners, merges duplicate owners, deduplicates fields, sorts fields, prunes
-// empty entries, and writes DocumentVersionV1. ValidateNormalized is available
-// when callers need to require that a document is already canonical.
+// State stores ownership in separate surface-relative namespaces:
+// Desired, Observed, metadata labels, and metadata annotations. A path such as
+// $.ready in Observed is unrelated to $.ready in Desired, and a metadata label
+// path such as $["scheduler.arcoris.dev/mode"] is relative to the labels
+// surface rather than to a synthetic whole-object $.metadata path.
 //
-// Document version 1 owns only the Desired surface. Observed and metadata
-// ownership are intentionally not modeled in v1; future document versions may
-// add them explicitly.
-//
-// Document, Surface, and Entry are plain mutable document structs. They expose
-// slices because they are raw document data. Use Clone, EntriesCopy, and
-// FieldsCopy when caller-side detachment is required. Validate and Normalize do
-// not make input immutable.
+// Normalize canonicalizes each surface independently by relying on
+// fieldownership's deterministic owner ordering, duplicate-owner merge,
+// duplicate-field deduplication, and empty-entry pruning. Validate checks each
+// surface with fieldownership structural validation. ValidateNormalized is
+// available for callers that need to assert already-canonical state.
 //
 // The package does not apply objects, merge values, validate resources,
 // validate descriptors, mutate metadata, access storage, assign storage

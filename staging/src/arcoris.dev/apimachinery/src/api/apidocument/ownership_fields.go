@@ -15,11 +15,20 @@
 package apidocument
 
 const (
-	// OwnershipFieldVersion is the object ownership document version field.
-	OwnershipFieldVersion FieldName = "version"
-
 	// OwnershipFieldDesired is the Desired ownership surface field.
 	OwnershipFieldDesired FieldName = "desired"
+
+	// OwnershipFieldObserved is the Observed ownership surface field.
+	OwnershipFieldObserved FieldName = "observed"
+
+	// OwnershipFieldMetadata is the metadata ownership object field.
+	OwnershipFieldMetadata FieldName = "metadata"
+
+	// OwnershipFieldLabels is the metadata labels ownership surface field.
+	OwnershipFieldLabels FieldName = "labels"
+
+	// OwnershipFieldAnnotations is the metadata annotations ownership surface field.
+	OwnershipFieldAnnotations FieldName = "annotations"
 
 	// OwnershipFieldEntries is the ownership surface entries field.
 	OwnershipFieldEntries FieldName = "entries"

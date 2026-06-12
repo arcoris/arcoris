@@ -27,6 +27,8 @@ func TestOperationStringAndValidity(t *testing.T) {
 		{name: "get", op: OperationGet, text: "get", valid: true},
 		{name: "create", op: OperationCreate, text: "create", valid: true},
 		{name: "apply", op: OperationApply, text: "apply", valid: true},
+		{name: "update observed", op: OperationUpdateObserved, text: "update_observed", valid: true},
+		{name: "patch metadata", op: OperationPatchMetadata, text: "patch_metadata", valid: true},
 		{name: "delete", op: OperationDelete, text: "delete", valid: true},
 		{name: "unknown", op: Operation(99), text: "unknown", valid: false},
 	}

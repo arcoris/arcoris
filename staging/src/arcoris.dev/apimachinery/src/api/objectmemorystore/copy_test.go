@@ -18,7 +18,7 @@ import (
 	"context"
 	"testing"
 
-	"arcoris.dev/apimachinery/api/objectownership"
+	"arcoris.dev/apimachinery/api/fieldownership"
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -31,7 +31,6 @@ func TestCreateDoesNotRetainInputStateAliases(t *testing.T) {
 	_, err := store.Create(context.Background(), key, input)
 	requireNoError(t, err)
 
-	input.Ownership.Desired.Entries[0].Fields[0] = "$.mutated"
 	input.Object.Desired = value.StringValue("mutated")
 	*input.Object.Observed = value.StringValue("mutated")
 
@@ -87,7 +86,6 @@ func TestUpdateDoesNotRetainInputStateAliases(t *testing.T) {
 
 	_, err := store.Update(context.Background(), key, created.Revision, next)
 	requireNoError(t, err)
-	next.Ownership.Desired.Entries[0].Fields[0] = "$.mutated"
 	next.Object.Desired = value.StringValue("mutated")
 	*next.Object.Observed = value.StringValue("mutated")
 
@@ -133,7 +131,6 @@ func TestDeleteReturnDoesNotExposeTombstoneStateAliases(t *testing.T) {
 }
 
 func mutateStateAliases(state *objectstore.State) {
-	state.Ownership.Desired.Entries[0].Fields[0] = "$.mutated"
 	state.Object.Desired = value.StringValue("mutated")
 	if state.Object.Observed != nil {
 		*state.Object.Observed = value.StringValue("mutated")
@@ -143,8 +140,8 @@ func mutateStateAliases(state *objectstore.State) {
 func requireStateAliasesIntact(t *testing.T, state objectstore.State, text string) {
 	t.Helper()
 
-	if state.Ownership.Desired.Entries[0].Fields[0] != objectownership.Path("$.desired") {
-		t.Fatalf("stored ownership was mutated: %#v", state.Ownership.Desired.Entries)
+	if !state.Ownership.Desired().FieldsFor(fieldownership.MustOwner("manager")).Equal(fieldSet("$.desired")) {
+		t.Fatalf("stored ownership was mutated: %s", state.Ownership.Desired().FieldsFor(fieldownership.MustOwner("manager")))
 	}
 	requireDesiredString(t, state, text)
 

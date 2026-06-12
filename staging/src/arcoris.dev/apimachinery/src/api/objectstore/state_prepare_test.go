@@ -22,18 +22,16 @@ import (
 
 func TestPrepareInputStateNormalizesOwnership(t *testing.T) {
 	state := validState()
-	state.Ownership = rawUnsortedOwnership()
+	state.Ownership = ownershipWithSurfaces()
 
 	prepared, err := PrepareInputState(state)
 	requireNoError(t, err)
 
-	if got, want := prepared.Ownership.Desired.Entries[0].Owner.String(), "a"; got != want {
-		t.Fatalf("first owner = %q; want %q", got, want)
-	}
-	if len(prepared.Ownership.Desired.Entries[0].Fields) != 1 {
-		t.Fatalf("fields were not deduplicated: %#v", prepared.Ownership.Desired.Entries[0].Fields)
-	}
 	requireNoError(t, objectownership.ValidateNormalized(prepared.Ownership))
+	requireOwnershipField(t, prepared.Ownership.Desired(), "manager", "$.spec")
+	requireOwnershipField(t, prepared.Ownership.Observed(), "controller", "$.ready")
+	requireOwnershipField(t, prepared.Ownership.Metadata().Labels(), "labeler", `$["app"]`)
+	requireOwnershipField(t, prepared.Ownership.Metadata().Annotations(), "annotator", `$["scheduler.arcoris.dev/mode"]`)
 }
 
 func TestPrepareInputStatePreservesZeroRevision(t *testing.T) {
@@ -47,14 +45,12 @@ func TestPrepareInputStatePreservesZeroRevision(t *testing.T) {
 
 func TestPrepareInputStateDoesNotMutateInput(t *testing.T) {
 	state := validState()
-	state.Ownership = rawUnsortedOwnership()
+	state.Ownership = ownershipWithSurfaces()
 
 	_, err := PrepareInputState(state)
 	requireNoError(t, err)
 
-	if got := len(state.Ownership.Desired.Entries[1].Fields); got != 2 {
-		t.Fatalf("input fields were mutated, len = %d; want 2", got)
-	}
+	requireOwnershipField(t, state.Ownership.Metadata().Annotations(), "annotator", `$["scheduler.arcoris.dev/mode"]`)
 }
 
 func TestPrepareInputStateRejectsInvalidState(t *testing.T) {
@@ -67,12 +63,9 @@ func TestAssignRevisionDetachesState(t *testing.T) {
 	state.Ownership = ownershipWithEntry()
 
 	committed := AssignRevision(state, 9)
-	state.Ownership.Desired.Entries[0].Fields[0] = "$.mutated"
 
 	if committed.Revision != 9 {
 		t.Fatalf("revision = %v; want 9", committed.Revision)
 	}
-	if got := committed.Ownership.Desired.Entries[0].Fields[0]; got != objectownership.Path("$.spec") {
-		t.Fatalf("committed field = %q; want $.spec", got)
-	}
+	requireOwnershipField(t, committed.Ownership.Desired(), "manager", "$.spec")
 }

@@ -14,23 +14,16 @@
 
 package objectstore
 
-import (
-	"testing"
-
-	"arcoris.dev/apimachinery/api/objectownership"
-)
+import "testing"
 
 func TestAssignRevisionClonesAndAssignsRevision(t *testing.T) {
 	state := validState()
 	state.Ownership = ownershipWithEntry()
 
 	assigned := AssignRevision(state, 7)
-	state.Ownership.Desired.Entries[0].Fields[0] = "$.other"
 
 	if assigned.Revision != 7 {
 		t.Fatalf("Revision = %v; want 7", assigned.Revision)
 	}
-	if got, want := assigned.Ownership.Desired.Entries[0].Fields[0], objectownership.Path("$.spec"); got != want {
-		t.Fatalf("assigned ownership field = %q; want %q", got, want)
-	}
+	requireOwnershipField(t, assigned.Ownership.Desired(), "manager", "$.spec")
 }

@@ -21,24 +21,11 @@ import (
 )
 
 var (
-	// ErrInvalidDocument classifies malformed object ownership documents.
-	ErrInvalidDocument = errors.New("invalid object ownership document")
+	// ErrInvalidState classifies malformed object ownership state.
+	ErrInvalidState = errors.New("invalid object ownership state")
 
-	// ErrUnsupportedVersion classifies unknown document versions.
-	ErrUnsupportedVersion = errors.New("unsupported object ownership document version")
-
-	// ErrInvalidSurface classifies defensive surface invariant failures after
-	// entry-level validation has already succeeded.
-	ErrInvalidSurface = errors.New("invalid object ownership surface")
-
-	// ErrInvalidEntry classifies malformed owner/path records.
-	ErrInvalidEntry = errors.New("invalid object ownership entry")
-
-	// ErrInvalidPath classifies malformed document field path text.
-	ErrInvalidPath = errors.New("invalid object ownership path")
-
-	// ErrNotNormalized classifies valid documents that are not canonical.
-	ErrNotNormalized = errors.New("object ownership document is not normalized")
+	// ErrNotNormalized classifies valid ownership state that is not canonical.
+	ErrNotNormalized = errors.New("object ownership state is not normalized")
 )
 
 // Error is the structured diagnostic returned by objectownership.

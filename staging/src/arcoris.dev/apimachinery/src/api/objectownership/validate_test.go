@@ -14,114 +14,21 @@
 
 package objectownership
 
-import (
-	"testing"
+import "testing"
 
-	"arcoris.dev/apimachinery/api/fieldownership"
-	"arcoris.dev/apimachinery/api/fieldpath"
-)
-
-func TestValidateAcceptsDocumentVersionV1(t *testing.T) {
-	requireNoError(t, Validate(Document{Version: DocumentVersionV1}))
+func TestValidateAcceptsEmptyState(t *testing.T) {
+	requireNoError(t, Validate(EmptyState()))
 }
 
-func TestValidateRejectsZeroVersion(t *testing.T) {
-	err := Validate(Document{})
-
-	requireErrorIs(t, err, ErrInvalidDocument)
-	requireObjectOwnershipError(t, err, pathDocumentVersion, ErrorReasonMissingVersion)
-}
-
-func TestValidateRejectsUnsupportedVersion(t *testing.T) {
-	err := Validate(Document{Version: "v2"})
-
-	requireErrorIs(t, err, ErrUnsupportedVersion)
-	requireObjectOwnershipError(t, err, pathDocumentVersion, ErrorReasonUnsupportedVersion)
-}
-
-func TestValidateAcceptsUnsortedEntries(t *testing.T) {
-	err := Validate(document(documentEntry("z", "$.z"), documentEntry("a", "$.a")))
-
-	requireNoError(t, err)
-}
-
-func TestValidateAcceptsDuplicateOwners(t *testing.T) {
-	err := Validate(document(documentEntry("user", "$.image"), documentEntry("user", "$.replicas")))
-
-	requireNoError(t, err)
-}
-
-func TestValidateAcceptsDuplicateFields(t *testing.T) {
-	err := Validate(document(documentEntry("user", "$.image", "$.image")))
-
-	requireNoError(t, err)
-}
-
-func TestValidateAcceptsEmptyFieldEntryWithValidOwner(t *testing.T) {
-	err := Validate(document(documentEntry("user")))
-
-	requireNoError(t, err)
-}
-
-func TestValidateReportsFirstFailureDeterministically(t *testing.T) {
-	err := Validate(document(
-		Entry{Owner: fieldownership.Owner{}, Fields: []Path{"not-a-path"}},
-		documentEntry("user", ""),
-	))
-
-	requireErrorIs(t, err, ErrInvalidEntry)
-	requireObjectOwnershipError(t, err, "document.desired.entries[0].owner", ErrorReasonInvalidOwner)
-}
-
-func TestValidateRejectsInvalidOwner(t *testing.T) {
-	err := Validate(document(Entry{
-		Owner:  fieldownership.Owner{},
-		Fields: []Path{"$.image"},
-	}))
-
-	requireErrorIs(t, err, ErrInvalidEntry)
-	requireErrorIs(t, err, fieldownership.ErrInvalidOwner)
-	requireObjectOwnershipError(
-		t,
-		err,
-		"document.desired.entries[0].owner",
-		ErrorReasonInvalidOwner,
+func TestValidateAcceptsAllSurfaces(t *testing.T) {
+	state := NewStateWithSurfaces(
+		ownershipState(ownershipEntry("desired", "$.image")),
+		ownershipState(ownershipEntry("observed", "$.ready")),
+		NewMetadataState(
+			ownershipState(ownershipEntry("labels", `$["app"]`)),
+			ownershipState(ownershipEntry("annotations", `$["scheduler.arcoris.dev/mode"]`)),
+		),
 	)
-}
 
-func TestValidateRejectsEmptyPath(t *testing.T) {
-	err := Validate(document(documentEntry("user", "")))
-
-	requireErrorIs(t, err, ErrInvalidPath)
-	requireObjectOwnershipError(
-		t,
-		err,
-		"document.desired.entries[0].fields[0]",
-		ErrorReasonInvalidPath,
-	)
-}
-
-func TestValidateRejectsInvalidPathGrammar(t *testing.T) {
-	err := Validate(document(documentEntry("user", "image")))
-
-	requireErrorIs(t, err, ErrInvalidPath)
-	requireErrorIs(t, err, fieldpath.ErrInvalidPath)
-}
-
-func TestValidateRejectsNonCanonicalPathIfApplicable(t *testing.T) {
-	err := Validate(document(documentEntry("user", `$."image"`)))
-
-	requireErrorIs(t, err, ErrInvalidPath)
-}
-
-func TestValidateRejectsNonCanonicalPathWithObjectOwnershipError(t *testing.T) {
-	err := Validate(document(documentEntry("user", `$."image"`)))
-
-	requireErrorIs(t, err, ErrInvalidPath)
-	requireObjectOwnershipError(
-		t,
-		err,
-		"document.desired.entries[0].fields[0]",
-		ErrorReasonInvalidPath,
-	)
+	requireNoError(t, Validate(state))
 }

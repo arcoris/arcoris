@@ -25,7 +25,7 @@ import (
 // objectToNode converts a value-backed object envelope to stable JSON fields.
 //
 // Envelope member order is stable regardless of Deterministic. Deterministic
-// controls only nested value objects and ownership documents.
+// controls only nested value objects and ownership state.
 func objectToNode(path jsonPath, obj codec.Object, decode resolvedDecodeConfig, encode resolvedEncodeConfig) (jsonNode, error) {
 	members := make([]jsonMember, 0, 5)
 	var err error

@@ -177,12 +177,12 @@ func newOwnershipByteCodec(format codec.Format, mediaType codec.MediaType) *fake
 
 func (f fakeOwnershipByteCodec) DecodeObjectOwnership(
 	[]byte,
-) (objectownership.Document, error) {
-	return objectownership.Document{}, nil
+) (objectownership.State, error) {
+	return objectownership.State{}, nil
 }
 
 func (f fakeOwnershipByteCodec) EncodeObjectOwnership(
-	objectownership.Document,
+	objectownership.State,
 ) ([]byte, error) {
 	return nil, nil
 }
@@ -235,13 +235,13 @@ func newOwnershipStreamCodec(format codec.Format, mediaType codec.MediaType) *fa
 
 func (f fakeOwnershipStreamCodec) DecodeObjectOwnershipFrom(
 	io.Reader,
-) (objectownership.Document, error) {
-	return objectownership.Document{}, nil
+) (objectownership.State, error) {
+	return objectownership.State{}, nil
 }
 
 func (f fakeOwnershipStreamCodec) EncodeObjectOwnershipTo(
 	io.Writer,
-	objectownership.Document,
+	objectownership.State,
 ) error {
 	return nil
 }
@@ -280,14 +280,14 @@ func (f fakeFullByteCodec) EncodeObject(obj codec.Object) ([]byte, error) {
 
 func (f fakeFullByteCodec) DecodeObjectOwnership(
 	data []byte,
-) (objectownership.Document, error) {
+) (objectownership.State, error) {
 	return fakeOwnershipByteCodec{}.DecodeObjectOwnership(data)
 }
 
 func (f fakeFullByteCodec) EncodeObjectOwnership(
-	doc objectownership.Document,
+	state objectownership.State,
 ) ([]byte, error) {
-	return fakeOwnershipByteCodec{}.EncodeObjectOwnership(doc)
+	return fakeOwnershipByteCodec{}.EncodeObjectOwnership(state)
 }
 
 type fakeFullStreamingCodec struct {
@@ -324,15 +324,15 @@ func (f fakeFullStreamingCodec) EncodeObjectTo(w io.Writer, obj codec.Object) er
 
 func (f fakeFullStreamingCodec) DecodeObjectOwnershipFrom(
 	r io.Reader,
-) (objectownership.Document, error) {
+) (objectownership.State, error) {
 	return fakeOwnershipStreamCodec{}.DecodeObjectOwnershipFrom(r)
 }
 
 func (f fakeFullStreamingCodec) EncodeObjectOwnershipTo(
 	w io.Writer,
-	doc objectownership.Document,
+	state objectownership.State,
 ) error {
-	return fakeOwnershipStreamCodec{}.EncodeObjectOwnershipTo(w, doc)
+	return fakeOwnershipStreamCodec{}.EncodeObjectOwnershipTo(w, state)
 }
 
 type fakeByteAndStreamCodec struct {
@@ -369,15 +369,15 @@ func (f fakeByteAndStreamCodec) EncodeObjectTo(w io.Writer, obj codec.Object) er
 
 func (f fakeByteAndStreamCodec) DecodeObjectOwnershipFrom(
 	r io.Reader,
-) (objectownership.Document, error) {
+) (objectownership.State, error) {
 	return fakeFullStreamingCodec{}.DecodeObjectOwnershipFrom(r)
 }
 
 func (f fakeByteAndStreamCodec) EncodeObjectOwnershipTo(
 	w io.Writer,
-	doc objectownership.Document,
+	state objectownership.State,
 ) error {
-	return fakeFullStreamingCodec{}.EncodeObjectOwnershipTo(w, doc)
+	return fakeFullStreamingCodec{}.EncodeObjectOwnershipTo(w, state)
 }
 
 func requireNoError(t *testing.T, err error) {

@@ -21,18 +21,23 @@ import (
 
 // Clone returns a detached copy of s.
 //
-// Clone copies metadata, desired value, observed value, and ownership document
-// slices using the existing API value and ownership contracts. The revision is
+// Clone copies metadata and value payloads using the existing object/value
+// contracts. Ownership state is stored by value and remains immutable by
+// convention through fieldownership's private representation. The revision is
 // copied by value.
 func (s State) Clone() State {
 	return State{
 		Object:    cloneObject(s.Object),
-		Ownership: s.Ownership.Clone(),
+		Ownership: s.Ownership,
 		Revision:  s.Revision,
 	}
 }
 
 // cloneObject detaches value-backed object payloads from caller mutation.
+//
+// Object metadata is cloned through object.New/WithObserved helper semantics.
+// Desired and Observed values are cloned explicitly because value.Value can hold
+// reference-bearing composite payloads.
 func cloneObject(in object.Object[value.Value, value.Value]) object.Object[value.Value, value.Value] {
 	out := object.New[value.Value, value.Value](
 		in.TypeMeta,

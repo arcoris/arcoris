@@ -36,12 +36,12 @@ func newOwnershipByteCodec(format codec.Format, mediaTypes ...codec.MediaType) *
 
 func (f fakeOwnershipByteCodec) DecodeObjectOwnership(
 	[]byte,
-) (objectownership.Document, error) {
-	return objectownership.Document{}, nil
+) (objectownership.State, error) {
+	return objectownership.State{}, nil
 }
 
 func (f fakeOwnershipByteCodec) EncodeObjectOwnership(
-	objectownership.Document,
+	objectownership.State,
 ) ([]byte, error) {
 	return nil, nil
 }

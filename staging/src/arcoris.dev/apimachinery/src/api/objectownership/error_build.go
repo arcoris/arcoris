@@ -21,29 +21,31 @@ import (
 )
 
 const (
-	// pathDocument names the whole document when a narrower path is not useful.
-	pathDocument = "document"
-
-	// pathDocumentVersion names the document version diagnostic location.
-	pathDocumentVersion = "document.version"
-
-	// pathDocumentDesired names the Desired surface diagnostic location.
-	pathDocumentDesired = "document.desired"
+	// pathState is the root diagnostic path for whole-state invariants.
+	pathState = "state"
+	// pathStateDesired identifies the Desired ownership surface.
+	pathStateDesired = "state.desired"
+	// pathStateObserved identifies the Observed ownership surface.
+	pathStateObserved = "state.observed"
+	// pathStateMetadataLabels identifies metadata.labels ownership.
+	pathStateMetadataLabels = "state.metadata.labels"
+	// pathStateMetadataAnnotations identifies metadata.annotations ownership.
+	pathStateMetadataAnnotations = "state.metadata.annotations"
 )
 
-// errorAt builds a structured diagnostic without a nested cause.
+// errorAt creates an ownership diagnostic without a lower-level cause.
 func errorAt(path string, err error, reason ErrorReason, detail string) error {
 	return &Error{
 		Record: diagnostic.NewRecord(path, err, reason, detail),
 	}
 }
 
-// errorfAt builds a structured diagnostic with formatted detail text.
+// errorfAt formats a detail string before creating an ownership diagnostic.
 func errorfAt(path string, err error, reason ErrorReason, format string, args ...any) error {
 	return errorAt(path, err, reason, fmt.Sprintf(format, args...))
 }
 
-// wrapAt builds a structured diagnostic that preserves a lower-level cause.
+// wrapAt creates an ownership diagnostic that preserves a lower-level cause.
 func wrapAt(path string, err error, reason ErrorReason, detail string, cause error) error {
 	return &Error{
 		Record: diagnostic.WrapRecord(path, err, reason, detail, cause),

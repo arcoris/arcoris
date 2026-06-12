@@ -59,12 +59,12 @@ func (f fakeFullByteCodec) EncodeObject(obj codec.Object) ([]byte, error) {
 
 func (f fakeFullByteCodec) DecodeObjectOwnership(
 	data []byte,
-) (objectownership.Document, error) {
+) (objectownership.State, error) {
 	return fakeOwnershipByteCodec{}.DecodeObjectOwnership(data)
 }
 
 func (f fakeFullByteCodec) EncodeObjectOwnership(
-	doc objectownership.Document,
+	state objectownership.State,
 ) ([]byte, error) {
-	return fakeOwnershipByteCodec{}.EncodeObjectOwnership(doc)
+	return fakeOwnershipByteCodec{}.EncodeObjectOwnership(state)
 }

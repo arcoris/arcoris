@@ -33,7 +33,7 @@
 //
 // Codecs transform bytes or streams to and from API document models such as
 // api/value.Value, value-backed api/object envelopes, and
-// api/objectownership.Document. Codecs do not validate values against api/types
+// api/objectownership.State. Codecs do not validate values against api/types
 // descriptors, perform object validation, apply objects, compute field
 // ownership conflicts, default, prune, convert API versions, perform resource
 // catalog lookup, access storage, run admission, or execute runtime/server

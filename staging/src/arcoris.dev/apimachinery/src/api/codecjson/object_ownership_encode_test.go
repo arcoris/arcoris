@@ -22,70 +22,30 @@ import (
 	"arcoris.dev/apimachinery/api/objectownership"
 )
 
-func TestEncodeObjectOwnershipDocument(t *testing.T) {
-	doc := objectownership.Document{
-		Version: objectownership.DocumentVersionV1,
-		Desired: objectownership.Surface{Entries: []objectownership.Entry{
-			{
-				Owner:  fieldownership.MustOwner("user-cli"),
-				Fields: []objectownership.Path{"$.image", "$.replicas"},
-			},
-		}},
-	}
+func TestEncodeObjectOwnershipState(t *testing.T) {
+	state := objectownership.NewState(ownershipSurface(
+		ownershipEntry("user-cli", "$.image", "$.replicas"),
+	))
 
-	data, err := newTestCodec(t).EncodeObjectOwnership(doc)
+	data, err := newTestCodec(t).EncodeObjectOwnership(state)
 	requireNoError(t, err)
 
-	want := `{"version":"v1","desired":{"entries":[{"owner":"user-cli","fields":["$.image","$.replicas"]}]}}`
+	want := `{"desired":{"entries":[{"owner":"user-cli","fields":["$.image","$.replicas"]}]},"observed":{"entries":[]},"metadata":{"labels":{"entries":[]},"annotations":{"entries":[]}}}`
 	if string(data) != want {
 		t.Fatalf("encoded = %s; want %s", data, want)
 	}
 }
 
-func TestEncodeObjectOwnershipValidatesBeforeEncode(t *testing.T) {
-	doc := objectownership.Document{Version: objectownership.DocumentVersionV1}
-	doc.Desired.Entries = []objectownership.Entry{{Owner: fieldownership.Owner{}, Fields: []objectownership.Path{"$.image"}}}
+func TestEncodeObjectOwnershipUsesCanonicalStateOrder(t *testing.T) {
+	state := objectownership.NewState(ownershipSurface(
+		ownershipEntry("user-b", "$.b"),
+		ownershipEntry("user-a", "$.b", "$.a"),
+	))
 
-	_, err := newTestCodec(t).EncodeObjectOwnership(doc)
-
-	requireErrorIs(t, err, ErrInvalidEnvelope)
-	requireErrorIs(t, err, objectownership.ErrInvalidEntry)
-}
-
-func TestEncodeObjectOwnershipDeterministicNormalizes(t *testing.T) {
-	c := newTestCodecWith(t, func(config *jsonconfig.Config) {
-		config.Encode.Ordering.Mode = jsonconfig.OrderingDeterministic
-	})
-	doc := objectownership.Document{
-		Version: objectownership.DocumentVersionV1,
-		Desired: objectownership.Surface{Entries: []objectownership.Entry{
-			{Owner: fieldownership.MustOwner("user-b"), Fields: []objectownership.Path{"$.b"}},
-			{Owner: fieldownership.MustOwner("user-a"), Fields: []objectownership.Path{"$.b", "$.a"}},
-		}},
-	}
-
-	data, err := c.EncodeObjectOwnership(doc)
+	data, err := newTestCodec(t).EncodeObjectOwnership(state)
 	requireNoError(t, err)
 
-	want := `{"version":"v1","desired":{"entries":[{"owner":"user-a","fields":["$.a","$.b"]},{"owner":"user-b","fields":["$.b"]}]}}`
-	if string(data) != want {
-		t.Fatalf("encoded = %s; want %s", data, want)
-	}
-}
-
-func TestEncodeObjectOwnershipPreservesOrderByDefault(t *testing.T) {
-	doc := objectownership.Document{
-		Version: objectownership.DocumentVersionV1,
-		Desired: objectownership.Surface{Entries: []objectownership.Entry{
-			{Owner: fieldownership.MustOwner("user-b"), Fields: []objectownership.Path{"$.b"}},
-			{Owner: fieldownership.MustOwner("user-a"), Fields: []objectownership.Path{"$.b", "$.a"}},
-		}},
-	}
-
-	data, err := newTestCodec(t).EncodeObjectOwnership(doc)
-	requireNoError(t, err)
-
-	want := `{"version":"v1","desired":{"entries":[{"owner":"user-b","fields":["$.b"]},{"owner":"user-a","fields":["$.b","$.a"]}]}}`
+	want := `{"desired":{"entries":[{"owner":"user-a","fields":["$.a","$.b"]},{"owner":"user-b","fields":["$.b"]}]},"observed":{"entries":[]},"metadata":{"labels":{"entries":[]},"annotations":{"entries":[]}}}`
 	if string(data) != want {
 		t.Fatalf("encoded = %s; want %s", data, want)
 	}
@@ -95,26 +55,25 @@ func TestEncodeObjectOwnershipPretty(t *testing.T) {
 	c := newTestCodecWith(t, func(config *jsonconfig.Config) {
 		config.Encode.Output.Layout = jsonconfig.LayoutPretty
 	})
-	doc := objectownership.Document{Version: objectownership.DocumentVersionV1}
 
-	data, err := c.EncodeObjectOwnership(doc)
+	data, err := c.EncodeObjectOwnership(objectownership.EmptyState())
 	requireNoError(t, err)
 
-	want := "{\n  \"version\": \"v1\",\n  \"desired\": {\n    \"entries\": []\n  }\n}"
+	want := "{\n  \"desired\": {\n    \"entries\": []\n  },\n  \"observed\": {\n    \"entries\": []\n  },\n  \"metadata\": {\n    \"labels\": {\n      \"entries\": []\n    },\n    \"annotations\": {\n      \"entries\": []\n    }\n  }\n}"
 	if string(data) != want {
 		t.Fatalf("encoded = %q; want %q", data, want)
 	}
 }
 
-func TestEncodeObjectOwnershipOmitsEmptyDesiredWhenConfigured(t *testing.T) {
+func TestEncodeObjectOwnershipOmitsEmptySurfacesWhenConfigured(t *testing.T) {
 	c := newTestCodecWith(t, func(config *jsonconfig.Config) {
-		config.Encode.Ownership.EmptyDesired = jsonconfig.EmptyOwnershipSurfaceOmit
+		config.Encode.Ownership.EmptySurfaces = jsonconfig.EmptyOwnershipSurfaceOmit
 	})
 
-	data, err := c.EncodeObjectOwnership(objectownership.Document{Version: objectownership.DocumentVersionV1})
+	data, err := c.EncodeObjectOwnership(objectownership.EmptyState())
 	requireNoError(t, err)
 
-	if string(data) != `{"version":"v1"}` {
+	if string(data) != `{}` {
 		t.Fatalf("encoded = %s", data)
 	}
 }
@@ -124,10 +83,47 @@ func TestEncodeObjectOwnershipOmitsEmptyEntriesWhenConfigured(t *testing.T) {
 		config.Encode.Ownership.EmptyEntries = jsonconfig.EmptyEntriesOmit
 	})
 
-	data, err := c.EncodeObjectOwnership(objectownership.Document{Version: objectownership.DocumentVersionV1})
+	data, err := c.EncodeObjectOwnership(objectownership.EmptyState())
 	requireNoError(t, err)
 
-	if string(data) != `{"version":"v1","desired":{}}` {
+	if string(data) != `{"desired":{},"observed":{},"metadata":{"labels":{},"annotations":{}}}` {
 		t.Fatalf("encoded = %s", data)
+	}
+}
+
+func TestEncodeObjectOwnershipAllSurfaces(t *testing.T) {
+	state := ownershipState(
+		ownershipSurface(ownershipEntry("user-cli", "$.image")),
+		ownershipSurface(ownershipEntry("controller", "$.ready")),
+		objectownership.NewMetadataState(
+			ownershipSurface(ownershipEntry("labeler", `$["scheduler.arcoris.dev/mode"]`)),
+			ownershipSurface(ownershipEntry("annotator", `$["with.dots"]`)),
+		),
+	)
+
+	data, err := newTestCodec(t).EncodeObjectOwnership(state)
+	requireNoError(t, err)
+
+	want := `{"desired":{"entries":[{"owner":"user-cli","fields":["$.image"]}]},"observed":{"entries":[{"owner":"controller","fields":["$.ready"]}]},"metadata":{"labels":{"entries":[{"owner":"labeler","fields":["$[\"scheduler.arcoris.dev/mode\"]"]}]},"annotations":{"entries":[{"owner":"annotator","fields":["$[\"with.dots\"]"]}]}}}`
+	if string(data) != want {
+		t.Fatalf("encoded = %s; want %s", data, want)
+	}
+}
+
+func TestEncodeObjectOwnershipNormalizeNeverStillUsesCanonicalState(t *testing.T) {
+	c := newTestCodecWith(t, func(config *jsonconfig.Config) {
+		config.Encode.Ownership.Normalize = jsonconfig.OwnershipNormalizeNever
+	})
+	state := objectownership.NewState(fieldownership.MustState(
+		ownershipEntry("z", "$.z"),
+		ownershipEntry("a", "$.a"),
+	))
+
+	data, err := c.EncodeObjectOwnership(state)
+	requireNoError(t, err)
+
+	want := `{"desired":{"entries":[{"owner":"a","fields":["$.a"]},{"owner":"z","fields":["$.z"]}]},"observed":{"entries":[]},"metadata":{"labels":{"entries":[]},"annotations":{"entries":[]}}}`
+	if string(data) != want {
+		t.Fatalf("encoded = %s; want %s", data, want)
 	}
 }

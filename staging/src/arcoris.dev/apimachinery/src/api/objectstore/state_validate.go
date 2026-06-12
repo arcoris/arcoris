@@ -21,11 +21,17 @@ import (
 )
 
 // IsValid reports whether s is structurally usable as committed store state.
+//
+// It is a convenience wrapper around ValidateCommittedState and therefore
+// expects a non-zero store-assigned revision.
 func (s State) IsValid() bool {
 	return ValidateCommittedState(s) == nil
 }
 
 // ValidateCommittedState checks state that already has a store-assigned revision.
+//
+// Committed state must be detached by the store implementation, contain a
+// non-zero revision, and carry normalized ownership state.
 func ValidateCommittedState(state State) error {
 	return validateState(state, true)
 }
@@ -33,12 +39,16 @@ func ValidateCommittedState(state State) error {
 // ValidateInputState checks state supplied to Create or Update before commit.
 //
 // Input state must have a zero revision because concrete stores assign commit
-// revisions. This prevents callers from forging concurrency tokens.
+// revisions. This prevents callers from forging concurrency tokens. Ownership
+// only needs to be valid here; PrepareInputState canonicalizes it before commit.
 func ValidateInputState(state State) error {
 	return validateState(state, false)
 }
 
 // validateState applies storage-level object and ownership checks.
+//
+// The store layer deliberately does not validate payloads against resource
+// descriptors. It only checks the envelope shape needed for committed storage.
 func validateState(state State, committed bool) error {
 	if committed && !state.Revision.IsValid() {
 		return errorFor(ErrorReasonInvalidRevision, Key{}, state.Revision, 0, ErrInvalidRevision)
@@ -63,12 +73,12 @@ func validateState(state State, committed bool) error {
 	return nil
 }
 
-// validateOwnership accepts raw input documents and requires committed
-// documents to be normalized.
-func validateOwnership(doc objectownership.Document, committed bool) error {
+// validateOwnership accepts valid input ownership and requires committed
+// ownership to be canonical.
+func validateOwnership(state objectownership.State, committed bool) error {
 	if committed {
-		return objectownership.ValidateNormalized(doc)
+		return objectownership.ValidateNormalized(state)
 	}
 
-	return objectownership.Validate(doc)
+	return objectownership.Validate(state)
 }

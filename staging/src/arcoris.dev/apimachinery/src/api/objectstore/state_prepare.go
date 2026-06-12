@@ -14,27 +14,21 @@
 
 package objectstore
 
-import (
-	"errors"
-
-	"arcoris.dev/apimachinery/api/objectownership"
-)
+import "arcoris.dev/apimachinery/api/objectownership"
 
 // PrepareInputState validates, detaches, and canonicalizes Create/Update state.
 //
 // The returned state still has zero revision. Concrete stores assign a
-// committed revision only after their concurrency preconditions pass.
+// committed revision only after their concurrency preconditions pass. Ownership
+// is normalized here so all Store implementations commit the same canonical
+// state shape.
 func PrepareInputState(state State) (State, error) {
 	if err := ValidateInputState(state); err != nil {
 		return State{}, err
 	}
 
 	prepared := state.Clone()
-	normalized, err := objectownership.Normalize(prepared.Ownership)
-	if err != nil {
-		return State{}, errorFor(ErrorReasonInvalidOwnership, Key{}, 0, 0, errors.Join(ErrInvalidState, err))
-	}
-	prepared.Ownership = normalized
+	prepared.Ownership = objectownership.Normalize(prepared.Ownership)
 
 	return prepared, nil
 }

@@ -36,7 +36,7 @@ var (
 	// ErrInvalidNumber classifies JSON numbers outside the value model.
 	ErrInvalidNumber = errors.New("invalid JSON number")
 
-	// ErrInvalidEnvelope classifies malformed object or ownership document shapes.
+	// ErrInvalidEnvelope classifies malformed object or ownership JSON shapes.
 	ErrInvalidEnvelope = errors.New("invalid JSON object envelope")
 )
 

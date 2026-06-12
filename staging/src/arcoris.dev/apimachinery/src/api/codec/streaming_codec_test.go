@@ -45,10 +45,10 @@ func (fakeStreamingCodec) EncodeObjectTo(io.Writer, Object) error {
 	return nil
 }
 
-func (fakeStreamingCodec) DecodeObjectOwnershipFrom(io.Reader) (objectownership.Document, error) {
-	return objectownership.Document{}, nil
+func (fakeStreamingCodec) DecodeObjectOwnershipFrom(io.Reader) (objectownership.State, error) {
+	return objectownership.State{}, nil
 }
 
-func (fakeStreamingCodec) EncodeObjectOwnershipTo(io.Writer, objectownership.Document) error {
+func (fakeStreamingCodec) EncodeObjectOwnershipTo(io.Writer, objectownership.State) error {
 	return nil
 }

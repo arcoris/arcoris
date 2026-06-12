@@ -24,8 +24,8 @@ func TestDefaultDecodeOwnershipConfig(t *testing.T) {
 	if config.UnknownFields != UnknownFieldReject {
 		t.Fatalf("unknown fields = %d; want reject", config.UnknownFields)
 	}
-	if !config.ValidateDocument {
-		t.Fatalf("validate document = false; want true")
+	if !config.ValidateState {
+		t.Fatalf("validate state = false; want true")
 	}
 }
 
@@ -38,8 +38,8 @@ func TestResolveDecodeOwnershipConfig(t *testing.T) {
 	if config.UnknownFields != UnknownFieldReject {
 		t.Fatalf("unknown fields = %d; want reject", config.UnknownFields)
 	}
-	if !config.ValidateDocument {
-		t.Fatalf("validate document = false; want true")
+	if !config.ValidateState {
+		t.Fatalf("validate state = false; want true")
 	}
 }
 

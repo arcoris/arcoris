@@ -23,7 +23,7 @@ import (
 //
 // Public byte encoders convert their semantic target into a jsonNode first,
 // then enter this shared writer path so Pretty and EscapeHTML behavior stay
-// identical across value, object, and object ownership documents.
+// identical across value, object, and object ownership state.
 func encodeTargetBytes(node jsonNode, config resolvedEncodeConfig) ([]byte, error) {
 	var buffer bytes.Buffer
 	if err := encodeTargetTo(&buffer, node, config); err != nil {

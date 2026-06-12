@@ -17,36 +17,16 @@ package objectownership
 import (
 	"errors"
 	"testing"
-
-	"arcoris.dev/apimachinery/api/fieldownership"
-	"arcoris.dev/apimachinery/api/fieldpath"
 )
 
-func TestInvalidPathErrorWrapsObjectOwnershipInvalidPath(t *testing.T) {
-	err := Validate(document(documentEntry("user", "image")))
+func TestInvalidStateErrorWrapsObjectOwnershipInvalidState(t *testing.T) {
+	err := errorAt(pathState, ErrInvalidState, ErrorReasonInvalidState, "bad state")
 
-	requireErrorIs(t, err, ErrInvalidPath)
-	requireErrorIs(t, err, fieldpath.ErrInvalidPath)
-}
-
-func TestInvalidOwnerErrorWrapsFieldOwnershipInvalidOwner(t *testing.T) {
-	err := Validate(document(Entry{
-		Owner:  fieldownership.Owner{},
-		Fields: []Path{"$.image"},
-	}))
-
-	requireErrorIs(t, err, ErrInvalidEntry)
-	requireErrorIs(t, err, fieldownership.ErrInvalidOwner)
-}
-
-func TestUnsupportedVersionError(t *testing.T) {
-	err := Validate(Document{Version: "v2"})
-
-	requireErrorIs(t, err, ErrUnsupportedVersion)
+	requireErrorIs(t, err, ErrInvalidState)
 }
 
 func TestErrorAsObjectOwnershipError(t *testing.T) {
-	err := Validate(Document{})
+	err := errorAt(pathStateDesired, ErrInvalidState, ErrorReasonInvalidDesired, "bad desired ownership")
 
 	var ownershipErr *Error
 	if !errors.As(err, &ownershipErr) {
@@ -55,13 +35,13 @@ func TestErrorAsObjectOwnershipError(t *testing.T) {
 }
 
 func TestErrorDiagnosticPath(t *testing.T) {
-	err := Validate(document(documentEntry("user", "")))
+	err := errorAt(pathStateObserved, ErrInvalidState, ErrorReasonInvalidObserved, "bad observed ownership")
 
 	requireObjectOwnershipError(
 		t,
 		err,
-		"document.desired.entries[0].fields[0]",
-		ErrorReasonInvalidPath,
+		pathStateObserved,
+		ErrorReasonInvalidObserved,
 	)
 }
 

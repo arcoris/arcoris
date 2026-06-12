@@ -18,9 +18,9 @@
 // defines resource-family contracts and version descriptors. Package
 // objectvalidation validates object envelopes against resource contracts.
 // Package valueapply owns Desired field apply semantics. Package objectownership
-// owns object-level ownership state and document boundaries. Package
+// owns canonical object-level ownership state. Package
 // objectlifecycle decides when apply is invoked as part of runtime operations.
-// Package objectstore stores committed objects and ownership documents.
+// Package objectstore stores committed objects and ownership state.
 //
 // Version 1 applies Desired only. Applied Observed is rejected even when the
 // resource defines an observed descriptor. Applied metadata may identify the

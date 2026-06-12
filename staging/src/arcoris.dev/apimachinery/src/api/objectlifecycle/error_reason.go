@@ -40,6 +40,20 @@ const (
 	ErrorReasonApplyFailed ErrorReason = "apply_failed"
 	// ErrorReasonOwnershipInitFailed reports create/apply-create ownership extraction failure.
 	ErrorReasonOwnershipInitFailed ErrorReason = "ownership_init_failed"
+	// ErrorReasonUnsupportedSurface reports an operation against an unsupported object surface.
+	ErrorReasonUnsupportedSurface ErrorReason = "unsupported_surface"
+	// ErrorReasonObservedNotDefined reports Observed updates for versions without Observed.
+	ErrorReasonObservedNotDefined ErrorReason = "observed_not_defined"
+	// ErrorReasonInvalidObserved reports invalid Observed update payload.
+	ErrorReasonInvalidObserved ErrorReason = "invalid_observed"
+	// ErrorReasonInvalidMetadataPatch reports malformed labels/annotations patch input.
+	ErrorReasonInvalidMetadataPatch ErrorReason = "invalid_metadata_patch"
+	// ErrorReasonEmptyMetadataPatch reports a metadata patch without changes.
+	ErrorReasonEmptyMetadataPatch ErrorReason = "empty_metadata_patch"
+	// ErrorReasonInvalidMetadataKey reports malformed label or annotation keys.
+	ErrorReasonInvalidMetadataKey ErrorReason = "invalid_metadata_key"
+	// ErrorReasonMetadataOwnershipFailed reports metadata ownership state construction failure.
+	ErrorReasonMetadataOwnershipFailed ErrorReason = "metadata_ownership_failed"
 	// ErrorReasonConflict reports field ownership or store compare-and-swap conflict.
 	ErrorReasonConflict ErrorReason = "conflict"
 	// ErrorReasonNotFound reports a missing live object.
@@ -68,6 +82,13 @@ func (r ErrorReason) IsValid() bool {
 		ErrorReasonValidationFailed,
 		ErrorReasonApplyFailed,
 		ErrorReasonOwnershipInitFailed,
+		ErrorReasonUnsupportedSurface,
+		ErrorReasonObservedNotDefined,
+		ErrorReasonInvalidObserved,
+		ErrorReasonInvalidMetadataPatch,
+		ErrorReasonEmptyMetadataPatch,
+		ErrorReasonInvalidMetadataKey,
+		ErrorReasonMetadataOwnershipFailed,
 		ErrorReasonConflict,
 		ErrorReasonNotFound,
 		ErrorReasonAlreadyExists,

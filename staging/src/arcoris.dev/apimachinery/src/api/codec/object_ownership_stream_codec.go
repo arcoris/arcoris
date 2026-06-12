@@ -20,23 +20,23 @@ import (
 	"arcoris.dev/apimachinery/api/objectownership"
 )
 
-// ObjectOwnershipStreamDecoder decodes object ownership documents from a stream.
+// ObjectOwnershipStreamDecoder decodes object ownership state from a stream.
 //
-// The stream form is for concrete codecs that can parse ownership documents
-// incrementally. It still returns the in-memory objectownership.Document model.
+// The stream form is for concrete codecs that can parse ownership state
+// incrementally. It returns the canonical objectownership.State model.
 type ObjectOwnershipStreamDecoder interface {
-	DecodeObjectOwnershipFrom(r io.Reader) (objectownership.Document, error)
+	DecodeObjectOwnershipFrom(r io.Reader) (objectownership.State, error)
 }
 
-// ObjectOwnershipStreamEncoder encodes object ownership documents to a stream.
+// ObjectOwnershipStreamEncoder encodes object ownership state to a stream.
 //
-// The encoder formats the supplied document only. It does not call
+// The encoder formats the supplied state only. It does not call
 // objectownership.Normalize or compute semantic ownership changes.
 type ObjectOwnershipStreamEncoder interface {
-	EncodeObjectOwnershipTo(w io.Writer, doc objectownership.Document) error
+	EncodeObjectOwnershipTo(w io.Writer, state objectownership.State) error
 }
 
-// ObjectOwnershipStreamCodec is an optional streaming codec for ownership docs.
+// ObjectOwnershipStreamCodec is an optional streaming codec for ownership state.
 //
 // A codec may implement ObjectOwnershipCodec without implementing this optional
 // streaming capability.

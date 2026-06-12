@@ -24,8 +24,8 @@ func TestPackageHasFormatNeutralFieldNames(t *testing.T) {
 	if apidocument.ObjectFieldDesired.IsZero() {
 		t.Fatalf("ObjectFieldDesired is zero")
 	}
-	if apidocument.OwnershipFieldVersion.IsZero() {
-		t.Fatalf("OwnershipFieldVersion is zero")
+	if apidocument.OwnershipFieldDesired.IsZero() {
+		t.Fatalf("OwnershipFieldDesired is zero")
 	}
 	if apidocument.PageMetaFieldContinue.IsZero() {
 		t.Fatalf("PageMetaFieldContinue is zero")

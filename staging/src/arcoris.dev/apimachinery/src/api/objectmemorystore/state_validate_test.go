@@ -35,8 +35,7 @@ func TestPrepareInputStateReturnsDetachedState(t *testing.T) {
 	prepared, err := prepareInputState(state)
 	requireNoError(t, err)
 
-	state.Ownership.Desired.Entries[0].Owner = fieldownership.MustOwner("mutated")
-	if prepared.Ownership.Desired.Entries[0].Owner != fieldownership.MustOwner("manager") {
-		t.Fatalf("prepareInputState retained caller mutation")
+	if !prepared.Ownership.Desired().FieldsFor(fieldownership.MustOwner("manager")).Equal(fieldSet("$.desired")) {
+		t.Fatalf("prepared ownership = %s; want $.desired", prepared.Ownership.Desired().FieldsFor(fieldownership.MustOwner("manager")))
 	}
 }

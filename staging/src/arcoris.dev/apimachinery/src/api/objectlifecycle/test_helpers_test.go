@@ -176,6 +176,15 @@ func owner(name string) fieldownership.Owner {
 	return fieldownership.MustOwner(name)
 }
 
+func ownershipField(text string) fieldpath.Path {
+	path, err := fieldpath.ParseCanonical(text)
+	if err != nil {
+		panic(err)
+	}
+
+	return path
+}
+
 func createObject(t *testing.T, executor *Executor, index int, image string, owner fieldownership.Owner) Result {
 	t.Helper()
 
@@ -262,31 +271,30 @@ func requireObservedReady(t *testing.T, state objectstore.State, want string) {
 	}
 }
 
-func requireOwnedPath(t *testing.T, doc objectownership.Document, owner fieldownership.Owner, path objectownership.Path) {
+func requireOwnedPath(t *testing.T, state objectownership.State, owner fieldownership.Owner, path fieldpath.Path) {
 	t.Helper()
 
-	for _, entry := range doc.Desired.Entries {
-		if entry.Owner != owner {
-			continue
-		}
-		for _, field := range entry.Fields {
-			if field == path {
-				return
-			}
-		}
-	}
-
-	t.Fatalf("ownership path %s for owner %s not found in %#v", path, owner, doc)
+	requireSurfaceOwnedPath(t, state.Desired(), owner, path)
 }
 
-func requireNormalizedOwnership(t *testing.T, doc objectownership.Document) {
+func requireSurfaceOwnedPath(t *testing.T, surface fieldownership.State, owner fieldownership.Owner, path fieldpath.Path) {
 	t.Helper()
 
-	if err := objectownership.ValidateNormalized(doc); err != nil {
+	if surface.FieldsFor(owner).Has(path) {
+		return
+	}
+
+	t.Fatalf("ownership path %s for owner %s not found in %s", path, owner, surface.FieldsFor(owner))
+}
+
+func requireNormalizedOwnership(t *testing.T, state objectownership.State) {
+	t.Helper()
+
+	if err := objectownership.ValidateNormalized(state); err != nil {
 		t.Fatalf("ownership is not normalized: %v", err)
 	}
 }
 
-func ownershipPath(path fieldpath.Path) objectownership.Path {
-	return objectownership.Path(path.String())
+func ownershipPath(path fieldpath.Path) fieldpath.Path {
+	return path
 }

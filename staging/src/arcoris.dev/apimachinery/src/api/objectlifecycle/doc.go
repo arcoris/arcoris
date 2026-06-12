@@ -26,10 +26,10 @@
 //
 // api/objectvalidation validates object envelopes against resolved resource
 // contracts. api/objectapply computes pure Desired apply output for existing
-// live objects. api/objectownership represents operational ownership state and
-// committed ownership documents. api/objectstore commits already-computed state
-// with optimistic concurrency. objectlifecycle composes these layers into Get,
-// Create, Apply, and Delete operations.
+// live objects. api/objectownership represents canonical object ownership
+// state. api/objectstore commits already-computed state with optimistic
+// concurrency. objectlifecycle composes these layers into Get,
+// Create, Apply, UpdateObserved, PatchMetadata, and Delete operations.
 //
 // # Operation semantics
 //
@@ -53,6 +53,21 @@
 // Create. Existing-object Apply delegates Desired merge and ownership semantics
 // to api/objectapply and commits through objectstore.Update.
 //
+// UpdateObserved resolves an explicit group/version/resource and object
+// identity, requires an existing live object and non-zero expected store
+// revision, validates the replacement Observed payload against the selected
+// resource version's Observed descriptor, replaces Observed, updates Observed
+// ownership, preserves Desired and metadata ownership, and commits through
+// objectstore.Update.
+//
+// PatchMetadata resolves an explicit group/version/resource and object identity,
+// requires an existing live object and non-zero expected store revision, and
+// patches labels and annotations only. Nil patch values delete keys and non-nil
+// values set keys. The operation preserves TypeMeta, ObjectMeta identity/system
+// fields, Desired, Observed, Desired ownership, and Observed ownership.
+// Finalizers and ownerReferences are intentionally not generic metadata patch
+// fields.
+//
 // Delete resolves an explicit group/version/resource and object identity,
 // requires a non-zero expected store revision, and commits a tombstone through
 // objectstore.Delete. The returned State is the deleted live state and keeps the
@@ -70,6 +85,18 @@
 // ApplyRequest represents Desired apply intent. Applied Observed payloads are
 // rejected even when the resource defines Observed. Live Observed is preserved
 // during existing-object Apply.
+//
+// UpdateObserved is the separate Observed writer operation. It does not mutate
+// Desired or metadata. The first implementation uses complete replacement
+// semantics for Observed and assigns Observed ownership to the supplied owner
+// for the fields explicitly present in the replacement payload.
+//
+// # Metadata policy
+//
+// PatchMetadata is limited to labels and annotations. It does not mutate
+// metadata.name, metadata.namespace, metadata.uid, metadata.resourceVersion,
+// metadata.generation, metadata.createdAt, metadata.deletion, finalizers, or
+// ownerReferences. It does not stamp resourceVersion or generation.
 //
 // # Non-goals
 //

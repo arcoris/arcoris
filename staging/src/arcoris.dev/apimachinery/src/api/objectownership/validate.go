@@ -14,78 +14,43 @@
 
 package objectownership
 
-// Validate checks document shape without requiring normalized ordering.
+import "arcoris.dev/apimachinery/api/fieldownership"
+
+// Validate checks ownership state shape.
 //
-// Valid raw documents may contain duplicate owners, duplicate fields, unsorted
-// entries, and empty field entries. Normalize owns canonicalization.
-func Validate(doc Document) error {
-	if err := validateDocumentVersion(doc.Version); err != nil {
+// The current public constructors make invalid State values difficult to build,
+// but validation remains a package boundary for stores, codecs, tests, and any
+// future internal constructors. The function is fail-fast and reports the first
+// malformed surface with a stable diagnostic path.
+func Validate(state State) error {
+	if err := validateSurfaceState(pathStateDesired, ErrorReasonInvalidDesired, state.Desired()); err != nil {
 		return err
 	}
-	if err := validateSurface(pathDocumentDesired, doc.Desired); err != nil {
+	if err := validateSurfaceState(pathStateObserved, ErrorReasonInvalidObserved, state.Observed()); err != nil {
+		return err
+	}
+	if err := validateSurfaceState(pathStateMetadataLabels, ErrorReasonInvalidMetadataLabels, state.Metadata().Labels()); err != nil {
+		return err
+	}
+	if err := validateSurfaceState(pathStateMetadataAnnotations, ErrorReasonInvalidMetadataAnnotations, state.Metadata().Annotations()); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// validateDocumentVersion rejects missing and unknown document shapes.
-func validateDocumentVersion(version DocumentVersion) error {
-	if version.IsZero() {
-		return errorAt(
-			pathDocumentVersion,
-			ErrInvalidDocument,
-			ErrorReasonMissingVersion,
-			"document version is required",
-		)
-	}
-	if !version.IsSupported() {
-		return errorfAt(
-			pathDocumentVersion,
-			ErrUnsupportedVersion,
-			ErrorReasonUnsupportedVersion,
-			"document version %q is not supported",
-			version,
-		)
-	}
-
-	return nil
-}
-
-// validateSurface checks raw entries while allowing duplicate owners.
-func validateSurface(path string, surface Surface) error {
-	for i, entry := range surface.Entries {
-		if err := validateEntry(entryPath(path, i), entry); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// validateEntry checks owner identity and every document path string.
-func validateEntry(path string, entry Entry) error {
-	if err := entry.Owner.ValidateLexical(); err != nil {
+// validateSurfaceState attaches object-surface context to fieldownership
+// structural validation.
+func validateSurfaceState(path string, reason ErrorReason, state fieldownership.State) error {
+	if err := state.ValidateStructure(); err != nil {
 		return wrapAt(
-			path+".owner",
-			ErrInvalidEntry,
-			ErrorReasonInvalidOwner,
-			"entry owner is invalid",
+			path,
+			ErrInvalidState,
+			reason,
+			"object ownership surface state is invalid",
 			err,
 		)
 	}
 
-	for i, field := range entry.Fields {
-		if err := validatePath(fieldPath(path, i), field); err != nil {
-			return err
-		}
-	}
-
 	return nil
-}
-
-// validatePath checks one canonical document path.
-func validatePath(path string, p Path) error {
-	_, err := parsePath(path, p)
-	return err
 }

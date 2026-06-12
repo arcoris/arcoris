@@ -18,27 +18,21 @@ package objectownership
 type ErrorReason string
 
 const (
-	// ErrorReasonInvalidDocument reports malformed top-level document shape.
-	ErrorReasonInvalidDocument ErrorReason = "invalid_document"
+	// ErrorReasonInvalidState reports malformed top-level ownership state.
+	ErrorReasonInvalidState ErrorReason = "invalid_state"
 
-	// ErrorReasonMissingVersion reports documents without an explicit version.
-	ErrorReasonMissingVersion ErrorReason = "missing_version"
+	// ErrorReasonInvalidDesired reports malformed Desired ownership state.
+	ErrorReasonInvalidDesired ErrorReason = "invalid_desired"
 
-	// ErrorReasonUnsupportedVersion reports an unknown document version.
-	ErrorReasonUnsupportedVersion ErrorReason = "unsupported_version"
+	// ErrorReasonInvalidObserved reports malformed Observed ownership state.
+	ErrorReasonInvalidObserved ErrorReason = "invalid_observed"
 
-	// ErrorReasonInvalidSurface reports malformed surface ownership shape.
-	ErrorReasonInvalidSurface ErrorReason = "invalid_surface"
+	// ErrorReasonInvalidMetadataLabels reports malformed labels ownership state.
+	ErrorReasonInvalidMetadataLabels ErrorReason = "invalid_metadata_labels"
 
-	// ErrorReasonInvalidEntry reports malformed owner/path entry shape.
-	ErrorReasonInvalidEntry ErrorReason = "invalid_entry"
+	// ErrorReasonInvalidMetadataAnnotations reports malformed annotations ownership state.
+	ErrorReasonInvalidMetadataAnnotations ErrorReason = "invalid_metadata_annotations"
 
-	// ErrorReasonInvalidOwner reports malformed owner identity text.
-	ErrorReasonInvalidOwner ErrorReason = "invalid_owner"
-
-	// ErrorReasonInvalidPath reports malformed document path text.
-	ErrorReasonInvalidPath ErrorReason = "invalid_path"
-
-	// ErrorReasonNotNormalized reports valid documents that are not canonical.
+	// ErrorReasonNotNormalized reports valid states that are not canonical.
 	ErrorReasonNotNormalized ErrorReason = "not_normalized"
 )

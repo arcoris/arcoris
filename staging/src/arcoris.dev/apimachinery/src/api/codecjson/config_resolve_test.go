@@ -61,7 +61,7 @@ func TestResolveDecodeConfig(t *testing.T) {
 	config.Decode.Limits.MaxStringBytes = 16
 	config.Decode.Objects.UnknownEnvelopeFields = jsonconfig.UnknownFieldIgnore
 	config.Decode.Ownership.UnknownFields = jsonconfig.UnknownFieldIgnore
-	config.Decode.Ownership.ValidateDocument = false
+	config.Decode.Ownership.ValidateState = false
 
 	resolved := resolveDecodeConfig(config.Decode)
 
@@ -77,8 +77,8 @@ func TestResolveDecodeConfig(t *testing.T) {
 	if resolved.rejectUnknownOwnershipFields {
 		t.Fatalf("reject unknown ownership fields = true; want false")
 	}
-	if resolved.validateOwnershipDocument {
-		t.Fatalf("validate ownership document = true; want false")
+	if resolved.validateOwnershipState {
+		t.Fatalf("validate ownership state = true; want false")
 	}
 }
 

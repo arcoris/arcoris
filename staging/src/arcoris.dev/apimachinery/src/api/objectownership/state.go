@@ -16,56 +16,69 @@ package objectownership
 
 import "arcoris.dev/apimachinery/api/fieldownership"
 
-// State stores object-level field ownership.
+// State stores canonical object-level field ownership.
 //
-// v1 owns only the Desired surface. The private shape leaves room for observed
-// or metadata ownership without exposing public struct fields.
+// Each fieldownership.State is scoped to one object surface. Paths are relative
+// to that surface root, so Desired $.image, Observed $.ready, and metadata label
+// $["app"] never share one global path namespace. State is immutable by
+// convention: callers update it by creating replacement fieldownership.State
+// values and installing them through With* methods.
 type State struct {
-	// desired is the fieldownership.State for the object's Desired surface.
+	// desired stores declarative user/manager intent ownership.
 	//
-	// It stays private so callers cannot construct brittle State literals that
-	// would block future Observed or metadata ownership surfaces.
+	// objectapply is intentionally allowed to replace only this surface.
 	desired fieldownership.State
+	// observed stores runtime/controller-reported ownership.
+	//
+	// Observed ownership is reserved for observed/status update operations. It
+	// must not be modified by Desired apply.
+	observed fieldownership.State
+	// metadata stores the supported ObjectMeta map ownership surfaces.
+	//
+	// Identity and system metadata fields are not modeled here.
+	metadata MetadataState
 }
 
-// EmptyState returns an empty object ownership state.
+// MetadataState stores ownable ObjectMeta map surfaces.
 //
-// It is equivalent to the zero State but keeps call sites explicit when they are
-// constructing object ownership rather than ordinary field ownership.
-func EmptyState() State {
-	return State{}
+// Only labels and annotations are modeled. Object identity/system fields,
+// finalizers, and owner references have separate lifecycle/governance semantics
+// and are intentionally excluded from this generic ownership state.
+type MetadataState struct {
+	// labels stores ownership of individual metadata.labels keys.
+	labels fieldownership.State
+	// annotations stores ownership of individual metadata.annotations keys.
+	annotations fieldownership.State
 }
 
-// NewState constructs object ownership state from Desired ownership.
-//
-// The supplied fieldownership.State is stored by value and follows
-// fieldownership's immutable-by-convention contract.
-func NewState(desired fieldownership.State) State {
-	return State{desired: desired}
-}
-
-// IsEmpty reports whether no object surface has ownership state.
-//
-// Today this means Desired ownership is empty. The method intentionally hides
-// that detail so adding future surfaces does not change callers.
+// IsEmpty reports whether no modeled object surface has ownership state.
 func (s State) IsEmpty() bool {
-	return s.desired.IsEmpty()
+	return s.desired.IsEmpty() &&
+		s.observed.IsEmpty() &&
+		s.metadata.IsEmpty()
 }
 
 // Desired returns Desired-surface ownership.
 //
-// The returned fieldownership.State remains immutable-by-convention; callers
-// transform it through fieldownership APIs and store the result with WithDesired.
+// The returned fieldownership.State remains immutable by convention. Callers
+// transform it with fieldownership APIs and store the replacement with
+// WithDesired.
 func (s State) Desired() fieldownership.State {
 	return s.desired
 }
 
-// WithDesired returns a copy of s with replacement Desired ownership.
+// Observed returns Observed-surface ownership.
 //
-// Future object surfaces should be preserved by this method, making it the
-// stable update point for Desired ownership.
-func (s State) WithDesired(desired fieldownership.State) State {
-	s.desired = desired
+// Paths in this state are relative to the Observed payload root. They must not
+// be interpreted as Desired paths or as whole-object paths.
+func (s State) Observed() fieldownership.State {
+	return s.observed
+}
 
-	return s
+// Metadata returns metadata map ownership state.
+//
+// The returned MetadataState contains only labels and annotations. It does not
+// include identity/system metadata fields.
+func (s State) Metadata() MetadataState {
+	return s.metadata
 }

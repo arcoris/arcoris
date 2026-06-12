@@ -23,13 +23,13 @@ import (
 // State is the committed live state value stored for one object key.
 //
 // Object contains the authoritative live object envelope. Ownership contains
-// the committed object ownership document associated with that live object.
+// the canonical object ownership state associated with that live object.
 // Revision is the store-local commit revision assigned by the store.
 type State struct {
 	// Object is the committed value-backed API object envelope.
 	Object object.Object[value.Value, value.Value]
-	// Ownership is the committed ownership document for Object.Desired.
-	Ownership objectownership.Document
+	// Ownership is the committed ownership state for modeled object surfaces.
+	Ownership objectownership.State
 	// Revision is the store-local revision assigned at commit time.
 	Revision Revision
 }

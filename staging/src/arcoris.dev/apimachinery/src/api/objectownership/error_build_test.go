@@ -20,25 +20,25 @@ import (
 )
 
 func TestErrorAt(t *testing.T) {
-	const pathDocument = "document"
+	const pathState = "state"
 
-	err := errorAt(pathDocument, ErrInvalidDocument, ErrorReasonInvalidDocument, "bad document")
+	err := errorAt(pathState, ErrInvalidState, ErrorReasonInvalidState, "bad state")
 
-	requireObjectOwnershipError(t, err, pathDocument, ErrorReasonInvalidDocument)
+	requireObjectOwnershipError(t, err, pathState, ErrorReasonInvalidState)
 }
 
 func TestErrorfAt(t *testing.T) {
-	err := errorfAt(pathDocumentVersion, ErrUnsupportedVersion, ErrorReasonUnsupportedVersion, "bad %s", "version")
+	err := errorfAt(pathState, ErrInvalidState, ErrorReasonInvalidState, "bad %s", "state")
 
-	requireObjectOwnershipError(t, err, pathDocumentVersion, ErrorReasonUnsupportedVersion)
+	requireObjectOwnershipError(t, err, pathState, ErrorReasonInvalidState)
 }
 
 func TestWrapAt(t *testing.T) {
-	const pathDocument = "document"
+	const pathState = "state"
 
 	cause := errors.New("cause")
-	err := wrapAt(pathDocument, ErrInvalidDocument, ErrorReasonInvalidDocument, "bad document", cause)
+	err := wrapAt(pathState, ErrInvalidState, ErrorReasonInvalidState, "bad state", cause)
 
-	requireObjectOwnershipError(t, err, pathDocument, ErrorReasonInvalidDocument)
+	requireObjectOwnershipError(t, err, pathState, ErrorReasonInvalidState)
 	requireErrorIs(t, err, cause)
 }

@@ -17,19 +17,24 @@ package objectownership
 import "testing"
 
 func TestErrorReasonStrings(t *testing.T) {
-	if ErrorReasonInvalidDocument != "invalid_document" {
-		t.Fatalf("invalid document reason = %q", ErrorReasonInvalidDocument)
+	tests := []struct {
+		name string
+		got  ErrorReason
+		want string
+	}{
+		{name: "invalid state", got: ErrorReasonInvalidState, want: "invalid_state"},
+		{name: "invalid desired", got: ErrorReasonInvalidDesired, want: "invalid_desired"},
+		{name: "invalid observed", got: ErrorReasonInvalidObserved, want: "invalid_observed"},
+		{name: "invalid metadata labels", got: ErrorReasonInvalidMetadataLabels, want: "invalid_metadata_labels"},
+		{name: "invalid metadata annotations", got: ErrorReasonInvalidMetadataAnnotations, want: "invalid_metadata_annotations"},
+		{name: "not normalized", got: ErrorReasonNotNormalized, want: "not_normalized"},
 	}
-	if ErrorReasonMissingVersion != "missing_version" {
-		t.Fatalf("missing version reason = %q", ErrorReasonMissingVersion)
-	}
-	if ErrorReasonUnsupportedVersion != "unsupported_version" {
-		t.Fatalf("unsupported version reason = %q", ErrorReasonUnsupportedVersion)
-	}
-	if ErrorReasonInvalidPath != "invalid_path" {
-		t.Fatalf("invalid path reason = %q", ErrorReasonInvalidPath)
-	}
-	if ErrorReasonNotNormalized != "not_normalized" {
-		t.Fatalf("not normalized reason = %q", ErrorReasonNotNormalized)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if string(tt.got) != tt.want {
+				t.Fatalf("reason = %q; want %q", tt.got, tt.want)
+			}
+		})
 	}
 }

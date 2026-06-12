@@ -61,6 +61,6 @@ func (e *Executor) Create(ctx context.Context, req CreateRequest) (Result, error
 func inputState(obj objectapply.ValueObject, ownership objectownership.State) objectstore.State {
 	return objectstore.State{
 		Object:    obj,
-		Ownership: objectownership.ToDocument(ownership),
+		Ownership: ownership,
 	}
 }

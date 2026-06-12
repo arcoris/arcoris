@@ -14,25 +14,35 @@
 
 package objectownership
 
-// Normalize canonicalizes doc without changing ownership semantics.
+import "arcoris.dev/apimachinery/api/fieldownership"
+
+// Normalize canonicalizes every modeled surface without changing ownership
+// semantics.
 //
-// It sorts owners, merges duplicate owner entries, deduplicates fields, prunes
-// empty entries, and writes DocumentVersionV1. It deliberately preserves shared
-// ownership and explicit parent/child path pairs.
-func Normalize(doc Document) (Document, error) {
-	if err := Validate(doc); err != nil {
-		return Document{}, err
-	}
-
-	desired, err := fieldOwnershipStateFromDocumentSurface(pathDocumentDesired, doc.Desired)
-	if err != nil {
-		return Document{}, err
-	}
-
-	return Document{
-		Version: DocumentVersionV1,
-		Desired: fieldOwnershipStateToDocumentSurface(
-			desired,
+// Each surface is normalized independently. Desired ownership is never merged
+// with Observed ownership, and metadata.labels ownership is never merged with
+// metadata.annotations ownership.
+func Normalize(state State) State {
+	return NewStateWithSurfaces(
+		normalizeFieldOwnership(state.Desired()),
+		normalizeFieldOwnership(state.Observed()),
+		NewMetadataState(
+			normalizeFieldOwnership(state.Metadata().Labels()),
+			normalizeFieldOwnership(state.Metadata().Annotations()),
 		),
-	}, nil
+	)
+}
+
+// normalizeFieldOwnership re-runs fieldownership normalization for one surface.
+//
+// Public objectownership.State values should already contain structurally valid
+// fieldownership.State values. The panic protects against an internal invariant
+// break rather than user input.
+func normalizeFieldOwnership(state fieldownership.State) fieldownership.State {
+	normalized, err := fieldownership.NewState(state.Entries()...)
+	if err != nil {
+		panic(err)
+	}
+
+	return normalized
 }

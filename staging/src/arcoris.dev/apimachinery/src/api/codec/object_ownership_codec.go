@@ -16,24 +16,24 @@ package codec
 
 import "arcoris.dev/apimachinery/api/objectownership"
 
-// ObjectOwnershipDecoder decodes object ownership documents from bytes.
+// ObjectOwnershipDecoder decodes object ownership state from bytes.
 //
-// DecodeObjectOwnership converts a concrete format into the stable in-memory
-// objectownership.Document representation. Semantic document validation remains
-// the responsibility of api/objectownership, not the codec contract itself.
+// DecodeObjectOwnership converts a concrete format into the canonical
+// objectownership.State representation. Semantic validation remains the
+// responsibility of api/objectownership, not the codec contract itself.
 type ObjectOwnershipDecoder interface {
-	DecodeObjectOwnership(data []byte) (objectownership.Document, error)
+	DecodeObjectOwnership(data []byte) (objectownership.State, error)
 }
 
-// ObjectOwnershipEncoder encodes object ownership documents to bytes.
+// ObjectOwnershipEncoder encodes object ownership state to bytes.
 //
-// EncodeObjectOwnership formats an existing ownership document. It must not
+// EncodeObjectOwnership formats existing ownership state. It must not
 // compute ownership, merge ownership, or mutate object metadata.
 type ObjectOwnershipEncoder interface {
-	EncodeObjectOwnership(doc objectownership.Document) ([]byte, error)
+	EncodeObjectOwnership(state objectownership.State) ([]byte, error)
 }
 
-// ObjectOwnershipCodec is a byte-based codec for object ownership documents.
+// ObjectOwnershipCodec is a byte-based codec for object ownership state.
 //
 // Implementations should also report TargetObjectOwnership from Info when they
 // expose this capability.

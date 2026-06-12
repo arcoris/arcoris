@@ -15,13 +15,14 @@
 package codecjson
 
 import (
-	"arcoris.dev/apimachinery/api/objectownership"
 	"testing"
+
+	"arcoris.dev/apimachinery/api/objectownership"
 )
 
 // TestDecodeObjectOwnershipBytesRejectsDuplicateKey covers byte-slice ownership decoding.
 func TestDecodeObjectOwnershipBytesRejectsDuplicateKey(t *testing.T) {
-	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"version":"v1","version":"v1"}`))
+	_, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{},"desired":{}}`))
 
 	requireErrorIs(t, err, ErrDuplicateKey)
 }
@@ -29,11 +30,11 @@ func TestDecodeObjectOwnershipBytesRejectsDuplicateKey(t *testing.T) {
 // TestEncodeObjectOwnershipBytesUsesSharedWriter covers byte-slice ownership encoding.
 func TestEncodeObjectOwnershipBytesUsesSharedWriter(t *testing.T) {
 	data, err := newTestCodec(t).EncodeObjectOwnership(
-		objectownership.Document{Version: objectownership.DocumentVersionV1},
+		objectownership.EmptyState(),
 	)
 	requireNoError(t, err)
 
-	if got, want := string(data), `{"version":"v1","desired":{"entries":[]}}`; got != want {
+	if got, want := string(data), `{"desired":{"entries":[]},"observed":{"entries":[]},"metadata":{"labels":{"entries":[]},"annotations":{"entries":[]}}}`; got != want {
 		t.Fatalf("encoded ownership = %s; want %s", got, want)
 	}
 }

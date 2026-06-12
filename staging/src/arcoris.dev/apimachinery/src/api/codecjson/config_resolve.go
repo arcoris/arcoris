@@ -38,7 +38,7 @@ func resolveDecodeConfig(config jsonconfig.DecodeConfig) resolvedDecodeConfig {
 		maxNumberDigits:              config.Limits.MaxNumberDigits,
 		rejectUnknownEnvelopeFields:  config.Objects.UnknownEnvelopeFields == jsonconfig.UnknownFieldReject,
 		rejectUnknownOwnershipFields: config.Ownership.UnknownFields == jsonconfig.UnknownFieldReject,
-		validateOwnershipDocument:    config.Ownership.ValidateDocument,
+		validateOwnershipState:       config.Ownership.ValidateState,
 	}
 }
 
@@ -59,7 +59,7 @@ func resolveEncodeConfig(config jsonconfig.EncodeConfig) resolvedEncodeConfig {
 		metadata:           config.Object.Metadata,
 		observed:           config.Object.Observed,
 		ownershipNormalize: config.Ownership.Normalize,
-		emptyDesired:       config.Ownership.EmptyDesired,
+		emptySurfaces:      config.Ownership.EmptySurfaces,
 		emptyEntries:       config.Ownership.EmptyEntries,
 	}
 }

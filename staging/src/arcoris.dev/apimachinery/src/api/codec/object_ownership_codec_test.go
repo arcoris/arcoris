@@ -19,7 +19,7 @@ import "arcoris.dev/apimachinery/api/objectownership"
 var _ ObjectOwnershipDecoder = fakeObjectOwnershipCodec{}
 var _ ObjectOwnershipEncoder = fakeObjectOwnershipCodec{}
 
-// ObjectOwnershipCodec is a partial byte capability for ownership documents.
+// ObjectOwnershipCodec is a partial byte capability for ownership state.
 var _ ObjectOwnershipCodec = fakeObjectOwnershipCodec{}
 var _ ObjectOwnershipCodec = fakeByteCodec{}
 
@@ -27,18 +27,18 @@ type fakeObjectOwnershipCodec struct {
 	fakeBaseCodec
 }
 
-func (fakeObjectOwnershipCodec) DecodeObjectOwnership([]byte) (objectownership.Document, error) {
-	return objectownership.Document{}, nil
+func (fakeObjectOwnershipCodec) DecodeObjectOwnership([]byte) (objectownership.State, error) {
+	return objectownership.State{}, nil
 }
 
-func (fakeObjectOwnershipCodec) EncodeObjectOwnership(objectownership.Document) ([]byte, error) {
+func (fakeObjectOwnershipCodec) EncodeObjectOwnership(objectownership.State) ([]byte, error) {
 	return nil, nil
 }
 
-func (fakeByteCodec) DecodeObjectOwnership(data []byte) (objectownership.Document, error) {
+func (fakeByteCodec) DecodeObjectOwnership(data []byte) (objectownership.State, error) {
 	return fakeObjectOwnershipCodec{}.DecodeObjectOwnership(data)
 }
 
-func (fakeByteCodec) EncodeObjectOwnership(doc objectownership.Document) ([]byte, error) {
-	return fakeObjectOwnershipCodec{}.EncodeObjectOwnership(doc)
+func (fakeByteCodec) EncodeObjectOwnership(state objectownership.State) ([]byte, error) {
+	return fakeObjectOwnershipCodec{}.EncodeObjectOwnership(state)
 }

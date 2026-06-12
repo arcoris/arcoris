@@ -24,8 +24,8 @@ func TestDefaultEncodeOwnershipConfig(t *testing.T) {
 	if config.Normalize != OwnershipNormalizeWhenDeterministic {
 		t.Fatalf("normalize = %d; want when deterministic", config.Normalize)
 	}
-	if config.EmptyDesired != EmptyOwnershipSurfaceEmit {
-		t.Fatalf("empty desired = %d; want emit", config.EmptyDesired)
+	if config.EmptySurfaces != EmptyOwnershipSurfaceEmit {
+		t.Fatalf("empty surfaces = %d; want emit", config.EmptySurfaces)
 	}
 	if config.EmptyEntries != EmptyEntriesEmit {
 		t.Fatalf("empty entries = %d; want emit", config.EmptyEntries)
@@ -41,8 +41,8 @@ func TestResolveEncodeOwnershipConfig(t *testing.T) {
 	if config.Normalize == OwnershipNormalizeDefault {
 		t.Fatalf("normalize still default")
 	}
-	if config.EmptyDesired == EmptyOwnershipSurfaceDefault {
-		t.Fatalf("empty desired still default")
+	if config.EmptySurfaces == EmptyOwnershipSurfaceDefault {
+		t.Fatalf("empty surfaces still default")
 	}
 	if config.EmptyEntries == EmptyEntriesDefault {
 		t.Fatalf("empty entries still default")
@@ -57,15 +57,15 @@ func TestValidateEncodeOwnershipConfigRejectsUnknownModes(t *testing.T) {
 		path   string
 	}{
 		"normalize": {
-			config: EncodeOwnershipConfig{Normalize: OwnershipNormalizeMode(99), EmptyDesired: EmptyOwnershipSurfaceEmit, EmptyEntries: EmptyEntriesEmit},
+			config: EncodeOwnershipConfig{Normalize: OwnershipNormalizeMode(99), EmptySurfaces: EmptyOwnershipSurfaceEmit, EmptyEntries: EmptyEntriesEmit},
 			path:   "encode.ownership.normalize",
 		},
-		"empty desired": {
-			config: EncodeOwnershipConfig{Normalize: OwnershipNormalizeWhenDeterministic, EmptyDesired: EmptyOwnershipSurfaceMode(99), EmptyEntries: EmptyEntriesEmit},
-			path:   "encode.ownership.empty_desired",
+		"empty surfaces": {
+			config: EncodeOwnershipConfig{Normalize: OwnershipNormalizeWhenDeterministic, EmptySurfaces: EmptyOwnershipSurfaceMode(99), EmptyEntries: EmptyEntriesEmit},
+			path:   "encode.ownership.empty_surfaces",
 		},
 		"empty entries": {
-			config: EncodeOwnershipConfig{Normalize: OwnershipNormalizeWhenDeterministic, EmptyDesired: EmptyOwnershipSurfaceEmit, EmptyEntries: EmptyEntriesMode(99)},
+			config: EncodeOwnershipConfig{Normalize: OwnershipNormalizeWhenDeterministic, EmptySurfaces: EmptyOwnershipSurfaceEmit, EmptyEntries: EmptyEntriesMode(99)},
 			path:   "encode.ownership.empty_entries",
 		},
 	}

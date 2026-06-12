@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectapply"
-	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/resource"
 	"arcoris.dev/apimachinery/api/value"
@@ -94,8 +93,8 @@ func TestApplySameValueDifferentOwnerChangesOwnership(t *testing.T) {
 	requireNoError(t, err)
 
 	requireEffect(t, result.Result, OperationApply, EffectUpdated)
-	requireOwnedPath(t, result.State.Ownership, owner("creator"), objectownership.Path("$.image"))
-	requireOwnedPath(t, result.State.Ownership, owner("observer"), objectownership.Path("$.image"))
+	requireOwnedPath(t, result.State.Ownership, owner("creator"), ownershipField("$.image"))
+	requireOwnedPath(t, result.State.Ownership, owner("observer"), ownershipField("$.image"))
 }
 
 func TestApplyInvalidObjectReturnsValidationFailed(t *testing.T) {
@@ -215,9 +214,34 @@ func TestApplyPreservesLiveObservedAndMetadata(t *testing.T) {
 		t,
 		WithResourceResolver(testCatalog(t, testDefinition(resourceObserved()))),
 	)
-	_, err := executor.Create(
+	created, err := executor.Create(
 		context.Background(),
-		CreateRequest{Object: testObservedObject(1, "api:v1", "true"), Owner: owner("creator")},
+		CreateRequest{Object: testObject(1, "api:v1"), Owner: owner("creator")},
+	)
+	requireNoError(t, err)
+
+	observed, err := executor.UpdateObserved(
+		context.Background(),
+		UpdateObservedRequest{
+			Resource: testGVR(),
+			Object:   testName(1),
+			Observed: objectValue(member("ready", value.StringValue("true"))),
+			Owner:    owner("controller"),
+			Expected: created.State.Revision,
+		},
+	)
+	requireNoError(t, err)
+
+	patched, err := executor.PatchMetadata(
+		context.Background(),
+		PatchMetadataRequest{
+			Resource:    testGVR(),
+			Object:      testName(1),
+			Labels:      map[string]*string{"app": stringPtr("worker")},
+			Annotations: map[string]*string{"with.dots": stringPtr("yes")},
+			Owner:       owner("metadata"),
+			Expected:    observed.State.Revision,
+		},
 	)
 	requireNoError(t, err)
 
@@ -231,9 +255,18 @@ func TestApplyPreservesLiveObservedAndMetadata(t *testing.T) {
 		t.Fatalf("Observed missing")
 	}
 	requireObservedReady(t, result.State, "true")
+	requireLabel(t, result.Result, "app", "worker")
+	requireAnnotation(t, result.Result, "with.dots", "yes")
 	if result.State.Object.ObjectMeta.ResourceVersion != "" {
 		t.Fatalf("ResourceVersion = %q; want empty because lifecycle does not stamp metadata", result.State.Object.ObjectMeta.ResourceVersion)
 	}
+	if !patched.State.Revision.Before(result.State.Revision) {
+		t.Fatalf("revision = %v; want after %v", result.State.Revision, patched.State.Revision)
+	}
+	requireOwnedPath(t, result.State.Ownership, owner("creator"), ownershipField("$.image"))
+	requireSurfaceOwnedPath(t, result.State.Ownership.Observed(), owner("controller"), ownershipField("$.ready"))
+	requireSurfaceOwnedPath(t, result.State.Ownership.Metadata().Labels(), owner("metadata"), ownershipField(`$["app"]`))
+	requireSurfaceOwnedPath(t, result.State.Ownership.Metadata().Annotations(), owner("metadata"), ownershipField(`$["with.dots"]`))
 }
 
 func resourceObserved() resource.VersionOption {

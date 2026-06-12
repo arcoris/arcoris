@@ -21,8 +21,11 @@ import (
 )
 
 func TestOwnershipFieldNames(t *testing.T) {
-	assertFieldName(t, "OwnershipFieldVersion", apidocument.OwnershipFieldVersion, "version")
 	assertFieldName(t, "OwnershipFieldDesired", apidocument.OwnershipFieldDesired, "desired")
+	assertFieldName(t, "OwnershipFieldObserved", apidocument.OwnershipFieldObserved, "observed")
+	assertFieldName(t, "OwnershipFieldMetadata", apidocument.OwnershipFieldMetadata, "metadata")
+	assertFieldName(t, "OwnershipFieldLabels", apidocument.OwnershipFieldLabels, "labels")
+	assertFieldName(t, "OwnershipFieldAnnotations", apidocument.OwnershipFieldAnnotations, "annotations")
 	assertFieldName(t, "OwnershipFieldEntries", apidocument.OwnershipFieldEntries, "entries")
 	assertFieldName(t, "OwnershipFieldOwner", apidocument.OwnershipFieldOwner, "owner")
 	assertFieldName(t, "OwnershipFieldFields", apidocument.OwnershipFieldFields, "fields")
@@ -30,8 +33,11 @@ func TestOwnershipFieldNames(t *testing.T) {
 
 func TestOwnershipFieldsAreDocumentFieldNames(t *testing.T) {
 	fields := []apidocument.FieldName{
-		apidocument.OwnershipFieldVersion,
 		apidocument.OwnershipFieldDesired,
+		apidocument.OwnershipFieldObserved,
+		apidocument.OwnershipFieldMetadata,
+		apidocument.OwnershipFieldLabels,
+		apidocument.OwnershipFieldAnnotations,
 		apidocument.OwnershipFieldEntries,
 		apidocument.OwnershipFieldOwner,
 		apidocument.OwnershipFieldFields,
