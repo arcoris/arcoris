@@ -14,7 +14,11 @@
 
 package objectapply
 
-import "testing"
+import (
+	"testing"
+
+	"arcoris.dev/apimachinery/api/value"
+)
 
 func TestApplyPreservesLiveObserved(t *testing.T) {
 	req := testRequest()
@@ -42,6 +46,15 @@ func TestApplyWithoutLiveObservedKeepsObservedAbsent(t *testing.T) {
 func TestApplyRejectsAppliedObserved(t *testing.T) {
 	req := testRequest()
 	req.Applied = req.Applied.WithObserved(obj(member("ready", str("false"))))
+
+	_, err := Apply(req, Options{})
+
+	requireErrorIs(t, err, ErrUnsupportedObservedApply)
+}
+
+func TestApplyRejectsZeroAppliedObserved(t *testing.T) {
+	req := testRequest()
+	req.Applied = req.Applied.WithObserved(value.Value{})
 
 	_, err := Apply(req, Options{})
 

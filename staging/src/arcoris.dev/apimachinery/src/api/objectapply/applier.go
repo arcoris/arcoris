@@ -14,27 +14,30 @@
 
 package objectapply
 
-// applier carries immutable options through one apply pipeline.
-type applier struct {
+// Applier applies value-backed objects using reusable options.
+//
+// Applier is immutable by convention. New stores Options by value, and each
+// Apply call runs an independent object-level apply pipeline.
+type Applier struct {
 	// opts are copied from the public call boundary and then treated as
 	// read-only for the rest of the pipeline.
 	opts Options
 }
 
-// newApplier gives internal methods a stable receiver for one operation.
+// New returns a reusable object applier.
 //
-// The helper intentionally performs no validation. Options are pass-through
-// knobs for lower-level validators and valueapply, and zero values are valid.
-func newApplier(opts Options) applier {
-	return applier{opts: opts}
+// New intentionally performs no validation. Options are pass-through knobs for
+// objectvalidation, valuevalidation, and valueapply, and zero values are valid.
+func New(opts Options) Applier {
+	return Applier{opts: opts}
 }
 
-// apply validates object policy, delegates Desired apply, and builds output.
+// Apply validates object policy, delegates Desired apply, and builds output.
 //
 // The order matters: object-level shape and policy failures must stop before
 // valueapply so unsupported metadata or observed input is never silently
 // interpreted as Desired intent.
-func (a applier) apply(req Request) (Result, error) {
+func (a Applier) Apply(req Request) (Result, error) {
 	if err := a.validateRequest(req); err != nil {
 		return Result{}, err
 	}

@@ -42,13 +42,13 @@ func validateObjectMeta(path string, obj ValueObject, reason ErrorReason) error 
 //
 // This keeps objectapply from becoming a second object validator. The local
 // wrapper only maps validation failures into the objectapply error taxonomy.
-func (a applier) validateObject(
+func (a Applier) validateObject(
 	path string,
 	obj ValueObject,
 	reason ErrorReason,
 	req Request,
 ) error {
-	if err := objectvalidation.Validate(obj, a.validationPlan(req)); err != nil {
+	if err := objectvalidation.New(a.validationPlan(req)).Validate(obj); err != nil {
 		return objectValidationError(path, reason, err)
 	}
 
@@ -57,12 +57,11 @@ func (a applier) validateObject(
 
 // objectValidationError maps objectvalidation's taxonomy into objectapply.
 //
-// Object/resource family, version, scope, and plan failures point to the
-// supplied Resource contract. Metadata and surface failures remain object
-// failures because the concrete object payload or envelope did not satisfy an
-// otherwise usable contract.
+// Invalid plans point to the supplied Resource/options contract. Other
+// objectvalidation failures remain object failures because the concrete object
+// envelope or payload did not satisfy an otherwise supplied contract.
 func objectValidationError(path string, reason ErrorReason, err error) error {
-	if objectValidationResourceFailure(err) {
+	if errors.Is(err, objectvalidation.ErrInvalidPlan) {
 		return wrapAt(
 			pathRequestResource,
 			ErrInvalidResource,
@@ -79,13 +78,4 @@ func objectValidationError(path string, reason ErrorReason, err error) error {
 		"object does not satisfy resource contract",
 		err,
 	)
-}
-
-// objectValidationResourceFailure reports lower-level failures owned by the
-// request Resource rather than by the object envelope being validated.
-func objectValidationResourceFailure(err error) bool {
-	return errors.Is(err, objectvalidation.ErrInvalidPlan) ||
-		errors.Is(err, objectvalidation.ErrResourceMismatch) ||
-		errors.Is(err, objectvalidation.ErrVersionNotDefined) ||
-		errors.Is(err, objectvalidation.ErrInvalidScope)
 }

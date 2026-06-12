@@ -24,5 +24,5 @@ package objectapply
 // resource lookup, metadata apply, observed apply, defaulting, pruning, or API
 // version conversion. Callers must provide a resolved resource.Definition.
 func Apply(req Request, opts Options) (Result, error) {
-	return newApplier(opts).apply(req)
+	return New(opts).Apply(req)
 }

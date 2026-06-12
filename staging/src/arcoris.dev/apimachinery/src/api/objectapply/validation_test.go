@@ -74,7 +74,7 @@ func TestApplyResourceMismatch(t *testing.T) {
 
 	_, err := Apply(req, Options{})
 
-	requireErrorIs(t, err, ErrInvalidResource)
+	requireErrorIs(t, err, ErrInvalidObject)
 	requireErrorIs(t, err, objectvalidation.ErrResourceMismatch)
 }
 
@@ -90,7 +90,7 @@ func TestApplyScopeMismatch(t *testing.T) {
 
 	_, err := Apply(req, Options{})
 
-	requireErrorIs(t, err, ErrInvalidResource)
+	requireErrorIs(t, err, ErrInvalidObject)
 	requireErrorIs(t, err, objectvalidation.ErrInvalidScope)
 }
 
@@ -121,7 +121,7 @@ func TestApplyMissingResourceVersionReturnsInvalidResource(t *testing.T) {
 
 	_, err := Apply(req, Options{})
 
-	requireErrorIs(t, err, ErrInvalidResource)
+	requireErrorIs(t, err, ErrInvalidObject)
 	requireErrorIs(t, err, objectvalidation.ErrVersionNotDefined)
 }
 

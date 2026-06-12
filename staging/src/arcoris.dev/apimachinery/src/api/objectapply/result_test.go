@@ -14,7 +14,12 @@
 
 package objectapply
 
-import "testing"
+import (
+	"testing"
+
+	"arcoris.dev/apimachinery/api/fieldownership"
+	"arcoris.dev/apimachinery/api/fieldpath"
+)
 
 func TestResultZeroValue(t *testing.T) {
 	var result Result
@@ -24,5 +29,39 @@ func TestResultZeroValue(t *testing.T) {
 	}
 	if !result.Ownership.IsEmpty() {
 		t.Fatalf("zero Result ownership is not empty")
+	}
+}
+
+func TestApplyEarlyValidationFailureReturnsZeroResult(t *testing.T) {
+	req := testRequest()
+	req.Owner = fieldownership.Owner{}
+
+	result, err := Apply(req, Options{})
+	requireErrorIs(t, err, ErrInvalidOwner)
+
+	if !result.Object.Desired.IsZero() {
+		t.Fatalf("object was populated")
+	}
+	if !result.Ownership.IsEmpty() {
+		t.Fatalf("ownership was populated")
+	}
+	if !result.Desired.Value.IsZero() {
+		t.Fatalf("desired result was populated")
+	}
+}
+
+func TestApplyDesiredUnsupportedTakeoverReturnsPartialDesiredOnly(t *testing.T) {
+	req := testRequest()
+	req.Ownership = desiredOwnership(entry("other", fieldpath.Root()))
+
+	result, err := Apply(req, Options{Force: true})
+	requireErrorIs(t, err, ErrDesiredApplyFailed)
+
+	requireSet(t, result.Desired.AppliedFields, "$.image")
+	if !result.Object.Desired.IsZero() {
+		t.Fatalf("object was built")
+	}
+	if !result.Ownership.IsEmpty() {
+		t.Fatalf("ownership was updated")
 	}
 }

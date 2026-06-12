@@ -14,7 +14,11 @@
 
 package objectapply
 
-import "testing"
+import (
+	"testing"
+
+	"arcoris.dev/apimachinery/api/resource"
+)
 
 func TestApplyDesiredField(t *testing.T) {
 	result, err := Apply(testRequest(), Options{})
@@ -31,6 +35,32 @@ func TestApplyDesiredMapKey(t *testing.T) {
 		Live:     testObject(obj(member("app", str("old")))),
 		Applied:  appliedObject(obj(member("app", str("new")))),
 		Resource: testResource(mapDesiredDescriptor()),
+	}, Options{})
+	requireNoError(t, err)
+
+	requireStringMember(t, result.Object.Desired, "app", "new")
+	requireSet(t, result.Desired.AppliedFields, `$["app"]`)
+}
+
+func TestApplyDesiredUsesSelectedResourceVersionDescriptor(t *testing.T) {
+	resourceDef := resource.NewDefinition(
+		"control.arcoris.dev",
+		"Worker",
+		"workers",
+		resource.ScopeNamespaced,
+		resource.NewVersion("v1", desiredDescriptor(), resource.Exposed(), resource.Canonical()),
+		resource.NewVersion("v2", mapDesiredDescriptor()),
+	)
+	live := testObject(obj(member("app", str("old"))))
+	live.TypeMeta = testTypeMeta("v2")
+	applied := appliedObject(obj(member("app", str("new"))))
+	applied.TypeMeta = testTypeMeta("v2")
+
+	result, err := Apply(Request{
+		Owner:    owner("user"),
+		Live:     live,
+		Applied:  applied,
+		Resource: resourceDef,
 	}, Options{})
 	requireNoError(t, err)
 

@@ -20,7 +20,7 @@ package objectapply
 // descriptor-aware objectvalidation. That makes unsupported Observed/metadata
 // input fail as objectapply policy instead of being hidden behind lower-level
 // payload validation details.
-func (a applier) validateRequest(req Request) error {
+func (a Applier) validateRequest(req Request) error {
 	// Owner must be valid before it is passed to fieldownership through
 	// valueapply.
 	if err := req.Owner.ValidateLexical(); err != nil {

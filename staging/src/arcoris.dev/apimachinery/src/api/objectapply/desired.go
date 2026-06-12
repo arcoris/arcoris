@@ -25,7 +25,7 @@ import (
 // objectapply deliberately passes only the selected resource version's Desired
 // descriptor and the Desired ownership state. It does not inspect field sets,
 // compare values, merge values, or reason about ownership conflicts itself.
-func (a applier) applyDesired(
+func (a Applier) applyDesired(
 	req Request,
 	version resource.VersionDefinition,
 ) (valueapply.Result, error) {

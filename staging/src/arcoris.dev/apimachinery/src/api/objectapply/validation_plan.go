@@ -25,7 +25,7 @@ import (
 // objectapply validates value-backed Desired and Observed surfaces with the
 // same resolver/depth options that are later passed to valueapply. This keeps
 // validation and merge traversal semantics aligned.
-func (a applier) validationPlan(req Request) objectvalidation.Plan[value.Value, value.Value] {
+func (a Applier) validationPlan(req Request) objectvalidation.Plan[value.Value, value.Value] {
 	validator := valuevalidation.SurfaceValidator{
 		Options: valuevalidation.Options{
 			Resolver: a.opts.Resolver,

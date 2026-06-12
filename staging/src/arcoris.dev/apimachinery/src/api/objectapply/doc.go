@@ -12,26 +12,46 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package objectapply applies value-backed API object envelopes under resolved
-// resource contract semantics.
+// Package objectapply orchestrates value-backed API object apply.
 //
-// The package is a pure object-level orchestration layer. It validates live and
-// applied object envelopes against a resource definition, checks object identity
-// compatibility, applies the Desired surface through api/valueapply, preserves
-// live Observed data, and returns updated api/objectownership state.
+// Package object defines the value-backed object envelope. Package resource
+// defines resource-family contracts and version descriptors. Package
+// objectvalidation validates object envelopes against resource contracts.
+// Package valueapply owns Desired field apply semantics. Package objectownership
+// owns object-level ownership state and document boundaries. Package
+// objectlifecycle decides when apply is invoked as part of runtime operations.
+// Package objectstore stores committed objects and ownership documents.
 //
-// Version 1 applies Desired only. Observed apply is unsupported. Metadata apply
-// is unsupported. The result preserves live TypeMeta, live ObjectMeta, and live
-// Observed data.
+// Version 1 applies Desired only. Applied Observed is rejected even when the
+// resource defines an observed descriptor. Applied metadata may identify the
+// live object, but metadata update intent is rejected. Successful apply
+// preserves live TypeMeta, ObjectMeta, and Observed, installs the merged Desired
+// value, and replaces Desired ownership through objectownership.State.WithDesired.
+// Cross-version apply and API version conversion are unsupported.
 //
-// objectapply delegates object ownership storage shape to api/objectownership
-// and field-level apply semantics to api/valueapply. It does not reimplement
-// field extraction, comparison, merge, conflict detection, force semantics,
-// dropped-field deletion, or ownership takeover rules.
+// Applied metadata identity must match the live object. Name and namespace must
+// match. Applied UID may be empty; when non-empty it must match live UID.
+// Non-identity metadata such as generateName, resourceVersion, generation,
+// timestamps, deletion, labels, annotations, owner references, and finalizers is
+// rejected.
 //
-// The package does not read or write storage, run admission, authorize request
-// subjects, perform resource catalog lookup, convert between API versions,
-// mutate runtime metadata, serialize managed fields, decode wire formats, emit
-// events, or execute controller/runtime lifecycle behavior. Runtime layers are
-// responsible for those concerns.
+// Request.Resource is expected to be resolved and prevalidated by construction,
+// registration, or catalog code. objectapply performs only defensive checks
+// needed before selecting the live object version and calling lower layers. It
+// does not perform catalog lookup or full resource descriptor graph validation
+// per apply operation.
+//
+// Validation and apply are deterministic: owner, resource shape, applied
+// Observed, normalized applied metadata spelling, metadata, identity, version,
+// metadata policy, live object contract, applied object contract, live version
+// selection, Desired valueapply, output object construction, and ownership
+// replacement. Early object-level failures return a zero Result. Desired apply
+// failures return partial Result.Desired when valueapply provides it. Output
+// Object and replacement Ownership are populated only after Desired apply
+// succeeds.
+//
+// The package does not perform admission, authorization, storage access,
+// resource lookup, metadata apply, observed apply, defaulting, pruning, version
+// conversion, codec behavior, runtime lifecycle execution, controller behavior,
+// or client behavior.
 package objectapply

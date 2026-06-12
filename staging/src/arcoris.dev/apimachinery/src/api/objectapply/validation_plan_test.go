@@ -31,7 +31,7 @@ func (testResolver) Resolve(types.TypeName) (types.Definition, bool) {
 
 func TestValidationPlan(t *testing.T) {
 	resolver := testResolver{}
-	plan := newApplier(Options{
+	plan := New(Options{
 		Resolver: resolver,
 		MaxDepth: 11,
 	}).validationPlan(testRequest())

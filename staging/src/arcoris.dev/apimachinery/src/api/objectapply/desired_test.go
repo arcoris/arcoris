@@ -21,7 +21,7 @@ func TestApplyDesired(t *testing.T) {
 	version, err := selectVersion(req.Live, req.Resource)
 	requireNoError(t, err)
 
-	result, err := newApplier(Options{}).applyDesired(req, version)
+	result, err := New(Options{}).applyDesired(req, version)
 	requireNoError(t, err)
 
 	requireStringMember(t, result.Value, "image", "api:v2")

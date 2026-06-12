@@ -21,9 +21,8 @@ import "arcoris.dev/apimachinery/api/resource"
 // objectapply never performs catalog lookup, but the single supplied
 // resource.Definition must still have usable family and version identities
 // before objectvalidation and valueapply rely on it. This deliberately stops
-// short of full resource.Validate surface checks because value-backed
-// objectapply supports non-object Desired descriptors through valueapply.
-func (a applier) validateResource(def resource.Definition) error {
+// short of full resource.ValidateResolved descriptor graph checks.
+func (a Applier) validateResource(def resource.Definition) error {
 	if err := def.Group().Validate(); err != nil {
 		return wrapAt(
 			pathRequestResource,
@@ -68,7 +67,8 @@ func (a applier) validateResource(def resource.Definition) error {
 //
 // Full resource descriptor validation remains a registration/catalog concern.
 // Here we only need a version table that can select a Desired descriptor for
-// the live object's API version.
+// the live object's API version. Resource surface validation remains owned by
+// api/resource and registration/catalog trust boundaries.
 func validateResourceVersions(versions []resource.VersionDefinition) error {
 	if len(versions) == 0 {
 		return wrapAt(

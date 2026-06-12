@@ -177,6 +177,21 @@ func TestApplyAllowsNonNilZeroAppliedDeletion(t *testing.T) {
 	requireNoError(t, err)
 }
 
+func TestApplyDoesNotMutateNonNilZeroAppliedDeletion(t *testing.T) {
+	req := testRequest()
+	req.Applied.ObjectMeta.Deletion = &stamp.Deletion{}
+
+	_, err := Apply(req, Options{})
+	requireNoError(t, err)
+
+	if req.Applied.ObjectMeta.Deletion == nil {
+		t.Fatal("Apply mutated applied deletion pointer to nil")
+	}
+	if !req.Applied.ObjectMeta.Deletion.IsZero() {
+		t.Fatalf("applied deletion = %#v; want zero", req.Applied.ObjectMeta.Deletion)
+	}
+}
+
 func TestApplyRejectsNonZeroAppliedDeletion(t *testing.T) {
 	req := testRequest()
 	req.Applied.ObjectMeta.Deletion = &stamp.Deletion{DeletedAt: metadataTimestamp()}

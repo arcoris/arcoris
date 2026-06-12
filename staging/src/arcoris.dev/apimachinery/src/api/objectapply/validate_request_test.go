@@ -22,7 +22,7 @@ import (
 )
 
 func TestValidateRequest(t *testing.T) {
-	err := newApplier(Options{}).validateRequest(testRequest())
+	err := New(Options{}).validateRequest(testRequest())
 
 	requireNoError(t, err)
 }
@@ -31,7 +31,7 @@ func TestValidateRequestRejectsInvalidOwner(t *testing.T) {
 	req := testRequest()
 	req.Owner = fieldownership.Owner{}
 
-	err := newApplier(Options{}).validateRequest(req)
+	err := New(Options{}).validateRequest(req)
 
 	requireErrorIs(t, err, ErrInvalidOwner)
 }
@@ -40,7 +40,7 @@ func TestValidateRequestRejectsMissingResource(t *testing.T) {
 	req := testRequest()
 	req.Resource = resource.Definition{}
 
-	err := newApplier(Options{}).validateRequest(req)
+	err := New(Options{}).validateRequest(req)
 
 	requireErrorIs(t, err, ErrInvalidResource)
 }

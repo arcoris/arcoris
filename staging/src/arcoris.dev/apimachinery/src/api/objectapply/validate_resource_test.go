@@ -19,10 +19,11 @@ import (
 
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 	"arcoris.dev/apimachinery/api/resource"
+	"arcoris.dev/apimachinery/api/types"
 )
 
 func TestValidateResource(t *testing.T) {
-	err := newApplier(Options{}).validateResource(testRequest().Resource)
+	err := New(Options{}).validateResource(testRequest().Resource)
 
 	requireNoError(t, err)
 }
@@ -35,9 +36,113 @@ func TestValidateResourceRejectsInvalidDefinition(t *testing.T) {
 		resource.ScopeNamespaced,
 	)
 
-	err := newApplier(Options{}).validateResource(def)
+	err := New(Options{}).validateResource(def)
 
 	requireErrorIs(t, err, ErrInvalidResource)
 	requireErrorIs(t, err, resource.ErrInvalidDefinition)
 	requireObjectApplyError(t, err, pathRequestResource, ErrorReasonInvalidResource)
+}
+
+func TestValidateResourceRejectsInvalidInputs(t *testing.T) {
+	tests := []struct {
+		name   string
+		def    resource.Definition
+		target error
+	}{
+		{
+			name: "invalid group",
+			def: resource.NewDefinition(
+				apiidentity.Group("bad group"),
+				apiidentity.Kind("Worker"),
+				apiidentity.Resource("workers"),
+				resource.ScopeNamespaced,
+				resource.NewVersion("v1", desiredDescriptor(), resource.Exposed(), resource.Canonical()),
+			),
+		},
+		{
+			name: "invalid kind",
+			def: resource.NewDefinition(
+				apiidentity.Group("control.arcoris.dev"),
+				apiidentity.Kind("bad kind"),
+				apiidentity.Resource("workers"),
+				resource.ScopeNamespaced,
+				resource.NewVersion("v1", desiredDescriptor(), resource.Exposed(), resource.Canonical()),
+			),
+		},
+		{
+			name: "invalid resource",
+			def: resource.NewDefinition(
+				apiidentity.Group("control.arcoris.dev"),
+				apiidentity.Kind("Worker"),
+				apiidentity.Resource("bad resource"),
+				resource.ScopeNamespaced,
+				resource.NewVersion("v1", desiredDescriptor(), resource.Exposed(), resource.Canonical()),
+			),
+		},
+		{
+			name: "invalid scope",
+			def: resource.NewDefinition(
+				apiidentity.Group("control.arcoris.dev"),
+				apiidentity.Kind("Worker"),
+				apiidentity.Resource("workers"),
+				resource.ScopeInvalid,
+				resource.NewVersion("v1", desiredDescriptor(), resource.Exposed(), resource.Canonical()),
+			),
+		},
+		{
+			name: "no versions",
+			def: resource.NewDefinition(
+				apiidentity.Group("control.arcoris.dev"),
+				apiidentity.Kind("Worker"),
+				apiidentity.Resource("workers"),
+				resource.ScopeNamespaced,
+			),
+			target: resource.ErrInvalidDefinition,
+		},
+		{
+			name: "duplicate versions",
+			def: resource.NewDefinition(
+				apiidentity.Group("control.arcoris.dev"),
+				apiidentity.Kind("Worker"),
+				apiidentity.Resource("workers"),
+				resource.ScopeNamespaced,
+				resource.NewVersion("v1", desiredDescriptor(), resource.Exposed(), resource.Canonical()),
+				resource.NewVersion("v1", desiredDescriptor()),
+			),
+			target: resource.ErrInvalidDefinition,
+		},
+		{
+			name: "invalid version",
+			def: resource.NewDefinition(
+				apiidentity.Group("control.arcoris.dev"),
+				apiidentity.Kind("Worker"),
+				apiidentity.Resource("workers"),
+				resource.ScopeNamespaced,
+				resource.NewVersion("bad version", desiredDescriptor(), resource.Exposed(), resource.Canonical()),
+			),
+		},
+		{
+			name: "missing desired",
+			def: resource.NewDefinition(
+				apiidentity.Group("control.arcoris.dev"),
+				apiidentity.Kind("Worker"),
+				apiidentity.Resource("workers"),
+				resource.ScopeNamespaced,
+				resource.NewVersion("v1", types.Descriptor{}, resource.Exposed(), resource.Canonical()),
+			),
+			target: resource.ErrInvalidVersion,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := New(Options{}).validateResource(tt.def)
+
+			requireErrorIs(t, err, ErrInvalidResource)
+			if tt.target != nil {
+				requireErrorIs(t, err, tt.target)
+			}
+			requireObjectApplyError(t, err, pathRequestResource, ErrorReasonInvalidResource)
+		})
+	}
 }

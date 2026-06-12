@@ -41,7 +41,7 @@ func TestValidateObjectMetaRejectsInvalidMetadata(t *testing.T) {
 func TestValidateObject(t *testing.T) {
 	req := testRequest()
 
-	err := newApplier(Options{}).validateObject(
+	err := New(Options{}).validateObject(
 		pathObjectLive,
 		req.Live,
 		ErrorReasonInvalidLiveObject,
@@ -51,7 +51,7 @@ func TestValidateObject(t *testing.T) {
 	requireNoError(t, err)
 }
 
-func TestValidateObjectMapsResourceFailure(t *testing.T) {
+func TestValidateObjectMapsVersionMissingAsObjectFailure(t *testing.T) {
 	req := testRequest()
 	req.Resource = resource.NewDefinition(
 		apiidentity.Group("control.arcoris.dev"),
@@ -61,14 +61,48 @@ func TestValidateObjectMapsResourceFailure(t *testing.T) {
 		resource.NewVersion("v2", desiredDescriptor(), resource.Exposed(), resource.Canonical()),
 	)
 
-	err := newApplier(Options{}).validateObject(
+	err := New(Options{}).validateObject(
 		pathObjectLive,
 		req.Live,
 		ErrorReasonInvalidLiveObject,
 		req,
 	)
 
-	requireErrorIs(t, err, ErrInvalidResource)
+	requireErrorIs(t, err, ErrInvalidObject)
 	requireErrorIs(t, err, objectvalidation.ErrVersionNotDefined)
+	requireObjectApplyError(t, err, pathObjectLive, ErrorReasonInvalidLiveObject)
+}
+
+func TestValidateObjectMapsResourceMismatchAsObjectFailure(t *testing.T) {
+	req := testRequest()
+	req.Resource = resource.NewDefinition(
+		apiidentity.Group("other.arcoris.dev"),
+		apiidentity.Kind("Worker"),
+		apiidentity.Resource("workers"),
+		resource.ScopeNamespaced,
+		resource.NewVersion("v1", desiredDescriptor(), resource.Exposed(), resource.Canonical()),
+	)
+
+	err := New(Options{}).validateObject(
+		pathObjectLive,
+		req.Live,
+		ErrorReasonInvalidLiveObject,
+		req,
+	)
+
+	requireErrorIs(t, err, ErrInvalidObject)
+	requireErrorIs(t, err, objectvalidation.ErrResourceMismatch)
+	requireObjectApplyError(t, err, pathObjectLive, ErrorReasonInvalidLiveObject)
+}
+
+func TestValidateObjectMapsInvalidPlanAsInvalidResource(t *testing.T) {
+	err := objectValidationError(
+		pathObjectLive,
+		ErrorReasonInvalidLiveObject,
+		objectvalidation.ErrInvalidPlan,
+	)
+
+	requireErrorIs(t, err, ErrInvalidResource)
+	requireErrorIs(t, err, objectvalidation.ErrInvalidPlan)
 	requireObjectApplyError(t, err, pathRequestResource, ErrorReasonInvalidResource)
 }

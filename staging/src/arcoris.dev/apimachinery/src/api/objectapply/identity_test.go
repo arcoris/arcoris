@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	apiidentity "arcoris.dev/apimachinery/api/identity"
+	"arcoris.dev/apimachinery/api/meta"
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 )
 
@@ -30,6 +31,19 @@ func TestApplySameIdentity(t *testing.T) {
 func TestApplyDifferentGVKRejected(t *testing.T) {
 	req := testRequest()
 	req.Applied.TypeMeta.Kind = apiidentity.Kind("Other")
+
+	_, err := Apply(req, Options{})
+
+	requireErrorIs(t, err, ErrIdentityMismatch)
+}
+
+func TestApplyDifferentGroupRejected(t *testing.T) {
+	req := testRequest()
+	req.Applied.TypeMeta = meta.FromGroupVersionKind(apiidentity.GroupVersionKind{
+		Group:   "other.arcoris.dev",
+		Version: "v1",
+		Kind:    "Worker",
+	})
 
 	_, err := Apply(req, Options{})
 
@@ -75,6 +89,15 @@ func TestApplyDifferentUIDRejected(t *testing.T) {
 func TestApplyAllowsAppliedUIDOmitted(t *testing.T) {
 	req := testRequest()
 	req.Applied.ObjectMeta.UID = ""
+
+	_, err := Apply(req, Options{})
+
+	requireNoError(t, err)
+}
+
+func TestApplyAllowsAppliedUIDMatchingLive(t *testing.T) {
+	req := testRequest()
+	req.Applied.ObjectMeta.UID = req.Live.ObjectMeta.UID
 
 	_, err := Apply(req, Options{})
 
