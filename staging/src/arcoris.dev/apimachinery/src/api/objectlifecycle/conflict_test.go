@@ -90,8 +90,8 @@ func (s staleUpdateStore) Update(context.Context, objectstore.Key, objectstore.R
 	return objectstore.State{}, objectstore.ErrStaleRevision
 }
 
-func (s staleUpdateStore) Delete(context.Context, objectstore.Key, objectstore.Revision) (objectstore.State, error) {
-	return objectstore.State{}, objectstore.ErrStaleRevision
+func (s staleUpdateStore) Delete(context.Context, objectstore.Key, objectstore.Revision) (objectstore.DeleteResult, error) {
+	return objectstore.DeleteResult{}, objectstore.ErrStaleRevision
 }
 
 type conflictUpdateStore struct {
@@ -110,6 +110,6 @@ func (s conflictUpdateStore) Update(context.Context, objectstore.Key, objectstor
 	return objectstore.State{}, objectstore.ErrConflict
 }
 
-func (s conflictUpdateStore) Delete(context.Context, objectstore.Key, objectstore.Revision) (objectstore.State, error) {
-	return objectstore.State{}, objectstore.ErrConflict
+func (s conflictUpdateStore) Delete(context.Context, objectstore.Key, objectstore.Revision) (objectstore.DeleteResult, error) {
+	return objectstore.DeleteResult{}, objectstore.ErrConflict
 }

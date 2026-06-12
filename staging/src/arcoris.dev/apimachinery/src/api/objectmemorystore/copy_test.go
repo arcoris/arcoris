@@ -123,7 +123,7 @@ func TestDeleteReturnDoesNotExposeTombstoneStateAliases(t *testing.T) {
 
 	deleted, err := store.Delete(context.Background(), key, created.Revision)
 	requireNoError(t, err)
-	mutateStateAliases(&deleted)
+	mutateStateAliases(&deleted.Deleted)
 
 	current := store.shardFor(key).get(key).load()
 	if current == nil || !current.deleted {

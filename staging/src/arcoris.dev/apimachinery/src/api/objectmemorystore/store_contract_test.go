@@ -15,24 +15,16 @@
 package objectmemorystore
 
 import (
-	"context"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectstore"
+	"arcoris.dev/apimachinery/api/objectstoretest"
 )
 
-func TestOperationsRejectNilContext(t *testing.T) {
-	store := testStore(t)
+func TestStoreContract(t *testing.T) {
+	objectstoretest.RunStoreContractTests(t, func(tb testing.TB) objectstore.Store {
+		tb.Helper()
 
-	_, _, err := store.Get(nil, testKey(1))
-	requireErrorIs(t, err, objectstore.ErrNilContext)
-}
-
-func TestOperationsRespectAlreadyDoneContext(t *testing.T) {
-	store := testStore(t)
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-
-	_, _, err := store.Get(ctx, testKey(1))
-	requireErrorIs(t, err, context.Canceled)
+		return testStore(tb)
+	})
 }

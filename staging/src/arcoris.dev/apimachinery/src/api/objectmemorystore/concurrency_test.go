@@ -228,12 +228,17 @@ func TestConcurrentDeleteSameKeyAllowsOneWinner(t *testing.T) {
 	store := testStore(t)
 	key := testKey(1)
 	created := createState(t, store, key, "created")
+	results := make([]objectstore.DeleteResult, 32)
 	errs := runConcurrent(32, func(i int) error {
-		_, err := store.Delete(context.Background(), key, created.Revision)
+		result, err := store.Delete(context.Background(), key, created.Revision)
+		if err == nil {
+			results[i] = result
+		}
 		return err
 	})
 
 	successes := 0
+	var winner objectstore.DeleteResult
 	for _, err := range errs {
 		switch {
 		case err == nil:
@@ -245,6 +250,15 @@ func TestConcurrentDeleteSameKeyAllowsOneWinner(t *testing.T) {
 	}
 	if successes != 1 {
 		t.Fatalf("successes = %d; want 1", successes)
+	}
+	for _, result := range results {
+		if !result.IsZero() {
+			winner = result
+			break
+		}
+	}
+	if !winner.Revision.IsValid() || !created.Revision.Before(winner.Revision) {
+		t.Fatalf("winner delete revision = %v; want after %v", winner.Revision, created.Revision)
 	}
 }
 

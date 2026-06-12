@@ -38,6 +38,9 @@ var (
 	// ErrInvalidRevision classifies invalid or forged revisions.
 	ErrInvalidRevision = errors.New("objectstore: invalid revision")
 
+	// ErrNilContext classifies a nil context passed to a store operation.
+	ErrNilContext = errors.New("objectstore: nil context")
+
 	// ErrUninitializedStore classifies use of a nil or zero implementation.
 	ErrUninitializedStore = errors.New("objectstore: uninitialized store")
 )

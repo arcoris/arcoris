@@ -42,11 +42,11 @@ type Store interface {
 	// newly assigned committed revision.
 	Update(ctx context.Context, key Key, expected Revision, state State) (State, error)
 
-	// Delete tombstones the live state for key if expected matches the current
-	// committed revision.
+	// Delete tombstones the live state for key when expected matches the
+	// current committed revision.
 	//
-	// Delete returns the live state that was deleted. The returned state keeps
-	// its original live revision; the committed delete revision is intentionally
-	// not exposed by this first store contract.
-	Delete(ctx context.Context, key Key, expected Revision) (State, error)
+	// DeleteResult.Deleted is the live state that was deleted and keeps its
+	// previous live revision. DeleteResult.Revision is the newly assigned
+	// tombstone commit revision.
+	Delete(ctx context.Context, key Key, expected Revision) (DeleteResult, error)
 }

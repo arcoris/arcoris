@@ -14,21 +14,13 @@
 
 package objectmemorystore
 
-import "context"
+import (
+	"context"
+
+	"arcoris.dev/apimachinery/api/objectstore"
+)
 
 // checkContext reports already-observed context cancellation.
-//
-// The memory store does not wait on context, start goroutines, or retry work.
-// Context is accepted so the same Store contract can support future
-// implementations that may cross process or storage boundaries.
 func checkContext(ctx context.Context) error {
-	if ctx == nil {
-		return ErrNilContext
-	}
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-		return nil
-	}
+	return objectstore.ValidateContext(ctx)
 }

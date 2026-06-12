@@ -22,8 +22,9 @@ import (
 // Result is the common successful lifecycle operation result.
 //
 // State is populated with committed store state for found, created, updated,
-// and deleted effects. Delete returns the deleted live state according to the
-// objectstore.Store contract; the underlying tombstone revision is not exposed.
+// and deleted effects. Delete returns the deleted live state; the store-level
+// tombstone revision stays in objectstore.DeleteResult for lower layers that
+// need commit-event detail.
 type Result struct {
 	// Operation is the lifecycle operation that succeeded.
 	Operation Operation

@@ -35,7 +35,7 @@ func TestPrepareKeyedChecksContextBeforeKey(t *testing.T) {
 
 	err := store.prepareKeyed(nil, objectstore.Key{})
 
-	requireErrorIs(t, err, ErrNilContext)
+	requireErrorIs(t, err, objectstore.ErrNilContext)
 }
 
 func TestPrepareRevisionedChecksRevisionAfterKey(t *testing.T) {

@@ -21,7 +21,6 @@ import (
 
 func TestSentinelErrorsAreDistinctAndClassifiable(t *testing.T) {
 	sentinels := []error{
-		ErrNilContext,
 		ErrNilOption,
 		ErrInvalidShardCount,
 	}

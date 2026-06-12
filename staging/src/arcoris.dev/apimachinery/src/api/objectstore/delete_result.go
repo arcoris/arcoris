@@ -14,20 +14,16 @@
 
 package objectstore
 
-// Revision is a store-local monotonic commit revision.
-//
-// Revisions are assigned by a concrete store when Create, Update, or Delete
-// commits. They are monotonic within one store and may have gaps. They are not
-// API resource versions, object generations, wall-clock timestamps, distributed
-// sequence numbers, or globally comparable values.
-type Revision uint64
-
-// IsZero reports whether r is the invalid/unset revision.
-func (r Revision) IsZero() bool {
-	return r == 0
+// DeleteResult is the successful result of a committed delete.
+type DeleteResult struct {
+	// Deleted is the detached live state that was tombstoned. Its Revision is
+	// the previous live revision that matched the caller's expected revision.
+	Deleted State
+	// Revision is the store-local tombstone commit revision.
+	Revision Revision
 }
 
-// IsValid reports whether r can identify committed store state.
-func (r Revision) IsValid() bool {
-	return !r.IsZero()
+// IsZero reports whether r contains no deleted state or delete revision.
+func (r DeleteResult) IsZero() bool {
+	return r.Deleted.Revision.IsZero() && r.Revision.IsZero()
 }

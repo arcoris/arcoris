@@ -30,7 +30,7 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func testStore(t *testing.T, opts ...Option) *Store {
+func testStore(t testing.TB, opts ...Option) *Store {
 	t.Helper()
 
 	store, err := New(opts...)

@@ -16,7 +16,6 @@ package objectstore
 
 import (
 	"arcoris.dev/apimachinery/api/object"
-	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/value"
 )
 
@@ -28,7 +27,7 @@ import (
 func (s State) Clone() State {
 	return State{
 		Object:    cloneObject(s.Object),
-		Ownership: cloneOwnershipDocument(s.Ownership),
+		Ownership: s.Ownership.Clone(),
 		Revision:  s.Revision,
 	}
 }
@@ -43,47 +42,6 @@ func cloneObject(in object.Object[value.Value, value.Value]) object.Object[value
 	if in.Observed != nil {
 		out = out.WithObserved(in.Observed.Clone())
 	}
-
-	return out
-}
-
-// cloneOwnershipDocument copies every public slice in doc without validating it.
-func cloneOwnershipDocument(doc objectownership.Document) objectownership.Document {
-	out := objectownership.Document{
-		Version: doc.Version,
-		Desired: objectownership.Surface{
-			Entries: cloneOwnershipEntries(doc.Desired.Entries),
-		},
-	}
-
-	return out
-}
-
-// cloneOwnershipEntries copies ownership document entries and field slices.
-func cloneOwnershipEntries(entries []objectownership.Entry) []objectownership.Entry {
-	if entries == nil {
-		return nil
-	}
-
-	out := make([]objectownership.Entry, len(entries))
-	for i, entry := range entries {
-		out[i] = objectownership.Entry{
-			Owner:  entry.Owner,
-			Fields: cloneOwnershipPaths(entry.Fields),
-		}
-	}
-
-	return out
-}
-
-// cloneOwnershipPaths copies one ownership field path slice.
-func cloneOwnershipPaths(paths []objectownership.Path) []objectownership.Path {
-	if paths == nil {
-		return nil
-	}
-
-	out := make([]objectownership.Path, len(paths))
-	copy(out, paths)
 
 	return out
 }

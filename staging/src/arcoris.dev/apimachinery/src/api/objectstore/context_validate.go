@@ -14,20 +14,17 @@
 
 package objectstore
 
-// Revision is a store-local monotonic commit revision.
-//
-// Revisions are assigned by a concrete store when Create, Update, or Delete
-// commits. They are monotonic within one store and may have gaps. They are not
-// API resource versions, object generations, wall-clock timestamps, distributed
-// sequence numbers, or globally comparable values.
-type Revision uint64
+import "context"
 
-// IsZero reports whether r is the invalid/unset revision.
-func (r Revision) IsZero() bool {
-	return r == 0
-}
-
-// IsValid reports whether r can identify committed store state.
-func (r Revision) IsValid() bool {
-	return !r.IsZero()
+// ValidateContext checks the operation context boundary shared by stores.
+func ValidateContext(ctx context.Context) error {
+	if ctx == nil {
+		return errorFor(ErrorReasonNilContext, Key{}, 0, 0, ErrNilContext)
+	}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		return nil
+	}
 }

@@ -29,9 +29,14 @@ func TestErrorReasonStringAndValidity(t *testing.T) {
 		{name: "stale revision", in: ErrorReasonStaleRevision, text: "stale_revision", valid: true},
 		{name: "invalid key", in: ErrorReasonInvalidKey, text: "invalid_key", valid: true},
 		{name: "invalid state", in: ErrorReasonInvalidState, text: "invalid_state", valid: true},
+		{name: "invalid state object", in: ErrorReasonInvalidStateObject, text: "invalid_state_object", valid: true},
+		{name: "missing desired", in: ErrorReasonMissingDesired, text: "missing_desired", valid: true},
+		{name: "invalid observed", in: ErrorReasonInvalidObserved, text: "invalid_observed", valid: true},
+		{name: "invalid ownership", in: ErrorReasonInvalidOwnership, text: "invalid_ownership", valid: true},
 		{name: "invalid revision", in: ErrorReasonInvalidRevision, text: "invalid_revision", valid: true},
+		{name: "nil context", in: ErrorReasonNilContext, text: "nil_context", valid: true},
 		{name: "uninitialized store", in: ErrorReasonUninitializedStore, text: "uninitialized_store", valid: true},
-		{name: "unknown", in: 0, text: "unknown", valid: false},
+		{name: "unknown", in: "", text: "unknown", valid: false},
 	}
 
 	for _, tt := range tests {

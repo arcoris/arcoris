@@ -21,18 +21,18 @@ import (
 )
 
 // Delete tombstones live state when expected matches the current revision.
-//
-// Delete returns the live State that was removed. The tombstone commit revision
-// is kept internally so a future event layer can distinguish the delete commit,
-// but the current objectstore.Store contract does not expose that revision.
-func (s *Store) Delete(ctx context.Context, key objectstore.Key, expected objectstore.Revision) (objectstore.State, error) {
+func (s *Store) Delete(
+	ctx context.Context,
+	key objectstore.Key,
+	expected objectstore.Revision,
+) (objectstore.DeleteResult, error) {
 	if err := s.prepareDelete(ctx, key, expected); err != nil {
-		return objectstore.State{}, err
+		return objectstore.DeleteResult{}, err
 	}
 
 	st := s.shardFor(key).get(key)
 	if st == nil {
-		return objectstore.State{}, objectstoreError(
+		return objectstore.DeleteResult{}, objectstoreError(
 			objectstore.ErrorReasonNotFound,
 			key,
 			expected,
@@ -44,7 +44,7 @@ func (s *Store) Delete(ctx context.Context, key objectstore.Key, expected object
 	for {
 		current := st.load()
 		if current == nil || current.deleted {
-			return objectstore.State{}, objectstoreError(
+			return objectstore.DeleteResult{}, objectstoreError(
 				objectstore.ErrorReasonNotFound,
 				key,
 				expected,
@@ -53,7 +53,7 @@ func (s *Store) Delete(ctx context.Context, key objectstore.Key, expected object
 			)
 		}
 		if current.state.Revision != expected {
-			return objectstore.State{}, objectstoreError(
+			return objectstore.DeleteResult{}, objectstoreError(
 				objectstore.ErrorReasonStaleRevision,
 				key,
 				expected,
@@ -63,13 +63,17 @@ func (s *Store) Delete(ctx context.Context, key objectstore.Key, expected object
 		}
 
 		deleted := current.visibleState()
-		next := tombstoneRecord(deleted, s.nextRevision())
+		deleteRevision := s.nextRevision()
+		next := tombstoneRecord(deleted, deleteRevision)
 		if st.compareAndSwap(current, next) {
-			return deleted, nil
+			return objectstore.DeleteResult{
+				Deleted:  deleted,
+				Revision: deleteRevision,
+			}, nil
 		}
 
 		if latest := st.load(); latest != nil && latest.state.Revision != expected {
-			return objectstore.State{}, objectstoreError(
+			return objectstore.DeleteResult{}, objectstoreError(
 				objectstore.ErrorReasonConflict,
 				key,
 				expected,

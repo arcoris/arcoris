@@ -15,52 +15,64 @@
 package objectstore
 
 // ErrorReason is stable machine-readable detail for objectstore errors.
-type ErrorReason uint8
+type ErrorReason string
 
 const (
 	// ErrorReasonNotFound reports a missing or tombstoned live object.
-	ErrorReasonNotFound ErrorReason = iota + 1
+	ErrorReasonNotFound ErrorReason = "not_found"
 	// ErrorReasonAlreadyExists reports a create request for an existing live object.
-	ErrorReasonAlreadyExists
+	ErrorReasonAlreadyExists ErrorReason = "already_exists"
 	// ErrorReasonConflict reports a compare-and-swap race after preconditions passed.
-	ErrorReasonConflict
+	ErrorReasonConflict ErrorReason = "conflict"
 	// ErrorReasonStaleRevision reports an expected revision mismatch.
-	ErrorReasonStaleRevision
+	ErrorReasonStaleRevision ErrorReason = "stale_revision"
 	// ErrorReasonInvalidKey reports an invalid object store key.
-	ErrorReasonInvalidKey
-	// ErrorReasonInvalidState reports invalid object or ownership state.
-	ErrorReasonInvalidState
+	ErrorReasonInvalidKey ErrorReason = "invalid_key"
+	// ErrorReasonInvalidState reports otherwise invalid object store state.
+	ErrorReasonInvalidState ErrorReason = "invalid_state"
+	// ErrorReasonInvalidStateObject reports invalid object envelope metadata.
+	ErrorReasonInvalidStateObject ErrorReason = "invalid_state_object"
+	// ErrorReasonMissingDesired reports missing committed Desired data.
+	ErrorReasonMissingDesired ErrorReason = "missing_desired"
+	// ErrorReasonInvalidObserved reports invalid optional Observed data.
+	ErrorReasonInvalidObserved ErrorReason = "invalid_observed"
+	// ErrorReasonInvalidOwnership reports invalid or non-canonical ownership.
+	ErrorReasonInvalidOwnership ErrorReason = "invalid_ownership"
 	// ErrorReasonInvalidRevision reports a forbidden or missing revision.
-	ErrorReasonInvalidRevision
+	ErrorReasonInvalidRevision ErrorReason = "invalid_revision"
+	// ErrorReasonNilContext reports a nil operation context.
+	ErrorReasonNilContext ErrorReason = "nil_context"
 	// ErrorReasonUninitializedStore reports use of a nil or zero implementation.
-	ErrorReasonUninitializedStore
+	ErrorReasonUninitializedStore ErrorReason = "uninitialized_store"
 )
 
 // IsValid reports whether r is a known objectstore error reason.
 func (r ErrorReason) IsValid() bool {
-	return r >= ErrorReasonNotFound && r <= ErrorReasonUninitializedStore
+	switch r {
+	case ErrorReasonNotFound,
+		ErrorReasonAlreadyExists,
+		ErrorReasonConflict,
+		ErrorReasonStaleRevision,
+		ErrorReasonInvalidKey,
+		ErrorReasonInvalidState,
+		ErrorReasonInvalidStateObject,
+		ErrorReasonMissingDesired,
+		ErrorReasonInvalidObserved,
+		ErrorReasonInvalidOwnership,
+		ErrorReasonInvalidRevision,
+		ErrorReasonNilContext,
+		ErrorReasonUninitializedStore:
+		return true
+	default:
+		return false
+	}
 }
 
 // String returns stable diagnostic text for r.
 func (r ErrorReason) String() string {
-	switch r {
-	case ErrorReasonNotFound:
-		return "not_found"
-	case ErrorReasonAlreadyExists:
-		return "already_exists"
-	case ErrorReasonConflict:
-		return "conflict"
-	case ErrorReasonStaleRevision:
-		return "stale_revision"
-	case ErrorReasonInvalidKey:
-		return "invalid_key"
-	case ErrorReasonInvalidState:
-		return "invalid_state"
-	case ErrorReasonInvalidRevision:
-		return "invalid_revision"
-	case ErrorReasonUninitializedStore:
-		return "uninitialized_store"
-	default:
+	if !r.IsValid() {
 		return "unknown"
 	}
+
+	return string(r)
 }

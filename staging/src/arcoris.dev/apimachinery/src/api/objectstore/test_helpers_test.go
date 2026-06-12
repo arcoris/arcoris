@@ -111,6 +111,6 @@ func (fakeStore) Update(context.Context, Key, Revision, State) (State, error) {
 	return State{}, nil
 }
 
-func (fakeStore) Delete(context.Context, Key, Revision) (State, error) {
-	return State{}, nil
+func (fakeStore) Delete(context.Context, Key, Revision) (DeleteResult, error) {
+	return DeleteResult{}, nil
 }

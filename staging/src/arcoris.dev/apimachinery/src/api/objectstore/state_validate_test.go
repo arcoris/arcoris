@@ -15,14 +15,24 @@
 package objectstore
 
 import (
+	"errors"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldownership"
+	"arcoris.dev/apimachinery/api/object"
 	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/value"
 )
 
 func TestValidateInputStateAcceptsZeroRevision(t *testing.T) {
 	requireNoError(t, ValidateInputState(validState()))
+}
+
+func TestValidateInputStateAcceptsRawOwnership(t *testing.T) {
+	state := validState()
+	state.Ownership = rawUnsortedOwnership()
+
+	requireNoError(t, ValidateInputState(state))
 }
 
 func TestValidateInputStateRejectsForgedRevision(t *testing.T) {
@@ -44,6 +54,8 @@ func TestValidateCommittedStateRejectsInvalidObjectMeta(t *testing.T) {
 	state.Object.Kind = ""
 
 	requireErrorIs(t, ValidateCommittedState(state), ErrInvalidState)
+	requireErrorIs(t, ValidateCommittedState(state), object.ErrInvalidObject)
+	requireStoreErrorReason(t, ValidateCommittedState(state), ErrorReasonInvalidStateObject)
 }
 
 func TestValidateCommittedStateRejectsInvalidDesiredValue(t *testing.T) {
@@ -51,6 +63,15 @@ func TestValidateCommittedStateRejectsInvalidDesiredValue(t *testing.T) {
 	state.Object.Desired = value.Value{}
 
 	requireErrorIs(t, ValidateCommittedState(state), ErrInvalidState)
+	requireStoreErrorReason(t, ValidateCommittedState(state), ErrorReasonMissingDesired)
+}
+
+func TestValidateCommittedStateRejectsInvalidObservedValue(t *testing.T) {
+	state := validCommittedState()
+	state.Object.Observed = &value.Value{}
+
+	requireErrorIs(t, ValidateCommittedState(state), ErrInvalidState)
+	requireStoreErrorReason(t, ValidateCommittedState(state), ErrorReasonInvalidObserved)
 }
 
 func TestValidateCommittedStateRejectsInvalidOwnership(t *testing.T) {
@@ -58,4 +79,50 @@ func TestValidateCommittedStateRejectsInvalidOwnership(t *testing.T) {
 	state.Ownership = objectownership.Document{}
 
 	requireErrorIs(t, ValidateCommittedState(state), ErrInvalidState)
+	requireErrorIs(t, ValidateCommittedState(state), objectownership.ErrInvalidDocument)
+	requireStoreErrorReason(t, ValidateCommittedState(state), ErrorReasonInvalidOwnership)
+}
+
+func TestValidateCommittedStateRejectsRawOwnership(t *testing.T) {
+	state := validCommittedState()
+	state.Ownership = rawUnsortedOwnership()
+
+	err := ValidateCommittedState(state)
+
+	requireErrorIs(t, err, ErrInvalidState)
+	requireErrorIs(t, err, objectownership.ErrNotNormalized)
+	requireStoreErrorReason(t, err, ErrorReasonInvalidOwnership)
+}
+
+func TestValidateCommittedStateAcceptsNormalizedOwnership(t *testing.T) {
+	state := validCommittedState()
+	normalized, err := objectownership.Normalize(rawUnsortedOwnership())
+	requireNoError(t, err)
+	state.Ownership = normalized
+
+	requireNoError(t, ValidateCommittedState(state))
+}
+
+func rawUnsortedOwnership() objectownership.Document {
+	return objectownership.Document{
+		Version: objectownership.DocumentVersionV1,
+		Desired: objectownership.Surface{
+			Entries: []objectownership.Entry{
+				{Owner: fieldownership.MustOwner("z"), Fields: []objectownership.Path{"$.z"}},
+				{Owner: fieldownership.MustOwner("a"), Fields: []objectownership.Path{"$.a", "$.a"}},
+			},
+		},
+	}
+}
+
+func requireStoreErrorReason(t *testing.T, err error, reason ErrorReason) {
+	t.Helper()
+
+	var storeErr *Error
+	if !errors.As(err, &storeErr) {
+		t.Fatalf("errors.As(%v, *Error) = false", err)
+	}
+	if storeErr.Reason != reason {
+		t.Fatalf("reason = %v; want %v", storeErr.Reason, reason)
+	}
 }

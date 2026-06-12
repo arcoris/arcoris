@@ -48,17 +48,27 @@ func validateState(state State, committed bool) error {
 	}
 
 	if err := state.Object.ValidateMeta(); err != nil {
-		return errorFor(ErrorReasonInvalidState, Key{}, 0, 0, errors.Join(ErrInvalidState, err))
+		return errorFor(ErrorReasonInvalidStateObject, Key{}, 0, 0, errors.Join(ErrInvalidState, err))
 	}
 	if state.Object.Desired.IsZero() {
-		return errorFor(ErrorReasonInvalidState, Key{}, 0, 0, ErrInvalidState)
+		return errorFor(ErrorReasonMissingDesired, Key{}, 0, 0, ErrInvalidState)
 	}
 	if state.Object.Observed != nil && state.Object.Observed.IsZero() {
-		return errorFor(ErrorReasonInvalidState, Key{}, 0, 0, ErrInvalidState)
+		return errorFor(ErrorReasonInvalidObserved, Key{}, 0, 0, ErrInvalidState)
 	}
-	if err := objectownership.Validate(state.Ownership); err != nil {
-		return errorFor(ErrorReasonInvalidState, Key{}, 0, 0, errors.Join(ErrInvalidState, err))
+	if err := validateOwnership(state.Ownership, committed); err != nil {
+		return errorFor(ErrorReasonInvalidOwnership, Key{}, 0, 0, errors.Join(ErrInvalidState, err))
 	}
 
 	return nil
+}
+
+// validateOwnership accepts raw input documents and requires committed
+// documents to be normalized.
+func validateOwnership(doc objectownership.Document, committed bool) error {
+	if committed {
+		return objectownership.ValidateNormalized(doc)
+	}
+
+	return objectownership.Validate(doc)
 }

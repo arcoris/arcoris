@@ -15,17 +15,24 @@
 // Package objectmemorystore provides an in-memory implementation of
 // arcoris.dev/apimachinery/api/objectstore.Store.
 //
-// Store uses a fixed sharded key index and one atomic publication slot per
-// object. Shard locks protect only map structure. Live object transitions use
-// per-object compare-and-swap over immutable records, so unrelated objects do
-// not serialize behind one global state mutex.
+// Store uses a fixed sharded key index. Shard locks protect only map structure:
+// finding or creating the per-object slot. Each slot publishes immutable records
+// through an atomic pointer, and live/update/delete transitions use
+// compare-and-swap on that per-object pointer.
 //
-// Records are immutable after publication. Delete commits a tombstone record
-// instead of physically removing a slot; this avoids delete/update races and
-// leaves a clean foundation for future watch/event and compaction layers.
+// Records are immutable after publication. Create and Update publish live
+// records with normalized ownership and store-assigned revisions. Delete
+// publishes a tombstone record instead of physically removing the slot.
+// DeleteResult exposes both the deleted live state and the tombstone commit
+// revision. Revision numbers are monotonic within one store, but concurrent CAS
+// races may create gaps.
 //
-// The implementation is intended for tests, local prototypes, and future
-// runtime composition. It is not durable, distributed, persistent, indexed,
-// list-capable, or watch-capable. It does not validate objects against resource
-// descriptors, apply objects, run admission, or encode/decode wire formats.
+// The implementation is concurrency-safe for independent Store operations. It
+// detaches caller input before publication and returns detached states from Get,
+// Create, Update, and Delete.
+//
+// The implementation is not durable, persistent, distributed, list-capable,
+// watch-capable, secondary-indexed, admission-aware, codec-aware, or
+// transactional across keys. It does not validate resource descriptors, apply
+// objects, stamp metadata, or execute lifecycle hooks.
 package objectmemorystore

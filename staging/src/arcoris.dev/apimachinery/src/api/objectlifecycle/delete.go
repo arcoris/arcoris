@@ -23,8 +23,9 @@ import (
 // Delete removes live state after resolving the requested resource identity.
 //
 // Delete requires the caller's expected store revision and does not implement
-// finalizers, deletion timestamps, graceful deletion, or tombstone revision
-// exposure. Those policies belong above the first lifecycle slice.
+// finalizers, deletion timestamps, or graceful deletion. Store-level tombstone
+// revisions remain part of the objectstore result; this lifecycle result
+// exposes the deleted live state.
 func (e *Executor) Delete(ctx context.Context, req DeleteRequest) (Result, error) {
 	if err := e.requireExecutor(OperationDelete); err != nil {
 		return Result{}, err
@@ -47,5 +48,5 @@ func (e *Executor) Delete(ctx context.Context, req DeleteRequest) (Result, error
 		return Result{}, mapStoreError(OperationDelete, prepared.key, err)
 	}
 
-	return Result{Operation: OperationDelete, Effect: EffectDeleted, State: deleted}, nil
+	return Result{Operation: OperationDelete, Effect: EffectDeleted, State: deleted.Deleted}, nil
 }

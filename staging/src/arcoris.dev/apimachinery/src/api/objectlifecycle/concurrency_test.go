@@ -162,6 +162,6 @@ func (s *oneWinnerUpdateStore) Update(_ context.Context, _ objectstore.Key, _ ob
 	return state, nil
 }
 
-func (s *oneWinnerUpdateStore) Delete(context.Context, objectstore.Key, objectstore.Revision) (objectstore.State, error) {
-	return objectstore.State{}, objectstore.ErrConflict
+func (s *oneWinnerUpdateStore) Delete(context.Context, objectstore.Key, objectstore.Revision) (objectstore.DeleteResult, error) {
+	return objectstore.DeleteResult{}, objectstore.ErrConflict
 }

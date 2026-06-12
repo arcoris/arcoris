@@ -41,9 +41,11 @@ func ExampleStore_createGetUpdateDelete() {
 
 	fmt.Println(created.Revision.IsValid())
 	fmt.Println(got.Revision == created.Revision)
-	fmt.Println(deleted.Revision == updated.Revision)
+	fmt.Println(deleted.Deleted.Revision == updated.Revision)
+	fmt.Println(updated.Revision.Before(deleted.Revision))
 
 	// Output:
+	// true
 	// true
 	// true
 	// true

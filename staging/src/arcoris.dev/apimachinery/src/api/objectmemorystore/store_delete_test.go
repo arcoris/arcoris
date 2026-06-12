@@ -61,13 +61,13 @@ func TestDeleteReturnsDeletedLiveState(t *testing.T) {
 	deleted, err := store.Delete(context.Background(), key, created.Revision)
 	requireNoError(t, err)
 
-	if deleted.Revision != created.Revision {
-		t.Fatalf("deleted Revision = %v; want %v", deleted.Revision, created.Revision)
+	if deleted.Deleted.Revision != created.Revision {
+		t.Fatalf("deleted Revision = %v; want %v", deleted.Deleted.Revision, created.Revision)
 	}
-	requireDesiredString(t, deleted, "created")
+	requireDesiredString(t, deleted.Deleted, "created")
 }
 
-func TestDeleteKeepsDeleteRevisionInternal(t *testing.T) {
+func TestDeleteExposesDeleteRevision(t *testing.T) {
 	store := testStore(t)
 	key := testKey(1)
 	created := createState(t, store, key, "created")
@@ -75,8 +75,11 @@ func TestDeleteKeepsDeleteRevisionInternal(t *testing.T) {
 	deleted, err := store.Delete(context.Background(), key, created.Revision)
 	requireNoError(t, err)
 
-	if deleted.Revision != created.Revision {
-		t.Fatalf("deleted Revision = %v; want live revision %v", deleted.Revision, created.Revision)
+	if deleted.Deleted.Revision != created.Revision {
+		t.Fatalf("deleted Revision = %v; want live revision %v", deleted.Deleted.Revision, created.Revision)
+	}
+	if !deleted.Revision.IsValid() || !created.Revision.Before(deleted.Revision) {
+		t.Fatalf("delete revision = %v; want committed revision after %v", deleted.Revision, created.Revision)
 	}
 
 	current := store.shardFor(key).get(key).load()
@@ -86,9 +89,31 @@ func TestDeleteKeepsDeleteRevisionInternal(t *testing.T) {
 	if !current.deleteRevision.IsValid() || !created.Revision.Before(current.deleteRevision) {
 		t.Fatalf("deleteRevision = %v; want committed revision after %v", current.deleteRevision, created.Revision)
 	}
+	if current.deleteRevision != deleted.Revision {
+		t.Fatalf("tombstone revision = %v; want returned %v", current.deleteRevision, deleted.Revision)
+	}
 	if current.state.Revision != created.Revision {
 		t.Fatalf("tombstone state revision = %v; want deleted live revision %v", current.state.Revision, created.Revision)
 	}
+}
+
+func TestDeleteResultIsZero(t *testing.T) {
+	var result objectstore.DeleteResult
+	if !result.IsZero() {
+		t.Fatalf("zero DeleteResult is not zero")
+	}
+
+	result = objectstore.DeleteResult{Deleted: validDeleteState(), Revision: 2}
+	if result.IsZero() {
+		t.Fatalf("populated DeleteResult is zero")
+	}
+}
+
+func validDeleteState() objectstore.State {
+	state := testState("deleted")
+	state.Revision = 1
+
+	return state
 }
 
 func TestDeleteMakesObjectInvisible(t *testing.T) {

@@ -17,9 +17,6 @@ package objectmemorystore
 import "errors"
 
 var (
-	// ErrNilContext classifies a nil context passed to a store operation.
-	ErrNilContext = errors.New("objectmemorystore: nil context")
-
 	// ErrNilOption classifies a nil construction option.
 	ErrNilOption = errors.New("objectmemorystore: nil option")
 

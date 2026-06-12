@@ -12,27 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package objectmemorystore
+package objectstore
 
 import (
 	"context"
+	"errors"
 	"testing"
-
-	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-func TestOperationsRejectNilContext(t *testing.T) {
-	store := testStore(t)
+func TestValidateContextRejectsNilContext(t *testing.T) {
+	err := ValidateContext(nil)
 
-	_, _, err := store.Get(nil, testKey(1))
-	requireErrorIs(t, err, objectstore.ErrNilContext)
+	requireErrorIs(t, err, ErrNilContext)
+	var storeErr *Error
+	if !errors.As(err, &storeErr) {
+		t.Fatalf("errors.As failed")
+	}
+	if storeErr.Reason != ErrorReasonNilContext {
+		t.Fatalf("reason = %v; want %v", storeErr.Reason, ErrorReasonNilContext)
+	}
 }
 
-func TestOperationsRespectAlreadyDoneContext(t *testing.T) {
-	store := testStore(t)
+func TestValidateContextReturnsContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, _, err := store.Get(ctx, testKey(1))
-	requireErrorIs(t, err, context.Canceled)
+	requireErrorIs(t, ValidateContext(ctx), context.Canceled)
+}
+
+func TestValidateContextAcceptsLiveContext(t *testing.T) {
+	requireNoError(t, ValidateContext(context.Background()))
 }

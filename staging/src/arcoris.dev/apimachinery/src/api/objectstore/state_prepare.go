@@ -32,7 +32,7 @@ func PrepareInputState(state State) (State, error) {
 	prepared := state.Clone()
 	normalized, err := objectownership.Normalize(prepared.Ownership)
 	if err != nil {
-		return State{}, errorFor(ErrorReasonInvalidState, Key{}, 0, 0, errors.Join(ErrInvalidState, err))
+		return State{}, errorFor(ErrorReasonInvalidOwnership, Key{}, 0, 0, errors.Join(ErrInvalidState, err))
 	}
 	prepared.Ownership = normalized
 

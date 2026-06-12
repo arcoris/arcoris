@@ -12,21 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package objectstore defines contracts for authoritative committed API object
-// state.
+// Package objectstore defines the committed-state contract for value-backed API
+// objects.
 //
-// An object store holds value-backed live object envelopes, object ownership
-// documents, and store-local commit revisions. It is descriptor-agnostic:
-// callers are expected to resolve resources, validate object envelopes, compute
-// apply results, and decide admission before committing state here.
+// State contains a value-backed live object envelope, an object ownership
+// document, and a store-local Revision. Revisions are assigned by a Store when
+// Create, Update, or Delete commits. They are not API resourceVersion values,
+// ObjectMeta generations, wall-clock timestamps, durable storage versions, or
+// globally comparable values across stores. They may have gaps.
 //
-// The package deliberately does not validate objects against resource
-// contracts, apply objects, compute field conflicts, run admission, encode or
-// decode wire formats, expose HTTP or gRPC behavior, list objects, watch
-// changes, or stamp object metadata resourceVersion/generation fields. Those
-// responsibilities belong to higher API operation, codec, request-flow,
-// server, and future watch layers.
+// Callers are responsible for resolving resources, validating object envelopes,
+// computing apply results, deciding admission, and preparing lifecycle
+// semantics before calling a Store. Store implementations validate keys and
+// input state shape, detach caller state, normalize ownership before commit,
+// assign revisions, enforce optimistic concurrency, and return detached
+// committed states.
 //
-// This package defines contracts only. The in-memory implementation lives in
-// the sibling package arcoris.dev/apimachinery/api/objectmemorystore.
+// Input State values for Create and Update must have zero Revision. Committed
+// State values returned by stores have non-zero Revision and normalized
+// ownership documents. ValidateInputState accepts raw valid ownership
+// documents; PrepareInputState clones and normalizes them. ValidateCommittedState
+// requires normalized ownership.
+//
+// Delete commits a tombstone and returns DeleteResult. DeleteResult.Deleted is
+// the live state that was deleted and keeps its previous live revision.
+// DeleteResult.Revision is the store-local tombstone commit revision.
+//
+// The package deliberately does not validate resource descriptors, apply
+// objects, compute field conflicts, run admission or authorization, default,
+// convert, prune, list, watch, encode/decode wire formats, expose serving
+// behavior, or stamp object metadata resourceVersion/generation fields. Those
+// responsibilities belong to higher lifecycle, apply, resource, codec, serving,
+// and future watch layers.
+//
+// The in-memory implementation lives in the sibling package
+// arcoris.dev/apimachinery/api/objectmemorystore.
 package objectstore
