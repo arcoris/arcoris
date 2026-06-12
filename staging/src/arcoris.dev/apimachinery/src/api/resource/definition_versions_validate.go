@@ -21,13 +21,14 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
-// validateDefinitionVersions checks the version set owned by a Definition.
+// validateDefinitionVersionsLocal checks the local version set owned by a
+// Definition.
 //
 // Version-set rules are intentionally small: at least one version, unique
 // version identifiers, at least one exposed version, and exactly one exposed
 // canonical version. The package does not define conversion, storage versions,
 // rollout policy, or version negotiation.
-func validateDefinitionVersions(versions []VersionDefinition, resolver types.Resolver) error {
+func validateDefinitionVersionsLocal(versions []VersionDefinition) error {
 	if len(versions) == 0 {
 		return definitionError(
 			pathDefinitionVersions,
@@ -43,7 +44,37 @@ func validateDefinitionVersions(versions []VersionDefinition, resolver types.Res
 	for i, version := range versions {
 		path := versionPath(i, version.version)
 
-		if err := validateVersionDefinition(version, resolver, path); err != nil {
+		if err := validateVersionDefinitionLocal(version, path); err != nil {
+			return err
+		}
+
+		if err := summary.record(path, version); err != nil {
+			return err
+		}
+	}
+
+	return summary.validate()
+}
+
+// validateDefinitionVersionsResolved checks the resolved version set owned by a
+// Definition.
+func validateDefinitionVersionsResolved(versions []VersionDefinition, resolver types.Resolver) error {
+	if len(versions) == 0 {
+		return definitionError(
+			pathDefinitionVersions,
+			ErrorReasonMissingVersion,
+			detailDefinitionNeedsVersion,
+		)
+	}
+
+	summary := versionSetSummary{
+		seen: make(map[identity.Version]struct{}, len(versions)),
+	}
+
+	for i, version := range versions {
+		path := versionPath(i, version.version)
+
+		if err := validateVersionDefinitionResolved(version, resolver, path); err != nil {
 			return err
 		}
 

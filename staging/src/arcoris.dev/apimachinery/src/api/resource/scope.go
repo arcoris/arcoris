@@ -21,6 +21,7 @@ package resource
 // or routing behavior.
 type Scope uint8
 
+// Supported Scope values.
 const (
 	// ScopeInvalid is the zero value and is never a valid resource scope.
 	ScopeInvalid Scope = iota

@@ -21,6 +21,7 @@ package resource
 // diagnostics, tests, command output, or future editor tooling.
 type ErrorReason string
 
+// Resource validation and encoding error reasons.
 const (
 	// ErrorReasonInvalidGroup means the resource family group is not a valid
 	// api/identity Group.

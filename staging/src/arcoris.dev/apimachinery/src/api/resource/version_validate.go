@@ -21,12 +21,12 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
-// validateVersionDefinition checks one version descriptor.
+// validateVersionDefinitionLocal checks one version descriptor locally.
 //
 // The version validator owns only version identity and Desired/Observed surface
 // shape. Cross-version invariants such as exposure and canonical selection stay
 // in definition_versions_validate.go.
-func validateVersionDefinition(version VersionDefinition, resolver types.Resolver, path string) error {
+func validateVersionDefinitionLocal(version VersionDefinition, path string) error {
 	if err := version.version.Validate(); err != nil {
 		return nestedVersionError(
 			path+".version",
@@ -43,7 +43,56 @@ func validateVersionDefinition(version VersionDefinition, resolver types.Resolve
 		)
 	}
 
-	if err := validateSurface(
+	if err := validateSurfaceLocal(
+		version.desired,
+		path+".desired",
+		ErrorReasonInvalidDesired,
+		ErrorReasonDesiredNotObject,
+		detailDesiredObjectLikeTemplate,
+	); err != nil {
+		return err
+	}
+
+	if !version.observed.IsZero() {
+		if err := validateSurfaceLocal(
+			version.observed,
+			path+".observed",
+			ErrorReasonInvalidObserved,
+			ErrorReasonObservedNotObject,
+			detailObservedObjectLikeTemplate,
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// validateVersionDefinitionResolved checks one version descriptor with a
+// resolver.
+//
+// This is the resolved counterpart to validateVersionDefinitionLocal: it owns
+// version identity, Desired presence, and resolver-proven Desired/Observed root
+// object shape, but still delegates full descriptor graph validation to
+// api/types.
+func validateVersionDefinitionResolved(version VersionDefinition, resolver types.Resolver, path string) error {
+	if err := version.version.Validate(); err != nil {
+		return nestedVersionError(
+			path+".version",
+			ErrorReasonInvalidVersion,
+			fmt.Sprintf("version %q is invalid", version.version),
+			err,
+		)
+	}
+	if version.desired.IsZero() {
+		return versionError(
+			path+".desired",
+			ErrorReasonMissingDesired,
+			detailVersionDesiredRequired,
+		)
+	}
+
+	if err := validateSurfaceResolved(
 		version.desired,
 		resolver,
 		path+".desired",
@@ -55,7 +104,7 @@ func validateVersionDefinition(version VersionDefinition, resolver types.Resolve
 	}
 
 	if !version.observed.IsZero() {
-		if err := validateSurface(
+		if err := validateSurfaceResolved(
 			version.observed,
 			resolver,
 			path+".observed",

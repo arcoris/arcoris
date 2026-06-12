@@ -20,13 +20,20 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
+// defaultSurfaceRefMaxDepth bounds root DescriptorRef probing.
+//
+// The guard is intentionally internal: resource definitions do not expose
+// validation tuning yet, but the resolver walk still needs a deterministic
+// failure mode for very deep acyclic reference chains.
+const defaultSurfaceRefMaxDepth = 64
+
 // requireObjectLike converts object-like probing into a VersionDefinition
 // validation error.
 //
 // The caller provides the reason because Desired and Observed use distinct
 // diagnostics while sharing the same structural root rule.
 func requireObjectLike(desc types.Descriptor, resolver types.Resolver, path string, reason ErrorReason, label string) error {
-	ok, detail := objectLike(desc, resolver, make(map[types.TypeName]bool), label)
+	ok, detail := objectLikeResolved(desc, resolver, make(map[types.TypeName]bool), label, 0)
 	if ok {
 		return nil
 	}
@@ -42,6 +49,30 @@ func requireObjectLike(desc types.Descriptor, resolver types.Resolver, path stri
 // surfaces need object-like proof because resource definitions define API
 // object roots.
 func objectLike(desc types.Descriptor, resolver types.Resolver, resolving map[types.TypeName]bool, label string) (bool, string) {
+	return objectLikeResolved(desc, resolver, resolving, label, 0)
+}
+
+// objectLikeResolved follows DescriptorRef roots until it can prove object-like
+// shape or return a deterministic rejection detail.
+//
+// resolving tracks the active chain for cycle detection. depth tracks acyclic
+// chain length so hostile or accidental very-deep graphs cannot recurse
+// indefinitely.
+func objectLikeResolved(
+	desc types.Descriptor,
+	resolver types.Resolver,
+	resolving map[types.TypeName]bool,
+	label string,
+	depth int,
+) (bool, string) {
+	if depth > defaultSurfaceRefMaxDepth {
+		return false, fmt.Sprintf(
+			"%s root reference chain exceeded maximum resolution depth %d",
+			label,
+			defaultSurfaceRefMaxDepth,
+		)
+	}
+
 	switch desc.Code() {
 	case types.DescriptorObject:
 		return true, ""
@@ -77,7 +108,7 @@ func objectLike(desc types.Descriptor, resolver types.Resolver, resolving map[ty
 		}
 		next[name] = true
 
-		return objectLike(def.Descriptor(), resolver, next, label)
+		return objectLikeResolved(def.Descriptor(), resolver, next, label, depth+1)
 
 	default:
 		return false, fmt.Sprintf(

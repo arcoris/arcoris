@@ -36,5 +36,5 @@ func TestPackageDocumentationConstructionFlow(t *testing.T) {
 		),
 	)
 
-	requireNoError(t, def.Validate(nil))
+	requireNoError(t, def.ValidateLocal())
 }

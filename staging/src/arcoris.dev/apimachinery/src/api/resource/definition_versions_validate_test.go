@@ -79,18 +79,17 @@ func TestValidateDefinitionVersionsRejectsInvalidVersionSet(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateDefinitionVersions(tc.input, nil)
+			err := validateDefinitionVersionsLocal(tc.input)
 			requireResourceError(t, err, ErrInvalidDefinition, tc.path, tc.reason)
 		})
 	}
 }
 
 func TestValidateDefinitionVersionsPropagatesVersionErrors(t *testing.T) {
-	err := validateDefinitionVersions(
+	err := validateDefinitionVersionsLocal(
 		[]VersionDefinition{
 			NewVersion(identity.Version("v0"), objectType(), Exposed(), Canonical()),
 		},
-		nil,
 	)
 
 	requireResourceError(

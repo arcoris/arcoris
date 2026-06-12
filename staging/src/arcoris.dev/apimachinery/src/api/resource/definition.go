@@ -14,10 +14,7 @@
 
 package resource
 
-import (
-	"arcoris.dev/apimachinery/api/identity"
-	"arcoris.dev/apimachinery/api/types"
-)
+import "arcoris.dev/apimachinery/api/identity"
 
 // Definition describes one durable API resource family.
 //
@@ -43,8 +40,8 @@ type Definition struct {
 
 // NewDefinition constructs a resource-family definition.
 //
-// The constructor records the supplied values without validation. Call Validate
-// or ValidateDefinitionResolved at a trust boundary.
+// The constructor records the supplied values without validation. Call
+// ValidateLocal or ValidateResolved at a trust boundary.
 func NewDefinition(
 	group identity.Group,
 	kind identity.Kind,
@@ -122,9 +119,4 @@ func (d Definition) GroupVersionResource(version identity.Version) (identity.Gro
 		return identity.GroupVersionResource{}, false
 	}
 	return identity.GroupVersionResource{Group: d.group, Version: version, Resource: d.resource}, true
-}
-
-// Validate checks the structural integrity of d.
-func (d Definition) Validate(resolver types.Resolver) error {
-	return ValidateDefinitionResolved(d, resolver)
 }

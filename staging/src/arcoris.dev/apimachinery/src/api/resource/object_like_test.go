@@ -15,6 +15,7 @@
 package resource
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -120,6 +121,29 @@ func TestObjectLikeRejectsRecursiveReferences(t *testing.T) {
 
 	if !strings.Contains(detail, "recursive") {
 		t.Fatalf("detail = %q, want recursive reference detail", detail)
+	}
+}
+
+func TestObjectLikeRejectsDeepReferenceChains(t *testing.T) {
+	resolver := fakeResolver{}
+	for i := 0; i <= defaultSurfaceRefMaxDepth+1; i++ {
+		name := types.TypeName(fmt.Sprintf("control.arcoris.dev.Deep%02d", i))
+		var next types.DescriptorExpr = types.Object()
+		if i < defaultSurfaceRefMaxDepth+1 {
+			next = types.Ref(fmt.Sprintf("control.arcoris.dev.Deep%02d", i+1))
+		}
+		resolver[name] = types.Define(string(name), next)
+	}
+
+	ok, detail := objectLike(
+		refType("control.arcoris.dev.Deep00"),
+		resolver,
+		make(map[types.TypeName]bool),
+		"desired",
+	)
+	requireEqual(t, ok, false)
+	if !strings.Contains(detail, "maximum resolution depth") {
+		t.Fatalf("detail = %q, want depth-limit detail", detail)
 	}
 }
 

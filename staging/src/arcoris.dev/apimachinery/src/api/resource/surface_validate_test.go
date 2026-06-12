@@ -20,7 +20,7 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 )
 
-func TestValidateSurfaceRejectsInvalidAndNonObjectSurfaces(t *testing.T) {
+func TestValidateSurfaceLocalRejectsInvalidAndNonObjectSurfaces(t *testing.T) {
 	cases := []struct {
 		name   string
 		desc   types.Descriptor
@@ -46,9 +46,8 @@ func TestValidateSurfaceRejectsInvalidAndNonObjectSurfaces(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateSurface(
+			err := validateSurfaceLocal(
 				tc.desc,
-				nil,
 				tc.path,
 				ErrorReasonInvalidDesired,
 				ErrorReasonDesiredNotObject,
@@ -57,4 +56,57 @@ func TestValidateSurfaceRejectsInvalidAndNonObjectSurfaces(t *testing.T) {
 			requireResourceError(t, err, tc.target, tc.path, tc.reason)
 		})
 	}
+}
+
+func TestValidateSurfaceLocalAcceptsRootRefs(t *testing.T) {
+	requireNoError(t, validateSurfaceLocal(
+		refType("control.arcoris.dev.WorkerDesired"),
+		"definition.versions[v1].desired",
+		ErrorReasonInvalidDesired,
+		ErrorReasonDesiredNotObject,
+		detailDesiredObjectLikeTemplate,
+	))
+}
+
+func TestValidateSurfaceResolvedAcceptsResolvedObjectRefs(t *testing.T) {
+	resolver := fakeResolver{
+		types.TypeName("control.arcoris.dev.WorkerDesired"): types.Define(
+			"control.arcoris.dev.WorkerDesired",
+			types.Object(),
+		),
+	}
+
+	requireNoError(t, validateSurfaceResolved(
+		refType("control.arcoris.dev.WorkerDesired"),
+		resolver,
+		"definition.versions[v1].desired",
+		ErrorReasonInvalidDesired,
+		ErrorReasonDesiredNotObject,
+		detailDesiredObjectLikeTemplate,
+	))
+}
+
+func TestValidateSurfaceResolvedRejectsResolvedScalarRefs(t *testing.T) {
+	resolver := fakeResolver{
+		types.TypeName("control.arcoris.dev.Text"): types.Define(
+			"control.arcoris.dev.Text",
+			types.String(),
+		),
+	}
+
+	err := validateSurfaceResolved(
+		refType("control.arcoris.dev.Text"),
+		resolver,
+		"definition.versions[v1].desired",
+		ErrorReasonInvalidDesired,
+		ErrorReasonDesiredNotObject,
+		detailDesiredObjectLikeTemplate,
+	)
+	requireResourceError(
+		t,
+		err,
+		ErrInvalidVersion,
+		"definition.versions[v1].desired",
+		ErrorReasonDesiredNotObject,
+	)
 }

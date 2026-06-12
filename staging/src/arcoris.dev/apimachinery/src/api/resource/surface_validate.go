@@ -14,24 +14,24 @@
 
 package resource
 
-import "arcoris.dev/apimachinery/api/types"
+import (
+	"fmt"
 
-// validateSurface checks one resource API surface descriptor.
+	"arcoris.dev/apimachinery/api/types"
+)
+
+// validateSurfaceLocal checks one resource API surface descriptor without a resolver.
 //
-// Resource versions only accept object-like root surfaces: either a direct
-// object descriptor or a reference that the supplied resolver can prove resolves
-// to an object. This keeps resource definitions structural and avoids sneaking
-// value validation, codecs, runtime object machinery, or resource metadata into
-// this package.
-func validateSurface(
+// Local validation accepts direct objects and reference roots with valid syntax,
+// but it does not prove that references resolve to object-like descriptors.
+func validateSurfaceLocal(
 	desc types.Descriptor,
-	resolver types.Resolver,
 	path string,
 	invalidReason ErrorReason,
 	objectReason ErrorReason,
 	label string,
 ) error {
-	if err := validateSurfaceDescriptor(desc, resolver); err != nil {
+	if err := types.ValidateLocal(desc); err != nil {
 		return nestedVersionError(
 			path,
 			invalidReason,
@@ -40,21 +40,44 @@ func validateSurface(
 		)
 	}
 
-	return requireObjectLike(
-		desc,
-		resolver,
-		path,
-		objectReason,
-		label,
-	)
+	switch desc.Code() {
+	case types.DescriptorObject, types.DescriptorRef:
+		return nil
+	default:
+		return versionError(
+			path,
+			objectReason,
+			fmt.Sprintf("%s root must be object or reference to object, got %s", label, desc.Code()),
+		)
+	}
 }
 
-// validateSurfaceDescriptor keeps resource-local validation aligned with
-// api/types without making resource callers pass a sentinel resolver for local
-// checks.
-func validateSurfaceDescriptor(desc types.Descriptor, resolver types.Resolver) error {
-	if resolver == nil {
-		return types.ValidateLocal(desc)
+// validateSurfaceResolved checks one resource API surface descriptor with a resolver.
+//
+// Resolved validation accepts direct objects or references that resolve to
+// object-like descriptors through resolver. It does not define live objects,
+// metadata, storage, codecs, or runtime behavior.
+func validateSurfaceResolved(
+	desc types.Descriptor,
+	resolver types.Resolver,
+	path string,
+	invalidReason ErrorReason,
+	objectReason ErrorReason,
+	label string,
+) error {
+	if err := types.ValidateResolved(desc, resolver); err != nil {
+		return nestedVersionError(
+			path,
+			invalidReason,
+			invalidSurfaceDetail(label, err),
+			err,
+		)
 	}
-	return types.ValidateResolved(desc, resolver)
+
+	ok, detail := objectLikeResolved(desc, resolver, make(map[types.TypeName]bool), label, 0)
+	if ok {
+		return nil
+	}
+
+	return versionError(path, objectReason, detail)
 }

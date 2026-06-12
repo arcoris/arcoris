@@ -20,10 +20,11 @@ package resource
 // through VersionDefinition.Exposed and VersionDefinition.Canonical.
 type versionFlags uint8
 
+// Version flag bits stored in VersionDefinition.
 const (
 	// versionFlagExposed marks a version as part of the public API surface.
 	versionFlagExposed versionFlags = 1 << iota
-	// versionFlagCanonical marks the single preferred version for diagnostics
-	// and future API presentation layers.
+	// versionFlagCanonical marks the family's single canonical descriptor
+	// version for version-independent resource consumers.
 	versionFlagCanonical
 )

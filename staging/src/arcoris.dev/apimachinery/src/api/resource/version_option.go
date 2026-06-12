@@ -29,10 +29,12 @@ func Exposed() VersionOption {
 	}
 }
 
-// Canonical marks a resource version as the canonical family version.
+// Canonical marks a resource version as the family’s single canonical
+// descriptor version for version-independent consumers.
 //
-// Canonical does not define storage behavior. Storage and persistence semantics
-// belong to future runtime/storage layers.
+// Canonical does not define storage behavior, conversion behavior, migration
+// behavior, or defaulting behavior. Those responsibilities belong to future
+// runtime/storage layers.
 func Canonical() VersionOption {
 	return func(v *VersionDefinition) {
 		v.flags |= versionFlagCanonical

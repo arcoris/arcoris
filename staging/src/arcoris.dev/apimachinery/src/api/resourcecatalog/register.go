@@ -61,7 +61,7 @@ func (c *Catalog) RegisterMany(defs ...resource.Definition) error {
 		candidate.storeLocked(def)
 	}
 	for i, def := range defs {
-		if err := resource.ValidateDefinitionResolved(def, candidate.resolver); err != nil {
+		if err := validateCatalogDefinition(def, candidate.resolver); err != nil {
 			return nestedCatalogError(
 				definitionPath(i),
 				ErrorReasonInvalidDefinition,
@@ -74,5 +74,41 @@ func (c *Catalog) RegisterMany(defs ...resource.Definition) error {
 	for _, def := range defs {
 		c.storeLocked(def)
 	}
+	return nil
+}
+
+// validateCatalogDefinition applies the catalog's registration-time validation
+// policy to one resource definition.
+//
+// A catalog with a resolver can prove DescriptorRef roots through resolved
+// validation. A catalog without a resolver can still accept direct-object
+// definitions through local validation, but rejects root refs because they
+// cannot be proven object-like at registration time.
+func validateCatalogDefinition(def resource.Definition, resolver types.Resolver) error {
+	if resolver != nil {
+		return def.ValidateResolved(resolver)
+	}
+
+	if err := def.ValidateLocal(); err != nil {
+		return err
+	}
+
+	for _, version := range def.Versions() {
+		if version.Desired().Code() == types.DescriptorRef {
+			return fmt.Errorf(
+				"definition.versions[%s].desired requires a catalog resolver: %w",
+				version.Version(),
+				resource.ErrInvalidVersion,
+			)
+		}
+		if observed, ok := version.Observed(); ok && observed.Code() == types.DescriptorRef {
+			return fmt.Errorf(
+				"definition.versions[%s].observed requires a catalog resolver: %w",
+				version.Version(),
+				resource.ErrInvalidVersion,
+			)
+		}
+	}
+
 	return nil
 }

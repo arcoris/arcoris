@@ -46,7 +46,7 @@ func TestValidateVersionDefinitionRejectsInvalidVersionAndMissingDesired(t *test
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateVersionDefinition(tc.version, nil, versionPath(0, tc.version.version))
+			err := validateVersionDefinitionLocal(tc.version, versionPath(0, tc.version.version))
 			requireResourceError(t, err, ErrInvalidVersion, tc.path, tc.reason)
 		})
 	}
@@ -60,7 +60,7 @@ func TestValidateVersionDefinitionAcceptsValidVersionWithoutObserved(t *testing.
 		Canonical(),
 	)
 
-	requireNoError(t, validateVersionDefinition(version, nil, versionPath(0, version.version)))
+	requireNoError(t, validateVersionDefinitionLocal(version, versionPath(0, version.version)))
 }
 
 func TestValidateVersionDefinitionRejectsStructurallyInvalidDesired(t *testing.T) {
@@ -71,9 +71,8 @@ func TestValidateVersionDefinitionRejectsStructurallyInvalidDesired(t *testing.T
 		Canonical(),
 	)
 
-	err := validateVersionDefinition(
+	err := validateVersionDefinitionLocal(
 		version,
-		nil,
 		versionPath(0, version.version),
 	)
 	resourceErr := requireResourceError(
@@ -101,9 +100,8 @@ func TestValidateVersionDefinitionRejectsInvalidObserved(t *testing.T) {
 		Canonical(),
 	)
 
-	err := validateVersionDefinition(
+	err := validateVersionDefinitionLocal(
 		version,
-		nil,
 		versionPath(0, version.version),
 	)
 	requireResourceError(
@@ -124,9 +122,8 @@ func TestValidateVersionDefinitionRejectsStructurallyInvalidObserved(t *testing.
 		Canonical(),
 	)
 
-	err := validateVersionDefinition(
+	err := validateVersionDefinitionLocal(
 		version,
-		nil,
 		versionPath(0, version.version),
 	)
 	requireResourceError(
@@ -190,6 +187,158 @@ func TestInvalidSurfaceDetailUsesStructuredTypeError(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			requireEqual(t, invalidSurfaceDetail("desired", tc.err), tc.want)
+		})
+	}
+}
+
+func TestValidateVersionDefinitionLocalAcceptsRootRefs(t *testing.T) {
+	version := NewVersion(
+		identity.Version("v1"),
+		refType("control.arcoris.dev.WorkerDesired"),
+		Observed(refType("control.arcoris.dev.WorkerObserved")),
+		Exposed(),
+		Canonical(),
+	)
+
+	requireNoError(t, validateVersionDefinitionLocal(version, versionPath(0, version.version)))
+}
+
+func TestValidateVersionDefinitionLocalRejectsInvalidRootRefSyntax(t *testing.T) {
+	version := NewVersion(
+		identity.Version("v1"),
+		refType("bad"),
+		Exposed(),
+		Canonical(),
+	)
+
+	err := validateVersionDefinitionLocal(version, versionPath(0, version.version))
+	requireResourceError(
+		t,
+		err,
+		ErrInvalidVersion,
+		"definition.versions[v1].desired",
+		ErrorReasonInvalidDesired,
+	)
+	requireDetailContains(t, err, "invalid_reference_name")
+}
+
+func TestValidateVersionDefinitionResolvedHandlesRootRefCases(t *testing.T) {
+	cases := []struct {
+		name     string
+		version  VersionDefinition
+		resolver fakeResolver
+		path     string
+		reason   ErrorReason
+		detail   string
+	}{
+		{
+			name: "desired unresolved",
+			version: NewVersion(
+				identity.Version("v1"),
+				refType("control.arcoris.dev.MissingDesired"),
+				Exposed(),
+				Canonical(),
+			),
+			resolver: fakeResolver{},
+			path:     "definition.versions[v1].desired",
+			reason:   ErrorReasonInvalidDesired,
+			detail:   "was not found",
+		},
+		{
+			name: "desired recursive",
+			version: NewVersion(
+				identity.Version("v1"),
+				refType("control.arcoris.dev.LoopDesired"),
+				Exposed(),
+				Canonical(),
+			),
+			resolver: fakeResolver{
+				types.TypeName("control.arcoris.dev.LoopDesired"): types.Define(
+					"control.arcoris.dev.LoopDesired",
+					types.Ref("control.arcoris.dev.LoopDesired"),
+				),
+			},
+			path:   "definition.versions[v1].desired",
+			reason: ErrorReasonInvalidDesired,
+			detail: "recursive",
+		},
+		{
+			name: "desired scalar",
+			version: NewVersion(
+				identity.Version("v1"),
+				refType("control.arcoris.dev.TextDesired"),
+				Exposed(),
+				Canonical(),
+			),
+			resolver: fakeResolver{
+				types.TypeName("control.arcoris.dev.TextDesired"): types.Define(
+					"control.arcoris.dev.TextDesired",
+					types.String(),
+				),
+			},
+			path:   "definition.versions[v1].desired",
+			reason: ErrorReasonDesiredNotObject,
+			detail: "got string",
+		},
+		{
+			name: "observed unresolved",
+			version: NewVersion(
+				identity.Version("v1"),
+				objectType(),
+				Observed(refType("control.arcoris.dev.MissingObserved")),
+				Exposed(),
+				Canonical(),
+			),
+			resolver: fakeResolver{},
+			path:     "definition.versions[v1].observed",
+			reason:   ErrorReasonInvalidObserved,
+			detail:   "was not found",
+		},
+		{
+			name: "observed recursive",
+			version: NewVersion(
+				identity.Version("v1"),
+				objectType(),
+				Observed(refType("control.arcoris.dev.LoopObserved")),
+				Exposed(),
+				Canonical(),
+			),
+			resolver: fakeResolver{
+				types.TypeName("control.arcoris.dev.LoopObserved"): types.Define(
+					"control.arcoris.dev.LoopObserved",
+					types.Ref("control.arcoris.dev.LoopObserved"),
+				),
+			},
+			path:   "definition.versions[v1].observed",
+			reason: ErrorReasonInvalidObserved,
+			detail: "recursive",
+		},
+		{
+			name: "observed scalar",
+			version: NewVersion(
+				identity.Version("v1"),
+				objectType(),
+				Observed(refType("control.arcoris.dev.TextObserved")),
+				Exposed(),
+				Canonical(),
+			),
+			resolver: fakeResolver{
+				types.TypeName("control.arcoris.dev.TextObserved"): types.Define(
+					"control.arcoris.dev.TextObserved",
+					types.String(),
+				),
+			},
+			path:   "definition.versions[v1].observed",
+			reason: ErrorReasonObservedNotObject,
+			detail: "got string",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateVersionDefinitionResolved(tc.version, tc.resolver, versionPath(0, tc.version.version))
+			requireResourceError(t, err, ErrInvalidVersion, tc.path, tc.reason)
+			requireDetailContains(t, err, tc.detail)
 		})
 	}
 }

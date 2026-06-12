@@ -24,6 +24,7 @@ import (
 
 func TestValidateDefinitionAcceptsValidCases(t *testing.T) {
 	requireNoError(t, ValidateDefinitionLocal(validDefinition()))
+	requireNoError(t, validDefinition().ValidateLocal())
 
 	multi := NewDefinition(
 		identity.Group("control.arcoris.dev"),
@@ -34,6 +35,7 @@ func TestValidateDefinitionAcceptsValidCases(t *testing.T) {
 		NewVersion(identity.Version("v1"), objectType(), Exposed(), Canonical()),
 	)
 	requireNoError(t, ValidateDefinitionLocal(multi))
+	requireNoError(t, multi.ValidateLocal())
 }
 
 func TestValidateDefinitionAcceptsResolvedObjectRefs(t *testing.T) {
@@ -63,6 +65,26 @@ func TestValidateDefinitionAcceptsResolvedObjectRefs(t *testing.T) {
 	)
 
 	requireNoError(t, ValidateDefinitionResolved(def, resolver))
+	requireNoError(t, def.ValidateResolved(resolver))
+}
+
+func TestValidateDefinitionLocalAcceptsRootRefs(t *testing.T) {
+	def := NewDefinition(
+		identity.Group("control.arcoris.dev"),
+		identity.Kind("Worker"),
+		identity.Resource("workers"),
+		ScopeNamespaced,
+		NewVersion(
+			identity.Version("v1"),
+			refType("control.arcoris.dev.WorkerDesired"),
+			Observed(refType("control.arcoris.dev.WorkerObserved")),
+			Exposed(),
+			Canonical(),
+		),
+	)
+
+	requireNoError(t, ValidateDefinitionLocal(def))
+	requireNoError(t, def.ValidateLocal())
 }
 
 func TestValidateDefinitionPreservesNestedIdentityErrors(t *testing.T) {
