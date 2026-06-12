@@ -115,9 +115,30 @@ func TestErrorUnwrapClassifiesObjectFailures(t *testing.T) {
 }
 
 func TestErrorUnwrapPreservesInvalidPlanForMissingValidator(t *testing.T) {
-	err := missingValidator(pathPlanDesiredValidator, "desired surface validator is required")
+	tests := []struct {
+		name string
+		path string
+		msg  string
+	}{
+		{
+			name: "desired",
+			path: pathPlanDesiredValidator,
+			msg:  "desired surface validator is required",
+		},
+		{
+			name: "observed",
+			path: pathPlanObservedValidator,
+			msg:  "observed surface validator is required",
+		},
+	}
 
-	requireErrorIs(t, err, ErrInvalidPlan)
-	requireErrorIs(t, err, ErrMissingValidator)
-	requireErrorNotIs(t, err, ErrInvalidObject)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := missingValidator(tt.path, tt.msg)
+
+			requireErrorIs(t, err, ErrInvalidPlan)
+			requireErrorIs(t, err, ErrMissingValidator)
+			requireErrorNotIs(t, err, ErrInvalidObject)
+		})
+	}
 }

@@ -26,10 +26,6 @@ func validateDesired[D any, O any](
 	version resource.VersionDefinition,
 	plan Plan[D, O],
 ) error {
-	if plan.DesiredValidator == nil {
-		return missingValidator(pathPlanDesiredValidator, "desired surface validator is required")
-	}
-
 	descriptor := version.Desired()
 	if err := plan.DesiredValidator.ValidateSurface(value, descriptor, plan.Resolver); err != nil {
 		return nested(

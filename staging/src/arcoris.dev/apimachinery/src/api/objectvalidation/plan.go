@@ -41,12 +41,12 @@ type Plan[D any, O any] struct {
 	ObservedValidator SurfaceValidator[O]
 }
 
-// validatePlanShape checks only the dependencies needed before object work.
+// validateStaticPlanShape checks dependencies needed before object work.
 //
 // Resource definitions are expected to be validated at catalog or construction
 // boundaries. This package does not repeatedly validate the full resource
 // descriptor graph for every object.
-func validatePlanShape[D any, O any](plan Plan[D, O]) error {
+func validateStaticPlanShape[D any, O any](plan Plan[D, O]) error {
 	if plan.Resource.IsZero() {
 		return errorf(
 			pathPlanResource,

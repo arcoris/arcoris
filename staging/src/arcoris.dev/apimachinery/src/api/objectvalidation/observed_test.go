@@ -49,6 +49,25 @@ func TestValidateObservedPresence(t *testing.T) {
 		)
 	})
 
+	t.Run("no descriptor with observed and nil observed validator", func(t *testing.T) {
+		plan := validPlan()
+		plan.Resource = resourceDefinition(
+			resource.ScopeNamespaced,
+			versionWithoutObserved("v1"),
+		)
+		plan.ObservedValidator = nil
+
+		err := Validate(validObject(), plan)
+		requireValidationError(
+			t,
+			err,
+			ErrObservedNotAllowed,
+			pathObjectObserved,
+			ErrorReasonObservedNotAllowed,
+		)
+		requireErrorNotIs(t, err, ErrInvalidPlan)
+	})
+
 	t.Run("descriptor nil observed", func(t *testing.T) {
 		requireNoError(t, Validate(validObjectWithoutObserved(), validPlan()))
 	})
@@ -69,8 +88,12 @@ func TestValidateObservedSurface(t *testing.T) {
 	if observed.called != 1 {
 		t.Fatalf("observed validator called %d times, want 1", observed.called)
 	}
-	if observed.value != *obj.Observed {
-		t.Fatalf("observed value = %#v, want %#v", observed.value, *obj.Observed)
+	wantObserved, ok := obj.ObservedValue()
+	if !ok {
+		t.Fatal("ObservedValue() returned ok=false")
+	}
+	if observed.value != wantObserved {
+		t.Fatalf("observed value = %#v, want %#v", observed.value, wantObserved)
 	}
 	requireAlternateDescriptor(t, observed.typ)
 	if observed.resolver != resolver {

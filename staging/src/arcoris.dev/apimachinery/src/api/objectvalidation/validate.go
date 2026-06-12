@@ -16,6 +16,22 @@ package objectvalidation
 
 import "arcoris.dev/apimachinery/api/object"
 
+// Validator validates objects against a reusable object validation plan.
+//
+// Validator is immutable by convention. New stores the plan by value, and each
+// Validate call runs an independent first-failure validation pipeline.
+type Validator[D any, O any] struct {
+	plan Plan[D, O]
+}
+
+// New returns a reusable object validator for plan.
+//
+// New does not validate plan eagerly. Static and conditional plan failures are
+// reported by Validate so construction stays cheap and side-effect free.
+func New[D any, O any](plan Plan[D, O]) Validator[D, O] {
+	return Validator[D, O]{plan: plan}
+}
+
 // Validate checks whether obj conforms to the already-resolved plan Resource.
 //
 // Validation is deterministic and returns the first failure: plan shape,
@@ -27,7 +43,12 @@ func Validate[D any, O any](
 	obj object.Object[D, O],
 	plan Plan[D, O],
 ) error {
-	if err := validatePlanShape(plan); err != nil {
+	return New(plan).Validate(obj)
+}
+
+// Validate checks whether obj conforms to the validator's plan.
+func (v Validator[D, O]) Validate(obj object.Object[D, O]) error {
+	if err := validateStaticPlanShape(v.plan); err != nil {
 		return err
 	}
 
@@ -36,24 +57,25 @@ func Validate[D any, O any](
 	}
 
 	gvk := obj.GroupVersionKind()
-	if err := validateResourceMatch(gvk, plan.Resource); err != nil {
+	if err := validateResourceMatch(gvk, v.plan.Resource); err != nil {
 		return err
 	}
 
-	version, err := resolveVersion(gvk, plan.Resource)
+	version, err := resolveVersion(gvk, v.plan.Resource)
 	if err != nil {
 		return err
 	}
 
-	if err := validateScope(obj, plan.Resource); err != nil {
+	if err := validateScope(obj, v.plan.Resource); err != nil {
 		return err
 	}
 
-	if err := validateDesired(obj.Desired, version, plan); err != nil {
+	if err := validateDesired(obj.Desired, version, v.plan); err != nil {
 		return err
 	}
 
-	if err := validateObserved(obj.Observed, version, plan); err != nil {
+	observed, hasObserved := obj.ObservedValue()
+	if err := validateObserved(observed, hasObserved, version, v.plan); err != nil {
 		return err
 	}
 

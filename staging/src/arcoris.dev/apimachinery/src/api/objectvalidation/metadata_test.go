@@ -15,6 +15,7 @@
 package objectvalidation
 
 import (
+	"errors"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/meta"
@@ -27,6 +28,7 @@ func TestValidateWrapsMetadataErrors(t *testing.T) {
 		obj    apiobject.Object[testDesired, testObserved]
 		target error
 		path   string
+		reason ErrorReason
 	}{
 		{
 			name: "type meta",
@@ -37,6 +39,7 @@ func TestValidateWrapsMetadataErrors(t *testing.T) {
 			},
 			target: meta.ErrInvalidTypeMeta,
 			path:   pathObjectTypeMeta,
+			reason: ErrorReasonInvalidTypeMeta,
 		},
 		{
 			name: "object meta",
@@ -47,6 +50,7 @@ func TestValidateWrapsMetadataErrors(t *testing.T) {
 			},
 			target: meta.ErrInvalidObjectMeta,
 			path:   "object.metadata",
+			reason: ErrorReasonInvalidObjectMeta,
 		},
 	}
 
@@ -58,7 +62,7 @@ func TestValidateWrapsMetadataErrors(t *testing.T) {
 				err,
 				ErrInvalidMetadata,
 				tt.path,
-				ErrorReasonInvalidMetadata,
+				tt.reason,
 			)
 			requireErrorIs(t, err, ErrInvalidObject)
 			requireErrorIs(t, err, apiobject.ErrInvalidObject)
@@ -67,6 +71,20 @@ func TestValidateWrapsMetadataErrors(t *testing.T) {
 				t.Fatal("Error.Cause is nil")
 			}
 		})
+	}
+}
+
+func TestMetadataDiagnosticFallsBackForNonObjectErrors(t *testing.T) {
+	path, reason, detail := metadataDiagnostic(errors.New("metadata failed"))
+
+	if path != pathObject {
+		t.Fatalf("path = %q, want %q", path, pathObject)
+	}
+	if reason != ErrorReasonInvalidMetadata {
+		t.Fatalf("reason = %q, want %q", reason, ErrorReasonInvalidMetadata)
+	}
+	if detail != "object metadata is invalid" {
+		t.Fatalf("detail = %q, want %q", detail, "object metadata is invalid")
 	}
 }
 

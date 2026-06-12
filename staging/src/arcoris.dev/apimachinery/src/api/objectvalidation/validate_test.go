@@ -17,7 +17,69 @@ package objectvalidation
 import (
 	"errors"
 	"testing"
+
+	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 )
+
+func TestValidatorMatchesPackageValidate(t *testing.T) {
+	obj := validObject()
+	plan := validPlan()
+
+	errFromFunction := Validate(obj, plan)
+	errFromValidator := New(plan).Validate(obj)
+
+	requireNoError(t, errFromFunction)
+	requireNoError(t, errFromValidator)
+}
+
+func TestValidatorCanBeReused(t *testing.T) {
+	plan, desired, observed := validPlanWithSpies()
+	validator := New(plan)
+
+	requireNoError(t, validator.Validate(validObject()))
+	requireNoError(t, validator.Validate(validObjectWithoutObserved()))
+
+	if desired.called != 2 {
+		t.Fatalf("desired validator called %d times, want 2", desired.called)
+	}
+	if observed.called != 1 {
+		t.Fatalf("observed validator called %d times, want 1", observed.called)
+	}
+}
+
+func TestValidatorStoresPlanByValue(t *testing.T) {
+	plan := validPlan()
+	validator := New(plan)
+	plan.Resource = mismatchedResourceDefinition()
+
+	requireNoError(t, validator.Validate(validObject()))
+}
+
+func TestValidatorDoesNotMutateObject(t *testing.T) {
+	obj := validObject()
+	observedPtr := obj.Observed
+	observedValue := *obj.Observed
+
+	requireNoError(t, New(validPlan()).Validate(obj))
+
+	if obj.TypeMeta != validTypeMeta("v1") {
+		t.Fatalf("TypeMeta = %#v, want unchanged", obj.TypeMeta)
+	}
+	if obj.ObjectMeta.Namespace != metaidentity.Namespace("system") ||
+		obj.ObjectMeta.Name != "worker" ||
+		obj.ObjectMeta.UID != "uid-1" {
+		t.Fatalf("ObjectMeta = %#v, want unchanged", obj.ObjectMeta)
+	}
+	if obj.Desired != (testDesired{Replicas: 3}) {
+		t.Fatalf("Desired = %#v, want unchanged", obj.Desired)
+	}
+	if obj.Observed != observedPtr {
+		t.Fatalf("Observed pointer = %#v, want %#v", obj.Observed, observedPtr)
+	}
+	if *obj.Observed != observedValue {
+		t.Fatalf("Observed value = %#v, want %#v", *obj.Observed, observedValue)
+	}
+}
 
 func TestValidateEndToEnd(t *testing.T) {
 	plan, desired, observed := validPlanWithSpies()

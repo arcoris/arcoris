@@ -25,6 +25,12 @@ const (
 	// ErrorReasonInvalidMetadata identifies object metadata validation failures.
 	ErrorReasonInvalidMetadata ErrorReason = "invalid_metadata"
 
+	// ErrorReasonInvalidTypeMeta identifies TypeMeta validation failures.
+	ErrorReasonInvalidTypeMeta ErrorReason = "invalid_type_meta"
+
+	// ErrorReasonInvalidObjectMeta identifies ObjectMeta validation failures.
+	ErrorReasonInvalidObjectMeta ErrorReason = "invalid_object_meta"
+
 	// ErrorReasonResourceMismatch identifies object/resource group-kind mismatches.
 	ErrorReasonResourceMismatch ErrorReason = "resource_mismatch"
 

@@ -22,13 +22,14 @@ import "arcoris.dev/apimachinery/api/resource"
 // Requiring observed state is a persistence/runtime concern, not baseline
 // resource contract validation.
 func validateObserved[D any, O any](
-	value *O,
+	value O,
+	hasValue bool,
 	version resource.VersionDefinition,
 	plan Plan[D, O],
 ) error {
 	descriptor, ok := version.Observed()
 	if !ok {
-		if value != nil {
+		if hasValue {
 			return errorf(
 				pathObjectObserved,
 				ErrObservedNotAllowed,
@@ -41,15 +42,15 @@ func validateObserved[D any, O any](
 		return nil
 	}
 
-	if value == nil {
+	if !hasValue {
 		return nil
 	}
 
-	if plan.ObservedValidator == nil {
-		return missingValidator(pathPlanObservedValidator, "observed surface validator is required")
+	if err := validateObservedValidatorDependency(hasValue, version, plan); err != nil {
+		return err
 	}
 
-	if err := plan.ObservedValidator.ValidateSurface(*value, descriptor, plan.Resolver); err != nil {
+	if err := plan.ObservedValidator.ValidateSurface(value, descriptor, plan.Resolver); err != nil {
 		return nested(
 			pathObjectObserved,
 			ErrInvalidObserved,
@@ -57,6 +58,30 @@ func validateObserved[D any, O any](
 			"observed surface is invalid",
 			err,
 		)
+	}
+
+	return nil
+}
+
+// validateObservedValidatorDependency checks the conditional observed validator.
+//
+// Missing observed validators are plan failures only when the selected version
+// defines observed and the object actually carries observed data.
+func validateObservedValidatorDependency[D any, O any](
+	hasValue bool,
+	version resource.VersionDefinition,
+	plan Plan[D, O],
+) error {
+	if !hasValue {
+		return nil
+	}
+
+	if _, ok := version.Observed(); !ok {
+		return nil
+	}
+
+	if plan.ObservedValidator == nil {
+		return missingValidator(pathPlanObservedValidator, "observed surface validator is required")
 	}
 
 	return nil
