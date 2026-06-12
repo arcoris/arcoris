@@ -20,10 +20,16 @@ func TestErrorReasonStrings(t *testing.T) {
 	if ErrorReasonInvalidDocument != "invalid_document" {
 		t.Fatalf("invalid document reason = %q", ErrorReasonInvalidDocument)
 	}
+	if ErrorReasonMissingVersion != "missing_version" {
+		t.Fatalf("missing version reason = %q", ErrorReasonMissingVersion)
+	}
 	if ErrorReasonUnsupportedVersion != "unsupported_version" {
 		t.Fatalf("unsupported version reason = %q", ErrorReasonUnsupportedVersion)
 	}
 	if ErrorReasonInvalidPath != "invalid_path" {
 		t.Fatalf("invalid path reason = %q", ErrorReasonInvalidPath)
+	}
+	if ErrorReasonNotNormalized != "not_normalized" {
+		t.Fatalf("not normalized reason = %q", ErrorReasonNotNormalized)
 	}
 }

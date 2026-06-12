@@ -15,6 +15,7 @@
 package objectownership
 
 import (
+	"reflect"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/fieldownership"
@@ -41,5 +42,65 @@ func TestSurfaceIsEmptyDoesNotValidateEntries(t *testing.T) {
 
 	if surface.IsEmpty() {
 		t.Fatalf("surface with invalid but mentioned field IsEmpty() = true")
+	}
+}
+
+func TestSurfaceClonePreservesRawShape(t *testing.T) {
+	surface := Surface{Entries: []Entry{
+		documentEntry("b", "$.b", "$.b"),
+		documentEntry("a"),
+		documentEntry("b", "$.a"),
+	}}
+
+	clone := surface.Clone()
+
+	if !reflect.DeepEqual(clone, surface) {
+		t.Fatalf("Clone() = %#v; want %#v", clone, surface)
+	}
+}
+
+func TestSurfaceClonePreservesNilAndEmptyEntries(t *testing.T) {
+	nilEntries := (Surface{}).Clone()
+	if nilEntries.Entries != nil {
+		t.Fatalf("nil Entries clone = %#v; want nil", nilEntries.Entries)
+	}
+
+	emptyEntries := (Surface{Entries: []Entry{}}).Clone()
+	if emptyEntries.Entries == nil {
+		t.Fatal("empty Entries clone = nil; want non-nil empty slice")
+	}
+}
+
+func TestSurfaceCloneDetachesEntriesAndFields(t *testing.T) {
+	surface := Surface{Entries: []Entry{documentEntry("user", "$.image")}}
+
+	clone := surface.Clone()
+	clone.Entries[0].Owner = owner("other")
+	clone.Entries[0].Fields[0] = "$.other"
+
+	requireDocumentEntries(t, surface, documentEntry("user", "$.image"))
+}
+
+func TestSurfaceEntriesCopyDetachesEntriesAndFields(t *testing.T) {
+	surface := Surface{Entries: []Entry{documentEntry("user", "$.image")}}
+
+	entries := surface.EntriesCopy()
+	entries[0].Owner = owner("other")
+	entries[0].Fields[0] = "$.other"
+
+	requireDocumentEntries(t, surface, documentEntry("user", "$.image"))
+}
+
+func TestSurfaceEntriesCopyPreservesNilAndEmptyEntries(t *testing.T) {
+	if entries := (Surface{}).EntriesCopy(); entries != nil {
+		t.Fatalf("nil EntriesCopy() = %#v; want nil", entries)
+	}
+
+	entries := (Surface{Entries: []Entry{}}).EntriesCopy()
+	if entries == nil {
+		t.Fatal("empty EntriesCopy() = nil; want non-nil empty slice")
+	}
+	if len(entries) != 0 {
+		t.Fatalf("empty EntriesCopy() len = %d; want 0", len(entries))
 	}
 }

@@ -16,6 +16,15 @@ package objectownership
 
 import "testing"
 
+func TestNormalizeWritesDocumentVersionV1(t *testing.T) {
+	got, err := Normalize(document(documentEntry("user", "$.image")))
+	requireNoError(t, err)
+
+	if got.Version != DocumentVersionV1 {
+		t.Fatalf("Version = %q; want %q", got.Version, DocumentVersionV1)
+	}
+}
+
 func TestNormalizeSortsEntriesByOwner(t *testing.T) {
 	got, err := Normalize(document(documentEntry("z", "$.z"), documentEntry("a", "$.a")))
 	requireNoError(t, err)
@@ -74,4 +83,22 @@ func TestNormalizeDoesNotMutateInput(t *testing.T) {
 	requireNoError(t, err)
 
 	requireDocumentEntries(t, doc.Desired, documentEntry("user", "$.z", "$.a"))
+}
+
+func TestNormalizeRejectsInvalidRawDocument(t *testing.T) {
+	_, err := Normalize(Document{})
+
+	requireErrorIs(t, err, ErrInvalidDocument)
+}
+
+func TestNormalizeOutputPassesValidateNormalized(t *testing.T) {
+	normalized, err := Normalize(document(
+		documentEntry("b", "$.z", "$.z"),
+		documentEntry("a", "$.spec.image", "$.spec"),
+		documentEntry("b", "$.a"),
+		documentEntry("empty"),
+	))
+	requireNoError(t, err)
+
+	requireNoError(t, ValidateNormalized(normalized))
 }

@@ -26,6 +26,31 @@ type Surface struct {
 	Entries []Entry
 }
 
+// Clone returns a detached copy of s without validating or normalizing it.
+//
+// Clone preserves raw entry order, duplicate owners, empty entries, and
+// nil-vs-empty Entries shape. Nested Entry.Fields slices are detached.
+func (s Surface) Clone() Surface {
+	return Surface{Entries: s.EntriesCopy()}
+}
+
+// EntriesCopy returns detached entries with detached nested field slices.
+//
+// EntriesCopy preserves nil-vs-empty slice shape and raw entry order. It does
+// not validate, normalize, merge, sort, or prune entries.
+func (s Surface) EntriesCopy() []Entry {
+	if s.Entries == nil {
+		return nil
+	}
+
+	out := make([]Entry, len(s.Entries))
+	for i, entry := range s.Entries {
+		out[i] = entry.Clone()
+	}
+
+	return out
+}
+
 // IsEmpty reports whether the surface contains no owned fields.
 //
 // IsEmpty is not a validity check. It ignores owner validity, path validity,

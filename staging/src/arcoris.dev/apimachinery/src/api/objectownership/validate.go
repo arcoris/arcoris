@@ -35,7 +35,7 @@ func validateDocumentVersion(version DocumentVersion) error {
 		return errorAt(
 			pathDocumentVersion,
 			ErrInvalidDocument,
-			ErrorReasonInvalidDocument,
+			ErrorReasonMissingVersion,
 			"document version is required",
 		)
 	}

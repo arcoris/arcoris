@@ -29,7 +29,7 @@ func TestValidateRejectsZeroVersion(t *testing.T) {
 	err := Validate(Document{})
 
 	requireErrorIs(t, err, ErrInvalidDocument)
-	requireObjectOwnershipError(t, err, pathDocumentVersion, ErrorReasonInvalidDocument)
+	requireObjectOwnershipError(t, err, pathDocumentVersion, ErrorReasonMissingVersion)
 }
 
 func TestValidateRejectsUnsupportedVersion(t *testing.T) {
@@ -51,10 +51,26 @@ func TestValidateAcceptsDuplicateOwners(t *testing.T) {
 	requireNoError(t, err)
 }
 
+func TestValidateAcceptsDuplicateFields(t *testing.T) {
+	err := Validate(document(documentEntry("user", "$.image", "$.image")))
+
+	requireNoError(t, err)
+}
+
 func TestValidateAcceptsEmptyFieldEntryWithValidOwner(t *testing.T) {
 	err := Validate(document(documentEntry("user")))
 
 	requireNoError(t, err)
+}
+
+func TestValidateReportsFirstFailureDeterministically(t *testing.T) {
+	err := Validate(document(
+		Entry{Owner: fieldownership.Owner{}, Fields: []Path{"not-a-path"}},
+		documentEntry("user", ""),
+	))
+
+	requireErrorIs(t, err, ErrInvalidEntry)
+	requireObjectOwnershipError(t, err, "document.desired.entries[0].owner", ErrorReasonInvalidOwner)
 }
 
 func TestValidateRejectsInvalidOwner(t *testing.T) {

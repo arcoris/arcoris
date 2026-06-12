@@ -36,6 +36,9 @@ var (
 
 	// ErrInvalidPath classifies malformed document field path text.
 	ErrInvalidPath = errors.New("invalid object ownership path")
+
+	// ErrNotNormalized classifies valid documents that are not canonical.
+	ErrNotNormalized = errors.New("object ownership document is not normalized")
 )
 
 // Error is the structured diagnostic returned by objectownership.

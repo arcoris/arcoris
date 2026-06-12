@@ -29,6 +29,18 @@ type Document struct {
 	Desired Surface
 }
 
+// Clone returns a detached copy of d without validating or normalizing it.
+//
+// Clone preserves raw order, duplicate owners, duplicate fields, empty entries,
+// and nil-vs-empty slice shape. It does not make payloads immutable; it only
+// detaches the document slice containers owned by Document.
+func (d Document) Clone() Document {
+	return Document{
+		Version: d.Version,
+		Desired: d.Desired.Clone(),
+	}
+}
+
 // IsEmpty reports whether the document contains no owned object fields.
 //
 // IsEmpty is not a validity check. It ignores Version and every other document

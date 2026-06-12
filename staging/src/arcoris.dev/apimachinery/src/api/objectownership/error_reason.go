@@ -21,6 +21,9 @@ const (
 	// ErrorReasonInvalidDocument reports malformed top-level document shape.
 	ErrorReasonInvalidDocument ErrorReason = "invalid_document"
 
+	// ErrorReasonMissingVersion reports documents without an explicit version.
+	ErrorReasonMissingVersion ErrorReason = "missing_version"
+
 	// ErrorReasonUnsupportedVersion reports an unknown document version.
 	ErrorReasonUnsupportedVersion ErrorReason = "unsupported_version"
 
@@ -35,4 +38,7 @@ const (
 
 	// ErrorReasonInvalidPath reports malformed document path text.
 	ErrorReasonInvalidPath ErrorReason = "invalid_path"
+
+	// ErrorReasonNotNormalized reports valid documents that are not canonical.
+	ErrorReasonNotNormalized ErrorReason = "not_normalized"
 )

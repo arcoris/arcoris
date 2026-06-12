@@ -87,3 +87,12 @@ func TestToDocumentDoesNotMutateState(t *testing.T) {
 
 	requireOwnersOf(t, state.Desired(), path("$.image"), "user")
 }
+
+func TestToDocumentOutputPassesValidateNormalized(t *testing.T) {
+	state := NewState(ownershipState(
+		ownershipEntry("b", "$.z"),
+		ownershipEntry("a", "$.a"),
+	))
+
+	requireNoError(t, ValidateNormalized(ToDocument(state)))
+}

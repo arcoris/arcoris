@@ -15,6 +15,7 @@
 package objectownership
 
 import (
+	"reflect"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/fieldownership"
@@ -34,5 +35,63 @@ func TestEntryIsEmptyDoesNotValidateOwner(t *testing.T) {
 
 	if !entry.IsEmpty() {
 		t.Fatalf("entry with invalid owner but no fields IsEmpty() = false")
+	}
+}
+
+func TestEntryClonePreservesRawFields(t *testing.T) {
+	entry := documentEntry("user", "$.z", "$.z", "$.a")
+
+	clone := entry.Clone()
+
+	if !reflect.DeepEqual(clone, entry) {
+		t.Fatalf("Clone() = %#v; want %#v", clone, entry)
+	}
+}
+
+func TestEntryClonePreservesNilAndEmptyFields(t *testing.T) {
+	nilFields := (Entry{Owner: owner("user")}).Clone()
+	if nilFields.Fields != nil {
+		t.Fatalf("nil Fields clone = %#v; want nil", nilFields.Fields)
+	}
+
+	emptyFields := (Entry{Owner: owner("user"), Fields: []Path{}}).Clone()
+	if emptyFields.Fields == nil {
+		t.Fatal("empty Fields clone = nil; want non-nil empty slice")
+	}
+}
+
+func TestEntryCloneDetachesFields(t *testing.T) {
+	entry := documentEntry("user", "$.image")
+
+	clone := entry.Clone()
+	clone.Fields[0] = "$.other"
+
+	if entry.Fields[0] != "$.image" {
+		t.Fatalf("original field = %q; want $.image", entry.Fields[0])
+	}
+}
+
+func TestEntryFieldsCopyDetachesFields(t *testing.T) {
+	entry := documentEntry("user", "$.image")
+
+	fields := entry.FieldsCopy()
+	fields[0] = "$.other"
+
+	if entry.Fields[0] != "$.image" {
+		t.Fatalf("original field = %q; want $.image", entry.Fields[0])
+	}
+}
+
+func TestEntryFieldsCopyPreservesNilAndEmptyFields(t *testing.T) {
+	if fields := (Entry{Owner: owner("user")}).FieldsCopy(); fields != nil {
+		t.Fatalf("nil FieldsCopy() = %#v; want nil", fields)
+	}
+
+	fields := (Entry{Owner: owner("user"), Fields: []Path{}}).FieldsCopy()
+	if fields == nil {
+		t.Fatal("empty FieldsCopy() = nil; want non-nil empty slice")
+	}
+	if len(fields) != 0 {
+		t.Fatalf("empty FieldsCopy() len = %d; want 0", len(fields))
 	}
 }

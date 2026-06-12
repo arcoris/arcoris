@@ -21,6 +21,9 @@ import (
 )
 
 const (
+	// pathDocument names the whole document when a narrower path is not useful.
+	pathDocument = "document"
+
 	// pathDocumentVersion names the document version diagnostic location.
 	pathDocumentVersion = "document.version"
 

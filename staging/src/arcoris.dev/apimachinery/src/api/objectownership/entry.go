@@ -30,6 +30,32 @@ type Entry struct {
 	Fields []Path
 }
 
+// Clone returns a detached copy of e without validating or normalizing it.
+//
+// Clone preserves duplicate fields, raw field order, and nil-vs-empty Fields
+// shape. Owner is copied by value.
+func (e Entry) Clone() Entry {
+	return Entry{
+		Owner:  e.Owner,
+		Fields: e.FieldsCopy(),
+	}
+}
+
+// FieldsCopy returns a detached copy of Fields.
+//
+// FieldsCopy preserves nil-vs-empty slice shape and raw field order. It does
+// not validate, deduplicate, sort, or canonicalize field path text.
+func (e Entry) FieldsCopy() []Path {
+	if e.Fields == nil {
+		return nil
+	}
+
+	out := make([]Path, len(e.Fields))
+	copy(out, e.Fields)
+
+	return out
+}
+
 // IsEmpty reports whether the entry owns no fields.
 //
 // IsEmpty is not a validity check. It ignores Owner validity and path validity,
