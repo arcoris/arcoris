@@ -37,6 +37,7 @@ func TestObjectValidateMetaRejectsInvalidMetadata(t *testing.T) {
 		obj    Object[testDesired, testObserved]
 		target error
 		path   string
+		reason ErrorReason
 	}{
 		{
 			name: "type meta",
@@ -47,6 +48,7 @@ func TestObjectValidateMetaRejectsInvalidMetadata(t *testing.T) {
 			},
 			target: meta.ErrInvalidTypeMeta,
 			path:   "object.typeMeta",
+			reason: ErrorReasonInvalidTypeMeta,
 		},
 		{
 			name: "object meta",
@@ -57,6 +59,7 @@ func TestObjectValidateMetaRejectsInvalidMetadata(t *testing.T) {
 			},
 			target: meta.ErrInvalidObjectMeta,
 			path:   "object.metadata",
+			reason: ErrorReasonInvalidObjectMeta,
 		},
 	}
 
@@ -73,7 +76,7 @@ func TestObjectValidateMetaRejectsInvalidMetadata(t *testing.T) {
 			if objectErr.Path != tt.path {
 				t.Fatalf("Path = %q, want %q", objectErr.Path, tt.path)
 			}
-			if objectErr.Reason != ErrorReasonInvalidMetadata {
+			if objectErr.Reason != tt.reason {
 				t.Fatalf("Reason = %q", objectErr.Reason)
 			}
 			if objectErr.Cause == nil {

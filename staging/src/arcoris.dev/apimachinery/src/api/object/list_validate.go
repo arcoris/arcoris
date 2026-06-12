@@ -20,11 +20,23 @@ package object
 // resource-aware context outside api/object.
 func (l List[T]) ValidateMeta() error {
 	if err := l.TypeMeta.ValidateLexical(); err != nil {
-		return nested("list.typeMeta", ErrInvalidList, err)
+		return nested(
+			"list.typeMeta",
+			ErrInvalidList,
+			ErrorReasonInvalidTypeMeta,
+			"type metadata is invalid",
+			err,
+		)
 	}
 
 	if err := l.PageMeta.ValidateLexical(); err != nil {
-		return nested("list.metadata", ErrInvalidList, err)
+		return nested(
+			"list.metadata",
+			ErrInvalidList,
+			ErrorReasonInvalidPageMeta,
+			"page metadata is invalid",
+			err,
+		)
 	}
 
 	return nil

@@ -19,5 +19,10 @@ type ErrorReason string
 
 // Object reasons refine broad sentinel errors with stable diagnostics.
 const (
-	ErrorReasonInvalidMetadata ErrorReason = "invalid_metadata"
+	// ErrorReasonInvalidTypeMeta means TypeMeta failed metadata validation.
+	ErrorReasonInvalidTypeMeta ErrorReason = "invalid_type_meta"
+	// ErrorReasonInvalidObjectMeta means ObjectMeta failed metadata validation.
+	ErrorReasonInvalidObjectMeta ErrorReason = "invalid_object_meta"
+	// ErrorReasonInvalidPageMeta means PageMeta failed metadata validation.
+	ErrorReasonInvalidPageMeta ErrorReason = "invalid_page_meta"
 )

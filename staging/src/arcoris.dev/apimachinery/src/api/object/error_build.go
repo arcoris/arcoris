@@ -17,13 +17,13 @@ package object
 import "arcoris.dev/apimachinery/api/internal/diagnostic"
 
 // nested wraps a metadata validation failure without hiding its identity.
-func nested(path string, err error, cause error) error {
+func nested(path string, err error, reason ErrorReason, detail string, cause error) error {
 	return &Error{
 		Record: diagnostic.WrapRecord(
 			path,
 			err,
-			ErrorReasonInvalidMetadata,
-			"metadata is invalid",
+			reason,
+			detail,
 			cause,
 		),
 	}

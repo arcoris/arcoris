@@ -21,11 +21,23 @@ package object
 // outside api/object.
 func (o Object[D, O]) ValidateMeta() error {
 	if err := o.TypeMeta.ValidateLexical(); err != nil {
-		return nested("object.typeMeta", ErrInvalidObject, err)
+		return nested(
+			"object.typeMeta",
+			ErrInvalidObject,
+			ErrorReasonInvalidTypeMeta,
+			"type metadata is invalid",
+			err,
+		)
 	}
 
 	if err := o.ObjectMeta.ValidateLexical(); err != nil {
-		return nested("object.metadata", ErrInvalidObject, err)
+		return nested(
+			"object.metadata",
+			ErrInvalidObject,
+			ErrorReasonInvalidObjectMeta,
+			"object metadata is invalid",
+			err,
+		)
 	}
 
 	return nil

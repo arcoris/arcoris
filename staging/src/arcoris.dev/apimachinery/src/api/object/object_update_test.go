@@ -67,6 +67,10 @@ func TestObjectUpdateMethods(t *testing.T) {
 	if !withObserved.HasObserved() || withObserved.Observed.ReadyReplicas != 2 {
 		t.Fatalf("WithObserved() Observed = %#v", withObserved.Observed)
 	}
+	observedValue, ok := withObserved.ObservedValue()
+	if !ok || observedValue.ReadyReplicas != 2 {
+		t.Fatalf("WithObserved() ObservedValue() = %#v, %v", observedValue, ok)
+	}
 	if original.HasObserved() {
 		t.Fatal("WithObserved() mutated original")
 	}

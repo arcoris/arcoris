@@ -85,3 +85,52 @@ func TestNewObserved(t *testing.T) {
 		t.Fatal("NewObserved() reused caller variable address")
 	}
 }
+
+func TestObservedValue(t *testing.T) {
+	obj := New[testDesired, testObserved](
+		validTypeMeta(),
+		validObjectMeta(),
+		testDesired{Replicas: 3},
+	)
+
+	observed, ok := obj.ObservedValue()
+	if ok {
+		t.Fatalf("ObservedValue() ok = true, value = %#v", observed)
+	}
+
+	withObserved := obj.WithObserved(testObserved{ReadyReplicas: 2})
+	observed, ok = withObserved.ObservedValue()
+	if !ok {
+		t.Fatal("ObservedValue() ok = false")
+	}
+	if observed.ReadyReplicas != 2 {
+		t.Fatalf("ObservedValue() = %#v", observed)
+	}
+
+	observed.ReadyReplicas = 9
+	if withObserved.Observed.ReadyReplicas != 2 {
+		t.Fatal("ObservedValue() exposed internal observed pointer")
+	}
+}
+
+func TestObservedValueIsShallow(t *testing.T) {
+	type observedPayload struct {
+		Values []int
+	}
+
+	obj := NewObserved(
+		validTypeMeta(),
+		validObjectMeta(),
+		testDesired{Replicas: 3},
+		observedPayload{Values: []int{1}},
+	)
+
+	observed, ok := obj.ObservedValue()
+	if !ok {
+		t.Fatal("ObservedValue() ok = false")
+	}
+	observed.Values[0] = 9
+	if obj.Observed.Values[0] != 9 {
+		t.Fatal("ObservedValue() unexpectedly deep-copied reference-bearing payload")
+	}
+}

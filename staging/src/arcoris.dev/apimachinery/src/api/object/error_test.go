@@ -28,8 +28,8 @@ func TestErrorFormatting(t *testing.T) {
 		Record: diagnostic.NewRecord(
 			"object.metadata",
 			ErrInvalidObject,
-			ErrorReasonInvalidMetadata,
-			"metadata is invalid",
+			ErrorReasonInvalidObjectMeta,
+			"object metadata is invalid",
 		),
 	}
 
@@ -38,8 +38,8 @@ func TestErrorFormatting(t *testing.T) {
 		"object",
 		"object.metadata",
 		ErrInvalidObject.Error(),
-		string(ErrorReasonInvalidMetadata),
-		"metadata is invalid",
+		string(ErrorReasonInvalidObjectMeta),
+		"object metadata is invalid",
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("Error() = %q, want segment %q", got, want)
@@ -49,13 +49,19 @@ func TestErrorFormatting(t *testing.T) {
 
 func TestNestedErrorDetailDoesNotRepeatCause(t *testing.T) {
 	cause := meta.TypeMeta{Kind: "Worker"}.ValidateLexical()
-	err := nested("object.typeMeta", ErrInvalidObject, cause)
+	err := nested(
+		"object.typeMeta",
+		ErrInvalidObject,
+		ErrorReasonInvalidTypeMeta,
+		"type metadata is invalid",
+		cause,
+	)
 
 	var objectErr *Error
 	if !errors.As(err, &objectErr) {
 		t.Fatalf("errors.As(%T) = false", objectErr)
 	}
-	if objectErr.Detail != "metadata is invalid" {
+	if objectErr.Detail != "type metadata is invalid" {
 		t.Fatalf("Detail = %q", objectErr.Detail)
 	}
 	if strings.Contains(objectErr.Detail, cause.Error()) {
@@ -65,7 +71,13 @@ func TestNestedErrorDetailDoesNotRepeatCause(t *testing.T) {
 
 func TestErrorUnwrapPreservesSentinelAndCause(t *testing.T) {
 	cause := meta.TypeMeta{Kind: "Worker"}.ValidateLexical()
-	err := nested("object.typeMeta", ErrInvalidObject, cause)
+	err := nested(
+		"object.typeMeta",
+		ErrInvalidObject,
+		ErrorReasonInvalidTypeMeta,
+		"type metadata is invalid",
+		cause,
+	)
 
 	if !errors.Is(err, ErrInvalidObject) {
 		t.Fatalf("errors.Is(%v, ErrInvalidObject) = false", err)

@@ -22,7 +22,9 @@ import (
 
 func TestNewList(t *testing.T) {
 	items := []int{1, 2}
-	list := NewList(validListTypeMeta(), validPageMeta(), items)
+	typeMeta := validListTypeMeta()
+	pageMeta := validPageMeta()
+	list := NewList(typeMeta, pageMeta, items)
 
 	if list.TypeMeta != validListTypeMeta() {
 		t.Fatalf("TypeMeta = %#v", list.TypeMeta)
@@ -34,6 +36,14 @@ func TestNewList(t *testing.T) {
 		t.Fatalf("Len() = %d", list.Len())
 	}
 
+	typeMeta.Kind = "OtherList"
+	if list.TypeMeta.Kind != "WorkerList" {
+		t.Fatal("NewList() did not detach type metadata")
+	}
+	*pageMeta.RemainingItemCount = 9
+	if *list.PageMeta.RemainingItemCount != 1 {
+		t.Fatal("NewList() did not detach page metadata")
+	}
 	items[0] = 9
 	if list.Items[0] != 1 {
 		t.Fatalf("NewList() did not detach item slice")
@@ -75,7 +85,9 @@ func TestListIsZero(t *testing.T) {
 		{name: "zero", list: List[int]{}, want: true},
 		{name: "type meta", list: List[int]{TypeMeta: validListTypeMeta()}, want: false},
 		{name: "list meta", list: List[int]{PageMeta: meta.PageMeta{ResourceVersion: "rv-1"}}, want: false},
-		{name: "items", list: List[int]{Items: []int{0}}, want: false},
+		{name: "nil items", list: List[int]{Items: nil}, want: true},
+		{name: "empty items", list: List[int]{Items: []int{}}, want: true},
+		{name: "zero item", list: List[int]{Items: []int{0}}, want: false},
 	}
 
 	for _, tt := range tests {

@@ -68,3 +68,16 @@ func NewObserved[D any, O any](
 func (o Object[D, O]) HasObserved() bool {
 	return o.Observed != nil
 }
+
+// ObservedValue returns the observed payload by value.
+//
+// It reports false when Observed is nil. The returned payload is a normal Go
+// value copy; reference-bearing fields inside O are not deep-copied.
+func (o Object[D, O]) ObservedValue() (O, bool) {
+	if o.Observed == nil {
+		var zero O
+		return zero, false
+	}
+
+	return *o.Observed, true
+}

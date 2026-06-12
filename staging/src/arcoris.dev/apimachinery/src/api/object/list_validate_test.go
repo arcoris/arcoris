@@ -37,6 +37,7 @@ func TestListValidateMetaRejectsInvalidMetadata(t *testing.T) {
 		list   List[int]
 		target error
 		path   string
+		reason ErrorReason
 	}{
 		{
 			name: "type meta",
@@ -46,6 +47,7 @@ func TestListValidateMetaRejectsInvalidMetadata(t *testing.T) {
 			},
 			target: meta.ErrInvalidTypeMeta,
 			path:   "list.typeMeta",
+			reason: ErrorReasonInvalidTypeMeta,
 		},
 		{
 			name: "list meta",
@@ -55,6 +57,7 @@ func TestListValidateMetaRejectsInvalidMetadata(t *testing.T) {
 			},
 			target: meta.ErrInvalidPageMeta,
 			path:   "list.metadata",
+			reason: ErrorReasonInvalidPageMeta,
 		},
 	}
 
@@ -71,7 +74,7 @@ func TestListValidateMetaRejectsInvalidMetadata(t *testing.T) {
 			if objectErr.Path != tt.path {
 				t.Fatalf("Path = %q, want %q", objectErr.Path, tt.path)
 			}
-			if objectErr.Reason != ErrorReasonInvalidMetadata {
+			if objectErr.Reason != tt.reason {
 				t.Fatalf("Reason = %q", objectErr.Reason)
 			}
 			if objectErr.Cause == nil {
