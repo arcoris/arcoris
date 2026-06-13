@@ -16,34 +16,6 @@ package objectstore
 
 import metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 
-// ListScopeKind identifies structural collection-list scope.
-type ListScopeKind uint8
-
-const (
-	// ListScopeAll lists all object names for the resource, regardless of namespace.
-	ListScopeAll ListScopeKind = iota + 1
-
-	// ListScopeNamespace lists only object names in one namespace.
-	ListScopeNamespace
-)
-
-// IsValid reports whether k is one of the supported structural scopes.
-func (k ListScopeKind) IsValid() bool {
-	return k == ListScopeAll || k == ListScopeNamespace
-}
-
-// String returns stable diagnostic text for k.
-func (k ListScopeKind) String() string {
-	switch k {
-	case ListScopeAll:
-		return "all"
-	case ListScopeNamespace:
-		return "namespace"
-	default:
-		return "unknown"
-	}
-}
-
 // ListScope defines structural filtering for objectstore.List.
 //
 // The store does not decide whether a resource is globally scoped or

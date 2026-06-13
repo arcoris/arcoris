@@ -37,18 +37,6 @@ func TestListResultHelpers(t *testing.T) {
 	}
 }
 
-func TestListItemCloneDetachesState(t *testing.T) {
-	item := ListItem{Key: validKey(), State: validCommittedState()}
-
-	cloned := item.Clone()
-	cloned.State.Object.Desired = value.StringValue("mutated")
-
-	got, ok := item.State.Object.Desired.AsString()
-	if !ok || got != "desired" {
-		t.Fatalf("source desired = %q, %v; want desired, true", got, ok)
-	}
-}
-
 func TestListResultCloneDetachesItemsAndStates(t *testing.T) {
 	result := ListResult{
 		Items:    []ListItem{{Key: validKey(), State: validCommittedState()}},

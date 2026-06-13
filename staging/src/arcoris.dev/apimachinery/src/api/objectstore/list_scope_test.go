@@ -45,30 +45,6 @@ func TestListScopeConstructors(t *testing.T) {
 	}
 }
 
-func TestListScopeKindStringAndValidity(t *testing.T) {
-	tests := []struct {
-		name  string
-		kind  ListScopeKind
-		text  string
-		valid bool
-	}{
-		{name: "all", kind: ListScopeAll, text: "all", valid: true},
-		{name: "namespace", kind: ListScopeNamespace, text: "namespace", valid: true},
-		{name: "unknown", kind: 0, text: "unknown", valid: false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.kind.String(); got != tt.text {
-				t.Fatalf("String() = %q; want %q", got, tt.text)
-			}
-			if got := tt.kind.IsValid(); got != tt.valid {
-				t.Fatalf("IsValid() = %v; want %v", got, tt.valid)
-			}
-		})
-	}
-}
-
 func TestMustNamespacePanicsOnInvalidNamespace(t *testing.T) {
 	defer func() {
 		if recover() == nil {

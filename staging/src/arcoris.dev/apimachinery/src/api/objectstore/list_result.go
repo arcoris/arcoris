@@ -14,22 +14,6 @@
 
 package objectstore
 
-// ListItem is one committed live object returned by Store.List.
-type ListItem struct {
-	// Key is the authoritative storage identity for State.
-	Key Key
-
-	// State is the detached committed live state for Key.
-	State State
-}
-
-// Clone returns a detached copy of i.
-func (i ListItem) Clone() ListItem {
-	i.State = i.State.Clone()
-
-	return i
-}
-
 // ListResult is the successful result of a collection read.
 type ListResult struct {
 	// Items are detached live states that matched the request.
