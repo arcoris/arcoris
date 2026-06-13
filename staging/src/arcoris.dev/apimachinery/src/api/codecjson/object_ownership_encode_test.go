@@ -15,6 +15,7 @@
 package codecjson
 
 import (
+	"strings"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/codecjson/jsonconfig"
@@ -77,6 +78,69 @@ func TestEncodeObjectOwnershipOmitsEmptySurfacesWhenConfigured(t *testing.T) {
 	}
 }
 
+func TestEncodeObjectOwnershipNeverEmitsEmptySurfaceObjects(t *testing.T) {
+	testCases := map[string]struct {
+		mutate func(*jsonconfig.Config)
+		state  objectownership.State
+	}{
+		"empty surfaces emitted": {
+			state: objectownership.EmptyState(),
+		},
+		"pretty empty surfaces emitted": {
+			mutate: func(config *jsonconfig.Config) {
+				config.Encode.Output.Layout = jsonconfig.LayoutPretty
+			},
+			state: objectownership.EmptyState(),
+		},
+		"empty surfaces omitted": {
+			mutate: func(config *jsonconfig.Config) {
+				config.Encode.Ownership.EmptySurfaces = jsonconfig.EmptyOwnershipSurfaceOmit
+			},
+			state: objectownership.EmptyState(),
+		},
+		"metadata labels only": {
+			mutate: func(config *jsonconfig.Config) {
+				config.Encode.Ownership.EmptySurfaces = jsonconfig.EmptyOwnershipSurfaceOmit
+			},
+			state: ownershipState(
+				ownershipSurface(),
+				ownershipSurface(),
+				objectownership.NewMetadataState(
+					ownershipSurface(ownershipEntry("labeler", `$["app"]`)),
+					ownershipSurface(),
+				),
+			),
+		},
+		"metadata annotations only": {
+			mutate: func(config *jsonconfig.Config) {
+				config.Encode.Ownership.EmptySurfaces = jsonconfig.EmptyOwnershipSurfaceOmit
+			},
+			state: ownershipState(
+				ownershipSurface(),
+				ownershipSurface(),
+				objectownership.NewMetadataState(
+					ownershipSurface(),
+					ownershipSurface(ownershipEntry("annotator", `$["note"]`)),
+				),
+			),
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			c := newTestCodecWith(t, func(config *jsonconfig.Config) {
+				if testCase.mutate != nil {
+					testCase.mutate(config)
+				}
+			})
+
+			data, err := c.EncodeObjectOwnership(testCase.state)
+			requireNoError(t, err)
+			assertNoEmptyOwnershipSurfaceObject(t, string(data))
+		})
+	}
+}
+
 func TestEncodeObjectOwnershipOmitEmptySurfacesKeepsNonEmptyDesired(t *testing.T) {
 	c := newTestCodecWith(t, func(config *jsonconfig.Config) {
 		config.Encode.Ownership.EmptySurfaces = jsonconfig.EmptyOwnershipSurfaceOmit
@@ -107,6 +171,22 @@ func TestEncodeObjectOwnershipAllSurfaces(t *testing.T) {
 	want := `{"desired":{"entries":[{"owner":"user-cli","fields":["$.image"]}]},"observed":{"entries":[{"owner":"controller","fields":["$.ready"]}]},"metadata":{"labels":{"entries":[{"owner":"labeler","fields":["$[\"scheduler.arcoris.dev/mode\"]"]}]},"annotations":{"entries":[{"owner":"annotator","fields":["$[\"with.dots\"]"]}]}}}`
 	if string(data) != want {
 		t.Fatalf("encoded = %s; want %s", data, want)
+	}
+}
+
+func assertNoEmptyOwnershipSurfaceObject(t *testing.T, data string) {
+	t.Helper()
+
+	compact := strings.NewReplacer(" ", "", "\n", "", "\t", "", "\r", "").Replace(data)
+	for _, forbidden := range []string{
+		`"desired":{}`,
+		`"observed":{}`,
+		`"labels":{}`,
+		`"annotations":{}`,
+	} {
+		if strings.Contains(compact, forbidden) {
+			t.Fatalf("encoded ownership contains forbidden empty surface %s: %s", forbidden, data)
+		}
 	}
 }
 

@@ -26,9 +26,10 @@ import (
 
 // ownershipStateToNode converts canonical ownership state into lower-camel JSON.
 //
-// Encoding validates the state before writing. Deterministic encoding may run
-// objectownership.Normalize, which is intentionally idempotent for public
-// objectownership.State values.
+// Encoding validates objectownership.State before writing. The codec does not
+// normalize, compute ownership, or interpret lifecycle semantics; ownership
+// canonicalization belongs to objectownership constructors and objectstore
+// commit boundaries.
 func ownershipStateToNode(path jsonPath, state objectownership.State, config resolvedEncodeConfig) (jsonNode, error) {
 	if err := objectownership.Validate(state); err != nil {
 		return jsonNode{}, wrapAt(

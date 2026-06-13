@@ -43,6 +43,29 @@ func TestResolveDecodeOwnershipConfig(t *testing.T) {
 	}
 }
 
+func TestResolveDecodeOwnershipConfigKeepsDefaultValidationEnabledWithExplicitUnknownFields(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]UnknownFieldMode{
+		"reject": UnknownFieldReject,
+		"ignore": UnknownFieldIgnore,
+	}
+
+	for name, unknownFields := range testCases {
+		t.Run(name, func(t *testing.T) {
+			config := DecodeOwnershipConfig{UnknownFields: unknownFields}
+			resolveDecodeOwnershipConfig(&config)
+
+			if config.UnknownFields != unknownFields {
+				t.Fatalf("unknown fields = %d; want %d", config.UnknownFields, unknownFields)
+			}
+			if config.Validation != OwnershipValidationEnable {
+				t.Fatalf("validation = %d; want enable", config.Validation)
+			}
+		})
+	}
+}
+
 func TestResolveDecodeOwnershipConfigKeepsExplicitValidationDisable(t *testing.T) {
 	t.Parallel()
 

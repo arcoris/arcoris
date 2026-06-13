@@ -20,7 +20,11 @@
 //
 // Object ownership JSON represents the current canonical objectownership.State
 // shape directly. It does not carry domain model versions, migration markers,
-// or storage-envelope metadata.
+// or storage-envelope metadata. Encoding validates ownership state before
+// writing, but it does not compute ownership or normalize ownership state.
+// Decoding targets semantic ownership state, not a raw document model, so
+// duplicate owner entries may collapse through objectownership and
+// fieldownership construction.
 //
 // Codec instances are configured at construction with jsonconfig.Config from
 // api/codecjson/jsonconfig. That subpackage owns JSON-specific public

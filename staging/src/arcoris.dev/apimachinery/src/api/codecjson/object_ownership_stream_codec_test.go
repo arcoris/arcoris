@@ -20,6 +20,7 @@ import (
 	"strings"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/codecjson/jsonconfig"
 	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/objectownership"
 )
@@ -65,6 +66,47 @@ func TestEncodeObjectOwnershipToMatchesEncodeObjectOwnership(t *testing.T) {
 			requireNoError(t, err)
 			var buffer bytes.Buffer
 			requireNoError(t, c.EncodeObjectOwnershipTo(&buffer, state))
+
+			if buffer.String() != string(fromBytes) {
+				t.Fatalf("stream = %s; bytes = %s", buffer.String(), fromBytes)
+			}
+		})
+	}
+}
+
+func TestEncodeObjectOwnershipToMatchesEncodeObjectOwnershipWithOwnershipOptions(t *testing.T) {
+	testCases := map[string]struct {
+		mutate func(*jsonconfig.Config)
+		state  objectownership.State
+	}{
+		"empty surfaces omitted": {
+			mutate: func(config *jsonconfig.Config) {
+				config.Encode.Ownership.EmptySurfaces = jsonconfig.EmptyOwnershipSurfaceOmit
+			},
+			state: objectownership.EmptyState(),
+		},
+		"pretty output": {
+			mutate: func(config *jsonconfig.Config) {
+				config.Encode.Output.Layout = jsonconfig.LayoutPretty
+			},
+			state: ownershipState(
+				ownershipSurface(ownershipEntry("user-cli", "$.image")),
+				ownershipSurface(ownershipEntry("controller", "$.ready")),
+				objectownership.NewMetadataState(
+					ownershipSurface(ownershipEntry("labeler", `$["app"]`)),
+					ownershipSurface(ownershipEntry("annotator", `$["note"]`)),
+				),
+			),
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			c := newTestCodecWith(t, testCase.mutate)
+			fromBytes, err := c.EncodeObjectOwnership(testCase.state)
+			requireNoError(t, err)
+			var buffer bytes.Buffer
+			requireNoError(t, c.EncodeObjectOwnershipTo(&buffer, testCase.state))
 
 			if buffer.String() != string(fromBytes) {
 				t.Fatalf("stream = %s; bytes = %s", buffer.String(), fromBytes)
