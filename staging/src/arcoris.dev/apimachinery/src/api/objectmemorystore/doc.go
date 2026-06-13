@@ -29,10 +29,15 @@
 //
 // The implementation is concurrency-safe for independent Store operations. It
 // detaches caller input before publication and returns detached states from Get,
-// Create, Update, and Delete.
+// List, Create, Update, and Delete.
 //
-// The implementation is not durable, persistent, distributed, list-capable,
-// watch-capable, secondary-indexed, admission-aware, codec-aware, or
-// transactional across keys. It does not validate resource descriptors, apply
-// objects, stamp metadata, or execute lifecycle hooks.
+// List supports live collection reads by resource and structural scope. It
+// scans shards, copies matching slots, and atomically loads current records. It
+// returns a detached current live collection read, not a historical MVCC
+// snapshot under concurrent writes.
+//
+// The implementation is not durable, persistent, distributed, watch-capable,
+// secondary-indexed, admission-aware, codec-aware, or transactional across
+// keys. It does not validate resource descriptors, apply objects, stamp
+// metadata, or execute lifecycle hooks.
 package objectmemorystore

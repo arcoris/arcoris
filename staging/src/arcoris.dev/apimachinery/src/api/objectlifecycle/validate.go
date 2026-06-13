@@ -95,6 +95,18 @@ func (e *Executor) validateGetRequest(GetRequest) error {
 	return nil
 }
 
+// validateListRequest checks lifecycle-local List request shape.
+func (e *Executor) validateListRequest(req ListRequest) error {
+	if err := objectstore.ValidateListRequest(objectstore.ListRequest{
+		Resource: req.Resource,
+		Scope:    req.Scope,
+	}); err != nil {
+		return errorFor(OperationList, ErrorReasonInvalidRequest, objectstore.Key{}, ErrInvalidRequest, err)
+	}
+
+	return nil
+}
+
 // validateDeleteRequest checks lifecycle-local Delete request fields.
 func (e *Executor) validateDeleteRequest(req DeleteRequest) error {
 	if req.Expected.IsZero() {

@@ -49,4 +49,12 @@ type Store interface {
 	// previous live revision. DeleteResult.Revision is the newly assigned
 	// tombstone commit revision.
 	Delete(ctx context.Context, key Key, expected Revision) (DeleteResult, error)
+
+	// List reads live committed states for one resource collection and scope.
+	//
+	// List returns only live states. Missing, deleted, and tombstoned objects
+	// are omitted. It is a storage collection read: it does not validate
+	// resource descriptors, authorize callers, run admission, apply selectors,
+	// paginate results, watch changes, or interpret API-server request policy.
+	List(ctx context.Context, request ListRequest) (ListResult, error)
 }

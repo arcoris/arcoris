@@ -79,6 +79,11 @@ func (s staleUpdateStore) Get(context.Context, objectstore.Key) (objectstore.Sta
 	return s.state, true, nil
 }
 
+// List is unused by conflict tests and returns conflict to fail loudly if called.
+func (s staleUpdateStore) List(context.Context, objectstore.ListRequest) (objectstore.ListResult, error) {
+	return objectstore.ListResult{}, objectstore.ErrConflict
+}
+
 func (s staleUpdateStore) Create(context.Context, objectstore.Key, objectstore.State) (objectstore.State, error) {
 	return objectstore.State{}, objectstore.ErrAlreadyExists
 }
@@ -97,6 +102,11 @@ type conflictUpdateStore struct {
 
 func (s conflictUpdateStore) Get(context.Context, objectstore.Key) (objectstore.State, bool, error) {
 	return s.state, true, nil
+}
+
+// List is unused by conflict tests and returns conflict to fail loudly if called.
+func (s conflictUpdateStore) List(context.Context, objectstore.ListRequest) (objectstore.ListResult, error) {
+	return objectstore.ListResult{}, objectstore.ErrConflict
 }
 
 func (s conflictUpdateStore) Create(context.Context, objectstore.Key, objectstore.State) (objectstore.State, error) {

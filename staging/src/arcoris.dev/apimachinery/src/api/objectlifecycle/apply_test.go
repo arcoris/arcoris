@@ -283,6 +283,11 @@ func (s *mustNotGetStore) Get(context.Context, objectstore.Key) (objectstore.Sta
 	return objectstore.State{}, false, errors.New("unexpected get")
 }
 
+// List is unexpected because these Apply tests must reject before any store read.
+func (s *mustNotGetStore) List(context.Context, objectstore.ListRequest) (objectstore.ListResult, error) {
+	return objectstore.ListResult{}, errors.New("unexpected list")
+}
+
 func (s *mustNotGetStore) Create(context.Context, objectstore.Key, objectstore.State) (objectstore.State, error) {
 	return objectstore.State{}, errors.New("unexpected create")
 }

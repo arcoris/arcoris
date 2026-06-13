@@ -20,6 +20,8 @@ type Operation uint8
 const (
 	// OperationGet reads committed live state.
 	OperationGet Operation = iota + 1
+	// OperationList reads committed live state for a resource collection.
+	OperationList
 	// OperationCreate creates committed live state for an absent key.
 	OperationCreate
 	// OperationApply applies Desired intent to live state or creates missing state.
@@ -42,6 +44,8 @@ func (op Operation) String() string {
 	switch op {
 	case OperationGet:
 		return "get"
+	case OperationList:
+		return "list"
 	case OperationCreate:
 		return "create"
 	case OperationApply:

@@ -25,6 +25,7 @@ func TestOperationStringAndValidity(t *testing.T) {
 	}{
 		{name: "zero", op: 0, text: "unknown", valid: false},
 		{name: "get", op: OperationGet, text: "get", valid: true},
+		{name: "list", op: OperationList, text: "list", valid: true},
 		{name: "create", op: OperationCreate, text: "create", valid: true},
 		{name: "apply", op: OperationApply, text: "apply", valid: true},
 		{name: "update observed", op: OperationUpdateObserved, text: "update_observed", valid: true},

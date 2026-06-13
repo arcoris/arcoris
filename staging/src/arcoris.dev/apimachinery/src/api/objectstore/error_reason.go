@@ -28,6 +28,10 @@ const (
 	ErrorReasonStaleRevision ErrorReason = "stale_revision"
 	// ErrorReasonInvalidKey reports an invalid object store key.
 	ErrorReasonInvalidKey ErrorReason = "invalid_key"
+	// ErrorReasonInvalidListRequest reports an invalid collection-list request.
+	ErrorReasonInvalidListRequest ErrorReason = "invalid_list_request"
+	// ErrorReasonInvalidListScope reports an invalid collection-list scope.
+	ErrorReasonInvalidListScope ErrorReason = "invalid_list_scope"
 	// ErrorReasonInvalidState reports otherwise invalid object store state.
 	ErrorReasonInvalidState ErrorReason = "invalid_state"
 	// ErrorReasonInvalidStateObject reports invalid object envelope metadata.
@@ -54,6 +58,8 @@ func (r ErrorReason) IsValid() bool {
 		ErrorReasonConflict,
 		ErrorReasonStaleRevision,
 		ErrorReasonInvalidKey,
+		ErrorReasonInvalidListRequest,
+		ErrorReasonInvalidListScope,
 		ErrorReasonInvalidState,
 		ErrorReasonInvalidStateObject,
 		ErrorReasonMissingDesired,

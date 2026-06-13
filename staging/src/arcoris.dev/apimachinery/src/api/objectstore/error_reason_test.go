@@ -28,6 +28,8 @@ func TestErrorReasonStringAndValidity(t *testing.T) {
 		{name: "conflict", in: ErrorReasonConflict, text: "conflict", valid: true},
 		{name: "stale revision", in: ErrorReasonStaleRevision, text: "stale_revision", valid: true},
 		{name: "invalid key", in: ErrorReasonInvalidKey, text: "invalid_key", valid: true},
+		{name: "invalid list request", in: ErrorReasonInvalidListRequest, text: "invalid_list_request", valid: true},
+		{name: "invalid list scope", in: ErrorReasonInvalidListScope, text: "invalid_list_scope", valid: true},
 		{name: "invalid state", in: ErrorReasonInvalidState, text: "invalid_state", valid: true},
 		{name: "invalid state object", in: ErrorReasonInvalidStateObject, text: "invalid_state_object", valid: true},
 		{name: "missing desired", in: ErrorReasonMissingDesired, text: "missing_desired", valid: true},

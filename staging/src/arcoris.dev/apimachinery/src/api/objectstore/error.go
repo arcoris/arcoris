@@ -32,6 +32,9 @@ var (
 	// ErrInvalidKey classifies malformed object store keys.
 	ErrInvalidKey = errors.New("objectstore: invalid key")
 
+	// ErrInvalidListRequest classifies malformed object store list requests.
+	ErrInvalidListRequest = errors.New("objectstore: invalid list request")
+
 	// ErrInvalidState classifies malformed object store state values.
 	ErrInvalidState = errors.New("objectstore: invalid state")
 

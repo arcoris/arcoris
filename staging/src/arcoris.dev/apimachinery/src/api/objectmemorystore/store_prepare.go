@@ -53,6 +53,18 @@ func (s *Store) prepareDelete(ctx context.Context, key objectstore.Key, expected
 	return s.prepareRevisioned(ctx, key, expected)
 }
 
+// prepareList validates List inputs before scanning shards.
+func (s *Store) prepareList(ctx context.Context, request objectstore.ListRequest) error {
+	if err := requireStore(s); err != nil {
+		return err
+	}
+	if err := checkContext(ctx); err != nil {
+		return err
+	}
+
+	return objectstore.ValidateListRequest(request)
+}
+
 // prepareRevisioned validates the common boundary for expected-revision writes.
 func (s *Store) prepareRevisioned(ctx context.Context, key objectstore.Key, expected objectstore.Revision) error {
 	if err := s.prepareKeyed(ctx, key); err != nil {

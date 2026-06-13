@@ -29,7 +29,7 @@
 // live objects. api/objectownership represents canonical object ownership
 // state. api/objectstore commits already-computed state with optimistic
 // concurrency. objectlifecycle composes these layers into Get,
-// Create, Apply, UpdateObserved, PatchMetadata, and Delete operations.
+// List, Create, Apply, UpdateObserved, PatchMetadata, and Delete operations.
 //
 // # Operation semantics
 //
@@ -38,6 +38,12 @@
 // does not revalidate stored Desired or Observed payloads against current
 // descriptors; descriptor-aware validation is a write-path responsibility so
 // reads remain stable under descriptor evolution.
+//
+// List resolves an explicit group/version/resource, applies resource-scope
+// compatibility for the structural list scope, delegates the collection read to
+// objectstore.List, and returns committed live items. List follows Get's
+// read-path rule: it does not revalidate stored Desired or Observed payloads
+// against current descriptors.
 //
 // Create accepts a value-backed live object envelope, resolves its resource by
 // group/version/kind, validates it against the resource contract, initializes
@@ -103,6 +109,6 @@
 // objectlifecycle does not decode wire formats, select codecs, serve HTTP or
 // gRPC, run admission, authorize subjects, stamp ObjectMeta resourceVersion or
 // generation, generate UIDs, execute finalizers, perform graceful deletion,
-// default, convert, prune, list, watch, compact tombstones, reconcile
-// controllers, emit metrics/logging/tracing, or start background goroutines.
+// default, convert, prune, watch, compact tombstones, reconcile controllers,
+// emit metrics/logging/tracing, or start background goroutines.
 package objectlifecycle

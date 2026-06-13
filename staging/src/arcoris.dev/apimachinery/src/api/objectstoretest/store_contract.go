@@ -51,6 +51,9 @@ func RunStoreContractTests(t *testing.T, newStore Factory) {
 		{name: "delete success", run: testDeleteSuccess},
 		{name: "delete stale", run: testDeleteStale},
 		{name: "recreate after delete", run: testRecreateAfterDelete},
+		{name: "list success", run: testListSuccess},
+		{name: "list invalid request", run: testListInvalidRequest},
+		{name: "list context", run: testListContext},
 		{name: "detachment", run: testStateDetachment},
 		{name: "invalid inputs", run: testInvalidInputs},
 		{name: "context", run: testContext},
@@ -63,6 +66,7 @@ func RunStoreContractTests(t *testing.T, newStore Factory) {
 	}
 }
 
+// testGetMissing verifies absent keys return ok=false without an error.
 func testGetMissing(t *testing.T, newStore Factory) {
 	_, ok, err := newStore(t).Get(context.Background(), key(1))
 	requireNoError(t, err)
@@ -71,6 +75,7 @@ func testGetMissing(t *testing.T, newStore Factory) {
 	}
 }
 
+// testCreateSuccess verifies create assigns a committed revision and normalizes ownership.
 func testCreateSuccess(t *testing.T, newStore Factory) {
 	created, err := newStore(t).Create(context.Background(), key(1), rawState("created"))
 	requireNoError(t, err)
@@ -82,6 +87,7 @@ func testCreateSuccess(t *testing.T, newStore Factory) {
 	requireNormalizedOwnership(t, created)
 }
 
+// testCreateExisting verifies create rejects an already-live key.
 func testCreateExisting(t *testing.T, newStore Factory) {
 	store := newStore(t)
 	_, err := store.Create(context.Background(), key(1), rawState("created"))
@@ -91,6 +97,7 @@ func testCreateExisting(t *testing.T, newStore Factory) {
 	requireErrorIs(t, err, objectstore.ErrAlreadyExists)
 }
 
+// testUpdateSuccess verifies update commits a newer revision and normalized ownership.
 func testUpdateSuccess(t *testing.T, newStore Factory) {
 	store := newStore(t)
 	created := create(t, store, key(1), "created")
@@ -105,6 +112,7 @@ func testUpdateSuccess(t *testing.T, newStore Factory) {
 	requireNormalizedOwnership(t, updated)
 }
 
+// testUpdateStale verifies update enforces optimistic revision matching.
 func testUpdateStale(t *testing.T, newStore Factory) {
 	store := newStore(t)
 	created := create(t, store, key(1), "created")
@@ -113,6 +121,7 @@ func testUpdateStale(t *testing.T, newStore Factory) {
 	requireErrorIs(t, err, objectstore.ErrStaleRevision)
 }
 
+// testDeleteSuccess verifies delete tombstones live state and exposes both revisions.
 func testDeleteSuccess(t *testing.T, newStore Factory) {
 	store := newStore(t)
 	created := create(t, store, key(1), "created")
@@ -136,6 +145,7 @@ func testDeleteSuccess(t *testing.T, newStore Factory) {
 	}
 }
 
+// testDeleteStale verifies delete enforces optimistic revision matching.
 func testDeleteStale(t *testing.T, newStore Factory) {
 	store := newStore(t)
 	created := create(t, store, key(1), "created")
@@ -144,6 +154,7 @@ func testDeleteStale(t *testing.T, newStore Factory) {
 	requireErrorIs(t, err, objectstore.ErrStaleRevision)
 }
 
+// testRecreateAfterDelete verifies tombstoned slots can accept a later create.
 func testRecreateAfterDelete(t *testing.T, newStore Factory) {
 	store := newStore(t)
 	created := create(t, store, key(1), "created")
@@ -159,6 +170,81 @@ func testRecreateAfterDelete(t *testing.T, newStore Factory) {
 	requireDesired(t, recreated, "recreated")
 }
 
+// testListSuccess verifies the store-level live collection read contract.
+func testListSuccess(t *testing.T, newStore Factory) {
+	store := newStore(t)
+	firstKey := keyWith("workers", "alpha", "one")
+	secondKey := keyWith("workers", "beta", "two")
+	otherResourceKey := keyWith("jobs", "alpha", "skip")
+
+	first := create(t, store, firstKey, "first")
+	second := create(t, store, secondKey, "second")
+	create(t, store, otherResourceKey, "other")
+	deleted := create(t, store, keyWith("workers", "alpha", "deleted"), "deleted")
+	_, err := store.Delete(context.Background(), keyWith("workers", "alpha", "deleted"), deleted.Revision)
+	requireNoError(t, err)
+
+	all, err := store.List(context.Background(), objectstore.ListRequest{
+		Resource: firstKey.Resource,
+		Scope:    objectstore.AllNamespaces(),
+	})
+	requireNoError(t, err)
+	if all.Len() != 2 {
+		t.Fatalf("all len = %d; want 2", all.Len())
+	}
+	requireListItem(t, all.Items[0], firstKey, first.Revision, "first")
+	requireListItem(t, all.Items[1], secondKey, second.Revision, "second")
+	if all.Revision.IsZero() {
+		t.Fatalf("list revision is zero")
+	}
+
+	namespace, err := objectstore.InNamespace("alpha")
+	requireNoError(t, err)
+	namespaced, err := store.List(context.Background(), objectstore.ListRequest{
+		Resource: firstKey.Resource,
+		Scope:    namespace,
+	})
+	requireNoError(t, err)
+	if namespaced.Len() != 1 {
+		t.Fatalf("namespace len = %d; want 1", namespaced.Len())
+	}
+	requireListItem(t, namespaced.Items[0], firstKey, first.Revision, "first")
+
+	namespaced.Items[0].State.Object.Desired = value.StringValue("mutated")
+	again, err := store.List(context.Background(), objectstore.ListRequest{
+		Resource: firstKey.Resource,
+		Scope:    namespace,
+	})
+	requireNoError(t, err)
+	requireListItem(t, again.Items[0], firstKey, first.Revision, "first")
+}
+
+// testListInvalidRequest verifies list requests do not reuse invalid-key errors.
+func testListInvalidRequest(t *testing.T, newStore Factory) {
+	_, err := newStore(t).List(context.Background(), objectstore.ListRequest{})
+	requireErrorIs(t, err, objectstore.ErrInvalidListRequest)
+}
+
+// testListContext verifies list follows the common store context contract.
+func testListContext(t *testing.T, newStore Factory) {
+	store := newStore(t)
+
+	_, err := store.List(nil, objectstore.ListRequest{
+		Resource: key(1).Resource,
+		Scope:    objectstore.AllNamespaces(),
+	})
+	requireErrorIs(t, err, objectstore.ErrNilContext)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err = store.List(ctx, objectstore.ListRequest{
+		Resource: key(1).Resource,
+		Scope:    objectstore.AllNamespaces(),
+	})
+	requireErrorIs(t, err, context.Canceled)
+}
+
+// testStateDetachment verifies stores detach caller input and returned states.
 func testStateDetachment(t *testing.T, newStore Factory) {
 	store := newStore(t)
 	input := rawState("created")
@@ -185,6 +271,7 @@ func testStateDetachment(t *testing.T, newStore Factory) {
 	requireDesired(t, again, "created")
 }
 
+// testInvalidInputs verifies common key, state, and revision validation.
 func testInvalidInputs(t *testing.T, newStore Factory) {
 	store := newStore(t)
 
@@ -206,6 +293,7 @@ func testInvalidInputs(t *testing.T, newStore Factory) {
 	requireErrorIs(t, err, objectstore.ErrInvalidRevision)
 }
 
+// testContext verifies nil and canceled contexts are classified consistently.
 func testContext(t *testing.T, newStore Factory) {
 	store := newStore(t)
 
@@ -218,6 +306,7 @@ func testContext(t *testing.T, newStore Factory) {
 	requireErrorIs(t, err, context.Canceled)
 }
 
+// create commits a test state and fails the current test on error.
 func create(t *testing.T, store objectstore.Store, key objectstore.Key, text string) objectstore.State {
 	t.Helper()
 
@@ -227,20 +316,27 @@ func create(t *testing.T, store objectstore.Store, key objectstore.Key, text str
 	return created
 }
 
+// key constructs the default worker key for reusable store contract tests.
 func key(index int) objectstore.Key {
+	return keyWith("workers", "system", fmt.Sprintf("worker-%d", index))
+}
+
+// keyWith constructs a validated key for reusable store contract tests.
+func keyWith(resourceName, namespace, name string) objectstore.Key {
 	return objectstore.MustKey(
 		apiidentity.GroupVersionResource{
 			Group:    "control.arcoris.dev",
 			Version:  "v1",
-			Resource: "workers",
+			Resource: apiidentity.Resource(resourceName),
 		},
 		metaidentity.ObjectName{
-			Namespace: "system",
-			Name:      metaidentity.Name(fmt.Sprintf("worker-%d", index)),
+			Namespace: metaidentity.Namespace(namespace),
+			Name:      metaidentity.Name(name),
 		},
 	)
 }
 
+// rawState constructs valid uncommitted state with intentionally raw ownership order.
 func rawState(text string) objectstore.State {
 	observed := value.StringValue("observed-" + text)
 	return objectstore.State{
@@ -261,6 +357,7 @@ func rawState(text string) objectstore.State {
 	}
 }
 
+// mutateState changes visible payload values to test store detachment.
 func mutateState(state *objectstore.State, text string) {
 	state.Object.Desired = value.StringValue(text)
 	if state.Object.Observed != nil {
@@ -268,6 +365,7 @@ func mutateState(state *objectstore.State, text string) {
 	}
 }
 
+// fieldSet parses canonical field paths for test ownership entries.
 func fieldSet(paths ...string) fieldpath.Set {
 	parsed := make([]fieldpath.Path, 0, len(paths))
 	for _, text := range paths {
@@ -281,6 +379,7 @@ func fieldSet(paths ...string) fieldpath.Set {
 	return fieldpath.MustSet(parsed...)
 }
 
+// requireDesired checks the committed Desired string payload.
 func requireDesired(t *testing.T, state objectstore.State, want string) {
 	t.Helper()
 
@@ -290,6 +389,7 @@ func requireDesired(t *testing.T, state objectstore.State, want string) {
 	}
 }
 
+// requireNormalizedOwnership checks committed ownership canonicality.
 func requireNormalizedOwnership(t *testing.T, state objectstore.State) {
 	t.Helper()
 
@@ -298,6 +398,27 @@ func requireNormalizedOwnership(t *testing.T, state objectstore.State) {
 	}
 }
 
+// requireListItem checks the visible storage identity and detached committed state.
+func requireListItem(
+	t *testing.T,
+	item objectstore.ListItem,
+	key objectstore.Key,
+	revision objectstore.Revision,
+	desired string,
+) {
+	t.Helper()
+
+	if !item.Key.Equal(key) {
+		t.Fatalf("item key = %s; want %s", item.Key, key)
+	}
+	if item.State.Revision != revision {
+		t.Fatalf("item revision = %v; want %v", item.State.Revision, revision)
+	}
+	requireDesired(t, item.State, desired)
+	requireNormalizedOwnership(t, item.State)
+}
+
+// requireNoError fails the test when err is non-nil.
 func requireNoError(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
@@ -305,6 +426,7 @@ func requireNoError(t *testing.T, err error) {
 	}
 }
 
+// requireErrorIs checks sentinel preservation through wrapping.
 func requireErrorIs(t *testing.T, err error, target error) {
 	t.Helper()
 	if !errors.Is(err, target) {

@@ -145,6 +145,11 @@ func (s *oneWinnerUpdateStore) Get(context.Context, objectstore.Key) (objectstor
 	return s.state, true, nil
 }
 
+// List is unused by apply concurrency tests and returns conflict if called.
+func (s *oneWinnerUpdateStore) List(context.Context, objectstore.ListRequest) (objectstore.ListResult, error) {
+	return objectstore.ListResult{}, objectstore.ErrConflict
+}
+
 func (s *oneWinnerUpdateStore) Create(context.Context, objectstore.Key, objectstore.State) (objectstore.State, error) {
 	return objectstore.State{}, objectstore.ErrAlreadyExists
 }

@@ -150,3 +150,8 @@ func (fakeStore) Update(context.Context, Key, Revision, State) (State, error) {
 func (fakeStore) Delete(context.Context, Key, Revision) (DeleteResult, error) {
 	return DeleteResult{}, nil
 }
+
+// List satisfies Store for objectstore contract-shape tests.
+func (fakeStore) List(context.Context, ListRequest) (ListResult, error) {
+	return ListResult{}, nil
+}
