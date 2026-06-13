@@ -37,6 +37,10 @@ type Selection struct {
 	EntryID codecregistry.EntryID
 
 	// Entry records the registry metadata and implementation for EntryID.
+	//
+	// Selection exposes Entry for inspection and advanced diagnostics. Typed
+	// Select* methods already return the selected capability directly, so most
+	// callers should use that typed value instead of asserting Entry.Codec().
 	Entry codecregistry.Entry
 }
 

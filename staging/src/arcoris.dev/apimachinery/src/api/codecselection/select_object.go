@@ -18,64 +18,20 @@ import "arcoris.dev/apimachinery/api/codec"
 
 // SelectObjectDecoder selects a byte-based object decoder for contentType.
 func (s Selector) SelectObjectDecoder(contentType ContentType) (Selection, codec.ObjectDecoder, error) {
-	path := runtimeDecodePath(codec.TargetObject.String())
-	selection, err := s.selectDecode(contentType, codec.TargetObject, TransportBytes, path)
-	if err != nil {
-		return Selection{}, nil, err
-	}
-
-	selected, ok := selection.Entry.Codec().(codec.ObjectCodec)
-	if !ok {
-		return Selection{}, nil, missingRuntimeCapabilityError(path, selection)
-	}
-
-	return selection, selected, nil
+	return selectTypedDecoder[codec.ObjectCodec](s, contentType, codec.TargetObject, TransportBytes)
 }
 
 // SelectObjectEncoder selects a byte-based object encoder from preferences.
 func (s Selector) SelectObjectEncoder(preferences PreferenceSet) (Selection, codec.ObjectEncoder, error) {
-	path := runtimeEncodePath(codec.TargetObject.String())
-	selection, err := s.selectEncode(preferences, codec.TargetObject, TransportBytes, path)
-	if err != nil {
-		return Selection{}, nil, err
-	}
-
-	selected, ok := selection.Entry.Codec().(codec.ObjectCodec)
-	if !ok {
-		return Selection{}, nil, missingRuntimeCapabilityError(path, selection)
-	}
-
-	return selection, selected, nil
+	return selectTypedEncoder[codec.ObjectCodec](s, preferences, codec.TargetObject, TransportBytes)
 }
 
 // SelectObjectStreamDecoder selects a streaming object decoder for contentType.
 func (s Selector) SelectObjectStreamDecoder(contentType ContentType) (Selection, codec.ObjectStreamDecoder, error) {
-	path := runtimeDecodePath(codec.TargetObject.String())
-	selection, err := s.selectDecode(contentType, codec.TargetObject, TransportStream, path)
-	if err != nil {
-		return Selection{}, nil, err
-	}
-
-	selected, ok := selection.Entry.Codec().(codec.ObjectStreamCodec)
-	if !ok {
-		return Selection{}, nil, missingRuntimeCapabilityError(path, selection)
-	}
-
-	return selection, selected, nil
+	return selectTypedDecoder[codec.ObjectStreamCodec](s, contentType, codec.TargetObject, TransportStream)
 }
 
 // SelectObjectStreamEncoder selects a streaming object encoder from preferences.
 func (s Selector) SelectObjectStreamEncoder(preferences PreferenceSet) (Selection, codec.ObjectStreamEncoder, error) {
-	path := runtimeEncodePath(codec.TargetObject.String())
-	selection, err := s.selectEncode(preferences, codec.TargetObject, TransportStream, path)
-	if err != nil {
-		return Selection{}, nil, err
-	}
-
-	selected, ok := selection.Entry.Codec().(codec.ObjectStreamCodec)
-	if !ok {
-		return Selection{}, nil, missingRuntimeCapabilityError(path, selection)
-	}
-
-	return selection, selected, nil
+	return selectTypedEncoder[codec.ObjectStreamCodec](s, preferences, codec.TargetObject, TransportStream)
 }

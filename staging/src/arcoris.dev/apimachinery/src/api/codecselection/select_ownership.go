@@ -20,70 +20,26 @@ import "arcoris.dev/apimachinery/api/codec"
 func (s Selector) SelectObjectOwnershipDecoder(
 	contentType ContentType,
 ) (Selection, codec.ObjectOwnershipDecoder, error) {
-	path := runtimeDecodePath(codec.TargetObjectOwnership.String())
-	selection, err := s.selectDecode(contentType, codec.TargetObjectOwnership, TransportBytes, path)
-	if err != nil {
-		return Selection{}, nil, err
-	}
-
-	selected, ok := selection.Entry.Codec().(codec.ObjectOwnershipCodec)
-	if !ok {
-		return Selection{}, nil, missingRuntimeCapabilityError(path, selection)
-	}
-
-	return selection, selected, nil
+	return selectTypedDecoder[codec.ObjectOwnershipCodec](s, contentType, codec.TargetObjectOwnership, TransportBytes)
 }
 
 // SelectObjectOwnershipEncoder selects a byte-based ownership encoder from preferences.
 func (s Selector) SelectObjectOwnershipEncoder(
 	preferences PreferenceSet,
 ) (Selection, codec.ObjectOwnershipEncoder, error) {
-	path := runtimeEncodePath(codec.TargetObjectOwnership.String())
-	selection, err := s.selectEncode(preferences, codec.TargetObjectOwnership, TransportBytes, path)
-	if err != nil {
-		return Selection{}, nil, err
-	}
-
-	selected, ok := selection.Entry.Codec().(codec.ObjectOwnershipCodec)
-	if !ok {
-		return Selection{}, nil, missingRuntimeCapabilityError(path, selection)
-	}
-
-	return selection, selected, nil
+	return selectTypedEncoder[codec.ObjectOwnershipCodec](s, preferences, codec.TargetObjectOwnership, TransportBytes)
 }
 
 // SelectObjectOwnershipStreamDecoder selects a streaming ownership decoder for contentType.
 func (s Selector) SelectObjectOwnershipStreamDecoder(
 	contentType ContentType,
 ) (Selection, codec.ObjectOwnershipStreamDecoder, error) {
-	path := runtimeDecodePath(codec.TargetObjectOwnership.String())
-	selection, err := s.selectDecode(contentType, codec.TargetObjectOwnership, TransportStream, path)
-	if err != nil {
-		return Selection{}, nil, err
-	}
-
-	selected, ok := selection.Entry.Codec().(codec.ObjectOwnershipStreamCodec)
-	if !ok {
-		return Selection{}, nil, missingRuntimeCapabilityError(path, selection)
-	}
-
-	return selection, selected, nil
+	return selectTypedDecoder[codec.ObjectOwnershipStreamCodec](s, contentType, codec.TargetObjectOwnership, TransportStream)
 }
 
 // SelectObjectOwnershipStreamEncoder selects a streaming ownership encoder from preferences.
 func (s Selector) SelectObjectOwnershipStreamEncoder(
 	preferences PreferenceSet,
 ) (Selection, codec.ObjectOwnershipStreamEncoder, error) {
-	path := runtimeEncodePath(codec.TargetObjectOwnership.String())
-	selection, err := s.selectEncode(preferences, codec.TargetObjectOwnership, TransportStream, path)
-	if err != nil {
-		return Selection{}, nil, err
-	}
-
-	selected, ok := selection.Entry.Codec().(codec.ObjectOwnershipStreamCodec)
-	if !ok {
-		return Selection{}, nil, missingRuntimeCapabilityError(path, selection)
-	}
-
-	return selection, selected, nil
+	return selectTypedEncoder[codec.ObjectOwnershipStreamCodec](s, preferences, codec.TargetObjectOwnership, TransportStream)
 }
