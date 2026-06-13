@@ -39,8 +39,8 @@ func TestDefaultEncodeConfig(t *testing.T) {
 	if config.Object.TypeMeta != TypeMetaOmitZero {
 		t.Fatalf("type meta = %d; want omit zero", config.Object.TypeMeta)
 	}
-	if config.Ownership.Normalize != OwnershipNormalizeWhenDeterministic {
-		t.Fatalf("ownership normalize = %d; want when deterministic", config.Ownership.Normalize)
+	if config.Ownership.EmptySurfaces != EmptyOwnershipSurfaceEmit {
+		t.Fatalf("empty surfaces = %d; want emit", config.Ownership.EmptySurfaces)
 	}
 	if config.Limits.MaxDepth != DefaultMaxDepth {
 		t.Fatalf("max depth = %d; want %d", config.Limits.MaxDepth, DefaultMaxDepth)
@@ -71,8 +71,8 @@ func TestResolveEncodeConfig(t *testing.T) {
 	if config.Object.Metadata == MetadataDefault {
 		t.Fatalf("metadata mode still default")
 	}
-	if config.Ownership.EmptyEntries == EmptyEntriesDefault {
-		t.Fatalf("empty entries mode still default")
+	if config.Ownership.EmptySurfaces == EmptyOwnershipSurfaceDefault {
+		t.Fatalf("empty surfaces mode still default")
 	}
 	if config.Limits.MaxDepth != DefaultMaxDepth {
 		t.Fatalf("max depth = %d; want %d", config.Limits.MaxDepth, DefaultMaxDepth)

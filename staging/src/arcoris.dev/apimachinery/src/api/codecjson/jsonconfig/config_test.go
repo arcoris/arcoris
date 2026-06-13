@@ -34,8 +34,8 @@ func TestResolveZeroConfigUsesDefaults(t *testing.T) {
 	if config.Decode.Limits.MaxNumberDigits != DefaultMaxNumberDigits {
 		t.Fatalf("decode max number digits = %d; want %d", config.Decode.Limits.MaxNumberDigits, DefaultMaxNumberDigits)
 	}
-	if !config.Decode.Ownership.ValidateState {
-		t.Fatalf("decode ownership validation = false; want true")
+	if config.Decode.Ownership.Validation != OwnershipValidationEnable {
+		t.Fatalf("decode ownership validation = %d; want enable", config.Decode.Ownership.Validation)
 	}
 	if config.Encode.Output.Layout != LayoutCompact {
 		t.Fatalf("encode layout = %d; want compact", config.Encode.Output.Layout)
@@ -77,6 +77,9 @@ func assertNoDefaultModes(t *testing.T, config Config) {
 	}
 	if config.Decode.Ownership.UnknownFields == UnknownFieldDefault {
 		t.Fatalf("decode ownership unknown field mode still default")
+	}
+	if config.Decode.Ownership.Validation == OwnershipValidationDefault {
+		t.Fatalf("decode ownership validation mode still default")
 	}
 	if config.Encode.Output.Layout == LayoutDefault {
 		t.Fatalf("encode layout mode still default")
@@ -126,13 +129,7 @@ func assertNoDefaultModes(t *testing.T, config Config) {
 	if config.Encode.Object.Observed == ObservedDefault {
 		t.Fatalf("encode observed mode still default")
 	}
-	if config.Encode.Ownership.Normalize == OwnershipNormalizeDefault {
-		t.Fatalf("encode ownership normalize mode still default")
-	}
 	if config.Encode.Ownership.EmptySurfaces == EmptyOwnershipSurfaceDefault {
 		t.Fatalf("encode ownership empty surfaces mode still default")
-	}
-	if config.Encode.Ownership.EmptyEntries == EmptyEntriesDefault {
-		t.Fatalf("encode ownership empty entries mode still default")
 	}
 }

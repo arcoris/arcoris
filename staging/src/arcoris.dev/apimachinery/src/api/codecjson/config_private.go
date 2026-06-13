@@ -60,7 +60,7 @@ type resolvedEncodeConfig struct {
 	// finalNewline appends a trailing newline after one JSON document.
 	finalNewline bool
 
-	// deterministic sorts value object members and may normalize ownership state.
+	// deterministic sorts value object members.
 	deterministic bool
 
 	// escapeHTML mirrors encoding/json HTML escaping for JSON strings.
@@ -90,12 +90,6 @@ type resolvedEncodeConfig struct {
 	// observed controls absent observed payload emission.
 	observed jsonconfig.ObservedEncodeMode
 
-	// ownershipNormalize controls pre-encode ownership state normalization.
-	ownershipNormalize jsonconfig.OwnershipNormalizeMode
-
 	// emptySurfaces controls empty ownership surface emission.
 	emptySurfaces jsonconfig.EmptyOwnershipSurfaceMode
-
-	// emptyEntries controls empty ownership entries emission.
-	emptyEntries jsonconfig.EmptyEntriesMode
 }

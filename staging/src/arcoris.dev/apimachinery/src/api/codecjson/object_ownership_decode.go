@@ -23,6 +23,11 @@ import (
 )
 
 // nodeToOwnershipState converts lower-camel JSON into canonical ownership state.
+//
+// Decoding targets objectownership.State, not a raw JSON document model.
+// Duplicate owner entries and duplicate fields may collapse through
+// fieldownership.State construction. That loss of raw duplication is
+// intentional because the codec returns the semantic ownership model.
 func nodeToOwnershipState(path jsonPath, node jsonNode, config resolvedDecodeConfig) (objectownership.State, error) {
 	if err := requireObject(path, node, "object ownership root must be a JSON object"); err != nil {
 		return objectownership.State{}, err

@@ -24,8 +24,8 @@ func TestDefaultDecodeOwnershipConfig(t *testing.T) {
 	if config.UnknownFields != UnknownFieldReject {
 		t.Fatalf("unknown fields = %d; want reject", config.UnknownFields)
 	}
-	if !config.ValidateState {
-		t.Fatalf("validate state = false; want true")
+	if config.Validation != OwnershipValidationEnable {
+		t.Fatalf("validation = %d; want enable", config.Validation)
 	}
 }
 
@@ -38,15 +38,44 @@ func TestResolveDecodeOwnershipConfig(t *testing.T) {
 	if config.UnknownFields != UnknownFieldReject {
 		t.Fatalf("unknown fields = %d; want reject", config.UnknownFields)
 	}
-	if !config.ValidateState {
-		t.Fatalf("validate state = false; want true")
+	if config.Validation != OwnershipValidationEnable {
+		t.Fatalf("validation = %d; want enable", config.Validation)
 	}
 }
 
-func TestValidateDecodeOwnershipConfigRejectsUnknownMode(t *testing.T) {
+func TestResolveDecodeOwnershipConfigKeepsExplicitValidationDisable(t *testing.T) {
 	t.Parallel()
 
-	err := validateDecodeOwnershipConfig(DecodeOwnershipConfig{UnknownFields: UnknownFieldMode(99)})
-	requireConfigErrorIs(t, err, ErrInvalidConfig)
-	requireErrorTextContains(t, err, "decode.ownership.unknown_fields")
+	config := DecodeOwnershipConfig{Validation: OwnershipValidationDisable}
+	resolveDecodeOwnershipConfig(&config)
+
+	if config.Validation != OwnershipValidationDisable {
+		t.Fatalf("validation = %d; want disable", config.Validation)
+	}
+}
+
+func TestValidateDecodeOwnershipConfigRejectsUnknownModes(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		config DecodeOwnershipConfig
+		path   string
+	}{
+		"unknown fields": {
+			config: DecodeOwnershipConfig{UnknownFields: UnknownFieldMode(99), Validation: OwnershipValidationEnable},
+			path:   "decode.ownership.unknown_fields",
+		},
+		"validation": {
+			config: DecodeOwnershipConfig{UnknownFields: UnknownFieldReject, Validation: OwnershipValidationMode(99)},
+			path:   "decode.ownership.validation",
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			err := validateDecodeOwnershipConfig(testCase.config)
+			requireConfigErrorIs(t, err, ErrInvalidConfig)
+			requireErrorTextContains(t, err, testCase.path)
+		})
+	}
 }

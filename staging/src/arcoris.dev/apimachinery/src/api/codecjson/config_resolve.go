@@ -38,28 +38,26 @@ func resolveDecodeConfig(config jsonconfig.DecodeConfig) resolvedDecodeConfig {
 		maxNumberDigits:              config.Limits.MaxNumberDigits,
 		rejectUnknownEnvelopeFields:  config.Objects.UnknownEnvelopeFields == jsonconfig.UnknownFieldReject,
 		rejectUnknownOwnershipFields: config.Ownership.UnknownFields == jsonconfig.UnknownFieldReject,
-		validateOwnershipState:       config.Ownership.ValidateState,
+		validateOwnershipState:       config.Ownership.Validation == jsonconfig.OwnershipValidationEnable,
 	}
 }
 
 // resolveEncodeConfig copies resolved encode policy into hot-path fields.
 func resolveEncodeConfig(config jsonconfig.EncodeConfig) resolvedEncodeConfig {
 	return resolvedEncodeConfig{
-		pretty:             config.Output.Layout == jsonconfig.LayoutPretty,
-		indent:             config.Output.Indent,
-		finalNewline:       config.Output.FinalNewline == jsonconfig.FinalNewlineAppend,
-		deterministic:      config.Ordering.Mode == jsonconfig.OrderingDeterministic,
-		escapeHTML:         config.Strings.EscapeHTML,
-		maxDepth:           config.Limits.MaxDepth,
-		maxOutputBytes:     config.Limits.MaxOutputBytes,
-		maxNumberDigits:    config.Numbers.MaxDigits,
-		floatFormat:        config.Numbers.FloatFormat,
-		negativeZero:       config.Numbers.NegativeZero,
-		typeMeta:           config.Object.TypeMeta,
-		metadata:           config.Object.Metadata,
-		observed:           config.Object.Observed,
-		ownershipNormalize: config.Ownership.Normalize,
-		emptySurfaces:      config.Ownership.EmptySurfaces,
-		emptyEntries:       config.Ownership.EmptyEntries,
+		pretty:          config.Output.Layout == jsonconfig.LayoutPretty,
+		indent:          config.Output.Indent,
+		finalNewline:    config.Output.FinalNewline == jsonconfig.FinalNewlineAppend,
+		deterministic:   config.Ordering.Mode == jsonconfig.OrderingDeterministic,
+		escapeHTML:      config.Strings.EscapeHTML,
+		maxDepth:        config.Limits.MaxDepth,
+		maxOutputBytes:  config.Limits.MaxOutputBytes,
+		maxNumberDigits: config.Numbers.MaxDigits,
+		floatFormat:     config.Numbers.FloatFormat,
+		negativeZero:    config.Numbers.NegativeZero,
+		typeMeta:        config.Object.TypeMeta,
+		metadata:        config.Object.Metadata,
+		observed:        config.Object.Observed,
+		emptySurfaces:   config.Ownership.EmptySurfaces,
 	}
 }

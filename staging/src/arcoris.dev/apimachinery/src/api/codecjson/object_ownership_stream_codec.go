@@ -38,8 +38,8 @@ func (c Codec) DecodeObjectOwnershipFrom(
 
 // EncodeObjectOwnershipTo writes one object ownership state as JSON.
 //
-// Deterministic output normalizes the state before writing. The encoder does
-// not compute ownership or interpret lifecycle semantics.
+// The encoder validates the supplied state and formats it directly. It does not
+// normalize ownership, compute ownership, or interpret lifecycle semantics.
 func (c Codec) EncodeObjectOwnershipTo(
 	w io.Writer,
 	state objectownership.State,

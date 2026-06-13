@@ -16,15 +16,15 @@ package jsonconfig
 
 import "testing"
 
-func TestEmptyEntriesModeIsKnown(t *testing.T) {
+func TestOwnershipValidationModeIsKnown(t *testing.T) {
 	t.Parallel()
 
-	if !isKnownEmptyEntriesMode(EmptyEntriesDefault) ||
-		!isKnownEmptyEntriesMode(EmptyEntriesEmit) ||
-		!isKnownEmptyEntriesMode(EmptyEntriesOmit) {
-		t.Fatalf("known empty entries mode reported unknown")
+	if !isKnownOwnershipValidationMode(OwnershipValidationDefault) ||
+		!isKnownOwnershipValidationMode(OwnershipValidationEnable) ||
+		!isKnownOwnershipValidationMode(OwnershipValidationDisable) {
+		t.Fatalf("known ownership validation mode reported unknown")
 	}
-	if isKnownEmptyEntriesMode(EmptyEntriesMode(99)) {
-		t.Fatalf("unknown empty entries mode reported known")
+	if isKnownOwnershipValidationMode(OwnershipValidationMode(99)) {
+		t.Fatalf("unknown ownership validation mode reported known")
 	}
 }

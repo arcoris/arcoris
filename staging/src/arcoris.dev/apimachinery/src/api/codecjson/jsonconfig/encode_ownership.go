@@ -16,48 +16,29 @@ package jsonconfig
 
 // EncodeOwnershipConfig controls object ownership state output.
 type EncodeOwnershipConfig struct {
-	// Normalize controls whether objectownership.Normalize is applied.
-	Normalize OwnershipNormalizeMode
-
 	// EmptySurfaces controls ownership surface emission when a surface is empty.
 	EmptySurfaces EmptyOwnershipSurfaceMode
-
-	// EmptyEntries controls entries emission for empty ownership surfaces.
-	EmptyEntries EmptyEntriesMode
 }
 
 // defaultEncodeOwnershipConfig returns stable ownership state output policy.
 func defaultEncodeOwnershipConfig() EncodeOwnershipConfig {
 	return EncodeOwnershipConfig{
-		Normalize:     OwnershipNormalizeWhenDeterministic,
 		EmptySurfaces: EmptyOwnershipSurfaceEmit,
-		EmptyEntries:  EmptyEntriesEmit,
 	}
 }
 
 // resolveEncodeOwnershipConfig applies ownership encode defaults in place.
 func resolveEncodeOwnershipConfig(config *EncodeOwnershipConfig) {
-	if config.Normalize == OwnershipNormalizeDefault {
-		config.Normalize = OwnershipNormalizeWhenDeterministic
-	}
 	if config.EmptySurfaces == EmptyOwnershipSurfaceDefault {
 		config.EmptySurfaces = EmptyOwnershipSurfaceEmit
-	}
-	if config.EmptyEntries == EmptyEntriesDefault {
-		config.EmptyEntries = EmptyEntriesEmit
 	}
 }
 
 // validateEncodeOwnershipConfig checks ownership state output policy.
 func validateEncodeOwnershipConfig(config EncodeOwnershipConfig) error {
-	switch {
-	case !isKnownOwnershipNormalizeMode(config.Normalize):
-		return invalidConfig("encode.ownership.normalize", "unknown normalize mode %d", config.Normalize)
-	case !isKnownEmptyOwnershipSurfaceMode(config.EmptySurfaces):
+	if !isKnownEmptyOwnershipSurfaceMode(config.EmptySurfaces) {
 		return invalidConfig("encode.ownership.empty_surfaces", "unknown empty surfaces mode %d", config.EmptySurfaces)
-	case !isKnownEmptyEntriesMode(config.EmptyEntries):
-		return invalidConfig("encode.ownership.empty_entries", "unknown empty entries mode %d", config.EmptyEntries)
-	default:
-		return nil
 	}
+
+	return nil
 }

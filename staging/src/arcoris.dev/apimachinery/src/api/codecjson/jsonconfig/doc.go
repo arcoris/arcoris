@@ -20,7 +20,7 @@
 //
 // Ownership configuration controls JSON representation of canonical
 // objectownership.State values. It does not define storage schema versions or
-// domain ownership-document migration policy.
+// domain migration policy.
 //
 // Configuration is resolved when a codecjson.Codec is constructed. Runtime
 // encode/decode calls do not receive per-call options.

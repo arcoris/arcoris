@@ -34,7 +34,7 @@ func TestDecodeObjectOwnershipState(t *testing.T) {
 	requireOwnershipFields(t, got.Metadata().Annotations(), "annotator", `$["with.dots"]`)
 }
 
-func TestDecodeObjectOwnershipNormalizesDuplicateEntries(t *testing.T) {
+func TestDecodeObjectOwnershipCollapsesDuplicateEntries(t *testing.T) {
 	got, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{"entries":[{"owner":"user-cli","fields":["$.image"]},{"owner":"user-cli","fields":["$.image","$.replicas"]}]}}`))
 	requireNoError(t, err)
 

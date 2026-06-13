@@ -19,20 +19,15 @@ type DecodeOwnershipConfig struct {
 	// UnknownFields controls unknown ownership JSON fields.
 	UnknownFields UnknownFieldMode
 
-	// ValidateState controls semantic ownership-state validation after decode.
-	//
-	// A zero Config resolves this to true for the safe default policy. Callers
-	// that intentionally disable validation should set UnknownFields explicitly
-	// as well, because a bare false bool is otherwise indistinguishable from
-	// zero-value default construction.
-	ValidateState bool
+	// Validation controls semantic ownership-state validation after decode.
+	Validation OwnershipValidationMode
 }
 
 // defaultDecodeOwnershipConfig returns strict ownership decode policy.
 func defaultDecodeOwnershipConfig() DecodeOwnershipConfig {
 	return DecodeOwnershipConfig{
 		UnknownFields: UnknownFieldReject,
-		ValidateState: true,
+		Validation:    OwnershipValidationEnable,
 	}
 }
 
@@ -40,15 +35,20 @@ func defaultDecodeOwnershipConfig() DecodeOwnershipConfig {
 func resolveDecodeOwnershipConfig(config *DecodeOwnershipConfig) {
 	if config.UnknownFields == UnknownFieldDefault {
 		config.UnknownFields = UnknownFieldReject
-		config.ValidateState = true
+	}
+	if config.Validation == OwnershipValidationDefault {
+		config.Validation = OwnershipValidationEnable
 	}
 }
 
 // validateDecodeOwnershipConfig checks ownership-state decode policy.
 func validateDecodeOwnershipConfig(config DecodeOwnershipConfig) error {
-	if !isKnownUnknownFieldMode(config.UnknownFields) {
+	switch {
+	case !isKnownUnknownFieldMode(config.UnknownFields):
 		return invalidConfig("decode.ownership.unknown_fields", "unknown field mode %d", config.UnknownFields)
+	case !isKnownOwnershipValidationMode(config.Validation):
+		return invalidConfig("decode.ownership.validation", "unknown validation mode %d", config.Validation)
+	default:
+		return nil
 	}
-
-	return nil
 }
