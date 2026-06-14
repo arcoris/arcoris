@@ -52,6 +52,13 @@
 // version does not define an observed descriptor, and validated only when
 // present.
 //
+// Descriptor traversal details such as unknown-field rejection, required-field
+// checks, null handling, numeric/string type checks, and nested field paths are
+// owned by the configured SurfaceValidator implementation. objectvalidation
+// selects the correct surface descriptor, calls validators in deterministic
+// order, and preserves the lower validation cause under the object.desired or
+// object.observed boundary diagnostic.
+//
 // Non-goals: no catalog lookup, admission, serving/exposed-version policy,
 // storage validation, defaulting, conversion, pruning, apply, ownership,
 // lifecycle, codecs, runtime schemes, clients, controllers, or global
