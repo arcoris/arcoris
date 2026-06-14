@@ -27,6 +27,7 @@
 // State is the single canonical ownership model. There is no separate ownership
 // document model, document version, or migration layer in this package. Stores,
 // codecs, lifecycle code, and apply code all exchange State directly.
+// The zero State is valid empty ownership and is equivalent to EmptyState.
 //
 // State stores ownership in separate surface-relative namespaces:
 // Desired, Observed, metadata labels, and metadata annotations. A path such as
@@ -34,11 +35,12 @@
 // path such as $["scheduler.arcoris.dev/mode"] is relative to the labels
 // surface rather than to a synthetic whole-object $.metadata path.
 //
-// Normalize canonicalizes each surface independently by relying on
-// fieldownership's deterministic owner ordering, duplicate-owner merge,
-// duplicate-field deduplication, and empty-entry pruning. Validate checks each
-// surface with fieldownership structural validation. ValidateNormalized is
-// available for callers that need to assert already-canonical state.
+// Normalize canonicalizes each surface independently without mutating the input
+// State. It relies on fieldownership's deterministic owner ordering,
+// duplicate-owner merge, duplicate-field deduplication, and empty-entry pruning.
+// Validate checks each surface with fieldownership structural validation.
+// ValidateNormalized is available for callers that need to assert
+// already-canonical state.
 //
 // The package does not apply objects, merge values, validate resources,
 // validate descriptors, mutate metadata, access storage, assign storage

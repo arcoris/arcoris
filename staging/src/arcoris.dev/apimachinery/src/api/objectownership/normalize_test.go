@@ -14,7 +14,10 @@
 
 package objectownership
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestNormalizeEmptyState(t *testing.T) {
 	got := Normalize(EmptyState())
@@ -48,4 +51,84 @@ func TestNormalizeDoesNotMutateInput(t *testing.T) {
 	_ = Normalize(state)
 
 	requireOwnersOf(t, state.Desired(), path("$.image"), "desired")
+}
+
+func TestNormalizeIsIdempotent(t *testing.T) {
+	state := NewStateWithSurfaces(
+		ownershipState(
+			ownershipEntry("zeta", "$.replicas"),
+			ownershipEntry("alpha", "$.image"),
+			ownershipEntry("alpha", "$.replicas", "$.image"),
+		),
+		ownershipState(
+			ownershipEntry("observer", "$.ready"),
+			ownershipEntry("observer", "$.phase"),
+		),
+		NewMetadataState(
+			ownershipState(
+				ownershipEntry("labeler", `$["team"]`),
+				ownershipEntry("labeler", `$["app"]`),
+			),
+			ownershipState(
+				ownershipEntry("annotator", `$["scheduler.arcoris.dev/mode"]`),
+				ownershipEntry("annotator", `$["note"]`),
+			),
+		),
+	)
+
+	once := Normalize(state)
+	twice := Normalize(once)
+
+	if !reflect.DeepEqual(twice, once) {
+		t.Fatalf("Normalize(Normalize(state)) != Normalize(state)")
+	}
+}
+
+func TestNormalizeIsDeterministicAcrossEquivalentInputOrder(t *testing.T) {
+	first := NewStateWithSurfaces(
+		ownershipState(
+			ownershipEntry("zeta", "$.replicas"),
+			ownershipEntry("alpha", "$.image"),
+			ownershipEntry("alpha", "$.replicas"),
+		),
+		ownershipState(ownershipEntry("observer", "$.ready")),
+		NewMetadataState(
+			ownershipState(ownershipEntry("labeler", `$["team"]`), ownershipEntry("labeler", `$["app"]`)),
+			ownershipState(ownershipEntry("annotator", `$["note"]`)),
+		),
+	)
+	second := NewStateWithSurfaces(
+		ownershipState(
+			ownershipEntry("alpha", "$.replicas"),
+			ownershipEntry("zeta", "$.replicas"),
+			ownershipEntry("alpha", "$.image"),
+		),
+		ownershipState(ownershipEntry("observer", "$.ready")),
+		NewMetadataState(
+			ownershipState(ownershipEntry("labeler", `$["app"]`), ownershipEntry("labeler", `$["team"]`)),
+			ownershipState(ownershipEntry("annotator", `$["note"]`)),
+		),
+	)
+
+	if !reflect.DeepEqual(Normalize(first), Normalize(second)) {
+		t.Fatalf("equivalent ownership states normalized differently")
+	}
+}
+
+func TestNormalizeDoesNotMergeSurfaces(t *testing.T) {
+	state := NewStateWithSurfaces(
+		ownershipState(ownershipEntry("desired-owner", "$.ready")),
+		ownershipState(ownershipEntry("observed-owner", "$.ready")),
+		NewMetadataState(
+			ownershipState(ownershipEntry("label-owner", `$["ready"]`)),
+			ownershipState(ownershipEntry("annotation-owner", `$["ready"]`)),
+		),
+	)
+
+	got := Normalize(state)
+
+	requireOwnersOf(t, got.Desired(), path("$.ready"), "desired-owner")
+	requireOwnersOf(t, got.Observed(), path("$.ready"), "observed-owner")
+	requireOwnersOf(t, got.Metadata().Labels(), path(`$["ready"]`), "label-owner")
+	requireOwnersOf(t, got.Metadata().Annotations(), path(`$["ready"]`), "annotation-owner")
 }

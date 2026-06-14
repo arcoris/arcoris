@@ -32,3 +32,41 @@ func TestValidateAcceptsAllSurfaces(t *testing.T) {
 
 	requireNoError(t, Validate(state))
 }
+
+func TestValidateAcceptsNormalizeOutputFromDuplicateOwnerInput(t *testing.T) {
+	state := NewStateWithSurfaces(
+		ownershipState(
+			ownershipEntry("manager", "$.image"),
+			ownershipEntry("manager", "$.replicas", "$.image"),
+		),
+		ownershipState(
+			ownershipEntry("controller", "$.ready"),
+			ownershipEntry("controller", "$.phase"),
+		),
+		NewMetadataState(
+			ownershipState(
+				ownershipEntry("metadata", `$["team"]`),
+				ownershipEntry("metadata", `$["app"]`),
+			),
+			ownershipState(
+				ownershipEntry("metadata", `$["note"]`),
+				ownershipEntry("metadata", `$["scheduler.arcoris.dev/mode"]`),
+			),
+		),
+	)
+
+	requireNoError(t, Validate(Normalize(state)))
+}
+
+func TestValidateAllowsSamePathInDifferentSurfaces(t *testing.T) {
+	state := NewStateWithSurfaces(
+		ownershipState(ownershipEntry("desired", "$.ready")),
+		ownershipState(ownershipEntry("observed", "$.ready")),
+		NewMetadataState(
+			ownershipState(ownershipEntry("labels", `$["ready"]`)),
+			ownershipState(ownershipEntry("annotations", `$["ready"]`)),
+		),
+	)
+
+	requireNoError(t, Validate(state))
+}
