@@ -70,5 +70,16 @@ func (e *Executor) resolveKeyResource(op Operation, gvr identity.GroupVersionRes
 		return resolvedResource{}, errorFor(op, ErrorReasonResourceNotFound, objectstore.Key{}, ErrResourceNotFound, nil)
 	}
 
-	return resolvedResource{definition: def, version: version, gvr: gvr}, nil
+	resolvedGVR, ok := def.GroupVersionResource(version.Version())
+	if !ok || resolvedGVR != gvr {
+		return resolvedResource{}, errorFor(
+			op,
+			ErrorReasonInvalidResourceContract,
+			objectstore.Key{},
+			ErrValidationFailed,
+			ErrInvalidResourceContract,
+		)
+	}
+
+	return resolvedResource{definition: def, version: version, gvr: resolvedGVR}, nil
 }
