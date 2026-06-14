@@ -51,6 +51,7 @@ func RunStoreContractTests(t *testing.T, newStore Factory) {
 		{name: "delete success", run: testDeleteSuccess},
 		{name: "delete stale", run: testDeleteStale},
 		{name: "recreate after delete", run: testRecreateAfterDelete},
+		{name: "changes", run: testChanges},
 		{name: "list success", run: testListSuccess},
 		{name: "list invalid request", run: testListInvalidRequest},
 		{name: "list context", run: testListContext},
@@ -168,6 +169,30 @@ func testRecreateAfterDelete(t *testing.T, newStore Factory) {
 		t.Fatalf("recreated revision = %v; want after delete %v", recreated.Revision, deleted.Revision)
 	}
 	requireDesired(t, recreated, "recreated")
+}
+
+// testChanges verifies mutation results can form valid value-level transitions.
+func testChanges(t *testing.T, newStore Factory) {
+	store := newStore(t)
+	key := key(1)
+
+	created, err := store.Create(context.Background(), key, rawState("created"))
+	requireNoError(t, err)
+	createdChange, err := objectstore.NewCreatedChange(key, created)
+	requireNoError(t, err)
+	requireValidChange(t, createdChange)
+
+	updated, err := store.Update(context.Background(), key, created.Revision, rawState("updated"))
+	requireNoError(t, err)
+	updatedChange, err := objectstore.NewUpdatedChange(key, created, updated)
+	requireNoError(t, err)
+	requireValidChange(t, updatedChange)
+
+	deleted, err := store.Delete(context.Background(), key, updated.Revision)
+	requireNoError(t, err)
+	deletedChange, err := objectstore.NewDeletedChange(key, deleted.Deleted, deleted.Revision)
+	requireNoError(t, err)
+	requireValidChange(t, deletedChange)
 }
 
 // testListSuccess verifies the store-level live collection read contract.
@@ -416,6 +441,18 @@ func requireListItem(
 	}
 	requireDesired(t, item.State, desired)
 	requireNormalizedOwnership(t, item.State)
+}
+
+// requireValidChange checks full objectstore.Change validation.
+func requireValidChange(t *testing.T, change objectstore.Change) {
+	t.Helper()
+
+	if err := change.Validate(); err != nil {
+		t.Fatalf("change is invalid: %v", err)
+	}
+	if !change.IsValid() {
+		t.Fatalf("change IsValid() = false")
+	}
 }
 
 // requireNoError fails the test when err is non-nil.
