@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectstore"
+	"arcoris.dev/apimachinery/api/value"
 )
 
 func TestDeleteRequiresExpectedRevision(t *testing.T) {
@@ -128,4 +129,50 @@ func TestDeleteMakesObjectInvisible(t *testing.T) {
 	if ok {
 		t.Fatalf("deleted object is visible")
 	}
+}
+
+func TestDeleteResultDeletedStateIsDetached(t *testing.T) {
+	store := testStore(t)
+	key := testKey(1)
+	created := createState(t, store, key, "created")
+
+	deleted, err := store.Delete(context.Background(), key, created.Revision)
+	requireNoError(t, err)
+	deleted.Deleted.Object.Desired = value.StringValue("mutated")
+
+	current := store.shardFor(key).get(key).load()
+	requireDesiredString(t, current.state, "created")
+}
+
+func TestDeleteRecreateRejectsOldLiveRevision(t *testing.T) {
+	store := testStore(t)
+	key := testKey(1)
+	created := createState(t, store, key, "created")
+
+	deleted, err := store.Delete(context.Background(), key, created.Revision)
+	requireNoError(t, err)
+
+	_, err = store.Update(context.Background(), key, created.Revision, testState("stale-update"))
+	requireErrorIs(t, err, objectstore.ErrNotFound)
+
+	_, err = store.Delete(context.Background(), key, created.Revision)
+	requireErrorIs(t, err, objectstore.ErrNotFound)
+
+	recreated := createState(t, store, key, "recreated")
+	if !deleted.Revision.Before(recreated.Revision) {
+		t.Fatalf("recreated revision = %v; want after delete %v", recreated.Revision, deleted.Revision)
+	}
+
+	_, err = store.Update(context.Background(), key, created.Revision, testState("old-update"))
+	requireErrorIs(t, err, objectstore.ErrStaleRevision)
+
+	_, err = store.Delete(context.Background(), key, created.Revision)
+	requireErrorIs(t, err, objectstore.ErrStaleRevision)
+
+	got, ok, err := store.Get(context.Background(), key)
+	requireNoError(t, err)
+	if !ok {
+		t.Fatalf("recreated object missing")
+	}
+	requireDesiredString(t, got, "recreated")
 }
