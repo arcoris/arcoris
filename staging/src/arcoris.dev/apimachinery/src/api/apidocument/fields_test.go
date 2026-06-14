@@ -68,3 +68,64 @@ func TestFieldsTreeMatchesFlatConstants(t *testing.T) {
 		})
 	}
 }
+
+func TestFieldGroupsHaveNoDuplicateFields(t *testing.T) {
+	fields := apidocument.Fields()
+	groups := map[string][]apidocument.FieldName{
+		"typeMeta": {
+			fields.TypeMeta().APIVersion(),
+			fields.TypeMeta().Kind(),
+		},
+		"object": {
+			fields.Object().APIVersion(),
+			fields.Object().Kind(),
+			fields.Object().Metadata(),
+			fields.Object().Desired(),
+			fields.Object().Observed(),
+		},
+		"objectMeta": {
+			fields.ObjectMeta().Name(),
+			fields.ObjectMeta().GenerateName(),
+			fields.ObjectMeta().Namespace(),
+			fields.ObjectMeta().UID(),
+			fields.ObjectMeta().ResourceVersion(),
+			fields.ObjectMeta().Generation(),
+			fields.ObjectMeta().CreatedAt(),
+			fields.ObjectMeta().Deletion(),
+			fields.ObjectMeta().Labels(),
+			fields.ObjectMeta().Annotations(),
+			fields.ObjectMeta().OwnerReferences(),
+			fields.ObjectMeta().Finalizers(),
+		},
+		"ownership": {
+			fields.Ownership().Desired(),
+			fields.Ownership().Observed(),
+			fields.Ownership().MetadataField(),
+			fields.Ownership().Metadata().Labels(),
+			fields.Ownership().Metadata().Annotations(),
+			fields.Ownership().Surface().Entries(),
+			fields.Ownership().Entry().Owner(),
+			fields.Ownership().Entry().Fields(),
+		},
+		"pageMeta": {
+			fields.PageMeta().ResourceVersion(),
+			fields.PageMeta().Continue(),
+			fields.PageMeta().RemainingItemCount(),
+		},
+	}
+
+	for group, names := range groups {
+		t.Run(group, func(t *testing.T) {
+			seen := make(map[apidocument.FieldName]struct{}, len(names))
+			for _, name := range names {
+				if name.IsZero() {
+					t.Fatalf("zero field name")
+				}
+				if _, ok := seen[name]; ok {
+					t.Fatalf("duplicate field %q", name)
+				}
+				seen[name] = struct{}{}
+			}
+		})
+	}
+}

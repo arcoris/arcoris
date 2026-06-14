@@ -60,3 +60,76 @@ func TestPathsTree(t *testing.T) {
 		})
 	}
 }
+
+func TestPathsTreeHasNoDuplicatePaths(t *testing.T) {
+	paths := exportedDocumentPaths()
+	seen := make(map[apidocument.Path]string, len(paths))
+
+	for name, path := range paths {
+		if path.IsZero() {
+			t.Fatalf("%s path is zero", name)
+		}
+		if previous, ok := seen[path]; ok {
+			t.Fatalf("%s and %s both expose path %q", previous, name, path)
+		}
+		seen[path] = name
+	}
+}
+
+func exportedDocumentPaths() map[string]apidocument.Path {
+	paths := apidocument.Paths()
+
+	return map[string]apidocument.Path{
+		"typeMeta.apiVersion":                           paths.TypeMeta().APIVersion(),
+		"typeMeta.kind":                                 paths.TypeMeta().Kind(),
+		"object.apiVersion":                             paths.Object().APIVersion(),
+		"object.kind":                                   paths.Object().Kind(),
+		"object.metadata":                               paths.Object().MetadataPath(),
+		"object.metadata.name":                          paths.Object().Metadata().Name(),
+		"object.metadata.generateName":                  paths.Object().Metadata().GenerateName(),
+		"object.metadata.namespace":                     paths.Object().Metadata().Namespace(),
+		"object.metadata.uid":                           paths.Object().Metadata().UID(),
+		"object.metadata.resourceVersion":               paths.Object().Metadata().ResourceVersion(),
+		"object.metadata.generation":                    paths.Object().Metadata().Generation(),
+		"object.metadata.createdAt":                     paths.Object().Metadata().CreatedAt(),
+		"object.metadata.deletion":                      paths.Object().Metadata().Deletion(),
+		"object.metadata.labels":                        paths.Object().Metadata().Labels(),
+		"object.metadata.annotations":                   paths.Object().Metadata().Annotations(),
+		"object.metadata.ownerReferences":               paths.Object().Metadata().OwnerReferences(),
+		"object.metadata.finalizers":                    paths.Object().Metadata().Finalizers(),
+		"object.desired":                                paths.Object().Desired(),
+		"object.observed":                               paths.Object().Observed(),
+		"objectMeta.name":                               paths.ObjectMeta().Name(),
+		"objectMeta.generateName":                       paths.ObjectMeta().GenerateName(),
+		"objectMeta.namespace":                          paths.ObjectMeta().Namespace(),
+		"objectMeta.uid":                                paths.ObjectMeta().UID(),
+		"objectMeta.resourceVersion":                    paths.ObjectMeta().ResourceVersion(),
+		"objectMeta.generation":                         paths.ObjectMeta().Generation(),
+		"objectMeta.createdAt":                          paths.ObjectMeta().CreatedAt(),
+		"objectMeta.deletion":                           paths.ObjectMeta().Deletion(),
+		"objectMeta.labels":                             paths.ObjectMeta().Labels(),
+		"objectMeta.annotations":                        paths.ObjectMeta().Annotations(),
+		"objectMeta.ownerReferences":                    paths.ObjectMeta().OwnerReferences(),
+		"objectMeta.finalizers":                         paths.ObjectMeta().Finalizers(),
+		"ownership.desired":                             paths.Ownership().Desired(),
+		"ownership.desired.entries":                     paths.Ownership().DesiredSurface().Entries(),
+		"ownership.desired.entries.owner":               paths.Ownership().DesiredSurface().Entry().Owner(),
+		"ownership.desired.entries.fields":              paths.Ownership().DesiredSurface().Entry().Fields(),
+		"ownership.observed":                            paths.Ownership().Observed(),
+		"ownership.observed.entries":                    paths.Ownership().ObservedSurface().Entries(),
+		"ownership.observed.entries.owner":              paths.Ownership().ObservedSurface().Entry().Owner(),
+		"ownership.observed.entries.fields":             paths.Ownership().ObservedSurface().Entry().Fields(),
+		"ownership.metadata":                            paths.Ownership().MetadataPath(),
+		"ownership.metadata.labels":                     paths.Ownership().Metadata().Labels(),
+		"ownership.metadata.labels.entries":             paths.Ownership().Metadata().LabelsSurface().Entries(),
+		"ownership.metadata.labels.entries.owner":       paths.Ownership().Metadata().LabelsSurface().Entry().Owner(),
+		"ownership.metadata.labels.entries.fields":      paths.Ownership().Metadata().LabelsSurface().Entry().Fields(),
+		"ownership.metadata.annotations":                paths.Ownership().Metadata().Annotations(),
+		"ownership.metadata.annotations.entries":        paths.Ownership().Metadata().AnnotationsSurface().Entries(),
+		"ownership.metadata.annotations.entries.owner":  paths.Ownership().Metadata().AnnotationsSurface().Entry().Owner(),
+		"ownership.metadata.annotations.entries.fields": paths.Ownership().Metadata().AnnotationsSurface().Entry().Fields(),
+		"pageMeta.resourceVersion":                      paths.PageMeta().ResourceVersion(),
+		"pageMeta.continue":                             paths.PageMeta().Continue(),
+		"pageMeta.remainingItemCount":                   paths.PageMeta().RemainingItemCount(),
+	}
+}
