@@ -39,6 +39,12 @@
 // the live state that was deleted and keeps its previous live revision.
 // DeleteResult.Revision is the store-local tombstone commit revision.
 //
+// Change describes one structurally valid committed transition: created,
+// updated, or deleted. It is a reusable value model for future watch, cache,
+// audit, or controller layers, but objectstore does not implement those layers
+// and Change values do not prove that a transition occurred in a particular
+// Store instance.
+//
 // List reads committed live states for one resource collection and structural
 // scope. It returns only live records; missing, deleted, and tombstoned objects
 // are omitted. ListResult.Revision is the store revision observed by the

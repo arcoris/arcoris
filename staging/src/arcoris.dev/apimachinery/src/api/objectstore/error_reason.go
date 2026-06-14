@@ -32,6 +32,10 @@ const (
 	ErrorReasonInvalidListRequest ErrorReason = "invalid_list_request"
 	// ErrorReasonInvalidListScope reports an invalid collection-list scope.
 	ErrorReasonInvalidListScope ErrorReason = "invalid_list_scope"
+	// ErrorReasonInvalidChange reports an invalid object store transition value.
+	ErrorReasonInvalidChange ErrorReason = "invalid_change"
+	// ErrorReasonInvalidChangeKind reports an unknown object store transition kind.
+	ErrorReasonInvalidChangeKind ErrorReason = "invalid_change_kind"
 	// ErrorReasonInvalidState reports otherwise invalid object store state.
 	ErrorReasonInvalidState ErrorReason = "invalid_state"
 	// ErrorReasonInvalidStateObject reports invalid object envelope metadata.
@@ -60,6 +64,8 @@ func (r ErrorReason) IsValid() bool {
 		ErrorReasonInvalidKey,
 		ErrorReasonInvalidListRequest,
 		ErrorReasonInvalidListScope,
+		ErrorReasonInvalidChange,
+		ErrorReasonInvalidChangeKind,
 		ErrorReasonInvalidState,
 		ErrorReasonInvalidStateObject,
 		ErrorReasonMissingDesired,
