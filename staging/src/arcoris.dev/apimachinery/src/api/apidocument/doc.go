@@ -24,6 +24,13 @@
 // compatibility change. api/meta owns metadata semantics and validation;
 // api/apidocument owns spelling only.
 //
+// The flat FieldName constants are grouped by immutable navigation helpers:
+// Fields() returns the field-name tree, and Paths() returns stable diagnostic
+// paths such as object.metadata.labels or ownership.metadata.annotations. Those
+// helpers do not define a separate schema; they organize the same canonical
+// field vocabulary so call sites do not have to scan or manually concatenate the
+// flat constant set.
+//
 // Go struct tags in object and metadata packages remain string literals because
 // struct tags cannot reference constants. Tests in this package verify that
 // those tags stay aligned with the constants.
