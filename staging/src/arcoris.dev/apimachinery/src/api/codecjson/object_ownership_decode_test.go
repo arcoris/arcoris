@@ -50,6 +50,15 @@ func TestDecodeObjectOwnershipEmptySurfaces(t *testing.T) {
 	}
 }
 
+func TestDecodeObjectOwnershipSurfaceWithoutEntriesIsEmpty(t *testing.T) {
+	got, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{"desired":{},"observed":{},"metadata":{"labels":{},"annotations":{}}}`))
+	requireNoError(t, err)
+
+	if !got.IsEmpty() {
+		t.Fatalf("state = %#v; want empty", got)
+	}
+}
+
 func TestDecodeObjectOwnershipEmptyState(t *testing.T) {
 	got, err := newTestCodec(t).DecodeObjectOwnership([]byte(`{}`))
 	requireNoError(t, err)
