@@ -71,3 +71,19 @@ func TestListResultClonePreservesNilItems(t *testing.T) {
 		t.Fatalf("cloned revision = %v; want %v", cloned.Revision, result.Revision)
 	}
 }
+
+func TestListResultClonePreservesNonNilEmptyItems(t *testing.T) {
+	result := ListResult{Items: []ListItem{}, Revision: 1}
+
+	cloned := result.Clone()
+
+	if cloned.Items == nil {
+		t.Fatalf("cloned Items is nil; want non-nil empty slice")
+	}
+	if len(cloned.Items) != 0 {
+		t.Fatalf("cloned Items len = %d; want 0", len(cloned.Items))
+	}
+	if cloned.Revision != result.Revision {
+		t.Fatalf("cloned revision = %v; want %v", cloned.Revision, result.Revision)
+	}
+}

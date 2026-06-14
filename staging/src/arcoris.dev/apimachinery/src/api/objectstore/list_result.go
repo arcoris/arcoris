@@ -19,7 +19,11 @@ type ListResult struct {
 	// Items are detached live states that matched the request.
 	Items []ListItem
 
-	// Revision is the store revision observed by the list operation.
+	// Revision is the store revision watermark observed by the list operation.
+	//
+	// It is not necessarily the maximum item revision. It is also not a
+	// historical MVCC snapshot revision unless a concrete Store implementation
+	// explicitly documents snapshot isolation.
 	Revision Revision
 }
 

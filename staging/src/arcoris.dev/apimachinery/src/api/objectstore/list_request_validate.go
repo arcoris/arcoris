@@ -16,59 +16,19 @@ package objectstore
 
 import "errors"
 
+// IsValid reports whether request is structurally usable by Store.List.
+func (request ListRequest) IsValid() bool {
+	return ValidateListRequest(request) == nil
+}
+
 // ValidateListRequest checks the structural shape required for Store.List.
 func ValidateListRequest(request ListRequest) error {
 	if err := request.Resource.Validate(); err != nil {
 		return errorFor(ErrorReasonInvalidListRequest, Key{}, 0, 0, errors.Join(ErrInvalidListRequest, err))
 	}
-	if err := validateListScope(request.Scope); err != nil {
+	if err := ValidateListScope(request.Scope); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-// validateListScope checks that scope is explicit and structurally usable.
-func validateListScope(scope ListScope) error {
-	switch scope.kind {
-	case ListScopeAll:
-		if !scope.namespace.IsZero() {
-			return errorFor(
-				ErrorReasonInvalidListScope,
-				Key{},
-				0,
-				0,
-				ErrInvalidListRequest,
-			)
-		}
-		return nil
-	case ListScopeNamespace:
-		if scope.namespace.IsZero() {
-			return errorFor(
-				ErrorReasonInvalidListScope,
-				Key{},
-				0,
-				0,
-				ErrInvalidListRequest,
-			)
-		}
-		if err := scope.namespace.ValidateLexical(); err != nil {
-			return errorFor(
-				ErrorReasonInvalidListScope,
-				Key{},
-				0,
-				0,
-				errors.Join(ErrInvalidListRequest, err),
-			)
-		}
-		return nil
-	default:
-		return errorFor(
-			ErrorReasonInvalidListScope,
-			Key{},
-			0,
-			0,
-			ErrInvalidListRequest,
-		)
-	}
 }

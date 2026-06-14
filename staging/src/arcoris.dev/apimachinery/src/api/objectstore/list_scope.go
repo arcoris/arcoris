@@ -36,7 +36,7 @@ func AllNamespaces() ListScope {
 // InNamespace validates namespace and returns a namespace-limited scope.
 func InNamespace(namespace metaidentity.Namespace) (ListScope, error) {
 	scope := ListScope{kind: ListScopeNamespace, namespace: namespace}
-	if err := validateListScope(scope); err != nil {
+	if err := ValidateListScope(scope); err != nil {
 		return ListScope{}, err
 	}
 

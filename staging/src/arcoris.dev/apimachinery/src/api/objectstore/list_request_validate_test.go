@@ -92,8 +92,13 @@ func TestValidateListRequest(t *testing.T) {
 	}
 }
 
-func TestInNamespaceRejectsInvalidNamespace(t *testing.T) {
-	_, err := InNamespace("System")
+func TestListRequestIsValid(t *testing.T) {
+	valid := ListRequest{Resource: validResource(), Scope: AllNamespaces()}
+	if !valid.IsValid() {
+		t.Fatalf("valid list request reported invalid")
+	}
 
-	requireErrorIs(t, err, ErrInvalidListRequest)
+	if (ListRequest{}).IsValid() {
+		t.Fatalf("zero list request reported valid")
+	}
 }
