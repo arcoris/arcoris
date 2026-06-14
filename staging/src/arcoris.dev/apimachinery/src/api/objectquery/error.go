@@ -14,11 +14,7 @@
 
 package objectquery
 
-import (
-	"errors"
-
-	"arcoris.dev/apimachinery/api/internal/diagnostic"
-)
+import "errors"
 
 var (
 	// ErrInvalidQuery classifies malformed top-level query values.
@@ -33,27 +29,3 @@ var (
 	// ErrInvalidOperator classifies unknown requirement operators.
 	ErrInvalidOperator = errors.New("invalid object query operator")
 )
-
-// Error is the structured diagnostic returned by objectquery validation.
-type Error struct {
-	// Record stores the shared path, sentinel, reason, detail, and cause fields.
-	diagnostic.Record[ErrorReason]
-}
-
-// Error returns a compact human-readable objectquery diagnostic.
-func (e *Error) Error() string {
-	if e == nil {
-		return "<nil>"
-	}
-
-	return e.Record.Format("objectquery")
-}
-
-// Unwrap exposes broad sentinels and lower validation causes for errors.Is.
-func (e *Error) Unwrap() error {
-	if e == nil {
-		return nil
-	}
-
-	return e.Record.Unwrap()
-}

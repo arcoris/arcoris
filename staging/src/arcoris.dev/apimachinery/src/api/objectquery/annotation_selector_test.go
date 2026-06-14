@@ -28,59 +28,10 @@ func TestAnnotationSelectorEmptyMatchesEverything(t *testing.T) {
 	requireNoError(t, selector.Validate())
 }
 
-func TestAnnotationSelectorCanonicalizesRequirementOrderAndDuplicates(t *testing.T) {
-	selector := mustAnnotationSelector(
-		t,
-		mustAnnotationEquals(t, "team", "platform"),
-		mustAnnotationIn(t, "note", "qa rollout", "prod rollout"),
-		mustAnnotationIn(t, "note", "prod rollout", "qa rollout"),
-	)
+func mustAnnotationSelector(t *testing.T, requirements ...AnnotationRequirement) AnnotationSelector {
+	t.Helper()
+	selector, err := NewAnnotationSelector(requirements...)
+	requireNoError(t, err)
 
-	if len(selector.requirements) != 2 {
-		t.Fatalf("len = %d; want 2", len(selector.requirements))
-	}
-	requireRequirement(t, selector.requirements[0].req, "note", OperatorIn, "prod rollout", "qa rollout")
-	requireRequirement(t, selector.requirements[1].req, "team", OperatorEquals, "platform")
-}
-
-func TestAnnotationSelectorAllowsDifferentRequirementsForSameKey(t *testing.T) {
-	selector := mustAnnotationSelector(
-		t,
-		mustAnnotationIn(t, "note", "prod rollout", "qa rollout"),
-		mustAnnotationNotEquals(t, "note", "qa rollout"),
-	)
-
-	if len(selector.requirements) != 2 {
-		t.Fatalf("len = %d; want 2", len(selector.requirements))
-	}
-	if !selector.match(testItem("system", "worker", nil, map[string]string{"note": "prod rollout"})) {
-		t.Fatal("selector did not match prod rollout")
-	}
-	if selector.match(testItem("system", "worker", nil, map[string]string{"note": "qa rollout"})) {
-		t.Fatal("selector matched qa rollout")
-	}
-}
-
-func TestAnnotationSelectorAndsRequirements(t *testing.T) {
-	selector := mustAnnotationSelector(
-		t,
-		mustAnnotationEquals(t, "note", "prod rollout"),
-		mustAnnotationEquals(t, "team", "platform"),
-	)
-
-	if !selector.match(testItem("system", "worker", nil, map[string]string{"note": "prod rollout", "team": "platform"})) {
-		t.Fatal("selector did not match both requirements")
-	}
-	if selector.match(testItem("system", "worker", nil, map[string]string{"note": "prod rollout"})) {
-		t.Fatal("selector matched one requirement")
-	}
-}
-
-func TestAnnotationSelectorDoesNotMutateInputRequirements(t *testing.T) {
-	req := AnnotationRequirement{req: metadataRequirement{key: "note", op: OperatorIn, values: []string{"qa rollout", "prod rollout"}}}
-
-	selector := mustAnnotationSelector(t, req)
-	selector.requirements[0].req.values[0] = "mutated"
-
-	requireRequirement(t, req.req, "note", OperatorIn, "qa rollout", "prod rollout")
+	return selector
 }

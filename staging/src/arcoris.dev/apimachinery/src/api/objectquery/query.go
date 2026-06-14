@@ -28,38 +28,3 @@ type Query struct {
 	// Annotations filters by object metadata annotations.
 	Annotations AnnotationSelector
 }
-
-// Compile validates and canonicalizes query into a predicate.
-func Compile(query Query) (Predicate, error) {
-	if err := query.Identity.Validate(); err != nil {
-		return Predicate{}, err
-	}
-
-	labels, err := query.Labels.canonical()
-	if err != nil {
-		return Predicate{}, wrapf(
-			"query.labels",
-			ErrInvalidQuery,
-			ErrorReasonInvalidQuery,
-			err,
-			"label selector is invalid",
-		)
-	}
-
-	annotations, err := query.Annotations.canonical()
-	if err != nil {
-		return Predicate{}, wrapf(
-			"query.annotations",
-			ErrInvalidQuery,
-			ErrorReasonInvalidQuery,
-			err,
-			"annotation selector is invalid",
-		)
-	}
-
-	return Predicate{
-		identity:    query.Identity,
-		labels:      labels,
-		annotations: annotations,
-	}, nil
-}

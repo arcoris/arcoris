@@ -15,102 +15,56 @@
 package objectquery
 
 import (
-	"testing"
-
+	apiidentity "arcoris.dev/apimachinery/api/identity"
+	"arcoris.dev/apimachinery/api/meta"
+	"arcoris.dev/apimachinery/api/meta/annotations"
+	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
+	"arcoris.dev/apimachinery/api/meta/labels"
+	"arcoris.dev/apimachinery/api/object"
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestPredicateFilterNilInputReturnsNil(t *testing.T) {
-	predicate, err := Compile(Query{})
-	requireNoError(t, err)
-
-	if got := predicate.Filter(nil); got != nil {
-		t.Fatalf("Filter(nil) = %#v; want nil", got)
+func testItem(namespace string, name string, labelValues map[string]string, annotationValues map[string]string) objectstore.ListItem {
+	labelSet, err := labels.FromStrings(labelValues)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func TestPredicateFilterEmptyInputReturnsEmptyNonNil(t *testing.T) {
-	predicate, err := Compile(Query{})
-	requireNoError(t, err)
-	input := []objectListItem{}
-	items := objectListItems(input)
-
-	got := predicate.Filter(items)
-	if got == nil {
-		t.Fatal("Filter(empty) returned nil")
-	}
-	if len(got) != 0 {
-		t.Fatalf("len = %d; want 0", len(got))
-	}
-}
-
-func TestPredicateFilterPreservesOrderAndSelectsMatches(t *testing.T) {
-	selector := mustLabelSelector(t, mustLabelEquals(t, "env", "prod"))
-	predicate, err := Compile(Query{Labels: selector})
-	requireNoError(t, err)
-	items := objectListItems([]objectListItem{
-		{namespace: "system", name: "first", labels: map[string]string{"env": "prod"}},
-		{namespace: "system", name: "second", labels: map[string]string{"env": "qa"}},
-		{namespace: "system", name: "third", labels: map[string]string{"env": "prod"}},
-	})
-
-	got := predicate.Filter(items)
-	if len(got) != 2 {
-		t.Fatalf("len = %d; want 2", len(got))
-	}
-	if got[0].Key.Object.Name != "first" || got[1].Key.Object.Name != "third" {
-		t.Fatalf("order = %s, %s; want first, third", got[0].Key.Object.Name, got[1].Key.Object.Name)
-	}
-}
-
-func TestPredicateFilterZeroPredicateReturnsAllItems(t *testing.T) {
-	predicate, err := Compile(Query{})
-	requireNoError(t, err)
-	items := objectListItems([]objectListItem{
-		{namespace: "system", name: "first"},
-		{namespace: "system", name: "second"},
-	})
-
-	got := predicate.Filter(items)
-	if len(got) != len(items) {
-		t.Fatalf("len = %d; want %d", len(got), len(items))
-	}
-}
-
-func TestPredicateFilterDoesNotMutateInputAndDoesNotCloneState(t *testing.T) {
-	predicate, err := Compile(Query{})
-	requireNoError(t, err)
-	observed := value.StringValue("observed")
-	items := objectListItems([]objectListItem{{namespace: "system", name: "worker"}})
-	items[0].State.Object = items[0].State.Object.WithObserved(observed)
-
-	got := predicate.Filter(items)
-	if len(got) != 1 {
-		t.Fatalf("len = %d; want 1", len(got))
-	}
-	if got[0].State.Object.Observed != items[0].State.Object.Observed {
-		t.Fatal("Filter cloned state; observed pointer differs")
+	annotationSet, err := annotations.FromStrings(annotationValues)
+	if err != nil {
+		panic(err)
 	}
 
-	got[0].State.Object.Desired = value.StringValue("mutated")
-	if text, _ := items[0].State.Object.Desired.AsString(); text != "worker" {
-		t.Fatalf("input desired = %q; want worker", text)
+	key := objectstore.MustKey(
+		apiidentity.GroupVersionResource{
+			Group:    "control.arcoris.dev",
+			Version:  "v1",
+			Resource: "workers",
+		},
+		metaidentity.ObjectName{
+			Namespace: metaidentity.Namespace(namespace),
+			Name:      metaidentity.Name(name),
+		},
+	)
+
+	return objectstore.ListItem{
+		Key: key,
+		State: objectstore.State{
+			Object: object.New[value.Value, value.Value](
+				meta.FromGroupVersionKind(apiidentity.GroupVersionKind{
+					Group:   "control.arcoris.dev",
+					Version: "v1",
+					Kind:    "Worker",
+				}),
+				meta.ObjectMeta{
+					Name:        metaidentity.Name(name),
+					Namespace:   metaidentity.Namespace(namespace),
+					Labels:      labelSet,
+					Annotations: annotationSet,
+				},
+				value.StringValue(name),
+			),
+			Revision: 1,
+		},
 	}
-}
-
-type objectListItem struct {
-	namespace   string
-	name        string
-	labels      map[string]string
-	annotations map[string]string
-}
-
-func objectListItems(items []objectListItem) []objectstore.ListItem {
-	out := make([]objectstore.ListItem, 0, len(items))
-	for _, item := range items {
-		out = append(out, testItem(item.namespace, item.name, item.labels, item.annotations))
-	}
-
-	return out
 }

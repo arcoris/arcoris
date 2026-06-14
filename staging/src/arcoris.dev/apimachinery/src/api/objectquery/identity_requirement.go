@@ -34,39 +34,6 @@ type NameRequirement struct {
 	name metaidentity.Name
 }
 
-// NamespaceEquals constructs an exact namespace requirement.
-//
-// A zero namespace is valid and matches objects whose storage identity has no
-// namespace. Invalid non-zero namespace syntax is rejected by api/meta/identity.
-func NamespaceEquals(namespace metaidentity.Namespace) (NamespaceRequirement, error) {
-	if err := namespace.ValidateLexical(); err != nil {
-		return NamespaceRequirement{}, wrapf(
-			"query.identity.namespace",
-			ErrInvalidQuery,
-			ErrorReasonInvalidIdentity,
-			err,
-			"namespace requirement is invalid",
-		)
-	}
-
-	return NamespaceRequirement{set: true, namespace: namespace}, nil
-}
-
-// NameEquals constructs an exact object name requirement.
-func NameEquals(name metaidentity.Name) (NameRequirement, error) {
-	if err := name.ValidateLexical(); err != nil {
-		return NameRequirement{}, wrapf(
-			"query.identity.name",
-			ErrInvalidQuery,
-			ErrorReasonInvalidIdentity,
-			err,
-			"name requirement is invalid",
-		)
-	}
-
-	return NameRequirement{set: true, name: name}, nil
-}
-
 // IsZero reports whether r carries no namespace requirement.
 func (r NamespaceRequirement) IsZero() bool {
 	return !r.set
@@ -75,28 +42,4 @@ func (r NamespaceRequirement) IsZero() bool {
 // IsZero reports whether r carries no name requirement.
 func (r NameRequirement) IsZero() bool {
 	return !r.set
-}
-
-// validate checks the namespace requirement structure.
-func (r NamespaceRequirement) validate(path string) error {
-	if !r.set {
-		return nil
-	}
-	if err := r.namespace.ValidateLexical(); err != nil {
-		return wrapf(path, ErrInvalidQuery, ErrorReasonInvalidIdentity, err, "namespace requirement is invalid")
-	}
-
-	return nil
-}
-
-// validate checks the name requirement structure.
-func (r NameRequirement) validate(path string) error {
-	if !r.set {
-		return nil
-	}
-	if err := r.name.ValidateLexical(); err != nil {
-		return wrapf(path, ErrInvalidQuery, ErrorReasonInvalidIdentity, err, "name requirement is invalid")
-	}
-
-	return nil
 }

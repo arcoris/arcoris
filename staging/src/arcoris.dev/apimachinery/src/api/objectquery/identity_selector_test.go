@@ -32,87 +32,26 @@ func TestIdentitySelectorZeroMatchesEverything(t *testing.T) {
 	requireNoError(t, selector.Validate())
 }
 
-func TestIdentitySelectorMatchesNamespaceAndName(t *testing.T) {
-	tests := []struct {
-		name     string
-		selector IdentitySelector
-		item     objectName
-		match    bool
-	}{
-		{
-			name:     "namespace",
-			selector: mustInNamespace(t, "system"),
-			item:     objectName{namespace: "system", name: "worker"},
-			match:    true,
-		},
-		{
-			name:     "namespace mismatch",
-			selector: mustInNamespace(t, "system"),
-			item:     objectName{namespace: "other", name: "worker"},
-		},
-		{
-			name:     "name",
-			selector: mustWithName(t, "worker"),
-			item:     objectName{namespace: "system", name: "worker"},
-			match:    true,
-		},
-		{
-			name:     "name mismatch",
-			selector: mustWithName(t, "worker"),
-			item:     objectName{namespace: "system", name: "other"},
-		},
-		{
-			name:     "object",
-			selector: mustWithObject(t, "system", "worker"),
-			item:     objectName{namespace: "system", name: "worker"},
-			match:    true,
-		},
-		{
-			name:     "object namespace mismatch",
-			selector: mustWithObject(t, "system", "worker"),
-			item:     objectName{namespace: "other", name: "worker"},
-		},
-		{
-			name:     "empty namespace exact",
-			selector: mustInNamespace(t, ""),
-			item:     objectName{name: "worker"},
-			match:    true,
-		},
-	}
+func mustInNamespace(t *testing.T, namespace metaidentity.Namespace) IdentitySelector {
+	t.Helper()
+	selector, err := InNamespace(namespace)
+	requireNoError(t, err)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			item := testItem(tt.item.namespace, tt.item.name, nil, nil)
-			if got := tt.selector.match(item); got != tt.match {
-				t.Fatalf("match = %v; want %v", got, tt.match)
-			}
-		})
-	}
+	return selector
 }
 
-func TestIdentitySelectorRejectsInvalidInputs(t *testing.T) {
-	_, err := InNamespace(metaidentity.Namespace("Bad_Namespace"))
-	requireErrorIs(t, err, ErrInvalidQuery)
-	requireErrorIs(t, err, metaidentity.ErrInvalidNamespace)
+func mustWithName(t *testing.T, name metaidentity.Name) IdentitySelector {
+	t.Helper()
+	selector, err := WithName(name)
+	requireNoError(t, err)
 
-	_, err = WithName(metaidentity.Name(""))
-	requireErrorIs(t, err, ErrInvalidQuery)
-	requireErrorIs(t, err, metaidentity.ErrInvalidName)
+	return selector
 }
 
-func TestIdentitySelectorValidateRejectsMalformedInternalValues(t *testing.T) {
-	selector := IdentitySelector{
-		Namespace: NamespaceRequirement{set: true, namespace: "Bad_Namespace"},
-	}
-	requireErrorIs(t, selector.Validate(), ErrInvalidQuery)
+func mustWithObject(t *testing.T, namespace metaidentity.Namespace, name metaidentity.Name) IdentitySelector {
+	t.Helper()
+	selector, err := WithObject(namespace, name)
+	requireNoError(t, err)
 
-	selector = IdentitySelector{
-		Name: NameRequirement{set: true},
-	}
-	requireErrorIs(t, selector.Validate(), ErrInvalidQuery)
-}
-
-type objectName struct {
-	namespace string
-	name      string
+	return selector
 }

@@ -14,9 +14,18 @@
 
 package objectquery
 
-import "slices"
+import (
+	"slices"
+	"strconv"
+)
 
-// canonicalMetadataRequirements validates, sorts, and deduplicates requirements.
+// canonicalMetadataRequirements validates, sorts, and deduplicates one
+// selector's requirements.
+//
+// Exact duplicate requirements collapse because ANDing the same predicate twice
+// does not change semantics. Different requirements for the same key remain
+// present because they express useful intersections such as "env in
+// (prod,qa) AND env != qa".
 func canonicalMetadataRequirements(
 	path string,
 	requirements []metadataRequirement,
@@ -30,10 +39,10 @@ func canonicalMetadataRequirements(
 	out := make([]metadataRequirement, len(requirements))
 	for i, req := range requirements {
 		cloned := req.clone()
-		if err := cloned.validate(path+"["+itoa(i)+"]", validateKey, validateValue); err != nil {
+		if err := cloned.validate(path+"["+strconv.Itoa(i)+"]", validateKey, validateValue); err != nil {
 			return nil, err
 		}
-		cloned.values = canonicalValues(cloned.values)
+		cloned.values = canonicalMetadataValues(cloned.values)
 		out[i] = cloned
 	}
 
@@ -41,7 +50,8 @@ func canonicalMetadataRequirements(
 	return compactMetadataRequirements(out), nil
 }
 
-// compactMetadataRequirements removes exact duplicate canonical requirements.
+// compactMetadataRequirements removes exact duplicate canonical requirements
+// after sorting has placed duplicates next to each other.
 func compactMetadataRequirements(requirements []metadataRequirement) []metadataRequirement {
 	if len(requirements) == 0 {
 		return nil

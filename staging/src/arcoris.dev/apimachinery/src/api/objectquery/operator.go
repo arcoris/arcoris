@@ -36,38 +36,3 @@ const (
 	// OperatorNotIn matches when a metadata key is absent or outside a finite set.
 	OperatorNotIn
 )
-
-// IsValid reports whether op is one of the known query operators.
-func (op Operator) IsValid() bool {
-	switch op {
-	case OperatorExists,
-		OperatorDoesNotExist,
-		OperatorEquals,
-		OperatorNotEquals,
-		OperatorIn,
-		OperatorNotIn:
-		return true
-	default:
-		return false
-	}
-}
-
-// String returns the stable operator spelling.
-func (op Operator) String() string {
-	switch op {
-	case OperatorExists:
-		return "exists"
-	case OperatorDoesNotExist:
-		return "doesNotExist"
-	case OperatorEquals:
-		return "equals"
-	case OperatorNotEquals:
-		return "notEquals"
-	case OperatorIn:
-		return "in"
-	case OperatorNotIn:
-		return "notIn"
-	default:
-		return "unknown"
-	}
-}

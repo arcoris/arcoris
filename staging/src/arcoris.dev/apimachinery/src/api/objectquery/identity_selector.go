@@ -14,11 +14,6 @@
 
 package objectquery
 
-import (
-	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
-	"arcoris.dev/apimachinery/api/objectstore"
-)
-
 // IdentitySelector filters by authoritative objectstore storage identity.
 //
 // It intentionally matches objectstore.ListItem.Key.Object rather than
@@ -31,66 +26,7 @@ type IdentitySelector struct {
 	Name NameRequirement
 }
 
-// InNamespace constructs an identity selector for one namespace.
-func InNamespace(namespace metaidentity.Namespace) (IdentitySelector, error) {
-	req, err := NamespaceEquals(namespace)
-	if err != nil {
-		return IdentitySelector{}, err
-	}
-
-	return IdentitySelector{Namespace: req}, nil
-}
-
-// WithName constructs an identity selector for one object name.
-func WithName(name metaidentity.Name) (IdentitySelector, error) {
-	req, err := NameEquals(name)
-	if err != nil {
-		return IdentitySelector{}, err
-	}
-
-	return IdentitySelector{Name: req}, nil
-}
-
-// WithObject constructs an identity selector for one namespace/name pair.
-func WithObject(namespace metaidentity.Namespace, name metaidentity.Name) (IdentitySelector, error) {
-	namespaceReq, err := NamespaceEquals(namespace)
-	if err != nil {
-		return IdentitySelector{}, err
-	}
-	nameReq, err := NameEquals(name)
-	if err != nil {
-		return IdentitySelector{}, err
-	}
-
-	return IdentitySelector{Namespace: namespaceReq, Name: nameReq}, nil
-}
-
 // IsZero reports whether s carries no identity requirements.
 func (s IdentitySelector) IsZero() bool {
 	return s.Namespace.IsZero() && s.Name.IsZero()
-}
-
-// Validate checks identity selector requirements.
-func (s IdentitySelector) Validate() error {
-	if err := s.Namespace.validate("query.identity.namespace"); err != nil {
-		return err
-	}
-	if err := s.Name.validate("query.identity.name"); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// match checks item against the identity selector.
-func (s IdentitySelector) match(item objectstore.ListItem) bool {
-	objectName := item.Key.Object
-	if !s.Namespace.IsZero() && objectName.Namespace != s.Namespace.namespace {
-		return false
-	}
-	if !s.Name.IsZero() && objectName.Name != s.Name.name {
-		return false
-	}
-
-	return true
 }

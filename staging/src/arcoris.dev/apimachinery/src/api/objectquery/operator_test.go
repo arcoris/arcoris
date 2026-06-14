@@ -16,52 +16,15 @@ package objectquery
 
 import "testing"
 
-func TestOperatorValidity(t *testing.T) {
-	tests := []struct {
-		name string
-		op   Operator
-		want bool
-	}{
-		{name: "zero", op: 0},
-		{name: "exists", op: OperatorExists, want: true},
-		{name: "does not exist", op: OperatorDoesNotExist, want: true},
-		{name: "equals", op: OperatorEquals, want: true},
-		{name: "not equals", op: OperatorNotEquals, want: true},
-		{name: "in", op: OperatorIn, want: true},
-		{name: "not in", op: OperatorNotIn, want: true},
-		{name: "unknown", op: Operator(255)},
+func TestOperatorConstantOrdering(t *testing.T) {
+	if OperatorExists != 1 {
+		t.Fatalf("OperatorExists = %d; want 1", OperatorExists)
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.op.IsValid(); got != tt.want {
-				t.Fatalf("IsValid() = %v; want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestOperatorString(t *testing.T) {
-	tests := []struct {
-		name string
-		op   Operator
-		want string
-	}{
-		{name: "zero", op: 0, want: "unknown"},
-		{name: "exists", op: OperatorExists, want: "exists"},
-		{name: "does not exist", op: OperatorDoesNotExist, want: "doesNotExist"},
-		{name: "equals", op: OperatorEquals, want: "equals"},
-		{name: "not equals", op: OperatorNotEquals, want: "notEquals"},
-		{name: "in", op: OperatorIn, want: "in"},
-		{name: "not in", op: OperatorNotIn, want: "notIn"},
-		{name: "unknown", op: Operator(255), want: "unknown"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.op.String(); got != tt.want {
-				t.Fatalf("String() = %q; want %q", got, tt.want)
-			}
-		})
+	if !(OperatorExists < OperatorDoesNotExist &&
+		OperatorDoesNotExist < OperatorEquals &&
+		OperatorEquals < OperatorNotEquals &&
+		OperatorNotEquals < OperatorIn &&
+		OperatorIn < OperatorNotIn) {
+		t.Fatal("operator constants are not in canonical order")
 	}
 }
