@@ -29,6 +29,8 @@ import (
 // fieldownership.State construction. That loss of raw duplication is
 // intentional because the codec returns the semantic ownership model.
 func nodeToOwnershipState(path jsonPath, node jsonNode, config resolvedDecodeConfig) (objectownership.State, error) {
+	fields := apidocument.Fields().Ownership()
+
 	if err := requireObject(path, node, "object ownership root must be a JSON object"); err != nil {
 		return objectownership.State{}, err
 	}
@@ -39,8 +41,8 @@ func nodeToOwnershipState(path jsonPath, node jsonNode, config resolvedDecodeCon
 	}
 
 	desired := fieldownership.EmptyState()
-	if desiredNode, ok := node.member(apidocument.OwnershipFieldDesired.String()); ok {
-		surface, err := nodeToOwnershipSurface(path.Member(apidocument.OwnershipFieldDesired.String()), desiredNode, config)
+	if desiredNode, ok := node.member(fields.Desired().String()); ok {
+		surface, err := nodeToOwnershipSurface(path.Member(fields.Desired().String()), desiredNode, config)
 		if err != nil {
 			return objectownership.State{}, err
 		}
@@ -48,8 +50,8 @@ func nodeToOwnershipState(path jsonPath, node jsonNode, config resolvedDecodeCon
 	}
 
 	observed := fieldownership.EmptyState()
-	if observedNode, ok := node.member(apidocument.OwnershipFieldObserved.String()); ok {
-		surface, err := nodeToOwnershipSurface(path.Member(apidocument.OwnershipFieldObserved.String()), observedNode, config)
+	if observedNode, ok := node.member(fields.Observed().String()); ok {
+		surface, err := nodeToOwnershipSurface(path.Member(fields.Observed().String()), observedNode, config)
 		if err != nil {
 			return objectownership.State{}, err
 		}
@@ -57,8 +59,8 @@ func nodeToOwnershipState(path jsonPath, node jsonNode, config resolvedDecodeCon
 	}
 
 	metadata := objectownership.NewMetadataState(fieldownership.EmptyState(), fieldownership.EmptyState())
-	if metadataNode, ok := node.member(apidocument.OwnershipFieldMetadata.String()); ok {
-		decoded, err := nodeToOwnershipMetadata(path.Member(apidocument.OwnershipFieldMetadata.String()), metadataNode, config)
+	if metadataNode, ok := node.member(fields.MetadataField().String()); ok {
+		decoded, err := nodeToOwnershipMetadata(path.Member(fields.MetadataField().String()), metadataNode, config)
 		if err != nil {
 			return objectownership.State{}, err
 		}
@@ -84,6 +86,8 @@ func nodeToOwnershipState(path jsonPath, node jsonNode, config resolvedDecodeCon
 
 // nodeToOwnershipMetadata converts lower-camel metadata ownership object.
 func nodeToOwnershipMetadata(path jsonPath, node jsonNode, config resolvedDecodeConfig) (objectownership.MetadataState, error) {
+	fields := apidocument.Fields().Ownership().Metadata()
+
 	if err := requireObject(path, node, "object ownership metadata must be a JSON object"); err != nil {
 		return objectownership.MetadataState{}, err
 	}
@@ -94,8 +98,8 @@ func nodeToOwnershipMetadata(path jsonPath, node jsonNode, config resolvedDecode
 	}
 
 	labels := fieldownership.EmptyState()
-	if labelsNode, ok := node.member(apidocument.OwnershipFieldLabels.String()); ok {
-		surface, err := nodeToOwnershipSurface(path.Member(apidocument.OwnershipFieldLabels.String()), labelsNode, config)
+	if labelsNode, ok := node.member(fields.Labels().String()); ok {
+		surface, err := nodeToOwnershipSurface(path.Member(fields.Labels().String()), labelsNode, config)
 		if err != nil {
 			return objectownership.MetadataState{}, err
 		}
@@ -103,8 +107,8 @@ func nodeToOwnershipMetadata(path jsonPath, node jsonNode, config resolvedDecode
 	}
 
 	annotations := fieldownership.EmptyState()
-	if annotationsNode, ok := node.member(apidocument.OwnershipFieldAnnotations.String()); ok {
-		surface, err := nodeToOwnershipSurface(path.Member(apidocument.OwnershipFieldAnnotations.String()), annotationsNode, config)
+	if annotationsNode, ok := node.member(fields.Annotations().String()); ok {
+		surface, err := nodeToOwnershipSurface(path.Member(fields.Annotations().String()), annotationsNode, config)
 		if err != nil {
 			return objectownership.MetadataState{}, err
 		}
@@ -116,6 +120,8 @@ func nodeToOwnershipMetadata(path jsonPath, node jsonNode, config resolvedDecode
 
 // nodeToOwnershipSurface converts one surface object into field ownership state.
 func nodeToOwnershipSurface(path jsonPath, node jsonNode, config resolvedDecodeConfig) (fieldownership.State, error) {
+	fields := apidocument.Fields().Ownership().Surface()
+
 	if err := requireObject(path, node, "object ownership surface must be a JSON object"); err != nil {
 		return fieldownership.State{}, err
 	}
@@ -125,13 +131,13 @@ func nodeToOwnershipSurface(path jsonPath, node jsonNode, config resolvedDecodeC
 		}
 	}
 
-	entriesNode, ok := node.member(apidocument.OwnershipFieldEntries.String())
+	entriesNode, ok := node.member(fields.Entries().String())
 	if !ok {
 		return fieldownership.EmptyState(), nil
 	}
 	if entriesNode.kind != jsonKindArray {
 		return fieldownership.State{}, errorAt(
-			path.Member(apidocument.OwnershipFieldEntries.String()),
+			path.Member(fields.Entries().String()),
 			ErrInvalidEnvelope,
 			codec.ErrInvalidDocument,
 			ErrorReasonInvalidEnvelope,
@@ -141,7 +147,7 @@ func nodeToOwnershipSurface(path jsonPath, node jsonNode, config resolvedDecodeC
 
 	entries := make([]fieldownership.Entry, 0, len(entriesNode.items))
 	for i, item := range entriesNode.items {
-		entry, err := nodeToOwnershipEntry(path.Member(apidocument.OwnershipFieldEntries.String()).Index(i), item, config)
+		entry, err := nodeToOwnershipEntry(path.Member(fields.Entries().String()).Index(i), item, config)
 		if err != nil {
 			return fieldownership.State{}, err
 		}
@@ -200,17 +206,20 @@ func nodeToOwnershipEntry(path jsonPath, node jsonNode, config resolvedDecodeCon
 
 // nodeToRequiredOwnershipOwner extracts the required owner identity string.
 func nodeToRequiredOwnershipOwner(path jsonPath, node jsonNode) (fieldownership.Owner, error) {
-	ownerNode, ok := node.member(apidocument.OwnershipFieldOwner.String())
+	fields := apidocument.Fields().Ownership().Entry()
+	ownerField := fields.Owner().String()
+
+	ownerNode, ok := node.member(ownerField)
 	if !ok {
 		return fieldownership.Owner{}, errorAt(
-			path.Member(apidocument.OwnershipFieldOwner.String()),
+			path.Member(ownerField),
 			ErrInvalidEnvelope,
 			codec.ErrInvalidDocument,
 			ErrorReasonInvalidEnvelope,
 			"object ownership entry owner is required",
 		)
 	}
-	owner, err := expectString(path.Member(apidocument.OwnershipFieldOwner.String()), ownerNode, "object ownership entry owner must be a JSON string")
+	owner, err := expectString(path.Member(ownerField), ownerNode, "object ownership entry owner must be a JSON string")
 	if err != nil {
 		return fieldownership.Owner{}, err
 	}
@@ -218,7 +227,7 @@ func nodeToRequiredOwnershipOwner(path jsonPath, node jsonNode) (fieldownership.
 	parsed, err := fieldownership.NewOwner(owner)
 	if err != nil {
 		return fieldownership.Owner{}, wrapAt(
-			path.Member(apidocument.OwnershipFieldOwner.String()),
+			path.Member(ownerField),
 			ErrInvalidEnvelope,
 			codec.ErrInvalidDocument,
 			ErrorReasonInvalidEnvelope,
@@ -232,13 +241,16 @@ func nodeToRequiredOwnershipOwner(path jsonPath, node jsonNode) (fieldownership.
 
 // nodeToOwnershipFields extracts an optional canonical field path array.
 func nodeToOwnershipFields(path jsonPath, node jsonNode) (fieldpath.Set, error) {
-	fieldsNode, ok := node.member(apidocument.OwnershipFieldFields.String())
+	entryFields := apidocument.Fields().Ownership().Entry()
+	fieldsField := entryFields.Fields().String()
+
+	fieldsNode, ok := node.member(fieldsField)
 	if !ok {
 		return fieldpath.EmptySet(), nil
 	}
 	if fieldsNode.kind != jsonKindArray {
 		return fieldpath.Set{}, errorAt(
-			path.Member(apidocument.OwnershipFieldFields.String()),
+			path.Member(fieldsField),
 			ErrInvalidEnvelope,
 			codec.ErrInvalidDocument,
 			ErrorReasonInvalidEnvelope,
@@ -249,7 +261,7 @@ func nodeToOwnershipFields(path jsonPath, node jsonNode) (fieldpath.Set, error) 
 	paths := make([]fieldpath.Path, 0, len(fieldsNode.items))
 	for i, item := range fieldsNode.items {
 		field, err := expectString(
-			path.Member(apidocument.OwnershipFieldFields.String()).Index(i),
+			path.Member(fieldsField).Index(i),
 			item,
 			"object ownership entry field must be a JSON string",
 		)
@@ -259,7 +271,7 @@ func nodeToOwnershipFields(path jsonPath, node jsonNode) (fieldpath.Set, error) 
 		parsed, err := fieldpath.ParseCanonical(field)
 		if err != nil {
 			return fieldpath.Set{}, wrapAt(
-				path.Member(apidocument.OwnershipFieldFields.String()).Index(i),
+				path.Member(fieldsField).Index(i),
 				ErrInvalidEnvelope,
 				codec.ErrInvalidDocument,
 				ErrorReasonInvalidEnvelope,
@@ -270,10 +282,10 @@ func nodeToOwnershipFields(path jsonPath, node jsonNode) (fieldpath.Set, error) 
 		paths = append(paths, parsed)
 	}
 
-	fields, err := fieldpath.NewSet(paths...)
+	fieldSet, err := fieldpath.NewSet(paths...)
 	if err != nil {
 		return fieldpath.Set{}, wrapAt(
-			path.Member(apidocument.OwnershipFieldFields.String()),
+			path.Member(fieldsField),
 			ErrInvalidEnvelope,
 			codec.ErrInvalidDocument,
 			ErrorReasonInvalidEnvelope,
@@ -282,5 +294,5 @@ func nodeToOwnershipFields(path jsonPath, node jsonNode) (fieldpath.Set, error) 
 		)
 	}
 
-	return fields, nil
+	return fieldSet, nil
 }

@@ -31,6 +31,8 @@ import (
 // canonicalization belongs to objectownership constructors and objectstore
 // commit boundaries.
 func ownershipStateToNode(path jsonPath, state objectownership.State, config resolvedEncodeConfig) (jsonNode, error) {
+	fields := apidocument.Fields().Ownership()
+
 	if err := objectownership.Validate(state); err != nil {
 		return jsonNode{}, wrapAt(
 			path,
@@ -46,20 +48,20 @@ func ownershipStateToNode(path jsonPath, state objectownership.State, config res
 	members := []jsonMember{}
 	if config.emptySurfaces == jsonconfig.EmptyOwnershipSurfaceEmit || !state.Desired().IsEmpty() {
 		members = append(members, jsonMember{
-			name:  apidocument.OwnershipFieldDesired.String(),
-			value: ownershipSurfaceToNode(path.Member(apidocument.OwnershipFieldDesired.String()), state.Desired()),
+			name:  fields.Desired().String(),
+			value: ownershipSurfaceToNode(path.Member(fields.Desired().String()), state.Desired()),
 		})
 	}
 	if config.emptySurfaces == jsonconfig.EmptyOwnershipSurfaceEmit || !state.Observed().IsEmpty() {
 		members = append(members, jsonMember{
-			name:  apidocument.OwnershipFieldObserved.String(),
-			value: ownershipSurfaceToNode(path.Member(apidocument.OwnershipFieldObserved.String()), state.Observed()),
+			name:  fields.Observed().String(),
+			value: ownershipSurfaceToNode(path.Member(fields.Observed().String()), state.Observed()),
 		})
 	}
 	if config.emptySurfaces == jsonconfig.EmptyOwnershipSurfaceEmit || !metadata.IsEmpty() {
 		members = append(members, jsonMember{
-			name:  apidocument.OwnershipFieldMetadata.String(),
-			value: ownershipMetadataToNode(path.Member(apidocument.OwnershipFieldMetadata.String()), metadata, config),
+			name:  fields.MetadataField().String(),
+			value: ownershipMetadataToNode(path.Member(fields.MetadataField().String()), metadata, config),
 		})
 	}
 
@@ -68,17 +70,18 @@ func ownershipStateToNode(path jsonPath, state objectownership.State, config res
 
 // ownershipSurfaceToNode converts one ownership surface into an entries object.
 func ownershipSurfaceToNode(path jsonPath, surface fieldownership.State) jsonNode {
+	fields := apidocument.Fields().Ownership().Surface()
 	entries := surface.Entries()
 	items := make([]jsonNode, 0, len(entries))
 	for i, entry := range entries {
-		items = append(items, ownershipEntryToNode(path.Member(apidocument.OwnershipFieldEntries.String()).Index(i), entry))
+		items = append(items, ownershipEntryToNode(path.Member(fields.Entries().String()).Index(i), entry))
 	}
 
 	return jsonNode{
 		kind: jsonKindObject,
 		members: []jsonMember{
 			{
-				name:  apidocument.OwnershipFieldEntries.String(),
+				name:  fields.Entries().String(),
 				value: jsonNode{kind: jsonKindArray, items: items},
 			},
 		},
@@ -87,17 +90,18 @@ func ownershipSurfaceToNode(path jsonPath, surface fieldownership.State) jsonNod
 
 // ownershipMetadataToNode converts metadata ownership surfaces.
 func ownershipMetadataToNode(path jsonPath, metadata objectownership.MetadataState, config resolvedEncodeConfig) jsonNode {
+	fields := apidocument.Fields().Ownership().Metadata()
 	members := []jsonMember{}
 	if config.emptySurfaces == jsonconfig.EmptyOwnershipSurfaceEmit || !metadata.Labels().IsEmpty() {
 		members = append(members, jsonMember{
-			name:  apidocument.OwnershipFieldLabels.String(),
-			value: ownershipSurfaceToNode(path.Member(apidocument.OwnershipFieldLabels.String()), metadata.Labels()),
+			name:  fields.Labels().String(),
+			value: ownershipSurfaceToNode(path.Member(fields.Labels().String()), metadata.Labels()),
 		})
 	}
 	if config.emptySurfaces == jsonconfig.EmptyOwnershipSurfaceEmit || !metadata.Annotations().IsEmpty() {
 		members = append(members, jsonMember{
-			name:  apidocument.OwnershipFieldAnnotations.String(),
-			value: ownershipSurfaceToNode(path.Member(apidocument.OwnershipFieldAnnotations.String()), metadata.Annotations()),
+			name:  fields.Annotations().String(),
+			value: ownershipSurfaceToNode(path.Member(fields.Annotations().String()), metadata.Annotations()),
 		})
 	}
 
@@ -106,6 +110,7 @@ func ownershipMetadataToNode(path jsonPath, metadata objectownership.MetadataSta
 
 // ownershipEntryToNode converts one owner entry.
 func ownershipEntryToNode(path jsonPath, entry fieldownership.Entry) jsonNode {
+	entryFields := apidocument.Fields().Ownership().Entry()
 	paths := entry.Fields().Paths()
 	fields := make([]jsonNode, 0, len(paths))
 	for _, field := range paths {
@@ -115,8 +120,8 @@ func ownershipEntryToNode(path jsonPath, entry fieldownership.Entry) jsonNode {
 	return jsonNode{
 		kind: jsonKindObject,
 		members: []jsonMember{
-			{name: apidocument.OwnershipFieldOwner.String(), value: jsonNode{kind: jsonKindString, stringValue: entry.Owner().String()}},
-			{name: apidocument.OwnershipFieldFields.String(), value: jsonNode{kind: jsonKindArray, items: fields}},
+			{name: entryFields.Owner().String(), value: jsonNode{kind: jsonKindString, stringValue: entry.Owner().String()}},
+			{name: entryFields.Fields().String(), value: jsonNode{kind: jsonKindArray, items: fields}},
 		},
 	}
 }

@@ -33,13 +33,14 @@ func TestNodeToOptionalObjectMetaAbsent(t *testing.T) {
 // TestObjectMetaToNodeRoundTripsThroughMetadataDecoder covers metadata delegation.
 func TestObjectMetaToNodeRoundTripsThroughMetadataDecoder(t *testing.T) {
 	want := testObjectMeta()
-	metadataNode, err := objectMetaToNode(rootPath().Member(apidocument.ObjectFieldMetadata.String()), want, newTestCodec(t).decode)
+	metadataField := apidocument.Fields().Object().Metadata().String()
+	metadataNode, err := objectMetaToNode(rootPath().Member(metadataField), want, newTestCodec(t).decode)
 	requireNoError(t, err)
 
 	envelopeNode := jsonNode{
 		kind: jsonKindObject,
 		members: []jsonMember{
-			{name: apidocument.ObjectFieldMetadata.String(), value: metadataNode},
+			{name: metadataField, value: metadataNode},
 		},
 	}
 	got, err := nodeToOptionalObjectMeta(rootPath(), envelopeNode, newTestCodec(t).decode)

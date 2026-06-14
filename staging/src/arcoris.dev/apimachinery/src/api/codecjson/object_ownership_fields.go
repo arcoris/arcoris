@@ -18,10 +18,12 @@ import "arcoris.dev/apimachinery/api/apidocument"
 
 // allowOwnershipStateField reports whether name belongs to the ownership root.
 func allowOwnershipStateField(name string) bool {
+	fields := apidocument.Fields().Ownership()
+
 	switch name {
-	case apidocument.OwnershipFieldDesired.String(),
-		apidocument.OwnershipFieldObserved.String(),
-		apidocument.OwnershipFieldMetadata.String():
+	case fields.Desired().String(),
+		fields.Observed().String(),
+		fields.MetadataField().String():
 		return true
 	default:
 		return false
@@ -30,9 +32,11 @@ func allowOwnershipStateField(name string) bool {
 
 // allowOwnershipMetadataField reports whether name belongs to metadata ownership.
 func allowOwnershipMetadataField(name string) bool {
+	fields := apidocument.Fields().Ownership().Metadata()
+
 	switch name {
-	case apidocument.OwnershipFieldLabels.String(),
-		apidocument.OwnershipFieldAnnotations.String():
+	case fields.Labels().String(),
+		fields.Annotations().String():
 		return true
 	default:
 		return false
@@ -41,14 +45,16 @@ func allowOwnershipMetadataField(name string) bool {
 
 // allowOwnershipSurfaceField reports whether name belongs to a surface object.
 func allowOwnershipSurfaceField(name string) bool {
-	return name == apidocument.OwnershipFieldEntries.String()
+	return name == apidocument.Fields().Ownership().Surface().Entries().String()
 }
 
 // allowOwnershipEntryField reports whether name belongs to one ownership entry.
 func allowOwnershipEntryField(name string) bool {
+	fields := apidocument.Fields().Ownership().Entry()
+
 	switch name {
-	case apidocument.OwnershipFieldOwner.String(),
-		apidocument.OwnershipFieldFields.String():
+	case fields.Owner().String(),
+		fields.Fields().String():
 		return true
 	default:
 		return false

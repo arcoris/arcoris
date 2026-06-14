@@ -18,12 +18,14 @@ import "arcoris.dev/apimachinery/api/apidocument"
 
 // allowObjectEnvelopeField reports whether name belongs to the object envelope.
 func allowObjectEnvelopeField(name string) bool {
+	fields := apidocument.Fields().Object()
+
 	switch name {
-	case apidocument.ObjectFieldAPIVersion.String(),
-		apidocument.ObjectFieldKind.String(),
-		apidocument.ObjectFieldMetadata.String(),
-		apidocument.ObjectFieldDesired.String(),
-		apidocument.ObjectFieldObserved.String():
+	case fields.APIVersion().String(),
+		fields.Kind().String(),
+		fields.Metadata().String(),
+		fields.Desired().String(),
+		fields.Observed().String():
 		return true
 	default:
 		return false

@@ -21,12 +21,13 @@ import (
 )
 
 func TestAllowObjectEnvelopeField(t *testing.T) {
+	fields := apidocument.Fields().Object()
 	allowed := []string{
-		apidocument.ObjectFieldAPIVersion.String(),
-		apidocument.ObjectFieldKind.String(),
-		apidocument.ObjectFieldMetadata.String(),
-		apidocument.ObjectFieldDesired.String(),
-		apidocument.ObjectFieldObserved.String(),
+		fields.APIVersion().String(),
+		fields.Kind().String(),
+		fields.Metadata().String(),
+		fields.Desired().String(),
+		fields.Observed().String(),
 	}
 	for _, name := range allowed {
 		if !allowObjectEnvelopeField(name) {

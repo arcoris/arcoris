@@ -27,6 +27,7 @@ import (
 // Envelope member order is stable regardless of Deterministic. Deterministic
 // controls only nested value objects and ownership state.
 func objectToNode(path jsonPath, obj codec.Object, decode resolvedDecodeConfig, encode resolvedEncodeConfig) (jsonNode, error) {
+	fields := apidocument.Fields().Object()
 	members := make([]jsonMember, 0, 5)
 	var err error
 	members, err = appendTypeMetaMembers(path, members, obj, encode)
@@ -35,28 +36,28 @@ func objectToNode(path jsonPath, obj codec.Object, decode resolvedDecodeConfig, 
 	}
 
 	if encode.metadata == jsonconfig.MetadataEmitEmpty || !obj.ObjectMeta.IsZero() {
-		metadataNode, err := objectMetaToNode(path.Member(apidocument.ObjectFieldMetadata.String()), obj.ObjectMeta, decode)
+		metadataNode, err := objectMetaToNode(path.Member(fields.Metadata().String()), obj.ObjectMeta, decode)
 		if err != nil {
 			return jsonNode{}, err
 		}
-		members = append(members, jsonMember{name: apidocument.ObjectFieldMetadata.String(), value: metadataNode})
+		members = append(members, jsonMember{name: fields.Metadata().String(), value: metadataNode})
 	}
 
-	desiredNode, err := valueToNode(path.Member(apidocument.ObjectFieldDesired.String()), obj.Desired, encode)
+	desiredNode, err := valueToNode(path.Member(fields.Desired().String()), obj.Desired, encode)
 	if err != nil {
 		return jsonNode{}, err
 	}
-	members = append(members, jsonMember{name: apidocument.ObjectFieldDesired.String(), value: desiredNode})
+	members = append(members, jsonMember{name: fields.Desired().String(), value: desiredNode})
 
 	if obj.Observed != nil {
-		observedNode, err := valueToNode(path.Member(apidocument.ObjectFieldObserved.String()), *obj.Observed, encode)
+		observedNode, err := valueToNode(path.Member(fields.Observed().String()), *obj.Observed, encode)
 		if err != nil {
 			return jsonNode{}, err
 		}
-		members = append(members, jsonMember{name: apidocument.ObjectFieldObserved.String(), value: observedNode})
+		members = append(members, jsonMember{name: fields.Observed().String(), value: observedNode})
 	} else if encode.observed == jsonconfig.ObservedEmitNullWhenAbsent {
 		members = append(members, jsonMember{
-			name:  apidocument.ObjectFieldObserved.String(),
+			name:  fields.Observed().String(),
 			value: jsonNode{kind: jsonKindNull},
 		})
 	}
@@ -71,23 +72,25 @@ func appendTypeMetaMembers(
 	obj codec.Object,
 	config resolvedEncodeConfig,
 ) ([]jsonMember, error) {
+	fields := apidocument.Fields().Object()
+
 	if config.typeMeta == jsonconfig.TypeMetaRequire {
 		switch {
 		case obj.TypeMeta.APIVersion.IsZero():
-			return nil, errorAt(path.Member(apidocument.ObjectFieldAPIVersion.String()), ErrInvalidEnvelope, errors.Join(codec.ErrEncodeFailed, codec.ErrInvalidDocument), ErrorReasonInvalidEnvelope, "apiVersion is required by JSON encode config")
+			return nil, errorAt(path.Member(fields.APIVersion().String()), ErrInvalidEnvelope, errors.Join(codec.ErrEncodeFailed, codec.ErrInvalidDocument), ErrorReasonInvalidEnvelope, "apiVersion is required by JSON encode config")
 		case obj.TypeMeta.Kind.IsZero():
-			return nil, errorAt(path.Member(apidocument.ObjectFieldKind.String()), ErrInvalidEnvelope, errors.Join(codec.ErrEncodeFailed, codec.ErrInvalidDocument), ErrorReasonInvalidEnvelope, "kind is required by JSON encode config")
+			return nil, errorAt(path.Member(fields.Kind().String()), ErrInvalidEnvelope, errors.Join(codec.ErrEncodeFailed, codec.ErrInvalidDocument), ErrorReasonInvalidEnvelope, "kind is required by JSON encode config")
 		}
 	}
 	if !obj.TypeMeta.APIVersion.IsZero() {
 		members = append(members, jsonMember{
-			name:  apidocument.ObjectFieldAPIVersion.String(),
+			name:  fields.APIVersion().String(),
 			value: jsonNode{kind: jsonKindString, stringValue: obj.TypeMeta.APIVersion.String()},
 		})
 	}
 	if !obj.TypeMeta.Kind.IsZero() {
 		members = append(members, jsonMember{
-			name:  apidocument.ObjectFieldKind.String(),
+			name:  fields.Kind().String(),
 			value: jsonNode{kind: jsonKindString, stringValue: obj.TypeMeta.Kind.String()},
 		})
 	}

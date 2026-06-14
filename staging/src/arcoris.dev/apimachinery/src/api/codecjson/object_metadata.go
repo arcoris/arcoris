@@ -30,18 +30,19 @@ import (
 // sure the metadata node came from the ordered duplicate-checking parser before
 // delegating to those existing contracts.
 func nodeToOptionalObjectMeta(path jsonPath, node jsonNode, config resolvedDecodeConfig) (meta.ObjectMeta, error) {
-	metadataNode, ok := node.member(apidocument.ObjectFieldMetadata.String())
+	fields := apidocument.Fields().Object()
+	metadataNode, ok := node.member(fields.Metadata().String())
 	if !ok {
 		return meta.ObjectMeta{}, nil
 	}
-	if err := requireObject(path.Member(apidocument.ObjectFieldMetadata.String()), metadataNode, "metadata must be a JSON object"); err != nil {
+	if err := requireObject(path.Member(fields.Metadata().String()), metadataNode, "metadata must be a JSON object"); err != nil {
 		return meta.ObjectMeta{}, err
 	}
 
 	data, err := jsonNodeBytes(metadataNode, false)
 	if err != nil {
 		return meta.ObjectMeta{}, wrapAt(
-			path.Member(apidocument.ObjectFieldMetadata.String()),
+			path.Member(fields.Metadata().String()),
 			ErrInvalidEnvelope,
 			codec.ErrDecodeFailed,
 			ErrorReasonInvalidEnvelope,
@@ -53,7 +54,7 @@ func nodeToOptionalObjectMeta(path jsonPath, node jsonNode, config resolvedDecod
 	var objectMeta meta.ObjectMeta
 	if err := json.Unmarshal(data, &objectMeta); err != nil {
 		return meta.ObjectMeta{}, wrapAt(
-			path.Member(apidocument.ObjectFieldMetadata.String()),
+			path.Member(fields.Metadata().String()),
 			ErrInvalidEnvelope,
 			codec.ErrInvalidDocument,
 			ErrorReasonInvalidEnvelope,

@@ -27,6 +27,8 @@ import (
 // The conversion is intentionally resource-agnostic. It checks only the JSON
 // envelope shape and lexical identity fields that are present in the document.
 func nodeToObject(path jsonPath, node jsonNode, config resolvedDecodeConfig) (codec.Object, error) {
+	fields := apidocument.Fields().Object()
+
 	if err := requireObject(path, node, "object envelope root must be a JSON object"); err != nil {
 		return codec.Object{}, err
 	}
@@ -54,8 +56,8 @@ func nodeToObject(path jsonPath, node jsonNode, config resolvedDecodeConfig) (co
 		ObjectMeta: objectMeta,
 		Desired:    desired,
 	}
-	if observedNode, ok := node.member(apidocument.ObjectFieldObserved.String()); ok {
-		observed, err := nodeToValue(path.Member(apidocument.ObjectFieldObserved.String()), observedNode, config)
+	if observedNode, ok := node.member(fields.Observed().String()); ok {
+		observed, err := nodeToValue(path.Member(fields.Observed().String()), observedNode, config)
 		if err != nil {
 			return codec.Object{}, err
 		}
@@ -67,10 +69,11 @@ func nodeToObject(path jsonPath, node jsonNode, config resolvedDecodeConfig) (co
 
 // nodeToRequiredDesired extracts the desired payload while preserving explicit null.
 func nodeToRequiredDesired(path jsonPath, node jsonNode, config resolvedDecodeConfig) (value.Value, error) {
-	desiredNode, ok := node.member(apidocument.ObjectFieldDesired.String())
+	fields := apidocument.Fields().Object()
+	desiredNode, ok := node.member(fields.Desired().String())
 	if !ok {
 		return value.Value{}, errorAt(
-			path.Member(apidocument.ObjectFieldDesired.String()),
+			path.Member(fields.Desired().String()),
 			ErrInvalidEnvelope,
 			codec.ErrInvalidDocument,
 			ErrorReasonInvalidEnvelope,
@@ -78,21 +81,22 @@ func nodeToRequiredDesired(path jsonPath, node jsonNode, config resolvedDecodeCo
 		)
 	}
 
-	return nodeToValue(path.Member(apidocument.ObjectFieldDesired.String()), desiredNode, config)
+	return nodeToValue(path.Member(fields.Desired().String()), desiredNode, config)
 }
 
 // nodeToTypeMeta extracts optional apiVersion/kind fields without resource lookup.
 func nodeToTypeMeta(path jsonPath, node jsonNode) (meta.TypeMeta, error) {
+	fields := apidocument.Fields().Object()
 	var typeMeta meta.TypeMeta
-	if apiVersionNode, ok := node.member(apidocument.ObjectFieldAPIVersion.String()); ok {
-		apiVersion, err := expectString(path.Member(apidocument.ObjectFieldAPIVersion.String()), apiVersionNode, "apiVersion must be a JSON string")
+	if apiVersionNode, ok := node.member(fields.APIVersion().String()); ok {
+		apiVersion, err := expectString(path.Member(fields.APIVersion().String()), apiVersionNode, "apiVersion must be a JSON string")
 		if err != nil {
 			return meta.TypeMeta{}, err
 		}
 		parsed, err := apiidentity.ParseGroupVersion(apiVersion)
 		if err != nil {
 			return meta.TypeMeta{}, wrapAt(
-				path.Member(apidocument.ObjectFieldAPIVersion.String()),
+				path.Member(fields.APIVersion().String()),
 				ErrInvalidEnvelope,
 				codec.ErrInvalidDocument,
 				ErrorReasonInvalidEnvelope,
@@ -102,15 +106,15 @@ func nodeToTypeMeta(path jsonPath, node jsonNode) (meta.TypeMeta, error) {
 		}
 		typeMeta.APIVersion = parsed
 	}
-	if kindNode, ok := node.member(apidocument.ObjectFieldKind.String()); ok {
-		kind, err := expectString(path.Member(apidocument.ObjectFieldKind.String()), kindNode, "kind must be a JSON string")
+	if kindNode, ok := node.member(fields.Kind().String()); ok {
+		kind, err := expectString(path.Member(fields.Kind().String()), kindNode, "kind must be a JSON string")
 		if err != nil {
 			return meta.TypeMeta{}, err
 		}
 		parsed, err := apiidentity.ParseKind(kind)
 		if err != nil {
 			return meta.TypeMeta{}, wrapAt(
-				path.Member(apidocument.ObjectFieldKind.String()),
+				path.Member(fields.Kind().String()),
 				ErrInvalidEnvelope,
 				codec.ErrInvalidDocument,
 				ErrorReasonInvalidEnvelope,
