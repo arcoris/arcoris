@@ -51,6 +51,7 @@ func RunStoreContractTests(t *testing.T, newStore Factory) {
 		{name: "delete success", run: testDeleteSuccess},
 		{name: "delete stale", run: testDeleteStale},
 		{name: "recreate after delete", run: testRecreateAfterDelete},
+		{name: "recreate rejects stale revisions", run: testRecreateRejectsStaleRevisions},
 		{name: "changes", run: testChanges},
 		{name: "list success", run: testListSuccess},
 		{name: "list invalid request", run: testListInvalidRequest},
@@ -169,6 +170,48 @@ func testRecreateAfterDelete(t *testing.T, newStore Factory) {
 		t.Fatalf("recreated revision = %v; want after delete %v", recreated.Revision, deleted.Revision)
 	}
 	requireDesired(t, recreated, "recreated")
+}
+
+// testRecreateRejectsStaleRevisions verifies tombstone slots prevent stale
+// expected revisions from mutating a later live object at the same key.
+func testRecreateRejectsStaleRevisions(t *testing.T, newStore Factory) {
+	store := newStore(t)
+	key := key(1)
+	created := create(t, store, key, "created")
+	deleted, err := store.Delete(context.Background(), key, created.Revision)
+	requireNoError(t, err)
+	recreated, err := store.Create(context.Background(), key, rawState("recreated"))
+	requireNoError(t, err)
+
+	staleRevisions := []struct {
+		name     string
+		revision objectstore.Revision
+	}{
+		{name: "old live revision", revision: created.Revision},
+		{name: "tombstone revision", revision: deleted.Revision},
+	}
+
+	for _, tt := range staleRevisions {
+		t.Run(tt.name+" update", func(t *testing.T) {
+			_, err := store.Update(context.Background(), key, tt.revision, rawState("stale-update"))
+			requireErrorIs(t, err, objectstore.ErrStaleRevision)
+		})
+
+		t.Run(tt.name+" delete", func(t *testing.T) {
+			_, err := store.Delete(context.Background(), key, tt.revision)
+			requireErrorIs(t, err, objectstore.ErrStaleRevision)
+		})
+	}
+
+	got, ok, err := store.Get(context.Background(), key)
+	requireNoError(t, err)
+	if !ok {
+		t.Fatalf("recreated object missing")
+	}
+	if got.Revision != recreated.Revision {
+		t.Fatalf("visible revision = %v; want recreated revision %v", got.Revision, recreated.Revision)
+	}
+	requireDesired(t, got, "recreated")
 }
 
 // testChanges verifies mutation results can form valid value-level transitions.
