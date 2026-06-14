@@ -15,6 +15,13 @@
 // Package objectsurface defines the stable object surface taxonomy shared by
 // ownership, lifecycle, codecs, and tests.
 //
+// Surface names are semantic object-root-relative identifiers. Their spelling
+// is derived through api/apidocument's field and path trees so surface IDs and
+// API document field names cannot drift independently. Use Kinds() to navigate
+// known surface IDs, Kind.ObjectPath to map a surface to a full apidocument
+// object path, and KindFromObjectPath to map full object paths back to known
+// surfaces.
+//
 // Desired is declarative user or manager intent. Observed is runtime,
 // controller, or agent state. Metadata labels and annotations are key/value
 // metadata maps with their own mutation rules.

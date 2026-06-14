@@ -16,29 +16,29 @@ package objectsurface
 
 import "testing"
 
-func TestKindString(t *testing.T) {
+func TestKindIsMetadata(t *testing.T) {
 	kinds := Kinds()
 	metadata := kinds.Metadata()
 
 	tests := []struct {
 		name string
 		kind Kind
-		want string
+		want bool
 	}{
-		{name: "desired", kind: kinds.Desired(), want: "desired"},
-		{name: "observed", kind: kinds.Observed(), want: "observed"},
-		{name: "labels", kind: metadata.Labels(), want: "metadata.labels"},
-		{name: "annotations", kind: metadata.Annotations(), want: "metadata.annotations"},
-		{name: "finalizers", kind: metadata.Finalizers(), want: "metadata.finalizers"},
-		{name: "owner references", kind: metadata.OwnerReferences(), want: "metadata.ownerReferences"},
-		{name: "empty", kind: "", want: ""},
-		{name: "unknown", kind: "metadata.name", want: "metadata.name"},
+		{name: "desired", kind: kinds.Desired(), want: false},
+		{name: "observed", kind: kinds.Observed(), want: false},
+		{name: "labels", kind: metadata.Labels(), want: true},
+		{name: "annotations", kind: metadata.Annotations(), want: true},
+		{name: "finalizers", kind: metadata.Finalizers(), want: true},
+		{name: "owner references", kind: metadata.OwnerReferences(), want: true},
+		{name: "empty", kind: "", want: false},
+		{name: "unknown", kind: "metadata.name", want: false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.kind.String(); got != tt.want {
-				t.Fatalf("String() = %q; want %q", got, tt.want)
+			if got := tt.kind.IsMetadata(); got != tt.want {
+				t.Fatalf("IsMetadata() = %v; want %v", got, tt.want)
 			}
 		})
 	}

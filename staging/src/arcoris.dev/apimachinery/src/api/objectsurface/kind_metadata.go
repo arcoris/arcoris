@@ -14,10 +14,17 @@
 
 package objectsurface
 
-// Kind identifies a stable object surface.
-type Kind string
+// IsMetadata reports whether k belongs to ObjectMeta.
+func (k Kind) IsMetadata() bool {
+	metadata := Kinds().Metadata()
 
-// String returns stable surface text.
-func (k Kind) String() string {
-	return string(k)
+	switch k {
+	case metadata.Labels(),
+		metadata.Annotations(),
+		metadata.Finalizers(),
+		metadata.OwnerReferences():
+		return true
+	default:
+		return false
+	}
 }

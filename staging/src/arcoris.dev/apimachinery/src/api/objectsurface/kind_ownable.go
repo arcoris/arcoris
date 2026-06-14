@@ -14,10 +14,18 @@
 
 package objectsurface
 
-// Kind identifies a stable object surface.
-type Kind string
+// IsOwnable reports whether k is currently modeled by object ownership.
+func (k Kind) IsOwnable() bool {
+	kinds := Kinds()
+	metadata := kinds.Metadata()
 
-// String returns stable surface text.
-func (k Kind) String() string {
-	return string(k)
+	switch k {
+	case kinds.Desired(),
+		kinds.Observed(),
+		metadata.Labels(),
+		metadata.Annotations():
+		return true
+	default:
+		return false
+	}
 }

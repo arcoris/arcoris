@@ -14,10 +14,20 @@
 
 package objectsurface
 
-// Kind identifies a stable object surface.
-type Kind string
+// IsValid reports whether k is a known object surface.
+func (k Kind) IsValid() bool {
+	kinds := Kinds()
+	metadata := kinds.Metadata()
 
-// String returns stable surface text.
-func (k Kind) String() string {
-	return string(k)
+	switch k {
+	case kinds.Desired(),
+		kinds.Observed(),
+		metadata.Labels(),
+		metadata.Annotations(),
+		metadata.Finalizers(),
+		metadata.OwnerReferences():
+		return true
+	default:
+		return false
+	}
 }

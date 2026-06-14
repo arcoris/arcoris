@@ -14,10 +14,30 @@
 
 package objectsurface
 
-// Kind identifies a stable object surface.
-type Kind string
+import (
+	"testing"
 
-// String returns stable surface text.
-func (k Kind) String() string {
-	return string(k)
+	"arcoris.dev/apimachinery/api/apidocument"
+)
+
+func TestKindTreeUsesAPIDocumentFields(t *testing.T) {
+	kinds := Kinds()
+	objectFields := apidocument.Fields().Object()
+
+	tests := []struct {
+		name string
+		got  Kind
+		want Kind
+	}{
+		{name: "desired", got: kinds.Desired(), want: rootKind(objectFields.Desired())},
+		{name: "observed", got: kinds.Observed(), want: rootKind(objectFields.Observed())},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.got != tt.want {
+				t.Fatalf("kind = %q; want %q", tt.got, tt.want)
+			}
+		})
+	}
 }
