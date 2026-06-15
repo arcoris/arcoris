@@ -22,3 +22,31 @@ func TestQueryZeroValue(t *testing.T) {
 		t.Fatal("zero Query contains non-zero section")
 	}
 }
+
+func TestQueryValidateZero(t *testing.T) {
+	requireNoError(t, (Query{}).Validate())
+}
+
+func TestQueryValidateInvalidIdentity(t *testing.T) {
+	err := (Query{
+		Identity: IdentitySelector{Name: NameRequirement{set: true}},
+	}).Validate()
+
+	requireErrorIs(t, err, ErrInvalidQuery)
+}
+
+func TestQueryValidateInvalidLabels(t *testing.T) {
+	err := (Query{
+		Labels: LabelSelector{requirements: []LabelRequirement{{req: metadataRequirement{key: "env", op: OperatorIn}}}},
+	}).Validate()
+
+	requireErrorIs(t, err, ErrInvalidQuery)
+}
+
+func TestQueryValidateInvalidAnnotations(t *testing.T) {
+	err := (Query{
+		Annotations: AnnotationSelector{requirements: []AnnotationRequirement{{req: metadataRequirement{key: "note", op: OperatorIn}}}},
+	}).Validate()
+
+	requireErrorIs(t, err, ErrInvalidQuery)
+}

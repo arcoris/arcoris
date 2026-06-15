@@ -36,3 +36,17 @@ func TestMetadataRequirementMatchNegativeOperatorsMatchAbsentKeys(t *testing.T) 
 		t.Fatal("notIn did not match absent key")
 	}
 }
+
+func TestMetadataRequirementMatchMembershipUsesCanonicalSortedValues(t *testing.T) {
+	lookup := func(string) (string, bool) { return "qa", true }
+
+	in := metadataRequirement{key: "env", op: OperatorIn, values: []string{"prod", "qa"}}
+	if !in.match(lookup) {
+		t.Fatal("in did not match canonical sorted value set")
+	}
+
+	notIn := metadataRequirement{key: "env", op: OperatorNotIn, values: []string{"prod", "qa"}}
+	if notIn.match(lookup) {
+		t.Fatal("notIn matched value present in canonical sorted value set")
+	}
+}

@@ -26,6 +26,38 @@ func TestLabelSelectorEmptyMatchesEverything(t *testing.T) {
 		t.Fatal("zero label selector did not match")
 	}
 	requireNoError(t, selector.Validate())
+	if selector.Requirements() != nil {
+		t.Fatalf("Requirements() = %#v; want nil", selector.Requirements())
+	}
+}
+
+func TestLabelSelectorRequirementsAccessorCanonicalOrder(t *testing.T) {
+	selector := mustLabelSelector(
+		t,
+		mustLabelEquals(t, "tier", "backend"),
+		mustLabelIn(t, "env", "qa", "prod"),
+	)
+
+	requirements := selector.Requirements()
+	if len(requirements) != 2 {
+		t.Fatalf("len = %d; want 2", len(requirements))
+	}
+	if requirements[0].Key() != "env" || requirements[1].Key() != "tier" {
+		t.Fatalf("requirement order = %q, %q; want env, tier", requirements[0].Key(), requirements[1].Key())
+	}
+}
+
+func TestLabelSelectorRequirementsDefensiveCopy(t *testing.T) {
+	selector := mustLabelSelector(t, mustLabelIn(t, "env", "qa", "prod"))
+	requirements := selector.Requirements()
+	requirements[0].req.values[0] = "mutated"
+	requirements = append(requirements, mustLabelEquals(t, "tier", "backend"))
+
+	next := selector.Requirements()
+	if len(next) != 1 {
+		t.Fatalf("len = %d; want 1", len(next))
+	}
+	requireStrings(t, next[0].Values(), "prod", "qa")
 }
 
 func mustLabelSelector(t *testing.T, requirements ...LabelRequirement) LabelSelector {

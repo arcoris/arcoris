@@ -23,3 +23,21 @@ type AnnotationRequirement struct {
 	// req stores the shared metadata requirement representation.
 	req metadataRequirement
 }
+
+// Key returns the metadata annotation key matched by r.
+func (r AnnotationRequirement) Key() string {
+	return r.req.key
+}
+
+// Operator returns the finite operator used by r.
+func (r AnnotationRequirement) Operator() Operator {
+	return r.req.op
+}
+
+// Values returns r's canonical values as a defensive copy.
+//
+// Exists and DoesNotExist requirements return nil. Equals and NotEquals return
+// one value. In and NotIn return a sorted, deduplicated value set.
+func (r AnnotationRequirement) Values() []string {
+	return append([]string(nil), r.req.values...)
+}

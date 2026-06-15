@@ -39,7 +39,28 @@ func (r NamespaceRequirement) IsZero() bool {
 	return !r.set
 }
 
+// Namespace returns the exact namespace requirement and whether it is present.
+//
+// A present zero namespace is meaningful: it matches objects whose storage
+// identity has no namespace.
+func (r NamespaceRequirement) Namespace() (metaidentity.Namespace, bool) {
+	if !r.set {
+		return "", false
+	}
+
+	return r.namespace, true
+}
+
 // IsZero reports whether r carries no name requirement.
 func (r NameRequirement) IsZero() bool {
 	return !r.set
+}
+
+// Name returns the exact object name requirement and whether it is present.
+func (r NameRequirement) Name() (metaidentity.Name, bool) {
+	if !r.set {
+		return "", false
+	}
+
+	return r.name, true
 }

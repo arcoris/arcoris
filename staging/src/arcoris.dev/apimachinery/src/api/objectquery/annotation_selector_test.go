@@ -26,6 +26,38 @@ func TestAnnotationSelectorEmptyMatchesEverything(t *testing.T) {
 		t.Fatal("zero annotation selector did not match")
 	}
 	requireNoError(t, selector.Validate())
+	if selector.Requirements() != nil {
+		t.Fatalf("Requirements() = %#v; want nil", selector.Requirements())
+	}
+}
+
+func TestAnnotationSelectorRequirementsAccessorCanonicalOrder(t *testing.T) {
+	selector := mustAnnotationSelector(
+		t,
+		mustAnnotationEquals(t, "team", "platform"),
+		mustAnnotationIn(t, "note", "qa rollout", "prod rollout"),
+	)
+
+	requirements := selector.Requirements()
+	if len(requirements) != 2 {
+		t.Fatalf("len = %d; want 2", len(requirements))
+	}
+	if requirements[0].Key() != "note" || requirements[1].Key() != "team" {
+		t.Fatalf("requirement order = %q, %q; want note, team", requirements[0].Key(), requirements[1].Key())
+	}
+}
+
+func TestAnnotationSelectorRequirementsDefensiveCopy(t *testing.T) {
+	selector := mustAnnotationSelector(t, mustAnnotationIn(t, "note", "qa rollout", "prod rollout"))
+	requirements := selector.Requirements()
+	requirements[0].req.values[0] = "mutated"
+	requirements = append(requirements, mustAnnotationEquals(t, "team", "platform"))
+
+	next := selector.Requirements()
+	if len(next) != 1 {
+		t.Fatalf("len = %d; want 1", len(next))
+	}
+	requireStrings(t, next[0].Values(), "prod rollout", "qa rollout")
 }
 
 func mustAnnotationSelector(t *testing.T, requirements ...AnnotationRequirement) AnnotationSelector {

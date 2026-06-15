@@ -33,9 +33,11 @@ func (r metadataRequirement) match(lookup func(string) (string, bool)) bool {
 	case OperatorNotEquals:
 		return !ok || actual != r.values[0]
 	case OperatorIn:
-		return ok && slices.Contains(r.values, actual)
+		_, found := slices.BinarySearch(r.values, actual)
+		return ok && found
 	case OperatorNotIn:
-		return !ok || !slices.Contains(r.values, actual)
+		_, found := slices.BinarySearch(r.values, actual)
+		return !ok || !found
 	default:
 		return false
 	}

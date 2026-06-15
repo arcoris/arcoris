@@ -21,6 +21,39 @@ func TestAnnotationRequirementZeroValue(t *testing.T) {
 	if req.req.op != 0 || req.req.key != "" || req.req.values != nil {
 		t.Fatalf("zero annotation requirement = %#v; want empty", req)
 	}
+	if req.Key() != "" {
+		t.Fatalf("Key() = %q; want empty", req.Key())
+	}
+	if req.Operator() != 0 {
+		t.Fatalf("Operator() = %s; want zero", req.Operator())
+	}
+	if req.Values() != nil {
+		t.Fatalf("Values() = %#v; want nil", req.Values())
+	}
+}
+
+func TestAnnotationRequirementAccessors(t *testing.T) {
+	req := mustAnnotationIn(t, "note", "qa rollout", "prod rollout", "qa rollout")
+
+	if got := req.Key(); got != "note" {
+		t.Fatalf("Key() = %q; want note", got)
+	}
+	if got := req.Operator(); got != OperatorIn {
+		t.Fatalf("Operator() = %s; want %s", got, OperatorIn)
+	}
+	requireStrings(t, req.Values(), "prod rollout", "qa rollout")
+}
+
+func TestAnnotationRequirementValuesDefensiveCopy(t *testing.T) {
+	req := mustAnnotationIn(t, "note", "qa rollout", "prod rollout")
+	selector := mustAnnotationSelector(t, req)
+	values := req.Values()
+	values[0] = "mutated"
+
+	requireStrings(t, req.Values(), "prod rollout", "qa rollout")
+	if !selector.match(testItem("system", "worker", nil, map[string]string{"note": "prod rollout"})) {
+		t.Fatal("mutating Values() copy affected selector match")
+	}
 }
 
 func mustAnnotationExists(t *testing.T, key string) AnnotationRequirement {

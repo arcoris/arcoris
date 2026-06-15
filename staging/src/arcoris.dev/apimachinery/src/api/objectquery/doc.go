@@ -22,10 +22,17 @@
 //
 // Query is the declarative value callers build. Compile validates and
 // canonicalizes Query into Predicate, which is the deterministic evaluator.
+// Predicate can expose a detached canonical Query for inspection by future
+// lifecycle, cache, index, parser, and adapter layers without exposing mutable
+// predicate internals.
+//
 // Query sections use AND semantics: identity, labels, and annotations must all
 // match. Label and annotation selector requirements are also ANDed. There is no
 // OR, nested boolean grouping, regex, numeric comparison, or Desired/Observed
 // field traversal in v1.
+//
+// Selectors and requirements are opaque construction-safe values. Accessors
+// expose stable canonical data and return defensive copies for slices.
 //
 // Negative metadata requirements intentionally match absent keys. NotEquals is
 // true when the key is absent or has a different value. NotIn is true when the

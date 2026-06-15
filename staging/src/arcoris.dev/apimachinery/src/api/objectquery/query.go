@@ -28,3 +28,9 @@ type Query struct {
 	// Annotations filters by object metadata annotations.
 	Annotations AnnotationSelector
 }
+
+// Validate checks whether q can compile into a canonical predicate.
+func (q Query) Validate() error {
+	_, err := Compile(q)
+	return err
+}

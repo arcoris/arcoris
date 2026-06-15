@@ -68,6 +68,33 @@ func TestCompileRejectsInvalidSections(t *testing.T) {
 	}
 }
 
+func TestCompileInvalidIdentityErrorPathAndReason(t *testing.T) {
+	_, err := Compile(Query{
+		Identity: IdentitySelector{Name: NameRequirement{set: true}},
+	})
+
+	requireErrorIs(t, err, ErrInvalidQuery)
+	requireQueryError(t, err, "query.identity.name", ErrorReasonInvalidIdentity)
+}
+
+func TestCompileInvalidLabelSelectorErrorPathAndReason(t *testing.T) {
+	_, err := Compile(Query{
+		Labels: LabelSelector{requirements: []LabelRequirement{{req: metadataRequirement{key: "env", op: OperatorIn}}}},
+	})
+
+	requireErrorIs(t, err, ErrInvalidQuery)
+	requireQueryError(t, err, "query.labels", ErrorReasonInvalidQuery)
+}
+
+func TestCompileInvalidAnnotationSelectorErrorPathAndReason(t *testing.T) {
+	_, err := Compile(Query{
+		Annotations: AnnotationSelector{requirements: []AnnotationRequirement{{req: metadataRequirement{key: "note", op: OperatorIn}}}},
+	})
+
+	requireErrorIs(t, err, ErrInvalidQuery)
+	requireQueryError(t, err, "query.annotations", ErrorReasonInvalidQuery)
+}
+
 func TestCompileCanonicalizesPredicateDeterministically(t *testing.T) {
 	firstLabels := mustLabelSelector(
 		t,

@@ -27,3 +27,31 @@ type AnnotationSelector struct {
 func (s AnnotationSelector) IsZero() bool {
 	return len(s.requirements) == 0
 }
+
+// Requirements returns the selector requirements in canonical order.
+//
+// The returned slice and every requirement inside it are detached from the
+// selector. Mutating the slice or values returned from each requirement does
+// not affect s.
+func (s AnnotationSelector) Requirements() []AnnotationRequirement {
+	return cloneAnnotationRequirements(s.requirements)
+}
+
+// clone returns a detached selector.
+func (s AnnotationSelector) clone() AnnotationSelector {
+	return AnnotationSelector{requirements: cloneAnnotationRequirements(s.requirements)}
+}
+
+// cloneAnnotationRequirements returns detached annotation requirements.
+func cloneAnnotationRequirements(requirements []AnnotationRequirement) []AnnotationRequirement {
+	if len(requirements) == 0 {
+		return nil
+	}
+
+	out := make([]AnnotationRequirement, len(requirements))
+	for i, req := range requirements {
+		out[i] = req.clone()
+	}
+
+	return out
+}

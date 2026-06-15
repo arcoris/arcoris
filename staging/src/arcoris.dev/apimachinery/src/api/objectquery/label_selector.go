@@ -27,3 +27,31 @@ type LabelSelector struct {
 func (s LabelSelector) IsZero() bool {
 	return len(s.requirements) == 0
 }
+
+// Requirements returns the selector requirements in canonical order.
+//
+// The returned slice and every requirement inside it are detached from the
+// selector. Mutating the slice or values returned from each requirement does
+// not affect s.
+func (s LabelSelector) Requirements() []LabelRequirement {
+	return cloneLabelRequirements(s.requirements)
+}
+
+// clone returns a detached selector.
+func (s LabelSelector) clone() LabelSelector {
+	return LabelSelector{requirements: cloneLabelRequirements(s.requirements)}
+}
+
+// cloneLabelRequirements returns detached label requirements.
+func cloneLabelRequirements(requirements []LabelRequirement) []LabelRequirement {
+	if len(requirements) == 0 {
+		return nil
+	}
+
+	out := make([]LabelRequirement, len(requirements))
+	for i, req := range requirements {
+		out[i] = req.clone()
+	}
+
+	return out
+}

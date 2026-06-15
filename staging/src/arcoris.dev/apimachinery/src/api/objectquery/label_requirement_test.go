@@ -21,6 +21,39 @@ func TestLabelRequirementZeroValue(t *testing.T) {
 	if req.req.op != 0 || req.req.key != "" || req.req.values != nil {
 		t.Fatalf("zero label requirement = %#v; want empty", req)
 	}
+	if req.Key() != "" {
+		t.Fatalf("Key() = %q; want empty", req.Key())
+	}
+	if req.Operator() != 0 {
+		t.Fatalf("Operator() = %s; want zero", req.Operator())
+	}
+	if req.Values() != nil {
+		t.Fatalf("Values() = %#v; want nil", req.Values())
+	}
+}
+
+func TestLabelRequirementAccessors(t *testing.T) {
+	req := mustLabelIn(t, "env", "qa", "prod", "qa")
+
+	if got := req.Key(); got != "env" {
+		t.Fatalf("Key() = %q; want env", got)
+	}
+	if got := req.Operator(); got != OperatorIn {
+		t.Fatalf("Operator() = %s; want %s", got, OperatorIn)
+	}
+	requireStrings(t, req.Values(), "prod", "qa")
+}
+
+func TestLabelRequirementValuesDefensiveCopy(t *testing.T) {
+	req := mustLabelIn(t, "env", "qa", "prod")
+	selector := mustLabelSelector(t, req)
+	values := req.Values()
+	values[0] = "mutated"
+
+	requireStrings(t, req.Values(), "prod", "qa")
+	if !selector.match(testItem("system", "worker", map[string]string{"env": "prod"}, nil)) {
+		t.Fatal("mutating Values() copy affected selector match")
+	}
 }
 
 func mustLabelExists(t *testing.T, key string) LabelRequirement {

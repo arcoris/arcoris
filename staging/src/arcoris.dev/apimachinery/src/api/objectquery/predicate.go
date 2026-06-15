@@ -30,3 +30,16 @@ type Predicate struct {
 func (p Predicate) IsZero() bool {
 	return p.identity.IsZero() && p.labels.IsZero() && p.annotations.IsZero()
 }
+
+// Query returns p's detached canonical query.
+//
+// The returned query is safe for inspection by future lifecycle, cache, index,
+// parser, and adapter layers. Any slices exposed through selector or
+// requirement accessors are defensive copies and cannot mutate p.
+func (p Predicate) Query() Query {
+	return Query{
+		Identity:    p.identity,
+		Labels:      p.labels.clone(),
+		Annotations: p.annotations.clone(),
+	}
+}

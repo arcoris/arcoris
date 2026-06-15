@@ -72,3 +72,17 @@ func requireRequirement(t *testing.T, got metadataRequirement, key string, op Op
 	}
 	requireStrings(t, got.values, values...)
 }
+
+func requireQueryError(t *testing.T, err error, path string, reason ErrorReason) {
+	t.Helper()
+	var queryErr *Error
+	if !errors.As(err, &queryErr) {
+		t.Fatalf("errors.As(%v, *Error) = false", err)
+	}
+	if queryErr.Path != path {
+		t.Fatalf("Path = %q; want %q", queryErr.Path, path)
+	}
+	if queryErr.Reason != reason {
+		t.Fatalf("Reason = %q; want %q", queryErr.Reason, reason)
+	}
+}
