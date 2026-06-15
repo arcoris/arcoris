@@ -18,10 +18,12 @@ import "arcoris.dev/apimachinery/api/objectstore"
 
 // ListResult is the successful result of a lifecycle collection read.
 type ListResult struct {
-	// Items are detached committed live states returned by objectstore.List.
+	// Items are detached committed live states returned by objectstore.List and
+	// then filtered by the lifecycle query, when one is present.
 	Items []objectstore.ListItem
 
-	// Revision is the store-local revision observed by the collection read.
+	// Revision is the store-local revision observed by the collection read
+	// before lifecycle query filtering.
 	Revision objectstore.Revision
 }
 

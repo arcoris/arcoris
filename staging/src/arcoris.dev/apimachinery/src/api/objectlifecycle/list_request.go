@@ -16,14 +16,23 @@ package objectlifecycle
 
 import (
 	"arcoris.dev/apimachinery/api/identity"
+	"arcoris.dev/apimachinery/api/objectquery"
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-// ListRequest identifies one resource collection and structural scope to read.
+// ListRequest identifies one resource collection, structural scope, and
+// optional semantic query to read.
 type ListRequest struct {
 	// Resource is the concrete resource collection identity to resolve.
 	Resource identity.GroupVersionResource
 
-	// Scope is the explicit structural collection scope.
+	// Scope is the explicit structural storage collection scope.
 	Scope objectstore.ListScope
+
+	// Query filters already-loaded list items above objectstore.
+	//
+	// Resource and Scope define the storage read sent to objectstore.List. Query
+	// is compiled by objectlifecycle, evaluated after the store result is cloned,
+	// and never pushed into storage. It does not affect ListResult.Revision.
+	Query objectquery.Query
 }

@@ -21,7 +21,8 @@ import (
 	"arcoris.dev/apimachinery/api/resource"
 )
 
-// List resolves a resource identity and reads committed live collection state.
+// List resolves a resource identity, reads committed live collection state, and
+// applies semantic query filtering above the store.
 func (e *Executor) List(ctx context.Context, req ListRequest) (ListResult, error) {
 	if err := e.requireExecutor(OperationList); err != nil {
 		return ListResult{}, err
@@ -32,12 +33,19 @@ func (e *Executor) List(ctx context.Context, req ListRequest) (ListResult, error
 	if err := e.validateListRequest(req); err != nil {
 		return ListResult{}, err
 	}
+	predicate, err := compileListQuery(req.Query)
+	if err != nil {
+		return ListResult{}, err
+	}
 
 	resolved, err := e.resolveKeyResource(OperationList, req.Resource)
 	if err != nil {
 		return ListResult{}, err
 	}
 	if err := validateListScopeForResource(resolved, req.Scope); err != nil {
+		return ListResult{}, err
+	}
+	if err := validateListQueryForResourceAndScope(resolved, req.Scope, predicate); err != nil {
 		return ListResult{}, err
 	}
 
@@ -50,8 +58,9 @@ func (e *Executor) List(ctx context.Context, req ListRequest) (ListResult, error
 	}
 
 	storeResult = storeResult.Clone()
+	items := predicate.Filter(storeResult.Items)
 	return ListResult{
-		Items:    storeResult.Items,
+		Items:    items,
 		Revision: storeResult.Revision,
 	}, nil
 }

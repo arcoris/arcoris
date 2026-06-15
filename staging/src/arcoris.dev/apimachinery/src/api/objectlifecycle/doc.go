@@ -41,7 +41,10 @@
 //
 // List resolves an explicit group/version/resource, applies resource-scope
 // compatibility for the structural list scope, delegates the collection read to
-// objectstore.List, and returns committed live items. List follows Get's
+// objectstore.List, and returns committed live items. Optional api/objectquery
+// filtering is compiled before storage is read and evaluated after the store
+// result is cloned, so storage still sees only Resource and Scope. Filtering
+// does not change the returned store revision watermark. List follows Get's
 // read-path rule: it does not revalidate stored Desired or Observed payloads
 // against current descriptors.
 //
