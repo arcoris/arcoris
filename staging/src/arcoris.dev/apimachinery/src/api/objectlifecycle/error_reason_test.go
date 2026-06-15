@@ -24,6 +24,8 @@ func TestErrorReasonStringAndValidity(t *testing.T) {
 		valid  bool
 	}{
 		{name: "invalid request", reason: ErrorReasonInvalidRequest, text: "invalid_request", valid: true},
+		{name: "invalid query", reason: ErrorReasonInvalidQuery, text: "invalid_query", valid: true},
+		{name: "invalid query scope", reason: ErrorReasonInvalidQueryScope, text: "invalid_query_scope", valid: true},
 		{name: "invalid owner", reason: ErrorReasonInvalidOwner, text: "invalid_owner", valid: true},
 		{name: "invalid context", reason: ErrorReasonInvalidContext, text: "invalid_context", valid: true},
 		{name: "invalid expected revision", reason: ErrorReasonInvalidExpectedRevision, text: "invalid_expected_revision", valid: true},

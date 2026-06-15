@@ -26,7 +26,7 @@ func compileListQuery(query objectquery.Query) (objectquery.Predicate, error) {
 	if err != nil {
 		return objectquery.Predicate{}, errorFor(
 			OperationList,
-			ErrorReasonInvalidRequest,
+			ErrorReasonInvalidQuery,
 			objectstore.Key{},
 			ErrInvalidRequest,
 			err,
@@ -75,11 +75,11 @@ func validateListQueryForResourceAndScope(
 }
 
 // invalidListQuery maps query/scope/resource contradictions to lifecycle input
-// errors without blaming objectstore.
+// errors without blaming objectstore or objectquery.
 func invalidListQuery() error {
 	return errorFor(
 		OperationList,
-		ErrorReasonInvalidRequest,
+		ErrorReasonInvalidQueryScope,
 		objectstore.Key{},
 		ErrInvalidRequest,
 		nil,

@@ -16,6 +16,7 @@ package objectlifecycle
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/meta/annotations"
@@ -215,6 +216,247 @@ func TestListCombinedQueryUsesAndSemantics(t *testing.T) {
 	requireImage(t, result.Items[0].State, "api:match")
 }
 
+func TestListQueryNamespacePolicyMatrix(t *testing.T) {
+	tests := []struct {
+		name            string
+		globalResource  bool
+		scope           func(t *testing.T) objectstore.ListScope
+		queryNamespace  metaidentity.Namespace
+		hasNamespace    bool
+		wantReason      ErrorReason
+		wantStoreCalled bool
+	}{
+		{
+			name:            "namespace scope different query namespace rejected",
+			scope:           lifecycleNamespaceScope("alpha"),
+			queryNamespace:  "beta",
+			hasNamespace:    true,
+			wantReason:      ErrorReasonInvalidQueryScope,
+			wantStoreCalled: false,
+		},
+		{
+			name:            "namespace scope same query namespace allowed",
+			scope:           lifecycleNamespaceScope("alpha"),
+			queryNamespace:  "alpha",
+			hasNamespace:    true,
+			wantStoreCalled: true,
+		},
+		{
+			name:            "all namespaces with non-zero query namespace allowed",
+			scope:           lifecycleAllNamespacesScope,
+			queryNamespace:  "alpha",
+			hasNamespace:    true,
+			wantStoreCalled: true,
+		},
+		{
+			name:            "global resource absent query namespace allowed",
+			globalResource:  true,
+			scope:           lifecycleAllNamespacesScope,
+			wantStoreCalled: true,
+		},
+		{
+			name:            "global resource explicit zero query namespace allowed",
+			globalResource:  true,
+			scope:           lifecycleAllNamespacesScope,
+			queryNamespace:  "",
+			hasNamespace:    true,
+			wantStoreCalled: true,
+		},
+		{
+			name:            "global resource non-zero query namespace rejected",
+			globalResource:  true,
+			scope:           lifecycleAllNamespacesScope,
+			queryNamespace:  "alpha",
+			hasNamespace:    true,
+			wantReason:      ErrorReasonInvalidQueryScope,
+			wantStoreCalled: false,
+		},
+		{
+			name:            "namespaced resource absent query namespace allowed",
+			scope:           lifecycleAllNamespacesScope,
+			wantStoreCalled: true,
+		},
+		{
+			name:            "namespaced resource non-zero query namespace allowed",
+			scope:           lifecycleAllNamespacesScope,
+			queryNamespace:  "alpha",
+			hasNamespace:    true,
+			wantStoreCalled: true,
+		},
+		{
+			name:            "namespaced resource explicit zero query namespace rejected",
+			scope:           lifecycleAllNamespacesScope,
+			queryNamespace:  "",
+			hasNamespace:    true,
+			wantReason:      ErrorReasonInvalidQueryScope,
+			wantStoreCalled: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &trackingListStore{}
+			options := []Option{WithStore(store)}
+			if tt.globalResource {
+				options = append(options, WithResourceResolver(testCatalog(t, globalTestDefinition())))
+			}
+			executor := testExecutor(t, options...)
+
+			query := objectquery.Query{}
+			if tt.hasNamespace {
+				query.Identity.Namespace = mustLifecycleNamespaceEquals(t, tt.queryNamespace)
+			}
+
+			_, err := executor.List(context.Background(), ListRequest{
+				Resource: testGVR(),
+				Scope:    tt.scope(t),
+				Query:    query,
+			})
+			if tt.wantReason != "" {
+				requireLifecycleError(t, err, ErrInvalidRequest, tt.wantReason)
+				if errors.Is(err, objectquery.ErrInvalidQuery) {
+					t.Fatalf("errors.Is(err, objectquery.ErrInvalidQuery) = true")
+				}
+			} else {
+				requireNoError(t, err)
+			}
+			if store.listCalled != tt.wantStoreCalled {
+				t.Fatalf("store.List called = %v; want %v", store.listCalled, tt.wantStoreCalled)
+			}
+		})
+	}
+}
+
+func TestListQueryErrorReasons(t *testing.T) {
+	t.Run("plain invalid list request keeps invalid request reason", func(t *testing.T) {
+		executor := testExecutor(t)
+
+		_, err := executor.List(context.Background(), ListRequest{})
+
+		requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidRequest)
+		requireErrorIs(t, err, objectstore.ErrInvalidListRequest)
+	})
+
+	t.Run("query scope conflict uses query scope reason", func(t *testing.T) {
+		store := &trackingListStore{}
+		executor := testExecutor(t, WithStore(store))
+		scope, err := objectstore.InNamespace("alpha")
+		requireNoError(t, err)
+
+		_, err = executor.List(context.Background(), ListRequest{
+			Resource: testGVR(),
+			Scope:    scope,
+			Query: objectquery.Query{
+				Identity: objectquery.IdentitySelector{
+					Namespace: mustLifecycleNamespaceEquals(t, "beta"),
+				},
+			},
+		})
+
+		requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidQueryScope)
+		if errors.Is(err, objectquery.ErrInvalidQuery) {
+			t.Fatalf("errors.Is(err, objectquery.ErrInvalidQuery) = true")
+		}
+		if store.listCalled {
+			t.Fatalf("store.List was called")
+		}
+	})
+
+	// Malformed objectquery internals are tested inside api/objectquery. From
+	// objectlifecycle, selectors and requirements are intentionally opaque, so
+	// public-constructible lifecycle tests cover valid query values that
+	// contradict resource/scope constraints.
+}
+
+func TestListQueryPreservesRevision(t *testing.T) {
+	items := []objectstore.ListItem{
+		lifecycleQueryListItem(t, 1, "system", "api:v1", map[string]string{"env": "prod"}, nil, 1),
+		lifecycleQueryListItem(t, 2, "system", "api:v2", map[string]string{"env": "qa"}, nil, 2),
+		lifecycleQueryListItem(t, 3, "system", "api:v3", map[string]string{"env": "prod"}, nil, 3),
+	}
+
+	tests := []struct {
+		name      string
+		query     objectquery.Query
+		wantNames []metaidentity.Name
+	}{
+		{
+			name: "matches all",
+			query: objectquery.Query{
+				Labels: mustLifecycleLabelSelector(t, mustLifecycleLabelExists(t, "env")),
+			},
+			wantNames: []metaidentity.Name{"worker-1", "worker-2", "worker-3"},
+		},
+		{
+			name: "matches some",
+			query: objectquery.Query{
+				Labels: mustLifecycleLabelSelector(t, mustLifecycleLabelEquals(t, "env", "prod")),
+			},
+			wantNames: []metaidentity.Name{"worker-1", "worker-3"},
+		},
+		{
+			name: "matches none",
+			query: objectquery.Query{
+				Labels: mustLifecycleLabelSelector(t, mustLifecycleLabelEquals(t, "env", "dev")),
+			},
+			wantNames: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &trackingListStore{
+				result: objectstore.ListResult{
+					Items:    items,
+					Revision: 42,
+				},
+			}
+			executor := testExecutor(t, WithStore(store))
+
+			result, err := executor.List(context.Background(), ListRequest{
+				Resource: testGVR(),
+				Scope:    objectstore.AllNamespaces(),
+				Query:    tt.query,
+			})
+			requireNoError(t, err)
+
+			requireLifecycleListNames(t, result, tt.wantNames...)
+			if result.Revision != 42 {
+				t.Fatalf("revision = %v; want 42", result.Revision)
+			}
+			if result.Revision.IsZero() {
+				t.Fatal("revision is zero")
+			}
+		})
+	}
+}
+
+func TestListQueryFilteringPreservesOrder(t *testing.T) {
+	store := &trackingListStore{
+		result: objectstore.ListResult{
+			Items: []objectstore.ListItem{
+				lifecycleQueryListItem(t, 1, "system", "api:v1", map[string]string{"env": "prod"}, nil, 1),
+				lifecycleQueryListItem(t, 2, "system", "api:v2", map[string]string{"env": "qa"}, nil, 2),
+				lifecycleQueryListItem(t, 3, "system", "api:v3", map[string]string{"env": "prod"}, nil, 3),
+				lifecycleQueryListItem(t, 4, "system", "api:v4", map[string]string{"env": "prod"}, nil, 4),
+			},
+			Revision: 5,
+		},
+	}
+	executor := testExecutor(t, WithStore(store))
+
+	result, err := executor.List(context.Background(), ListRequest{
+		Resource: testGVR(),
+		Scope:    objectstore.AllNamespaces(),
+		Query: objectquery.Query{
+			Labels: mustLifecycleLabelSelector(t, mustLifecycleLabelEquals(t, "env", "prod")),
+		},
+	})
+	requireNoError(t, err)
+
+	requireLifecycleListNames(t, result, "worker-1", "worker-3", "worker-4")
+}
+
 func TestListQueryNamespaceScopeConsistency(t *testing.T) {
 	t.Run("namespace scope conflict", func(t *testing.T) {
 		store := &trackingListStore{}
@@ -232,7 +474,7 @@ func TestListQueryNamespaceScopeConsistency(t *testing.T) {
 			},
 		})
 
-		requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidRequest)
+		requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidQueryScope)
 		if store.listCalled {
 			t.Fatalf("store.List was called")
 		}
@@ -342,7 +584,7 @@ func TestListGlobalResourceQueryNamespaceConsistency(t *testing.T) {
 			},
 		})
 
-		requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidRequest)
+		requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidQueryScope)
 		if store.listCalled {
 			t.Fatalf("store.List was called")
 		}
@@ -399,7 +641,7 @@ func TestListNamespacedResourceQueryNamespaceConsistency(t *testing.T) {
 			},
 		})
 
-		requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidRequest)
+		requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidQueryScope)
 		if store.listCalled {
 			t.Fatalf("store.List was called")
 		}
@@ -504,6 +746,49 @@ func createObjectWithMetadata(
 	return result
 }
 
+func lifecycleAllNamespacesScope(t *testing.T) objectstore.ListScope {
+	t.Helper()
+
+	return objectstore.AllNamespaces()
+}
+
+func lifecycleNamespaceScope(namespace metaidentity.Namespace) func(t *testing.T) objectstore.ListScope {
+	return func(t *testing.T) objectstore.ListScope {
+		t.Helper()
+
+		scope, err := objectstore.InNamespace(namespace)
+		requireNoError(t, err)
+
+		return scope
+	}
+}
+
+func lifecycleQueryListItem(
+	t *testing.T,
+	index int,
+	namespace metaidentity.Namespace,
+	image string,
+	rawLabels map[string]string,
+	rawAnnotations map[string]string,
+	revision objectstore.Revision,
+) objectstore.ListItem {
+	t.Helper()
+
+	obj := testObjectWithDesired(index, value.StringValue(image))
+	obj.ObjectMeta.Namespace = namespace
+	obj.ObjectMeta.Labels = mustLifecycleLabels(t, rawLabels)
+	obj.ObjectMeta.Annotations = mustLifecycleAnnotations(t, rawAnnotations)
+
+	return objectstore.ListItem{
+		Key: objectstore.MustKey(testGVR(), obj.ObjectMeta.ObjectName()),
+		State: objectstore.State{
+			Object:    obj,
+			Ownership: objectownership.EmptyState(),
+			Revision:  revision,
+		},
+	}
+}
+
 func mustLifecycleLabels(t *testing.T, values map[string]string) labels.Set {
 	t.Helper()
 
@@ -526,6 +811,15 @@ func mustLifecycleLabelEquals(t *testing.T, key string, val string) objectquery.
 	t.Helper()
 
 	requirement, err := objectquery.LabelEquals(key, val)
+	requireNoError(t, err)
+
+	return requirement
+}
+
+func mustLifecycleLabelExists(t *testing.T, key string) objectquery.LabelRequirement {
+	t.Helper()
+
+	requirement, err := objectquery.LabelExists(key)
 	requireNoError(t, err)
 
 	return requirement

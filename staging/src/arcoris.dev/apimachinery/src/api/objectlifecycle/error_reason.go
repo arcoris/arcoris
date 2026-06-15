@@ -20,6 +20,11 @@ type ErrorReason string
 const (
 	// ErrorReasonInvalidRequest reports malformed operation input.
 	ErrorReasonInvalidRequest ErrorReason = "invalid_request"
+	// ErrorReasonInvalidQuery reports malformed objectquery input.
+	ErrorReasonInvalidQuery ErrorReason = "invalid_query"
+	// ErrorReasonInvalidQueryScope reports a query that contradicts list scope
+	// or resource scope.
+	ErrorReasonInvalidQueryScope ErrorReason = "invalid_query_scope"
 	// ErrorReasonInvalidOwner reports malformed field owner input.
 	ErrorReasonInvalidOwner ErrorReason = "invalid_owner"
 	// ErrorReasonInvalidContext reports a nil lifecycle operation context.
@@ -72,6 +77,8 @@ const (
 func (r ErrorReason) IsValid() bool {
 	switch r {
 	case ErrorReasonInvalidRequest,
+		ErrorReasonInvalidQuery,
+		ErrorReasonInvalidQueryScope,
 		ErrorReasonInvalidOwner,
 		ErrorReasonInvalidContext,
 		ErrorReasonInvalidExpectedRevision,

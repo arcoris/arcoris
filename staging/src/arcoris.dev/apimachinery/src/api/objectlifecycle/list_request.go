@@ -33,6 +33,12 @@ type ListRequest struct {
 	//
 	// Resource and Scope define the storage read sent to objectstore.List. Query
 	// is compiled by objectlifecycle, evaluated after the store result is cloned,
-	// and never pushed into storage. It does not affect ListResult.Revision.
+	// and never pushed into storage or indexes. It does not affect
+	// ListResult.Revision.
+	//
+	// An absent query namespace requirement means "do not filter by namespace."
+	// An explicit zero namespace requirement means "match objects whose storage
+	// identity has no namespace." That is compatible with global resources and
+	// contradictory for namespaced resources.
 	Query objectquery.Query
 }
