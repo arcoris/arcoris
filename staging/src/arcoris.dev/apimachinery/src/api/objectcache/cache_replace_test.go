@@ -45,11 +45,12 @@ func TestCacheReplaceReplacesItemsRevisionAndIndexes(t *testing.T) {
 	assertCacheListEquivalent(t, cache, objectquery.Query{
 		Annotations: mustAnnotationSelector(t, mustAnnotationEquals(t, "team", "new")),
 	})
+	assertCacheInvariants(t, cache)
 }
 
 func TestCacheReplaceRejectsDuplicateKeysAndLeavesCacheUnchanged(t *testing.T) {
 	cache := mustCache(t, testListResult(10, testItems()...))
-	before := cache.Items()
+	before := captureCacheView(t, cache)
 	item := testItem("system", "worker-1", 20, nil, nil)
 	duplicate := item
 	duplicate.State.Revision = 21
@@ -58,11 +59,7 @@ func TestCacheReplaceRejectsDuplicateKeysAndLeavesCacheUnchanged(t *testing.T) {
 
 	requireErrorIs(t, err, ErrInvalidCache)
 	requireErrorIs(t, err, ErrDuplicateKey)
-	if got := cache.Revision(); got != 10 {
-		t.Fatalf("Revision() = %v; want 10", got)
-	}
-	requireSameItems(t, cache.Items(), before)
-	assertCacheInvariants(t, cache)
+	requireCacheUnchanged(t, cache, before)
 }
 
 func TestCacheReplaceClonesInput(t *testing.T) {
@@ -84,5 +81,68 @@ func TestCacheReplaceClonesInput(t *testing.T) {
 	}
 	if got := labelValue(t, got, "env"); got != "prod" {
 		t.Fatalf("label env = %q; want prod", got)
+	}
+}
+
+func TestCacheReplaceRejectsOlderRevisionAndLeavesCacheUnchanged(t *testing.T) {
+	cache := mustCache(t, testListResult(10, testItems()...))
+	before := captureCacheView(t, cache)
+	replacement := []objectstore.ListItem{
+		testItem("system", "worker-9", 9, labelsMap("env", "qa"), nil),
+	}
+
+	err := cache.Replace(testListResult(9, replacement...))
+
+	requireErrorIs(t, err, ErrStaleSnapshot)
+	requireErrorNotIs(t, err, ErrStaleChange)
+	requireCacheUnchanged(t, cache, before)
+}
+
+func TestCacheReplaceAcceptsEqualRevision(t *testing.T) {
+	cache := mustCache(t, testListResult(10, testItems()...))
+	replacement := []objectstore.ListItem{
+		testItem("system", "worker-9", 9, labelsMap("env", "qa"), nil),
+	}
+
+	requireNoError(t, cache.Replace(testListResult(10, replacement...)))
+
+	if got := cache.Revision(); got != 10 {
+		t.Fatalf("Revision() = %v; want 10", got)
+	}
+	requireItemOrder(t, cache.Items(), itemRef{"system", "worker-9", 9})
+	assertCacheInvariants(t, cache)
+}
+
+func TestCacheReplaceUsesReplacementOrder(t *testing.T) {
+	cache := mustCache(t, testListResult(10, testItems()...))
+	replacement := []objectstore.ListItem{
+		testItem("system", "worker-3", 13, nil, nil),
+		testItem("system", "worker-1", 11, nil, nil),
+		testItem("system", "worker-2", 12, nil, nil),
+	}
+
+	requireNoError(t, cache.Replace(testListResult(11, replacement...)))
+
+	requireItemOrder(
+		t,
+		cache.Items(),
+		itemRef{"system", "worker-3", 13},
+		itemRef{"system", "worker-1", 11},
+		itemRef{"system", "worker-2", 12},
+	)
+	assertCacheInvariants(t, cache)
+}
+
+func TestCacheListEquivalentAfterReplace(t *testing.T) {
+	cache := mustCache(t, testListResult(10, testItems()...))
+	replacement := []objectstore.ListItem{
+		testItem("system", "worker-1", 11, labelsMap("env", "qa"), annotationsMap("team", "tools")),
+		testItem("other", "worker-3", 13, labelsMap("env", "prod"), annotationsMap("team", "core")),
+	}
+
+	requireNoError(t, cache.Replace(testListResult(12, replacement...)))
+
+	for _, query := range representativeQueries(t) {
+		assertCacheListEquivalent(t, cache, query)
 	}
 }

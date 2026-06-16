@@ -26,6 +26,10 @@ import (
 // Replace rebuilds the collection atomically. Apply consumes validated
 // objectstore.Change values and advances the cache revision when the change is
 // newer than the current watermark.
+//
+// Cache preserves initial and replacement list order. Created keys are appended
+// in committed change order, updates preserve position, and deletes preserve
+// the relative order of remaining keys.
 type Cache struct {
 	// mu protects col and every index owned by col.
 	mu sync.RWMutex

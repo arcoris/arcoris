@@ -22,7 +22,9 @@ import (
 
 // Replace atomically replaces the entire cache collection.
 //
-// If result is invalid, the existing cache state is left unchanged.
+// If result is invalid or older than the current cache revision, the existing
+// cache state is left unchanged. Equal revisions are accepted as idempotent
+// refreshes. Replacement item order becomes the new cache order.
 func (c *Cache) Replace(result objectstore.ListResult) error {
 	if c == nil {
 		return fmt.Errorf("%w: nil cache", ErrInvalidCache)
@@ -36,6 +38,19 @@ func (c *Cache) Replace(result objectstore.ListResult) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	if !c.col.isZero() && next.revision.Before(c.col.revision) {
+		return staleSnapshotError(c.col.revision, next.revision)
+	}
+
 	c.col = next
 	return nil
+}
+
+func staleSnapshotError(current objectstore.Revision, incoming objectstore.Revision) error {
+	return fmt.Errorf(
+		"%w: current revision %s, incoming revision %s",
+		ErrStaleSnapshot,
+		current.String(),
+		incoming.String(),
+	)
 }

@@ -20,39 +20,43 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-// apply dispatches a validated, newer objectstore.Change into collection-local
-// mutation logic. The caller is responsible for atomic cache publication.
-func (col *collection) apply(change objectstore.Change) error {
+// validateApply checks cache-local preconditions without mutating collection
+// state. The caller must already have validated the objectstore.Change shape and
+// stale revision ordering.
+func (col collection) validateApply(change objectstore.Change) error {
 	switch change.Kind {
 	case objectstore.ChangeCreated:
-		return col.applyCreate(change)
+		return col.validateCreate(change)
 	case objectstore.ChangeUpdated:
-		return col.applyUpdate(change)
+		return col.validateUpdate(change)
 	case objectstore.ChangeDeleted:
-		return col.applyDelete(change)
+		return col.validateDelete(change)
 	default:
 		return invalidChangeError(nil)
 	}
 }
 
-// applyCreate adds a new live item and appends its key to stable output order.
-func (col *collection) applyCreate(change objectstore.Change) error {
+// applyValidated dispatches a change that already passed validateApply.
+func (col *collection) applyValidated(change objectstore.Change) {
+	switch change.Kind {
+	case objectstore.ChangeCreated:
+		col.applyCreateValidated(change)
+	case objectstore.ChangeUpdated:
+		col.applyUpdateValidated(change)
+	case objectstore.ChangeDeleted:
+		col.applyDeleteValidated(change)
+	}
+}
+
+func (col collection) validateCreate(change objectstore.Change) error {
 	if _, exists := col.items[change.Key]; exists {
 		return invalidChangeStateError("create key already exists", change.Key)
 	}
 
-	item := objectstore.ListItem{Key: change.Key, State: change.After.Clone()}
-	col.ensureMaps()
-	col.order = append(col.order, change.Key)
-	col.items[change.Key] = item
-	col.indexes.add(item)
-	col.revision = change.Revision
-
 	return nil
 }
 
-// applyUpdate replaces one live item while preserving its existing order slot.
-func (col *collection) applyUpdate(change objectstore.Change) error {
+func (col collection) validateUpdate(change objectstore.Change) error {
 	current, exists := col.items[change.Key]
 	if !exists {
 		return invalidChangeStateError("update key is missing", change.Key)
@@ -61,17 +65,10 @@ func (col *collection) applyUpdate(change objectstore.Change) error {
 		return invalidChangeStateError("update before revision does not match cache", change.Key)
 	}
 
-	next := objectstore.ListItem{Key: change.Key, State: change.After.Clone()}
-	col.indexes.remove(current)
-	col.items[change.Key] = next
-	col.indexes.add(next)
-	col.revision = change.Revision
-
 	return nil
 }
 
-// applyDelete removes a live item from items, order, and every index bucket.
-func (col *collection) applyDelete(change objectstore.Change) error {
+func (col collection) validateDelete(change objectstore.Change) error {
 	current, exists := col.items[change.Key]
 	if !exists {
 		return invalidChangeStateError("delete key is missing", change.Key)
@@ -80,6 +77,35 @@ func (col *collection) applyDelete(change objectstore.Change) error {
 		return invalidChangeStateError("delete before revision does not match cache", change.Key)
 	}
 
+	return nil
+}
+
+// applyCreateValidated adds a new live item and appends its key to stable
+// output order.
+func (col *collection) applyCreateValidated(change objectstore.Change) {
+	item := objectstore.ListItem{Key: change.Key, State: change.After.Clone()}
+	col.ensureMaps()
+	col.order = append(col.order, change.Key)
+	col.items[change.Key] = item
+	col.indexes.add(item)
+	col.revision = change.Revision
+}
+
+// applyUpdateValidated replaces one live item while preserving its existing
+// order slot.
+func (col *collection) applyUpdateValidated(change objectstore.Change) {
+	current := col.items[change.Key]
+	next := objectstore.ListItem{Key: change.Key, State: change.After.Clone()}
+	col.indexes.remove(current)
+	col.items[change.Key] = next
+	col.indexes.add(next)
+	col.revision = change.Revision
+}
+
+// applyDeleteValidated removes a live item from items, order, and every index
+// bucket.
+func (col *collection) applyDeleteValidated(change objectstore.Change) {
+	current := col.items[change.Key]
 	col.indexes.remove(current)
 	delete(col.items, change.Key)
 	col.removeOrderKey(change.Key)
@@ -88,8 +114,6 @@ func (col *collection) applyDelete(change objectstore.Change) error {
 		col.items = nil
 		col.indexes = indexes{}
 	}
-
-	return nil
 }
 
 // ensureMaps initializes lazy maps for create-after-empty transitions.

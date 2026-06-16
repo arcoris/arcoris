@@ -31,4 +31,8 @@ var (
 
 	// ErrStaleChange reports a change at or before the current cache revision.
 	ErrStaleChange = errors.New("stale object cache change")
+
+	// ErrStaleSnapshot reports a replacement snapshot older than the current
+	// cache revision.
+	ErrStaleSnapshot = errors.New("stale object cache snapshot")
 )

@@ -22,7 +22,7 @@ import (
 // list evaluates predicate over collection order.
 //
 // Indexes only reduce the candidate key set. The predicate remains the final
-// semantic authority and every returned item is cloned.
+// semantic source of truth and every returned item is cloned.
 func (col collection) list(predicate objectquery.Predicate) []objectstore.ListItem {
 	if len(col.order) == 0 {
 		return nil

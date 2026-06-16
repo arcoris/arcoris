@@ -23,9 +23,44 @@ import (
 func TestCollectionApplyUnknownKind(t *testing.T) {
 	col := mustCollection(t, testListResult(1))
 
-	err := col.apply(objectstore.Change{Kind: objectstore.ChangeKind(99)})
+	err := col.validateApply(objectstore.Change{Kind: objectstore.ChangeKind(99)})
 
 	requireErrorIs(t, err, ErrInvalidChange)
+}
+
+func TestCollectionValidateApplyDoesNotMutateState(t *testing.T) {
+	item := testItem("system", "worker-1", 1, labelsMap("env", "prod"), nil)
+	col := mustCollection(t, testListResult(10, item))
+	before := col.listItems()
+	change := objectstore.MustCreatedChange(item.Key, testItem(
+		"system",
+		"worker-1",
+		11,
+		labelsMap("env", "qa"),
+		nil,
+	).State)
+
+	err := col.validateApply(change)
+
+	requireErrorIs(t, err, ErrInvalidChange)
+	if col.revision != 10 {
+		t.Fatalf("revision = %v; want 10", col.revision)
+	}
+	requireSameItems(t, col.listItems(), before)
+	assertCollectionInvariants(t, col)
+}
+
+func TestCollectionApplyValidatedMutatesIncrementally(t *testing.T) {
+	item := testItem("system", "worker-1", 1, labelsMap("env", "prod"), nil)
+	col := mustCollection(t, testListResult(1, item))
+	next := testItem("system", "worker-1", 2, labelsMap("env", "qa"), nil)
+	change := objectstore.MustUpdatedChange(item.Key, item.State, next.State)
+
+	requireNoError(t, col.validateApply(change))
+	col.applyValidated(change.Clone())
+
+	requireItemOrder(t, col.listItems(), itemRef{"system", "worker-1", 2})
+	assertCollectionInvariants(t, col)
 }
 
 func TestCollectionRemoveMissingOrderKeyLeavesOrder(t *testing.T) {

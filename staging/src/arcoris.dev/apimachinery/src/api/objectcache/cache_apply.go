@@ -24,7 +24,10 @@ import (
 // Apply atomically applies a committed object store change to c.
 //
 // Changes must validate through objectstore, be newer than the current cache
-// revision, and be consistent with the current cached key state.
+// revision, and be consistent with the current cached key state. Apply assumes
+// callers provide a complete ordered change stream for this cached collection.
+// It detects stale revisions and per-key before-revision mismatches, but missed
+// unrelated-key changes require a future watch/reflector recovery layer.
 func (c *Cache) Apply(change objectstore.Change) error {
 	if c == nil {
 		return fmt.Errorf("%w: nil cache", ErrInvalidCache)
@@ -32,6 +35,7 @@ func (c *Cache) Apply(change objectstore.Change) error {
 	if err := change.Validate(); err != nil {
 		return invalidChangeError(err)
 	}
+	change = change.Clone()
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -39,13 +43,11 @@ func (c *Cache) Apply(change objectstore.Change) error {
 	if !c.col.revision.Before(change.Revision) {
 		return staleChangeError(c.col.revision, change.Revision)
 	}
-
-	next := c.col.clone()
-	if err := next.apply(change.Clone()); err != nil {
+	if err := c.col.validateApply(change); err != nil {
 		return err
 	}
 
-	c.col = next
+	c.col.applyValidated(change)
 	return nil
 }
 

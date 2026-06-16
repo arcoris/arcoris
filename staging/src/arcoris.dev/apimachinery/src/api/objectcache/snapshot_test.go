@@ -182,6 +182,14 @@ func requireErrorIs(t *testing.T, err error, target error) {
 	}
 }
 
+func requireErrorNotIs(t *testing.T, err error, target error) {
+	t.Helper()
+
+	if errors.Is(err, target) {
+		t.Fatalf("errors.Is(%v, %v) = true; want false", err, target)
+	}
+}
+
 func requireNoError(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
@@ -283,6 +291,73 @@ func assertSnapshotListMatchesObjectQueryFullScan(
 		t.Fatalf("Revision = %v; want %v", got.Revision, snapshot.Revision())
 	}
 	requireSameItems(t, got.Items, want)
+}
+
+func representativeQueries(t *testing.T) []objectquery.Query {
+	t.Helper()
+
+	return []objectquery.Query{
+		{},
+		{
+			Identity: objectquery.IdentitySelector{
+				Namespace: mustNamespaceEquals(t, "system"),
+			},
+		},
+		{
+			Identity: objectquery.IdentitySelector{
+				Name: mustNameEquals(t, "worker-1"),
+			},
+		},
+		{
+			Identity: objectquery.IdentitySelector{
+				Namespace: mustNamespaceEquals(t, "system"),
+				Name:      mustNameEquals(t, "worker-1"),
+			},
+		},
+		{
+			Labels: mustLabelSelector(t, mustLabelExists(t, "env")),
+		},
+		{
+			Labels: mustLabelSelector(t, mustLabelEquals(t, "env", "prod")),
+		},
+		{
+			Labels: mustLabelSelector(t, mustLabelIn(t, "env", "prod", "qa", "new")),
+		},
+		{
+			Labels: mustLabelSelector(t, mustLabelDoesNotExist(t, "missing")),
+		},
+		{
+			Labels: mustLabelSelector(t, mustLabelNotEquals(t, "env", "prod")),
+		},
+		{
+			Labels: mustLabelSelector(t, mustLabelNotIn(t, "env", "prod", "qa")),
+		},
+		{
+			Annotations: mustAnnotationSelector(t, mustAnnotationExists(t, "team")),
+		},
+		{
+			Annotations: mustAnnotationSelector(t, mustAnnotationEquals(t, "team", "core")),
+		},
+		{
+			Annotations: mustAnnotationSelector(t, mustAnnotationIn(t, "team", "core", "tools", "new")),
+		},
+		{
+			Annotations: mustAnnotationSelector(t, mustAnnotationDoesNotExist(t, "missing")),
+		},
+		{
+			Annotations: mustAnnotationSelector(t, mustAnnotationNotEquals(t, "team", "core")),
+		},
+		{
+			Annotations: mustAnnotationSelector(t, mustAnnotationNotIn(t, "team", "core", "tools")),
+		},
+		{
+			Identity: objectquery.IdentitySelector{
+				Namespace: mustNamespaceEquals(t, "system"),
+			},
+			Labels:      mustLabelSelector(t, mustLabelIn(t, "env", "prod", "qa")),
+			Annotations: mustAnnotationSelector(t, mustAnnotationNotEquals(t, "zone", "west")),
+		},
+	}
 }
 
 func mustNamespaceEquals(t *testing.T, namespace metaidentity.Namespace) objectquery.NamespaceRequirement {

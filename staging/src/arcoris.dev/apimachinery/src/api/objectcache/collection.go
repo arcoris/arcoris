@@ -32,7 +32,7 @@ type collection struct {
 	items map[objectstore.Key]objectstore.ListItem
 
 	// indexes mirrors items and is rebuilt or updated with every collection
-	// mutation. It is not authoritative for object presence.
+	// mutation. It is not the source of truth for object presence.
 	indexes indexes
 }
 

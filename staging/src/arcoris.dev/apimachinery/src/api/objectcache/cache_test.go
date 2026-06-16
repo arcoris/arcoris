@@ -348,5 +348,31 @@ func assertCacheInvariants(t *testing.T, cache *Cache) {
 		}
 		requireSameItems(t, []objectstore.ListItem{got}, []objectstore.ListItem{item})
 	}
-	assertCacheListEquivalent(t, cache, objectquery.Query{})
+	for _, query := range representativeQueries(t) {
+		assertCacheListEquivalent(t, cache, query)
+	}
+}
+
+type cacheView struct {
+	revision objectstore.Revision
+	items    []objectstore.ListItem
+}
+
+func captureCacheView(t *testing.T, cache *Cache) cacheView {
+	t.Helper()
+
+	return cacheView{
+		revision: cache.Revision(),
+		items:    cache.Items(),
+	}
+}
+
+func requireCacheUnchanged(t *testing.T, cache *Cache, before cacheView) {
+	t.Helper()
+
+	if got := cache.Revision(); got != before.revision {
+		t.Fatalf("Revision() = %v; want %v", got, before.revision)
+	}
+	requireSameItems(t, cache.Items(), before.items)
+	assertCacheInvariants(t, cache)
 }

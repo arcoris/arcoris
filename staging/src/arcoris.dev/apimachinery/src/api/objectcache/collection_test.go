@@ -79,3 +79,26 @@ func assertCollectionListEquivalent(t *testing.T, col collection, query objectqu
 
 	requireSameItems(t, got, want)
 }
+
+func assertCollectionInvariants(t *testing.T, col collection) {
+	t.Helper()
+
+	seen := map[objectstore.Key]struct{}{}
+	for _, key := range col.order {
+		if _, exists := seen[key]; exists {
+			t.Fatalf("duplicate ordered key: %s", key)
+		}
+		seen[key] = struct{}{}
+		if _, exists := col.items[key]; !exists {
+			t.Fatalf("ordered key %s missing from items", key)
+		}
+	}
+	for key := range col.items {
+		if _, exists := seen[key]; !exists {
+			t.Fatalf("item key %s missing from order", key)
+		}
+	}
+	for _, query := range representativeQueries(t) {
+		assertCollectionListEquivalent(t, col, query)
+	}
+}

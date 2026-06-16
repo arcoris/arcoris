@@ -18,8 +18,12 @@ import "testing"
 
 func TestErrorSentinels(t *testing.T) {
 	for _, err := range []error{
+		ErrInvalidCache,
 		ErrInvalidSnapshot,
 		ErrDuplicateKey,
+		ErrInvalidChange,
+		ErrStaleChange,
+		ErrStaleSnapshot,
 	} {
 		if err == nil {
 			t.Fatal("error sentinel is nil")

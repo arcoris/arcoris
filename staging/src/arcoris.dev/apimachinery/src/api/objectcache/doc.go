@@ -25,6 +25,12 @@
 // and objectquery.Predicate.Match is always applied before returning query
 // results.
 //
+// Cache preserves source list order. Apply appends creates in committed change
+// order, preserves order for updates, and removes deleted keys while preserving
+// the relative order of the remaining items. Apply assumes callers provide a
+// complete ordered stream of committed changes for the cached collection; gap
+// detection and recovery belong to future watch/reflector layers.
+//
 // The package does not read object stores, push filters into storage, parse
 // selector strings, watch changes, run workload loops, own request policy, or
 // validate resource descriptors. Indexes are intentionally private; there is no
