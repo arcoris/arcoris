@@ -15,8 +15,6 @@
 package objectcache
 
 import (
-	"arcoris.dev/apimachinery/api/meta/annotations"
-	"arcoris.dev/apimachinery/api/meta/labels"
 	"arcoris.dev/apimachinery/api/objectquery"
 	"arcoris.dev/apimachinery/api/objectstore"
 )
@@ -63,103 +61,4 @@ func (plan candidatePlan) constrain(next keySet) candidatePlan {
 // includes reports whether key survives the indexed candidate plan.
 func (plan candidatePlan) includes(key objectstore.Key) bool {
 	return !plan.constrained || plan.keys.has(key)
-}
-
-// planIdentity narrows candidates with exact object identity requirements.
-func (idx indexes) planIdentity(
-	plan candidatePlan,
-	identity objectquery.IdentitySelector,
-) candidatePlan {
-	namespace, hasNamespace := identity.Namespace.Namespace()
-	name, hasName := identity.Name.Name()
-
-	switch {
-	case hasNamespace && hasName:
-		return plan.constrain(idx.byObject[objectNameKey{namespace: namespace, name: name}])
-	case hasNamespace:
-		return plan.constrain(idx.byNamespace[namespace])
-	case hasName:
-		return plan.constrain(idx.byName[name])
-	default:
-		return plan
-	}
-}
-
-// planLabels narrows candidates for positive label requirements.
-func (idx indexes) planLabels(
-	plan candidatePlan,
-	requirements []objectquery.LabelRequirement,
-) candidatePlan {
-	for _, req := range requirements {
-		if next, ok := idx.labelCandidates(req); ok {
-			plan = plan.constrain(next)
-		}
-	}
-
-	return plan
-}
-
-// labelCandidates returns candidates for one indexable label requirement.
-// Non-indexable negative operators are returned as residual-only.
-func (idx indexes) labelCandidates(req objectquery.LabelRequirement) (keySet, bool) {
-	key := labels.Key(req.Key())
-	switch req.Operator() {
-	case objectquery.OperatorExists:
-		return idx.byLabelKey[key], true
-	case objectquery.OperatorEquals:
-		values := req.Values()
-		return idx.byLabelValue[labelValueKey{key: key, value: labels.Value(values[0])}], true
-	case objectquery.OperatorIn:
-		sets := make([]keySet, 0, len(req.Values()))
-		for _, value := range req.Values() {
-			sets = append(sets, idx.byLabelValue[labelValueKey{
-				key:   key,
-				value: labels.Value(value),
-			}])
-		}
-		return unionKeySets(sets...), true
-	default:
-		return nil, false
-	}
-}
-
-// planAnnotations narrows candidates for positive annotation requirements.
-func (idx indexes) planAnnotations(
-	plan candidatePlan,
-	requirements []objectquery.AnnotationRequirement,
-) candidatePlan {
-	for _, req := range requirements {
-		if next, ok := idx.annotationCandidates(req); ok {
-			plan = plan.constrain(next)
-		}
-	}
-
-	return plan
-}
-
-// annotationCandidates returns candidates for one indexable annotation
-// requirement. Non-indexable negative operators are returned as residual-only.
-func (idx indexes) annotationCandidates(req objectquery.AnnotationRequirement) (keySet, bool) {
-	key := annotations.Key(req.Key())
-	switch req.Operator() {
-	case objectquery.OperatorExists:
-		return idx.byAnnotationKey[key], true
-	case objectquery.OperatorEquals:
-		values := req.Values()
-		return idx.byAnnotationValue[annotationValueKey{
-			key:   key,
-			value: annotations.Value(values[0]),
-		}], true
-	case objectquery.OperatorIn:
-		sets := make([]keySet, 0, len(req.Values()))
-		for _, value := range req.Values() {
-			sets = append(sets, idx.byAnnotationValue[annotationValueKey{
-				key:   key,
-				value: annotations.Value(value),
-			}])
-		}
-		return unionKeySets(sets...), true
-	default:
-		return nil, false
-	}
 }

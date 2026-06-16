@@ -32,3 +32,19 @@ func TestCacheGetNilReceiver(t *testing.T) {
 		t.Fatalf("Get() item = %#v; want zero item", got)
 	}
 }
+
+func TestCacheGetExistingAndMissingKey(t *testing.T) {
+	items := testItems()
+	cache := mustCache(t, testListResult(31, items...))
+
+	got, ok := cache.Get(items[1].Key)
+	if !ok {
+		t.Fatal("Get(existing) ok = false; want true")
+	}
+	requireItemOrder(t, []objectstore.ListItem{got}, itemRef{"system", "worker-2", 2})
+
+	missing := testItem("system", "missing", 99, nil, nil).Key
+	if got, ok := cache.Get(missing); ok || !got.Key.Equal(objectstore.Key{}) {
+		t.Fatalf("Get(missing) = %#v, %v; want zero, false", got, ok)
+	}
+}

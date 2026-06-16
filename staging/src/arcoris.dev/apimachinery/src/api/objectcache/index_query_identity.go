@@ -14,18 +14,24 @@
 
 package objectcache
 
-import "testing"
+import "arcoris.dev/apimachinery/api/objectquery"
 
-func TestCacheNilReceiverAccessors(t *testing.T) {
-	var cache *Cache
+// planIdentity narrows candidates with exact object identity requirements.
+func (idx indexes) planIdentity(
+	plan candidatePlan,
+	identity objectquery.IdentitySelector,
+) candidatePlan {
+	namespace, hasNamespace := identity.Namespace.Namespace()
+	name, hasName := identity.Name.Name()
 
-	if !cache.IsZero() {
-		t.Fatal("IsZero() = false; want true")
-	}
-	if got := cache.Len(); got != 0 {
-		t.Fatalf("Len() = %d; want 0", got)
-	}
-	if got := cache.Revision(); !got.IsZero() {
-		t.Fatalf("Revision() = %v; want zero", got)
+	switch {
+	case hasNamespace && hasName:
+		return plan.constrain(idx.byObject[objectNameKey{namespace: namespace, name: name}])
+	case hasNamespace:
+		return plan.constrain(idx.byNamespace[namespace])
+	case hasName:
+		return plan.constrain(idx.byName[name])
+	default:
+		return plan
 	}
 }

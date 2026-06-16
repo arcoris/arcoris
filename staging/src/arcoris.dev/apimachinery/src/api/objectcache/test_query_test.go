@@ -17,13 +17,27 @@ package objectcache
 import (
 	"testing"
 
+	"arcoris.dev/apimachinery/api/objectquery"
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-func TestCollectionApplyUnknownKind(t *testing.T) {
-	col := mustCollection(t, testListResult(1))
+func assertSnapshotListMatchesObjectQueryFullScan(
+	t *testing.T,
+	snapshot Snapshot,
+	source []objectstore.ListItem,
+	query objectquery.Query,
+) {
+	t.Helper()
 
-	err := col.validateApply(objectstore.Change{Kind: objectstore.ChangeKind(99)})
+	predicate, err := objectquery.Compile(query)
+	requireNoError(t, err)
 
-	requireErrorIs(t, err, ErrInvalidChange)
+	want := predicate.Filter(source)
+	got, err := snapshot.List(query)
+	requireNoError(t, err)
+
+	if got.Revision != snapshot.Revision() {
+		t.Fatalf("Revision = %v; want %v", got.Revision, snapshot.Revision())
+	}
+	requireSameItems(t, got.Items, want)
 }

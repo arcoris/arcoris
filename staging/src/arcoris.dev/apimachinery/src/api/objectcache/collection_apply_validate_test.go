@@ -20,10 +20,24 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-func TestCollectionApplyUnknownKind(t *testing.T) {
-	col := mustCollection(t, testListResult(1))
+func TestCollectionValidateApplyDoesNotMutateState(t *testing.T) {
+	item := testItem("system", "worker-1", 1, labelsMap("env", "prod"), nil)
+	col := mustCollection(t, testListResult(10, item))
+	before := col.listItems()
+	change := objectstore.MustCreatedChange(item.Key, testItem(
+		"system",
+		"worker-1",
+		11,
+		labelsMap("env", "qa"),
+		nil,
+	).State)
 
-	err := col.validateApply(objectstore.Change{Kind: objectstore.ChangeKind(99)})
+	err := col.validateApply(change)
 
 	requireErrorIs(t, err, ErrInvalidChange)
+	if col.revision != 10 {
+		t.Fatalf("revision = %v; want 10", col.revision)
+	}
+	requireSameItems(t, col.listItems(), before)
+	assertCollectionInvariants(t, col)
 }

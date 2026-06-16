@@ -14,16 +14,24 @@
 
 package objectcache
 
-import (
-	"testing"
+import "testing"
 
-	"arcoris.dev/apimachinery/api/objectstore"
-)
+func requireKeySetIncludesOnly(t *testing.T, set keySet, want ...itemRef) {
+	t.Helper()
 
-func TestCollectionApplyUnknownKind(t *testing.T) {
-	col := mustCollection(t, testListResult(1))
-
-	err := col.validateApply(objectstore.Change{Kind: objectstore.ChangeKind(99)})
-
-	requireErrorIs(t, err, ErrInvalidChange)
+	expected := map[itemRef]struct{}{}
+	for _, ref := range want {
+		expected[ref] = struct{}{}
+	}
+	for _, item := range testItems() {
+		ref := itemRef{
+			namespace: item.Key.Object.Namespace,
+			name:      item.Key.Object.Name,
+			revision:  item.State.Revision,
+		}
+		_, shouldInclude := expected[ref]
+		if got := set.has(item.Key); got != shouldInclude {
+			t.Fatalf("set.has(%s) = %t; want %t", item.Key.String(), got, shouldInclude)
+		}
+	}
 }

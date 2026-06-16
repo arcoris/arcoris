@@ -22,10 +22,7 @@ import (
 
 func TestIndexesPlanIdentityLabelAndAnnotation(t *testing.T) {
 	items := testItems()
-	idx := newIndexes()
-	for _, item := range items {
-		idx.add(item)
-	}
+	idx := testIndexes()
 	query := objectquery.Query{
 		Identity: objectquery.IdentitySelector{
 			Namespace: mustNamespaceEquals(t, "system"),
@@ -62,4 +59,13 @@ func TestIndexesPlanNegativeOnlyIsUnconstrained(t *testing.T) {
 	if plan.constrained {
 		t.Fatal("plan.constrained = true; want false for residual-only query")
 	}
+}
+
+func testIndexes() indexes {
+	idx := newIndexes()
+	for _, item := range testItems() {
+		idx.add(item)
+	}
+
+	return idx
 }
