@@ -22,20 +22,31 @@ import "arcoris.dev/apimachinery/api/objectstore"
 // ordered key. indexes are acceleration only and must never be used as a
 // semantic substitute for objectquery.Predicate.Match.
 type collection struct {
+	// revision is the observed store watermark for the whole collection.
 	revision objectstore.Revision
-	order    []objectstore.Key
-	items    map[objectstore.Key]objectstore.ListItem
-	indexes  indexes
+
+	// order defines deterministic public iteration order.
+	order []objectstore.Key
+
+	// items stores the current live item for every ordered key.
+	items map[objectstore.Key]objectstore.ListItem
+
+	// indexes mirrors items and is rebuilt or updated with every collection
+	// mutation. It is not authoritative for object presence.
+	indexes indexes
 }
 
+// isZero reports the zero collection state: no items and no revision.
 func (col collection) isZero() bool {
 	return len(col.order) == 0 && col.revision.IsZero()
 }
 
+// len reports the number of live items tracked by the ordered key list.
 func (col collection) len() int {
 	return len(col.order)
 }
 
+// item returns a detached item by storage key.
 func (col collection) item(key objectstore.Key) (objectstore.ListItem, bool) {
 	item, ok := col.items[key]
 	if !ok {
@@ -45,6 +56,7 @@ func (col collection) item(key objectstore.Key) (objectstore.ListItem, bool) {
 	return item.Clone(), true
 }
 
+// listItems returns every live item in collection order as detached clones.
 func (col collection) listItems() []objectstore.ListItem {
 	if len(col.order) == 0 {
 		return nil

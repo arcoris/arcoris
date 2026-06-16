@@ -26,17 +26,27 @@ import (
 // The canonical items map remains the source of live objects. Indexes narrow
 // candidates only; objectquery.Predicate.Match still owns final semantics.
 type indexes struct {
+	// byNamespace narrows identity namespace equality.
 	byNamespace map[metaidentity.Namespace]keySet
-	byName      map[metaidentity.Name]keySet
-	byObject    map[objectNameKey]keySet
 
-	byLabelKey   map[labels.Key]keySet
+	// byName narrows identity name equality across namespaces.
+	byName map[metaidentity.Name]keySet
+
+	// byObject narrows the combined namespace/name identity requirement.
+	byObject map[objectNameKey]keySet
+
+	// byLabelKey narrows label exists requirements.
+	byLabelKey map[labels.Key]keySet
+	// byLabelValue narrows label equals/in requirements.
 	byLabelValue map[labelValueKey]keySet
 
-	byAnnotationKey   map[annotations.Key]keySet
+	// byAnnotationKey narrows annotation exists requirements.
+	byAnnotationKey map[annotations.Key]keySet
+	// byAnnotationValue narrows annotation equals/in requirements.
 	byAnnotationValue map[annotationValueKey]keySet
 }
 
+// newIndexes returns empty but ready-to-use index buckets.
 func newIndexes() indexes {
 	return indexes{
 		byNamespace:       map[metaidentity.Namespace]keySet{},
@@ -49,6 +59,7 @@ func newIndexes() indexes {
 	}
 }
 
+// addIndexKey records one storage key in a single comparable bucket.
 func addIndexKey[K comparable](buckets map[K]keySet, bucket K, key objectstore.Key) {
 	set := buckets[bucket]
 	if set == nil {
@@ -58,6 +69,8 @@ func addIndexKey[K comparable](buckets map[K]keySet, bucket K, key objectstore.K
 	set.add(key)
 }
 
+// removeIndexKey removes one storage key and deletes the bucket when it becomes
+// empty, keeping later candidate planning simple.
 func removeIndexKey[K comparable](buckets map[K]keySet, bucket K, key objectstore.Key) {
 	set := buckets[bucket]
 	if set == nil {

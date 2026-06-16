@@ -16,6 +16,10 @@ package objectcache
 
 import "arcoris.dev/apimachinery/api/objectstore"
 
+// clone returns a detached collection with rebuilt indexes.
+//
+// A duplicate-key panic here would mean an internal collection invariant was
+// already broken, because public construction and replacement reject duplicates.
 func (col collection) clone() collection {
 	if len(col.order) == 0 {
 		return collection{revision: col.revision}

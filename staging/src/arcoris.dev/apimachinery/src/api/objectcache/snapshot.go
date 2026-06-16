@@ -23,6 +23,7 @@ import "arcoris.dev/apimachinery/api/objectstore"
 // changes and does not validate resource descriptors, scopes, or query/resource
 // consistency.
 type Snapshot struct {
+	// col is immutable after construction and stores only detached items.
 	col collection
 }
 

@@ -16,8 +16,10 @@ package objectcache
 
 import "arcoris.dev/apimachinery/api/objectstore"
 
+// keySet is a small set of storage keys used only for candidate planning.
 type keySet map[objectstore.Key]struct{}
 
+// newKeySet constructs a set for tests and small internal set operations.
 func newKeySet(keys ...objectstore.Key) keySet {
 	set := make(keySet, len(keys))
 	for _, key := range keys {
@@ -27,19 +29,23 @@ func newKeySet(keys ...objectstore.Key) keySet {
 	return set
 }
 
+// add inserts key into set.
 func (set keySet) add(key objectstore.Key) {
 	set[key] = struct{}{}
 }
 
+// remove deletes key from set.
 func (set keySet) remove(key objectstore.Key) {
 	delete(set, key)
 }
 
+// has reports whether key is present.
 func (set keySet) has(key objectstore.Key) bool {
 	_, ok := set[key]
 	return ok
 }
 
+// clone returns a detached copy of set.
 func (set keySet) clone() keySet {
 	if len(set) == 0 {
 		return nil
@@ -53,6 +59,7 @@ func (set keySet) clone() keySet {
 	return out
 }
 
+// unionKeySets ORs candidate buckets, used by In requirements.
 func unionKeySets(sets ...keySet) keySet {
 	out := keySet{}
 	for _, set := range sets {
@@ -67,6 +74,7 @@ func unionKeySets(sets ...keySet) keySet {
 	return out
 }
 
+// intersectKeySets ANDs candidate buckets, used across query requirements.
 func intersectKeySets(left keySet, right keySet) keySet {
 	if len(left) == 0 || len(right) == 0 {
 		return nil

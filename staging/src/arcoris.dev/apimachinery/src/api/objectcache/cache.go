@@ -27,7 +27,11 @@ import (
 // objectstore.Change values and advances the cache revision when the change is
 // newer than the current watermark.
 type Cache struct {
-	mu  sync.RWMutex
+	// mu protects col and every index owned by col.
+	mu sync.RWMutex
+
+	// col is the complete current materialized collection. Writers replace or
+	// mutate it only while holding mu.
 	col collection
 }
 

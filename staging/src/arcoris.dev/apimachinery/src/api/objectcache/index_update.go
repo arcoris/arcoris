@@ -16,6 +16,7 @@ package objectcache
 
 import "arcoris.dev/apimachinery/api/objectstore"
 
+// add indexes one live item under every query dimension objectcache supports.
 func (idx indexes) add(item objectstore.ListItem) {
 	key := item.Key
 	objectName := key.Object
@@ -40,6 +41,7 @@ func (idx indexes) add(item objectstore.ListItem) {
 	}
 }
 
+// remove deletes one live item from every bucket populated by add.
 func (idx indexes) remove(item objectstore.ListItem) {
 	key := item.Key
 	objectName := key.Object

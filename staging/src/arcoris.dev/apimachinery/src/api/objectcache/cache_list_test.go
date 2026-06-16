@@ -14,16 +14,22 @@
 
 package objectcache
 
-import "arcoris.dev/apimachinery/api/objectstore"
+import (
+	"testing"
 
-// ListResult is the result of querying a Snapshot or Cache.
-//
-// Revision is always the source collection revision, not a revision recomputed
-// from the matching items. Empty query results still carry that revision.
-type ListResult struct {
-	// Items are detached list items that matched the query.
-	Items []objectstore.ListItem
+	"arcoris.dev/apimachinery/api/objectquery"
+)
 
-	// Revision is the source collection's observed store revision watermark.
-	Revision objectstore.Revision
+func TestCacheListNilReceiver(t *testing.T) {
+	var cache *Cache
+
+	got, err := cache.List(objectquery.Query{})
+	requireNoError(t, err)
+
+	if got.Items != nil {
+		t.Fatalf("Items = %#v; want nil", got.Items)
+	}
+	if !got.Revision.IsZero() {
+		t.Fatalf("Revision = %v; want zero", got.Revision)
+	}
 }

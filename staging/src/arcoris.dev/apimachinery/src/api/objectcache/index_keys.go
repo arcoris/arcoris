@@ -20,17 +20,31 @@ import (
 	"arcoris.dev/apimachinery/api/meta/labels"
 )
 
+// objectNameKey is the comparable index key for exact namespace/name identity.
 type objectNameKey struct {
+	// namespace is the storage identity namespace. The zero namespace is a valid
+	// bucket for global objects.
 	namespace metaidentity.Namespace
-	name      metaidentity.Name
+
+	// name is the storage identity name.
+	name metaidentity.Name
 }
 
+// labelValueKey is the comparable index key for one label key/value pair.
 type labelValueKey struct {
-	key   labels.Key
+	// key is the canonical label key.
+	key labels.Key
+
+	// value is the canonical label value stored on an item.
 	value labels.Value
 }
 
+// annotationValueKey is the comparable index key for one annotation key/value
+// pair.
 type annotationValueKey struct {
-	key   annotations.Key
+	// key is the canonical annotation key.
+	key annotations.Key
+
+	// value is the canonical annotation value stored on an item.
 	value annotations.Value
 }

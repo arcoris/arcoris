@@ -20,6 +20,8 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
+// apply dispatches a validated, newer objectstore.Change into collection-local
+// mutation logic. The caller is responsible for atomic cache publication.
 func (col *collection) apply(change objectstore.Change) error {
 	switch change.Kind {
 	case objectstore.ChangeCreated:
@@ -33,6 +35,7 @@ func (col *collection) apply(change objectstore.Change) error {
 	}
 }
 
+// applyCreate adds a new live item and appends its key to stable output order.
 func (col *collection) applyCreate(change objectstore.Change) error {
 	if _, exists := col.items[change.Key]; exists {
 		return invalidChangeStateError("create key already exists", change.Key)
@@ -48,6 +51,7 @@ func (col *collection) applyCreate(change objectstore.Change) error {
 	return nil
 }
 
+// applyUpdate replaces one live item while preserving its existing order slot.
 func (col *collection) applyUpdate(change objectstore.Change) error {
 	current, exists := col.items[change.Key]
 	if !exists {
@@ -66,6 +70,7 @@ func (col *collection) applyUpdate(change objectstore.Change) error {
 	return nil
 }
 
+// applyDelete removes a live item from items, order, and every index bucket.
 func (col *collection) applyDelete(change objectstore.Change) error {
 	current, exists := col.items[change.Key]
 	if !exists {
@@ -87,6 +92,7 @@ func (col *collection) applyDelete(change objectstore.Change) error {
 	return nil
 }
 
+// ensureMaps initializes lazy maps for create-after-empty transitions.
 func (col *collection) ensureMaps() {
 	if col.items == nil {
 		col.items = map[objectstore.Key]objectstore.ListItem{}
@@ -96,6 +102,7 @@ func (col *collection) ensureMaps() {
 	}
 }
 
+// removeOrderKey removes a known key from the deterministic order slice.
 func (col *collection) removeOrderKey(key objectstore.Key) {
 	for i, existing := range col.order {
 		if existing.Equal(key) {
@@ -105,6 +112,8 @@ func (col *collection) removeOrderKey(key objectstore.Key) {
 	}
 }
 
+// invalidChangeStateError reports a structurally valid change that does not
+// match the cache's current materialized state.
 func invalidChangeStateError(message string, key objectstore.Key) error {
 	return fmt.Errorf("%w: %s: %s", ErrInvalidChange, message, key.String())
 }

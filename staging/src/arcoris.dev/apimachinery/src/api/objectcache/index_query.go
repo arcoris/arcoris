@@ -21,11 +21,22 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
+// candidatePlan describes the current indexed narrowing state for one query.
+//
+// constrained=false means the query has no positive indexed requirements yet,
+// so all ordered keys remain candidates.
 type candidatePlan struct {
+	// constrained marks whether keys is an actual candidate set or an implicit
+	// all-keys universe.
 	constrained bool
-	keys        keySet
+
+	// keys is the current intersection of positive indexed requirements.
+	keys keySet
 }
 
+// plan inspects the canonical predicate query and builds an indexed candidate
+// plan. Negative requirements intentionally remain residual and are handled by
+// Predicate.Match during the final scan.
 func (idx indexes) plan(predicate objectquery.Predicate) candidatePlan {
 	query := predicate.Query()
 
@@ -37,6 +48,7 @@ func (idx indexes) plan(predicate objectquery.Predicate) candidatePlan {
 	return plan
 }
 
+// constrain ANDs one positive indexed requirement into the current plan.
 func (plan candidatePlan) constrain(next keySet) candidatePlan {
 	if !plan.constrained {
 		return candidatePlan{constrained: true, keys: next.clone()}
@@ -48,10 +60,12 @@ func (plan candidatePlan) constrain(next keySet) candidatePlan {
 	}
 }
 
+// includes reports whether key survives the indexed candidate plan.
 func (plan candidatePlan) includes(key objectstore.Key) bool {
 	return !plan.constrained || plan.keys.has(key)
 }
 
+// planIdentity narrows candidates with exact object identity requirements.
 func (idx indexes) planIdentity(
 	plan candidatePlan,
 	identity objectquery.IdentitySelector,
@@ -71,6 +85,7 @@ func (idx indexes) planIdentity(
 	}
 }
 
+// planLabels narrows candidates for positive label requirements.
 func (idx indexes) planLabels(
 	plan candidatePlan,
 	requirements []objectquery.LabelRequirement,
@@ -84,6 +99,8 @@ func (idx indexes) planLabels(
 	return plan
 }
 
+// labelCandidates returns candidates for one indexable label requirement.
+// Non-indexable negative operators are returned as residual-only.
 func (idx indexes) labelCandidates(req objectquery.LabelRequirement) (keySet, bool) {
 	key := labels.Key(req.Key())
 	switch req.Operator() {
@@ -106,6 +123,7 @@ func (idx indexes) labelCandidates(req objectquery.LabelRequirement) (keySet, bo
 	}
 }
 
+// planAnnotations narrows candidates for positive annotation requirements.
 func (idx indexes) planAnnotations(
 	plan candidatePlan,
 	requirements []objectquery.AnnotationRequirement,
@@ -119,6 +137,8 @@ func (idx indexes) planAnnotations(
 	return plan
 }
 
+// annotationCandidates returns candidates for one indexable annotation
+// requirement. Non-indexable negative operators are returned as residual-only.
 func (idx indexes) annotationCandidates(req objectquery.AnnotationRequirement) (keySet, bool) {
 	key := annotations.Key(req.Key())
 	switch req.Operator() {

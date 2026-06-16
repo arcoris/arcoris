@@ -20,6 +20,9 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
+// buildCollection clones a store list result into cache-owned collection state.
+// The invalid sentinel distinguishes snapshot construction errors from mutable
+// cache construction or replacement errors.
 func buildCollection(result objectstore.ListResult, invalid error) (collection, error) {
 	cloned := result.Clone()
 	items := make(map[objectstore.Key]objectstore.ListItem, len(cloned.Items))
@@ -48,6 +51,8 @@ func buildCollection(result objectstore.ListResult, invalid error) (collection, 
 	}, nil
 }
 
+// duplicateKeyError preserves both the broad invalid-input sentinel and the
+// duplicate-key sentinel for callers using errors.Is.
 func duplicateKeyError(invalid error, key objectstore.Key) error {
 	return fmt.Errorf(
 		"%w: %w: %s",

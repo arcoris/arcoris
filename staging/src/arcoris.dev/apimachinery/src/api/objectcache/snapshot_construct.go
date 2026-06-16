@@ -30,6 +30,8 @@ func NewSnapshot(result objectstore.ListResult) (Snapshot, error) {
 	return Snapshot{col: col}, nil
 }
 
+// cloneListItems returns detached list item clones and preserves nil/empty as
+// nil. It is shared by tests and future small value-level helpers.
 func cloneListItems(items []objectstore.ListItem) []objectstore.ListItem {
 	if len(items) == 0 {
 		return nil

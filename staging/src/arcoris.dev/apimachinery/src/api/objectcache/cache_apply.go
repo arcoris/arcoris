@@ -49,6 +49,8 @@ func (c *Cache) Apply(change objectstore.Change) error {
 	return nil
 }
 
+// invalidChangeError keeps ErrInvalidChange visible while preserving the
+// objectstore.Change validation cause for errors.Is callers.
 func invalidChangeError(cause error) error {
 	if cause == nil {
 		return ErrInvalidChange
@@ -57,6 +59,9 @@ func invalidChangeError(cause error) error {
 	return errors.Join(ErrInvalidChange, cause)
 }
 
+// staleChangeError reports a monotonic revision violation without converting it
+// into an invalid-change error. A stale change can be structurally valid while
+// still being unusable for this cache revision.
 func staleChangeError(current objectstore.Revision, incoming objectstore.Revision) error {
 	return fmt.Errorf(
 		"%w: current revision %s, incoming revision %s",
