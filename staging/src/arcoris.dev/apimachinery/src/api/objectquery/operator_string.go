@@ -14,7 +14,7 @@
 
 package objectquery
 
-// String returns the stable operator spelling.
+// String returns a stable diagnostic operator name.
 func (op Operator) String() string {
 	switch op {
 	case OperatorExists:
@@ -29,6 +29,20 @@ func (op Operator) String() string {
 		return "in"
 	case OperatorNotIn:
 		return "notIn"
+	case OperatorLessThan:
+		return "lessThan"
+	case OperatorLessOrEqual:
+		return "lessOrEqual"
+	case OperatorGreaterThan:
+		return "greaterThan"
+	case OperatorGreaterOrEqual:
+		return "greaterOrEqual"
+	case OperatorHasPrefix:
+		return "hasPrefix"
+	case OperatorHasSuffix:
+		return "hasSuffix"
+	case OperatorContains:
+		return "contains"
 	default:
 		return "unknown"
 	}

@@ -16,27 +16,33 @@ package objectquery
 
 import "testing"
 
-func TestOperatorValidity(t *testing.T) {
-	tests := []struct {
-		name  string
-		op    Operator
-		valid bool
-	}{
-		{name: "zero", op: 0},
-		{name: "exists", op: OperatorExists, valid: true},
-		{name: "does not exist", op: OperatorDoesNotExist, valid: true},
-		{name: "equals", op: OperatorEquals, valid: true},
-		{name: "not equals", op: OperatorNotEquals, valid: true},
-		{name: "in", op: OperatorIn, valid: true},
-		{name: "not in", op: OperatorNotIn, valid: true},
-		{name: "unknown", op: Operator(255)},
+// TestOperatorIsValid verifies zero and out-of-range values are rejected while
+// every declared operator is accepted.
+func TestOperatorIsValid(t *testing.T) {
+	valid := []Operator{
+		OperatorExists,
+		OperatorDoesNotExist,
+		OperatorEquals,
+		OperatorNotEquals,
+		OperatorIn,
+		OperatorNotIn,
+		OperatorLessThan,
+		OperatorLessOrEqual,
+		OperatorGreaterThan,
+		OperatorGreaterOrEqual,
+		OperatorHasPrefix,
+		OperatorHasSuffix,
+		OperatorContains,
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.op.IsValid(); got != tt.valid {
-				t.Fatalf("IsValid() = %v; want %v", got, tt.valid)
-			}
-		})
+	for _, op := range valid {
+		if !op.IsValid() {
+			t.Fatalf("%s IsValid() = false; want true", op.String())
+		}
+	}
+	if Operator(0).IsValid() {
+		t.Fatal("zero operator IsValid() = true; want false")
+	}
+	if Operator(99).IsValid() {
+		t.Fatal("unknown operator IsValid() = true; want false")
 	}
 }

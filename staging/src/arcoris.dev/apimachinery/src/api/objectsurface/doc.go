@@ -31,4 +31,10 @@
 // deletion, are not generic ownable surfaces. Finalizers and ownerReferences
 // are named here as reserved metadata surfaces for lifecycle/governance layers;
 // current ownership state does not model them as generic patch surfaces.
+//
+// Surface taxonomy does not imply queryability. Queryable fields are selected
+// deliberately by api/objectquery through resource-specific selectable field
+// definitions. Desired, Observed, metadata, finalizers, owner references, and
+// other surfaces may exist as stable object surfaces without being generally
+// queryable.
 package objectsurface

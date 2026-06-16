@@ -16,15 +16,13 @@ package objectquery
 
 import "arcoris.dev/apimachinery/api/objectstore"
 
-// Filter returns items that match p while preserving input order.
+// Filter returns matching items in input order.
 //
-// Filter is intentionally shallow: it does not mutate items and does not clone
-// objectstore.State values. Storage list results own detachment; objectquery
-// only selects already-loaded items.
+// Filter is shallow: it does not clone objectstore.State. Store, lifecycle,
+// and cache layers own detachment boundaries.
 //
-// A nil input slice returns nil. An empty non-nil input slice is returned
-// unchanged. Non-empty inputs produce a new result slice containing shallow
-// ListItem copies.
+// Nil input stays nil. Empty non-nil input stays non-nil. A non-empty input
+// that has no matches returns nil to avoid allocating an empty result.
 func (p Predicate) Filter(items []objectstore.ListItem) []objectstore.ListItem {
 	if items == nil {
 		return nil
@@ -38,6 +36,9 @@ func (p Predicate) Filter(items []objectstore.ListItem) []objectstore.ListItem {
 		if p.Match(item) {
 			out = append(out, item)
 		}
+	}
+	if len(out) == 0 {
+		return nil
 	}
 
 	return out

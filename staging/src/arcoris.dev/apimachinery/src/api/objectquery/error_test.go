@@ -14,75 +14,27 @@
 
 package objectquery
 
-import (
-	"errors"
-	"reflect"
-	"testing"
-)
+import "testing"
 
-func TestErrorSentinelsAreDistinct(t *testing.T) {
-	sentinels := []error{
-		ErrInvalidQuery,
-		ErrInvalidSelector,
-		ErrInvalidRequirement,
-		ErrInvalidOperator,
+// TestErrorHelpersPreserveSentinels verifies representative error builders
+// retain both broad and specific errors.Is classifications.
+func TestErrorHelpersPreserveSentinels(t *testing.T) {
+	tests := []struct {
+		name   string
+		err    error
+		target error
+	}{
+		{name: "expression", err: invalidExpressionError("bad"), target: ErrInvalidExpression},
+		{name: "term", err: invalidTermError("bad"), target: ErrInvalidTerm},
+		{name: "field", err: invalidFieldError(ErrInvalidTerm, "bad"), target: ErrInvalidField},
+		{name: "operator", err: invalidOperatorError(Operator(99)), target: ErrInvalidOperator},
+		{name: "unsupported", err: unsupportedOperatorError(OperatorContains, "metadata"), target: ErrUnsupportedOperator},
 	}
 
-	seen := map[string]struct{}{}
-	for _, sentinel := range sentinels {
-		if sentinel == nil {
-			t.Fatal("sentinel is nil")
-		}
-		text := sentinel.Error()
-		if _, ok := seen[text]; ok {
-			t.Fatalf("duplicate sentinel text %q", text)
-		}
-		seen[text] = struct{}{}
-	}
-}
-
-func requireNoError(t *testing.T, err error) {
-	t.Helper()
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
-func requireErrorIs(t *testing.T, err error, target error) {
-	t.Helper()
-	if !errors.Is(err, target) {
-		t.Fatalf("errors.Is(%v, %v) = false", err, target)
-	}
-}
-
-func requireStrings(t *testing.T, got []string, want ...string) {
-	t.Helper()
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("strings = %#v; want %#v", got, want)
-	}
-}
-
-func requireRequirement(t *testing.T, got metadataRequirement, key string, op Operator, values ...string) {
-	t.Helper()
-	if got.key != key {
-		t.Fatalf("key = %q; want %q", got.key, key)
-	}
-	if got.op != op {
-		t.Fatalf("operator = %s; want %s", got.op, op)
-	}
-	requireStrings(t, got.values, values...)
-}
-
-func requireQueryError(t *testing.T, err error, path string, reason ErrorReason) {
-	t.Helper()
-	var queryErr *Error
-	if !errors.As(err, &queryErr) {
-		t.Fatalf("errors.As(%v, *Error) = false", err)
-	}
-	if queryErr.Path != path {
-		t.Fatalf("Path = %q; want %q", queryErr.Path, path)
-	}
-	if queryErr.Reason != reason {
-		t.Fatalf("Reason = %q; want %q", queryErr.Reason, reason)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			requireErrorIs(t, tt.err, ErrInvalidQuery)
+			requireErrorIs(t, tt.err, tt.target)
+		})
 	}
 }

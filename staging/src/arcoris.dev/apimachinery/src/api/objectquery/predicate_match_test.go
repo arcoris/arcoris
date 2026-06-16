@@ -16,86 +16,35 @@ package objectquery
 
 import "testing"
 
-func TestPredicateMatchCombinesSectionsWithAnd(t *testing.T) {
-	predicate, err := Compile(Query{
-		Identity: mustWithObject(t, "system", "worker"),
-		Labels: mustLabelSelector(
-			t,
-			mustLabelEquals(t, "env", "prod"),
-		),
-		Annotations: mustAnnotationSelector(
-			t,
-			mustAnnotationEquals(t, "note", "rollout"),
-		),
-	})
-	requireNoError(t, err)
+// TestPredicateMatchBooleanSemantics verifies AND, OR, NOT, All, and None
+// evaluate deterministically over one item.
+func TestPredicateMatchBooleanSemantics(t *testing.T) {
+	item := testItems()[0]
 
-	tests := []struct {
-		name  string
-		item  objectNameAndMetadata
-		match bool
-	}{
-		{
-			name: "all match",
-			item: objectNameAndMetadata{
-				namespace:   "system",
-				name:        "worker",
-				labels:      map[string]string{"env": "prod"},
-				annotations: map[string]string{"note": "rollout"},
-			},
-			match: true,
-		},
-		{
-			name: "namespace mismatch",
-			item: objectNameAndMetadata{
-				namespace:   "other",
-				name:        "worker",
-				labels:      map[string]string{"env": "prod"},
-				annotations: map[string]string{"note": "rollout"},
-			},
-		},
-		{
-			name: "name mismatch",
-			item: objectNameAndMetadata{
-				namespace:   "system",
-				name:        "other",
-				labels:      map[string]string{"env": "prod"},
-				annotations: map[string]string{"note": "rollout"},
-			},
-		},
-		{
-			name: "label mismatch",
-			item: objectNameAndMetadata{
-				namespace:   "system",
-				name:        "worker",
-				labels:      map[string]string{"env": "qa"},
-				annotations: map[string]string{"note": "rollout"},
-			},
-		},
-		{
-			name: "annotation mismatch",
-			item: objectNameAndMetadata{
-				namespace:   "system",
-				name:        "worker",
-				labels:      map[string]string{"env": "prod"},
-				annotations: map[string]string{"note": "other"},
-			},
-		},
+	if !mustPredicate(t, All()).Match(item) {
+		t.Fatal("All predicate did not match")
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			item := testItem(tt.item.namespace, tt.item.name, tt.item.labels, tt.item.annotations)
-			if got := predicate.Match(item); got != tt.match {
-				t.Fatalf("Match() = %v; want %v", got, tt.match)
-			}
-		})
+	if mustPredicate(t, None()).Match(item) {
+		t.Fatal("None predicate matched")
+	}
+	and := mustPredicate(t, mustAnd(t, mustQ(LabelEquals("env", "prod")), mustQ(AnnotationEquals("team", "core"))))
+	if !and.Match(item) {
+		t.Fatal("AND predicate did not match")
+	}
+	or := mustPredicate(t, mustOr(t, mustQ(LabelEquals("env", "qa")), mustQ(LabelEquals("env", "prod"))))
+	if !or.Match(item) {
+		t.Fatal("OR predicate did not match")
+	}
+	not := mustPredicate(t, mustNot(t, mustQ(LabelEquals("env", "qa"))))
+	if !not.Match(item) {
+		t.Fatal("NOT predicate did not match")
 	}
 }
 
-type objectNameAndMetadata struct {
-	namespace   string
-	name        string
-	labels      map[string]string
-	annotations map[string]string
+// TestMatchTermRejectsUnknownTermKind verifies malformed private terms fail
+// closed at evaluation time.
+func TestMatchTermRejectsUnknownTermKind(t *testing.T) {
+	if matchTerm(term{}, testItems()[0]) {
+		t.Fatal("unknown term matched; want false")
+	}
 }

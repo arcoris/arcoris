@@ -16,11 +16,8 @@ package objectquery
 
 import "testing"
 
+// TestPackageDocumentedZeroQueryContract mirrors the package documentation's
+// most important compatibility promise: zero Query means All.
 func TestPackageDocumentedZeroQueryContract(t *testing.T) {
-	predicate, err := Compile(Query{})
-	requireNoError(t, err)
-
-	if !predicate.Match(testItem("system", "worker", nil, nil)) {
-		t.Fatal("zero query did not match item")
-	}
+	requireNames(t, mustPredicate(t, Query{}).Filter(testItems()), "worker-1", "worker-2", "worker-3", "worker-4")
 }

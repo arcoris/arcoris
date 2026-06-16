@@ -14,25 +14,35 @@
 
 package objectquery
 
-// Operator is the finite metadata requirement operator set.
+// Operator identifies a finite object query operation.
 type Operator uint8
 
+// Supported query operators.
 const (
-	// OperatorExists matches when a metadata key is present.
+	// OperatorExists matches when a key or field path is present.
 	OperatorExists Operator = iota + 1
-
-	// OperatorDoesNotExist matches when a metadata key is absent.
+	// OperatorDoesNotExist matches only when a key or field path is absent.
 	OperatorDoesNotExist
-
-	// OperatorEquals matches when a metadata key has exactly one value.
+	// OperatorEquals matches a present value equal to one literal.
 	OperatorEquals
-
-	// OperatorNotEquals matches when a metadata key is absent or differs.
+	// OperatorNotEquals matches absent values or values different from one literal.
 	OperatorNotEquals
-
-	// OperatorIn matches when a metadata key value is in a finite set.
+	// OperatorIn matches a present value contained in a literal set.
 	OperatorIn
-
-	// OperatorNotIn matches when a metadata key is absent or outside a finite set.
+	// OperatorNotIn matches absent values or values outside a literal set.
 	OperatorNotIn
+	// OperatorLessThan matches ordered fields less than one literal.
+	OperatorLessThan
+	// OperatorLessOrEqual matches ordered fields less than or equal to one literal.
+	OperatorLessOrEqual
+	// OperatorGreaterThan matches ordered fields greater than one literal.
+	OperatorGreaterThan
+	// OperatorGreaterOrEqual matches ordered fields greater than or equal to one literal.
+	OperatorGreaterOrEqual
+	// OperatorHasPrefix matches string fields with a prefix.
+	OperatorHasPrefix
+	// OperatorHasSuffix matches string fields with a suffix.
+	OperatorHasSuffix
+	// OperatorContains matches string fields containing a substring.
+	OperatorContains
 )

@@ -15,6 +15,7 @@
 package objectlifecycle
 
 import (
+	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 	"arcoris.dev/apimachinery/api/objectquery"
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/resource"
@@ -43,7 +44,7 @@ func validateListQueryForResourceAndScope(
 	scope objectstore.ListScope,
 	predicate objectquery.Predicate,
 ) error {
-	namespace, hasNamespace := predicate.Query().Identity.Namespace.Namespace()
+	namespace, hasNamespace := listQueryNamespaceConstraint(predicate)
 	if !hasNamespace {
 		return nil
 	}
@@ -72,6 +73,28 @@ func validateListQueryForResourceAndScope(
 			ErrInvalidResourceContract,
 		)
 	}
+}
+
+func listQueryNamespaceConstraint(
+	predicate objectquery.Predicate,
+) (namespace metaidentity.Namespace, ok bool) {
+	predicate.RangeConstraints(func(constraint objectquery.Constraint) bool {
+		switch constraint.Kind {
+		case objectquery.ConstraintObjectNamespace,
+			objectquery.ConstraintObject:
+			namespace = constraint.Ref.Namespace
+			ok = true
+			return false
+		case objectquery.ConstraintKey:
+			namespace = constraint.Ref.Key.Object.Namespace
+			ok = true
+			return false
+		default:
+			return true
+		}
+	})
+
+	return namespace, ok
 }
 
 // invalidListQuery maps query/scope/resource contradictions to lifecycle input

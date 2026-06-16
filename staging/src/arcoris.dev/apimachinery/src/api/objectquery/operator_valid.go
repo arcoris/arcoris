@@ -14,17 +14,7 @@
 
 package objectquery
 
-// IsValid reports whether op is one of the known query operators.
+// IsValid reports whether op is a known object query operator.
 func (op Operator) IsValid() bool {
-	switch op {
-	case OperatorExists,
-		OperatorDoesNotExist,
-		OperatorEquals,
-		OperatorNotEquals,
-		OperatorIn,
-		OperatorNotIn:
-		return true
-	default:
-		return false
-	}
+	return op >= OperatorExists && op <= OperatorContains
 }

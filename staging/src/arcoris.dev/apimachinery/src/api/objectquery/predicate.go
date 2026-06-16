@@ -14,32 +14,30 @@
 
 package objectquery
 
-// Predicate is a validated, canonical object list item predicate.
+// Predicate is a compiled, canonical, immutable object query evaluator.
 type Predicate struct {
-	// identity is the canonical identity predicate.
-	identity IdentitySelector
-
-	// labels is the canonical label predicate.
-	labels LabelSelector
-
-	// annotations is the canonical annotation predicate.
-	annotations AnnotationSelector
+	// expr is the validated canonical expression used by Match and Filter.
+	expr *expr
+	// plan contains detached narrowing hints derived from expr.
+	plan Plan
 }
 
-// IsZero reports whether p matches every item.
+// IsZero reports whether p is the zero All predicate.
 func (p Predicate) IsZero() bool {
-	return p.identity.IsZero() && p.labels.IsZero() && p.annotations.IsZero()
+	return p.expr == nil
 }
 
-// Query returns p's detached canonical query.
-//
-// The returned query is safe for inspection by future lifecycle, cache, index,
-// parser, and adapter layers. Any slices exposed through selector or
-// requirement accessors are defensive copies and cannot mutate p.
+// Query returns a detached canonical query.
 func (p Predicate) Query() Query {
-	return Query{
-		Identity:    p.identity,
-		Labels:      p.labels.clone(),
-		Annotations: p.annotations.clone(),
-	}
+	return queryFromExpr(p.expr)
+}
+
+// Plan returns detached planning hints for p.
+func (p Predicate) Plan() Plan {
+	return p.plan.clone()
+}
+
+// RangeConstraints visits detached planning constraints until fn returns false.
+func (p Predicate) RangeConstraints(fn func(Constraint) bool) {
+	p.plan.RangeConstraints(fn)
 }

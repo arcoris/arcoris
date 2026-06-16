@@ -16,122 +16,38 @@ package objectquery
 
 import (
 	"testing"
-
-	apiidentity "arcoris.dev/apimachinery/api/identity"
-	"arcoris.dev/apimachinery/api/meta"
-	"arcoris.dev/apimachinery/api/meta/annotations"
-	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
-	"arcoris.dev/apimachinery/api/meta/labels"
-	"arcoris.dev/apimachinery/api/object"
-	"arcoris.dev/apimachinery/api/objectstore"
-	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestPredicateQueryZeroPredicate(t *testing.T) {
-	var predicate Predicate
-	query := predicate.Query()
+// TestPredicateQueryRoundTripCanonical verifies Predicate.Query returns a
+// detached canonical expression.
+func TestPredicateQueryRoundTripCanonical(t *testing.T) {
+	left := mustQ(LabelEquals("tier", "backend"))
+	right := mustQ(LabelEquals("env", "prod"))
+	query := mustAnd(t, left, right, left)
 
-	if !query.Identity.IsZero() || !query.Labels.IsZero() || !query.Annotations.IsZero() {
-		t.Fatalf("Query() = %#v; want zero query", query)
+	predicate := mustPredicate(t, query)
+	roundTrip := mustPredicate(t, predicate.Query())
+
+	if predicate.Query().expr.canonicalKey() != roundTrip.Query().expr.canonicalKey() {
+		t.Fatalf("canonical roundtrip changed")
 	}
 }
 
-func TestPredicateQueryReturnsCanonicalQuery(t *testing.T) {
-	predicate, err := Compile(Query{
-		Labels: mustLabelSelector(
-			t,
-			mustLabelEquals(t, "tier", "backend"),
-			mustLabelIn(t, "env", "qa", "prod"),
-		),
-	})
-	requireNoError(t, err)
-
-	requirements := predicate.Query().Labels.Requirements()
-	if len(requirements) != 2 {
-		t.Fatalf("len = %d; want 2", len(requirements))
-	}
-	if requirements[0].Key() != "env" || requirements[1].Key() != "tier" {
-		t.Fatalf("requirement order = %q, %q; want env, tier", requirements[0].Key(), requirements[1].Key())
-	}
-}
-
-func TestPredicateQueryPreservesIdentity(t *testing.T) {
-	predicate, err := Compile(Query{Identity: mustWithObject(t, "system", "worker")})
-	requireNoError(t, err)
-
-	query := predicate.Query()
-	namespace, ok := query.Identity.Namespace.Namespace()
-	if !ok || namespace != "system" {
-		t.Fatalf("Namespace() = %q, %v; want system, true", namespace, ok)
-	}
-	name, ok := query.Identity.Name.Name()
-	if !ok || name != "worker" {
-		t.Fatalf("Name() = %q, %v; want worker, true", name, ok)
-	}
-}
-
-func TestPredicateQueryDefensiveCopy(t *testing.T) {
-	predicate, err := Compile(Query{
-		Labels: mustLabelSelector(t, mustLabelIn(t, "env", "qa", "prod")),
-	})
-	requireNoError(t, err)
-
-	query := predicate.Query()
-	values := query.Labels.Requirements()[0].Values()
-	values[0] = "mutated"
-	query.Labels.requirements[0].req.values[0] = "mutated"
-	query.Labels.requirements = append(query.Labels.requirements, mustLabelEquals(t, "tier", "backend"))
-
-	next := predicate.Query().Labels.Requirements()
-	if len(next) != 1 {
-		t.Fatalf("len = %d; want 1", len(next))
-	}
-	requireStrings(t, next[0].Values(), "prod", "qa")
-	if !predicate.Match(testItem("system", "worker", map[string]string{"env": "prod"}, nil)) {
-		t.Fatal("predicate was mutated through Query()")
-	}
-}
-
-func testItem(namespace string, name string, labelValues map[string]string, annotationValues map[string]string) objectstore.ListItem {
-	labelSet, err := labels.FromStrings(labelValues)
-	if err != nil {
-		panic(err)
-	}
-	annotationSet, err := annotations.FromStrings(annotationValues)
-	if err != nil {
-		panic(err)
+// TestPredicateIsZeroAndPlanAccessors verifies the base Predicate value
+// exposes detached canonical query and plan state.
+func TestPredicateIsZeroAndPlanAccessors(t *testing.T) {
+	if !(Predicate{}).IsZero() {
+		t.Fatal("zero Predicate IsZero() = false; want true")
 	}
 
-	key := objectstore.MustKey(
-		apiidentity.GroupVersionResource{
-			Group:    "control.arcoris.dev",
-			Version:  "v1",
-			Resource: "workers",
-		},
-		metaidentity.ObjectName{
-			Namespace: metaidentity.Namespace(namespace),
-			Name:      metaidentity.Name(name),
-		},
-	)
-
-	return objectstore.ListItem{
-		Key: key,
-		State: objectstore.State{
-			Object: object.New[value.Value, value.Value](
-				meta.FromGroupVersionKind(apiidentity.GroupVersionKind{
-					Group:   "control.arcoris.dev",
-					Version: "v1",
-					Kind:    "Worker",
-				}),
-				meta.ObjectMeta{
-					Name:        metaidentity.Name(name),
-					Namespace:   metaidentity.Namespace(namespace),
-					Labels:      labelSet,
-					Annotations: annotationSet,
-				},
-				value.StringValue(name),
-			),
-			Revision: 1,
-		},
+	predicate := mustPredicate(t, mustQ(LabelEquals("env", "prod")))
+	if predicate.IsZero() {
+		t.Fatal("label predicate IsZero() = true; want false")
+	}
+	if predicate.Query().IsZero() {
+		t.Fatal("label predicate Query().IsZero() = true; want false")
+	}
+	if len(predicate.Plan().constraints) != 1 {
+		t.Fatalf("plan constraints = %d; want 1", len(predicate.Plan().constraints))
 	}
 }

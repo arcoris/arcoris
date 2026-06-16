@@ -12,33 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package objectquery defines typed, format-neutral query predicates for API
-// object list items.
+// Package objectquery defines a stable query algebra for API object list items.
 //
-// The package evaluates already-loaded objectstore.ListItem values. It does
-// not read from stores, push filters into storage, parse selector strings,
-// decode HTTP query parameters, build indexes, watch changes, run controllers,
-// validate resource descriptors, or perform admission or authorization.
+// A Query is an immutable expression value. The zero Query is valid and means
+// All. Queries are constructed with boolean combinators and typed term
+// constructors for storage keys, resources, labels, annotations, and explicitly
+// registered selectable fields.
 //
-// Query is the declarative value callers build. Compile validates and
-// canonicalizes Query into Predicate, which is the deterministic evaluator.
-// Predicate can expose a detached canonical Query for inspection by future
-// lifecycle, cache, index, parser, and adapter layers without exposing mutable
-// predicate internals.
+// Compile validates and canonicalizes a Query into a Predicate. A Predicate is
+// immutable and concurrency-safe. It can match one objectstore.ListItem, filter
+// already-loaded item slices while preserving input order, expose a detached
+// canonical Query, provide conservative planning constraints, and project a
+// committed objectstore.Change through the predicate.
 //
-// Query sections use AND semantics: identity, labels, and annotations must all
-// match. Label and annotation selector requirements are also ANDed. There is no
-// OR, nested boolean grouping, regex, numeric comparison, or Desired/Observed
-// field traversal in v1.
+// Query planning is advisory only. Plans may narrow cache or storage candidate
+// sets, but Predicate.Match remains the final semantic source of truth.
+// Negative requirements, NOT, and most OR expressions are intentionally kept
+// residual unless they can be represented safely without changing semantics.
 //
-// Selectors and requirements are opaque construction-safe values. Accessors
-// expose stable canonical data and return defensive copies for slices.
+// Selectable fields are not arbitrary JSONPath or descriptor traversal.
+// Resource-specific callers must register each queryable FieldRef through a
+// SelectableFieldSet. Field paths use apidocument.Path as stable diagnostic
+// document vocabulary; they are not JSONPath and not fieldpath.Path. Missing
+// means the path is absent. Null means the path exists and stores value.Null.
 //
-// Negative metadata requirements intentionally match absent keys. NotEquals is
-// true when the key is absent or has a different value. NotIn is true when the
-// key is absent or its value is outside the set.
-//
-// Predicate.Filter preserves input order and does not clone item state. Store
-// and list result APIs own detachment; objectquery is only a pure selection
-// layer.
+// This package does not parse selector strings, decode HTTP query parameters,
+// execute storage queries, build indexes, read stores, watch changes, run
+// controllers, authorize callers, run admission, or validate resource
+// descriptors. Those responsibilities belong to future adapters and higher
+// layers.
 package objectquery

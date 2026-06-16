@@ -16,27 +16,30 @@ package objectquery
 
 import "testing"
 
+// TestOperatorString verifies stable diagnostic names for every public
+// operator.
 func TestOperatorString(t *testing.T) {
-	tests := []struct {
-		name string
-		op   Operator
-		want string
-	}{
-		{name: "zero", op: 0, want: "unknown"},
-		{name: "exists", op: OperatorExists, want: "exists"},
-		{name: "does not exist", op: OperatorDoesNotExist, want: "doesNotExist"},
-		{name: "equals", op: OperatorEquals, want: "equals"},
-		{name: "not equals", op: OperatorNotEquals, want: "notEquals"},
-		{name: "in", op: OperatorIn, want: "in"},
-		{name: "not in", op: OperatorNotIn, want: "notIn"},
-		{name: "unknown", op: Operator(255), want: "unknown"},
+	tests := map[Operator]string{
+		0:                      "unknown",
+		OperatorExists:         "exists",
+		OperatorDoesNotExist:   "doesNotExist",
+		OperatorEquals:         "equals",
+		OperatorNotEquals:      "notEquals",
+		OperatorIn:             "in",
+		OperatorNotIn:          "notIn",
+		OperatorLessThan:       "lessThan",
+		OperatorLessOrEqual:    "lessOrEqual",
+		OperatorGreaterThan:    "greaterThan",
+		OperatorGreaterOrEqual: "greaterOrEqual",
+		OperatorHasPrefix:      "hasPrefix",
+		OperatorHasSuffix:      "hasSuffix",
+		OperatorContains:       "contains",
+		Operator(99):           "unknown",
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.op.String(); got != tt.want {
-				t.Fatalf("String() = %q; want %q", got, tt.want)
-			}
-		})
+	for op, want := range tests {
+		if got := op.String(); got != want {
+			t.Fatalf("%v.String() = %q; want %q", uint8(op), got, want)
+		}
 	}
 }

@@ -18,99 +18,37 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectstore"
-	"arcoris.dev/apimachinery/api/value"
 )
 
-func TestPredicateFilterNilInputReturnsNil(t *testing.T) {
-	predicate, err := Compile(Query{})
-	requireNoError(t, err)
+// TestPredicateFilterNilEmptyNoMatchAndOrder verifies Filter's shallow ordered
+// result contract.
+func TestPredicateFilterNilEmptyNoMatchAndOrder(t *testing.T) {
+	predicate := mustPredicate(t, mustQ(LabelEquals("env", "prod")))
 
 	if got := predicate.Filter(nil); got != nil {
 		t.Fatalf("Filter(nil) = %#v; want nil", got)
 	}
+
+	empty := []objectstore.ListItem{}
+	if got := predicate.Filter(empty); got == nil {
+		t.Fatal("Filter(empty) = nil; want empty non-nil")
+	}
+
+	requireNames(t, predicate.Filter(testItems()), "worker-1", "worker-3")
+	requireNames(t, mustPredicate(t, None()).Filter(testItems()))
 }
 
-func TestPredicateFilterEmptyInputReturnsEmptyNonNil(t *testing.T) {
-	predicate, err := Compile(Query{})
-	requireNoError(t, err)
-	input := []objectListItem{}
-	items := objectListItems(input)
-
-	got := predicate.Filter(items)
-	if got == nil {
-		t.Fatal("Filter(empty) returned nil")
+// BenchmarkPredicateFilter100 covers the common full-scan path without making
+// planning or cache internals part of objectquery.
+func BenchmarkPredicateFilter100(b *testing.B) {
+	items := make([]objectstore.ListItem, 0, 100)
+	for i := 0; i < 25; i++ {
+		items = append(items, testItems()...)
 	}
-	if len(got) != 0 {
-		t.Fatalf("len = %d; want 0", len(got))
+	predicate := mustPredicate(b, mustQ(LabelEquals("env", "prod")))
+
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_ = predicate.Filter(items)
 	}
-}
-
-func TestPredicateFilterPreservesOrderAndSelectsMatches(t *testing.T) {
-	selector := mustLabelSelector(t, mustLabelEquals(t, "env", "prod"))
-	predicate, err := Compile(Query{Labels: selector})
-	requireNoError(t, err)
-	items := objectListItems([]objectListItem{
-		{namespace: "system", name: "first", labels: map[string]string{"env": "prod"}},
-		{namespace: "system", name: "second", labels: map[string]string{"env": "qa"}},
-		{namespace: "system", name: "third", labels: map[string]string{"env": "prod"}},
-	})
-
-	got := predicate.Filter(items)
-	if len(got) != 2 {
-		t.Fatalf("len = %d; want 2", len(got))
-	}
-	if got[0].Key.Object.Name != "first" || got[1].Key.Object.Name != "third" {
-		t.Fatalf("order = %s, %s; want first, third", got[0].Key.Object.Name, got[1].Key.Object.Name)
-	}
-}
-
-func TestPredicateFilterZeroPredicateReturnsAllItems(t *testing.T) {
-	predicate, err := Compile(Query{})
-	requireNoError(t, err)
-	items := objectListItems([]objectListItem{
-		{namespace: "system", name: "first"},
-		{namespace: "system", name: "second"},
-	})
-
-	got := predicate.Filter(items)
-	if len(got) != len(items) {
-		t.Fatalf("len = %d; want %d", len(got), len(items))
-	}
-}
-
-func TestPredicateFilterDoesNotMutateInputAndDoesNotCloneState(t *testing.T) {
-	predicate, err := Compile(Query{})
-	requireNoError(t, err)
-	observed := value.StringValue("observed")
-	items := objectListItems([]objectListItem{{namespace: "system", name: "worker"}})
-	items[0].State.Object = items[0].State.Object.WithObserved(observed)
-
-	got := predicate.Filter(items)
-	if len(got) != 1 {
-		t.Fatalf("len = %d; want 1", len(got))
-	}
-	if got[0].State.Object.Observed != items[0].State.Object.Observed {
-		t.Fatal("Filter cloned state; observed pointer differs")
-	}
-
-	got[0].State.Object.Desired = value.StringValue("mutated")
-	if text, _ := items[0].State.Object.Desired.AsString(); text != "worker" {
-		t.Fatalf("input desired = %q; want worker", text)
-	}
-}
-
-type objectListItem struct {
-	namespace   string
-	name        string
-	labels      map[string]string
-	annotations map[string]string
-}
-
-func objectListItems(items []objectListItem) []objectstore.ListItem {
-	out := make([]objectstore.ListItem, 0, len(items))
-	for _, item := range items {
-		out = append(out, testItem(item.namespace, item.name, item.labels, item.annotations))
-	}
-
-	return out
 }

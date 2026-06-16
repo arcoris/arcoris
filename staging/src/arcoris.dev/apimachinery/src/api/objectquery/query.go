@@ -14,23 +14,42 @@
 
 package objectquery
 
-// Query is the declarative object list item query model.
+// Query is an immutable object query expression.
 //
-// A zero Query matches every item. Non-zero sections are combined with logical
-// AND: Identity, Labels, and Annotations must all match.
+// The zero Query is valid and is equivalent to All().
 type Query struct {
-	// Identity filters by objectstore.ListItem.Key.Object.
-	Identity IdentitySelector
-
-	// Labels filters by object metadata labels.
-	Labels LabelSelector
-
-	// Annotations filters by object metadata annotations.
-	Annotations AnnotationSelector
+	// expr is nil for the canonical All query. Non-nil expressions are treated
+	// as immutable; constructors and Predicate.Query clone before exposing them.
+	expr *expr
 }
 
-// Validate checks whether q can compile into a canonical predicate.
+// All returns a query that matches every list item.
+func All() Query {
+	return Query{}
+}
+
+// None returns a query that matches no list item.
+func None() Query {
+	return Query{expr: &expr{kind: exprNone}}
+}
+
+// IsZero reports whether q is the zero All query.
+func (q Query) IsZero() bool {
+	return q.expr == nil
+}
+
+// Validate checks whether q can be compiled with default options.
 func (q Query) Validate() error {
 	_, err := Compile(q)
 	return err
+}
+
+// queryFromExpr converts a private expression node back into the public value
+// type while preserving the nil-as-All convention.
+func queryFromExpr(e *expr) Query {
+	if e == nil || e.kind == exprAll {
+		return Query{}
+	}
+
+	return Query{expr: e.clone()}
 }

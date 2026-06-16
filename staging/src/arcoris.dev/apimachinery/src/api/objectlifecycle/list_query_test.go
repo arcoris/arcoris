@@ -87,9 +87,7 @@ func TestListLabelQueryFiltersResult(t *testing.T) {
 	result, err := executor.List(context.Background(), ListRequest{
 		Resource: testGVR(),
 		Scope:    objectstore.AllNamespaces(),
-		Query: objectquery.Query{
-			Labels: mustLifecycleLabelSelector(t, mustLifecycleLabelEquals(t, "env", "prod")),
-		},
+		Query:    mustLifecycleLabelEquals(t, "env", "prod"),
 	})
 	requireNoError(t, err)
 
@@ -124,12 +122,7 @@ func TestListAnnotationQueryFiltersResult(t *testing.T) {
 	result, err := executor.List(context.Background(), ListRequest{
 		Resource: testGVR(),
 		Scope:    objectstore.AllNamespaces(),
-		Query: objectquery.Query{
-			Annotations: mustLifecycleAnnotationSelector(
-				t,
-				mustLifecycleAnnotationEquals(t, "tier", "backend"),
-			),
-		},
+		Query:    mustLifecycleAnnotationEquals(t, "tier", "backend"),
 	})
 	requireNoError(t, err)
 
@@ -145,11 +138,7 @@ func TestListIdentityNameQueryFiltersResult(t *testing.T) {
 	result, err := executor.List(context.Background(), ListRequest{
 		Resource: testGVR(),
 		Scope:    objectstore.AllNamespaces(),
-		Query: objectquery.Query{
-			Identity: objectquery.IdentitySelector{
-				Name: mustLifecycleNameEquals(t, "worker-2"),
-			},
-		},
+		Query:    mustLifecycleNameEquals(t, "worker-2"),
 	})
 	requireNoError(t, err)
 
@@ -199,16 +188,12 @@ func TestListCombinedQueryUsesAndSemantics(t *testing.T) {
 	result, err := executor.List(context.Background(), ListRequest{
 		Resource: testGVR(),
 		Scope:    objectstore.AllNamespaces(),
-		Query: objectquery.Query{
-			Identity: objectquery.IdentitySelector{
-				Name: mustLifecycleNameEquals(t, "worker-1"),
-			},
-			Labels: mustLifecycleLabelSelector(t, mustLifecycleLabelEquals(t, "env", "prod")),
-			Annotations: mustLifecycleAnnotationSelector(
-				t,
-				mustLifecycleAnnotationEquals(t, "tier", "backend"),
-			),
-		},
+		Query: mustLifecycleAnd(
+			t,
+			mustLifecycleNameEquals(t, "worker-1"),
+			mustLifecycleLabelEquals(t, "env", "prod"),
+			mustLifecycleAnnotationEquals(t, "tier", "backend"),
+		),
 	})
 	requireNoError(t, err)
 
@@ -304,7 +289,7 @@ func TestListQueryNamespacePolicyMatrix(t *testing.T) {
 
 			query := objectquery.Query{}
 			if tt.hasNamespace {
-				query.Identity.Namespace = mustLifecycleNamespaceEquals(t, tt.queryNamespace)
+				query = mustLifecycleNamespaceEquals(t, tt.queryNamespace)
 			}
 
 			_, err := executor.List(context.Background(), ListRequest{
@@ -346,11 +331,7 @@ func TestListQueryErrorReasons(t *testing.T) {
 		_, err = executor.List(context.Background(), ListRequest{
 			Resource: testGVR(),
 			Scope:    scope,
-			Query: objectquery.Query{
-				Identity: objectquery.IdentitySelector{
-					Namespace: mustLifecycleNamespaceEquals(t, "beta"),
-				},
-			},
+			Query:    mustLifecycleNamespaceEquals(t, "beta"),
 		})
 
 		requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidQueryScope)
@@ -381,24 +362,18 @@ func TestListQueryPreservesRevision(t *testing.T) {
 		wantNames []metaidentity.Name
 	}{
 		{
-			name: "matches all",
-			query: objectquery.Query{
-				Labels: mustLifecycleLabelSelector(t, mustLifecycleLabelExists(t, "env")),
-			},
+			name:      "matches all",
+			query:     mustLifecycleLabelExists(t, "env"),
 			wantNames: []metaidentity.Name{"worker-1", "worker-2", "worker-3"},
 		},
 		{
-			name: "matches some",
-			query: objectquery.Query{
-				Labels: mustLifecycleLabelSelector(t, mustLifecycleLabelEquals(t, "env", "prod")),
-			},
+			name:      "matches some",
+			query:     mustLifecycleLabelEquals(t, "env", "prod"),
 			wantNames: []metaidentity.Name{"worker-1", "worker-3"},
 		},
 		{
-			name: "matches none",
-			query: objectquery.Query{
-				Labels: mustLifecycleLabelSelector(t, mustLifecycleLabelEquals(t, "env", "dev")),
-			},
+			name:      "matches none",
+			query:     mustLifecycleLabelEquals(t, "env", "dev"),
 			wantNames: nil,
 		},
 	}
@@ -448,9 +423,7 @@ func TestListQueryFilteringPreservesOrder(t *testing.T) {
 	result, err := executor.List(context.Background(), ListRequest{
 		Resource: testGVR(),
 		Scope:    objectstore.AllNamespaces(),
-		Query: objectquery.Query{
-			Labels: mustLifecycleLabelSelector(t, mustLifecycleLabelEquals(t, "env", "prod")),
-		},
+		Query:    mustLifecycleLabelEquals(t, "env", "prod"),
 	})
 	requireNoError(t, err)
 
@@ -467,11 +440,7 @@ func TestListQueryNamespaceScopeConsistency(t *testing.T) {
 		_, err = executor.List(context.Background(), ListRequest{
 			Resource: testGVR(),
 			Scope:    scope,
-			Query: objectquery.Query{
-				Identity: objectquery.IdentitySelector{
-					Namespace: mustLifecycleNamespaceEquals(t, "beta"),
-				},
-			},
+			Query:    mustLifecycleNamespaceEquals(t, "beta"),
 		})
 
 		requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidQueryScope)
@@ -489,11 +458,7 @@ func TestListQueryNamespaceScopeConsistency(t *testing.T) {
 		_, err = executor.List(context.Background(), ListRequest{
 			Resource: testGVR(),
 			Scope:    scope,
-			Query: objectquery.Query{
-				Identity: objectquery.IdentitySelector{
-					Namespace: mustLifecycleNamespaceEquals(t, "alpha"),
-				},
-			},
+			Query:    mustLifecycleNamespaceEquals(t, "alpha"),
 		})
 		requireNoError(t, err)
 
@@ -510,11 +475,7 @@ func TestListQueryNamespaceScopeConsistency(t *testing.T) {
 		result, err := executor.List(context.Background(), ListRequest{
 			Resource: testGVR(),
 			Scope:    objectstore.AllNamespaces(),
-			Query: objectquery.Query{
-				Identity: objectquery.IdentitySelector{
-					Namespace: mustLifecycleNamespaceEquals(t, "alpha"),
-				},
-			},
+			Query:    mustLifecycleNamespaceEquals(t, "alpha"),
 		})
 		requireNoError(t, err)
 
@@ -553,11 +514,7 @@ func TestListGlobalResourceQueryNamespaceConsistency(t *testing.T) {
 		_, err := executor.List(context.Background(), ListRequest{
 			Resource: testGVR(),
 			Scope:    objectstore.AllNamespaces(),
-			Query: objectquery.Query{
-				Identity: objectquery.IdentitySelector{
-					Namespace: mustLifecycleNamespaceEquals(t, ""),
-				},
-			},
+			Query:    mustLifecycleNamespaceEquals(t, ""),
 		})
 		requireNoError(t, err)
 
@@ -577,11 +534,7 @@ func TestListGlobalResourceQueryNamespaceConsistency(t *testing.T) {
 		_, err := executor.List(context.Background(), ListRequest{
 			Resource: testGVR(),
 			Scope:    objectstore.AllNamespaces(),
-			Query: objectquery.Query{
-				Identity: objectquery.IdentitySelector{
-					Namespace: mustLifecycleNamespaceEquals(t, "system"),
-				},
-			},
+			Query:    mustLifecycleNamespaceEquals(t, "system"),
 		})
 
 		requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidQueryScope)
@@ -614,11 +567,7 @@ func TestListNamespacedResourceQueryNamespaceConsistency(t *testing.T) {
 		_, err := executor.List(context.Background(), ListRequest{
 			Resource: testGVR(),
 			Scope:    objectstore.AllNamespaces(),
-			Query: objectquery.Query{
-				Identity: objectquery.IdentitySelector{
-					Namespace: mustLifecycleNamespaceEquals(t, "system"),
-				},
-			},
+			Query:    mustLifecycleNamespaceEquals(t, "system"),
 		})
 		requireNoError(t, err)
 
@@ -634,11 +583,7 @@ func TestListNamespacedResourceQueryNamespaceConsistency(t *testing.T) {
 		_, err := executor.List(context.Background(), ListRequest{
 			Resource: testGVR(),
 			Scope:    objectstore.AllNamespaces(),
-			Query: objectquery.Query{
-				Identity: objectquery.IdentitySelector{
-					Namespace: mustLifecycleNamespaceEquals(t, ""),
-				},
-			},
+			Query:    mustLifecycleNamespaceEquals(t, ""),
 		})
 
 		requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidQueryScope)
@@ -667,9 +612,7 @@ func TestListQueryPreservesRevisionWhenFilteringAllItems(t *testing.T) {
 	result, err := executor.List(context.Background(), ListRequest{
 		Resource: testGVR(),
 		Scope:    objectstore.AllNamespaces(),
-		Query: objectquery.Query{
-			Labels: mustLifecycleLabelSelector(t, mustLifecycleLabelEquals(t, "env", "prod")),
-		},
+		Query:    mustLifecycleLabelEquals(t, "env", "prod"),
 	})
 	requireNoError(t, err)
 
@@ -696,9 +639,7 @@ func TestListQueryPreservesDetachedResults(t *testing.T) {
 	result, err := executor.List(context.Background(), ListRequest{
 		Resource: testGVR(),
 		Scope:    objectstore.AllNamespaces(),
-		Query: objectquery.Query{
-			Labels: mustLifecycleLabelSelector(t, mustLifecycleLabelEquals(t, "env", "prod")),
-		},
+		Query:    mustLifecycleLabelEquals(t, "env", "prod"),
 	})
 	requireNoError(t, err)
 
@@ -807,76 +748,61 @@ func mustLifecycleAnnotations(t *testing.T, values map[string]string) annotation
 	return set
 }
 
-func mustLifecycleLabelEquals(t *testing.T, key string, val string) objectquery.LabelRequirement {
+func mustLifecycleLabelEquals(t *testing.T, key string, val string) objectquery.Query {
 	t.Helper()
 
-	requirement, err := objectquery.LabelEquals(key, val)
+	query, err := objectquery.LabelEquals(key, val)
 	requireNoError(t, err)
 
-	return requirement
+	return query
 }
 
-func mustLifecycleLabelExists(t *testing.T, key string) objectquery.LabelRequirement {
+func mustLifecycleLabelExists(t *testing.T, key string) objectquery.Query {
 	t.Helper()
 
-	requirement, err := objectquery.LabelExists(key)
+	query, err := objectquery.LabelExists(key)
 	requireNoError(t, err)
 
-	return requirement
+	return query
 }
 
-func mustLifecycleLabelSelector(
-	t *testing.T,
-	requirements ...objectquery.LabelRequirement,
-) objectquery.LabelSelector {
+func mustLifecycleAnnotationEquals(t *testing.T, key string, val string) objectquery.Query {
 	t.Helper()
 
-	selector, err := objectquery.NewLabelSelector(requirements...)
+	query, err := objectquery.AnnotationEquals(key, val)
 	requireNoError(t, err)
 
-	return selector
-}
-
-func mustLifecycleAnnotationEquals(t *testing.T, key string, val string) objectquery.AnnotationRequirement {
-	t.Helper()
-
-	requirement, err := objectquery.AnnotationEquals(key, val)
-	requireNoError(t, err)
-
-	return requirement
-}
-
-func mustLifecycleAnnotationSelector(
-	t *testing.T,
-	requirements ...objectquery.AnnotationRequirement,
-) objectquery.AnnotationSelector {
-	t.Helper()
-
-	selector, err := objectquery.NewAnnotationSelector(requirements...)
-	requireNoError(t, err)
-
-	return selector
+	return query
 }
 
 func mustLifecycleNamespaceEquals(
 	t *testing.T,
 	namespace metaidentity.Namespace,
-) objectquery.NamespaceRequirement {
+) objectquery.Query {
 	t.Helper()
 
-	requirement, err := objectquery.NamespaceEquals(namespace)
+	query, err := objectquery.ObjectInNamespace(namespace)
 	requireNoError(t, err)
 
-	return requirement
+	return query
 }
 
-func mustLifecycleNameEquals(t *testing.T, name metaidentity.Name) objectquery.NameRequirement {
+func mustLifecycleNameEquals(t *testing.T, name metaidentity.Name) objectquery.Query {
 	t.Helper()
 
-	requirement, err := objectquery.NameEquals(name)
+	query, err := objectquery.ObjectWithName(name)
 	requireNoError(t, err)
 
-	return requirement
+	return query
+}
+
+func mustLifecycleAnd(t *testing.T, queries ...objectquery.Query) objectquery.Query {
+	t.Helper()
+
+	query, err := objectquery.And(queries...)
+	requireNoError(t, err)
+
+	return query
 }
 
 func requireLifecycleListNames(t *testing.T, result ListResult, names ...metaidentity.Name) {
