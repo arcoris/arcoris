@@ -17,21 +17,20 @@ package objectquery
 // StaticFieldSet is an immutable in-memory SelectableFieldSet for tests and
 // callers that already have resolved field definitions.
 type StaticFieldSet struct {
-	// fields is keyed by FieldRef.String because FieldRef contains only
-	// comparable semantic components and the string form is stable internally.
-	fields map[string]SelectableField
+	// fields is keyed by a private structural FieldRef key, not diagnostic text.
+	fields map[fieldRefKey]SelectableField
 }
 
 // NewStaticFieldSet validates fields and returns an immutable resolver. Later
 // duplicate refs replace earlier definitions, which keeps construction simple
 // for generated field sets.
 func NewStaticFieldSet(fields ...SelectableField) (StaticFieldSet, error) {
-	out := StaticFieldSet{fields: map[string]SelectableField{}}
+	out := StaticFieldSet{fields: map[fieldRefKey]SelectableField{}}
 	for _, field := range fields {
 		if err := field.Validate(); err != nil {
 			return StaticFieldSet{}, invalidFieldError(err, "invalid selectable field")
 		}
-		out.fields[field.Ref.String()] = field
+		out.fields[field.Ref.key()] = field
 	}
 
 	return out, nil
@@ -39,6 +38,6 @@ func NewStaticFieldSet(fields ...SelectableField) (StaticFieldSet, error) {
 
 // ResolveSelectableField returns a registered field by exact FieldRef.
 func (s StaticFieldSet) ResolveSelectableField(ref FieldRef) (SelectableField, bool) {
-	field, ok := s.fields[ref.String()]
+	field, ok := s.fields[ref.key()]
 	return field, ok
 }

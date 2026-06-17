@@ -55,6 +55,18 @@ func TestQueryZeroAllNoneAndValidate(t *testing.T) {
 	requireNames(t, none.Filter(items))
 }
 
+// TestQueryValidateAcceptsCompileOptions verifies validation delegates to
+// Compile with the same option surface.
+func TestQueryValidateAcceptsCompileOptions(t *testing.T) {
+	requireNoError(t, mustQ(LabelEquals("env", "prod")).Validate())
+
+	query := mustQ(FieldEquals(fieldRef("spec.image"), value.StringValue("api")))
+	requireErrorIs(t, query.Validate(), ErrUnresolvedField)
+
+	fields := mustFieldSet(t, selectable(fieldRef("spec.image"), value.KindString, Operators(OperatorEquals)))
+	requireNoError(t, query.Validate(nil, WithSelectableFields(fields)))
+}
+
 // TestQueryFromExprDetaches verifies private expression nodes are cloned before
 // they become public Query values.
 func TestQueryFromExprDetaches(t *testing.T) {
@@ -145,6 +157,29 @@ func desiredRecord(image string, phase string, replicas int64) value.Value {
 			value.MustRecordMember("phase", value.StringValue(phase)),
 			value.MustRecordMember("replicas", value.Int64Value(replicas)),
 			value.MustRecordMember("nullable", value.NullValue()),
+			value.MustRecordMember("settings", value.MustRecordValue(
+				value.MustRecordMember("with.dots", value.StringValue("dotted")),
+			)),
+			value.MustRecordMember("containers", value.MustListValue(
+				value.MustRecordValue(
+					value.MustRecordMember("name", value.StringValue("main")),
+					value.MustRecordMember("image", value.StringValue(image)),
+				),
+				value.MustRecordValue(
+					value.MustRecordMember("name", value.StringValue("sidecar")),
+					value.MustRecordMember("image", value.StringValue(image+"-sidecar")),
+				),
+			)),
+			value.MustRecordMember("conditions", value.MustListValue(
+				value.MustRecordValue(
+					value.MustRecordMember("type", value.StringValue("Ready")),
+					value.MustRecordMember("status", value.StringValue("True")),
+				),
+				value.MustRecordValue(
+					value.MustRecordMember("type", value.StringValue("Scheduled")),
+					value.MustRecordMember("status", value.StringValue("True")),
+				),
+			)),
 		)),
 	)
 }

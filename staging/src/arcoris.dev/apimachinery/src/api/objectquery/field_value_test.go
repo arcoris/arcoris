@@ -17,6 +17,7 @@ package objectquery
 import (
 	"testing"
 
+	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/value"
 )
 
@@ -50,5 +51,53 @@ func TestLookupFieldValueDesiredObservedAndMissing(t *testing.T) {
 	notRecord.State.Object.Desired = value.StringValue("flat")
 	if lookupFieldValue(notRecord, fieldRef("spec.image")).present {
 		t.Fatal("non-record traversal present = true; want false")
+	}
+}
+
+// TestLookupFieldValueFieldPathElementKinds verifies objectquery traverses
+// semantic fieldpath elements instead of splitting diagnostic text.
+func TestLookupFieldValueFieldPathElementKinds(t *testing.T) {
+	item := testItems()[0]
+	tests := []struct {
+		name string
+		ref  FieldRef
+		want string
+	}{
+		{name: "dynamic key with dots", ref: fieldRef(`$.spec.settings["with.dots"]`), want: "dotted"},
+		{name: "list index", ref: fieldRef("$.spec.containers[1].image"), want: "api-sidecar"},
+		{name: "associative selector", ref: fieldRef(`$.spec.conditions[{"type":"Ready"}].status`), want: "True"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := lookupFieldValue(item, tt.ref)
+			if !got.present {
+				t.Fatal("field present = false; want true")
+			}
+			text, ok := got.value.AsString()
+			if !ok || text != tt.want {
+				t.Fatalf("field value = %q/%v; want %q/true", text, ok, tt.want)
+			}
+		})
+	}
+}
+
+// TestLiteralMatchesValue verifies selector matching uses exact literal
+// semantics for supported selector scalar kinds.
+func TestLiteralMatchesValue(t *testing.T) {
+	if !literalMatchesValue(fieldpath.StringLiteral("api"), value.StringValue("api")) {
+		t.Fatal("string literal did not match string value")
+	}
+	if !literalMatchesValue(fieldpath.BoolLiteral(true), value.BoolValue(true)) {
+		t.Fatal("bool literal did not match bool value")
+	}
+	if !literalMatchesValue(fieldpath.Int64Literal(-1), value.Int64Value(-1)) {
+		t.Fatal("int64 literal did not match integer value")
+	}
+	if !literalMatchesValue(fieldpath.Uint64Literal(1), value.Uint64Value(1)) {
+		t.Fatal("uint64 literal did not match integer value")
+	}
+	if literalMatchesValue(fieldpath.StringLiteral("1"), value.Int64Value(1)) {
+		t.Fatal("string literal matched integer value")
 	}
 }

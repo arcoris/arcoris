@@ -22,9 +22,6 @@ func TestFieldPolicyConstants(t *testing.T) {
 	if IndexNone != 0 {
 		t.Fatalf("IndexNone = %d; want zero", IndexNone)
 	}
-	if MissingAbsent != 0 {
-		t.Fatalf("MissingAbsent = %d; want zero", MissingAbsent)
-	}
 	if IndexEquality == IndexRange {
 		t.Fatal("IndexEquality and IndexRange must remain distinct")
 	}

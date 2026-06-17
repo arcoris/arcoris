@@ -40,7 +40,7 @@ func TestResolveAndValidateFieldUsesRegisteredDefinition(t *testing.T) {
 	field, err := resolveAndValidateField(term, compileOptions{fields: fields})
 	requireNoError(t, err)
 
-	if field.Ref != ref {
+	if field.Ref.Surface != ref.Surface || !field.Ref.Path.Equal(ref.Path) {
 		t.Fatalf("resolved ref = %s; want %s", field.Ref.String(), ref.String())
 	}
 }

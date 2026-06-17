@@ -17,6 +17,10 @@ package objectquery
 // constraintsForFieldTerm emits only positive field constraints. Negative
 // field operators stay residual because missing-value semantics matter.
 func constraintsForFieldTerm(t term) []Constraint {
+	if !fieldIndexSupportsOperator(t.field.Index, t.operator) {
+		return nil
+	}
+
 	switch t.operator {
 	case OperatorExists,
 		OperatorEquals,
@@ -33,5 +37,29 @@ func constraintsForFieldTerm(t term) []Constraint {
 		}}
 	default:
 		return nil
+	}
+}
+
+// fieldIndexSupportsOperator maps SelectableField index hints to conservative
+// field constraints. Predicate.Match remains the semantic source of truth.
+func fieldIndexSupportsOperator(hint IndexHint, op Operator) bool {
+	switch hint {
+	case IndexEquality:
+		return op == OperatorExists || op == OperatorEquals || op == OperatorIn
+	case IndexRange:
+		switch op {
+		case OperatorExists,
+			OperatorEquals,
+			OperatorIn,
+			OperatorLessThan,
+			OperatorLessOrEqual,
+			OperatorGreaterThan,
+			OperatorGreaterOrEqual:
+			return true
+		default:
+			return false
+		}
+	default:
+		return false
 	}
 }

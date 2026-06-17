@@ -33,9 +33,6 @@ type SelectableField struct {
 	Operators OperatorSet
 	// Index is an advisory indexing hint for future caches/storage adapters.
 	Index IndexHint
-	// Missing records the field's missing-value policy for documentation and
-	// future adapters. The evaluator always uses objectquery missing semantics.
-	Missing MissingPolicy
 }
 
 // Validate checks whether f is usable for field term compilation.

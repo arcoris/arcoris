@@ -19,6 +19,51 @@ import (
 	"fmt"
 )
 
+// ErrorReason identifies the stable reason for a query validation failure.
+type ErrorReason string
+
+// Stable query diagnostic reasons.
+const (
+	ErrorReasonInvalidExpression   ErrorReason = "invalid_expression"
+	ErrorReasonInvalidTerm         ErrorReason = "invalid_term"
+	ErrorReasonInvalidField        ErrorReason = "invalid_field"
+	ErrorReasonInvalidOperator     ErrorReason = "invalid_operator"
+	ErrorReasonUnsupportedOperator ErrorReason = "unsupported_operator"
+	ErrorReasonUnresolvedField     ErrorReason = "unresolved_field"
+	ErrorReasonInvalidChange       ErrorReason = "invalid_change"
+)
+
+// Error carries a stable objectquery diagnostic while preserving lower causes.
+type Error struct {
+	// Path identifies the logical compiler location that failed.
+	Path string
+	// Reason is the stable machine-readable failure class.
+	Reason ErrorReason
+	// Cause is the underlying validation or construction failure.
+	Cause error
+}
+
+// Error returns a compact diagnostic string.
+func (e *Error) Error() string {
+	if e == nil {
+		return "<nil>"
+	}
+	if e.Path == "" {
+		return string(e.Reason) + ": " + e.Cause.Error()
+	}
+
+	return e.Path + ": " + string(e.Reason) + ": " + e.Cause.Error()
+}
+
+// Unwrap returns the underlying cause for errors.Is/errors.As.
+func (e *Error) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+
+	return e.Cause
+}
+
 // Package sentinel errors are intentionally broad enough for stable errors.Is
 // checks while preserving lower causes through errors.Join.
 var (
@@ -54,30 +99,26 @@ func invalidQueryError(cause error) error {
 
 // invalidExpressionError classifies failures in boolean expression shape.
 func invalidExpressionError(format string, args ...any) error {
-	return errors.Join(ErrInvalidQuery, ErrInvalidExpression, fmt.Errorf(format, args...))
+	return newError("query.expression", ErrorReasonInvalidExpression, ErrInvalidExpression, fmt.Errorf(format, args...))
 }
 
 // invalidTermError classifies failures in typed query terms.
 func invalidTermError(format string, args ...any) error {
-	return errors.Join(ErrInvalidQuery, ErrInvalidTerm, fmt.Errorf(format, args...))
+	return newError("query.term", ErrorReasonInvalidTerm, ErrInvalidTerm, fmt.Errorf(format, args...))
 }
 
 // invalidFieldError keeps field failures distinguishable from generic term
 // failures while preserving any lower sentinel.
 func invalidFieldError(cause error, format string, args ...any) error {
-	err := errors.Join(ErrInvalidQuery, ErrInvalidField, fmt.Errorf(format, args...))
-	if cause != nil {
-		err = errors.Join(err, cause)
-	}
-
-	return err
+	return newError("query.field", ErrorReasonInvalidField, ErrInvalidField, fmt.Errorf(format, args...), cause)
 }
 
 // invalidOperatorError reports an unknown operator value before domain-specific
 // operator support is considered.
 func invalidOperatorError(op Operator) error {
-	return errors.Join(
-		ErrInvalidQuery,
+	return newError(
+		"query.operator",
+		ErrorReasonInvalidOperator,
 		ErrInvalidOperator,
 		fmt.Errorf("operator %s is invalid", op.String()),
 	)
@@ -86,9 +127,48 @@ func invalidOperatorError(op Operator) error {
 // unsupportedOperatorError reports a known operator that is forbidden for the
 // selected metadata domain or selectable field.
 func unsupportedOperatorError(op Operator, domain string) error {
-	return errors.Join(
-		ErrInvalidQuery,
+	return newError(
+		"query.operator",
+		ErrorReasonUnsupportedOperator,
 		ErrUnsupportedOperator,
 		fmt.Errorf("operator %s is unsupported for %s", op.String(), domain),
 	)
+}
+
+// unresolvedFieldError reports a missing selectable field declaration.
+func unresolvedFieldError(ref FieldRef, cause error) error {
+	return newError(
+		"query.field."+ref.String(),
+		ErrorReasonUnresolvedField,
+		ErrUnresolvedField,
+		cause,
+	)
+}
+
+// invalidChangeError reports an objectstore.Change projection failure.
+func invalidChangeError(cause error) error {
+	return newError("query.change", ErrorReasonInvalidChange, ErrInvalidChange, cause)
+}
+
+// newError joins broad sentinels with a structured diagnostic.
+func newError(path string, reason ErrorReason, sentinel error, causes ...error) error {
+	joined := []error{ErrInvalidQuery, sentinel}
+	var cause error
+	for _, item := range causes {
+		if item == nil {
+			continue
+		}
+		if cause == nil {
+			cause = item
+		} else {
+			cause = errors.Join(cause, item)
+		}
+		joined = append(joined, item)
+	}
+	if cause == nil {
+		cause = sentinel
+	}
+
+	joined = append(joined, &Error{Path: path, Reason: reason, Cause: cause})
+	return errors.Join(joined...)
 }

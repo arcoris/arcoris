@@ -42,3 +42,17 @@ func TestCanonicalValuesSortsDeduplicatesAndRejectsZero(t *testing.T) {
 	_, err = canonicalValues([]value.Value{{}})
 	requireErrorIs(t, err, ErrInvalidTerm)
 }
+
+// TestCanonicalValuesDeduplicatesSemanticDecimals verifies value set
+// canonicalization follows the same equality semantics as matching.
+func TestCanonicalValuesDeduplicatesSemanticDecimals(t *testing.T) {
+	values, err := canonicalValues([]value.Value{
+		value.DecimalValue(value.MustParseDecimal("1.20")),
+		value.DecimalValue(value.MustParseDecimal("1.2")),
+	})
+	requireNoError(t, err)
+
+	if len(values) != 1 {
+		t.Fatalf("canonical decimal values = %d; want 1", len(values))
+	}
+}

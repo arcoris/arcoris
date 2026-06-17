@@ -17,7 +17,7 @@ package objectquery
 import (
 	"fmt"
 
-	"arcoris.dev/apimachinery/api/apidocument"
+	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/objectsurface"
 )
 
@@ -28,17 +28,17 @@ import (
 type FieldRef struct {
 	// Surface is the semantic object surface that owns the field.
 	Surface objectsurface.Kind
-	// Path is a stable surface-relative document path, not JSONPath.
-	Path apidocument.Path
+	// Path is a surface-relative semantic payload path, not JSONPath.
+	Path fieldpath.Path
 }
 
 // String returns a stable diagnostic field reference.
 func (r FieldRef) String() string {
-	if r.Path.IsZero() {
+	if r.Path.IsRoot() {
 		return r.Surface.String()
 	}
 
-	return r.Surface.String() + "." + r.Path.String()
+	return r.Surface.String() + r.Path.CanonicalText()[1:]
 }
 
 // Validate checks the field reference shape before registry resolution.
@@ -46,9 +46,33 @@ func (r FieldRef) Validate() error {
 	if !r.Surface.IsValid() {
 		return fmt.Errorf("%w: surface %q", ErrInvalidField, r.Surface.String())
 	}
-	if r.Path.IsZero() {
+	if !isFieldSurfaceSupported(r.Surface) {
+		return fmt.Errorf("%w: unsupported field surface %q", ErrInvalidField, r.Surface.String())
+	}
+	if r.Path.IsRoot() {
 		return fmt.Errorf("%w: empty field path", ErrInvalidField)
+	}
+	if err := r.Path.ValidateStructure(); err != nil {
+		return fmt.Errorf("%w: invalid field path: %w", ErrInvalidField, err)
 	}
 
 	return nil
+}
+
+// isFieldSurfaceSupported reports whether objectquery can evaluate field
+// payloads on surface. Metadata surfaces use dedicated metadata terms instead.
+func isFieldSurfaceSupported(surface objectsurface.Kind) bool {
+	kinds := objectsurface.Kinds()
+	return surface == kinds.Desired() || surface == kinds.Observed()
+}
+
+// fieldRefKey is the private structural key used by StaticFieldSet.
+type fieldRefKey struct {
+	surface objectsurface.Kind
+	path    string
+}
+
+// key returns a stable semantic key without using FieldRef.String diagnostics.
+func (r FieldRef) key() fieldRefKey {
+	return fieldRefKey{surface: r.Surface, path: r.Path.CanonicalText()}
 }

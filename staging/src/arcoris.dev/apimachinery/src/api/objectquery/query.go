@@ -38,9 +38,9 @@ func (q Query) IsZero() bool {
 	return q.expr == nil
 }
 
-// Validate checks whether q can be compiled with default options.
-func (q Query) Validate() error {
-	_, err := Compile(q)
+// Validate checks whether q can be compiled with opts.
+func (q Query) Validate(opts ...CompileOption) error {
+	_, err := Compile(q, opts...)
 	return err
 }
 

@@ -53,6 +53,25 @@ func TestPredicateMatchFieldOperators(t *testing.T) {
 	}
 }
 
+// TestPredicateMatchObservedField verifies observed selectable fields compile
+// and evaluate against the observed payload, not desired state.
+func TestPredicateMatchObservedField(t *testing.T) {
+	item := testItem("system", "worker-1", 1, nil, nil, desiredRecord("api", "desired", 1))
+	observed := value.MustRecordValue(
+		value.MustRecordMember("status", value.MustRecordValue(
+			value.MustRecordMember("phase", value.StringValue("Ready")),
+		)),
+	)
+	item.State.Object.Observed = &observed
+	ref := observedFieldRef("status.phase")
+	fields := mustFieldSet(t, selectable(ref, value.KindString, Operators(OperatorEquals)))
+	predicate := mustPredicate(t, mustQ(FieldEquals(ref, value.StringValue("Ready"))), WithSelectableFields(fields))
+
+	if !predicate.Match(item) {
+		t.Fatal("observed field predicate did not match")
+	}
+}
+
 // BenchmarkPredicateMatchFieldTerm covers registered field evaluation.
 func BenchmarkPredicateMatchFieldTerm(b *testing.B) {
 	fields := mustFieldSet(b, selectable(fieldRef("spec.image"), value.KindString, Operators(OperatorEquals)))

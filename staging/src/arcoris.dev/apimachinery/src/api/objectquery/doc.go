@@ -32,9 +32,17 @@
 //
 // Selectable fields are not arbitrary JSONPath or descriptor traversal.
 // Resource-specific callers must register each queryable FieldRef through a
-// SelectableFieldSet. Field paths use apidocument.Path as stable diagnostic
-// document vocabulary; they are not JSONPath and not fieldpath.Path. Missing
-// means the path is absent. Null means the path exists and stores value.Null.
+// SelectableFieldSet. Field paths use api/fieldpath.Path, whose elements model
+// semantic field, map-key, list-index, and associative-list selector steps.
+// Field terms currently evaluate Desired and Observed surfaces only; metadata
+// labels and annotations have dedicated metadata terms. Missing means the path
+// is absent. Null means the path exists and stores value.Null.
+//
+// SelectableField.Index affects only planning hints. IndexNone suppresses field
+// constraints, IndexEquality exposes presence/equality/membership constraints,
+// and IndexRange additionally exposes ordering constraints. Predicate.Match is
+// always applied after any caller uses planning constraints, so planning cannot
+// change query semantics.
 //
 // This package does not parse selector strings, decode HTTP query parameters,
 // execute storage queries, build indexes, read stores, watch changes, run

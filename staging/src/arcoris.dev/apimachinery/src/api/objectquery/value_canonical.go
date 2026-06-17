@@ -16,56 +16,60 @@ package objectquery
 
 import (
 	"encoding/base64"
+	"math"
 	"strconv"
 	"strings"
 
 	"arcoris.dev/apimachinery/api/value"
 )
 
-// canonicalValueKey produces a deterministic equality key for value.Value.
-// It is internal comparison machinery, not a wire or storage encoding.
+// canonicalValueKey produces a deterministic, collision-resistant sort key for
+// literal sets. It is internal comparison machinery, not a wire encoding.
 func canonicalValueKey(v value.Value) string {
 	switch v.Kind() {
 	case value.KindNull:
-		return "null:"
+		return atom("null", "")
 	case value.KindBool:
 		payload, _ := v.AsBool()
-		return "bool:" + strconv.FormatBool(payload)
+		return atom("bool", strconv.FormatBool(payload))
 	case value.KindString:
 		payload, _ := v.AsString()
-		return "string:" + payload
+		return atom("string", payload)
 	case value.KindBytes:
 		payload, _ := v.AsBytes()
-		return "bytes:" + base64.StdEncoding.EncodeToString(payload)
+		return atom("bytes", base64.StdEncoding.EncodeToString(payload))
 	case value.KindInteger:
 		payload, _ := v.AsInteger()
-		return "integer:" + payload.String()
+		return atom("integer", payload.String())
 	case value.KindFloat:
 		payload, _ := v.AsFloat()
-		return "float:" + strconv.FormatFloat(payload, 'g', -1, 64)
+		if payload == 0 {
+			payload = 0
+		}
+		return atom("float", strconv.FormatFloat(payload, 'g', -1, 64))
 	case value.KindDecimal:
 		payload, _ := v.AsDecimal()
-		return "decimal:" + payload.String()
+		return atom("decimal", canonicalDecimal(payload))
 	case value.KindTimestamp:
 		payload, _ := v.AsTimestamp()
-		return "timestamp:" + payload.UTC().Format("2006-01-02T15:04:05.999999999Z07:00")
+		return atom("timestamp", payload.UTC().Format("2006-01-02T15:04:05.999999999Z07:00"))
 	case value.KindDate:
 		payload, _ := v.AsDate()
-		return "date:" + payload.String()
+		return atom("date", payload.String())
 	case value.KindTimeOfDay:
 		payload, _ := v.AsTimeOfDay()
-		return "timeOfDay:" + payload.String()
+		return atom("timeOfDay", payload.String())
 	case value.KindDuration:
 		payload, _ := v.AsDuration()
-		return "duration:" + payload.String()
+		return atom("duration", strconv.FormatInt(int64(payload), 10))
 	case value.KindRecord:
 		view, _ := v.AsRecord()
 		parts := make([]string, 0, view.Len())
 		view.ForEach(func(_ int, member value.RecordMember) bool {
-			parts = append(parts, member.Name.String()+"="+canonicalValueKey(member.Value))
+			parts = append(parts, atom("member", member.Name.String())+canonicalValueKey(member.Value))
 			return true
 		})
-		return "record:" + strings.Join(parts, ",")
+		return atom("record", strings.Join(parts, ""))
 	case value.KindList:
 		view, _ := v.AsList()
 		parts := make([]string, 0, view.Len())
@@ -73,8 +77,37 @@ func canonicalValueKey(v value.Value) string {
 			parts = append(parts, canonicalValueKey(nested))
 			return true
 		})
-		return "list:" + strings.Join(parts, ",")
+		return atom("list", strings.Join(parts, ""))
 	default:
-		return "invalid:"
+		return atom("invalid", "")
 	}
+}
+
+// atom length-prefixes payload so nested delimiters cannot collide.
+func atom(kind string, payload string) string {
+	return kind + "\x00" + payload + "\x00" + strconv.Itoa(len(payload))
+}
+
+// canonicalDecimal normalizes decimal representation to numeric equality.
+func canonicalDecimal(decimal value.Decimal) string {
+	if decimal.IsZero() {
+		return "0"
+	}
+
+	coefficient := decimal.Coefficient()
+	scale := decimal.Scale()
+	for scale > 0 && strings.HasSuffix(coefficient, "0") {
+		coefficient = strings.TrimSuffix(coefficient, "0")
+		scale--
+	}
+
+	sign := "+"
+	if decimal.IsNegative() {
+		sign = "-"
+	}
+	if scale > math.MaxInt32 {
+		return sign + coefficient + "e-" + strconv.FormatUint(uint64(scale), 10)
+	}
+
+	return sign + coefficient + "e-" + strconv.Itoa(int(scale))
 }

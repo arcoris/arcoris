@@ -52,7 +52,7 @@ func matchExpr(e *expr, item objectstore.ListItem) bool {
 		}
 		return false
 	default:
-		return true
+		return false
 	}
 }
 

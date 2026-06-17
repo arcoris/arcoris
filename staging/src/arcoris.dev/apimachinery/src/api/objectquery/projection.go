@@ -14,11 +14,7 @@
 
 package objectquery
 
-import (
-	"errors"
-
-	"arcoris.dev/apimachinery/api/objectstore"
-)
+import "arcoris.dev/apimachinery/api/objectstore"
 
 // ChangeProjectionKind classifies a committed change against a predicate.
 type ChangeProjectionKind uint8
@@ -52,7 +48,7 @@ type ChangeProjection struct {
 // does not publish events, mutate caches, or interpret storage history.
 func (p Predicate) ProjectChange(change objectstore.Change) (ChangeProjection, error) {
 	if err := change.Validate(); err != nil {
-		return ChangeProjection{}, errors.Join(ErrInvalidChange, err)
+		return ChangeProjection{}, invalidChangeError(err)
 	}
 
 	switch change.Kind {
@@ -82,6 +78,6 @@ func (p Predicate) ProjectChange(change objectstore.Change) (ChangeProjection, e
 		}
 		return ChangeProjection{Kind: ChangeProjectionIgnored}, nil
 	default:
-		return ChangeProjection{}, ErrInvalidChange
+		return ChangeProjection{}, invalidChangeError(ErrInvalidChange)
 	}
 }

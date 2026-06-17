@@ -59,4 +59,5 @@ func TestProjectChangeInvalidChange(t *testing.T) {
 	_, err := mustPredicate(t, All()).ProjectChange(objectstore.Change{})
 
 	requireErrorIs(t, err, ErrInvalidChange)
+	requireStructuredQueryError(t, err, ErrorReasonInvalidChange, "query.change")
 }

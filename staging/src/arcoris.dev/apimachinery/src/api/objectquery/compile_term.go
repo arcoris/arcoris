@@ -57,6 +57,7 @@ func validateTerm(t term, opts compileOptions) (term, error) {
 			return term{}, err
 		}
 		t.fieldRef = field.Ref
+		t.field = field
 	default:
 		return term{}, invalidTermError("unknown term kind")
 	}

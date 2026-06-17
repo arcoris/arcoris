@@ -15,9 +15,10 @@
 package objectquery
 
 import (
+	"strings"
 	"testing"
 
-	"arcoris.dev/apimachinery/api/apidocument"
+	"arcoris.dev/apimachinery/api/fieldpath"
 	"arcoris.dev/apimachinery/api/objectsurface"
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -32,15 +33,40 @@ func TestFieldRefStringAndValidate(t *testing.T) {
 	}
 	requireNoError(t, ref.Validate())
 
-	err := FieldRef{Path: apidocument.Path("spec.image")}.Validate()
+	err := FieldRef{Path: fieldPath("$.spec.image")}.Validate()
 	requireErrorIs(t, err, ErrInvalidField)
+
+	err = FieldRef{Surface: objectsurface.Kinds().Desired(), Path: fieldpath.Root()}.Validate()
+	requireErrorIs(t, err, ErrInvalidField)
+}
+
+// TestFieldRefRejectsUnsupportedSurfaces verifies field terms do not silently
+// treat metadata or reserved surfaces as missing payload fields.
+func TestFieldRefRejectsUnsupportedSurfaces(t *testing.T) {
+	metadata := objectsurface.Kinds().Metadata()
+	surfaces := []objectsurface.Kind{
+		metadata.Labels(),
+		metadata.Annotations(),
+		metadata.Finalizers(),
+		metadata.OwnerReferences(),
+	}
+
+	for _, surface := range surfaces {
+		t.Run(surface.String(), func(t *testing.T) {
+			ref := FieldRef{Surface: surface, Path: fieldPath("$.spec.image")}
+			requireErrorIs(t, ref.Validate(), ErrInvalidField)
+
+			_, err := FieldExists(ref)
+			requireErrorIs(t, err, ErrInvalidField)
+		})
+	}
 }
 
 // fieldRef builds a desired-surface selectable field reference for tests.
 func fieldRef(path string) FieldRef {
 	return FieldRef{
 		Surface: objectsurface.Kinds().Desired(),
-		Path:    apidocument.Path(path),
+		Path:    fieldPath(path),
 	}
 }
 
@@ -49,7 +75,7 @@ func fieldRef(path string) FieldRef {
 func observedFieldRef(path string) FieldRef {
 	return FieldRef{
 		Surface: objectsurface.Kinds().Observed(),
-		Path:    apidocument.Path(path),
+		Path:    fieldPath(path),
 	}
 }
 
@@ -60,7 +86,6 @@ func selectable(ref FieldRef, kind value.Kind, operators OperatorSet) Selectable
 		Kind:      kind,
 		Operators: operators,
 		Index:     IndexEquality,
-		Missing:   MissingAbsent,
 	}
 }
 
@@ -71,4 +96,17 @@ func mustFieldSet(t testing.TB, fields ...SelectableField) StaticFieldSet {
 	set, err := NewStaticFieldSet(fields...)
 	requireNoError(t, err)
 	return set
+}
+
+// fieldPath parses canonical fieldpath text for selectable field fixtures.
+func fieldPath(path string) fieldpath.Path {
+	if !strings.HasPrefix(path, "$") {
+		path = "$." + path
+	}
+	parsed, err := fieldpath.ParseCanonical(path)
+	if err != nil {
+		panic(err)
+	}
+
+	return parsed
 }

@@ -483,6 +483,87 @@ func TestListQueryNamespaceScopeConsistency(t *testing.T) {
 	})
 }
 
+func TestListQueryNamespaceBooleanAnalysis(t *testing.T) {
+	t.Run("or namespace query is filtered by predicate", func(t *testing.T) {
+		executor := testExecutor(t)
+		createObjectWithMetadata(t, executor, 1, "alpha", "api:alpha", nil, nil)
+		createObjectWithMetadata(t, executor, 2, "beta", "api:beta", nil, nil)
+		createObjectWithMetadata(t, executor, 3, "gamma", "api:gamma", nil, nil)
+
+		result, err := executor.List(context.Background(), ListRequest{
+			Resource: testGVR(),
+			Scope:    objectstore.AllNamespaces(),
+			Query: mustLifecycleOr(
+				t,
+				mustLifecycleNamespaceEquals(t, "alpha"),
+				mustLifecycleNamespaceEquals(t, "beta"),
+			),
+		})
+		requireNoError(t, err)
+
+		requireLifecycleListNames(t, result, "worker-1", "worker-2")
+	})
+
+	t.Run("contradictory namespace and is invalid", func(t *testing.T) {
+		store := &trackingListStore{}
+		executor := testExecutor(t, WithStore(store))
+
+		_, err := executor.List(context.Background(), ListRequest{
+			Resource: testGVR(),
+			Scope:    objectstore.AllNamespaces(),
+			Query: mustLifecycleAnd(
+				t,
+				mustLifecycleNamespaceEquals(t, "alpha"),
+				mustLifecycleNamespaceEquals(t, "beta"),
+			),
+		})
+
+		requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidQueryScope)
+		if store.listCalled {
+			t.Fatalf("store.List was called")
+		}
+	})
+
+	t.Run("key namespace and different namespace is invalid", func(t *testing.T) {
+		store := &trackingListStore{}
+		executor := testExecutor(t, WithStore(store))
+		key := objectstore.MustKey(testGVR(), metaidentity.ObjectName{
+			Namespace: "alpha",
+			Name:      "worker-1",
+		})
+
+		_, err := executor.List(context.Background(), ListRequest{
+			Resource: testGVR(),
+			Scope:    objectstore.AllNamespaces(),
+			Query: mustLifecycleAnd(
+				t,
+				mustLifecycleKeyEquals(t, key),
+				mustLifecycleNamespaceEquals(t, "beta"),
+			),
+		})
+
+		requireLifecycleError(t, err, ErrInvalidRequest, ErrorReasonInvalidQueryScope)
+		if store.listCalled {
+			t.Fatalf("store.List was called")
+		}
+	})
+
+	t.Run("not namespace query remains residual", func(t *testing.T) {
+		executor := testExecutor(t)
+		createObjectWithMetadata(t, executor, 1, "alpha", "api:alpha", nil, nil)
+		createObjectWithMetadata(t, executor, 2, "beta", "api:beta", nil, nil)
+
+		result, err := executor.List(context.Background(), ListRequest{
+			Resource: testGVR(),
+			Scope:    objectstore.AllNamespaces(),
+			Query:    mustLifecycleNot(t, mustLifecycleNamespaceEquals(t, "alpha")),
+		})
+		requireNoError(t, err)
+
+		requireLifecycleListNames(t, result, "worker-2")
+	})
+}
+
 func TestListGlobalResourceQueryNamespaceConsistency(t *testing.T) {
 	t.Run("absent namespace allowed", func(t *testing.T) {
 		store := &trackingListStore{}
@@ -800,6 +881,33 @@ func mustLifecycleAnd(t *testing.T, queries ...objectquery.Query) objectquery.Qu
 	t.Helper()
 
 	query, err := objectquery.And(queries...)
+	requireNoError(t, err)
+
+	return query
+}
+
+func mustLifecycleOr(t *testing.T, queries ...objectquery.Query) objectquery.Query {
+	t.Helper()
+
+	query, err := objectquery.Or(queries...)
+	requireNoError(t, err)
+
+	return query
+}
+
+func mustLifecycleNot(t *testing.T, query objectquery.Query) objectquery.Query {
+	t.Helper()
+
+	inverted, err := objectquery.Not(query)
+	requireNoError(t, err)
+
+	return inverted
+}
+
+func mustLifecycleKeyEquals(t *testing.T, key objectstore.Key) objectquery.Query {
+	t.Helper()
+
+	query, err := objectquery.KeyEquals(key)
 	requireNoError(t, err)
 
 	return query

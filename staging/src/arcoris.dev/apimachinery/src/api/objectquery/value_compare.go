@@ -16,10 +16,10 @@ package objectquery
 
 import "arcoris.dev/apimachinery/api/value"
 
-// valueEqual compares value.Value instances through the same canonical key used
-// for literal deduplication.
+// valueEqual delegates concrete payload equality to api/value so objectquery
+// does not duplicate value semantics.
 func valueEqual(left value.Value, right value.Value) bool {
-	return canonicalValueKey(left) == canonicalValueKey(right)
+	return value.Equal(left, right)
 }
 
 // valueIn applies equality semantics to a canonical literal set.

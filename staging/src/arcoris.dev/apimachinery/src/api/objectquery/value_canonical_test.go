@@ -30,7 +30,7 @@ func TestCanonicalValueKeyDistinguishesKinds(t *testing.T) {
 	if stringKey == intKey {
 		t.Fatalf("string and integer canonical keys are equal: %q", stringKey)
 	}
-	if !strings.HasPrefix(canonicalValueKey(value.NullValue()), "null:") {
+	if !strings.HasPrefix(canonicalValueKey(value.NullValue()), "null\x00") {
 		t.Fatal("null canonical key lost null prefix")
 	}
 }
@@ -41,10 +41,21 @@ func TestCanonicalValueKeyHandlesCompositeValues(t *testing.T) {
 	record := value.MustRecordValue(value.MustRecordMember("name", value.StringValue("api")))
 	list := value.MustListValue(value.StringValue("api"), value.Int64Value(1))
 
-	if !strings.HasPrefix(canonicalValueKey(record), "record:") {
+	if !strings.HasPrefix(canonicalValueKey(record), "record\x00") {
 		t.Fatalf("record canonical key = %q", canonicalValueKey(record))
 	}
-	if !strings.HasPrefix(canonicalValueKey(list), "list:") {
+	if !strings.HasPrefix(canonicalValueKey(list), "list\x00") {
 		t.Fatalf("list canonical key = %q", canonicalValueKey(list))
+	}
+}
+
+// TestCanonicalValueKeyAvoidsDelimiterCollisions verifies structural keys do
+// not collide when user strings contain punctuation used by older encodings.
+func TestCanonicalValueKeyAvoidsDelimiterCollisions(t *testing.T) {
+	left := value.MustRecordValue(value.MustRecordMember("a,b", value.StringValue("c=d")))
+	right := value.MustRecordValue(value.MustRecordMember("a", value.StringValue("b,c=d")))
+
+	if canonicalValueKey(left) == canonicalValueKey(right) {
+		t.Fatalf("canonical keys collided: %q", canonicalValueKey(left))
 	}
 }

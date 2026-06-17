@@ -16,6 +16,7 @@ package objectquery
 
 import (
 	"testing"
+	"time"
 
 	"arcoris.dev/apimachinery/api/value"
 )
@@ -35,16 +36,11 @@ func TestCompareOrdered(t *testing.T) {
 	}
 }
 
-// TestCompareCanonicalKeys verifies the fallback comparator has stable
-// three-way semantics.
-func TestCompareCanonicalKeys(t *testing.T) {
-	if compareCanonicalKeys(value.StringValue("a"), value.StringValue("b")) >= 0 {
-		t.Fatal("canonical a < b failed")
-	}
-	if compareCanonicalKeys(value.StringValue("b"), value.StringValue("a")) <= 0 {
-		t.Fatal("canonical b > a failed")
-	}
-	if compareCanonicalKeys(value.StringValue("a"), value.StringValue("a")) != 0 {
-		t.Fatal("canonical a == a failed")
+// TestCompareOrderedDurationUsesSemanticDuration verifies objectquery does not
+// fall back to lexicographic duration strings.
+func TestCompareOrderedDurationUsesSemanticDuration(t *testing.T) {
+	cmp, ok := compareOrdered(value.DurationValue(10*time.Second), value.DurationValue(2*time.Second))
+	if !ok || cmp <= 0 {
+		t.Fatalf("duration compare = (%d, %v); want greater/true", cmp, ok)
 	}
 }

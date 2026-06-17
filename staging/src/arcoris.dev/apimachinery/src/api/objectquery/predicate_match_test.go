@@ -48,3 +48,11 @@ func TestMatchTermRejectsUnknownTermKind(t *testing.T) {
 		t.Fatal("unknown term matched; want false")
 	}
 }
+
+// TestMatchExprRejectsUnknownExpressionKind verifies malformed private
+// expressions never broaden a predicate.
+func TestMatchExprRejectsUnknownExpressionKind(t *testing.T) {
+	if matchExpr(&expr{}, testItems()[0]) {
+		t.Fatal("unknown expression matched; want false")
+	}
+}

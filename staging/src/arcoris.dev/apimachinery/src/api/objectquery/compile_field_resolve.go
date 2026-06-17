@@ -14,10 +14,7 @@
 
 package objectquery
 
-import (
-	"errors"
-	"fmt"
-)
+import "fmt"
 
 // resolveAndValidateField resolves field metadata and validates operator and
 // literal compatibility before a field term can be evaluated.
@@ -46,18 +43,16 @@ func resolveAndValidateField(t term, opts compileOptions) (SelectableField, erro
 // registries and unknown fields are both query validation failures.
 func resolveField(ref FieldRef, opts compileOptions) (SelectableField, error) {
 	if opts.fields == nil {
-		return SelectableField{}, errors.Join(
-			ErrInvalidQuery,
-			ErrUnresolvedField,
+		return SelectableField{}, unresolvedFieldError(
+			ref,
 			fmt.Errorf("no selectable field set supplied for %s", ref.String()),
 		)
 	}
 
 	field, ok := opts.fields.ResolveSelectableField(ref)
 	if !ok {
-		return SelectableField{}, errors.Join(
-			ErrInvalidQuery,
-			ErrUnresolvedField,
+		return SelectableField{}, unresolvedFieldError(
+			ref,
 			fmt.Errorf("selectable field %s is not registered", ref.String()),
 		)
 	}

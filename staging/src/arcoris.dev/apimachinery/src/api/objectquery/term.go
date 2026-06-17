@@ -78,6 +78,8 @@ type term struct {
 
 	// fieldRef identifies the selectable field for termField.
 	fieldRef FieldRef
+	// field stores resolved selectable field metadata for compiled field terms.
+	field SelectableField
 	// values stores cloned and canonical field literals.
 	values []value.Value
 	// operator is the finite operation for metadata and field terms.

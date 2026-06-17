@@ -16,60 +16,7 @@ package objectquery
 
 import "arcoris.dev/apimachinery/api/value"
 
-// compareOrdered compares same-kind values that the compiler has classified as
-// orderable. The bool result is false for unsupported runtime kinds.
+// compareOrdered delegates ordered scalar comparison to api/value.
 func compareOrdered(left value.Value, right value.Value) (int, bool) {
-	if left.Kind() != right.Kind() {
-		return 0, false
-	}
-
-	switch left.Kind() {
-	case value.KindInteger:
-		l, _ := left.AsInteger()
-		r, _ := right.AsInteger()
-		return l.Compare(r), true
-	case value.KindFloat:
-		return compareFloats(left, right)
-	case value.KindDecimal:
-		l, _ := left.AsDecimal()
-		r, _ := right.AsDecimal()
-		return l.Compare(r), true
-	case value.KindTimestamp:
-		l, _ := left.AsTimestamp()
-		r, _ := right.AsTimestamp()
-		return l.Compare(r), true
-	case value.KindDate, value.KindTimeOfDay, value.KindDuration:
-		return compareCanonicalKeys(left, right), true
-	default:
-		return 0, false
-	}
-}
-
-// compareFloats returns a three-way comparison for float values.
-func compareFloats(left value.Value, right value.Value) (int, bool) {
-	l, _ := left.AsFloat()
-	r, _ := right.AsFloat()
-	switch {
-	case l < r:
-		return -1, true
-	case l > r:
-		return 1, true
-	default:
-		return 0, true
-	}
-}
-
-// compareCanonicalKeys provides stable ordering for value kinds whose canonical
-// string form is already their ordered representation in this package.
-func compareCanonicalKeys(left value.Value, right value.Value) int {
-	l := canonicalValueKey(left)
-	r := canonicalValueKey(right)
-	switch {
-	case l < r:
-		return -1
-	case l > r:
-		return 1
-	default:
-		return 0
-	}
+	return value.CompareOrdered(left, right)
 }

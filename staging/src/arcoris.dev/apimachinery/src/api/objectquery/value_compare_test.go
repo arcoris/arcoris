@@ -33,3 +33,21 @@ func TestValueEqualAndValueInUseCanonicalKeys(t *testing.T) {
 		t.Fatal("valueIn did not find expected string")
 	}
 }
+
+// TestValueEqualUsesSemanticDecimalEquality verifies FieldEquals and FieldIn
+// share numeric decimal semantics.
+func TestValueEqualUsesSemanticDecimalEquality(t *testing.T) {
+	left := value.DecimalValue(value.MustParseDecimal("1.20"))
+	right := value.DecimalValue(value.MustParseDecimal("1.2"))
+	other := value.DecimalValue(value.MustParseDecimal("1.21"))
+
+	if !valueEqual(left, right) {
+		t.Fatal("decimal 1.20 and 1.2 did not compare equal")
+	}
+	if !valueIn(left, []value.Value{right}) {
+		t.Fatal("decimal valueIn did not use semantic equality")
+	}
+	if valueEqual(left, other) {
+		t.Fatal("different decimal values compared equal")
+	}
+}

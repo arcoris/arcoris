@@ -26,15 +26,3 @@ const (
 	// IndexRange means ordered range indexes may help.
 	IndexRange
 )
-
-// MissingPolicy documents how a selectable field treats absent payload paths.
-type MissingPolicy uint8
-
-// Missing policy values documented by selectable field declarations.
-const (
-	// MissingAbsent means missing paths are represented as absent.
-	MissingAbsent MissingPolicy = iota
-	// MissingPresentNull reserves an explicit present-null policy for field
-	// definitions that need to document null-like absence.
-	MissingPresentNull
-)

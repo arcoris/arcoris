@@ -17,6 +17,7 @@ package objectquery
 import (
 	"testing"
 
+	"arcoris.dev/apimachinery/api/objectsurface"
 	"arcoris.dev/apimachinery/api/value"
 )
 
@@ -49,5 +50,31 @@ func TestStaticFieldSetLaterDuplicateReplacesEarlier(t *testing.T) {
 	}
 	if !field.Operators.Supports(OperatorHasPrefix) {
 		t.Fatal("later duplicate did not replace earlier field")
+	}
+}
+
+// TestStaticFieldSetKeysByFieldRef verifies lookup uses the structured surface
+// and canonical fieldpath identity, not a loose diagnostic suffix.
+func TestStaticFieldSetKeysByFieldRef(t *testing.T) {
+	desired := fieldRef("spec.image")
+	observed := FieldRef{Surface: objectsurface.Kinds().Observed(), Path: desired.Path}
+	quoted := fieldRef(`"spec.image"`)
+	set := mustFieldSet(t,
+		selectable(desired, value.KindString, Operators(OperatorEquals)),
+		selectable(observed, value.KindString, Operators(OperatorHasPrefix)),
+		selectable(quoted, value.KindString, Operators(OperatorContains)),
+	)
+
+	gotDesired, ok := set.ResolveSelectableField(desired)
+	if !ok || !gotDesired.Operators.Supports(OperatorEquals) {
+		t.Fatalf("desired field lookup = %v, %v; want equals field", gotDesired.Operators, ok)
+	}
+	gotObserved, ok := set.ResolveSelectableField(observed)
+	if !ok || !gotObserved.Operators.Supports(OperatorHasPrefix) {
+		t.Fatalf("observed field lookup = %v, %v; want prefix field", gotObserved.Operators, ok)
+	}
+	gotQuoted, ok := set.ResolveSelectableField(quoted)
+	if !ok || !gotQuoted.Operators.Supports(OperatorContains) {
+		t.Fatalf("quoted field lookup = %v, %v; want contains field", gotQuoted.Operators, ok)
 	}
 }

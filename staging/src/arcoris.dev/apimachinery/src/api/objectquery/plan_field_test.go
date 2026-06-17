@@ -25,8 +25,10 @@ import (
 // residual.
 func TestConstraintsForFieldTermEmitsPositiveOperatorsOnly(t *testing.T) {
 	ref := fieldRef("spec.replicas")
-	positive := term{kind: termField, fieldRef: ref, operator: OperatorGreaterThan, values: []value.Value{value.Int64Value(1)}}
-	negative := term{kind: termField, fieldRef: ref, operator: OperatorNotEquals, values: []value.Value{value.Int64Value(1)}}
+	field := selectable(ref, value.KindInteger, Operators(OperatorGreaterThan, OperatorNotEquals))
+	field.Index = IndexRange
+	positive := term{kind: termField, fieldRef: ref, field: field, operator: OperatorGreaterThan, values: []value.Value{value.Int64Value(1)}}
+	negative := term{kind: termField, fieldRef: ref, field: field, operator: OperatorNotEquals, values: []value.Value{value.Int64Value(1)}}
 
 	got := constraintsForFieldTerm(positive)
 	if len(got) != 1 || got[0].Kind != ConstraintField || got[0].Op != OperatorGreaterThan {
@@ -34,5 +36,41 @@ func TestConstraintsForFieldTermEmitsPositiveOperatorsOnly(t *testing.T) {
 	}
 	if got := constraintsForFieldTerm(negative); got != nil {
 		t.Fatalf("negative field constraints = %#v; want nil", got)
+	}
+}
+
+// TestFieldIndexHintControlsPlanning verifies SelectableField.Index is honored
+// by field constraint extraction.
+func TestFieldIndexHintControlsPlanning(t *testing.T) {
+	ref := fieldRef("spec.replicas")
+	tests := []struct {
+		name string
+		hint IndexHint
+		op   Operator
+		want bool
+	}{
+		{name: "none equality", hint: IndexNone, op: OperatorEquals},
+		{name: "equality equals", hint: IndexEquality, op: OperatorEquals, want: true},
+		{name: "equality in", hint: IndexEquality, op: OperatorIn, want: true},
+		{name: "equality range", hint: IndexEquality, op: OperatorGreaterThan},
+		{name: "range equals", hint: IndexRange, op: OperatorEquals, want: true},
+		{name: "range greater", hint: IndexRange, op: OperatorGreaterThan, want: true},
+		{name: "range negative", hint: IndexRange, op: OperatorNotEquals},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			field := selectable(ref, value.KindInteger, Operators(tt.op))
+			field.Index = tt.hint
+			term := term{kind: termField, fieldRef: ref, field: field, operator: tt.op, values: []value.Value{value.Int64Value(1)}}
+			if tt.op == OperatorExists {
+				term.values = nil
+			}
+
+			got := constraintsForFieldTerm(term)
+			if (len(got) > 0) != tt.want {
+				t.Fatalf("has constraints = %v; want %v (%#v)", len(got) > 0, tt.want, got)
+			}
+		})
 	}
 }
