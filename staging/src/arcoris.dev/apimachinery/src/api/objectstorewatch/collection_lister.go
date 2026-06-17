@@ -20,14 +20,13 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-// Snapshotter produces boundary-safe snapshots for structural collections.
+// CollectionLister produces boundary-safe collection reads for structural collections.
 //
-// Snapshot is not merely objectstore.Store.List under another name. It returns
-// a validated list result tied to a revision boundary that is intended for
-// subsequent watch continuation on the same ListerWatcher or Store boundary.
-// Snapshotter alone does not prove that future history is retained; that proof
-// happens when the same objectwatch.Source accepts and serves the watch request.
-type Snapshotter interface {
-	// Snapshot reads collection and returns a validated list-to-watch snapshot.
-	Snapshot(context.Context, objectstore.ListRequest) (Snapshot, error)
+// ListCollection is stronger than raw objectstore.Store.List because it returns
+// a validated CollectionRead intended for watch continuation on the same
+// ListerWatcher or Store boundary. It does not itself prove future history
+// availability; that proof happens when the same source serves Watch.
+type CollectionLister interface {
+	// ListCollection reads collection and returns a validated collection read.
+	ListCollection(context.Context, objectstore.ListRequest) (CollectionRead, error)
 }

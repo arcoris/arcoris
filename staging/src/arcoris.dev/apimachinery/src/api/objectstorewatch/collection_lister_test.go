@@ -14,16 +14,8 @@
 
 package objectstorewatch
 
-import "arcoris.dev/apimachinery/api/objectstore"
+import "testing"
 
-// Validate checks that s is a valid collection snapshot.
-func (s Snapshot) Validate() error {
-	if err := objectstore.ValidateListRequest(s.collection); err != nil {
-		return errorFor("snapshot.collection", ErrorReasonInvalidSnapshot, ErrInvalidSnapshot, err)
-	}
-	if err := objectstore.ValidateListResult(s.collection, s.result); err != nil {
-		return errorFor("snapshot.result", ErrorReasonInvalidSnapshot, ErrInvalidSnapshot, err)
-	}
-
-	return nil
+func TestCollectionListerInterface(t *testing.T) {
+	var _ CollectionLister = (*fakeCollectionLister)(nil)
 }

@@ -24,7 +24,7 @@ import (
 
 func TestErrorUnwrapPreservesCause(t *testing.T) {
 	cause := errors.New("cause")
-	err := &Error{Path: "snapshot.result", Reason: ErrorReasonInvalidSnapshot, Cause: cause}
+	err := &Error{Path: "collection_read.result", Reason: ErrorReasonInvalidCollectionRead, Cause: cause}
 
 	requireErrorIs(t, err, cause)
 }
@@ -33,8 +33,8 @@ func TestErrorStringHandlesNilCause(t *testing.T) {
 	tests := []*Error{
 		nil,
 		{},
-		{Reason: ErrorReasonInvalidSnapshot},
-		{Path: "snapshot.result", Reason: ErrorReasonInvalidSnapshot},
+		{Reason: ErrorReasonInvalidCollectionRead},
+		{Path: "collection_read.result", Reason: ErrorReasonInvalidCollectionRead},
 	}
 
 	for _, err := range tests {
@@ -46,30 +46,31 @@ func TestErrorStringHandlesNilCause(t *testing.T) {
 
 func TestErrorForExposesSentinelCauseAndDiagnostic(t *testing.T) {
 	err := errorFor(
-		"snapshot.result",
-		ErrorReasonInvalidSnapshot,
-		ErrInvalidSnapshot,
+		"collection_read.result",
+		ErrorReasonInvalidCollectionRead,
+		ErrInvalidCollectionRead,
 		objectstore.ErrInvalidListResult,
 	)
 
-	requireErrorIs(t, err, ErrInvalidSnapshot)
+	requireErrorIs(t, err, ErrInvalidCollectionRead)
 	requireErrorIs(t, err, objectstore.ErrInvalidListResult)
-	requireWatchError(t, err, ErrorReasonInvalidSnapshot, "snapshot.result")
+	requireWatchError(t, err, ErrorReasonInvalidCollectionRead, "collection_read.result")
 }
 
 func TestErrorForDoesNotDuplicatePackagePrefix(t *testing.T) {
 	err := errorFor(
-		"snapshot.collection",
-		ErrorReasonInvalidSnapshot,
-		ErrInvalidSnapshot,
+		"collection_read.collection",
+		ErrorReasonInvalidCollectionRead,
+		ErrInvalidCollectionRead,
 		objectstore.ErrInvalidListRequest,
 	)
 	text := err.Error()
 
-	if strings.Contains(text, "objectstorewatch: objectstorewatch.") {
+	duplicatedPrefix := "objectstorewatch: " + "objectstorewatch."
+	if strings.Contains(text, duplicatedPrefix) {
 		t.Fatalf("Error() = %q; contains duplicated package path", text)
 	}
-	if !strings.Contains(text, "objectstorewatch: snapshot.collection") {
+	if !strings.Contains(text, "objectstorewatch: collection_read.collection") {
 		t.Fatalf("Error() = %q; want package prefix plus local path", text)
 	}
 }

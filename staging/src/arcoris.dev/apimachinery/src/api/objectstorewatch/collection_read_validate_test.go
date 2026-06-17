@@ -20,27 +20,27 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-func TestSnapshotValidate(t *testing.T) {
+func TestCollectionReadValidate(t *testing.T) {
 	tests := []struct {
-		name     string
-		snapshot Snapshot
-		wantErr  error
+		name    string
+		read    CollectionRead
+		wantErr error
 	}{
-		{name: "valid", snapshot: testSnapshot(t)},
-		{name: "invalid collection", snapshot: Snapshot{}, wantErr: ErrInvalidSnapshot},
+		{name: "valid", read: testCollectionRead(t)},
+		{name: "invalid collection", read: CollectionRead{}, wantErr: ErrInvalidCollectionRead},
 		{
 			name: "invalid result",
-			snapshot: Snapshot{
+			read: CollectionRead{
 				collection: testCollection(),
 				result:     testListResult([]objectstore.ListItem{{Key: testKey("system", "main")}}, 1),
 			},
-			wantErr: ErrInvalidSnapshot,
+			wantErr: ErrInvalidCollectionRead,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.snapshot.Validate()
+			err := tt.read.Validate()
 			if tt.wantErr == nil {
 				requireNoError(t, err)
 				return

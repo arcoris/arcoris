@@ -101,16 +101,16 @@ func testListResult(items []objectstore.ListItem, revision objectstore.Revision)
 	return objectstore.ListResult{Items: items, Revision: revision}
 }
 
-func testSnapshot(t testing.TB) Snapshot {
+func testCollectionRead(t testing.TB) CollectionRead {
 	t.Helper()
 
-	snapshot, err := NewSnapshot(
+	read, err := NewCollectionRead(
 		testCollection(),
 		testListResult([]objectstore.ListItem{testListItem("system", "main", 1)}, 1),
 	)
 	requireNoError(t, err)
 
-	return snapshot
+	return read
 }
 
 func requireNoError(t testing.TB, err error) {
@@ -142,14 +142,14 @@ func requireWatchError(t testing.TB, err error, reason ErrorReason, pathPart str
 	}
 }
 
-type fakeSnapshotter struct{}
+type fakeCollectionLister struct{}
 
-func (*fakeSnapshotter) Snapshot(context.Context, objectstore.ListRequest) (Snapshot, error) {
-	return Snapshot{}, nil
+func (*fakeCollectionLister) ListCollection(context.Context, objectstore.ListRequest) (CollectionRead, error) {
+	return CollectionRead{}, nil
 }
 
 type fakeListerWatcher struct {
-	fakeSnapshotter
+	fakeCollectionLister
 }
 
 func (*fakeListerWatcher) Watch(context.Context, objectwatch.Request) (objectwatch.Stream, error) {

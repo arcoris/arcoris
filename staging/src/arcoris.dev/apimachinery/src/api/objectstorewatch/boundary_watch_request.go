@@ -19,7 +19,7 @@ import "arcoris.dev/apimachinery/api/objectwatch"
 // WatchRequest converts b into an objectwatch request for the same collection.
 //
 // The generated request always uses StartAfterRevision, including for zero
-// boundaries. StartAtCurrent is intentionally not used for snapshot
+// boundaries. StartAtCurrent is intentionally not used for collection-read
 // continuation because it would drop historical catch-up semantics.
 func (b Boundary) WatchRequest(options WatchOptions) (objectwatch.Request, error) {
 	if err := b.Validate(); err != nil {

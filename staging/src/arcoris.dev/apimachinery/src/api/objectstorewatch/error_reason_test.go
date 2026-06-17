@@ -23,7 +23,7 @@ func TestErrorReasonStringAndValidity(t *testing.T) {
 		text  string
 		valid bool
 	}{
-		{name: "invalid snapshot", in: ErrorReasonInvalidSnapshot, text: "invalid_snapshot", valid: true},
+		{name: "invalid collection read", in: ErrorReasonInvalidCollectionRead, text: "invalid_collection_read", valid: true},
 		{name: "invalid boundary", in: ErrorReasonInvalidBoundary, text: "invalid_boundary", valid: true},
 		{name: "unknown", in: "", text: "unknown"},
 	}

@@ -13,27 +13,34 @@
 // limitations under the License.
 
 // Package objectstorewatch defines contracts that bridge objectstore
-// collection snapshots and objectwatch streams.
+// collection reads and objectwatch streams.
 //
 // objectstore defines committed object state and structural collection
 // matching. objectwatch defines how committed changes are streamed.
 // objectstorewatch defines the list-to-watch boundary between them: a
-// Snapshot is a validated objectstore.ListResult tied to the exact
+// CollectionRead is a validated objectstore.ListResult tied to the exact
 // objectstore.ListRequest that produced it, and a Boundary is the
 // collection/revision pair from which a watch can continue.
 //
-// The central continuity contract is intentionally strict. For a Snapshot S
+// Package objectstorewatch deliberately avoids Snapshot terminology. In this
+// repository, snapshots are point-in-time component read views provided by
+// arcoris.dev/snapshot and related component packages. objectstorewatch works
+// with validated collection reads used as list-to-watch boundaries. A
+// CollectionRead is not a component snapshot and does not imply MVCC snapshot
+// isolation unless a concrete implementation documents that stronger behavior.
+//
+// The central continuity contract is intentionally strict. For a CollectionRead S
 // returned for collection C with boundary revision R, a watch request built
 // from S.Boundary() must observe the same collection C. If Watch succeeds and the
 // stream does not report restart-required or terminal continuity loss, it must
 // deliver every matching committed change with revision greater than R in
 // strictly increasing revision order. Silent gaps are forbidden.
 //
-// Snapshot and Boundary are value-level contracts. They validate shape and
+// CollectionRead and Boundary are value-level contracts. They validate shape and
 // preserve revision boundaries, but they do not prove that a concrete source
 // still retains the required history or that a later watch will succeed. A
-// concrete ListerWatcher proves continuity when it serves Snapshot and Watch
-// consistently. If history is unavailable or continuity is lost,
+// concrete ListerWatcher proves continuity when it serves ListCollection and
+// Watch consistently. If history is unavailable or continuity is lost,
 // implementations must report that explicitly through objectwatch errors or
 // restart-required events.
 //

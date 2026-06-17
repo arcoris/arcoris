@@ -16,64 +16,64 @@ package objectstorewatch
 
 import "arcoris.dev/apimachinery/api/objectstore"
 
-// Snapshot is a validated collection read plus its list-to-watch boundary.
+// CollectionRead is a validated collection read plus its list-to-watch boundary.
 //
-// Snapshot preserves the exact objectstore.ListRequest used for validation and
+// CollectionRead preserves the exact objectstore.ListRequest used for validation and
 // stores a detached clone of the list result. It is immutable by API
 // convention: methods that expose list data return detached copies.
-type Snapshot struct {
+type CollectionRead struct {
 	// collection is the structural collection that produced result.
 	collection objectstore.ListRequest
 	// result is the detached validated list output for collection.
 	result objectstore.ListResult
 }
 
-// NewSnapshot validates collection/result and stores a detached snapshot.
+// NewCollectionRead validates collection/result and stores a detached collection read.
 //
 // Validation runs before cloning so malformed large results are rejected
 // without first deep-copying their item payloads. Successful construction still
 // detaches the stored result from caller-owned data.
-func NewSnapshot(collection objectstore.ListRequest, result objectstore.ListResult) (Snapshot, error) {
+func NewCollectionRead(collection objectstore.ListRequest, result objectstore.ListResult) (CollectionRead, error) {
 	if err := objectstore.ValidateListRequest(collection); err != nil {
-		return Snapshot{}, errorFor("snapshot.collection", ErrorReasonInvalidSnapshot, ErrInvalidSnapshot, err)
+		return CollectionRead{}, errorFor("collection_read.collection", ErrorReasonInvalidCollectionRead, ErrInvalidCollectionRead, err)
 	}
 	if err := objectstore.ValidateListResult(collection, result); err != nil {
-		return Snapshot{}, errorFor("snapshot.result", ErrorReasonInvalidSnapshot, ErrInvalidSnapshot, err)
+		return CollectionRead{}, errorFor("collection_read.result", ErrorReasonInvalidCollectionRead, ErrInvalidCollectionRead, err)
 	}
 
-	return Snapshot{collection: collection, result: result.Clone()}, nil
+	return CollectionRead{collection: collection, result: result.Clone()}, nil
 }
 
-// Collection returns the structural collection that produced this snapshot.
-func (s Snapshot) Collection() objectstore.ListRequest {
+// Collection returns the structural collection that produced this collection read.
+func (s CollectionRead) Collection() objectstore.ListRequest {
 	return s.collection
 }
 
 // Result returns a detached copy of the validated list result.
-func (s Snapshot) Result() objectstore.ListResult {
+func (s CollectionRead) Result() objectstore.ListResult {
 	return s.result.Clone()
 }
 
-// Items returns detached list items in snapshot order.
-func (s Snapshot) Items() []objectstore.ListItem {
+// Items returns detached list items in collection read order.
+func (s CollectionRead) Items() []objectstore.ListItem {
 	return s.Result().Items
 }
 
-// Len returns the number of live items captured by the snapshot.
-func (s Snapshot) Len() int {
+// Len returns the number of live items captured by the collection read.
+func (s CollectionRead) Len() int {
 	return s.result.Len()
 }
 
-// Revision returns the collection boundary revision captured by the snapshot.
-func (s Snapshot) Revision() objectstore.Revision {
+// Revision returns the collection boundary revision captured by the collection read.
+func (s CollectionRead) Revision() objectstore.Revision {
 	return s.result.Revision
 }
 
-// Boundary returns the collection/revision pair represented by this snapshot.
+// Boundary returns the collection/revision pair represented by this collection read.
 //
-// Invalid snapshots return the zero Boundary. Callers that operate on arbitrary
-// Snapshot values should call Validate before using the returned Boundary.
-func (s Snapshot) Boundary() Boundary {
+// Invalid collection reads return the zero Boundary. Callers that operate on arbitrary
+// CollectionRead values should call Validate before using the returned Boundary.
+func (s CollectionRead) Boundary() Boundary {
 	if !s.IsValid() {
 		return Boundary{}
 	}
@@ -82,16 +82,16 @@ func (s Snapshot) Boundary() Boundary {
 }
 
 // Clone returns a detached copy of s.
-func (s Snapshot) Clone() Snapshot {
-	return Snapshot{collection: s.collection, result: s.result.Clone()}
+func (s CollectionRead) Clone() CollectionRead {
+	return CollectionRead{collection: s.collection, result: s.result.Clone()}
 }
 
 // IsZero reports whether s contains no collection and no list result.
-func (s Snapshot) IsZero() bool {
+func (s CollectionRead) IsZero() bool {
 	return s.collection == (objectstore.ListRequest{}) && s.result.IsZero()
 }
 
-// IsValid reports whether s passes snapshot validation.
-func (s Snapshot) IsValid() bool {
+// IsValid reports whether s passes collection read validation.
+func (s CollectionRead) IsValid() bool {
 	return s.Validate() == nil
 }

@@ -28,7 +28,7 @@ import (
 // continuity may depend on objectstorewatch.Store.
 type Store interface {
 	objectstore.Store
-	Snapshotter
+	CollectionLister
 	objectwatch.Source
 }
 

@@ -18,15 +18,15 @@ package objectstorewatch
 type ErrorReason string
 
 const (
-	// ErrorReasonInvalidSnapshot identifies a malformed list-to-watch snapshot.
-	ErrorReasonInvalidSnapshot ErrorReason = "invalid_snapshot"
+	// ErrorReasonInvalidCollectionRead identifies a malformed list-to-watch collection read.
+	ErrorReasonInvalidCollectionRead ErrorReason = "invalid_collection_read"
 	// ErrorReasonInvalidBoundary identifies a malformed watch boundary.
 	ErrorReasonInvalidBoundary ErrorReason = "invalid_boundary"
 )
 
 // IsValid reports whether r is a known objectstorewatch error reason.
 func (r ErrorReason) IsValid() bool {
-	return r == ErrorReasonInvalidSnapshot || r == ErrorReasonInvalidBoundary
+	return r == ErrorReasonInvalidCollectionRead || r == ErrorReasonInvalidBoundary
 }
 
 // String returns stable diagnostic text for r.

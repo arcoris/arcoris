@@ -20,8 +20,8 @@ import (
 )
 
 var (
-	// ErrInvalidSnapshot classifies malformed list-to-watch snapshots.
-	ErrInvalidSnapshot = errors.New("invalid object store watch snapshot")
+	// ErrInvalidCollectionRead classifies malformed list-to-watch collection reads.
+	ErrInvalidCollectionRead = errors.New("invalid object store watch collection read")
 	// ErrInvalidBoundary classifies malformed object store watch boundaries.
 	ErrInvalidBoundary = errors.New("invalid object store watch boundary")
 )
