@@ -19,11 +19,13 @@ import (
 	"arcoris.dev/apimachinery/api/objectwatch"
 )
 
-// Store is an objectstore.Store whose committed mutations are observable.
+// Store is a composite contract for observable object stores.
 //
-// Writers and lifecycle layers should depend on objectstore.Store when they do
-// not need watch capabilities. Components that require both writes and
-// list-to-watch continuity may depend on objectstorewatch.Store.
+// Store is not a concrete implementation and does not add reflector behavior.
+// Writers and lifecycle layers should normally depend on objectstore.Store.
+// Reflectors should normally depend on ListerWatcher because they do not need
+// write methods. Components that require both mutation and list-to-watch
+// continuity may depend on objectstorewatch.Store.
 type Store interface {
 	objectstore.Store
 	Snapshotter

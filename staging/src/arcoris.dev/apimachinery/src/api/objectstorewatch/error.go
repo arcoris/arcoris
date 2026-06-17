@@ -26,6 +26,28 @@ var (
 	ErrInvalidBoundary = errors.New("invalid object store watch boundary")
 )
 
+// errorFor builds the package's standard structured diagnostic.
+//
+// Call sites pass the path, reason, broad sentinel, and lower cause directly so
+// validation code stays explicit about the exact contract location that failed.
+// The returned value preserves errors.Is for the sentinel and cause, and
+// errors.As for *Error.
+func errorFor(path string, reason ErrorReason, sentinel error, cause error) error {
+	if cause == nil {
+		cause = sentinel
+	}
+	if cause == nil {
+		cause = errors.New("object store watch contract violation")
+	}
+
+	diagnostic := &Error{Path: path, Reason: reason, Cause: cause}
+	if sentinel == nil {
+		return diagnostic
+	}
+
+	return errors.Join(sentinel, diagnostic, cause)
+}
+
 // Error carries one structured objectstorewatch diagnostic.
 //
 // Package functions usually return Error through errors.Join together with a

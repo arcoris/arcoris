@@ -22,9 +22,11 @@ import (
 
 // Snapshotter produces boundary-safe snapshots for structural collections.
 //
-// Snapshot is stronger than raw objectstore.Store.List because it promises that
-// the returned ListResult is tied to a boundary intended for a subsequent watch
-// opened on the same ListerWatcher or Store boundary.
+// Snapshot is not merely objectstore.Store.List under another name. It returns
+// a validated list result tied to a revision boundary that is intended for
+// subsequent watch continuation on the same ListerWatcher or Store boundary.
+// Snapshotter alone does not prove that future history is retained; that proof
+// happens when the same objectwatch.Source accepts and serves the watch request.
 type Snapshotter interface {
 	// Snapshot reads collection and returns a validated list-to-watch snapshot.
 	Snapshot(context.Context, objectstore.ListRequest) (Snapshot, error)

@@ -19,10 +19,10 @@ import "arcoris.dev/apimachinery/api/objectstore"
 // Validate checks that s is a valid collection snapshot.
 func (s Snapshot) Validate() error {
 	if err := objectstore.ValidateListRequest(s.collection); err != nil {
-		return invalidSnapshotError("objectstorewatch.snapshot.collection", err)
+		return errorFor("snapshot.collection", ErrorReasonInvalidSnapshot, ErrInvalidSnapshot, err)
 	}
 	if err := objectstore.ValidateListResult(s.collection, s.result); err != nil {
-		return invalidSnapshotError("objectstorewatch.snapshot.result", err)
+		return errorFor("snapshot.result", ErrorReasonInvalidSnapshot, ErrInvalidSnapshot, err)
 	}
 
 	return nil

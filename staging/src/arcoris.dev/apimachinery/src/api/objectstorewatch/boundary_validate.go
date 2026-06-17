@@ -19,7 +19,7 @@ import "arcoris.dev/apimachinery/api/objectstore"
 // Validate checks that b names a structurally valid collection boundary.
 func (b Boundary) Validate() error {
 	if err := objectstore.ValidateListRequest(b.collection); err != nil {
-		return invalidBoundaryError("objectstorewatch.boundary.collection", err)
+		return errorFor("boundary.collection", ErrorReasonInvalidBoundary, ErrInvalidBoundary, err)
 	}
 
 	return nil

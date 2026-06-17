@@ -29,13 +29,19 @@ type Snapshot struct {
 }
 
 // NewSnapshot validates collection/result and stores a detached snapshot.
+//
+// Validation runs before cloning so malformed large results are rejected
+// without first deep-copying their item payloads. Successful construction still
+// detaches the stored result from caller-owned data.
 func NewSnapshot(collection objectstore.ListRequest, result objectstore.ListResult) (Snapshot, error) {
-	snapshot := Snapshot{collection: collection, result: result.Clone()}
-	if err := snapshot.Validate(); err != nil {
-		return Snapshot{}, err
+	if err := objectstore.ValidateListRequest(collection); err != nil {
+		return Snapshot{}, errorFor("snapshot.collection", ErrorReasonInvalidSnapshot, ErrInvalidSnapshot, err)
+	}
+	if err := objectstore.ValidateListResult(collection, result); err != nil {
+		return Snapshot{}, errorFor("snapshot.result", ErrorReasonInvalidSnapshot, ErrInvalidSnapshot, err)
 	}
 
-	return snapshot, nil
+	return Snapshot{collection: collection, result: result.Clone()}, nil
 }
 
 // Collection returns the structural collection that produced this snapshot.
@@ -64,6 +70,9 @@ func (s Snapshot) Revision() objectstore.Revision {
 }
 
 // Boundary returns the collection/revision pair represented by this snapshot.
+//
+// Invalid snapshots return the zero Boundary. Callers that operate on arbitrary
+// Snapshot values should call Validate before using the returned Boundary.
 func (s Snapshot) Boundary() Boundary {
 	if !s.IsValid() {
 		return Boundary{}

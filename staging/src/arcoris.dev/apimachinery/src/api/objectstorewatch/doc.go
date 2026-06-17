@@ -24,25 +24,27 @@
 //
 // The central continuity contract is intentionally strict. For a Snapshot S
 // returned for collection C with boundary revision R, a watch request built
-// from S.Boundary must observe the same collection C. If Watch succeeds and the
+// from S.Boundary() must observe the same collection C. If Watch succeeds and the
 // stream does not report restart-required or terminal continuity loss, it must
 // deliver every matching committed change with revision greater than R in
 // strictly increasing revision order. Silent gaps are forbidden.
 //
-// Snapshot and Boundary values validate shapes and preserve revision
-// boundaries, but they do not prove that a concrete source still retains the
-// required history. A concrete ListerWatcher proves continuity when it serves
-// Snapshot and Watch consistently. If history is unavailable or continuity is
-// lost, implementations must report that explicitly through objectwatch errors
-// or restart-required events.
+// Snapshot and Boundary are value-level contracts. They validate shape and
+// preserve revision boundaries, but they do not prove that a concrete source
+// still retains the required history or that a later watch will succeed. A
+// concrete ListerWatcher proves continuity when it serves Snapshot and Watch
+// consistently. If history is unavailable or continuity is lost,
+// implementations must report that explicitly through objectwatch errors or
+// restart-required events.
 //
 // This package does not implement storage, watch hubs, change logs,
 // goroutines, caches, reflectors, transports, objectquery filtering,
 // authorization, admission, lifecycle behavior, or resource descriptor
-// validation. It also deliberately does not define OnCreate, OnUpdate,
-// OnDelete, recorder, publisher, handler, journal, or change-log interfaces.
-// Committed mutation capture is an implementation responsibility of future
-// observable store wrappers or backend-native watch sources.
+// validation. It also deliberately does not define mutation hooks such as
+// OnCreate, OnUpdate, OnDelete, recorder, publisher, emitter, observer,
+// journal, or change-log interfaces. Committed mutation capture is an
+// implementation responsibility of future observable store wrappers or
+// backend-native watch sources.
 //
 // Future implementations may use a write-through objectstore wrapper,
 // backend-native watch support, a transactional outbox for persistent stores,

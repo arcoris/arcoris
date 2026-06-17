@@ -28,7 +28,7 @@ func (b Boundary) WatchRequest(options WatchOptions) (objectwatch.Request, error
 
 	start, err := objectwatch.AfterRevision(b.revision)
 	if err != nil {
-		return objectwatch.Request{}, invalidBoundaryError("objectstorewatch.boundary.watch_request", err)
+		return objectwatch.Request{}, errorFor("boundary.watch_request", ErrorReasonInvalidBoundary, ErrInvalidBoundary, err)
 	}
 
 	return objectwatch.Request{

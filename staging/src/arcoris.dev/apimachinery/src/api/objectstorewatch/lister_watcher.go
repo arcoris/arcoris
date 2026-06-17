@@ -18,9 +18,19 @@ import "arcoris.dev/apimachinery/api/objectwatch"
 
 // ListerWatcher can snapshot a collection and watch from snapshot boundaries.
 //
+// For a Snapshot S returned by Snapshot(ctx, C), a watch request built from
+// S.Boundary() must observe the same collection C. If Watch succeeds and the
+// stream does not report EventRestartRequired or a terminal continuity error,
+// it must deliver every matching committed change with revision greater than
+// S.Revision() in strictly increasing revision order.
+//
+// Implementations must not silently skip matching committed changes between
+// Snapshot and Watch. If history is unavailable or continuity cannot be proven,
+// the implementation must report that explicitly through objectwatch errors or
+// restart-required events.
+//
 // Reflectors should usually depend on this interface rather than Store because
-// reflectors do not need write methods. A compliant implementation must not
-// silently skip matching committed changes between Snapshot and Watch.
+// reflectors do not need write methods.
 type ListerWatcher interface {
 	Snapshotter
 	objectwatch.Source

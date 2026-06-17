@@ -17,7 +17,6 @@ package objectstorewatch
 import (
 	"context"
 	"errors"
-	"strings"
 	"testing"
 
 	apiidentity "arcoris.dev/apimachinery/api/identity"
@@ -138,8 +137,8 @@ func requireWatchError(t testing.TB, err error, reason ErrorReason, pathPart str
 	if watchErr.Reason != reason {
 		t.Fatalf("reason = %s; want %s", watchErr.Reason, reason)
 	}
-	if pathPart != "" && !strings.Contains(watchErr.Path, pathPart) {
-		t.Fatalf("path = %q; want to contain %q", watchErr.Path, pathPart)
+	if pathPart != "" && watchErr.Path != pathPart {
+		t.Fatalf("path = %q; want %q", watchErr.Path, pathPart)
 	}
 }
 
