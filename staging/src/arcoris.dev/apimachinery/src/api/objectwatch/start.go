@@ -19,21 +19,22 @@ import "arcoris.dev/apimachinery/api/objectstore"
 // Start describes the requested beginning of a watch stream.
 //
 // Start is part of the continuity contract. StartAfterRevision requires
-// historical delivery after a known committed revision. StartAtCurrent
-// deliberately asks for no historical catch-up.
+// historical delivery after a collection boundary revision, which may be zero.
+// StartAtCurrent deliberately asks for no historical catch-up.
 type Start struct {
 	// Mode identifies whether the stream catches up from history or starts at
 	// the source's current point.
 	Mode StartMode
-	// Revision is the source-local revision boundary for StartAfterRevision.
-	// It must be zero for StartAtCurrent.
+	// Revision is the source-local revision boundary for StartAfterRevision. A
+	// zero boundary means "deliver every matching committed change with
+	// revision > 0". It must be zero for StartAtCurrent.
 	Revision objectstore.Revision
 }
 
 // AfterRevision constructs a historical start after revision.
 //
-// The revision must be non-zero because zero is not a committed progress
-// boundary in objectstore.
+// Zero is allowed and represents the initial boundary before any committed
+// mutation has been observed.
 func AfterRevision(revision objectstore.Revision) (Start, error) {
 	start := Start{Mode: StartAfterRevision, Revision: revision}
 	if err := start.Validate(); err != nil {

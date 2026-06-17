@@ -20,42 +20,47 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-// Validator enforces local event ordering rules for one stream.
+// Validator enforces local request and event ordering rules for one stream.
 //
 // Validator does not read stores, recover streams, or prove source correctness
 // beyond the events it observes. It is intended for consumers and tests that
-// want to fail closed on invalid event sequences.
+// want to fail closed on invalid event sequences. Validator is not safe for
+// concurrent use.
 type Validator struct {
+	// request is the structural collection contract the stream is expected to
+	// satisfy.
+	request Request
 	// progress is the highest revision boundary accepted so far. EventChanged
-	// must advance strictly beyond it; EventBookmark may equal or advance it.
+	// must advance strictly beyond it; EventProgress may equal or advance it.
 	progress objectstore.Revision
-	// closed is set after EventRestartRequired because restart is terminal for
-	// the current stream.
+	// closed is set after EventRestartRequired or any observed continuity
+	// violation because the current stream can no longer be trusted.
 	closed bool
 }
 
-// NewValidator constructs a sequence validator for start.
+// NewValidator constructs a request-aware stream validator.
 //
 // StartAfterRevision initializes progress to the requested revision so the
 // first changed event must be strictly newer. StartAtCurrent starts with zero
-// progress and accepts the first non-zero changed or bookmark event.
-func NewValidator(start Start) (Validator, error) {
-	if err := start.Validate(); err != nil {
+// progress and accepts the first non-zero changed or progress event.
+func NewValidator(request Request) (Validator, error) {
+	if err := request.Validate(); err != nil {
 		return Validator{}, err
 	}
 
-	validator := Validator{}
-	if start.Mode == StartAfterRevision {
-		validator.progress = start.Revision
+	validator := Validator{request: request}
+	if request.Start.Mode == StartAfterRevision {
+		validator.progress = request.Start.Revision
 	}
 
 	return validator, nil
 }
 
-// Accept validates event against the stream progress observed so far.
+// Accept validates event against the request and stream progress observed so far.
 //
-// Accept mutates Validator only after the event validates and passes ordering
-// checks. EventRestartRequired is accepted once and then closes the validator.
+// Malformed event shapes are returned as ErrInvalidEvent without closing the
+// validator. Valid events that violate request scope or revision continuity
+// return ErrContinuityLost and close the validator.
 func (v *Validator) Accept(event Event) error {
 	if v == nil {
 		return continuityLostError(fmt.Errorf("nil validator"))
@@ -70,8 +75,8 @@ func (v *Validator) Accept(event Event) error {
 	switch event.Kind {
 	case EventChanged:
 		return v.acceptChanged(event)
-	case EventBookmark:
-		return v.acceptBookmark(event)
+	case EventProgress:
+		return v.acceptProgress(event)
 	case EventRestartRequired:
 		return v.acceptRestart(event)
 	default:
@@ -81,22 +86,32 @@ func (v *Validator) Accept(event Event) error {
 
 // acceptChanged requires strict progress advancement.
 func (v *Validator) acceptChanged(event Event) error {
+	if !objectstore.ChangeMatchesListRequest(event.Change, v.request.Collection) {
+		return v.closeWithContinuityLoss(fmt.Errorf("changed event does not match requested collection"))
+	}
 	if !v.progress.Before(event.Revision) {
-		return continuityLostError(
-			fmt.Errorf("changed revision %s is not after progress %s", event.Revision, v.progress),
-		)
+		return v.closeWithContinuityLoss(fmt.Errorf(
+			"changed revision %s is not after progress %s",
+			event.Revision,
+			v.progress,
+		))
 	}
 	v.progress = event.Revision
 
 	return nil
 }
 
-// acceptBookmark records a monotonic progress boundary.
-func (v *Validator) acceptBookmark(event Event) error {
+// acceptProgress records a monotonic progress boundary.
+func (v *Validator) acceptProgress(event Event) error {
+	if !v.request.AllowProgress {
+		return v.closeWithContinuityLoss(fmt.Errorf("progress event is not allowed by request"))
+	}
 	if event.Revision.Before(v.progress) {
-		return continuityLostError(
-			fmt.Errorf("bookmark revision %s is before progress %s", event.Revision, v.progress),
-		)
+		return v.closeWithContinuityLoss(fmt.Errorf(
+			"progress revision %s is before progress %s",
+			event.Revision,
+			v.progress,
+		))
 	}
 	v.progress = event.Revision
 
@@ -106,9 +121,11 @@ func (v *Validator) acceptBookmark(event Event) error {
 // acceptRestart records terminal restart-required state.
 func (v *Validator) acceptRestart(event Event) error {
 	if !event.Revision.IsZero() && event.Revision.Before(v.progress) {
-		return continuityLostError(
-			fmt.Errorf("restart revision %s is before progress %s", event.Revision, v.progress),
-		)
+		return v.closeWithContinuityLoss(fmt.Errorf(
+			"restart revision %s is before progress %s",
+			event.Revision,
+			v.progress,
+		))
 	}
 	if v.progress.Before(event.Revision) {
 		v.progress = event.Revision
@@ -116,4 +133,11 @@ func (v *Validator) acceptRestart(event Event) error {
 	v.closed = true
 
 	return nil
+}
+
+// closeWithContinuityLoss marks the stream terminal before returning the
+// continuity diagnostic so later Accept calls fail closed with ErrClosed.
+func (v *Validator) closeWithContinuityLoss(cause error) error {
+	v.closed = true
+	return continuityLostError(cause)
 }

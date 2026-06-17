@@ -25,9 +25,7 @@ func (s Start) Validate() error {
 
 	switch s.Mode {
 	case StartAfterRevision:
-		if s.Revision.IsZero() {
-			return invalidStartError("afterRevision requires a non-zero revision")
-		}
+		return nil
 	case StartAtCurrent:
 		if !s.Revision.IsZero() {
 			return invalidStartError("atCurrent requires zero revision")

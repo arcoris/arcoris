@@ -17,10 +17,10 @@ package objectwatch
 import "testing"
 
 func TestPackageContinuityContractScenario(t *testing.T) {
-	validator := mustValidator(t, Start{Mode: StartAfterRevision, Revision: 10})
+	validator := mustValidator(t, watchRequest(Start{Mode: StartAfterRevision, Revision: 10}, true))
 
 	requireNoError(t, validator.Accept(mustChangedEvent(t, 11)))
-	requireNoError(t, validator.Accept(mustBookmarkEvent(t, 12)))
+	requireNoError(t, validator.Accept(mustProgressEvent(t, 12)))
 	requireNoError(t, validator.Accept(mustChangedEvent(t, 13)))
 	requireNoError(t, validator.Accept(mustRestartEvent(t, RestartContinuityLost, 13)))
 

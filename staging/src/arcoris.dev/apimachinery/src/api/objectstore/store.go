@@ -20,8 +20,10 @@ import "context"
 //
 // Store implementations commit already-computed live object state and ownership
 // documents. They do not apply requests, run admission, validate against
-// resource descriptors, or stamp object metadata. Implementations should be
-// safe for concurrent use unless documented otherwise.
+// resource descriptors, stamp object metadata, watch changes, or guarantee
+// List -> Watch continuity. Implementations assign store-local revisions, may
+// leave revision gaps, and should be safe for concurrent use unless documented
+// otherwise.
 type Store interface {
 	// Get reads the latest live state for key.
 	//
@@ -55,6 +57,7 @@ type Store interface {
 	// List returns only live states. Missing, deleted, and tombstoned objects
 	// are omitted. It is a storage collection read: it does not validate
 	// resource descriptors, authorize callers, run admission, apply selectors,
-	// paginate results, watch changes, or interpret API-server request policy.
+	// paginate results, watch changes, provide MVCC snapshots unless documented
+	// by the implementation, or interpret API-server request policy.
 	List(ctx context.Context, request ListRequest) (ListResult, error)
 }

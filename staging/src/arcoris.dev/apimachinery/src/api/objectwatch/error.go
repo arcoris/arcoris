@@ -25,8 +25,11 @@ type ErrorReason string
 const (
 	// ErrorReasonInvalidRequest identifies a malformed watch request.
 	ErrorReasonInvalidRequest ErrorReason = "invalid_request"
-	// ErrorReasonInvalidStart identifies a malformed or unsupported start.
+	// ErrorReasonInvalidStart identifies a malformed start value.
 	ErrorReasonInvalidStart ErrorReason = "invalid_start"
+	// ErrorReasonUnsupportedCapability identifies a valid request that a source
+	// cannot serve with its advertised watch capabilities.
+	ErrorReasonUnsupportedCapability ErrorReason = "unsupported_capability"
 	// ErrorReasonInvalidEvent identifies a malformed stream event.
 	ErrorReasonInvalidEvent ErrorReason = "invalid_event"
 	// ErrorReasonInvalidRestart identifies a malformed restart reason.
@@ -54,11 +57,15 @@ func (e *Error) Error() string {
 	if e == nil {
 		return "<nil>"
 	}
+	cause := "object watch contract violation"
+	if e.Cause != nil {
+		cause = e.Cause.Error()
+	}
 	if e.Path == "" {
-		return string(e.Reason) + ": " + e.Cause.Error()
+		return string(e.Reason) + ": " + cause
 	}
 
-	return e.Path + ": " + string(e.Reason) + ": " + e.Cause.Error()
+	return e.Path + ": " + string(e.Reason) + ": " + cause
 }
 
 // Unwrap returns the lower cause for errors.Is and errors.As.
@@ -73,8 +80,11 @@ func (e *Error) Unwrap() error {
 var (
 	// ErrInvalidRequest classifies malformed object watch requests.
 	ErrInvalidRequest = errors.New("invalid object watch request")
-	// ErrInvalidStart classifies malformed or unsupported watch start points.
+	// ErrInvalidStart classifies malformed watch start points.
 	ErrInvalidStart = errors.New("invalid object watch start")
+	// ErrUnsupportedCapability classifies valid watch requests that a source
+	// cannot serve with its advertised capabilities.
+	ErrUnsupportedCapability = errors.New("unsupported object watch capability")
 	// ErrInvalidEvent classifies malformed object watch events.
 	ErrInvalidEvent = errors.New("invalid object watch event")
 	// ErrInvalidRestart classifies malformed restart-required reasons.
@@ -87,6 +97,50 @@ var (
 	ErrContinuityLost = errors.New("object watch continuity lost")
 )
 
+// HistoryUnavailable reports that a source cannot serve the requested start
+// revision because the required history is unavailable.
+func HistoryUnavailable(cause error) error {
+	return objectWatchError(
+		"watch.source.history",
+		ErrorReasonHistoryUnavailable,
+		[]error{ErrHistoryUnavailable},
+		cause,
+	)
+}
+
+// ContinuityLost reports that a source or stream can no longer prove that no
+// committed changes were skipped.
+func ContinuityLost(cause error) error {
+	return objectWatchError(
+		"watch.source.continuity",
+		ErrorReasonContinuityLost,
+		[]error{ErrContinuityLost},
+		cause,
+	)
+}
+
+// Closed reports use after a stream has been closed or reached a terminal
+// continuity state.
+func Closed(cause error) error {
+	return objectWatchError(
+		"watch.stream.closed",
+		ErrorReasonClosed,
+		[]error{ErrClosed},
+		cause,
+	)
+}
+
+// UnsupportedCapability reports that a source cannot serve a valid watch
+// request with its advertised capabilities.
+func UnsupportedCapability(cause error) error {
+	return objectWatchError(
+		"watch.capabilities",
+		ErrorReasonUnsupportedCapability,
+		[]error{ErrUnsupportedCapability},
+		cause,
+	)
+}
+
 // invalidStartError builds an error rooted at watch.start.
 func invalidStartError(format string, args ...any) error {
 	return objectWatchError(
@@ -94,6 +148,16 @@ func invalidStartError(format string, args ...any) error {
 		ErrorReasonInvalidStart,
 		[]error{ErrInvalidStart},
 		fmt.Errorf(format, args...),
+	)
+}
+
+// unsupportedCapabilityError builds a source-capability diagnostic at path.
+func unsupportedCapabilityError(path string, cause error) error {
+	return objectWatchError(
+		path,
+		ErrorReasonUnsupportedCapability,
+		[]error{ErrUnsupportedCapability},
+		cause,
 	)
 }
 

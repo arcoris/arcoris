@@ -37,6 +37,16 @@ func watchResource() apiidentity.GroupVersionResource {
 	}
 }
 
+// otherWatchResource returns a valid resource outside the shared watch request
+// collection.
+func otherWatchResource() apiidentity.GroupVersionResource {
+	return apiidentity.GroupVersionResource{
+		Group:    "control.arcoris.dev",
+		Version:  "v1",
+		Resource: "tasks",
+	}
+}
+
 // watchListRequest returns a structurally valid all-namespaces watch request
 // collection.
 func watchListRequest() objectstore.ListRequest {
@@ -46,16 +56,60 @@ func watchListRequest() objectstore.ListRequest {
 	}
 }
 
+// watchRequest returns a valid watch request over the shared test collection.
+func watchRequest(start Start, allowProgress bool) Request {
+	return Request{
+		Collection:    watchListRequest(),
+		Start:         start,
+		AllowProgress: allowProgress,
+	}
+}
+
+// watchNamespaceRequest returns a valid namespace-scoped watch request.
+func watchNamespaceRequest(start Start, namespace metaidentity.Namespace, allowProgress bool) Request {
+	return Request{
+		Collection: objectstore.ListRequest{
+			Resource: watchResource(),
+			Scope:    objectstore.MustNamespace(namespace),
+		},
+		Start:         start,
+		AllowProgress: allowProgress,
+	}
+}
+
 // watchKey returns an authoritative storage key for the shared test resource.
 func watchKey(name metaidentity.Name) objectstore.Key {
-	return objectstore.MustKey(watchResource(), metaidentity.ObjectName{
-		Namespace: "system",
+	return watchKeyFor(watchResource(), "system", name)
+}
+
+// watchKeyInNamespace returns a storage key in namespace for the shared test
+// resource.
+func watchKeyInNamespace(namespace metaidentity.Namespace, name metaidentity.Name) objectstore.Key {
+	return watchKeyFor(watchResource(), namespace, name)
+}
+
+// watchKeyFor returns an authoritative storage key for an arbitrary valid
+// resource and namespace used by stream-contract tests.
+func watchKeyFor(resource apiidentity.GroupVersionResource, namespace metaidentity.Namespace, name metaidentity.Name) objectstore.Key {
+	return objectstore.MustKey(resource, metaidentity.ObjectName{
+		Namespace: namespace,
 		Name:      name,
 	})
 }
 
 // watchState returns committed object state with a chosen revision.
 func watchState(revision objectstore.Revision, desired string) objectstore.State {
+	return watchStateForObject(revision, "system", "main", desired)
+}
+
+// watchStateForObject returns committed object state for an explicit
+// namespace/name identity.
+func watchStateForObject(
+	revision objectstore.Revision,
+	namespace metaidentity.Namespace,
+	name metaidentity.Name,
+	desired string,
+) objectstore.State {
 	return objectstore.State{
 		Object: object.New[value.Value, value.Value](
 			meta.FromGroupVersionKind(apiidentity.GroupVersionKind{
@@ -64,8 +118,8 @@ func watchState(revision objectstore.Revision, desired string) objectstore.State
 				Kind:    "Worker",
 			}),
 			meta.ObjectMeta{
-				Name:      "main",
-				Namespace: "system",
+				Name:      name,
+				Namespace: namespace,
 			},
 			value.StringValue(desired),
 		),
@@ -77,6 +131,14 @@ func watchState(revision objectstore.Revision, desired string) objectstore.State
 // watchCreatedChange returns a valid created transition fixture.
 func watchCreatedChange(revision objectstore.Revision) objectstore.Change {
 	return objectstore.MustCreatedChange(watchKey("main"), watchState(revision, "created"))
+}
+
+// watchCreatedChangeForKey returns a valid created transition for key.
+func watchCreatedChangeForKey(key objectstore.Key, revision objectstore.Revision) objectstore.Change {
+	return objectstore.MustCreatedChange(
+		key,
+		watchStateForObject(revision, key.Object.Namespace, key.Object.Name, "created"),
+	)
 }
 
 // watchUpdatedChange returns a valid updated transition fixture.

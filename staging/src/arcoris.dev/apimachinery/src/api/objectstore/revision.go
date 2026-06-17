@@ -20,14 +20,18 @@ package objectstore
 // commits. They are monotonic within one store and may have gaps. They are not
 // API resource versions, object generations, wall-clock timestamps, distributed
 // sequence numbers, or globally comparable values.
+//
+// Revision(0) is invalid for committed State and Change values. Higher
+// list-watch layers may still use zero as an initial collection boundary when
+// no committed mutation has been observed yet.
 type Revision uint64
 
-// IsZero reports whether r is the invalid/unset revision.
+// IsZero reports whether r is the zero boundary or unset committed revision.
 func (r Revision) IsZero() bool {
 	return r == 0
 }
 
-// IsValid reports whether r can identify committed store state.
+// IsValid reports whether r can identify committed store state or a committed change.
 func (r Revision) IsValid() bool {
 	return !r.IsZero()
 }

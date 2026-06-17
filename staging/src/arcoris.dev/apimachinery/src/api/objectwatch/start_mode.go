@@ -18,7 +18,8 @@ package objectwatch
 type StartMode uint8
 
 const (
-	// StartAfterRevision requests historical catch-up after Start.Revision.
+	// StartAfterRevision requests historical catch-up after Start.Revision,
+	// including zero as the initial collection boundary.
 	StartAfterRevision StartMode = iota + 1
 	// StartAtCurrent starts at the source's current progress point and does not
 	// request historical catch-up.

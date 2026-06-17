@@ -16,11 +16,13 @@
 // objects.
 //
 // State contains a value-backed live object envelope, object ownership state,
-// and a store-local Revision. Revisions are assigned by a Store when
-// Create, Update, or Delete commits. List reports the store revision observed
-// during the collection read. Revisions are not API resourceVersion values,
-// ObjectMeta generations, wall-clock timestamps, durable storage versions, or
-// globally comparable values across stores. They may have gaps.
+// and a store-local Revision. Revisions are assigned by a Store when Create,
+// Update, or Delete commits. Committed State and Change values must carry
+// non-zero revisions. List reports the store revision observed during the
+// collection read; that list boundary may be zero for an empty store before any
+// committed mutation has been observed. Revisions are not API resourceVersion
+// values, ObjectMeta generations, wall-clock timestamps, durable storage
+// versions, or globally comparable values across stores. They may have gaps.
 //
 // Callers are responsible for resolving resources, validating object envelopes,
 // computing apply results, deciding admission, and preparing lifecycle
@@ -50,13 +52,16 @@
 // are omitted. ListResult.Revision is the store revision observed by the
 // operation. Store implementations need not provide historical MVCC snapshot
 // isolation unless a concrete implementation documents that stronger behavior.
+// Structural collection matching helpers in this package check only resource
+// equality and ListScope namespace membership.
 //
 // The package deliberately does not validate resource descriptors, apply
 // objects, compute field conflicts, run admission or authorization, default,
-// convert, prune, watch, encode/decode wire formats, expose serving behavior,
-// apply selectors, paginate results, or stamp object metadata
-// resourceVersion/generation fields. Those responsibilities belong to higher
-// lifecycle, apply, resource, codec, serving, and future watch/runtime layers.
+// convert, prune, watch, reflect changes, provide List -> Watch continuity,
+// encode/decode wire formats, expose serving behavior, apply selectors,
+// paginate results, or stamp object metadata resourceVersion/generation fields.
+// Those responsibilities belong to higher lifecycle, apply, resource, codec,
+// serving, future objectstorewatch, and future watch/runtime layers.
 //
 // The in-memory implementation lives in the sibling package
 // arcoris.dev/apimachinery/api/objectmemorystore.

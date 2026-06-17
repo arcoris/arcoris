@@ -42,14 +42,14 @@ func TestChangedRejectsRestartReason(t *testing.T) {
 	requireWatchError(t, err, ErrorReasonInvalidRestart, "watch.event.restart")
 }
 
-func TestBookmarkRejectsInvalidShapes(t *testing.T) {
+func TestProgressRejectsInvalidShapes(t *testing.T) {
 	tests := []struct {
 		name  string
 		event Event
 	}{
-		{name: "zero revision", event: Event{Kind: EventBookmark}},
-		{name: "change", event: Event{Kind: EventBookmark, Revision: 1, Change: watchCreatedChange(1)}},
-		{name: "restart", event: Event{Kind: EventBookmark, Revision: 1, Restart: RestartSourceReset}},
+		{name: "zero revision", event: Event{Kind: EventProgress}},
+		{name: "change", event: Event{Kind: EventProgress, Revision: 1, Change: watchCreatedChange(1)}},
+		{name: "restart", event: Event{Kind: EventProgress, Revision: 1, Restart: RestartSourceReset}},
 	}
 
 	for _, tt := range tests {

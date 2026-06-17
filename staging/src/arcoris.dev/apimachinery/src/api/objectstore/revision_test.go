@@ -37,3 +37,9 @@ func TestRevisionCommittedIsValid(t *testing.T) {
 		t.Fatalf("committed revision reported invalid")
 	}
 }
+
+func TestRevisionZeroIsValidEmptyListBoundary(t *testing.T) {
+	request := ListRequest{Resource: validResource(), Scope: AllNamespaces()}
+
+	requireNoError(t, ValidateListResult(request, ListResult{}))
+}

@@ -32,8 +32,8 @@ func (e Event) Validate() error {
 	switch e.Kind {
 	case EventChanged:
 		return validateChangedEvent(e)
-	case EventBookmark:
-		return validateBookmarkEvent(e)
+	case EventProgress:
+		return validateProgressEvent(e)
 	case EventRestartRequired:
 		return validateRestartEvent(e)
 	default:
@@ -60,17 +60,17 @@ func validateChangedEvent(e Event) error {
 	return nil
 }
 
-// validateBookmarkEvent checks the progress-event contract: a non-zero
+// validateProgressEvent checks the progress-event contract: a non-zero
 // Revision and no mutation or restart payload.
-func validateBookmarkEvent(e Event) error {
+func validateProgressEvent(e Event) error {
 	if e.Revision.IsZero() {
-		return invalidEventError("watch.event.bookmark", fmt.Errorf("bookmark revision is zero"))
+		return invalidEventError("watch.event.progress", fmt.Errorf("progress revision is zero"))
 	}
 	if !e.Change.IsZero() {
-		return invalidEventError("watch.event.change", fmt.Errorf("bookmark event carries change"))
+		return invalidEventError("watch.event.change", fmt.Errorf("progress event carries change"))
 	}
 	if e.Restart != 0 {
-		return invalidEventRestartError(fmt.Errorf("bookmark event has restart reason %s", e.Restart.String()))
+		return invalidEventRestartError(fmt.Errorf("progress event has restart reason %s", e.Restart.String()))
 	}
 
 	return nil

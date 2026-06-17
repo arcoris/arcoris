@@ -19,14 +19,14 @@ import "arcoris.dev/apimachinery/api/objectstore"
 // Event is one item in an object watch stream.
 //
 // Exactly one payload family is meaningful for each Kind. EventChanged carries
-// Change, EventBookmark carries only Revision, and EventRestartRequired carries
+// Change, EventProgress carries only Revision, and EventRestartRequired carries
 // Restart plus an optional Revision progress boundary.
 type Event struct {
 	// Kind identifies the event semantics and therefore which payload fields
 	// are valid.
 	Kind EventKind
 	// Revision is the event progress boundary. For EventChanged it must equal
-	// Change.Revision. For EventBookmark it is the bookmark progress. For
+	// Change.Revision. For EventProgress it is the progress boundary. For
 	// EventRestartRequired zero means the source cannot name a reliable
 	// boundary, while non-zero names the last boundary it can report.
 	Revision objectstore.Revision

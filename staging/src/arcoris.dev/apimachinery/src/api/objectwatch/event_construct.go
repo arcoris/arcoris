@@ -29,13 +29,13 @@ func Changed(change objectstore.Change) (Event, error) {
 	return event, nil
 }
 
-// Bookmark constructs a progress-only event.
+// Progress constructs a progress-only event.
 //
-// A bookmark is useful only as a continuity/progress boundary. It never
-// describes an object mutation and must never be applied to cached object
-// state.
-func Bookmark(revision objectstore.Revision) (Event, error) {
-	event := Event{Kind: EventBookmark, Revision: revision}
+// A progress event is a watch revision boundary. It is not a pagination token,
+// never describes an object mutation, and must never be applied to cached
+// object state.
+func Progress(revision objectstore.Revision) (Event, error) {
+	event := Event{Kind: EventProgress, Revision: revision}
 	if err := event.Validate(); err != nil {
 		return Event{}, err
 	}

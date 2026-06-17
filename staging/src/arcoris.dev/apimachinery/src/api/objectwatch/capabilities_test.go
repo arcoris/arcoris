@@ -14,12 +14,16 @@
 
 package objectwatch
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestCapabilitiesSupportsStart(t *testing.T) {
 	capabilities := Capabilities{StartAtCurrent: true, HistoricalStart: true}
 
 	requireNoError(t, capabilities.SupportsStart(AtCurrent()))
+	requireNoError(t, capabilities.SupportsStart(Start{Mode: StartAfterRevision}))
 	requireNoError(t, capabilities.SupportsStart(Start{Mode: StartAfterRevision, Revision: 1}))
 }
 
@@ -36,14 +40,31 @@ func TestCapabilitiesRejectsUnsupportedStart(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.capabilities.SupportsStart(tt.start)
-			requireErrorIs(t, err, ErrInvalidStart)
+			requireErrorIs(t, err, ErrUnsupportedCapability)
+			if errors.Is(err, ErrInvalidStart) {
+				t.Fatalf("unsupported start preserved ErrInvalidStart: %v", err)
+			}
+			requireWatchError(t, err, ErrorReasonUnsupportedCapability, "watch.capabilities.start")
 		})
 	}
 }
 
+func TestCapabilitiesPreservesMalformedStart(t *testing.T) {
+	err := Capabilities{StartAtCurrent: true, HistoricalStart: true}.SupportsStart(Start{})
+
+	requireErrorIs(t, err, ErrInvalidStart)
+}
+
 func TestCapabilitiesSupportsRequest(t *testing.T) {
 	capabilities := Capabilities{StartAtCurrent: true}
-	request := Request{List: watchListRequest(), Start: AtCurrent(), AllowBookmarks: true}
+	request := Request{Collection: watchListRequest(), Start: AtCurrent(), AllowProgress: true}
+
+	requireNoError(t, capabilities.SupportsRequest(request))
+}
+
+func TestCapabilitiesProgressIsPermissiveNotRequired(t *testing.T) {
+	capabilities := Capabilities{StartAtCurrent: true, Progress: false}
+	request := Request{Collection: watchListRequest(), Start: AtCurrent(), AllowProgress: true}
 
 	requireNoError(t, capabilities.SupportsRequest(request))
 }
@@ -59,11 +80,13 @@ func TestCapabilitiesSupportsRequestPreservesInvalidRequest(t *testing.T) {
 
 func TestCapabilitiesSupportsRequestWrapsUnsupportedStart(t *testing.T) {
 	capabilities := Capabilities{}
-	request := Request{List: watchListRequest(), Start: AtCurrent()}
+	request := Request{Collection: watchListRequest(), Start: AtCurrent()}
 
 	err := capabilities.SupportsRequest(request)
 
-	requireErrorIs(t, err, ErrInvalidRequest)
-	requireErrorIs(t, err, ErrInvalidStart)
-	requireWatchError(t, err, ErrorReasonInvalidRequest, "watch.request.start")
+	requireErrorIs(t, err, ErrUnsupportedCapability)
+	if errors.Is(err, ErrInvalidStart) {
+		t.Fatalf("unsupported request preserved ErrInvalidStart: %v", err)
+	}
+	requireWatchError(t, err, ErrorReasonUnsupportedCapability, "watch.capabilities.start")
 }

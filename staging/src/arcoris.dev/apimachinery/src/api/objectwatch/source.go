@@ -18,10 +18,17 @@ import "context"
 
 // Source opens watch streams for structural object collections.
 //
-// Source implementations own the concrete continuity proof. If they cannot
-// honor Request.Start, they must fail Watch with a typed history/continuity
-// error or return a stream that terminates with EventRestartRequired.
+// Source implementations own the concrete continuity proof. Watch must
+// validate Request before opening a stream. Malformed requests should return
+// ErrInvalidRequest and/or ErrInvalidStart. Valid requests unsupported by the
+// source should return ErrUnsupportedCapability. If requested history cannot be
+// served, Watch should return ErrHistoryUnavailable. If continuity is lost
+// after stream creation, the stream should emit EventRestartRequired or return
+// ErrContinuityLost.
 type Source interface {
 	// Watch opens a pull-based event stream for request.
+	//
+	// If Watch returns nil error, the Stream must be non-nil. If Watch returns
+	// a non-nil error, the Stream must be nil.
 	Watch(context.Context, Request) (Stream, error)
 }

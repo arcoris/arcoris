@@ -14,25 +14,34 @@
 
 package objectwatch
 
-import "testing"
+import (
+	"testing"
+
+	"arcoris.dev/apimachinery/api/objectstore"
+)
 
 func TestAfterRevision(t *testing.T) {
-	start, err := AfterRevision(10)
-	requireNoError(t, err)
-
-	if start.Mode != StartAfterRevision || start.Revision != 10 {
-		t.Fatalf("start = %#v; want after revision 10", start)
+	tests := []struct {
+		name     string
+		revision int
+	}{
+		{name: "zero", revision: 0},
+		{name: "non-zero", revision: 10},
 	}
-	if !start.IsValid() || start.IsZero() {
-		t.Fatalf("valid start flags = valid %v zero %v; want true/false", start.IsValid(), start.IsZero())
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			start, err := AfterRevision(objectstore.Revision(tt.revision))
+			requireNoError(t, err)
+
+			if start.Mode != StartAfterRevision || start.Revision != objectstore.Revision(tt.revision) {
+				t.Fatalf("start = %#v; want after revision %d", start, tt.revision)
+			}
+			if !start.IsValid() || start.IsZero() {
+				t.Fatalf("valid start flags = valid %v zero %v; want true/false", start.IsValid(), start.IsZero())
+			}
+		})
 	}
-}
-
-func TestAfterRevisionRejectsZero(t *testing.T) {
-	_, err := AfterRevision(0)
-
-	requireErrorIs(t, err, ErrInvalidStart)
-	requireWatchError(t, err, ErrorReasonInvalidStart, "watch.start")
 }
 
 func TestAtCurrent(t *testing.T) {

@@ -20,15 +20,15 @@ type EventKind uint8
 const (
 	// EventChanged carries one committed objectstore.Change.
 	EventChanged EventKind = iota + 1
-	// EventBookmark reports stream progress without a mutation.
-	EventBookmark
+	// EventProgress reports stream progress without a mutation.
+	EventProgress
 	// EventRestartRequired terminates a stream whose continuity is lost.
 	EventRestartRequired
 )
 
 // IsValid reports whether k is a supported watch event kind.
 func (k EventKind) IsValid() bool {
-	return k == EventChanged || k == EventBookmark || k == EventRestartRequired
+	return k == EventChanged || k == EventProgress || k == EventRestartRequired
 }
 
 // String returns stable lower-camel diagnostic text.
@@ -36,8 +36,8 @@ func (k EventKind) String() string {
 	switch k {
 	case EventChanged:
 		return "changed"
-	case EventBookmark:
-		return "bookmark"
+	case EventProgress:
+		return "progress"
 	case EventRestartRequired:
 		return "restartRequired"
 	default:

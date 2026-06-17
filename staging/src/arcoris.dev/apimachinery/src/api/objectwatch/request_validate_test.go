@@ -20,21 +20,21 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-func TestRequestValidateRejectsInvalidListRequest(t *testing.T) {
+func TestRequestValidateRejectsInvalidCollection(t *testing.T) {
 	request := Request{
-		List:  objectstore.ListRequest{Scope: objectstore.AllNamespaces()},
-		Start: AtCurrent(),
+		Collection: objectstore.ListRequest{Scope: objectstore.AllNamespaces()},
+		Start:      AtCurrent(),
 	}
 
 	err := request.Validate()
 
 	requireErrorIs(t, err, ErrInvalidRequest)
 	requireErrorIs(t, err, objectstore.ErrInvalidListRequest)
-	requireWatchError(t, err, ErrorReasonInvalidRequest, "watch.request.list")
+	requireWatchError(t, err, ErrorReasonInvalidRequest, "watch.request.collection")
 }
 
 func TestRequestValidateRejectsInvalidStart(t *testing.T) {
-	request := Request{List: watchListRequest(), Start: Start{}}
+	request := Request{Collection: watchListRequest(), Start: Start{}}
 
 	err := request.Validate()
 
@@ -43,12 +43,12 @@ func TestRequestValidateRejectsInvalidStart(t *testing.T) {
 	requireWatchError(t, err, ErrorReasonInvalidStart, "watch.request.start")
 }
 
-func TestRequestValidateAllowBookmarksIsNotStructural(t *testing.T) {
-	for _, allowBookmarks := range []bool{false, true} {
+func TestRequestValidateAllowProgressIsNotStructural(t *testing.T) {
+	for _, allowProgress := range []bool{false, true} {
 		request := Request{
-			List:           watchListRequest(),
-			Start:          AtCurrent(),
-			AllowBookmarks: allowBookmarks,
+			Collection:    watchListRequest(),
+			Start:         AtCurrent(),
+			AllowProgress: allowProgress,
 		}
 
 		requireNoError(t, request.Validate())

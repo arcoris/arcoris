@@ -35,6 +35,9 @@ var (
 	// ErrInvalidListRequest classifies malformed object store list requests.
 	ErrInvalidListRequest = errors.New("objectstore: invalid list request")
 
+	// ErrInvalidListResult classifies malformed object store list results.
+	ErrInvalidListResult = errors.New("objectstore: invalid list result")
+
 	// ErrInvalidChange classifies malformed object store transition values.
 	ErrInvalidChange = errors.New("objectstore: invalid change")
 

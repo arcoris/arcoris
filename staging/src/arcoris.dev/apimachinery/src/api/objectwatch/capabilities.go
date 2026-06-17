@@ -18,18 +18,18 @@ package objectwatch
 //
 // Capabilities are descriptive contract hints. They help callers reject
 // obviously unsupported requests before opening a stream, but they do not prove
-// continuity, authorize access, require bookmarks, or replace Request/Event
-// validation.
+// continuity, authorize access, require progress markers, or replace
+// Request/Event validation.
 type Capabilities struct {
 	// StartAtCurrent reports whether the source can open a stream from its
 	// current progress point without historical catch-up.
 	StartAtCurrent bool
 	// HistoricalStart reports whether the source can serve committed changes
-	// after a caller-provided non-zero revision.
+	// after a caller-provided revision boundary, including zero.
 	HistoricalStart bool
-	// Bookmarks reports that the source may emit progress-only bookmarks when
-	// Request.AllowBookmarks is true.
-	Bookmarks bool
+	// Progress reports that the source may emit EventProgress markers when
+	// Request.AllowProgress is true.
+	Progress bool
 	// RestartEvents reports that the source may emit EventRestartRequired
 	// instead of reporting all continuity loss as terminal errors.
 	RestartEvents bool
@@ -44,9 +44,8 @@ type CapabilityReporter interface {
 
 // SupportsStart verifies whether c supports start's mode.
 //
-// The start value is validated first, so returned errors preserve normal
-// ErrInvalidStart diagnostics for malformed starts as well as unsupported
-// source modes.
+// The start value is validated first. Malformed starts return ErrInvalidStart;
+// valid starts that the source cannot serve return ErrUnsupportedCapability.
 func (c Capabilities) SupportsStart(start Start) error {
 	if err := start.Validate(); err != nil {
 		return err
@@ -55,11 +54,17 @@ func (c Capabilities) SupportsStart(start Start) error {
 	switch start.Mode {
 	case StartAtCurrent:
 		if !c.StartAtCurrent {
-			return invalidStartError("%s is unsupported by source", start.Mode.String())
+			return unsupportedCapabilityError(
+				"watch.capabilities.start",
+				ErrUnsupportedCapability,
+			)
 		}
 	case StartAfterRevision:
 		if !c.HistoricalStart {
-			return invalidStartError("%s is unsupported by source", start.Mode.String())
+			return unsupportedCapabilityError(
+				"watch.capabilities.start",
+				ErrUnsupportedCapability,
+			)
 		}
 	default:
 		return invalidStartError("mode %s is invalid", start.Mode.String())
@@ -70,16 +75,14 @@ func (c Capabilities) SupportsStart(start Start) error {
 
 // SupportsRequest verifies request shape and start support.
 //
-// Bookmarks are optional in Request. AllowBookmarks=true means a source may
-// emit bookmarks if it supports them; it does not mean the caller requires
-// bookmarks, so lack of Bookmarks capability is not an error.
+// Progress markers are optional in Request. AllowProgress=true means a source
+// may emit EventProgress if it supports progress reporting; it does not mean
+// the caller requires progress events, so lack of Progress capability is not an
+// error.
 func (c Capabilities) SupportsRequest(request Request) error {
 	if err := request.Validate(); err != nil {
 		return err
 	}
-	if err := c.SupportsStart(request.Start); err != nil {
-		return invalidRequestError("watch.request.start", err, ErrInvalidStart)
-	}
 
-	return nil
+	return c.SupportsStart(request.Start)
 }

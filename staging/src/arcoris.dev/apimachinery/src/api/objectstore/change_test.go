@@ -17,6 +17,7 @@ package objectstore
 import (
 	"testing"
 
+	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 	"arcoris.dev/apimachinery/api/value"
 )
 
@@ -88,6 +89,15 @@ func committedStateAt(revision Revision, desired string) State {
 	state := validState()
 	state.Object.Desired = value.StringValue(desired)
 	state.Revision = revision
+
+	return state
+}
+
+// committedStateForObject constructs committed state for an explicit object identity.
+func committedStateForObject(revision Revision, namespace, name, desired string) State {
+	state := committedStateAt(revision, desired)
+	state.Object.ObjectMeta.Namespace = metaidentity.Namespace(namespace)
+	state.Object.ObjectMeta.Name = metaidentity.Name(name)
 
 	return state
 }

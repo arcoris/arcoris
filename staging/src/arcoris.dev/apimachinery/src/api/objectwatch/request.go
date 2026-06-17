@@ -22,14 +22,15 @@ import "arcoris.dev/apimachinery/api/objectstore"
 // committed structural stream only; filtered watch semantics are built by
 // composing EventChanged.Change with objectquery outside this package.
 type Request struct {
-	// List is the structural resource/scope collection to watch. It follows the
-	// same validation rules as objectstore.ListRequest.
-	List objectstore.ListRequest
+	// Collection is the structural resource/scope collection to watch. It
+	// follows the same validation rules as objectstore.ListRequest, but
+	// objectwatch never executes a list operation.
+	Collection objectstore.ListRequest
 	// Start defines whether the stream catches up after a revision or starts at
 	// the source's current progress point.
 	Start Start
-	// AllowBookmarks permits, but does not require, bookmark events.
-	AllowBookmarks bool
+	// AllowProgress permits, but does not require, EventProgress markers.
+	AllowProgress bool
 }
 
 // IsValid reports whether r passes request validation.

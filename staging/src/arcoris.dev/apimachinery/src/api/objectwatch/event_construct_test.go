@@ -45,21 +45,21 @@ func TestChangedRejectsInvalidChange(t *testing.T) {
 	requireWatchError(t, err, ErrorReasonInvalidEvent, "watch.event.change")
 }
 
-func TestBookmarkValidate(t *testing.T) {
-	event, err := Bookmark(10)
+func TestProgressValidate(t *testing.T) {
+	event, err := Progress(10)
 	requireNoError(t, err)
 
-	if event.Kind != EventBookmark || event.Revision != 10 {
-		t.Fatalf("event = %#v; want bookmark revision 10", event)
+	if event.Kind != EventProgress || event.Revision != 10 {
+		t.Fatalf("event = %#v; want progress revision 10", event)
 	}
 	requireNoError(t, event.Validate())
 }
 
-func TestBookmarkRejectsZeroRevision(t *testing.T) {
-	_, err := Bookmark(0)
+func TestProgressRejectsZeroRevision(t *testing.T) {
+	_, err := Progress(0)
 
 	requireErrorIs(t, err, ErrInvalidEvent)
-	requireWatchError(t, err, ErrorReasonInvalidEvent, "watch.event.bookmark")
+	requireWatchError(t, err, ErrorReasonInvalidEvent, "watch.event.progress")
 }
 
 func TestRestartRequiredValidate(t *testing.T) {

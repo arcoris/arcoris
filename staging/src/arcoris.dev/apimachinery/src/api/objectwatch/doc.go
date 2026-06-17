@@ -15,10 +15,11 @@
 // Package objectwatch defines contracts for ordered streams of committed
 // objectstore.Change values.
 //
-// A watch stream is scoped by objectstore.ListRequest: resource plus structural
-// namespace scope. The stream carries committed objectstore.Change values for
-// that collection; it does not define objectquery filtering, parse selectors,
-// read stores, apply cache mutations, run reflectors, or expose a transport.
+// A watch stream is scoped by Request.Collection: an objectstore.ListRequest
+// containing resource plus structural namespace scope. The stream carries
+// committed objectstore.Change values for that collection; it does not execute
+// List, define objectquery filtering, parse selectors, read stores, store
+// changes, apply cache mutations, run reflectors, or expose a transport.
 //
 // The core continuity contract is strict. For StartAfterRevision(R), if
 // Source.Watch succeeds and the stream does not return EventRestartRequired or
@@ -33,18 +34,32 @@
 // wall-clock time, a global cluster version, or portable across unrelated
 // sources unless a source explicitly documents that property. Within one
 // successful stream, changed event revisions are strictly increasing and
-// bookmark revisions are monotonic non-decreasing progress boundaries.
+// progress event revisions are monotonic non-decreasing boundaries.
 //
-// EventChanged carries one committed objectstore.Change. EventBookmark is
-// progress only; it must not be applied to a cache and must never replace
-// change delivery. EventRestartRequired is terminal: consumers must stop
-// trusting the stream, perform a fresh list, and start a new watch from the new
-// list revision.
+// EventChanged carries one committed objectstore.Change. EventProgress is a
+// watch progress marker, not a pagination bookmark or page token; it must not
+// be applied to a cache and must never replace change delivery.
+// EventRestartRequired is terminal: consumers must stop trusting the stream,
+// perform a fresh list, and start a new watch from the new list revision.
+//
+// Stream is pull-based. Stream.Close must be idempotent. A source-side normal
+// EOF is not part of the contract; a watch stream ends because the caller
+// cancels or closes it, because continuity is explicitly lost, or because a
+// restart is required.
+//
+// Validator can enforce the local request contract for consumers and tests. It
+// checks that changed events match the watched objectstore.ListRequest resource
+// and namespace scope, enforces Request.AllowProgress for progress events, and
+// fails closed after continuity loss. Validator is not safe for concurrent use.
+//
+// Unsupported source capability is distinct from malformed input. Invalid
+// request/start values return ErrInvalidRequest and ErrInvalidStart, while
+// valid requests that a source cannot serve return ErrUnsupportedCapability.
 //
 // Consumers that need filtered watch semantics should combine this package with
 // api/objectquery outside objectwatch, for example by projecting
 // EventChanged.Change through objectquery.Predicate.ProjectChange. Future
-// cache, reflector, runtime, transport, authorization, admission, and
-// controller layers should depend on these contracts without moving their
-// behavior into this package.
+// objectstorewatch, cache, reflector, runtime, transport, authorization,
+// admission, and controller layers should depend on these contracts without
+// moving their behavior into this package.
 package objectwatch

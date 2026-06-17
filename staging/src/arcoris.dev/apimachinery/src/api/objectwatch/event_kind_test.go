@@ -24,7 +24,7 @@ func TestEventKindStringAndValidity(t *testing.T) {
 	}{
 		{kind: 0, text: "unknown"},
 		{kind: EventChanged, text: "changed", valid: true},
-		{kind: EventBookmark, text: "bookmark", valid: true},
+		{kind: EventProgress, text: "progress", valid: true},
 		{kind: EventRestartRequired, text: "restartRequired", valid: true},
 		{kind: EventKind(99), text: "unknown"},
 	}

@@ -24,8 +24,8 @@ import (
 // independently from a concrete source. Resource descriptor validation belongs
 // to lifecycle/resource layers, not objectwatch.
 func (r Request) Validate() error {
-	if err := objectstore.ValidateListRequest(r.List); err != nil {
-		return invalidRequestError("watch.request.list", err)
+	if err := objectstore.ValidateListRequest(r.Collection); err != nil {
+		return invalidRequestError("watch.request.collection", err)
 	}
 	if err := r.Start.Validate(); err != nil {
 		return objectWatchError(

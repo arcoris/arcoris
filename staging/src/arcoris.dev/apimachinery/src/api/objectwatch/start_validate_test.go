@@ -14,11 +14,7 @@
 
 package objectwatch
 
-import (
-	"testing"
-
-	"arcoris.dev/apimachinery/api/objectstore"
-)
+import "testing"
 
 func TestStartValidate(t *testing.T) {
 	tests := []struct {
@@ -27,7 +23,7 @@ func TestStartValidate(t *testing.T) {
 		valid bool
 	}{
 		{name: "after revision", start: Start{Mode: StartAfterRevision, Revision: 1}, valid: true},
-		{name: "after zero", start: Start{Mode: StartAfterRevision}, valid: false},
+		{name: "after zero", start: Start{Mode: StartAfterRevision}, valid: true},
 		{name: "current", start: Start{Mode: StartAtCurrent}, valid: true},
 		{name: "current non-zero", start: Start{Mode: StartAtCurrent, Revision: 1}, valid: false},
 		{name: "unknown mode", start: Start{Mode: StartMode(99)}, valid: false},
@@ -44,10 +40,4 @@ func TestStartValidate(t *testing.T) {
 			requireErrorIs(t, err, ErrInvalidStart)
 		})
 	}
-}
-
-func TestStartValidateRejectsZeroRevisionType(t *testing.T) {
-	err := (Start{Mode: StartAfterRevision, Revision: objectstore.Revision(0)}).Validate()
-
-	requireErrorIs(t, err, ErrInvalidStart)
 }

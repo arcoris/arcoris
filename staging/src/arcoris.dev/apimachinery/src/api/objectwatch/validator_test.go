@@ -20,6 +20,12 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
+func TestNewValidatorRejectsInvalidRequest(t *testing.T) {
+	_, err := NewValidator(Request{Start: AtCurrent()})
+
+	requireErrorIs(t, err, ErrInvalidRequest)
+}
+
 func TestValidatorStartAfterRevisionChangedOrdering(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -36,7 +42,7 @@ func TestValidatorStartAfterRevisionChangedOrdering(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validator := mustValidator(t, Start{Mode: StartAfterRevision, Revision: 10})
+			validator := mustValidator(t, watchRequest(Start{Mode: StartAfterRevision, Revision: 10}, false))
 			err := acceptAll(&validator, tt.events)
 			if tt.wantErr {
 				requireErrorIs(t, err, ErrContinuityLost)
@@ -48,28 +54,61 @@ func TestValidatorStartAfterRevisionChangedOrdering(t *testing.T) {
 }
 
 func TestValidatorStartAtCurrentAcceptsFirstNonZeroChange(t *testing.T) {
-	validator := mustValidator(t, AtCurrent())
+	validator := mustValidator(t, watchRequest(AtCurrent(), false))
 
 	requireNoError(t, validator.Accept(mustChangedEvent(t, 1)))
 }
 
-func TestValidatorBookmarkProgress(t *testing.T) {
+func TestValidatorAcceptsMatchingResourceAndScope(t *testing.T) {
+	validator := mustValidator(t, watchNamespaceRequest(AtCurrent(), "system", false))
+
+	requireNoError(t, validator.Accept(mustChangedEventForKey(t, watchKeyInNamespace("system", "main"), 1)))
+}
+
+func TestValidatorRejectsDifferentResourceAndCloses(t *testing.T) {
+	validator := mustValidator(t, watchRequest(AtCurrent(), false))
+
+	err := validator.Accept(mustChangedEventForKey(t, watchKeyFor(otherWatchResource(), "system", "main"), 1))
+	requireErrorIs(t, err, ErrContinuityLost)
+
+	err = validator.Accept(mustChangedEvent(t, 2))
+	requireErrorIs(t, err, ErrClosed)
+}
+
+func TestValidatorRejectsDifferentNamespaceForNamespaceScopeAndCloses(t *testing.T) {
+	validator := mustValidator(t, watchNamespaceRequest(AtCurrent(), "system", false))
+
+	err := validator.Accept(mustChangedEventForKey(t, watchKeyInNamespace("other", "main"), 1))
+	requireErrorIs(t, err, ErrContinuityLost)
+
+	err = validator.Accept(mustChangedEventForKey(t, watchKeyInNamespace("system", "next"), 2))
+	requireErrorIs(t, err, ErrClosed)
+}
+
+func TestValidatorAllNamespacesAcceptsMultipleNamespaces(t *testing.T) {
+	validator := mustValidator(t, watchRequest(AtCurrent(), false))
+
+	requireNoError(t, validator.Accept(mustChangedEventForKey(t, watchKeyInNamespace("system", "main"), 1)))
+	requireNoError(t, validator.Accept(mustChangedEventForKey(t, watchKeyInNamespace("other", "next"), 2)))
+}
+
+func TestValidatorProgress(t *testing.T) {
 	tests := []struct {
 		name    string
 		events  []Event
 		wantErr bool
 	}{
-		{name: "bookmark equal start accepted", events: []Event{mustBookmarkEvent(t, 10)}},
-		{name: "bookmark before start rejected", events: []Event{mustBookmarkEvent(t, 9)}, wantErr: true},
-		{name: "changed then same bookmark accepted", events: []Event{mustChangedEvent(t, 11), mustBookmarkEvent(t, 11)}},
-		{name: "changed then earlier bookmark rejected", events: []Event{mustChangedEvent(t, 11), mustBookmarkEvent(t, 10)}, wantErr: true},
-		{name: "bookmark then same changed rejected", events: []Event{mustBookmarkEvent(t, 20), mustChangedEvent(t, 20)}, wantErr: true},
-		{name: "bookmark then later changed accepted", events: []Event{mustBookmarkEvent(t, 20), mustChangedEvent(t, 21)}},
+		{name: "progress equal start accepted", events: []Event{mustProgressEvent(t, 10)}},
+		{name: "progress before start rejected", events: []Event{mustProgressEvent(t, 9)}, wantErr: true},
+		{name: "changed then same progress accepted", events: []Event{mustChangedEvent(t, 11), mustProgressEvent(t, 11)}},
+		{name: "changed then earlier progress rejected", events: []Event{mustChangedEvent(t, 11), mustProgressEvent(t, 10)}, wantErr: true},
+		{name: "progress then same changed rejected", events: []Event{mustProgressEvent(t, 20), mustChangedEvent(t, 20)}, wantErr: true},
+		{name: "progress then later changed accepted", events: []Event{mustProgressEvent(t, 20), mustChangedEvent(t, 21)}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validator := mustValidator(t, Start{Mode: StartAfterRevision, Revision: 10})
+			validator := mustValidator(t, watchRequest(Start{Mode: StartAfterRevision, Revision: 10}, true))
 			err := acceptAll(&validator, tt.events)
 			if tt.wantErr {
 				requireErrorIs(t, err, ErrContinuityLost)
@@ -80,8 +119,40 @@ func TestValidatorBookmarkProgress(t *testing.T) {
 	}
 }
 
+func TestValidatorRejectsProgressWhenNotAllowedAndCloses(t *testing.T) {
+	validator := mustValidator(t, watchRequest(AtCurrent(), false))
+
+	err := validator.Accept(mustProgressEvent(t, 1))
+	requireErrorIs(t, err, ErrContinuityLost)
+
+	err = validator.Accept(mustChangedEvent(t, 2))
+	requireErrorIs(t, err, ErrClosed)
+}
+
+func TestValidatorContinuityLossClosesChangedSequence(t *testing.T) {
+	validator := mustValidator(t, watchRequest(AtCurrent(), false))
+
+	requireNoError(t, validator.Accept(mustChangedEvent(t, 20)))
+	err := validator.Accept(mustChangedEvent(t, 19))
+	requireErrorIs(t, err, ErrContinuityLost)
+
+	err = validator.Accept(mustChangedEvent(t, 21))
+	requireErrorIs(t, err, ErrClosed)
+}
+
+func TestValidatorContinuityLossClosesProgressSequence(t *testing.T) {
+	validator := mustValidator(t, watchRequest(AtCurrent(), true))
+
+	requireNoError(t, validator.Accept(mustProgressEvent(t, 20)))
+	err := validator.Accept(mustProgressEvent(t, 19))
+	requireErrorIs(t, err, ErrContinuityLost)
+
+	err = validator.Accept(mustChangedEvent(t, 21))
+	requireErrorIs(t, err, ErrClosed)
+}
+
 func TestValidatorRestartRequiredIsTerminal(t *testing.T) {
-	validator := mustValidator(t, AtCurrent())
+	validator := mustValidator(t, watchRequest(AtCurrent(), false))
 	restart := mustRestartEvent(t, RestartContinuityLost, 0)
 
 	requireNoError(t, validator.Accept(restart))
@@ -90,20 +161,32 @@ func TestValidatorRestartRequiredIsTerminal(t *testing.T) {
 	requireErrorIs(t, err, ErrClosed)
 }
 
+func TestValidatorRestartBeforeProgressCloses(t *testing.T) {
+	validator := mustValidator(t, watchRequest(AtCurrent(), false))
+
+	requireNoError(t, validator.Accept(mustChangedEvent(t, 20)))
+	err := validator.Accept(mustRestartEvent(t, RestartContinuityLost, 19))
+	requireErrorIs(t, err, ErrContinuityLost)
+
+	err = validator.Accept(mustChangedEvent(t, 21))
+	requireErrorIs(t, err, ErrClosed)
+}
+
 func TestValidatorRejectsInvalidRestartRequired(t *testing.T) {
-	validator := mustValidator(t, AtCurrent())
+	validator := mustValidator(t, watchRequest(AtCurrent(), false))
 
 	err := validator.Accept(Event{Kind: EventRestartRequired})
 
 	requireErrorIs(t, err, ErrInvalidEvent)
 }
 
-func TestValidatorRejectsInvalidEvent(t *testing.T) {
-	validator := mustValidator(t, AtCurrent())
+func TestValidatorRejectsInvalidEventWithoutClosing(t *testing.T) {
+	validator := mustValidator(t, watchRequest(AtCurrent(), false))
 
 	err := validator.Accept(Event{})
-
 	requireErrorIs(t, err, ErrInvalidEvent)
+
+	requireNoError(t, validator.Accept(mustChangedEvent(t, 1)))
 }
 
 func TestValidatorRejectsNilReceiver(t *testing.T) {
@@ -114,10 +197,10 @@ func TestValidatorRejectsNilReceiver(t *testing.T) {
 	requireErrorIs(t, err, ErrContinuityLost)
 }
 
-func mustValidator(t *testing.T, start Start) Validator {
+func mustValidator(t *testing.T, request Request) Validator {
 	t.Helper()
 
-	validator, err := NewValidator(start)
+	validator, err := NewValidator(request)
 	requireNoError(t, err)
 	return validator
 }
@@ -130,10 +213,18 @@ func mustChangedEvent(t *testing.T, revision objectstore.Revision) Event {
 	return event
 }
 
-func mustBookmarkEvent(t *testing.T, revision objectstore.Revision) Event {
+func mustChangedEventForKey(t *testing.T, key objectstore.Key, revision objectstore.Revision) Event {
 	t.Helper()
 
-	event, err := Bookmark(revision)
+	event, err := Changed(watchCreatedChangeForKey(key, revision))
+	requireNoError(t, err)
+	return event
+}
+
+func mustProgressEvent(t *testing.T, revision objectstore.Revision) Event {
+	t.Helper()
+
+	event, err := Progress(revision)
 	requireNoError(t, err)
 	return event
 }

@@ -17,7 +17,7 @@ package objectwatch
 import "testing"
 
 func TestRequestValidateAcceptsValidRequest(t *testing.T) {
-	request := Request{List: watchListRequest(), Start: AtCurrent()}
+	request := Request{Collection: watchListRequest(), Start: AtCurrent()}
 
 	requireNoError(t, request.Validate())
 	if !request.IsValid() {
