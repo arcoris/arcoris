@@ -15,6 +15,7 @@
 package objectstorewatch
 
 import (
+	"context"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectstore"
@@ -35,4 +36,18 @@ func TestUpdatePublishesUpdatedChangeWithBeforeAndAfter(t *testing.T) {
 	if !event.Change.Before.Revision.Before(event.Change.After.Revision) {
 		t.Fatalf("before revision %s is not before after revision %s", event.Change.Before.Revision, event.Change.After.Revision)
 	}
+}
+
+func TestUpdatePublishesNothingWhenBackendFails(t *testing.T) {
+	store := testRuntimeStore(t)
+	key := testKey("system", 1)
+	created := createObject(t, store, key, "created")
+	stream := watchAfter(t, store, testCollection(), created.Revision)
+
+	_, err := store.Update(context.Background(), key, created.Revision+1, stateForKey(key, "stale"))
+	if err == nil {
+		t.Fatalf("Update() error = nil; want backend error")
+	}
+
+	requireNoEvent(t, stream)
 }

@@ -15,9 +15,11 @@
 package objectstorewatch
 
 import (
+	"context"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectstore"
+	"arcoris.dev/apimachinery/api/objectwatch"
 )
 
 func TestCreatePublishesCreatedChange(t *testing.T) {
@@ -32,4 +34,35 @@ func TestCreatePublishesCreatedChange(t *testing.T) {
 	if !event.Change.Key.Equal(key) {
 		t.Fatalf("change key = %#v; want %#v", event.Change.Key, key)
 	}
+}
+
+func TestCreatePublishesNothingWhenBackendFails(t *testing.T) {
+	store := testRuntimeStore(t)
+	key := testKey("system", 1)
+	created := createObject(t, store, key, "created")
+	stream := watchAfter(t, store, testCollection(), created.Revision)
+
+	_, err := store.Create(context.Background(), key, stateForKey(key, "duplicate"))
+	if err == nil {
+		t.Fatalf("Create() error = nil; want backend error")
+	}
+
+	requireNoEvent(t, stream)
+}
+
+func TestCreateContinuityLossTerminatesLiveStreams(t *testing.T) {
+	backend := invalidCreateResultBackend{Store: testBackend(t)}
+	store, err := New(backend)
+	requireNoError(t, err)
+	first := watchAfter(t, store, testCollection(), 0)
+	second := watchAfter(t, store, testCollection(), 0)
+
+	_, err = store.Create(context.Background(), testKey("system", 1), stateForKey(testKey("system", 1), "created"))
+	requireErrorIs(t, err, objectwatch.ErrContinuityLost)
+	requireErrorIs(t, err, objectstore.ErrInvalidChange)
+
+	_, err = first.Next(context.Background())
+	requireErrorIs(t, err, objectwatch.ErrContinuityLost)
+	_, err = second.Next(context.Background())
+	requireErrorIs(t, err, objectwatch.ErrContinuityLost)
 }

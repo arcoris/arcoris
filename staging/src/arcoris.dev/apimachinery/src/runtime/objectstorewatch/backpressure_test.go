@@ -18,6 +18,7 @@ import (
 	"context"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/objectwatch"
 )
 
@@ -31,4 +32,43 @@ func TestSlowWatcherLosesContinuityOnOverflow(t *testing.T) {
 	_, err := stream.Next(context.Background())
 	requireErrorIs(t, err, objectwatch.ErrContinuityLost)
 	requireErrorIs(t, err, ErrStreamOverflow)
+
+	_, err = stream.Next(context.Background())
+	requireErrorIs(t, err, objectwatch.ErrContinuityLost)
+}
+
+func TestSlowWatcherOverflowDoesNotPoisonHealthyWatcher(t *testing.T) {
+	store := testRuntimeStore(t, WithStreamBuffer(1))
+	slow := watchAfter(t, store, testCollection(), 0)
+	healthy := watchAfter(t, store, testCollection(), 0)
+
+	first := createObject(t, store, testKey("system", 1), "one")
+	if event := nextEvent(t, healthy); event.Revision != first.Revision {
+		t.Fatalf("healthy first revision = %s; want %s", event.Revision, first.Revision)
+	}
+	second := createObject(t, store, testKey("system", 2), "two")
+
+	if event := nextEvent(t, healthy); event.Revision != second.Revision {
+		t.Fatalf("healthy second revision = %s; want %s", event.Revision, second.Revision)
+	}
+	_, err := slow.Next(context.Background())
+	requireErrorIs(t, err, objectwatch.ErrContinuityLost)
+	requireErrorIs(t, err, ErrStreamOverflow)
+}
+
+func TestFutureWatchReplaysHistoryAfterWatcherOverflow(t *testing.T) {
+	store := testRuntimeStore(t, WithMaxHistory(10), WithStreamBuffer(1))
+	slow := watchAfter(t, store, testCollection(), 0)
+
+	first := createObject(t, store, testKey("system", 1), "one")
+	second := createObject(t, store, testKey("system", 2), "two")
+	_, err := slow.Next(context.Background())
+	requireErrorIs(t, err, objectwatch.ErrContinuityLost)
+
+	replay := watchAfter(t, store, testCollection(), 0)
+	for _, revision := range []objectstore.Revision{first.Revision, second.Revision} {
+		if event := nextEvent(t, replay); event.Revision != revision {
+			t.Fatalf("replay revision = %s; want %s", event.Revision, revision)
+		}
+	}
 }

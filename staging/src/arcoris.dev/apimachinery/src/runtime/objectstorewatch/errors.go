@@ -21,7 +21,7 @@ var (
 	ErrNilBackend = errors.New("nil object store backend")
 	// ErrInvalidOption reports malformed Store construction options.
 	ErrInvalidOption = errors.New("invalid object store watch option")
-	// ErrStreamOverflow reports that a watcher queue filled before it could
+	// ErrStreamOverflow reports that a stream queue filled before it could
 	// consume a matching event.
 	ErrStreamOverflow = errors.New("object store watch stream overflow")
 )

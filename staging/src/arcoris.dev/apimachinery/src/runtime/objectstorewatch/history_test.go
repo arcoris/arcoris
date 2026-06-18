@@ -55,6 +55,22 @@ func TestWatchHistoricalReplay(t *testing.T) {
 	}
 }
 
+func TestWatchHistoricalReplayLargerThanStreamBuffer(t *testing.T) {
+	store := testRuntimeStore(t, WithMaxHistory(10), WithStreamBuffer(1))
+	first := createObject(t, store, testKey("system", 1), "one")
+	second := createObject(t, store, testKey("system", 2), "two")
+	third := createObject(t, store, testKey("system", 3), "three")
+
+	stream := watchAfter(t, store, testCollection(), 0)
+
+	for _, revision := range []objectstore.Revision{first.Revision, second.Revision, third.Revision} {
+		if event := nextEvent(t, stream); event.Revision != revision {
+			t.Fatalf("revision = %s; want %s", event.Revision, revision)
+		}
+	}
+	requireNoEvent(t, stream)
+}
+
 func TestWatchHistoryCompaction(t *testing.T) {
 	store := testRuntimeStore(t, WithMaxHistory(1))
 	key := testKey("system", 1)
@@ -74,6 +90,9 @@ func TestWatchHistoryCompaction(t *testing.T) {
 	if event.Revision != updated.Revision {
 		t.Fatalf("revision = %s; want %s", event.Revision, updated.Revision)
 	}
+
+	stream = watchAfter(t, store, testCollection(), updated.Revision)
+	requireNoEvent(t, stream)
 }
 
 func TestListCollectionWatchContinuity(t *testing.T) {

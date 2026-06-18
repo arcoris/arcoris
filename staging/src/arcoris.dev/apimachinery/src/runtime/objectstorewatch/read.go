@@ -21,6 +21,30 @@ import (
 	storewatchapi "arcoris.dev/apimachinery/api/objectstorewatch"
 )
 
+// Get delegates to the backend under the observable store lock.
+//
+// Locking reads is conservative but keeps the first implementation simple:
+// callers observe backend state through the same serialization point used for
+// writes, collection reads, and watch registration.
+func (s *Store) Get(ctx context.Context, key objectstore.Key) (objectstore.State, bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.backend.Get(ctx, key)
+}
+
+// List delegates raw structural objectstore listing under the observable lock.
+//
+// List is the plain objectstore.Store operation. It does not create an
+// api/objectstorewatch CollectionRead; callers that need a watch boundary
+// should use ListCollection instead.
+func (s *Store) List(ctx context.Context, request objectstore.ListRequest) (objectstore.ListResult, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.backend.List(ctx, request)
+}
+
 // ListCollection returns a validated boundary-safe collection read.
 //
 // The backend List call and CollectionRead validation run under Store.mu. That

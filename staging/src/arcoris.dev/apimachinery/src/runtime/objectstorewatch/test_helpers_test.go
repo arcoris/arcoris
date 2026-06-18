@@ -50,6 +50,23 @@ func testBackend(t testing.TB) objectstore.Store {
 	return backend
 }
 
+type invalidCreateResultBackend struct {
+	objectstore.Store
+}
+
+func (b invalidCreateResultBackend) Create(
+	ctx context.Context,
+	key objectstore.Key,
+	state objectstore.State,
+) (objectstore.State, error) {
+	committed, err := b.Store.Create(ctx, key, state)
+	if err != nil {
+		return objectstore.State{}, err
+	}
+	committed.Revision = 0
+	return committed, nil
+}
+
 func testResource() apiidentity.GroupVersionResource {
 	return apiidentity.GroupVersionResource{
 		Group:    "control.arcoris.dev",

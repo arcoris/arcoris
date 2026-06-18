@@ -35,13 +35,13 @@ var (
 
 // Store is a passive write-through observable wrapper around objectstore.Store.
 //
-// Store serializes backend operations, collection reads, watch registration,
-// history mutation, and live fanout with one mutex. The zero value is not
-// usable; construct Store with New. Store contains a mutex and must not be
-// copied after construction.
+// Store.mu serializes backend calls, collection reads, watch registration,
+// retained history mutation, live stream registry mutation, and live fanout.
+// The zero value is not usable; construct Store with New. Store contains a
+// mutex and must not be copied after construction.
 type Store struct {
 	// mu serializes every backend call that can affect the observable boundary.
-	// It also protects history and watchers. This deliberately coarse lock is
+	// It also protects history and streams. This deliberately coarse lock is
 	// the continuity proof for replay computation followed by live registration.
 	mu sync.Mutex
 	// backend is the authoritative committed-state store. It must not be
@@ -50,11 +50,15 @@ type Store struct {
 	// history stores a bounded revision-ordered suffix of wrapper-observed
 	// committed changes. It is protected by mu.
 	history changeHistory
-	// streamBuffer is copied from construction options and used for each stream.
-	streamBuffer int
-	// watchers contains live streams registered for future matching changes. It
+	// options is the validated construction configuration. It is immutable after
+	// New returns and read only while Store.mu is held.
+	options Options
+	// nextStreamID is incremented under mu to give each live stream a stable
+	// registry key that cannot be confused with another stream pointer.
+	nextStreamID uint64
+	// streams contains live streams registered for future matching changes. It
 	// is protected by mu and entries are removed on Close or terminal overflow.
-	watchers map[*watcher]struct{}
+	streams map[uint64]*stream
 }
 
 // New constructs an observable wrapper around backend.
@@ -68,38 +72,61 @@ func New(backend objectstore.Store, options ...Option) (*Store, error) {
 	}
 
 	return &Store{
-		backend:      backend,
-		history:      newChangeHistory(opts.MaxHistory),
-		streamBuffer: opts.StreamBuffer,
-		watchers:     make(map[*watcher]struct{}),
+		backend: backend,
+		history: newChangeHistory(opts.MaxHistory),
+		options: opts,
+		streams: make(map[uint64]*stream),
 	}, nil
 }
 
-// removeWatcher unregisters watcher from future live fanout.
+// unregister removes stream id from future live fanout.
 //
 // It is safe to call from stream.Close. The method acquires Store.mu itself, so
 // callers must not already hold Store.mu when invoking it.
-func (s *Store) removeWatcher(w *watcher) {
+func (s *Store) unregister(id uint64) {
 	if s == nil {
 		return
 	}
 	s.mu.Lock()
-	delete(s.watchers, w)
+	s.unregisterLocked(id)
 	s.mu.Unlock()
 }
 
-// closeAllWithContinuityLoss terminates every live watcher after an internal
+// nextStreamIDLocked returns the next live stream registry key.
+//
+// Store.mu must be held.
+func (s *Store) nextStreamIDLocked() uint64 {
+	s.nextStreamID++
+	return s.nextStreamID
+}
+
+// registerLocked registers stream for future live fanout.
+//
+// Store.mu must be held.
+func (s *Store) registerLocked(stream *stream) {
+	s.streams[stream.id] = stream
+}
+
+// unregisterLocked removes id from future live fanout.
+//
+// Store.mu must be held.
+func (s *Store) unregisterLocked(id uint64) {
+	delete(s.streams, id)
+}
+
+// loseContinuityLocked terminates every live stream after an internal
 // continuity violation that prevents the wrapper from preserving its contract.
 //
-// The caller must hold Store.mu. Terminated watchers are removed immediately so
-// later committed changes cannot enqueue onto streams that have already lost
+// Store.mu must be held. Terminated streams are removed immediately so later
+// committed changes cannot enqueue onto streams that have already lost
 // continuity.
-func (s *Store) closeAllWithContinuityLoss(cause error) {
-	err := objectwatch.ContinuityLost(cause)
-	for w := range s.watchers {
-		w.terminate(err)
-		delete(s.watchers, w)
+func (s *Store) loseContinuityLocked(cause error) error {
+	err := continuityError(cause)
+	for id, stream := range s.streams {
+		stream.finish(err)
+		delete(s.streams, id)
 	}
+	return err
 }
 
 // continuityError records a wrapper/backend invariant violation.

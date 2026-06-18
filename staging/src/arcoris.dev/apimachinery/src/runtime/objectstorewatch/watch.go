@@ -24,7 +24,7 @@ import (
 // Watch opens a pull-based stream over committed changes for request.
 //
 // Watch validates the request before acquiring Store.mu, then computes retained
-// replay and registers the live watcher while holding Store.mu. Because writes
+// replay and registers the live stream while holding Store.mu. Because writes
 // use the same mutex, no committed change can occur between replay selection
 // and live registration.
 func (s *Store) Watch(ctx context.Context, request objectwatch.Request) (objectwatch.Stream, error) {
@@ -38,31 +38,28 @@ func (s *Store) Watch(ctx context.Context, request objectwatch.Request) (objectw
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	replay, err := s.prepareReplay(ctx, request)
+	replay, err := s.replayLocked(ctx, request)
 	if err != nil {
 		return nil, err
 	}
 
-	w := &watcher{request: request}
-	w.stream = newStream(s, w, s.streamBuffer)
-	for _, change := range replay {
-		if !w.enqueueChange(change) {
-			err := streamOverflowError()
-			w.terminate(err)
-			return nil, err
-		}
+	stream, err := newStream(s, s.nextStreamIDLocked(), request, replay, s.options.StreamBuffer)
+	if err != nil {
+		return nil, s.loseContinuityLocked(err)
 	}
-	s.watchers[w] = struct{}{}
+	s.registerLocked(stream)
 
-	return w.stream, nil
+	return stream, nil
 }
 
-// prepareReplay computes the retained historical changes required by request.
+// replayLocked computes the retained historical changes required by request.
 //
 // StartAfterRevision uses retained history. StartAtCurrent performs a backend
 // List under Store.mu to observe the current collection boundary without
 // replaying older retained changes.
-func (s *Store) prepareReplay(ctx context.Context, request objectwatch.Request) ([]objectstore.Change, error) {
+//
+// Store.mu must be held.
+func (s *Store) replayLocked(ctx context.Context, request objectwatch.Request) ([]objectstore.Change, error) {
 	switch request.Start.Mode {
 	case objectwatch.StartAfterRevision:
 		return s.history.replay(request.Collection, request.Start.Revision)

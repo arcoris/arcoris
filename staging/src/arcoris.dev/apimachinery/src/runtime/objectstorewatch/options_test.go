@@ -43,7 +43,18 @@ func TestNewAcceptsOptions(t *testing.T) {
 	if store.history.max != 2 {
 		t.Fatalf("max history = %d; want 2", store.history.max)
 	}
-	if store.streamBuffer != 1 {
-		t.Fatalf("stream buffer = %d; want 1", store.streamBuffer)
+	if store.options.StreamBuffer != 1 {
+		t.Fatalf("stream buffer = %d; want 1", store.options.StreamBuffer)
+	}
+}
+
+func TestDefaultOptions(t *testing.T) {
+	options := DefaultOptions()
+
+	if options.MaxHistory != defaultMaxHistory {
+		t.Fatalf("max history = %d; want %d", options.MaxHistory, defaultMaxHistory)
+	}
+	if options.StreamBuffer != defaultStreamBuffer {
+		t.Fatalf("stream buffer = %d; want %d", options.StreamBuffer, defaultStreamBuffer)
 	}
 }

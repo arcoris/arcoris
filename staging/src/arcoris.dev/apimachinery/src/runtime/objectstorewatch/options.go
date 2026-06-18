@@ -21,7 +21,7 @@ const (
 	// without making the passive wrapper an unbounded in-memory journal.
 	defaultMaxHistory = 4096
 	// defaultStreamBuffer gives readers a small burst window while preserving
-	// the rule that slow watchers cannot block writers indefinitely.
+	// the rule that slow streams cannot block writers indefinitely.
 	defaultStreamBuffer = 128
 )
 
@@ -36,6 +36,14 @@ type Options struct {
 
 // Option mutates Store construction options before validation.
 type Option func(*Options) error
+
+// DefaultOptions returns the construction defaults used by New.
+func DefaultOptions() Options {
+	return Options{
+		MaxHistory:   defaultMaxHistory,
+		StreamBuffer: defaultStreamBuffer,
+	}
+}
 
 // WithMaxHistory sets the retained committed-change history limit.
 //
@@ -54,8 +62,8 @@ func WithMaxHistory(n int) Option {
 
 // WithStreamBuffer sets each watch stream's bounded queue capacity.
 //
-// A full queue means the watcher is too slow to preserve continuity. Writers do
-// not wait for space; the watcher is terminated with ErrStreamOverflow wrapped
+// A full queue means the stream is too slow to preserve continuity. Writers do
+// not wait for space; the stream is terminated with ErrStreamOverflow wrapped
 // as objectwatch continuity loss.
 func WithStreamBuffer(n int) Option {
 	return func(options *Options) error {
@@ -72,10 +80,7 @@ func WithStreamBuffer(n int) Option {
 // Nil Option is rejected instead of ignored so accidental option plumbing bugs
 // are visible at construction time.
 func applyOptions(opts []Option) (Options, error) {
-	options := Options{
-		MaxHistory:   defaultMaxHistory,
-		StreamBuffer: defaultStreamBuffer,
-	}
+	options := DefaultOptions()
 	for _, opt := range opts {
 		if opt == nil {
 			return Options{}, errors.Join(ErrInvalidOption, errors.New("nil option"))

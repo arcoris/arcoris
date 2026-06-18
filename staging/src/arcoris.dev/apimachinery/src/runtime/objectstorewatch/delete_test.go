@@ -15,6 +15,7 @@
 package objectstorewatch
 
 import (
+	"context"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectstore"
@@ -31,10 +32,30 @@ func TestDeletePublishesDeletedChange(t *testing.T) {
 
 	requireChangedEvent(t, event, watchRequestAfter(t, testCollection(), created.Revision), objectstore.ChangeDeleted, deleted.Revision)
 	requireDesiredString(t, event.Change.Before, "created")
+	if event.Change.Before.Revision != created.Revision {
+		t.Fatalf("before revision = %s; want live revision %s", event.Change.Before.Revision, created.Revision)
+	}
+	if event.Change.Revision == event.Change.Before.Revision {
+		t.Fatalf("delete revision = %s; want tombstone revision distinct from live revision", event.Change.Revision)
+	}
 	if !event.Change.After.Revision.IsZero() ||
 		!event.Change.After.Object.TypeMeta.IsZero() ||
 		!event.Change.After.Object.ObjectMeta.IsZero() ||
 		!event.Change.After.Object.Desired.IsZero() {
 		t.Fatalf("delete after state = %#v; want zero", event.Change.After)
 	}
+}
+
+func TestDeletePublishesNothingWhenBackendFails(t *testing.T) {
+	store := testRuntimeStore(t)
+	key := testKey("system", 1)
+	created := createObject(t, store, key, "created")
+	stream := watchAfter(t, store, testCollection(), created.Revision)
+
+	_, err := store.Delete(context.Background(), key, created.Revision+1)
+	if err == nil {
+		t.Fatalf("Delete() error = nil; want backend error")
+	}
+
+	requireNoEvent(t, stream)
 }

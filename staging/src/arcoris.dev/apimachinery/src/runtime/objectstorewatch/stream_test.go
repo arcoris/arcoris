@@ -40,3 +40,18 @@ func TestStreamCloseUnregistersWatcher(t *testing.T) {
 	_, err := stream.Next(context.Background())
 	requireErrorIs(t, err, objectwatch.ErrClosed)
 }
+
+func TestStreamDeliveryReturnsDetachedEvents(t *testing.T) {
+	store := testRuntimeStore(t)
+	created := createObject(t, store, testKey("system", 1), "created")
+	stream := watchAfter(t, store, testCollection(), 0)
+
+	event := nextEvent(t, stream)
+	event.Change.After.Revision = 99
+
+	replay := watchAfter(t, store, testCollection(), 0)
+	replayed := nextEvent(t, replay)
+	if replayed.Change.After.Revision != created.Revision {
+		t.Fatalf("replayed revision = %s; want %s", replayed.Change.After.Revision, created.Revision)
+	}
+}
