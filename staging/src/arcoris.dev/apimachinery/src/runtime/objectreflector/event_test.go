@@ -16,88 +16,68 @@ package objectreflector
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/objectwatch"
 )
 
-func TestProcessChangedAppliesCreatedUpdatedDeleted(t *testing.T) {
-	tests := []struct {
-		name   string
-		change objectstore.Change
-	}{
-		{name: "created", change: createdChange(t, testKey("system", 1), 2)},
-		{name: "updated", change: updatedChange(t, testKey("system", 1), 2, 3)},
-		{name: "deleted", change: deletedChange(t, testKey("system", 1), 2, 3)},
-	}
+func createdChange(t testing.TB, key objectstore.Key, revision objectstore.Revision) objectstore.Change {
+	t.Helper()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			sink := newRecordingSink(1)
-			reflector := newTestReflector(t, &fakeListerWatcher{}, sink)
-			reflector.lastApplied = tt.change.Revision - 1
-
-			err := reflector.processEvent(context.Background(), changedEvent(t, tt.change))
-			requireNoError(t, err)
-
-			if sink.changeCount() != 1 {
-				t.Fatalf("change count = %d; want 1", sink.changeCount())
-			}
-			if reflector.lastApplied != tt.change.Revision {
-				t.Fatalf("lastApplied = %s; want %s", reflector.lastApplied, tt.change.Revision)
-			}
-		})
-	}
-}
-
-func TestProcessChangedDeliversDetachedChange(t *testing.T) {
-	key := testKey("system", 1)
-	change := createdChange(t, key, 2)
-	event := changedEvent(t, change)
-	sink := newRecordingSink(1)
-	reflector := newTestReflector(t, &fakeListerWatcher{}, sink)
-	reflector.lastApplied = 1
-
-	requireNoError(t, reflector.processEvent(context.Background(), event))
-	recorded := sink.recordedChanges()
-	recorded[0].After.Revision = 99
-
-	if event.Change.After.Revision != change.Revision {
-		t.Fatalf("event payload was mutated through sink copy")
-	}
-}
-
-func TestProcessChangedDoesNotAdvanceRevisionWhenApplyFails(t *testing.T) {
-	errApply := errors.New("apply failed")
-	sink := newRecordingSink(1)
-	sink.applyErr = errApply
-	reflector := newTestReflector(t, &fakeListerWatcher{}, sink)
-	reflector.lastApplied = 1
-
-	err := reflector.processEvent(context.Background(), changedEvent(t, createdChange(t, testKey("system", 1), 2)))
-	requireErrorIs(t, err, errApply)
-	if reflector.lastApplied != 1 {
-		t.Fatalf("lastApplied = %s; want 1", reflector.lastApplied)
-	}
-}
-
-func TestProcessProgressDoesNotApplyChange(t *testing.T) {
-	sink := newRecordingSink(1)
-	reflector := newTestReflector(t, &fakeListerWatcher{}, sink)
-	reflector.lastApplied = 2
-	reflector.lastProgress = 2
-
-	err := reflector.processEvent(context.Background(), progressEvent(t, 3))
+	change, err := objectstore.NewCreatedChange(key, testState(key, revision, "created"))
 	requireNoError(t, err)
 
-	if sink.changeCount() != 0 {
-		t.Fatalf("change count = %d; want 0", sink.changeCount())
-	}
-	if reflector.lastProgress != 3 {
-		t.Fatalf("lastProgress = %s; want 3", reflector.lastProgress)
-	}
+	return change
+}
+
+func updatedChange(t testing.TB, key objectstore.Key, beforeRevision, afterRevision objectstore.Revision) objectstore.Change {
+	t.Helper()
+
+	change, err := objectstore.NewUpdatedChange(
+		key,
+		testState(key, beforeRevision, "before"),
+		testState(key, afterRevision, "after"),
+	)
+	requireNoError(t, err)
+
+	return change
+}
+
+func deletedChange(t testing.TB, key objectstore.Key, beforeRevision, deleteRevision objectstore.Revision) objectstore.Change {
+	t.Helper()
+
+	change, err := objectstore.NewDeletedChange(key, testState(key, beforeRevision, "deleted"), deleteRevision)
+	requireNoError(t, err)
+
+	return change
+}
+
+func changedEvent(t testing.TB, change objectstore.Change) objectwatch.Event {
+	t.Helper()
+
+	event, err := objectwatch.Changed(change)
+	requireNoError(t, err)
+
+	return event
+}
+
+func progressEvent(t testing.TB, revision objectstore.Revision) objectwatch.Event {
+	t.Helper()
+
+	event, err := objectwatch.Progress(revision)
+	requireNoError(t, err)
+
+	return event
+}
+
+func restartEvent(t testing.TB) objectwatch.Event {
+	t.Helper()
+
+	event, err := objectwatch.RestartRequired(objectwatch.RestartContinuityLost, 0)
+	requireNoError(t, err)
+
+	return event
 }
 
 func TestProcessRestartRequiresRelist(t *testing.T) {
@@ -116,32 +96,4 @@ func TestProcessEventRejectsInvalidEvent(t *testing.T) {
 	err := reflector.processEvent(context.Background(), objectwatch.Event{})
 
 	requireErrorIs(t, err, ErrInvalidEvent)
-}
-
-func TestProcessChangedRejectsOutsideCollection(t *testing.T) {
-	reflector := newTestReflector(t, &fakeListerWatcher{}, newRecordingSink(1))
-	reflector.lastApplied = 1
-
-	err := reflector.processEvent(context.Background(), changedEvent(t, createdChange(t, otherResourceKey("system", 1), 2)))
-
-	requireErrorIs(t, err, ErrChangeOutsideCollection)
-}
-
-func TestProcessChangedRejectsNonMonotonicRevision(t *testing.T) {
-	reflector := newTestReflector(t, &fakeListerWatcher{}, newRecordingSink(1))
-	reflector.lastApplied = 2
-
-	err := reflector.processEvent(context.Background(), changedEvent(t, createdChange(t, testKey("system", 1), 2)))
-
-	requireErrorIs(t, err, ErrNonMonotonicRevision)
-}
-
-func TestProcessProgressRejectsOlderRevision(t *testing.T) {
-	reflector := newTestReflector(t, &fakeListerWatcher{}, newRecordingSink(1))
-	reflector.lastApplied = 3
-	reflector.lastProgress = 3
-
-	err := reflector.processEvent(context.Background(), progressEvent(t, 2))
-
-	requireErrorIs(t, err, ErrNonMonotonicRevision)
 }

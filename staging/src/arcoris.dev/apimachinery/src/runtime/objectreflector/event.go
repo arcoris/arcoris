@@ -16,14 +16,15 @@ package objectreflector
 
 import (
 	"context"
-	"fmt"
 
-	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/objectwatch"
 )
 
-// processEvent validates and routes one watch event. It never forwards
-// progress or restart control events to Sink.
+// processEvent validates one source event before routing it by kind.
+//
+// The clone at the boundary keeps a misbehaving stream implementation from
+// sharing mutable event payload state with the sink. Only EventChanged reaches
+// Sink; progress and restart-required events are reflector control flow.
 func (r *Reflector) processEvent(ctx context.Context, event objectwatch.Event) error {
 	event = event.Clone()
 	if err := event.Validate(); err != nil {
@@ -40,48 +41,4 @@ func (r *Reflector) processEvent(ctx context.Context, event objectwatch.Event) e
 	default:
 		return sourceContractError("unknown event kind %s", event.Kind.String())
 	}
-}
-
-// processChanged applies one committed object transition after validating
-// collection membership and strict revision ordering.
-func (r *Reflector) processChanged(ctx context.Context, event objectwatch.Event) error {
-	change := event.Change.Clone()
-	if err := objectstore.ValidateChange(change); err != nil {
-		return invalidEventError(err)
-	}
-	if !objectstore.ChangeMatchesListRequest(change, r.collection) {
-		return changeOutsideCollectionError(fmt.Errorf("change key %s is outside reflected collection", change.Key.String()))
-	}
-	if !r.lastApplied.Before(change.Revision) {
-		return nonMonotonicRevisionError(
-			fmt.Errorf("change revision %s is not after last applied revision %s", change.Revision, r.lastApplied),
-		)
-	}
-
-	if err := r.sink.ApplyChange(ctx, change.Clone()); err != nil {
-		return err
-	}
-	r.lastApplied = change.Revision
-	if r.lastProgress.Before(change.Revision) {
-		r.lastProgress = change.Revision
-	}
-
-	return nil
-}
-
-// processProgress records a source progress boundary without mutating Sink.
-func (r *Reflector) processProgress(event objectwatch.Event) error {
-	if event.Revision.Before(r.lastApplied) {
-		return nonMonotonicRevisionError(
-			fmt.Errorf("progress revision %s is before last applied revision %s", event.Revision, r.lastApplied),
-		)
-	}
-	if event.Revision.Before(r.lastProgress) {
-		return nonMonotonicRevisionError(
-			fmt.Errorf("progress revision %s is before last progress revision %s", event.Revision, r.lastProgress),
-		)
-	}
-	r.lastProgress = event.Revision
-
-	return nil
 }

@@ -33,59 +33,14 @@ type Reflector struct {
 	sink       Sink
 	options    Options
 
+	// mu protects the single-run guard only. The synchronization loop itself is
+	// single-threaded after beginRun succeeds, so revision fields do not need a
+	// lock while Run owns the reflector.
 	mu      sync.Mutex
 	running bool
 
+	// lastApplied is the sink boundary. lastProgress may move ahead on progress
+	// events, but committed changes must still advance strictly past lastApplied.
 	lastApplied  objectstore.Revision
 	lastProgress objectstore.Revision
-}
-
-// New validates dependencies and constructs a Reflector for one collection.
-func New(
-	source storewatchapi.ListerWatcher,
-	collection objectstore.ListRequest,
-	sink Sink,
-	options ...Option,
-) (*Reflector, error) {
-	if source == nil {
-		return nil, ErrNilSource
-	}
-	if sink == nil {
-		return nil, ErrNilSink
-	}
-	if err := objectstore.ValidateListRequest(collection); err != nil {
-		return nil, err
-	}
-	cfg, err := applyOptions(options)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Reflector{
-		source:     source,
-		collection: collection,
-		sink:       sink,
-		options:    cfg,
-	}, nil
-}
-
-// beginRun marks r active if no other Run call is active.
-func (r *Reflector) beginRun() error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if r.running {
-		return ErrAlreadyRunning
-	}
-	r.running = true
-
-	return nil
-}
-
-// endRun releases the single-run guard.
-func (r *Reflector) endRun() {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	r.running = false
 }

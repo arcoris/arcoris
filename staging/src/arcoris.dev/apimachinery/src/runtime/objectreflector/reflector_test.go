@@ -20,71 +20,66 @@ import (
 
 	"arcoris.dev/apimachinery/api/objectstore"
 	storewatchapi "arcoris.dev/apimachinery/api/objectstorewatch"
+	"arcoris.dev/apimachinery/runtime/objectmemorystore"
+	runtimewatch "arcoris.dev/apimachinery/runtime/objectstorewatch"
 )
 
-func TestNewValidation(t *testing.T) {
-	source := &fakeListerWatcher{}
-	sink := newRecordingSink(1)
+func newTestReflector(t testing.TB, source storewatchapi.ListerWatcher, sink Sink) *Reflector {
+	t.Helper()
 
-	tests := []struct {
-		name       string
-		source     storewatchapi.ListerWatcher
-		collection objectstore.ListRequest
-		sink       Sink
-		options    []Option
-		target     error
-	}{
-		{name: "nil source", source: nil, collection: testCollection(), sink: sink, target: ErrNilSource},
-		{name: "nil sink", source: source, collection: testCollection(), sink: nil, target: ErrNilSink},
-		{name: "invalid collection", source: source, collection: objectstore.ListRequest{}, sink: sink, target: objectstore.ErrInvalidListRequest},
-		{name: "nil option", source: source, collection: testCollection(), sink: sink, options: []Option{nil}, target: ErrInvalidOption},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, err := New(tt.source, tt.collection, tt.sink, tt.options...)
-			requireErrorIs(t, err, tt.target)
-		})
-	}
-}
-
-func TestNewSuccess(t *testing.T) {
-	reflector, err := New(&fakeListerWatcher{}, testCollection(), newRecordingSink(1), WithRequestProgress(false))
+	reflector, err := New(source, testCollection(), sink)
 	requireNoError(t, err)
 
-	if reflector.options.RequestProgress {
-		t.Fatalf("RequestProgress = true; want false")
-	}
+	return reflector
 }
 
-func TestRunRejectsConcurrentCalls(t *testing.T) {
-	stream := waitingStream()
-	source := &fakeListerWatcher{
-		listResponses:  []listResponse{{read: testRead(t, 0)}},
-		watchResponses: []watchResponse{{stream: stream}},
-	}
-	reflector := newTestReflector(t, source, newRecordingSink(1))
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	done := make(chan error, 1)
+func TestReflectorIntegrationWithRuntimeStoreWatch(t *testing.T) {
+	backend, err := objectmemorystore.New()
+	requireNoError(t, err)
+	source, err := runtimewatch.New(backend)
+	requireNoError(t, err)
 
+	sink := newRecordingSink(4)
+	reflector, err := New(source, testCollection(), sink)
+	requireNoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
 	go func() {
 		done <- reflector.Run(ctx)
 	}()
-	<-stream.nextStarted
 
-	err := reflector.Run(context.Background())
-	requireErrorIs(t, err, ErrAlreadyRunning)
+	waitRead(t, sink.replaceCh)
+
+	key := testKey("system", 1)
+	created, err := source.Create(context.Background(), key, testState(key, 0, "created"))
+	requireNoError(t, err)
+	requireChangeRevision(t, waitChange(t, sink.changeCh), objectstore.ChangeCreated, created.Revision)
+
+	updated, err := source.Update(context.Background(), key, created.Revision, testState(key, 0, "updated"))
+	requireNoError(t, err)
+	requireChangeRevision(t, waitChange(t, sink.changeCh), objectstore.ChangeUpdated, updated.Revision)
+
+	deleted, err := source.Delete(context.Background(), key, updated.Revision)
+	requireNoError(t, err)
+	requireChangeRevision(t, waitChange(t, sink.changeCh), objectstore.ChangeDeleted, deleted.Revision)
 
 	cancel()
 	requireErrorIs(t, <-done, context.Canceled)
 }
 
-func TestRunMayStartAgainAfterExit(t *testing.T) {
-	reflector := newTestReflector(t, &fakeListerWatcher{}, newRecordingSink(1))
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
+func requireChangeRevision(
+	t testing.TB,
+	change objectstore.Change,
+	kind objectstore.ChangeKind,
+	revision objectstore.Revision,
+) {
+	t.Helper()
 
-	requireErrorIs(t, reflector.Run(ctx), context.Canceled)
-	requireErrorIs(t, reflector.Run(ctx), context.Canceled)
+	if change.Kind != kind {
+		t.Fatalf("change kind = %s; want %s", change.Kind, kind)
+	}
+	if change.Revision != revision {
+		t.Fatalf("change revision = %s; want %s", change.Revision, revision)
+	}
 }

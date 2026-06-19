@@ -16,37 +16,24 @@ package objectreflector
 
 import (
 	"context"
+
+	"arcoris.dev/apimachinery/api/objectwatch"
 )
 
-// Run reflects until ctx is canceled, a sink operation fails, or the source
-// violates its contract.
+// consumeStream drains one watch stream until context cancellation, sink
+// failure, source terminal error, or a relist-required event ends the cycle.
 //
-// Run panics on a nil context. A nil context would create an uncancellable
-// active runtime component, which is a programmer error.
-func (r *Reflector) Run(ctx context.Context) error {
-	if ctx == nil {
-		panic("nil context")
-	}
-	if err := r.beginRun(); err != nil {
-		return err
-	}
-	defer r.endRun()
-
+// The reflector deliberately keeps no internal event buffer here. If a sink is
+// slow, the source stream sees that backpressure directly and can report
+// continuity loss according to the objectwatch contract.
+func (r *Reflector) consumeStream(ctx context.Context, stream objectwatch.Stream) error {
 	for {
-		if err := ctx.Err(); err != nil {
+		event, err := stream.Next(ctx)
+		if err != nil {
 			return err
 		}
-		err := r.runCycle(ctx)
-		if err == nil {
-			continue
+		if err := r.processEvent(ctx, event); err != nil {
+			return err
 		}
-		if ctxErr := ctx.Err(); ctxErr != nil {
-			return ctxErr
-		}
-		if isRelistRequired(err) {
-			continue
-		}
-
-		return err
 	}
 }

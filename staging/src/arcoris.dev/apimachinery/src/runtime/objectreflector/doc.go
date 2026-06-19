@@ -15,21 +15,33 @@
 // Package objectreflector provides an active runtime synchronizer from an
 // objectstorewatch.ListerWatcher source into a Sink.
 //
-// A Reflector lists one structural object collection, replaces the sink with
-// that collection, starts watching from the collection read boundary, and
-// applies committed changes one at a time. When a watch stream cannot preserve
-// continuity, the Reflector relists instead of allowing silent gaps.
+// # Model
 //
-// Sink receives committed objectstore.Change values only. Progress and restart
-// events are stream-control signals handled inside the Reflector and are never
-// forwarded as mutations.
+// A Reflector owns exactly one structural object collection. It reads that
+// collection through ListCollection, installs the returned collection read into
+// the sink, starts watching from the collection read boundary, and applies
+// committed objectstore.Change values one at a time.
 //
-// The first implementation intentionally keeps retry and backoff outside this
-// package. A failed sink operation is fatal because the Reflector does not know
-// whether the sink partially applied the operation or how to repair it.
+// # Continuity
+//
+// Watch continuity loss is handled by relisting. The Reflector never ignores a
+// source gap, duplicate revision, out-of-collection change, or restart-required
+// event in order to keep a stream running. It either relists from a fresh
+// collection read or returns a fatal contract error.
+//
+// # Sink Contract
+//
+// Sink receives committed changes only. Progress and restart events are
+// stream-control signals handled inside the Reflector and are never forwarded as
+// mutations. A failed sink operation is fatal because this package does not have
+// an idempotency or repair contract for partially-applied sink writes.
+//
+// # Non-goals
 //
 // This package does not implement a cache, queue, informer, controller, retry
 // framework, lifecycle manager, task group, metrics hook, transport adapter,
 // object query engine, scheduler, resync period, event-handler registry, or
-// persistent recovery mechanism.
+// persistent recovery mechanism. Retry and backoff are intentionally left to a
+// future runtime layer that can make policy decisions outside the core
+// source-to-sink protocol.
 package objectreflector
