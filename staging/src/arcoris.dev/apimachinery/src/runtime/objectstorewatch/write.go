@@ -38,7 +38,7 @@ func (s *Store) Create(ctx context.Context, key objectstore.Key, state objectsto
 
 	change, err := createdChange(key, created)
 	if err != nil {
-		return created, s.loseContinuityLocked(err)
+		return created, s.loseCommittedContinuityLocked(created.Revision, err)
 	}
 	if err := s.publishLocked(change); err != nil {
 		return created, err
@@ -72,12 +72,12 @@ func (s *Store) Update(
 	}
 	if !ok {
 		cause := errors.New("backend update succeeded without readable before state")
-		return after, s.loseContinuityLocked(cause)
+		return after, s.loseCommittedContinuityLocked(after.Revision, cause)
 	}
 
 	change, err := updatedChange(key, before, after)
 	if err != nil {
-		return after, s.loseContinuityLocked(err)
+		return after, s.loseCommittedContinuityLocked(after.Revision, err)
 	}
 	if err := s.publishLocked(change); err != nil {
 		return after, err
@@ -106,7 +106,7 @@ func (s *Store) Delete(
 
 	change, err := deletedChange(key, result)
 	if err != nil {
-		return result, s.loseContinuityLocked(err)
+		return result, s.loseCommittedContinuityLocked(result.Revision, err)
 	}
 	if err := s.publishLocked(change); err != nil {
 		return result, err

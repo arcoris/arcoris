@@ -64,7 +64,11 @@ func (s *Store) replayLocked(ctx context.Context, request objectwatch.Request) (
 	case objectwatch.StartAfterRevision:
 		return s.history.replay(request.Collection, request.Start.Revision)
 	case objectwatch.StartAtCurrent:
-		if _, err := s.backend.List(ctx, request.Collection); err != nil {
+		result, err := s.backend.List(ctx, request.Collection)
+		if err != nil {
+			return nil, err
+		}
+		if err := objectstore.ValidateListResult(request.Collection, result); err != nil {
 			return nil, err
 		}
 		return nil, nil

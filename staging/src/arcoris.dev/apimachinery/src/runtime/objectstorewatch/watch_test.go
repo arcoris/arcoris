@@ -56,6 +56,35 @@ func TestWatchStartAtCurrentDoesNotReplayHistory(t *testing.T) {
 	requireChangedEvent(t, event, objectwatch.Request{Collection: testCollection(), Start: objectwatch.AtCurrent()}, objectstore.ChangeUpdated, updated.Revision)
 }
 
+func TestWatchStartAtCurrentReturnsBackendListError(t *testing.T) {
+	store := testRuntimeStore(t)
+
+	stream, err := store.Watch(nil, objectwatch.Request{
+		Collection: testCollection(),
+		Start:      objectwatch.AtCurrent(),
+	})
+
+	if stream != nil {
+		t.Fatalf("stream = %#v; want nil", stream)
+	}
+	requireErrorIs(t, err, objectstore.ErrNilContext)
+}
+
+func TestWatchStartAtCurrentRejectsInvalidListResult(t *testing.T) {
+	store, err := New(invalidListResultBackend{Store: testBackend(t)})
+	requireNoError(t, err)
+
+	stream, err := store.Watch(context.Background(), objectwatch.Request{
+		Collection: testCollection(),
+		Start:      objectwatch.AtCurrent(),
+	})
+
+	if stream != nil {
+		t.Fatalf("stream = %#v; want nil", stream)
+	}
+	requireErrorIs(t, err, objectstore.ErrInvalidListResult)
+}
+
 func TestWatchAllowsProgressButDoesNotEmitProgress(t *testing.T) {
 	store := testRuntimeStore(t)
 	start, err := objectwatch.AfterRevision(0)

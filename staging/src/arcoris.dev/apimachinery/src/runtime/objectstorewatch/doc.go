@@ -39,6 +39,12 @@
 // reported as explicit continuity loss. Silent gaps are not successful
 // continuation.
 //
+// If a backend mutation commits but the wrapper cannot represent it as a valid
+// objectstore.Change or objectwatch.Event, Store invalidates the affected
+// retained-history boundary and terminates live streams with continuity loss.
+// Future historical watches that would cross the unpublishable committed
+// revision fail explicitly instead of silently missing the change.
+//
 // # History Retention
 //
 // Retained history is bounded and in-memory only. It is useful for short

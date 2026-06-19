@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectstore"
+	"arcoris.dev/apimachinery/api/objectwatch"
 )
 
 func TestUpdatePublishesUpdatedChangeWithBeforeAndAfter(t *testing.T) {
@@ -50,4 +51,28 @@ func TestUpdatePublishesNothingWhenBackendFails(t *testing.T) {
 	}
 
 	requireNoEvent(t, stream)
+}
+
+func TestUpdateContinuityLossInvalidatesFutureHistoricalWatch(t *testing.T) {
+	backend := invalidUpdateStateBackend{Store: testBackend(t)}
+	store, err := New(backend)
+	requireNoError(t, err)
+	key := testKey("system", 1)
+	created := createObject(t, store, key, "created")
+	stream := watchAfter(t, store, testCollection(), created.Revision)
+
+	updated, err := store.Update(context.Background(), key, created.Revision, stateForKey(key, "invalid"))
+	requireErrorIs(t, err, objectwatch.ErrContinuityLost)
+	requireErrorIs(t, err, objectstore.ErrInvalidChange)
+	_, err = stream.Next(context.Background())
+	requireErrorIs(t, err, objectwatch.ErrContinuityLost)
+
+	replay, err := store.Watch(context.Background(), watchRequestAfter(t, testCollection(), created.Revision))
+	if replay != nil {
+		t.Fatalf("stream = %#v; want nil", replay)
+	}
+	requireErrorIs(t, err, objectwatch.ErrHistoryUnavailable)
+
+	afterGap := watchAfter(t, store, testCollection(), updated.Revision)
+	requireNoEvent(t, afterGap)
 }

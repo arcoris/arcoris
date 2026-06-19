@@ -30,7 +30,7 @@ func (s *Store) publishLocked(change objectstore.Change) error {
 
 	event, err := changedEvent(change)
 	if err != nil {
-		return s.loseContinuityLocked(err)
+		return s.loseCommittedContinuityLocked(change.Revision, err)
 	}
 
 	for id, stream := range s.streams {

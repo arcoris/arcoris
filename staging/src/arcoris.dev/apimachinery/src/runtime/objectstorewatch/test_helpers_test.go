@@ -67,6 +67,66 @@ func (b invalidCreateResultBackend) Create(
 	return committed, nil
 }
 
+type invalidCreateStateBackend struct {
+	objectstore.Store
+}
+
+func (b invalidCreateStateBackend) Create(
+	ctx context.Context,
+	key objectstore.Key,
+	state objectstore.State,
+) (objectstore.State, error) {
+	committed, err := b.Store.Create(ctx, key, state)
+	if err != nil {
+		return objectstore.State{}, err
+	}
+	committed.Object.Desired = value.Value{}
+	return committed, nil
+}
+
+type invalidUpdateStateBackend struct {
+	objectstore.Store
+}
+
+func (b invalidUpdateStateBackend) Update(
+	ctx context.Context,
+	key objectstore.Key,
+	expected objectstore.Revision,
+	state objectstore.State,
+) (objectstore.State, error) {
+	committed, err := b.Store.Update(ctx, key, expected, state)
+	if err != nil {
+		return objectstore.State{}, err
+	}
+	committed.Object.Desired = value.Value{}
+	return committed, nil
+}
+
+type invalidDeleteResultBackend struct {
+	objectstore.Store
+}
+
+func (b invalidDeleteResultBackend) Delete(
+	ctx context.Context,
+	key objectstore.Key,
+	expected objectstore.Revision,
+) (objectstore.DeleteResult, error) {
+	result, err := b.Store.Delete(ctx, key, expected)
+	if err != nil {
+		return objectstore.DeleteResult{}, err
+	}
+	result.Deleted.Object.Desired = value.Value{}
+	return result, nil
+}
+
+type invalidListResultBackend struct {
+	objectstore.Store
+}
+
+func (b invalidListResultBackend) List(context.Context, objectstore.ListRequest) (objectstore.ListResult, error) {
+	return objectstore.ListResult{Items: []objectstore.ListItem{{}}}, nil
+}
+
 func testResource() apiidentity.GroupVersionResource {
 	return apiidentity.GroupVersionResource{
 		Group:    "control.arcoris.dev",

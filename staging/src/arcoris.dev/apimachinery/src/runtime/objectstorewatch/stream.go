@@ -83,6 +83,7 @@ func newStream(
 //
 // The method never returns a normal EOF. If the stream has reached a terminal
 // state, the terminal objectwatch-compatible error is returned instead.
+// A nil context is treated as context.Background.
 // Concurrent Next calls are safe, but callers should not rely on which goroutine
 // receives a particular event.
 func (s *stream) Next(ctx context.Context) (objectwatch.Event, error) {
@@ -127,7 +128,7 @@ func (s *stream) enqueue(event objectwatch.Event) bool {
 		return false
 	}
 	if s.terminalError() != nil {
-		return true
+		return false
 	}
 
 	select {

@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectstore"
+	"arcoris.dev/apimachinery/api/objectwatch"
 )
 
 func TestDeletePublishesDeletedChange(t *testing.T) {
@@ -58,4 +59,28 @@ func TestDeletePublishesNothingWhenBackendFails(t *testing.T) {
 	}
 
 	requireNoEvent(t, stream)
+}
+
+func TestDeleteContinuityLossInvalidatesFutureHistoricalWatch(t *testing.T) {
+	backend := invalidDeleteResultBackend{Store: testBackend(t)}
+	store, err := New(backend)
+	requireNoError(t, err)
+	key := testKey("system", 1)
+	created := createObject(t, store, key, "created")
+	stream := watchAfter(t, store, testCollection(), created.Revision)
+
+	deleted, err := store.Delete(context.Background(), key, created.Revision)
+	requireErrorIs(t, err, objectwatch.ErrContinuityLost)
+	requireErrorIs(t, err, objectstore.ErrInvalidChange)
+	_, err = stream.Next(context.Background())
+	requireErrorIs(t, err, objectwatch.ErrContinuityLost)
+
+	replay, err := store.Watch(context.Background(), watchRequestAfter(t, testCollection(), created.Revision))
+	if replay != nil {
+		t.Fatalf("stream = %#v; want nil", replay)
+	}
+	requireErrorIs(t, err, objectwatch.ErrHistoryUnavailable)
+
+	afterGap := watchAfter(t, store, testCollection(), deleted.Revision)
+	requireNoEvent(t, afterGap)
 }

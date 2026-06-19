@@ -41,6 +41,36 @@ func TestStreamCloseUnregistersWatcher(t *testing.T) {
 	requireErrorIs(t, err, objectwatch.ErrClosed)
 }
 
+func TestTerminalStreamLeftInRegistryIsRemovedOnFanout(t *testing.T) {
+	store := testRuntimeStore(t)
+	watchStream := watchAfter(t, store, testCollection(), 0)
+	runtimeStream := watchStream.(*stream)
+	runtimeStream.finish(objectwatch.Closed(nil))
+
+	createObject(t, store, testKey("system", 1), "created")
+
+	store.mu.Lock()
+	_, registered := store.streams[runtimeStream.id]
+	store.mu.Unlock()
+	if registered {
+		t.Fatalf("terminal stream remained registered")
+	}
+	_, err := watchStream.Next(context.Background())
+	requireErrorIs(t, err, objectwatch.ErrClosed)
+}
+
+func TestStreamNextNilContextUsesBackground(t *testing.T) {
+	store := testRuntimeStore(t)
+	created := createObject(t, store, testKey("system", 1), "created")
+	stream := watchAfter(t, store, testCollection(), 0)
+
+	event, err := stream.Next(nil)
+	requireNoError(t, err)
+	if event.Revision != created.Revision {
+		t.Fatalf("revision = %s; want %s", event.Revision, created.Revision)
+	}
+}
+
 func TestStreamDeliveryReturnsDetachedEvents(t *testing.T) {
 	store := testRuntimeStore(t)
 	created := createObject(t, store, testKey("system", 1), "created")

@@ -129,6 +129,22 @@ func (s *Store) loseContinuityLocked(cause error) error {
 	return err
 }
 
+// loseCommittedContinuityLocked invalidates history after a committed mutation
+// that the wrapper could not publish.
+//
+// Store.mu must be held. A valid revision becomes the new unsafe replay
+// boundary. An invalid revision taints all historical replay because no caller
+// can prove their requested start is after the missing committed mutation.
+func (s *Store) loseCommittedContinuityLocked(revision objectstore.Revision, cause error) error {
+	if revision.IsValid() {
+		s.history.invalidateThrough(revision)
+	} else {
+		s.history.taint(cause)
+	}
+
+	return s.loseContinuityLocked(cause)
+}
+
 // continuityError records a wrapper/backend invariant violation.
 //
 // The wrapper uses objectwatch continuity errors for committed-backend states it
