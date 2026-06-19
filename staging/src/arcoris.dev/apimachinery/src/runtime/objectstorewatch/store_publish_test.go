@@ -16,11 +16,23 @@ package objectstorewatch
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/objectwatch"
 )
+
+func TestStreamOverflowErrorPreservesContinuityAndOverflow(t *testing.T) {
+	err := streamOverflowError()
+
+	if !errors.Is(err, objectwatch.ErrContinuityLost) {
+		t.Fatalf("errors.Is(%v, %v) = false", err, objectwatch.ErrContinuityLost)
+	}
+	if !errors.Is(err, ErrStreamOverflow) {
+		t.Fatalf("errors.Is(%v, %v) = false", err, ErrStreamOverflow)
+	}
+}
 
 func TestSlowWatcherLosesContinuityOnOverflow(t *testing.T) {
 	store := testRuntimeStore(t, WithStreamBuffer(1))

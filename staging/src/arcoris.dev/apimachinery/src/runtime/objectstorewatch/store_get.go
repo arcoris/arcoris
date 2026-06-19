@@ -15,25 +15,19 @@
 package objectstorewatch
 
 import (
-	"errors"
-	"testing"
+	"context"
+
+	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-func TestErrorSentinels(t *testing.T) {
-	tests := []struct {
-		name string
-		err  error
-	}{
-		{name: "nil backend", err: ErrNilBackend},
-		{name: "invalid option", err: ErrInvalidOption},
-		{name: "stream overflow", err: ErrStreamOverflow},
-	}
+// Get delegates to the backend under the observable store lock.
+//
+// Locking reads is conservative but keeps the first implementation simple:
+// callers observe backend state through the same serialization point used for
+// writes, collection reads, and watch registration.
+func (s *Store) Get(ctx context.Context, key objectstore.Key) (objectstore.State, bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if !errors.Is(tt.err, tt.err) {
-				t.Fatalf("errors.Is(%v, %v) = false", tt.err, tt.err)
-			}
-		})
-	}
+	return s.backend.Get(ctx, key)
 }

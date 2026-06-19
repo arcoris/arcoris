@@ -21,32 +21,6 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-// Create delegates to the backend and publishes the committed create change.
-//
-// No event is published if the backend rejects the operation. If the backend
-// reports success but returns a state that cannot form a valid created change,
-// all live streams are terminated with continuity loss because the wrapper can
-// no longer prove the stream is complete and well-formed.
-func (s *Store) Create(ctx context.Context, key objectstore.Key, state objectstore.State) (objectstore.State, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	created, err := s.backend.Create(ctx, key, state)
-	if err != nil {
-		return objectstore.State{}, err
-	}
-
-	change, err := createdChange(key, created)
-	if err != nil {
-		return created, s.loseCommittedContinuityLocked(created.Revision, err)
-	}
-	if err := s.publishLocked(change); err != nil {
-		return created, err
-	}
-
-	return created, nil
-}
-
 // Update delegates to the backend and publishes the committed update change.
 //
 // The wrapper reads the committed before state under Store.mu before delegating
@@ -66,6 +40,7 @@ func (s *Store) Update(
 	if err != nil {
 		return objectstore.State{}, err
 	}
+
 	after, err := s.backend.Update(ctx, key, expected, state)
 	if err != nil {
 		return objectstore.State{}, err
@@ -79,38 +54,10 @@ func (s *Store) Update(
 	if err != nil {
 		return after, s.loseCommittedContinuityLocked(after.Revision, err)
 	}
+
 	if err := s.publishLocked(change); err != nil {
 		return after, err
 	}
 
 	return after, nil
-}
-
-// Delete delegates to the backend and publishes the committed delete change.
-//
-// The backend's DeleteResult supplies both the deleted live state and tombstone
-// revision, which are the exact fields required to construct a valid
-// objectstore.ChangeDeleted value.
-func (s *Store) Delete(
-	ctx context.Context,
-	key objectstore.Key,
-	expected objectstore.Revision,
-) (objectstore.DeleteResult, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	result, err := s.backend.Delete(ctx, key, expected)
-	if err != nil {
-		return objectstore.DeleteResult{}, err
-	}
-
-	change, err := deletedChange(key, result)
-	if err != nil {
-		return result, s.loseCommittedContinuityLocked(result.Revision, err)
-	}
-	if err := s.publishLocked(change); err != nil {
-		return result, err
-	}
-
-	return result, nil
 }

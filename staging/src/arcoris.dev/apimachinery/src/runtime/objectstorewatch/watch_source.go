@@ -43,13 +43,13 @@ func (s *Store) Watch(ctx context.Context, request objectwatch.Request) (objectw
 		return nil, err
 	}
 
-	stream, err := newStream(s, s.nextStreamIDLocked(), request, replay, s.options.StreamBuffer)
+	sm, err := newStream(s, s.nextStreamIDLocked(), request, replay, s.options.StreamBuffer)
 	if err != nil {
 		return nil, s.loseContinuityLocked(err)
 	}
-	s.registerLocked(stream)
+	s.registerLocked(sm)
 
-	return stream, nil
+	return sm, nil
 }
 
 // replayLocked computes the retained historical changes required by request.

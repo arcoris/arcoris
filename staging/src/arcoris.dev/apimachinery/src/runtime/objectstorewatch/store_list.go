@@ -15,25 +15,19 @@
 package objectstorewatch
 
 import (
-	"errors"
-	"testing"
+	"context"
+
+	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-func TestErrorSentinels(t *testing.T) {
-	tests := []struct {
-		name string
-		err  error
-	}{
-		{name: "nil backend", err: ErrNilBackend},
-		{name: "invalid option", err: ErrInvalidOption},
-		{name: "stream overflow", err: ErrStreamOverflow},
-	}
+// List delegates raw structural objectstore listing under the observable lock.
+//
+// List is the plain objectstore.Store operation. It does not create an
+// api/objectstorewatch CollectionRead; callers that need a watch boundary
+// should use ListCollection instead.
+func (s *Store) List(ctx context.Context, request objectstore.ListRequest) (objectstore.ListResult, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if !errors.Is(tt.err, tt.err) {
-				t.Fatalf("errors.Is(%v, %v) = false", tt.err, tt.err)
-			}
-		})
-	}
+	return s.backend.List(ctx, request)
 }

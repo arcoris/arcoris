@@ -16,6 +16,8 @@ package objectstorewatch
 
 import (
 	"context"
+	"fmt"
+	"sync"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectstore"
@@ -97,4 +99,72 @@ func TestWatchAllowsProgressButDoesNotEmitProgress(t *testing.T) {
 	requireNoError(t, err)
 
 	requireNoEvent(t, stream)
+}
+
+func TestWatchFiltersByNamespaceAndResource(t *testing.T) {
+	store := testRuntimeStore(t)
+	stream := watchAfter(t, store, namespaceCollection("alpha"), 0)
+
+	alpha := createObject(t, store, testKey("alpha", 1), "alpha")
+	createObject(t, store, testKey("beta", 1), "beta")
+	_, err := store.Create(context.Background(), otherResourceKey("alpha", 1), stateForKey(otherResourceKey("alpha", 1), "other"))
+	requireNoError(t, err)
+
+	event := nextEvent(t, stream)
+	requireChangedEvent(t, event, watchRequestAfter(t, namespaceCollection("alpha"), 0), objectstore.ChangeCreated, alpha.Revision)
+	requireNoEvent(t, stream)
+}
+
+func TestWatchAllNamespacesReceivesMultipleNamespaces(t *testing.T) {
+	store := testRuntimeStore(t)
+	stream := watchAfter(t, store, testCollection(), 0)
+
+	first := createObject(t, store, testKey("alpha", 1), "alpha")
+	second := createObject(t, store, testKey("beta", 1), "beta")
+
+	if event := nextEvent(t, stream); event.Revision != first.Revision {
+		t.Fatalf("first revision = %s; want %s", event.Revision, first.Revision)
+	}
+	if event := nextEvent(t, stream); event.Revision != second.Revision {
+		t.Fatalf("second revision = %s; want %s", event.Revision, second.Revision)
+	}
+}
+
+func TestConcurrentWatchAndCreate(t *testing.T) {
+	store := testRuntimeStore(t, WithStreamBuffer(16))
+	request := watchRequestAfter(t, testCollection(), 0)
+	errs := make(chan error, 16)
+	var wg sync.WaitGroup
+
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			stream, err := store.Watch(context.Background(), request)
+			if err != nil {
+				errs <- fmt.Errorf("watch %d: %w", i, err)
+				return
+			}
+			if err := stream.Close(); err != nil {
+				errs <- fmt.Errorf("close %d: %w", i, err)
+			}
+		}(i)
+	}
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			key := testKey("system", i)
+			_, err := store.Create(context.Background(), key, stateForKey(key, "created"))
+			if err != nil {
+				errs <- fmt.Errorf("create %d: %w", i, err)
+			}
+		}(i)
+	}
+
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		requireNoError(t, err)
+	}
 }

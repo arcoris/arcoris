@@ -16,7 +16,6 @@ package objectstorewatch
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -24,42 +23,68 @@ import (
 	"arcoris.dev/apimachinery/api/objectwatch"
 )
 
-func TestConcurrentWatchAndCreate(t *testing.T) {
-	store := testRuntimeStore(t, WithStreamBuffer(16))
-	request := watchRequestAfter(t, testCollection(), 0)
-	errs := make(chan error, 16)
-	var wg sync.WaitGroup
+func TestStreamCloseIsIdempotent(t *testing.T) {
+	stream := watchAfter(t, testRuntimeStore(t), testCollection(), 0)
 
-	for i := 0; i < 8; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			stream, err := store.Watch(context.Background(), request)
-			if err != nil {
-				errs <- fmt.Errorf("watch %d: %w", i, err)
-				return
-			}
-			if err := stream.Close(); err != nil {
-				errs <- fmt.Errorf("close %d: %w", i, err)
-			}
-		}(i)
-	}
-	for i := 0; i < 8; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			key := testKey("system", i)
-			_, err := store.Create(context.Background(), key, stateForKey(key, "created"))
-			if err != nil {
-				errs <- fmt.Errorf("create %d: %w", i, err)
-			}
-		}(i)
-	}
+	requireNoError(t, stream.Close())
+	requireNoError(t, stream.Close())
 
-	wg.Wait()
-	close(errs)
-	for err := range errs {
-		requireNoError(t, err)
+	_, err := stream.Next(context.Background())
+	requireErrorIs(t, err, objectwatch.ErrClosed)
+}
+
+func TestStreamCloseUnregistersWatcher(t *testing.T) {
+	store := testRuntimeStore(t)
+	stream := watchAfter(t, store, testCollection(), 0)
+	requireNoError(t, stream.Close())
+
+	createObject(t, store, testKey("system", 1), "created")
+	_, err := stream.Next(context.Background())
+	requireErrorIs(t, err, objectwatch.ErrClosed)
+}
+
+func TestTerminalStreamLeftInRegistryIsRemovedOnFanout(t *testing.T) {
+	store := testRuntimeStore(t)
+	watchStream := watchAfter(t, store, testCollection(), 0)
+	runtimeStream := watchStream.(*stream)
+	runtimeStream.finish(objectwatch.Closed(nil))
+
+	createObject(t, store, testKey("system", 1), "created")
+
+	store.mu.Lock()
+	_, registered := store.streams[runtimeStream.id]
+	store.mu.Unlock()
+	if registered {
+		t.Fatalf("terminal stream remained registered")
+	}
+	_, err := watchStream.Next(context.Background())
+	requireErrorIs(t, err, objectwatch.ErrClosed)
+}
+
+func TestStreamNextNilContextUsesBackground(t *testing.T) {
+	store := testRuntimeStore(t)
+	created := createObject(t, store, testKey("system", 1), "created")
+	stream := watchAfter(t, store, testCollection(), 0)
+
+	event, err := stream.Next(nil)
+	requireNoError(t, err)
+	if event.Revision != created.Revision {
+		t.Fatalf("revision = %s; want %s", event.Revision, created.Revision)
+	}
+}
+
+func TestStreamDeliveryReturnsDetachedEvents(t *testing.T) {
+	store := testRuntimeStore(t)
+	created := createObject(t, store, testKey("system", 1), "created")
+	stream := watchAfter(t, store, testCollection(), 0)
+
+	event := nextEvent(t, stream)
+	event.Change.After.Revision = 99
+
+	replay := watchAfter(t, store, testCollection(), 0)
+	replayed := nextEvent(t, replay)
+	if replayed.Change.After.Revision != created.Revision {
+		t.Fatalf("replayed revision = %s; want %s", replayed.Change.After.Revision, created.Revision)
 	}
 }
 
