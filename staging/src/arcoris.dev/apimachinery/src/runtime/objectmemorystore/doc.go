@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package objectmemorystore provides an in-memory implementation of
+// Package objectmemorystore provides an in-memory runtime implementation of
 // arcoris.dev/apimachinery/api/objectstore.Store.
+//
+// The package is intended for local runtimes, tests, examples, and lightweight
+// single-process deployments. It is not an API contract package and does not
+// provide persistence, replication, transport, authorization, admission, watch
+// continuity, reflector behavior, or durable recovery.
 //
 // Store uses a fixed sharded key index. Shard locks protect only map structure:
 // finding or creating the per-object slot. Each slot publishes immutable records
@@ -36,8 +41,13 @@
 // returns a detached current live collection read, not a historical MVCC
 // snapshot under concurrent writes.
 //
-// The implementation is not durable, persistent, distributed, watch-capable,
-// secondary-indexed, admission-aware, codec-aware, or transactional across
-// keys. It does not validate resource descriptors, apply objects, stamp
-// metadata, or execute lifecycle hooks.
+// Callers that need ListCollection -> Watch continuity should wrap Store with
+// arcoris.dev/apimachinery/runtime/objectstorewatch rather than mutating the
+// memory store directly.
+//
+// The implementation is not durable, persistent, replicated, distributed,
+// watch-capable, secondary-indexed, admission-aware, codec-aware, or
+// transactional across keys. It does not provide WAL/outbox recovery, validate
+// resource descriptors, apply objects, stamp metadata, or execute lifecycle
+// hooks.
 package objectmemorystore

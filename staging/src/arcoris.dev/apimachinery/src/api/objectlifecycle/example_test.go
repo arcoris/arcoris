@@ -18,9 +18,9 @@ import (
 	"context"
 	"fmt"
 
-	"arcoris.dev/apimachinery/api/objectmemorystore"
 	"arcoris.dev/apimachinery/api/resourcecatalog"
 	"arcoris.dev/apimachinery/api/valuevalidation"
+	"arcoris.dev/apimachinery/runtime/objectmemorystore"
 )
 
 func ExampleExecutor_Create() {

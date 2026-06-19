@@ -23,10 +23,10 @@ import (
 	"arcoris.dev/apimachinery/api/meta"
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 	"arcoris.dev/apimachinery/api/object"
-	"arcoris.dev/apimachinery/api/objectmemorystore"
 	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/value"
+	"arcoris.dev/apimachinery/runtime/objectmemorystore"
 )
 
 func ExampleStore_createGetUpdateDelete() {

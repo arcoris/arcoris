@@ -63,6 +63,6 @@
 // Those responsibilities belong to higher lifecycle, apply, resource, codec,
 // serving, future objectstorewatch, and future watch/runtime layers.
 //
-// The in-memory implementation lives in the sibling package
-// arcoris.dev/apimachinery/api/objectmemorystore.
+// The in-memory implementation lives in
+// arcoris.dev/apimachinery/runtime/objectmemorystore.
 package objectstore

@@ -26,7 +26,6 @@ import (
 	"arcoris.dev/apimachinery/api/meta"
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 	"arcoris.dev/apimachinery/api/object"
-	"arcoris.dev/apimachinery/api/objectmemorystore"
 	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/resource"
@@ -34,6 +33,7 @@ import (
 	"arcoris.dev/apimachinery/api/types"
 	"arcoris.dev/apimachinery/api/value"
 	"arcoris.dev/apimachinery/api/valuevalidation"
+	"arcoris.dev/apimachinery/runtime/objectmemorystore"
 )
 
 const testGroup = apiidentity.Group("control.arcoris.dev")

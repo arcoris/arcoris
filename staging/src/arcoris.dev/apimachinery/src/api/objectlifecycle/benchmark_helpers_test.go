@@ -18,10 +18,10 @@ import (
 	"context"
 	"testing"
 
-	"arcoris.dev/apimachinery/api/objectmemorystore"
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/resourcecatalog"
 	"arcoris.dev/apimachinery/api/valuevalidation"
+	"arcoris.dev/apimachinery/runtime/objectmemorystore"
 )
 
 func benchmarkExecutor(b *testing.B) *Executor {
