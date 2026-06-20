@@ -36,12 +36,15 @@ func TestProcessProgressDoesNotApplyChange(t *testing.T) {
 	}
 }
 
-func TestProcessProgressRejectsOlderRevision(t *testing.T) {
+func TestProcessProgressDoesNotMoveBackward(t *testing.T) {
 	reflector := newTestReflector(t, &fakeListerWatcher{}, newRecordingSink(1))
 	reflector.lastApplied = 3
 	reflector.lastProgress = 3
 
 	err := reflector.processEvent(context.Background(), progressEvent(t, 2))
+	requireNoError(t, err)
 
-	requireErrorIs(t, err, ErrNonMonotonicRevision)
+	if reflector.lastProgress != 3 {
+		t.Fatalf("lastProgress = %s; want 3", reflector.lastProgress)
+	}
 }

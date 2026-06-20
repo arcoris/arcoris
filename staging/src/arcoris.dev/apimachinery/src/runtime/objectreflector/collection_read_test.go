@@ -139,5 +139,5 @@ func TestValidateCollectionReadRejectsDifferentCollection(t *testing.T) {
 
 	err := reflector.validateCollectionRead(read)
 
-	requireErrorIs(t, err, ErrInvalidEvent)
+	requireErrorIs(t, err, ErrSourceContractViolation)
 }

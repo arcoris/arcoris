@@ -16,7 +16,8 @@ package objectreflector
 
 import (
 	"context"
-	"errors"
+
+	"arcoris.dev/apimachinery/api/objectwatch"
 )
 
 // runCycle performs one ListCollection -> Replace -> Watch -> ApplyChange pass.
@@ -40,15 +41,22 @@ func (r *Reflector) runCycle(ctx context.Context) (err error) {
 	r.lastApplied = read.Revision()
 	r.lastProgress = read.Revision()
 
-	stream, err := r.openWatch(ctx, read)
+	// The watch request is built once so the source stream and validator observe
+	// the same collection/start/progress contract.
+	request, err := r.buildWatchRequest(read)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if closeErr := stream.Close(); closeErr != nil {
-			err = errors.Join(err, closeErr)
-		}
-	}()
+	validator, err := objectwatch.NewValidator(request)
+	if err != nil {
+		return err
+	}
 
-	return r.consumeStream(ctx, stream)
+	stream, err := r.openWatch(ctx, request)
+	if err != nil {
+		return err
+	}
+	defer closeStreamAndJoin(&err, stream)
+
+	return r.consumeStream(ctx, stream, &validator)
 }

@@ -24,10 +24,12 @@
 //
 // # Continuity
 //
-// Watch continuity loss is handled by relisting. The Reflector never ignores a
-// source gap, duplicate revision, out-of-collection change, or restart-required
-// event in order to keep a stream running. It either relists from a fresh
-// collection read or returns a fatal contract error.
+// Request-aware stream validation is delegated to api/objectwatch.Validator.
+// The Reflector owns source-to-sink control flow and Sink mutation, not the
+// low-level watch event ordering rules. Watch continuity loss is handled by
+// relisting; the Reflector never ignores a source gap, duplicate revision,
+// out-of-collection change, or restart-required event in order to keep a stream
+// running.
 //
 // # Sink Contract
 //
@@ -41,7 +43,8 @@
 // This package does not implement a cache, queue, informer, controller, retry
 // framework, lifecycle manager, task group, metrics hook, transport adapter,
 // object query engine, scheduler, resync period, event-handler registry, or
-// persistent recovery mechanism. Retry and backoff are intentionally left to a
-// future runtime layer that can make policy decisions outside the core
-// source-to-sink protocol.
+// persistent recovery mechanism. This core implementation relists immediately
+// on continuity loss and restart-required events; retry and backoff are
+// intentionally left to a future runtime layer that can make policy decisions
+// outside the core source-to-sink protocol.
 package objectreflector

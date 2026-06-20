@@ -81,21 +81,3 @@ func TestProcessChangedDoesNotAdvanceRevisionWhenApplyFails(t *testing.T) {
 		t.Fatalf("lastApplied = %s; want 1", reflector.lastApplied)
 	}
 }
-
-func TestProcessChangedRejectsOutsideCollection(t *testing.T) {
-	reflector := newTestReflector(t, &fakeListerWatcher{}, newRecordingSink(1))
-	reflector.lastApplied = 1
-
-	err := reflector.processEvent(context.Background(), changedEvent(t, createdChange(t, otherResourceKey("system", 1), 2)))
-
-	requireErrorIs(t, err, ErrChangeOutsideCollection)
-}
-
-func TestProcessChangedRejectsNonMonotonicRevision(t *testing.T) {
-	reflector := newTestReflector(t, &fakeListerWatcher{}, newRecordingSink(1))
-	reflector.lastApplied = 2
-
-	err := reflector.processEvent(context.Background(), changedEvent(t, createdChange(t, testKey("system", 1), 2)))
-
-	requireErrorIs(t, err, ErrNonMonotonicRevision)
-}

@@ -116,7 +116,7 @@ func TestOpenWatchHandlesWatchContractFailures(t *testing.T) {
 		reflector := newTestReflector(t, source, newRecordingSink(1))
 
 		err := reflector.runCycle(context.Background())
-		requireErrorIs(t, err, ErrInvalidEvent)
+		requireErrorIs(t, err, ErrSourceContractViolation)
 	})
 
 	t.Run("stream and error closes stream", func(t *testing.T) {
@@ -129,6 +129,7 @@ func TestOpenWatchHandlesWatchContractFailures(t *testing.T) {
 		reflector := newTestReflector(t, source, newRecordingSink(1))
 
 		err := reflector.runCycle(context.Background())
+		requireErrorIs(t, err, ErrSourceContractViolation)
 		requireErrorIs(t, err, sourceErr)
 		if stream.closes() != 1 {
 			t.Fatalf("close count = %d; want 1", stream.closes())

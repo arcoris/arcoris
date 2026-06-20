@@ -39,8 +39,11 @@ type Reflector struct {
 	mu      sync.Mutex
 	running bool
 
-	// lastApplied is the sink boundary. lastProgress may move ahead on progress
-	// events, but committed changes must still advance strictly past lastApplied.
-	lastApplied  objectstore.Revision
+	// lastApplied is the latest committed change revision successfully applied to
+	// Sink, or the CollectionRead revision after Replace.
+	lastApplied objectstore.Revision
+	// lastProgress is the latest progress boundary observed from the stream. It is
+	// diagnostic state only; objectwatch.Validator owns request-aware stream
+	// ordering checks.
 	lastProgress objectstore.Revision
 }

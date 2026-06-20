@@ -19,8 +19,8 @@ import storewatchapi "arcoris.dev/apimachinery/api/objectstorewatch"
 // validateCollectionRead verifies the source returned a usable boundary for the
 // exact collection this Reflector owns.
 //
-// CollectionRead.Validate checks the objectstorewatch value contract. The extra
-// collection equality check is reflector-specific: a source that lists a
+// CollectionRead.Validate checks the objectstorewatch value contract. The
+// collection equality check is a source contract check: a source that lists a
 // different collection may still return a valid CollectionRead, but consuming it
 // would make the subsequent watch boundary unrelated to this Reflector's sink.
 func (r *Reflector) validateCollectionRead(read storewatchapi.CollectionRead) error {

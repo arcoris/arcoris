@@ -98,7 +98,24 @@ func TestRunCycleRejectsInvalidCollectionRead(t *testing.T) {
 
 	err := reflector.runCycle(context.Background())
 
-	requireErrorIs(t, err, ErrInvalidEvent)
+	requireErrorIs(t, err, ErrSourceContractViolation)
+}
+
+func TestRunCycleRejectsProgressWhenRequestProgressDisabled(t *testing.T) {
+	source := &fakeListerWatcher{
+		listResponses:  []listResponse{{read: testRead(t, 1)}},
+		watchResponses: []watchResponse{{stream: streamWithEvents(progressEvent(t, 2))}},
+	}
+	sink := newRecordingSink(1)
+	reflector, err := New(source, testCollection(), sink, WithRequestProgress(false))
+	requireNoError(t, err)
+
+	err = reflector.runCycle(context.Background())
+
+	requireErrorIs(t, err, objectwatch.ErrContinuityLost)
+	if sink.changeCount() != 0 {
+		t.Fatalf("change count = %d; want 0", sink.changeCount())
+	}
 }
 
 func TestRunCycleAppliesChangesInRevisionOrder(t *testing.T) {

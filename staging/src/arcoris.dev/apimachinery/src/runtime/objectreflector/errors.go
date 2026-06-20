@@ -28,9 +28,11 @@ var (
 	ErrInvalidOption = errors.New("invalid object reflector option")
 	// ErrAlreadyRunning reports a concurrent Run call on the same Reflector.
 	ErrAlreadyRunning = errors.New("object reflector already running")
-	// ErrInvalidEvent reports a malformed watch event or source stream contract
-	// violation observed while reflecting.
+	// ErrInvalidEvent reports a malformed watch event observed while reflecting.
 	ErrInvalidEvent = errors.New("invalid object reflector event")
+	// ErrSourceContractViolation reports invalid ListerWatcher or Source API
+	// behavior outside the watch event stream itself.
+	ErrSourceContractViolation = errors.New("object reflector source contract violation")
 	// ErrChangeOutsideCollection reports a changed event that does not belong to
 	// the collection this Reflector owns.
 	ErrChangeOutsideCollection = errors.New("object reflector change outside collection")
@@ -65,8 +67,9 @@ func nonMonotonicRevisionError(cause error) error {
 	return errors.Join(ErrNonMonotonicRevision, cause)
 }
 
-// sourceContractError classifies source behavior that makes the stream unsafe
-// to consume but is not itself an objectwatch terminal continuity error.
+// sourceContractError classifies ListerWatcher/Source behavior outside the
+// event stream contract. Event ordering and request matching are delegated to
+// objectwatch.Validator instead.
 func sourceContractError(format string, args ...any) error {
-	return invalidEventError(fmt.Errorf(format, args...))
+	return errors.Join(ErrSourceContractViolation, fmt.Errorf(format, args...))
 }

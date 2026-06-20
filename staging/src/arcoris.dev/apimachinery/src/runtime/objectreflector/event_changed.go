@@ -16,7 +16,6 @@ package objectreflector
 
 import (
 	"context"
-	"fmt"
 
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/objectwatch"
@@ -24,22 +23,13 @@ import (
 
 // processChanged applies one committed object transition.
 //
-// The source is already responsible for scoping the watch stream, but the
-// reflector verifies collection membership defensively. Accepting an
-// out-of-collection change would corrupt the sink while making the source bug
-// harder to diagnose.
+// objectwatch.Validator has already checked request membership and revision
+// ordering. This method keeps only a defensive change validation before handing
+// a detached payload to Sink.
 func (r *Reflector) processChanged(ctx context.Context, event objectwatch.Event) error {
 	change := event.Change.Clone()
 	if err := objectstore.ValidateChange(change); err != nil {
 		return invalidEventError(err)
-	}
-	if !objectstore.ChangeMatchesListRequest(change, r.collection) {
-		return changeOutsideCollectionError(fmt.Errorf("change key %s is outside reflected collection", change.Key.String()))
-	}
-	if !r.lastApplied.Before(change.Revision) {
-		return nonMonotonicRevisionError(
-			fmt.Errorf("change revision %s is not after last applied revision %s", change.Revision, r.lastApplied),
-		)
 	}
 
 	if err := r.sink.ApplyChange(ctx, change.Clone()); err != nil {

@@ -16,6 +16,7 @@ package objectreflector
 
 import (
 	"context"
+	"errors"
 
 	"arcoris.dev/apimachinery/api/objectwatch"
 )
@@ -26,10 +27,21 @@ import (
 // The reflector deliberately keeps no internal event buffer here. If a sink is
 // slow, the source stream sees that backpressure directly and can report
 // continuity loss according to the objectwatch contract.
-func (r *Reflector) consumeStream(ctx context.Context, stream objectwatch.Stream) error {
+func (r *Reflector) consumeStream(
+	ctx context.Context,
+	stream objectwatch.Stream,
+	validator *objectwatch.Validator,
+) error {
 	for {
 		event, err := stream.Next(ctx)
 		if err != nil {
+			return err
+		}
+		event = event.Clone()
+		if err := validator.Accept(event); err != nil {
+			if errors.Is(err, objectwatch.ErrInvalidEvent) {
+				return invalidEventError(err)
+			}
 			return err
 		}
 		if err := r.processEvent(ctx, event); err != nil {

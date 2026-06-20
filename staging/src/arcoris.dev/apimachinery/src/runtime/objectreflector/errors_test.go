@@ -44,7 +44,7 @@ func TestErrorBuildersPreserveSentinelsAndCauses(t *testing.T) {
 		{name: "invalid event", err: invalidEventError(cause), target: ErrInvalidEvent},
 		{name: "outside collection", err: changeOutsideCollectionError(cause), target: ErrChangeOutsideCollection},
 		{name: "non monotonic revision", err: nonMonotonicRevisionError(cause), target: ErrNonMonotonicRevision},
-		{name: "source contract", err: sourceContractError("source failed: %w", cause), target: ErrInvalidEvent},
+		{name: "source contract", err: sourceContractError("source failed: %w", cause), target: ErrSourceContractViolation},
 	}
 
 	for _, tt := range tests {

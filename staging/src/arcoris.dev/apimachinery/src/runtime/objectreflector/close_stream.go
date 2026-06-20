@@ -15,24 +15,25 @@
 package objectreflector
 
 import (
-	"context"
+	"errors"
 
 	"arcoris.dev/apimachinery/api/objectwatch"
 )
 
-// processEvent routes one event that objectwatch.Validator has already accepted.
-//
-// objectwatch.Validator owns request-aware event shape, collection, progress,
-// and ordering checks. The reflector owns only source-to-sink control flow.
-func (r *Reflector) processEvent(ctx context.Context, event objectwatch.Event) error {
-	switch event.Kind {
-	case objectwatch.EventChanged:
-		return r.processChanged(ctx, event)
-	case objectwatch.EventProgress:
-		return r.processProgress(event)
-	case objectwatch.EventRestartRequired:
-		return relistRequiredError(event.Restart)
-	default:
-		return invalidEventError(sourceContractError("unknown event kind %s", event.Kind.String()))
+// closeStreamAndJoin preserves the cycle error while still reporting close
+// failures from a stream that was successfully opened.
+func closeStreamAndJoin(errp *error, stream objectwatch.Stream) {
+	if stream == nil {
+		return
 	}
+	closeErr := stream.Close()
+	if closeErr == nil {
+		return
+	}
+	if *errp == nil {
+		*errp = closeErr
+		return
+	}
+
+	*errp = errors.Join(*errp, closeErr)
 }

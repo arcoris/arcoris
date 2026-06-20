@@ -32,20 +32,20 @@ func (r *Reflector) buildWatchRequest(read storewatchapi.CollectionRead) (object
 	return read.Boundary().WatchRequest(storewatchapi.WatchOptions{AllowProgress: r.options.RequestProgress})
 }
 
-// openWatch opens a source stream after the collection read boundary and
+// openWatch opens a source stream for an already-built request and
 // enforces objectwatch.Source's nil-stream/error contract.
 //
 // A source returning both a stream and an error is treated as failed; the stream
 // is closed defensively before the error is returned.
-func (r *Reflector) openWatch(ctx context.Context, read storewatchapi.CollectionRead) (objectwatch.Stream, error) {
-	request, err := r.buildWatchRequest(read)
-	if err != nil {
-		return nil, err
-	}
+func (r *Reflector) openWatch(ctx context.Context, request objectwatch.Request) (objectwatch.Stream, error) {
 	stream, err := r.source.Watch(ctx, request)
 	if err != nil {
 		if stream != nil {
-			return nil, errors.Join(err, stream.Close())
+			return nil, errors.Join(
+				sourceContractError("source returned stream and error"),
+				err,
+				stream.Close(),
+			)
 		}
 		return nil, err
 	}

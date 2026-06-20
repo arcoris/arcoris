@@ -14,29 +14,16 @@
 
 package objectreflector
 
-import (
-	"fmt"
-
-	"arcoris.dev/apimachinery/api/objectwatch"
-)
+import "arcoris.dev/apimachinery/api/objectwatch"
 
 // processProgress records a source progress boundary without mutating Sink.
 //
-// Progress is useful for source liveness and future observability, but it is not
-// an object mutation. A progress boundary may equal the latest applied change,
-// but it must never move behind already applied or already reported progress.
+// objectwatch.Validator owns progress allowance and monotonicity checks.
+// Reflector keeps lastProgress as diagnostic state only.
 func (r *Reflector) processProgress(event objectwatch.Event) error {
-	if event.Revision.Before(r.lastApplied) {
-		return nonMonotonicRevisionError(
-			fmt.Errorf("progress revision %s is before last applied revision %s", event.Revision, r.lastApplied),
-		)
+	if r.lastProgress.Before(event.Revision) {
+		r.lastProgress = event.Revision
 	}
-	if event.Revision.Before(r.lastProgress) {
-		return nonMonotonicRevisionError(
-			fmt.Errorf("progress revision %s is before last progress revision %s", event.Revision, r.lastProgress),
-		)
-	}
-	r.lastProgress = event.Revision
 
 	return nil
 }
