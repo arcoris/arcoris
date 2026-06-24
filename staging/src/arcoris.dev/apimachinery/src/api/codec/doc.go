@@ -21,9 +21,9 @@
 // convenience interfaces, codec metadata, and structured diagnostics.
 //
 // Package codec does not implement JSON, YAML, CBOR, or any other concrete wire
-// format. Concrete implementations live in packages such as api/codecjson,
-// api/codecyaml, and api/codeccbor. Codec registration and lookup live in a
-// separate api/codecregistry package.
+// format. Concrete implementations live outside api in packages such as
+// arcoris.dev/apimachinery/encoding/json. Codec registration and lookup live in
+// a separate api/codecregistry package.
 //
 // Concrete codec packages own their typed configuration, defaults, validation,
 // and effective runtime policy. Runtime callers receive configured codec

@@ -20,9 +20,9 @@
 // objectsurface names the stable object surface taxonomy. Package
 // objectownership wraps those lower layers into multi-surface object ownership
 // state. Package objectapply consumes the Desired portion of State. Package
-// objectstore stores State. Package codecjson encodes and decodes State. Package
-// objectlifecycle decides when ownership state is initialized, updated, or
-// committed.
+// objectstore stores State. Package arcoris.dev/apimachinery/encoding/json
+// encodes and decodes State as JSON. Package objectlifecycle decides when
+// ownership state is initialized, updated, or committed.
 //
 // State is the single canonical ownership model. There is no separate ownership
 // document model, document version, or migration layer in this package. Stores,

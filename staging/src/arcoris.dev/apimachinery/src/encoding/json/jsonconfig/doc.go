@@ -1,0 +1,30 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package jsonconfig contains JSON-codec-specific configuration helpers.
+//
+// The package contains JSON-specific configuration structs, modes, defaults,
+// and validation. It belongs to the JSON encoding implementation and does not
+// define general API object semantics or transport negotiation policy.
+//
+// Ownership configuration controls JSON representation of canonical
+// objectownership.State values. It does not define storage schema versions or
+// domain migration policy.
+//
+// Configuration is resolved when a jsoncodec.Codec is constructed. Runtime
+// encode/decode calls do not receive per-call options.
+//
+// The package is intentionally specific to encoding/json. YAML, CBOR, and other
+// concrete codecs should define their own configuration packages.
+package jsonconfig
