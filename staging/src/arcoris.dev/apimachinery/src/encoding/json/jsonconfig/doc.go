@@ -16,7 +16,8 @@
 //
 // The package contains JSON-specific configuration structs, modes, defaults,
 // and validation. It belongs to the JSON encoding implementation and does not
-// define general API object semantics or transport negotiation policy.
+// define general API object semantics, codec registry policy, transport
+// negotiation, runtime behavior, or storage behavior.
 //
 // Ownership configuration controls JSON representation of canonical
 // objectownership.State values. It does not define storage schema versions or

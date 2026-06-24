@@ -34,6 +34,11 @@
 // configuration, defaults, modes, and validation. Runtime decode and encode
 // methods do not accept per-call option bags.
 //
+// Registry integration is explicit. Callers may pass a Codec to
+// api/codecregistry directly or use Registration to build one configured
+// registry declaration. Importing this package does not install global codecs,
+// mutate process state, or register JSON by side effect.
+//
 // Package jsoncodec is descriptor-agnostic. It decodes JSON into concrete API
 // value documents and object envelopes, but it does not validate values against
 // api/types descriptors, default, prune, convert versions, perform resource
@@ -41,7 +46,8 @@
 // storage, run admission, or execute runtime/server behavior.
 //
 // This package does not implement storage, watch streams, admission,
-// authorization, transport serving, runtime caches, controllers, or scheduling.
+// authorization, transport serving, runtime caches, controllers, scheduling, or
+// transport negotiation.
 //
 // The decoder uses token-based JSON parsing into a private ordered node model.
 // It preserves JSON object member order, rejects duplicate JSON object keys,
