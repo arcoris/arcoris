@@ -32,21 +32,35 @@ func (r *Reflector) Run(ctx context.Context) error {
 	}
 	defer r.endRun()
 
+	attempt := 0
 	for {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
 		err := r.runCycle(ctx)
 		if err == nil {
+			attempt = 0
 			continue
 		}
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return ctxErr
 		}
 		if isRelistRequired(err) {
+			attempt++
+			if waitErr := r.waitBeforeRelist(ctx, attempt, err); waitErr != nil {
+				return waitErr
+			}
 			continue
 		}
 
 		return err
 	}
+}
+
+// waitBeforeRelist applies only to continuity-driven relists.
+//
+// Sink errors bypass RelistPolicy because the reflector has no repair or
+// idempotency contract for partially applied sink writes.
+func (r *Reflector) waitBeforeRelist(ctx context.Context, attempt int, cause error) error {
+	return r.options.RelistPolicy.Wait(ctx, attempt, cause)
 }

@@ -31,6 +31,11 @@
 // out-of-collection change, or restart-required event in order to keep a stream
 // running.
 //
+// RelistPolicy controls only the pacing between list-watch cycles after an
+// explicit continuity loss, unavailable history, or restart-required event. It
+// is not a retry framework and is not used for sink failures, malformed events,
+// source contract violations, or invalid collection reads.
+//
 // # Sink Contract
 //
 // Sink receives committed changes only. Progress and restart events are

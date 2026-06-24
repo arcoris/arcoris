@@ -22,6 +22,9 @@ func TestDefaultOptionsRequestsProgress(t *testing.T) {
 	if !options.RequestProgress {
 		t.Fatalf("RequestProgress = false; want true")
 	}
+	if options.RelistPolicy == nil {
+		t.Fatalf("RelistPolicy = nil; want default policy")
+	}
 }
 
 func TestWithRequestProgress(t *testing.T) {
@@ -36,6 +39,26 @@ func TestWithRequestProgress(t *testing.T) {
 
 func TestApplyOptionsRejectsNilOption(t *testing.T) {
 	_, err := applyOptions([]Option{nil})
+
+	requireErrorIs(t, err, ErrInvalidOption)
+}
+
+func TestWithRelistPolicy(t *testing.T) {
+	policy := &recordingRelistPolicy{}
+	options := DefaultOptions()
+
+	err := WithRelistPolicy(policy)(&options)
+	requireNoError(t, err)
+
+	if options.RelistPolicy != policy {
+		t.Fatalf("RelistPolicy was not installed")
+	}
+}
+
+func TestWithRelistPolicyRejectsNil(t *testing.T) {
+	options := DefaultOptions()
+
+	err := WithRelistPolicy(nil)(&options)
 
 	requireErrorIs(t, err, ErrInvalidOption)
 }
