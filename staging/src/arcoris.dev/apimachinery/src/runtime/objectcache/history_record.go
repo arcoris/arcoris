@@ -14,18 +14,28 @@
 
 package objectcache
 
-// Len returns the number of materialized live items.
-func (c *Cache) Len() int {
-	if c == nil {
-		return 0
+import "arcoris.dev/apimachinery/api/objectstore"
+
+// objectRecord owns retained history for one object key.
+type objectRecord struct {
+	key      objectstore.Key
+	versions versionRing
+}
+
+func newObjectRecord(key objectstore.Key, retained int) *objectRecord {
+	return &objectRecord{key: key, versions: newVersionRing(retained)}
+}
+
+func (r *objectRecord) append(version objectVersion) {
+	if r == nil {
+		return
 	}
+	r.versions.append(version)
+}
 
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	if !c.ready {
-		return 0
+func (r *objectRecord) newestToOldest(fn func(objectVersion) bool) {
+	if r == nil {
+		return
 	}
-
-	return c.latest.len()
+	r.versions.newestToOldest(fn)
 }

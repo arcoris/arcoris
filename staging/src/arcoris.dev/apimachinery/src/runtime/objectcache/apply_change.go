@@ -53,14 +53,15 @@ func (c *Cache) ApplyChange(ctx context.Context, change objectstore.Change) erro
 	if !c.ready {
 		return ErrNotReady
 	}
-	if !c.col.revision.Before(change.Revision) {
+	if !c.latest.revision.Before(change.Revision) {
 		return errorWith(ErrStaleChange, errors.New("change revision does not advance cache revision"))
 	}
-	if err := c.col.validateApply(change); err != nil {
+	if err := c.latest.validateApply(change); err != nil {
 		return err
 	}
 
-	c.col.applyValidated(change)
+	c.latest.applyValidated(change)
+	c.appendHistoryLocked(change)
 
 	return nil
 }

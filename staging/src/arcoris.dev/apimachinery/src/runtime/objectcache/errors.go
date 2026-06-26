@@ -17,8 +17,10 @@ package objectcache
 import "errors"
 
 var (
-	// ErrInvalidCache reports an unusable cache receiver, collection, or option.
+	// ErrInvalidCache reports an unusable cache receiver or collection.
 	ErrInvalidCache = errors.New("invalid object cache")
+	// ErrInvalidOption reports an invalid cache construction option.
+	ErrInvalidOption = errors.New("invalid object cache option")
 	// ErrInvalidRead reports a malformed or cache-incompatible collection read.
 	ErrInvalidRead = errors.New("invalid object cache read")
 	// ErrInvalidChange reports a malformed or cache-incompatible committed change.
@@ -33,6 +35,12 @@ var (
 	ErrStaleChange = errors.New("stale object cache change")
 	// ErrDuplicateKey reports repeated keys inside one replacement read.
 	ErrDuplicateKey = errors.New("duplicate object cache key")
+	// ErrHistoryDisabled reports a historical read against a latest-only cache.
+	ErrHistoryDisabled = errors.New("object cache history disabled")
+	// ErrHistoryUnavailable reports a historical read outside retained knowledge.
+	ErrHistoryUnavailable = errors.New("object cache history unavailable")
+	// ErrFutureRevision reports a historical read beyond the cache boundary.
+	ErrFutureRevision = errors.New("object cache future revision")
 )
 
 // errorWith preserves broad cache sentinels while keeping lower-level causes

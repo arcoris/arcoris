@@ -11,3 +11,5 @@ a runtime implementation, not an API contract package.
 `api/objectquery` remains the semantic query layer and must not depend on
 `runtime/objectcache`. Query/index support for runtime caches is intentionally
 deferred until it can use the current objectquery planning model.
+
+The active runtime cache may retain bounded per-object history when configured.

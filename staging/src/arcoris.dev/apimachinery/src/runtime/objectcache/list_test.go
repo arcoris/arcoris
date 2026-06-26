@@ -16,17 +16,15 @@ package objectcache
 
 import "testing"
 
-func TestListReturnsFalseWhenNilOrNotReady(t *testing.T) {
+func TestListRejectsNilOrNotReadyCache(t *testing.T) {
 	var nilCache *Cache
-	if result, ok := nilCache.List(); ok || !result.IsZero() {
-		t.Fatalf("nil List() = %#v, %v; want zero, false", result, ok)
-	}
+	_, err := nilCache.List()
+	requireErrorIs(t, err, ErrInvalidCache)
 
 	cache, err := New(testCollection())
 	requireNoError(t, err)
-	if result, ok := cache.List(); ok || !result.IsZero() {
-		t.Fatalf("not-ready List() = %#v, %v; want zero, false", result, ok)
-	}
+	_, err = cache.List()
+	requireErrorIs(t, err, ErrNotReady)
 }
 
 func TestListReturnsDetachedItemsAndRevision(t *testing.T) {
@@ -34,20 +32,16 @@ func TestListReturnsDetachedItemsAndRevision(t *testing.T) {
 	second := testKey("system", 2)
 	cache := readyCache(t, 9, listItem(first, 1, "first"), listItem(second, 2, "second"))
 
-	result, ok := cache.List()
-	if !ok {
-		t.Fatalf("List() ok = false; want true")
-	}
+	result, err := cache.List()
+	requireNoError(t, err)
 	if result.Revision != 9 {
 		t.Fatalf("revision = %s; want 9", result.Revision)
 	}
 	requireListOrder(t, result, first, second)
 	mutateState(&result.Items[0].State, "mutated")
 
-	again, ok := cache.List()
-	if !ok {
-		t.Fatalf("List() ok = false; want true")
-	}
+	again, err := cache.List()
+	requireNoError(t, err)
 	if desired := desiredString(t, again.Items[0].State); desired != "first" {
 		t.Fatalf("desired = %q; want first", desired)
 	}

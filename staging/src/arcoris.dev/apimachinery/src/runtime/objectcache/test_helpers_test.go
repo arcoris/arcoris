@@ -143,6 +143,24 @@ func readyCache(t testing.TB, revision objectstore.Revision, items ...objectstor
 	return cache
 }
 
+func readyHistoryCache(
+	t testing.TB,
+	retained int,
+	revision objectstore.Revision,
+	items ...objectstore.ListItem,
+) *Cache {
+	t.Helper()
+
+	cache, err := New(
+		testCollection(),
+		WithHistory(HistoryPolicy{RetainedVersionsPerObject: retained}),
+	)
+	requireNoError(t, err)
+	requireNoError(t, cache.Replace(context.Background(), collectionRead(t, testCollection(), revision, items...)))
+
+	return cache
+}
+
 func desiredString(t testing.TB, state objectstore.State) string {
 	t.Helper()
 

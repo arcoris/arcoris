@@ -16,23 +16,22 @@ package objectcache
 
 import "testing"
 
-func TestGetReturnsFalseWhenNilNotReadyOutsideOrMissing(t *testing.T) {
+func TestGetReportsReceiverReadinessCollectionAndAbsence(t *testing.T) {
 	var nilCache *Cache
-	if _, ok := nilCache.Get(testKey("system", 1)); ok {
-		t.Fatalf("nil Get() ok = true; want false")
-	}
+	_, err := nilCache.Get(testKey("system", 1))
+	requireErrorIs(t, err, ErrInvalidCache)
 
 	cache, err := New(namespaceCollection("system"))
 	requireNoError(t, err)
-	if _, ok := cache.Get(testKey("system", 1)); ok {
-		t.Fatalf("not-ready Get() ok = true; want false")
-	}
-	if _, ok := cache.Get(testKey("other", 1)); ok {
-		t.Fatalf("outside Get() ok = true; want false")
-	}
+	_, err = cache.Get(testKey("system", 1))
+	requireErrorIs(t, err, ErrNotReady)
+	_, err = cache.Get(testKey("other", 1))
+	requireErrorIs(t, err, ErrOutsideCollection)
 	requireNoError(t, cache.Replace(nil, collectionRead(t, namespaceCollection("system"), 0)))
-	if _, ok := cache.Get(testKey("system", 1)); ok {
-		t.Fatalf("missing Get() ok = true; want false")
+	result, err := cache.Get(testKey("system", 1))
+	requireNoError(t, err)
+	if result.Found || result.Revision != 0 {
+		t.Fatalf("missing Get() = %#v; want known absence at revision 0", result)
 	}
 }
 
@@ -40,17 +39,19 @@ func TestGetReturnsDetachedState(t *testing.T) {
 	key := testKey("system", 1)
 	cache := readyCache(t, 1, listItem(key, 1, "cached"))
 
-	got, ok := cache.Get(key)
-	if !ok {
-		t.Fatalf("Get() ok = false; want true")
+	got, err := cache.Get(key)
+	requireNoError(t, err)
+	if !got.Found {
+		t.Fatalf("Get() Found = false; want true")
 	}
-	mutateState(&got, "mutated")
+	mutateState(&got.State, "mutated")
 
-	again, ok := cache.Get(key)
-	if !ok {
-		t.Fatalf("Get() ok = false; want true")
+	again, err := cache.Get(key)
+	requireNoError(t, err)
+	if !again.Found {
+		t.Fatalf("Get() Found = false; want true")
 	}
-	if desired := desiredString(t, again); desired != "cached" {
+	if desired := desiredString(t, again.State); desired != "cached" {
 		t.Fatalf("desired = %q; want cached", desired)
 	}
 }

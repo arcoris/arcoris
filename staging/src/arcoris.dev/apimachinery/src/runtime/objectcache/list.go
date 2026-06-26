@@ -17,17 +17,17 @@ package objectcache
 import "arcoris.dev/apimachinery/api/objectstore"
 
 // List returns the current collection as detached list data.
-func (c *Cache) List() (objectstore.ListResult, bool) {
+func (c *Cache) List() (objectstore.ListResult, error) {
 	if c == nil {
-		return objectstore.ListResult{}, false
+		return objectstore.ListResult{}, ErrInvalidCache
 	}
 
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	if !c.ready {
-		return objectstore.ListResult{}, false
+		return objectstore.ListResult{}, ErrNotReady
 	}
 
-	return c.col.listResult(), true
+	return c.latest.listResult(), nil
 }

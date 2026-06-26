@@ -16,18 +16,19 @@ package objectcache
 
 import "arcoris.dev/apimachinery/api/objectstore"
 
-// Revision returns the current collection boundary revision.
-func (c *Cache) Revision() (objectstore.Revision, error) {
-	if c == nil {
-		return 0, ErrInvalidCache
-	}
-
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	if !c.ready {
-		return 0, ErrNotReady
-	}
-
-	return c.latest.revision, nil
+// GetResult is the result of a latest or historical object read.
+type GetResult struct {
+	// Key is the requested object key.
+	Key objectstore.Key
+	// State is populated only when Found is true. It is always detached from
+	// cache-owned state.
+	State objectstore.State
+	// Found reports whether the object was live at the served cache revision.
+	Found bool
+	// Revision is the cache observation revision served by the read.
+	//
+	// Get returns the current cache collection revision. GetAt returns the
+	// requested cache observation revision. PreviousLive returns the retained
+	// live version's observation revision.
+	Revision objectstore.Revision
 }

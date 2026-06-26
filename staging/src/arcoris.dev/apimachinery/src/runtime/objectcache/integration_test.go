@@ -29,7 +29,7 @@ func TestCacheIntegrationWithReflectorAndObservableStore(t *testing.T) {
 	requireNoError(t, err)
 	source, err := runtimewatch.New(backend)
 	requireNoError(t, err)
-	cache, err := New(testCollection())
+	cache, err := New(testCollection(), WithHistory(HistoryPolicy{RetainedVersionsPerObject: 3}))
 	requireNoError(t, err)
 	reflector, err := objectreflector.New(source, testCollection(), cache)
 	requireNoError(t, err)
@@ -48,23 +48,39 @@ func TestCacheIntegrationWithReflectorAndObservableStore(t *testing.T) {
 	created, err := source.Create(context.Background(), key, testState(key, 0, "created"))
 	requireNoError(t, err)
 	waitUntil(t, waitCtx, func() bool {
-		state, ok := cache.Get(key)
-		return ok && state.Revision == created.Revision && desiredString(t, state) == "created"
+		result, err := cache.Get(key)
+		return err == nil && result.Found && result.State.Revision == created.Revision && desiredString(t, result.State) == "created"
 	})
 
 	updated, err := source.Update(context.Background(), key, created.Revision, testState(key, 0, "updated"))
 	requireNoError(t, err)
 	waitUntil(t, waitCtx, func() bool {
-		state, ok := cache.Get(key)
-		return ok && state.Revision == updated.Revision && desiredString(t, state) == "updated"
+		result, err := cache.Get(key)
+		return err == nil && result.Found && result.State.Revision == updated.Revision && desiredString(t, result.State) == "updated"
 	})
 
-	_, err = source.Delete(context.Background(), key, updated.Revision)
+	previous, err := cache.PreviousLive(key, updated.Revision)
+	requireNoError(t, err)
+	if !previous.Found || desiredString(t, previous.State) != "created" {
+		t.Fatalf("PreviousLive() = %#v; want created version", previous)
+	}
+
+	deleted, err := source.Delete(context.Background(), key, updated.Revision)
 	requireNoError(t, err)
 	waitUntil(t, waitCtx, func() bool {
-		_, ok := cache.Get(key)
-		return !ok
+		result, err := cache.Get(key)
+		return err == nil && result.Revision == deleted.Revision && !result.Found
 	})
+	historical, err := cache.GetAt(key, updated.Revision)
+	requireNoError(t, err)
+	if !historical.Found || desiredString(t, historical.State) != "updated" {
+		t.Fatalf("GetAt(updated) = %#v; want updated version", historical)
+	}
+	previous, err = cache.PreviousLive(key, deleted.Revision)
+	requireNoError(t, err)
+	if !previous.Found || desiredString(t, previous.State) != "updated" {
+		t.Fatalf("PreviousLive(delete) = %#v; want updated version", previous)
+	}
 
 	cancel()
 	select {

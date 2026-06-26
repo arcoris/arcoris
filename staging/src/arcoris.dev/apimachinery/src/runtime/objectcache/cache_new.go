@@ -16,14 +16,25 @@ package objectcache
 
 import "arcoris.dev/apimachinery/api/objectstore"
 
-// New constructs an empty cache bound to collection.
+// New constructs an empty cache bound to one structural collection.
 func New(collection objectstore.ListRequest, options ...Option) (*Cache, error) {
 	if err := objectstore.ValidateListRequest(collection); err != nil {
 		return nil, errorWith(ErrInvalidCache, err)
 	}
-	if _, err := applyOptions(options); err != nil {
+	cfg, err := applyOptions(options)
+	if err != nil {
 		return nil, err
 	}
 
-	return &Cache{collection: collection}, nil
+	retained := cfg.History.RetainedVersionsPerObject
+	cache := &Cache{
+		collection:                collection,
+		historyEnabled:            retained > 0,
+		retainedVersionsPerObject: retained,
+	}
+	if cache.historyEnabled {
+		cache.records = map[objectstore.Key]*objectRecord{}
+	}
+
+	return cache, nil
 }

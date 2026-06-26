@@ -83,3 +83,36 @@ func TestConcurrentReadsWhileApplyChangeRuns(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestConcurrentHistoricalReadsWhileVersionRingIsOverwritten(t *testing.T) {
+	key := testKey("system", 1)
+	cache := readyHistoryCache(t, 3, 1, listItem(key, 1, "initial"))
+
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	for i := 0; i < 4; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			for j := 0; j < 200; j++ {
+				_, _ = cache.Get(key)
+				_, _ = cache.GetAt(key, 1)
+				_, _ = cache.PreviousLive(key, 80)
+				_, _ = cache.List()
+			}
+		}()
+	}
+
+	close(start)
+	before := testState(key, 1, "initial")
+	for revision := objectstore.Revision(2); revision < 80; revision++ {
+		after := testState(key, revision, revision.String())
+		requireNoError(t, cache.ApplyChange(
+			context.Background(),
+			objectstore.MustUpdatedChange(key, before, after),
+		))
+		before = after
+	}
+	wg.Wait()
+}

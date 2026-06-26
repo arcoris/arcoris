@@ -16,11 +16,11 @@ package objectcache
 
 import "arcoris.dev/apimachinery/api/objectstore"
 
-// Get returns the latest known live state for key.
+// PreviousLive returns the newest retained live version observed before before.
 //
-// A missing key is a successful known absence answer when the cache is ready
-// and the key belongs to the cache collection.
-func (c *Cache) Get(key objectstore.Key) (GetResult, error) {
+// Revisions are not dense, so PreviousLive scans retained object versions
+// instead of deriving a predecessor revision arithmetically.
+func (c *Cache) PreviousLive(key objectstore.Key, before objectstore.Revision) (GetResult, error) {
 	if c == nil {
 		return GetResult{}, ErrInvalidCache
 	}
@@ -31,17 +31,27 @@ func (c *Cache) Get(key objectstore.Key) (GetResult, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	if !c.ready {
-		return GetResult{}, ErrNotReady
+	state, err := c.prepareHistoricalReadLocked(key, before)
+	if err != nil {
+		return GetResult{}, err
 	}
-	result := GetResult{Key: key, Revision: c.latest.revision}
-	item, ok := c.latest.item(key)
+	if state.record == nil {
+		return GetResult{}, ErrHistoryUnavailable
+	}
+
+	var found objectVersion
+	ok := false
+	state.record.newestToOldest(func(version objectVersion) bool {
+		if version.Live && version.Revision.Before(before) {
+			found = version
+			ok = true
+			return false
+		}
+		return true
+	})
 	if !ok {
-		return result, nil
+		return GetResult{}, ErrHistoryUnavailable
 	}
 
-	result.State = item.State
-	result.Found = true
-
-	return result, nil
+	return liveResultAt(key, found.Revision, found.State), nil
 }

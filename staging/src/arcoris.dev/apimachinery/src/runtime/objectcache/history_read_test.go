@@ -14,18 +14,20 @@
 
 package objectcache
 
-// Len returns the number of materialized live items.
-func (c *Cache) Len() int {
-	if c == nil {
-		return 0
+import "testing"
+
+func TestHistoricalReadHelpersBuildDetachedResults(t *testing.T) {
+	key := testKey("system", 1)
+	state := testState(key, 4, "stored")
+
+	absence := knownAbsenceAt(key, 10)
+	if absence.Found || absence.Revision != 10 || !absence.Key.Equal(key) {
+		t.Fatalf("knownAbsenceAt() = %#v; want absence at revision 10", absence)
 	}
 
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	if !c.ready {
-		return 0
+	live := liveResultAt(key, 10, state)
+	mutateState(&state, "mutated")
+	if !live.Found || live.Revision != 10 || desiredString(t, live.State) != "stored" {
+		t.Fatalf("liveResultAt() = %#v; want detached live state at revision 10", live)
 	}
-
-	return c.latest.len()
 }

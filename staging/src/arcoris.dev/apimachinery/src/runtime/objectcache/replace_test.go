@@ -57,10 +57,8 @@ func TestReplaceInstallsCollectionReadAndPreservesOrder(t *testing.T) {
 		listItem(second, 4, "second"),
 	)))
 
-	result, ok := cache.List()
-	if !ok {
-		t.Fatalf("List() ok = false; want true")
-	}
+	result, err := cache.List()
+	requireNoError(t, err)
 	if result.Revision != 7 {
 		t.Fatalf("revision = %s; want 7", result.Revision)
 	}
@@ -77,11 +75,12 @@ func TestReplaceStoresDetachedState(t *testing.T) {
 	requireNoError(t, cache.Replace(context.Background(), read))
 	mutateState(&item.State, "mutated")
 
-	got, ok := cache.Get(key)
-	if !ok {
-		t.Fatalf("Get() ok = false; want true")
+	got, err := cache.Get(key)
+	requireNoError(t, err)
+	if !got.Found {
+		t.Fatalf("Get() Found = false; want true")
 	}
-	if desired := desiredString(t, got); desired != "original" {
+	if desired := desiredString(t, got.State); desired != "original" {
 		t.Fatalf("desired = %q; want original", desired)
 	}
 }
@@ -89,9 +88,10 @@ func TestReplaceStoresDetachedState(t *testing.T) {
 func TestReplaceRejectsDuplicateKeys(t *testing.T) {
 	key := testKey("system", 1)
 	cache := readyCache(t, 5, listItem(testKey("system", 2), 2, "existing"))
-	before, _ := cache.List()
+	before, err := cache.List()
+	requireNoError(t, err)
 
-	err := cache.Replace(context.Background(), collectionRead(
+	err = cache.Replace(context.Background(), collectionRead(
 		t,
 		testCollection(),
 		6,
@@ -101,7 +101,8 @@ func TestReplaceRejectsDuplicateKeys(t *testing.T) {
 
 	requireErrorIs(t, err, ErrInvalidRead)
 	requireErrorIs(t, err, ErrDuplicateKey)
-	after, _ := cache.List()
+	after, err := cache.List()
+	requireNoError(t, err)
 	if after.Revision != before.Revision || len(after.Items) != len(before.Items) {
 		t.Fatalf("failed Replace mutated cache: before=%#v after=%#v", before, after)
 	}
@@ -133,11 +134,12 @@ func TestReplaceRejectsStaleReadAndAcceptsEqualRevision(t *testing.T) {
 	requireErrorIs(t, err, ErrStaleRead)
 
 	requireNoError(t, cache.Replace(context.Background(), collectionRead(t, testCollection(), 10, listItem(key, 1, "refresh"))))
-	got, ok := cache.Get(key)
-	if !ok {
-		t.Fatalf("Get() ok = false; want true")
+	got, err := cache.Get(key)
+	requireNoError(t, err)
+	if !got.Found {
+		t.Fatalf("Get() Found = false; want true")
 	}
-	if desired := desiredString(t, got); desired != "refresh" {
+	if desired := desiredString(t, got.State); desired != "refresh" {
 		t.Fatalf("desired = %q; want refresh", desired)
 	}
 }

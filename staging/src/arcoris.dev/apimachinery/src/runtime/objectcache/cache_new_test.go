@@ -37,7 +37,7 @@ func TestNewRejectsNilOption(t *testing.T) {
 	if cache != nil {
 		t.Fatalf("cache = %#v; want nil", cache)
 	}
-	requireErrorIs(t, err, ErrInvalidCache)
+	requireErrorIs(t, err, ErrInvalidOption)
 }
 
 func TestNewStartsNotReady(t *testing.T) {
@@ -47,15 +47,26 @@ func TestNewStartsNotReady(t *testing.T) {
 	if cache.Ready() {
 		t.Fatalf("Ready() = true; want false")
 	}
-	if revision, ok := cache.Revision(); ok || revision != 0 {
-		t.Fatalf("Revision() = %s, %v; want 0, false", revision, ok)
-	}
-	if result, ok := cache.List(); ok || !result.IsZero() {
-		t.Fatalf("List() = %#v, %v; want zero, false", result, ok)
-	}
+	_, err = cache.Revision()
+	requireErrorIs(t, err, ErrNotReady)
+	_, err = cache.List()
+	requireErrorIs(t, err, ErrNotReady)
+	_, err = cache.Get(testKey("system", 1))
+	requireErrorIs(t, err, ErrNotReady)
 	if got := cache.Len(); got != 0 {
 		t.Fatalf("Len() = %d; want 0", got)
 	}
+}
+
+func TestHistoricalReadsReturnNotReadyBeforeReplace(t *testing.T) {
+	cache, err := New(testCollection(), WithHistory(HistoryPolicy{RetainedVersionsPerObject: 2}))
+	requireNoError(t, err)
+	key := testKey("system", 1)
+
+	_, err = cache.GetAt(key, 1)
+	requireErrorIs(t, err, ErrNotReady)
+	_, err = cache.PreviousLive(key, 1)
+	requireErrorIs(t, err, ErrNotReady)
 }
 
 func TestReplaceEmptyRevisionZeroMakesCacheReady(t *testing.T) {
@@ -67,10 +78,14 @@ func TestReplaceEmptyRevisionZeroMakesCacheReady(t *testing.T) {
 	if !cache.Ready() {
 		t.Fatalf("Ready() = false; want true")
 	}
-	if revision, ok := cache.Revision(); !ok || revision != 0 {
-		t.Fatalf("Revision() = %s, %v; want 0, true", revision, ok)
+	revision, err := cache.Revision()
+	requireNoError(t, err)
+	if revision != 0 {
+		t.Fatalf("Revision() = %s; want 0", revision)
 	}
-	if result, ok := cache.List(); !ok || result.Revision != 0 || len(result.Items) != 0 {
-		t.Fatalf("List() = %#v, %v; want empty revision 0, true", result, ok)
+	result, err := cache.List()
+	requireNoError(t, err)
+	if result.Revision != 0 || len(result.Items) != 0 {
+		t.Fatalf("List() = %#v; want empty revision 0", result)
 	}
 }

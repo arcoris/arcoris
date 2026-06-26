@@ -21,18 +21,18 @@ import (
 
 func TestRevisionReportsReadinessSeparatelyFromRevisionValue(t *testing.T) {
 	var nilCache *Cache
-	if revision, ok := nilCache.Revision(); ok || revision != 0 {
-		t.Fatalf("nil Revision() = %s, %v; want 0, false", revision, ok)
-	}
+	_, err := nilCache.Revision()
+	requireErrorIs(t, err, ErrInvalidCache)
 
 	cache, err := New(testCollection())
 	requireNoError(t, err)
-	if revision, ok := cache.Revision(); ok || revision != 0 {
-		t.Fatalf("new Revision() = %s, %v; want 0, false", revision, ok)
-	}
+	_, err = cache.Revision()
+	requireErrorIs(t, err, ErrNotReady)
 
 	requireNoError(t, cache.Replace(context.Background(), collectionRead(t, testCollection(), 0)))
-	if revision, ok := cache.Revision(); !ok || revision != 0 {
-		t.Fatalf("ready Revision() = %s, %v; want 0, true", revision, ok)
+	revision, err := cache.Revision()
+	requireNoError(t, err)
+	if revision != 0 {
+		t.Fatalf("ready Revision() = %s; want 0", revision)
 	}
 }

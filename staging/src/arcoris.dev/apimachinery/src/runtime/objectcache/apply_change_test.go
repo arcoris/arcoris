@@ -70,10 +70,8 @@ func TestApplyCreatedChangeAppendsItemAndAdvancesRevision(t *testing.T) {
 		objectstore.MustCreatedChange(created, testState(created, 2, "created")),
 	))
 
-	result, ok := cache.List()
-	if !ok {
-		t.Fatalf("List() ok = false; want true")
-	}
+	result, err := cache.List()
+	requireNoError(t, err)
 	if result.Revision != 2 {
 		t.Fatalf("revision = %s; want 2", result.Revision)
 	}
@@ -91,19 +89,18 @@ func TestApplyUpdatedChangePreservesPositionAndAdvancesRevision(t *testing.T) {
 		objectstore.MustUpdatedChange(first, before.State, testState(first, 3, "after")),
 	))
 
-	result, ok := cache.List()
-	if !ok {
-		t.Fatalf("List() ok = false; want true")
-	}
+	result, err := cache.List()
+	requireNoError(t, err)
 	if result.Revision != 3 {
 		t.Fatalf("revision = %s; want 3", result.Revision)
 	}
 	requireListOrder(t, result, first, second)
-	got, ok := cache.Get(first)
-	if !ok {
-		t.Fatalf("Get(updated) ok = false; want true")
+	got, err := cache.Get(first)
+	requireNoError(t, err)
+	if !got.Found {
+		t.Fatalf("Get(updated) Found = false; want true")
 	}
-	if desired := desiredString(t, got); desired != "after" {
+	if desired := desiredString(t, got.State); desired != "after" {
 		t.Fatalf("desired = %q; want after", desired)
 	}
 }
@@ -119,15 +116,15 @@ func TestApplyDeletedChangeRemovesItemAndPreservesRemainingOrder(t *testing.T) {
 		objectstore.MustDeletedChange(second.Key, second.State, 4),
 	))
 
-	result, ok := cache.List()
-	if !ok {
-		t.Fatalf("List() ok = false; want true")
-	}
+	result, err := cache.List()
+	requireNoError(t, err)
 	if result.Revision != 4 {
 		t.Fatalf("revision = %s; want 4", result.Revision)
 	}
 	requireListOrder(t, result, first.Key, third.Key)
-	if _, ok := cache.Get(second.Key); ok {
+	deleted, err := cache.Get(second.Key)
+	requireNoError(t, err)
+	if deleted.Found {
 		t.Fatalf("deleted key still present")
 	}
 }
@@ -140,11 +137,12 @@ func TestApplyChangeClonesRetainedState(t *testing.T) {
 	requireNoError(t, cache.ApplyChange(context.Background(), change))
 	mutateState(&change.After, "mutated")
 
-	got, ok := cache.Get(key)
-	if !ok {
-		t.Fatalf("Get() ok = false; want true")
+	got, err := cache.Get(key)
+	requireNoError(t, err)
+	if !got.Found {
+		t.Fatalf("Get() Found = false; want true")
 	}
-	if desired := desiredString(t, got); desired != "created" {
+	if desired := desiredString(t, got.State); desired != "created" {
 		t.Fatalf("desired = %q; want created", desired)
 	}
 }
@@ -252,15 +250,17 @@ func TestFailedApplyChangeLeavesStateUnchanged(t *testing.T) {
 	key := testKey("system", 1)
 	item := listItem(key, 1, "current")
 	cache := readyCache(t, 1, item)
-	before, _ := cache.List()
+	before, err := cache.List()
+	requireNoError(t, err)
 
-	err := cache.ApplyChange(
+	err = cache.ApplyChange(
 		context.Background(),
 		objectstore.MustUpdatedChange(key, testState(key, 1, "different"), testState(key, 2, "after")),
 	)
 
 	requireErrorIs(t, err, ErrInvalidChange)
-	after, _ := cache.List()
+	after, err := cache.List()
+	requireNoError(t, err)
 	if after.Revision != before.Revision || desiredString(t, after.Items[0].State) != "current" {
 		t.Fatalf("failed ApplyChange mutated cache: before=%#v after=%#v", before, after)
 	}

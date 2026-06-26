@@ -27,16 +27,27 @@ var _ objectreflector.Sink = (*Cache)(nil)
 //
 // Cache is inactive until Replace installs the first collection read. Revision
 // zero is a valid ready boundary for an empty initial collection, so readiness
-// is tracked separately from the revision watermark. Cache contains a mutex and
-// must not be copied after construction.
+// is tracked separately from the revision watermark.
+//
+// The latest collection is the source of truth for current live objects.
+// Optional object records retain bounded per-key history for GetAt and
+// PreviousLive. Cache contains a mutex and must not be copied after
+// construction.
 type Cache struct {
-	// mu protects collection, ready, and col.
+	// mu protects readiness, latest state, and per-object history records.
 	mu sync.RWMutex
 	// collection is the structural collection this cache owns.
 	collection objectstore.ListRequest
 	// ready records whether an initial Replace succeeded.
 	ready bool
-	// col is the current materialized collection. It is meaningful only when
+	// latest is the current materialized collection. It is meaningful only when
 	// ready is true.
-	col collection
+	latest collection
+	// historyEnabled records whether historical reads are supported.
+	historyEnabled bool
+	// retainedVersionsPerObject bounds every object record independently.
+	retainedVersionsPerObject int
+	// records stores optional per-object version rings. Deleted keys may remain
+	// here as tombstones even when absent from latest.
+	records map[objectstore.Key]*objectRecord
 }

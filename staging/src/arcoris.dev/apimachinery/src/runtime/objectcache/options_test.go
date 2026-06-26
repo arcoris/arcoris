@@ -20,19 +20,41 @@ import (
 )
 
 func TestApplyOptionsAcceptsEmptyOptions(t *testing.T) {
-	_, err := applyOptions(nil)
+	options, err := applyOptions(nil)
 	requireNoError(t, err)
+	if options.History.RetainedVersionsPerObject != 0 {
+		t.Fatalf("RetainedVersionsPerObject = %d; want 0", options.History.RetainedVersionsPerObject)
+	}
 }
 
 func TestApplyOptionsRejectsNilOption(t *testing.T) {
 	_, err := applyOptions([]Option{nil})
-	requireErrorIs(t, err, ErrInvalidCache)
+	requireErrorIs(t, err, ErrInvalidOption)
 }
 
 func TestApplyOptionsPreservesOptionError(t *testing.T) {
 	cause := errors.New("option failed")
 	_, err := applyOptions([]Option{func(*Options) error { return cause }})
 
-	requireErrorIs(t, err, ErrInvalidCache)
 	requireErrorIs(t, err, cause)
+}
+
+func TestDefaultOptionsDisablesHistory(t *testing.T) {
+	options := DefaultOptions()
+	if options.History.RetainedVersionsPerObject != 0 {
+		t.Fatalf("RetainedVersionsPerObject = %d; want 0", options.History.RetainedVersionsPerObject)
+	}
+}
+
+func TestWithHistoryValidatesRetention(t *testing.T) {
+	for _, retained := range []int{0, 1, 2, 8} {
+		options, err := applyOptions([]Option{WithHistory(HistoryPolicy{RetainedVersionsPerObject: retained})})
+		requireNoError(t, err)
+		if options.History.RetainedVersionsPerObject != retained {
+			t.Fatalf("RetainedVersionsPerObject = %d; want %d", options.History.RetainedVersionsPerObject, retained)
+		}
+	}
+
+	_, err := applyOptions([]Option{WithHistory(HistoryPolicy{RetainedVersionsPerObject: -1})})
+	requireErrorIs(t, err, ErrInvalidOption)
 }

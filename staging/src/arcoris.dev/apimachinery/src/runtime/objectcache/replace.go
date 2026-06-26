@@ -58,11 +58,12 @@ func (c *Cache) Replace(ctx context.Context, read storewatchapi.CollectionRead) 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if c.ready && read.Revision().Before(c.col.revision) {
+	if c.ready && read.Revision().Before(c.latest.revision) {
 		return errorWith(ErrStaleRead, errors.New("collection read revision is before cache revision"))
 	}
 
-	c.col = next
+	c.latest = next
+	c.resetHistoryLocked(next)
 	c.ready = true
 
 	return nil
