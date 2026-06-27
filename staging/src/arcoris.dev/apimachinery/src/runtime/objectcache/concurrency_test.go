@@ -19,6 +19,7 @@ import (
 	"sync"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/objectquery"
 	"arcoris.dev/apimachinery/api/objectstore"
 )
 
@@ -38,6 +39,7 @@ func TestConcurrentReadsWhileReplaceRuns(t *testing.T) {
 				_, _ = cache.Revision()
 				_, _ = cache.Get(key)
 				_, _ = cache.List()
+				_, _ = cache.Query(objectquery.Predicate{})
 				_ = cache.Len()
 			}
 		}()
@@ -67,6 +69,7 @@ func TestConcurrentReadsWhileApplyChangeRuns(t *testing.T) {
 			for j := 0; j < 200; j++ {
 				_, _ = cache.Get(key)
 				_, _ = cache.List()
+				_, _ = cache.Query(objectquery.Predicate{})
 			}
 		}()
 	}
@@ -100,6 +103,7 @@ func TestConcurrentHistoricalReadsWhileVersionRingIsOverwritten(t *testing.T) {
 				_, _ = cache.GetAt(key, 1)
 				_, _ = cache.PreviousLive(key, 80)
 				_, _ = cache.List()
+				_, _ = cache.Query(objectquery.Predicate{})
 			}
 		}()
 	}

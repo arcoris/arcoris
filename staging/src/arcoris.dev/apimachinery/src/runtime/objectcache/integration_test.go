@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"arcoris.dev/apimachinery/api/objectquery"
 	"arcoris.dev/apimachinery/runtime/objectmemorystore"
 	"arcoris.dev/apimachinery/runtime/objectreflector"
 	runtimewatch "arcoris.dev/apimachinery/runtime/objectstorewatch"
@@ -45,18 +46,30 @@ func TestCacheIntegrationWithReflectorAndObservableStore(t *testing.T) {
 	waitUntil(t, waitCtx, cache.Ready)
 
 	key := testKey("system", 1)
+	query := builtPredicate(t, func() (objectquery.Query, error) {
+		return objectquery.LabelEquals("env", "updated")
+	})
 	created, err := source.Create(context.Background(), key, testState(key, 0, "created"))
 	requireNoError(t, err)
 	waitUntil(t, waitCtx, func() bool {
 		result, err := cache.Get(key)
 		return err == nil && result.Found && result.State.Revision == created.Revision && desiredString(t, result.State) == "created"
 	})
+	result, err := cache.Query(query)
+	requireNoError(t, err)
+	if len(result.Items) != 0 {
+		t.Fatalf("Query() items = %d; want 0 before update membership", len(result.Items))
+	}
 
 	updated, err := source.Update(context.Background(), key, created.Revision, testState(key, 0, "updated"))
 	requireNoError(t, err)
 	waitUntil(t, waitCtx, func() bool {
 		result, err := cache.Get(key)
 		return err == nil && result.Found && result.State.Revision == updated.Revision && desiredString(t, result.State) == "updated"
+	})
+	waitUntil(t, waitCtx, func() bool {
+		result, err := cache.Query(query)
+		return err == nil && len(result.Items) == 1 && result.Items[0].Key.Equal(key)
 	})
 
 	previous, err := cache.PreviousLive(key, updated.Revision)
@@ -71,6 +84,11 @@ func TestCacheIntegrationWithReflectorAndObservableStore(t *testing.T) {
 		result, err := cache.Get(key)
 		return err == nil && result.Revision == deleted.Revision && !result.Found
 	})
+	result, err = cache.Query(query)
+	requireNoError(t, err)
+	if len(result.Items) != 0 {
+		t.Fatalf("Query() items = %d; want 0 after delete", len(result.Items))
+	}
 	historical, err := cache.GetAt(key, updated.Revision)
 	requireNoError(t, err)
 	if !historical.Found || desiredString(t, historical.State) != "updated" {

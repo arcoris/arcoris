@@ -27,8 +27,20 @@
 //
 // This package is a concrete runtime implementation, not an API contract. It
 // does not read from object stores, watch sources, run goroutines, perform
-// retries, execute controllers, evaluate objectquery predicates, own query
-// indexes, mutate storage, run admission, or serve transport APIs.
+// retries, execute controllers, own query indexes, mutate storage, run
+// admission, or serve transport APIs.
+//
+// # Query
+//
+// Query evaluates a compiled objectquery.Predicate over the latest live
+// collection only. It scans cache-owned items in deterministic order, uses
+// objectquery.Predicate.Match as the semantic source of truth, and returns
+// detached matching items at the current cache revision. Historical object
+// records are not considered by Query.
+//
+// Query indexes are intentionally deferred. Future private indexes may use
+// objectquery planning hints to narrow candidates, but they must still confirm
+// every result with Predicate.Match and must not change semantics.
 //
 // # History
 //

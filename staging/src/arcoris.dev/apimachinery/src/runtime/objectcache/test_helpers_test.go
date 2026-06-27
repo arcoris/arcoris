@@ -23,6 +23,7 @@ import (
 
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 	"arcoris.dev/apimachinery/api/meta"
+	"arcoris.dev/apimachinery/api/meta/annotations"
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 	"arcoris.dev/apimachinery/api/meta/labels"
 	"arcoris.dev/apimachinery/api/object"
@@ -112,8 +113,36 @@ func testState(key objectstore.Key, revision objectstore.Revision, desired strin
 	}
 }
 
+func testStateWithAnnotations(
+	key objectstore.Key,
+	revision objectstore.Revision,
+	desired string,
+	values map[string]string,
+) objectstore.State {
+	state := testState(key, revision, desired)
+	annotationSet, err := annotations.FromStrings(values)
+	if err != nil {
+		panic(err)
+	}
+	state.Object.ObjectMeta.Annotations = annotationSet
+
+	return state
+}
+
 func listItem(key objectstore.Key, revision objectstore.Revision, desired string) objectstore.ListItem {
 	return objectstore.ListItem{Key: key, State: testState(key, revision, desired)}
+}
+
+func listItemWithAnnotations(
+	key objectstore.Key,
+	revision objectstore.Revision,
+	desired string,
+	values map[string]string,
+) objectstore.ListItem {
+	return objectstore.ListItem{
+		Key:   key,
+		State: testStateWithAnnotations(key, revision, desired, values),
+	}
 }
 
 func collectionRead(
