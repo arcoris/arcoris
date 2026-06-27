@@ -37,6 +37,9 @@ func (col collection) validateApply(change objectstore.Change) error {
 }
 
 // validateCreate rejects create changes for keys already materialized.
+//
+// A created change for an existing key is a source/cache sequencing problem,
+// not a structural objectstore.Change error.
 func (col collection) validateCreate(change objectstore.Change) error {
 	if _, exists := col.items[change.Key]; exists {
 		return invalidChangeStateError("create key already exists", change.Key)
@@ -47,6 +50,9 @@ func (col collection) validateCreate(change objectstore.Change) error {
 
 // validateUpdate requires an existing key whose cached state exactly matches
 // the change's Before side.
+//
+// Matching the full Before state prevents the cache from applying an update on
+// top of a different observed object version with the same key.
 func (col collection) validateUpdate(change objectstore.Change) error {
 	current, exists := col.items[change.Key]
 	if !exists {
@@ -61,6 +67,9 @@ func (col collection) validateUpdate(change objectstore.Change) error {
 
 // validateDelete requires an existing key whose cached state exactly matches
 // the change's tombstoned Before side.
+//
+// The delete revision is carried by change.Revision. Before must still match
+// current live state so the cache does not remove the wrong object version.
 func (col collection) validateDelete(change objectstore.Change) error {
 	current, exists := col.items[change.Key]
 	if !exists {

@@ -17,11 +17,18 @@ package objectcache
 import "arcoris.dev/apimachinery/api/objectstore"
 
 // historicalReadState is the common validated state for historical reads.
+//
+// current is captured under Cache.mu so GetAt and PreviousLive compare against
+// a stable cache boundary while scanning the selected object record.
 type historicalReadState struct {
 	current objectstore.Revision
 	record  *objectRecord
 }
 
+// prepareHistoricalReadLocked validates common historical-read preconditions.
+//
+// Cache.mu must be held. The caller validates key collection membership before
+// locking because collection is immutable after New.
 func (c *Cache) prepareHistoricalReadLocked(key objectstore.Key, revision objectstore.Revision) (historicalReadState, error) {
 	if !c.ready {
 		return historicalReadState{}, ErrNotReady
@@ -41,6 +48,8 @@ func knownAbsenceAt(key objectstore.Key, revision objectstore.Revision) GetResul
 	return GetResult{Key: key, Revision: revision}
 }
 
+// liveResultAt returns a detached live read result at the served cache
+// observation revision.
 func liveResultAt(key objectstore.Key, revision objectstore.Revision, state objectstore.State) GetResult {
 	return GetResult{Key: key, State: state.Clone(), Found: true, Revision: revision}
 }

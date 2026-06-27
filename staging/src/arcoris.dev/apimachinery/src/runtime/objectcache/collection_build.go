@@ -21,6 +21,11 @@ import "arcoris.dev/apimachinery/api/objectstore"
 // It still checks duplicate keys because objectstore.ListResult validation
 // verifies item shape and collection membership, but duplicate materialized
 // keys are a cache read-model invariant.
+//
+// buildCollection does all allocation before Replace takes Cache.mu. That keeps
+// the write lock focused on the stale-read check, history reset, and atomic
+// pointer swap. Empty ready collections are represented by revision plus nil
+// order/items, and every retained ListItem is cloned before storage.
 func buildCollection(result objectstore.ListResult) (collection, error) {
 	col := collection{revision: result.Revision}
 	if len(result.Items) == 0 {

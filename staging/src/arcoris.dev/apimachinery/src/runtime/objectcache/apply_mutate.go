@@ -17,6 +17,10 @@ package objectcache
 import "arcoris.dev/apimachinery/api/objectstore"
 
 // applyValidated dispatches a change that has already passed validateApply.
+//
+// Callers must hold Cache.mu through the collection that owns col. The method
+// intentionally performs no validation; keeping validation in validateApply
+// makes failed changes leave collection state untouched.
 func (col *collection) applyValidated(change objectstore.Change) {
 	switch change.Kind {
 	case objectstore.ChangeCreated:
@@ -29,6 +33,9 @@ func (col *collection) applyValidated(change objectstore.Change) {
 }
 
 // applyCreateValidated adds a live item and appends the key to output order.
+//
+// Creates are the only mutation that grows order. Updates keep the existing
+// slot and deletes remove a slot without reordering survivors.
 func (col *collection) applyCreateValidated(change objectstore.Change) {
 	item := objectstore.ListItem{Key: change.Key, State: change.After.Clone()}
 	col.ensureItems()
@@ -38,12 +45,18 @@ func (col *collection) applyCreateValidated(change objectstore.Change) {
 }
 
 // applyUpdateValidated replaces an existing item without moving its order slot.
+//
+// The replacement state is cloned because objectstore.Change belongs to the
+// caller; collection owns everything it retains.
 func (col *collection) applyUpdateValidated(change objectstore.Change) {
 	col.items[change.Key] = objectstore.ListItem{Key: change.Key, State: change.After.Clone()}
 	col.revision = change.Revision
 }
 
 // applyDeleteValidated removes one item and keeps remaining order stable.
+//
+// Delete removes only latest live state. Optional tombstone retention is handled
+// by Cache.appendHistoryLocked after latest mutation succeeds.
 func (col *collection) applyDeleteValidated(change objectstore.Change) {
 	delete(col.items, change.Key)
 	col.removeOrderKey(change.Key)

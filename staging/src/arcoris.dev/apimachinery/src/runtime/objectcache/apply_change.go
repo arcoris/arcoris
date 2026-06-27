@@ -25,14 +25,16 @@ import (
 //
 // Shape and collection validation happen before taking the write lock. The
 // lock protects readiness, monotonic revision checks, per-key preconditions,
-// and the final mutation, so failed changes leave the cache untouched.
+// latest mutation, and history append. History is appended only after the
+// latest collection mutation succeeds, so failed changes leave both latest and
+// retained historical state untouched. The retained transition is cloned before
+// locking because cache state must not alias caller-owned objectstore.Change
+// data.
 func (c *Cache) ApplyChange(ctx context.Context, change objectstore.Change) error {
 	if c == nil {
 		return ErrInvalidCache
 	}
 	if ctx == nil {
-		// Reflector calls always provide a context. Treating nil as background
-		// keeps direct Sink use deterministic instead of panicking mid-pipeline.
 		ctx = context.Background()
 	}
 	if err := ctx.Err(); err != nil {

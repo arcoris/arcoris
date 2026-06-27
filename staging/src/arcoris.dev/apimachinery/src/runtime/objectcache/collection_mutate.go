@@ -17,6 +17,9 @@ package objectcache
 import "arcoris.dev/apimachinery/api/objectstore"
 
 // ensureItems initializes the item map for create-after-empty transitions.
+//
+// Empty collections keep nil maps until a create arrives; this avoids
+// allocation for ready-empty caches while preserving simple mutation code.
 func (col *collection) ensureItems() {
 	if col.items == nil {
 		col.items = map[objectstore.Key]objectstore.ListItem{}

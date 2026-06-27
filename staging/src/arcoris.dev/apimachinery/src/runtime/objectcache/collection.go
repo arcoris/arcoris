@@ -21,6 +21,9 @@ import "arcoris.dev/apimachinery/api/objectstore"
 // order defines public output order. items owns the current live item for every
 // ordered key. The collection has no query indexes in this first runtime cache
 // core; objectquery support is intentionally deferred.
+//
+// collection is not internally synchronized. Cache owns synchronization and
+// swaps or mutates collection values only while holding Cache.mu.
 type collection struct {
 	// revision is the collection boundary installed by Replace or advanced by
 	// ApplyChange. Revision zero is valid for an empty ready collection.
@@ -30,7 +33,8 @@ type collection struct {
 	// deletes without reordering survivors.
 	order []objectstore.Key
 	// items owns detached live states by key. Every key in order must exist in
-	// items, and no item outside order is part of the public collection.
+	// items, and no item outside order is part of the public collection. Empty
+	// collections may keep items nil to avoid needless maps.
 	items map[objectstore.Key]objectstore.ListItem
 }
 
@@ -40,6 +44,9 @@ func (col collection) len() int {
 }
 
 // item returns one detached item without exposing cache-owned state.
+//
+// The bool is only a latest-state presence signal. Historical reads use
+// objectRecord tombstones to distinguish retained absence from unknown history.
 func (col collection) item(key objectstore.Key) (objectstore.ListItem, bool) {
 	item, ok := col.items[key]
 	if !ok {
@@ -55,6 +62,9 @@ func (col collection) listResult() objectstore.ListResult {
 }
 
 // listItems returns detached items in deterministic cache order.
+//
+// The returned slice is safe for callers to mutate. It preserves replacement
+// order plus committed create/update/delete order semantics.
 func (col collection) listItems() []objectstore.ListItem {
 	if len(col.order) == 0 {
 		return nil

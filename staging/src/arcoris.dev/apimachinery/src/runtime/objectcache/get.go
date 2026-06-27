@@ -19,7 +19,9 @@ import "arcoris.dev/apimachinery/api/objectstore"
 // Get returns the latest known live state for key.
 //
 // A missing key is a successful known absence answer when the cache is ready
-// and the key belongs to the cache collection.
+// and the key belongs to the cache collection. Get never consults historical
+// records; it reads only the latest live materialized collection. The served
+// revision is the current collection boundary whether the key is live or absent.
 func (c *Cache) Get(key objectstore.Key) (GetResult, error) {
 	if c == nil {
 		return GetResult{}, ErrInvalidCache

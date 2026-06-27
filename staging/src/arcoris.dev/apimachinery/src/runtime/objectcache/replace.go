@@ -26,14 +26,15 @@ import (
 //
 // Replace validates and builds detached replacement state before taking the
 // write lock. The lock is held only for the stale-read check and pointer swap,
-// so readers never observe a partially rebuilt collection.
+// so readers never observe a partially rebuilt collection. Replace resets
+// per-object history because a replacement may follow a continuity gap. A nil
+// context is treated as context.Background for direct Sink use in tests and
+// small tools; objectreflector calls always provide a context.
 func (c *Cache) Replace(ctx context.Context, read storewatchapi.CollectionRead) error {
 	if c == nil {
 		return ErrInvalidCache
 	}
 	if ctx == nil {
-		// The reflector always supplies a context, but accepting nil keeps Sink
-		// usage from tests and small tools forgiving.
 		ctx = context.Background()
 	}
 	if err := ctx.Err(); err != nil {

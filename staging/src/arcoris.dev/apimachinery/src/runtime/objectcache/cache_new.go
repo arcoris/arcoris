@@ -17,6 +17,12 @@ package objectcache
 import "arcoris.dev/apimachinery/api/objectstore"
 
 // New constructs an empty cache bound to one structural collection.
+//
+// The collection request is immutable after construction. A Cache intentionally
+// cannot be retargeted to another resource or namespace scope because Replace,
+// ApplyChange, latest reads, and historical reads all rely on one stable
+// collection boundary. Latest-only caches avoid per-object record allocation
+// and tombstone retention.
 func New(collection objectstore.ListRequest, options ...Option) (*Cache, error) {
 	if err := objectstore.ValidateListRequest(collection); err != nil {
 		return nil, errorWith(ErrInvalidCache, err)

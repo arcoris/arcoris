@@ -19,11 +19,17 @@ package objectcache
 // The ring is not internally synchronized. Cache owns synchronization and
 // mutates records only while holding Cache.mu.
 type versionRing struct {
+	// entries stores ring slots. len(entries) may be lower than cap(entries)
+	// until the ring first fills.
 	entries []objectVersion
-	start   int
-	len     int
+	// start is the index of the oldest retained entry when len > 0.
+	start int
+	// len is the number of valid retained entries in entries.
+	len int
 }
 
+// newVersionRing creates a fixed-capacity ring. Non-positive capacity produces
+// a disabled ring that silently ignores appends.
 func newVersionRing(capacity int) versionRing {
 	if capacity <= 0 {
 		return versionRing{}
@@ -33,7 +39,9 @@ func newVersionRing(capacity int) versionRing {
 }
 
 // append records version as the newest entry and evicts only this object's
-// oldest version when the per-object capacity is full.
+// oldest version when the per-object capacity is full. The overwritten slot is
+// cleared before replacement so evicted object graphs do not stay reachable
+// through the backing array.
 func (r *versionRing) append(version objectVersion) {
 	capacity := cap(r.entries)
 	if capacity == 0 {
@@ -79,10 +87,13 @@ func (r versionRing) entry(offset int) objectVersion {
 	return r.entries[(r.start+offset)%cap(r.entries)].clone()
 }
 
+// count reports retained entries. It exists for invariant tests, not as public
+// cache API.
 func (r versionRing) count() int {
 	return r.len
 }
 
+// capacity reports the per-object retention bound carried by this ring.
 func (r versionRing) capacity() int {
 	return cap(r.entries)
 }

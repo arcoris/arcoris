@@ -19,7 +19,9 @@ import "arcoris.dev/apimachinery/api/objectstore"
 // GetAt returns the retained object state as of a cache observation revision.
 //
 // Found=false is a proven absence answer. ErrHistoryUnavailable means the cache
-// cannot prove the answer inside its per-object retention window.
+// cannot prove the answer inside its per-object retention window or across the
+// last replacement boundary. The newest retained version at or before revision
+// defines the retained answer; retained tombstones prove absence.
 func (c *Cache) GetAt(key objectstore.Key, revision objectstore.Revision) (GetResult, error) {
 	if c == nil {
 		return GetResult{}, ErrInvalidCache
