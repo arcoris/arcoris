@@ -1,18 +1,35 @@
 # arcoris.dev/snapshot
 
-## Status
+Status:
 
 Experimental staging module.
 
-## Purpose
+Purpose:
 
-Typed, revisioned publication primitives for component read models.
+Common typed snapshot and publication primitives for component read models.
 
-## Source layout
+Key types:
 
-The Go module root is `pkg/`. Published repositories promote `pkg/` to the
-repository root.
+- `Snapshot[R, T]`
+- `Stamped[R, T]`
+- `LocalRevision`
+- `Store[T]`
+- `Publisher[T]`
+- `Source` and `Reader` interfaces
 
-## Testing
+Non-goals:
 
-`cd pkg && go test ./...`
+- TTL
+- staleness policy
+- persistence
+- event sourcing
+- watch subscriptions
+- history retention
+- generic deep copy
+
+Testing:
+
+```sh
+cd src
+go test ./...
+```

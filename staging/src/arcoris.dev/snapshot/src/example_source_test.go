@@ -22,9 +22,9 @@ import (
 )
 
 func ExampleSource() {
-	store := snapshot.NewStore("ready", snapshot.Identity[string])
+	store := snapshot.NewStore("ready", snapshot.IdentityClone[string])
 
-	readValue := func(src snapshot.Source[string]) string {
+	readValue := func(src snapshot.Source[snapshot.LocalRevision, string]) string {
 		return src.Snapshot().Value
 	}
 
@@ -35,9 +35,9 @@ func ExampleSource() {
 }
 
 func ExampleStampedSource() {
-	store := snapshot.NewStore("ready", snapshot.Identity[string])
+	store := snapshot.NewStore("ready", snapshot.IdentityClone[string])
 
-	age := func(src snapshot.StampedSource[string], now time.Time) time.Duration {
+	age := func(src snapshot.StampedSource[snapshot.LocalRevision, string], now time.Time) time.Duration {
 		return src.Stamped().Age(now)
 	}
 
@@ -54,7 +54,7 @@ func ExampleRevisionSource() {
 
 	publisher.Publish("ready")
 
-	changed := func(src snapshot.RevisionSource, prev snapshot.Revision) bool {
+	changed := func(src snapshot.RevisionSource[snapshot.LocalRevision], prev snapshot.LocalRevision) bool {
 		return src.Revision().ChangedSince(prev)
 	}
 

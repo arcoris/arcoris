@@ -55,18 +55,18 @@ func (Budget) TryAdmitRetry() retrybudget.Decision {
 }
 
 // Snapshot returns the current unlimited retry-budget snapshot.
-func (Budget) Snapshot() snapshot.Snapshot[retrybudget.Snapshot] {
+func (Budget) Snapshot() snapshot.Snapshot[snapshot.LocalRevision, retrybudget.Snapshot] {
 	return staticSnapshot()
 }
 
-// Revision returns the stable revision used by the noop snapshot source.
-func (Budget) Revision() snapshot.Revision {
+// LocalRevision returns the stable revision used by the noop snapshot source.
+func (Budget) Revision() snapshot.LocalRevision {
 	return staticRevision()
 }
 
 // staticSnapshot returns the immutable retry-budget snapshot exposed by Budget.
-func staticSnapshot() snapshot.Snapshot[retrybudget.Snapshot] {
-	return snapshot.Snapshot[retrybudget.Snapshot]{
+func staticSnapshot() snapshot.Snapshot[snapshot.LocalRevision, retrybudget.Snapshot] {
+	return snapshot.Snapshot[snapshot.LocalRevision, retrybudget.Snapshot]{
 		Revision: staticRevision(),
 		Value:    staticSnapshotValue(),
 	}
@@ -76,8 +76,8 @@ func staticSnapshot() snapshot.Snapshot[retrybudget.Snapshot] {
 //
 // The noop implementation has one always-present immutable state, so revision 1
 // is used as its committed source-local revision.
-func staticRevision() snapshot.Revision {
-	return snapshot.ZeroRevision.Next()
+func staticRevision() snapshot.LocalRevision {
+	return snapshot.ZeroLocalRevision.Next()
 }
 
 // staticSnapshotValue returns the immutable domain value for Budget.
@@ -100,5 +100,5 @@ func staticSnapshotValue() retrybudget.Snapshot {
 }
 
 var _ retrybudget.Budget = Budget{}
-var _ snapshot.Source[retrybudget.Snapshot] = Budget{}
-var _ snapshot.RevisionSource = Budget{}
+var _ snapshot.Source[snapshot.LocalRevision, retrybudget.Snapshot] = Budget{}
+var _ snapshot.RevisionSource[snapshot.LocalRevision] = Budget{}

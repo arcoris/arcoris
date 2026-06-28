@@ -71,9 +71,9 @@ func newTestLimiter(t *testing.T, opts ...Option) (*Limiter, *fakeClock) {
 	return limiter, clk
 }
 
-func requireValidSnapshot(t *testing.T, snap snapshot.Snapshot[retrybudget.Snapshot]) {
+func requireValidSnapshot(t *testing.T, snap snapshot.Snapshot[snapshot.LocalRevision, retrybudget.Snapshot]) {
 	t.Helper()
-	if snap.IsZeroRevision() {
+	if snap.Revision.IsZero() {
 		t.Fatalf("Snapshot revision is zero")
 	}
 	if !snap.Value.IsValid() {

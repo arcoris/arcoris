@@ -14,40 +14,39 @@
 
 package snapshot
 
-// Snapshot is a lightweight point-in-time value read from a source.
+// Snapshot is a lightweight point-in-time value read from one source.
 //
-// Snapshot carries the source-local Revision at which Value was observed. The
-// type itself does not perform cloning, copying, or immutability enforcement.
-// Those guarantees come from the source that produced the snapshot.
+// R is the authoritative revision type for that source. It may be LocalRevision
+// for Store and Publisher, or a domain-owned revision such as an object-store
+// revision. Snapshot only requires comparability so callers can detect whether a
+// source has changed since a previously observed revision.
 //
-// Store returns cloned values and is safe for mutable payloads when the supplied
-// CloneFunc is correct. Publisher returns immutable published values and relies
-// on callers not mutating values after Publish.
-type Snapshot[T any] struct {
-	// Revision is the source-local revision of Value.
-	Revision Revision
+// Snapshot does not clone, freeze, or otherwise protect Value. Ownership and
+// immutability are source responsibilities.
+type Snapshot[R comparable, T any] struct {
+	// Revision is the source or domain revision at which Value was observed.
+	Revision R
 
-	// Value is the typed value observed at Revision.
+	// Value is the typed read-model value observed at Revision.
 	Value T
 }
 
-// IsZeroRevision reports whether the snapshot has ZeroRevision.
-func (s Snapshot[T]) IsZeroRevision() bool {
-	return s.Revision.IsZero()
-}
-
-// ChangedSince reports whether the snapshot revision differs from revision.
-func (s Snapshot[T]) ChangedSince(rev Revision) bool {
-	return s.Revision.ChangedSince(rev)
+// ChangedSince reports whether the snapshot revision differs from prev.
+//
+// The check is equality-based. Snapshot does not assume R is ordered, dense, or
+// globally comparable across unrelated sources.
+func (s Snapshot[R, T]) ChangedSince(prev R) bool {
+	return s.Revision != prev
 }
 
 // WithValue returns a snapshot with the same Revision and a different Value.
 //
-// WithValue is useful for adapting a read model while preserving the revision
-// that the derived value came from. The method does not clone either value.
-func (s Snapshot[T]) WithValue(val T) Snapshot[T] {
-	return Snapshot[T]{
+// WithValue is useful for deriving a smaller or transformed read model while
+// preserving the revision that made the value visible. The method does not clone
+// either value.
+func (s Snapshot[R, T]) WithValue(value T) Snapshot[R, T] {
+	return Snapshot[R, T]{
 		Revision: s.Revision,
-		Value:    val,
+		Value:    value,
 	}
 }

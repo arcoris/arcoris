@@ -25,20 +25,20 @@ import (
 // normally return ok=false instead of returning a zero Snapshot, but IsZero is
 // useful in tests and defensive integration code.
 //
-// A zero Snapshot must also have snapshot.ZeroRevision. A committed
-// snapshot.Store observation can never have ZeroRevision, so this keeps absence
+// A zero Snapshot must also have snapshot.ZeroLocalRevision. A committed
+// snapshot.Store observation can never have ZeroLocalRevision, so this keeps absence
 // distinguishable from a real cached observation.
 func (s Snapshot) IsZero() bool {
 	return s.Target == health.TargetUnknown &&
 		reportIsZero(s.Report) &&
-		s.Revision == snapshot.ZeroRevision &&
+		s.Revision == snapshot.ZeroLocalRevision &&
 		s.Updated.IsZero() &&
 		!s.Stale
 }
 
 // IsObserved reports whether s contains a stored probe observation.
 //
-// IsObserved is intentionally stricter than checking Updated and Revision
+// IsObserved is intentionally stricter than checking Updated and LocalRevision
 // alone. A snapshot is observed only when the complete Snapshot invariants hold:
 // a concrete Target, a valid Report for the same Target, a non-zero cache update
 // timestamp, and a non-zero revision. The embedded Report may still represent
@@ -61,7 +61,7 @@ func (s Snapshot) IsFresh() bool {
 // The zero Snapshot is valid and means that no cached observation exists. Any
 // non-zero Snapshot must be a complete observed cache value: Target is concrete,
 // Report is structurally valid, Report is aggregate-consistent, Report.Target
-// matches Target, Revision is non-zero, and Updated is non-zero. Stale may be
+// matches Target, LocalRevision is non-zero, and Updated is non-zero. Stale may be
 // true only on an otherwise observed Snapshot because stale is read-time cache
 // metadata.
 //
@@ -85,7 +85,7 @@ func (s Snapshot) IsValid() bool {
 	if !s.Report.IsConsistent() {
 		return false
 	}
-	if s.Revision == snapshot.ZeroRevision {
+	if s.Revision == snapshot.ZeroLocalRevision {
 		return false
 	}
 	if s.Updated.IsZero() {

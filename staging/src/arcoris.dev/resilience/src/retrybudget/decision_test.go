@@ -31,7 +31,7 @@ func TestDecisionStateHelpers(t *testing.T) {
 
 	decision.Allowed = false
 	decision.Reason = ReasonExhausted
-	decision.Snapshot = snapshot.Snapshot[Snapshot]{Revision: snapshot.ZeroRevision.Next(), Value: exhaustedSnapshotValue()}
+	decision.Snapshot = snapshot.Snapshot[snapshot.LocalRevision, Snapshot]{Revision: snapshot.ZeroLocalRevision.Next(), Value: exhaustedSnapshotValue()}
 	if decision.IsAllowed() {
 		t.Fatal("IsAllowed returned true")
 	}
@@ -41,9 +41,9 @@ func TestDecisionStateHelpers(t *testing.T) {
 }
 
 func TestDecisionIsValid(t *testing.T) {
-	exhausted := snapshot.Snapshot[Snapshot]{Revision: snapshot.ZeroRevision.Next(), Value: exhaustedSnapshotValue()}
-	invalidSnapshot := snapshot.Snapshot[Snapshot]{Revision: snapshot.ZeroRevision.Next(), Value: Snapshot{}}
-	zeroRevision := snapshot.Snapshot[Snapshot]{Value: validSnapshotValue()}
+	exhausted := snapshot.Snapshot[snapshot.LocalRevision, Snapshot]{Revision: snapshot.ZeroLocalRevision.Next(), Value: exhaustedSnapshotValue()}
+	invalidSnapshot := snapshot.Snapshot[snapshot.LocalRevision, Snapshot]{Revision: snapshot.ZeroLocalRevision.Next(), Value: Snapshot{}}
+	zeroRevision := snapshot.Snapshot[snapshot.LocalRevision, Snapshot]{Value: validSnapshotValue()}
 	tests := []struct {
 		name string
 		val  Decision

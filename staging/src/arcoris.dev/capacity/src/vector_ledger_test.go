@@ -22,8 +22,8 @@ import (
 )
 
 func TestVectorLedgerImplementsSnapshotSources(t *testing.T) {
-	var _ snapshot.Source[capacity.VectorSnapshot] = (*capacity.VectorLedger)(nil)
-	var _ snapshot.RevisionSource = (*capacity.VectorLedger)(nil)
+	var _ snapshot.Source[snapshot.LocalRevision, capacity.VectorSnapshot] = (*capacity.VectorLedger)(nil)
+	var _ snapshot.RevisionSource[snapshot.LocalRevision] = (*capacity.VectorLedger)(nil)
 }
 
 func TestVectorLedgerSetLimitsAndSnapshot(t *testing.T) {

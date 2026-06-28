@@ -42,8 +42,8 @@ func TestStoreSnapshotLifecycle(t *testing.T) {
 	if !ok {
 		t.Fatal("snapshot after update ok = false, want true")
 	}
-	if snap.Revision != snapshot.Revision(1) {
-		t.Fatalf("Revision = %d, want 1", snap.Revision)
+	if snap.Revision != snapshot.LocalRevision(1) {
+		t.Fatalf("LocalRevision = %d, want 1", snap.Revision)
 	}
 	if !snap.Updated.Equal(testNow) {
 		t.Fatalf("Updated = %v, want %v", snap.Updated, testNow)
@@ -57,8 +57,8 @@ func TestStoreSnapshotLifecycle(t *testing.T) {
 	if !ok {
 		t.Fatal("snapshot after second update ok = false, want true")
 	}
-	if snap.Revision != snapshot.Revision(2) {
-		t.Fatalf("Revision = %d, want 2", snap.Revision)
+	if snap.Revision != snapshot.LocalRevision(2) {
+		t.Fatalf("LocalRevision = %d, want 2", snap.Revision)
 	}
 	if !snap.Updated.Equal(testNow.Add(time.Second)) {
 		t.Fatalf("Updated = %v, want %v", snap.Updated, testNow.Add(time.Second))
@@ -88,11 +88,11 @@ func TestStoreRevisionsAreIndependentPerTarget(t *testing.T) {
 	if !ok {
 		t.Fatal("snapshot(live) ok = false, want true")
 	}
-	if ready.Revision != snapshot.Revision(2) {
-		t.Fatalf("ready Revision = %d, want 2", ready.Revision)
+	if ready.Revision != snapshot.LocalRevision(2) {
+		t.Fatalf("ready LocalRevision = %d, want 2", ready.Revision)
 	}
-	if live.Revision != snapshot.Revision(1) {
-		t.Fatalf("live Revision = %d, want 1", live.Revision)
+	if live.Revision != snapshot.LocalRevision(1) {
+		t.Fatalf("live LocalRevision = %d, want 1", live.Revision)
 	}
 }
 
@@ -161,7 +161,7 @@ func TestStoreRejectsInvalidReportWithoutAdvancingRevision(t *testing.T) {
 		t.Fatal("snapshot after rejected update ok = false, want true")
 	}
 	if after.Revision != before.Revision {
-		t.Fatalf("Revision after rejected update = %d, want %d", after.Revision, before.Revision)
+		t.Fatalf("LocalRevision after rejected update = %d, want %d", after.Revision, before.Revision)
 	}
 	if after.Updated != before.Updated {
 		t.Fatalf("Updated after rejected update = %v, want %v", after.Updated, before.Updated)
@@ -198,7 +198,7 @@ func TestStoreRejectsInconsistentReportWithoutAdvancingRevision(t *testing.T) {
 		t.Fatal("snapshot after rejected update ok = false, want true")
 	}
 	if after.Revision != before.Revision {
-		t.Fatalf("Revision after rejected update = %d, want %d", after.Revision, before.Revision)
+		t.Fatalf("LocalRevision after rejected update = %d, want %d", after.Revision, before.Revision)
 	}
 	if after.Report.Status != before.Report.Status || len(after.Report.Checks) != len(before.Report.Checks) {
 		t.Fatalf("snapshot after rejected update = %+v, want previous report %+v", after.Report, before.Report)
@@ -256,7 +256,7 @@ func TestStoreConcurrentReadUpdate(t *testing.T) {
 	if !ok {
 		t.Fatal("snapshot ok = false, want true")
 	}
-	if snap.Revision == snapshot.ZeroRevision {
-		t.Fatal("Revision = 0, want positive")
+	if snap.Revision == snapshot.ZeroLocalRevision {
+		t.Fatal("LocalRevision = 0, want positive")
 	}
 }

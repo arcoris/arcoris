@@ -26,7 +26,7 @@ package snapshot
 // clones the value returned by update before committing it, so retaining or
 // mutating values outside Store does not affect Store when the CloneFunc is
 // correct.
-func (s *Store[T]) Update(update func(T) T) Snapshot[T] {
+func (s *Store[T]) Update(update func(T) T) Snapshot[LocalRevision, T] {
 	return s.UpdateStamped(update).Snapshot()
 }
 
@@ -37,7 +37,43 @@ func (s *Store[T]) Update(update func(T) T) Snapshot[T] {
 // records the local commit time using the configured PassiveClock. If update
 // panics, cloning before commit panics, or revision overflow is detected, the
 // current Store value is left unchanged.
-func (s *Store[T]) UpdateStamped(update func(T) T) Stamped[T] {
+func (s *Store[T]) UpdateStamped(update func(T) T) Stamped[LocalRevision, T] {
+	if update == nil {
+		panic("snapshot: nil update function")
+	}
+
+	stamped, err := s.UpdateStampedErr(func(current T) (T, error) {
+		return update(current), nil
+	})
+	if err != nil {
+		panic("snapshot: unexpected update error")
+	}
+
+	return stamped
+}
+
+// UpdateErr applies update to a cloned copy of the current value and returns
+// the resulting lightweight snapshot.
+//
+// UpdateErr has the same locking and ownership semantics as Update. If update
+// returns an error, Store leaves the previous committed value unchanged and
+// returns a zero snapshot with that error.
+func (s *Store[T]) UpdateErr(update func(T) (T, error)) (Snapshot[LocalRevision, T], error) {
+	stamped, err := s.UpdateStampedErr(update)
+	if err != nil {
+		return Snapshot[LocalRevision, T]{}, err
+	}
+
+	return stamped.Snapshot(), nil
+}
+
+// UpdateStampedErr applies update to a cloned copy of the current value and
+// returns the resulting stamped snapshot.
+//
+// UpdateStampedErr is the fallible form of UpdateStamped. If update returns an
+// error, Store does not advance its revision, does not change its value, and
+// returns a zero stamped snapshot with that error.
+func (s *Store[T]) UpdateStampedErr(update func(T) (T, error)) (Stamped[LocalRevision, T], error) {
 	if update == nil {
 		panic("snapshot: nil update function")
 	}
@@ -46,7 +82,11 @@ func (s *Store[T]) UpdateStamped(update func(T) T) Stamped[T] {
 	defer s.mu.Unlock()
 
 	working := s.clone(s.value)
-	next := update(working)
+	next, err := update(working)
+	if err != nil {
+		return Stamped[LocalRevision, T]{}, err
+	}
+
 	stored := s.clone(next)
 	returned := s.clone(stored)
 	rev := s.revision.Next()
@@ -56,9 +96,9 @@ func (s *Store[T]) UpdateStamped(update func(T) T) Stamped[T] {
 	s.revision = rev
 	s.updated = updated
 
-	return Stamped[T]{
+	return Stamped[LocalRevision, T]{
 		Revision: rev,
 		Updated:  updated,
 		Value:    returned,
-	}
+	}, nil
 }

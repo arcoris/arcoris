@@ -35,7 +35,7 @@ func (r *VectorReservation) TryRelease() bool {
 }
 
 // ReleaseObserved releases r and returns the post-release vector snapshot.
-func (r *VectorReservation) ReleaseObserved() snapshot.Snapshot[VectorSnapshot] {
+func (r *VectorReservation) ReleaseObserved() snapshot.Snapshot[snapshot.LocalRevision, VectorSnapshot] {
 	snap, ok := r.TryReleaseObserved()
 	if !ok {
 		panicAt(
@@ -49,7 +49,7 @@ func (r *VectorReservation) ReleaseObserved() snapshot.Snapshot[VectorSnapshot] 
 }
 
 // TryReleaseObserved releases r and returns the current vector snapshot and outcome.
-func (r *VectorReservation) TryReleaseObserved() (snapshot.Snapshot[VectorSnapshot], bool) {
+func (r *VectorReservation) TryReleaseObserved() (snapshot.Snapshot[snapshot.LocalRevision, VectorSnapshot], bool) {
 	r.requireValid()
 
 	l := r.ledger

@@ -312,7 +312,7 @@ func newRetryBudget(t *testing.T, minRetries uint64) *fixedwindow.Limiter {
 
 func requireBulkheadSnapshot(
 	t *testing.T,
-	snap snapshot.Snapshot[bulkhead.Snapshot],
+	snap snapshot.Snapshot[snapshot.LocalRevision, bulkhead.Snapshot],
 	limit bulkhead.Amount,
 	reserved bulkhead.Amount,
 	available bulkhead.Amount,

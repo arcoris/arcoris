@@ -35,7 +35,7 @@ func (r *Reservation) TryRelease() bool {
 }
 
 // ReleaseObserved releases r and returns the post-release snapshot.
-func (r *Reservation) ReleaseObserved() snapshot.Snapshot[Snapshot] {
+func (r *Reservation) ReleaseObserved() snapshot.Snapshot[snapshot.LocalRevision, Snapshot] {
 	snap, ok := r.TryReleaseObserved()
 	if !ok {
 		panicAt("reservation", ErrReservationReleased, "reservation has already been released")
@@ -45,7 +45,7 @@ func (r *Reservation) ReleaseObserved() snapshot.Snapshot[Snapshot] {
 }
 
 // TryReleaseObserved releases r and returns the current snapshot and outcome.
-func (r *Reservation) TryReleaseObserved() (snapshot.Snapshot[Snapshot], bool) {
+func (r *Reservation) TryReleaseObserved() (snapshot.Snapshot[snapshot.LocalRevision, Snapshot], bool) {
 	ok := r.release()
 
 	return r.ledger.Snapshot(), ok

@@ -44,7 +44,7 @@ func TestNewPublishesValidInitialSnapshotWithZeroMinimum(t *testing.T) {
 	snap := l.Snapshot()
 	requireValidSnapshot(t, snap)
 
-	if snap.IsZeroRevision() {
+	if snap.Revision.IsZero() {
 		t.Fatalf("Snapshot revision is zero")
 	}
 	if snap.Value.Kind != retrybudget.KindFixedWindow {

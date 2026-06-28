@@ -24,13 +24,13 @@ import (
 // Snapshot is lock-free. Window rotation is performed on write paths, not on
 // read paths, so a quiet limiter may keep publishing the last window until the
 // next RecordOriginal or TryAdmitRetry call observes time advancement.
-func (l *Limiter) Snapshot() snapshot.Snapshot[retrybudget.Snapshot] {
+func (l *Limiter) Snapshot() snapshot.Snapshot[snapshot.LocalRevision, retrybudget.Snapshot] {
 	l.requireReady()
 	return l.published.Snapshot()
 }
 
-// Revision returns the latest published source-local revision.
-func (l *Limiter) Revision() snapshot.Revision {
+// LocalRevision returns the latest published source-local revision.
+func (l *Limiter) Revision() snapshot.LocalRevision {
 	l.requireReady()
 	return l.published.Revision()
 }
@@ -71,6 +71,6 @@ func (l *Limiter) snapshotValueLocked() retrybudget.Snapshot {
 // publishLocked publishes the current immutable domain snapshot.
 //
 // The caller must hold l.mu.
-func (l *Limiter) publishLocked() snapshot.Snapshot[retrybudget.Snapshot] {
+func (l *Limiter) publishLocked() snapshot.Snapshot[snapshot.LocalRevision, retrybudget.Snapshot] {
 	return l.published.Publish(l.snapshotValueLocked())
 }

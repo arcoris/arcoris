@@ -29,7 +29,7 @@ func TestSnapshotObservedRequiresRevision(t *testing.T) {
 	snap := Snapshot{
 		Target:   health.TargetReady,
 		Report:   healthyProbeReport(health.TargetReady, observed),
-		Revision: snapshot.ZeroRevision,
+		Revision: snapshot.ZeroLocalRevision,
 		Updated:  time.Unix(10, 0),
 	}
 

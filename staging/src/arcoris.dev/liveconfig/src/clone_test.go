@@ -109,8 +109,8 @@ func TestHolderCloneProtectsPublishedMutableConfigFromInputMutation(t *testing.T
 }
 
 func TestHolderBadCloneCanLeakMutableState(t *testing.T) {
-	// Identity is caller misuse for mutable values: the holder cannot protect
-	// published state when CloneFunc returns caller-owned storage.
+	// identityClone is caller misuse for mutable values: the holder cannot
+	// protect published state when CloneFunc returns caller-owned storage.
 	input := mutableConfig{Tags: []string{"a"}}
 	h, err := New(input, WithClone(identityClone[mutableConfig]))
 	if err != nil {

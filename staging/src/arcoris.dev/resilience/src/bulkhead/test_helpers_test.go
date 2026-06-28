@@ -22,7 +22,7 @@ import (
 
 func requireSnapshotValue(
 	t *testing.T,
-	snap snapshot.Snapshot[Snapshot],
+	snap snapshot.Snapshot[snapshot.LocalRevision, Snapshot],
 	limit Amount,
 	reserved Amount,
 	available Amount,

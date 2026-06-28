@@ -25,7 +25,7 @@ import (
 // domain payload that Runner wants to remember for one target: the target key and
 // the health report observed for that key. It does not contain cache metadata.
 //
-// Revision and update time are assigned by snapshot.Store when the observation
+// LocalRevision and update time are assigned by snapshot.Store when the observation
 // is committed. Keeping those fields out of observation prevents probe.store
 // from accidentally reintroducing manual generation or timestamp ownership.
 // Stale is also excluded because staleness is a read-boundary calculation: the
@@ -62,7 +62,7 @@ func newObservation(target health.Target, report health.Report) (observation, bo
 // isObserved reports whether o is a complete cache payload.
 //
 // This predicate intentionally checks only payload invariants. It does not check
-// Revision, Updated, or Stale because those fields are not part of observation.
+// LocalRevision, Updated, or Stale because those fields are not part of observation.
 // Public Snapshot performs the full read-model validation after snapshot.Store
 // has added its stamped metadata. The probe cache rejects inconsistent reports
 // rather than repairing their aggregate status, because hiding evaluator bugs at
@@ -78,11 +78,11 @@ func (o observation) isObserved() bool {
 // snapshotFromStamped adapts the snapshot package read model to probe.Snapshot.
 //
 // snapshot.Store returns a stamped observation: payload plus source-local
-// Revision and commit Updated time. probe.Snapshot is the public domain read
+// LocalRevision and commit Updated time. probe.Snapshot is the public domain read
 // model, so this function copies the payload fields across and preserves the
 // stamped metadata. Stale is intentionally left false; Runner sets it at the
 // read boundary after comparing Updated with the configured stale-after window.
-func snapshotFromStamped(stamped snapshot.Stamped[observation]) Snapshot {
+func snapshotFromStamped(stamped snapshot.Stamped[snapshot.LocalRevision, observation]) Snapshot {
 	obs := stamped.Value
 
 	return Snapshot{

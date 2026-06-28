@@ -37,7 +37,7 @@ type VectorLedger struct {
 	mu sync.Mutex
 
 	// revision is the local version of the last committed vector state.
-	revision snapshot.Revision
+	revision snapshot.LocalRevision
 
 	// state is the committed vector accounting source state.
 	state VectorState
@@ -46,7 +46,7 @@ type VectorLedger struct {
 // VectorObservation is returned by vector observed methods.
 type VectorObservation struct {
 	// Snapshot is post-mutation on success and current unchanged state on refusal.
-	Snapshot snapshot.Snapshot[VectorSnapshot]
+	Snapshot snapshot.Snapshot[snapshot.LocalRevision, VectorSnapshot]
 
 	// Refusal classifies why an observed vector reservation did not acquire capacity.
 	Refusal Refusal
@@ -63,7 +63,7 @@ func NewVectorLedger(limits Vector) *VectorLedger {
 	requireValidVector("limits", limits)
 
 	return &VectorLedger{
-		revision: snapshot.ZeroRevision.Next(),
+		revision: snapshot.ZeroLocalRevision.Next(),
 		state: VectorState{
 			Limits: limits,
 		},
@@ -88,7 +88,7 @@ func (l *VectorLedger) SetLimits(limits Vector) {
 }
 
 // SetLimitsObserved replaces vector limits and returns the resulting snapshot.
-func (l *VectorLedger) SetLimitsObserved(limits Vector) snapshot.Snapshot[VectorSnapshot] {
+func (l *VectorLedger) SetLimitsObserved(limits Vector) snapshot.Snapshot[snapshot.LocalRevision, VectorSnapshot] {
 	requireValidVector("limits", limits)
 	l.requireNonNil()
 
@@ -102,7 +102,7 @@ func (l *VectorLedger) SetLimitsObserved(limits Vector) snapshot.Snapshot[Vector
 }
 
 // Snapshot returns the current revisioned vector ledger snapshot.
-func (l *VectorLedger) Snapshot() snapshot.Snapshot[VectorSnapshot] {
+func (l *VectorLedger) Snapshot() snapshot.Snapshot[snapshot.LocalRevision, VectorSnapshot] {
 	l.requireNonNil()
 
 	l.mu.Lock()
@@ -113,8 +113,8 @@ func (l *VectorLedger) Snapshot() snapshot.Snapshot[VectorSnapshot] {
 	return l.snapshotLocked()
 }
 
-// Revision returns the latest committed vector ledger revision.
-func (l *VectorLedger) Revision() snapshot.Revision {
+// LocalRevision returns the latest committed vector ledger revision.
+func (l *VectorLedger) Revision() snapshot.LocalRevision {
 	l.requireNonNil()
 
 	l.mu.Lock()
@@ -136,8 +136,8 @@ func (l *VectorLedger) setLimitsLocked(limits Vector) {
 }
 
 // snapshotLocked derives a revisioned vector snapshot from protected state.
-func (l *VectorLedger) snapshotLocked() snapshot.Snapshot[VectorSnapshot] {
-	return snapshot.Snapshot[VectorSnapshot]{
+func (l *VectorLedger) snapshotLocked() snapshot.Snapshot[snapshot.LocalRevision, VectorSnapshot] {
+	return snapshot.Snapshot[snapshot.LocalRevision, VectorSnapshot]{
 		Revision: l.revision,
 		Value:    l.state.Snapshot(),
 	}

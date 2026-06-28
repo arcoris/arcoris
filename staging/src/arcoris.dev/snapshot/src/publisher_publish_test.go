@@ -21,23 +21,11 @@ import (
 	panicassert "arcoris.dev/testutil/panic"
 )
 
-func TestPublisherZeroValueSnapshot(t *testing.T) {
-	var publisher Publisher[string]
-
-	snap := publisher.Snapshot()
-	if !snap.IsZeroRevision() {
-		t.Fatalf("zero publisher revision = %d, want zero", snap.Revision)
-	}
-	if snap.Value != "" {
-		t.Fatalf("zero publisher value = %q, want empty", snap.Value)
-	}
-}
-
 func TestPublisherPublish(t *testing.T) {
 	publisher := NewPublisher[string]()
 
 	snap := publisher.Publish("value")
-	if got, want := snap.Revision, Revision(1); got != want {
+	if got, want := snap.Revision, LocalRevision(1); got != want {
 		t.Fatalf("Publish revision = %d, want %d", got, want)
 	}
 	if got, want := snap.Value, "value"; got != want {
@@ -50,20 +38,49 @@ func TestPublisherPublish(t *testing.T) {
 	}
 }
 
+func TestPublisherZeroValuePublishRemainsValid(t *testing.T) {
+	var publisher Publisher[string]
+
+	stamped := publisher.PublishStamped("value")
+	if got, want := stamped.Revision, LocalRevision(1); got != want {
+		t.Fatalf("PublishStamped revision = %d, want %d", got, want)
+	}
+	if got, want := publisher.Snapshot().Value, "value"; got != want {
+		t.Fatalf("Snapshot().Value = %q, want %q", got, want)
+	}
+}
+
 func TestPublisherPublishPanicsOnRevisionOverflowWithoutPublication(t *testing.T) {
 	publisher := NewPublisher[string]()
-	publisher.nextRevision = ^Revision(0)
+	publisher.nextRevision = ^LocalRevision(0)
 
-	panicassert.RequireMessage(t, "snapshot: revision overflow", func() {
+	panicassert.RequireMessage(t, "snapshot: local revision overflow", func() {
 		_ = publisher.Publish("value")
 	})
 
 	snap := publisher.Snapshot()
-	if !snap.IsZeroRevision() {
+	if !snap.Revision.IsZero() {
 		t.Fatalf("revision = %d, want zero", snap.Revision)
 	}
 	if got, want := snap.Value, ""; got != want {
 		t.Fatalf("value = %q, want %q", got, want)
+	}
+}
+
+func TestPublisherPublishStampedPanicsOnRevisionOverflowBeforeStore(t *testing.T) {
+	publisher := NewPublisher[string]()
+	publisher.Publish("old")
+
+	before := publisher.Snapshot()
+	publisher.nextRevision = ^LocalRevision(0)
+
+	panicassert.RequireMessage(t, "snapshot: local revision overflow", func() {
+		_ = publisher.PublishStamped("new")
+	})
+
+	after := publisher.Snapshot()
+	if after != before {
+		t.Fatalf("Snapshot() = %#v, want %#v", after, before)
 	}
 }
 
@@ -78,18 +95,6 @@ func TestPublisherPublishStampedUsesClock(t *testing.T) {
 	}
 }
 
-func TestPublisherStampedReturnsLatestPublishedStampedValue(t *testing.T) {
-	clk := newTestClock()
-	clk.set(time.Unix(10, 0))
-	publisher := NewPublisher[string](WithClock(clk))
-
-	published := publisher.PublishStamped("value")
-	loaded := publisher.Stamped()
-	if loaded != published {
-		t.Fatalf("Stamped() = %#v, want %#v", loaded, published)
-	}
-}
-
 func TestPublisherRevisionAdvancesWhenClockMovesBackward(t *testing.T) {
 	clk := newTestClock()
 	clk.set(time.Unix(20, 0))
@@ -100,29 +105,14 @@ func TestPublisherRevisionAdvancesWhenClockMovesBackward(t *testing.T) {
 	clk.set(time.Unix(10, 0))
 	second := publisher.PublishStamped("second")
 
-	if got, want := first.Revision, Revision(1); got != want {
+	if got, want := first.Revision, LocalRevision(1); got != want {
 		t.Fatalf("first revision = %d, want %d", got, want)
 	}
-	if got, want := second.Revision, Revision(2); got != want {
+	if got, want := second.Revision, LocalRevision(2); got != want {
 		t.Fatalf("second revision = %d, want %d", got, want)
 	}
 	if !second.Updated.Equal(time.Unix(10, 0)) {
 		t.Fatalf("second updated = %s, want %s", second.Updated, time.Unix(10, 0))
-	}
-}
-
-func TestPublisherRevision(t *testing.T) {
-	publisher := NewPublisher[string]()
-
-	if got := publisher.Revision(); !got.IsZero() {
-		t.Fatalf("initial Revision() = %d, want zero", got)
-	}
-
-	publisher.Publish("first")
-	publisher.Publish("second")
-
-	if got, want := publisher.Revision(), Revision(2); got != want {
-		t.Fatalf("Revision() = %d, want %d", got, want)
 	}
 }
 
@@ -135,8 +125,6 @@ func TestPublisherDoesNotClonePublishedMap(t *testing.T) {
 	publisher.Publish(val)
 	val["key"] = "changed"
 
-	// This test documents Publisher's immutable-publication contract. Publisher
-	// does not clone values; callers must publish values they will not mutate.
 	if got, want := publisher.Snapshot().Value["key"], "changed"; got != want {
 		t.Fatalf("published map value = %q, want %q", got, want)
 	}
@@ -149,8 +137,6 @@ func TestPublisherDoesNotClonePublishedNestedMutableValue(t *testing.T) {
 	publisher.Publish(val)
 	mutateMutableReadModel(&val, "changed-name", "changed-attr", "changed-tag")
 
-	// This test documents Publisher's immutable-publication contract. Publisher
-	// does not clone values; callers must publish values they will not mutate.
 	got := publisher.Snapshot().Value
 	assertMutableReadModel(t, got, mutableReadModelValue("changed-name", "changed-attr", "changed-tag"))
 }
@@ -162,15 +148,7 @@ func TestPublisherDoesNotClonePublishedValue(t *testing.T) {
 	publisher.Publish(val)
 	val[0] = "changed"
 
-	// This test documents Publisher's immutable-publication contract. Publisher
-	// does not clone values; callers must publish values they will not mutate.
 	if got, want := publisher.Snapshot().Value[0], "changed"; got != want {
 		t.Fatalf("published value = %q, want %q", got, want)
 	}
-}
-
-func TestNewPublisherPanicsOnNilOption(t *testing.T) {
-	panicassert.RequireMessage(t, "snapshot: nil option", func() {
-		_ = NewPublisher[string](nil)
-	})
 }

@@ -34,7 +34,7 @@ type Observation struct {
 	// The snapshot comes from capacity.Ledger's explicit observed accounting
 	// path. It exposes only scalar capacity state: Limit, Reserved, Available,
 	// and Debt.
-	Snapshot snapshot.Snapshot[Snapshot]
+	Snapshot snapshot.Snapshot[snapshot.LocalRevision, Snapshot]
 
 	// Refusal classifies why the attempt did not reserve capacity.
 	//
@@ -66,7 +66,7 @@ func (o Observation) Denied() bool {
 // snapshot value, and a valid refusal. Zero Observation is invalid because it
 // does not describe a committed acquisition attempt.
 func (o Observation) IsValid() bool {
-	return !o.Snapshot.IsZeroRevision() &&
+	return !o.Snapshot.Revision.IsZero() &&
 		o.Snapshot.Value.IsValid() &&
 		o.Refusal.IsValid()
 }

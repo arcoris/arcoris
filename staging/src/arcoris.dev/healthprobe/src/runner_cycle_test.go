@@ -98,7 +98,7 @@ func TestRunnerRunCycleDoesNotStoreInconsistentReport(t *testing.T) {
 		t.Fatal("Snapshot() after inconsistent report ok = false, want true")
 	}
 	if after.Revision != before.Revision {
-		t.Fatalf("Revision after inconsistent report = %d, want %d", after.Revision, before.Revision)
+		t.Fatalf("LocalRevision after inconsistent report = %d, want %d", after.Revision, before.Revision)
 	}
 }
 

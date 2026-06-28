@@ -67,10 +67,10 @@
 // zero Snapshot is valid and means no cached observation. Every observed
 // Snapshot has a concrete Target, a structurally valid and aggregate-consistent
 // health.Report whose Target matches the Snapshot Target, a non-zero Updated
-// timestamp, and a positive per-target Revision. Inconsistent reports are not
+// timestamp, and a positive per-target LocalRevision. Inconsistent reports are not
 // repaired or cached; rejecting them keeps evaluator aggregate bugs visible.
 // Internally, store uses one snapshot.Store[observation] per observed target;
-// the underlying snapshot store assigns Revision and Updated, while Stale
+// the underlying snapshot store assigns LocalRevision and Updated, while Stale
 // remains read-boundary metadata computed by Runner.
 //
 // # Staleness

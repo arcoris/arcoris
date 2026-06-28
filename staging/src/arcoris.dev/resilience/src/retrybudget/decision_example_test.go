@@ -26,8 +26,8 @@ func ExampleDecision() {
 	decision := retrybudget.Decision{
 		Allowed: true,
 		Reason:  retrybudget.ReasonAllowed,
-		Snapshot: snapshot.Snapshot[retrybudget.Snapshot]{
-			Revision: snapshot.ZeroRevision.Next(),
+		Snapshot: snapshot.Snapshot[snapshot.LocalRevision, retrybudget.Snapshot]{
+			Revision: snapshot.ZeroLocalRevision.Next(),
 			Value: retrybudget.Snapshot{
 				Kind: retrybudget.KindFixedWindow,
 				Attempts: retrybudget.AttemptsSnapshot{

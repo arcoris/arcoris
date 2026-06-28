@@ -50,7 +50,7 @@ func TestControlledSourcePublishesMany(t *testing.T) {
 
 	snap := src.PublishMany(NewConfigVersion(1), NewConfigVersion(2), NewConfigVersion(3))
 
-	if got, want := snap.Revision, snapshot.Revision(3); got != want {
+	if got, want := snap.Revision, snapshot.LocalRevision(3); got != want {
 		t.Fatalf("PublishMany revision = %d, want %d", got, want)
 	}
 	RequireConfigEqual(t, snap.Value, NewConfigVersion(3))
@@ -61,21 +61,21 @@ func TestEmptyControlledSourceStartsZero(t *testing.T) {
 	src := NewEmptyControlledSource[Config]()
 	snap := src.Snapshot()
 
-	if !snap.IsZeroRevision() {
+	if !snap.Revision.IsZero() {
 		t.Fatalf("Snapshot revision = %d, want zero", snap.Revision)
 	}
-	if src.Revision() != snapshot.ZeroRevision {
-		t.Fatalf("Revision() = %d, want zero", src.Revision())
+	if src.Revision() != snapshot.ZeroLocalRevision {
+		t.Fatalf("LocalRevision() = %d, want zero", src.Revision())
 	}
 }
 
 func TestZeroValueControlledSource(t *testing.T) {
 	var src ControlledSource[Config]
 
-	if got := src.Revision(); got != snapshot.ZeroRevision {
-		t.Fatalf("zero Revision() = %d, want zero", got)
+	if got := src.Revision(); got != snapshot.ZeroLocalRevision {
+		t.Fatalf("zero LocalRevision() = %d, want zero", got)
 	}
-	if snap := src.Snapshot(); !snap.IsZeroRevision() {
+	if snap := src.Snapshot(); !snap.Revision.IsZero() {
 		t.Fatalf("zero Snapshot revision = %d, want zero", snap.Revision)
 	}
 
@@ -99,8 +99,8 @@ func TestControlledSourceSerializesConcurrentPublications(t *testing.T) {
 	}
 	wg.Wait()
 
-	wantRev := snapshot.Revision(publications + 1)
+	wantRev := snapshot.LocalRevision(publications + 1)
 	if src.Revision() != wantRev {
-		t.Fatalf("Revision() = %d, want %d", src.Revision(), wantRev)
+		t.Fatalf("LocalRevision() = %d, want %d", src.Revision(), wantRev)
 	}
 }

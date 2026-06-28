@@ -19,7 +19,7 @@ import "arcoris.dev/snapshot"
 // Observation is the diagnostic read model returned by scalar observed methods.
 type Observation struct {
 	// Snapshot is read after the observed attempt.
-	Snapshot snapshot.Snapshot[Snapshot]
+	Snapshot snapshot.Snapshot[snapshot.LocalRevision, Snapshot]
 
 	// Refusal classifies why an observed scalar attempt did not reserve capacity.
 	Refusal Refusal

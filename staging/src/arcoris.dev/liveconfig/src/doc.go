@@ -25,12 +25,12 @@
 // Last-good means readers continue to observe the most recent accepted
 // configuration after a failed Apply. A failed candidate is still reported to
 // the caller and recorded by LastError, but it never becomes visible through
-// Snapshot or Stamped, and it does not advance Revision. This lets reload loops
+// Snapshot or Stamped, and it does not advance LocalRevision. This lets reload loops
 // keep trying new input while the component continues running on a coherent
 // configuration snapshot.
 //
 // Published values are immutable by contract. Holder does not clone values on
-// reads; Snapshot, Stamped, and Revision expose the value published by the
+// reads; Snapshot, Stamped, and LocalRevision expose the value published by the
 // underlying snapshot.Publisher. If T contains maps, slices, pointers, buffers,
 // or other mutable state, callers must provide a CloneFunc or otherwise
 // guarantee immutable ownership before values enter the holder.

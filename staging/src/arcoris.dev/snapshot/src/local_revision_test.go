@@ -21,33 +21,33 @@ import (
 )
 
 func TestRevisionIsZero(t *testing.T) {
-	if !ZeroRevision.IsZero() {
-		t.Fatal("ZeroRevision must report IsZero")
+	if !ZeroLocalRevision.IsZero() {
+		t.Fatal("ZeroLocalRevision must report IsZero")
 	}
 
-	if Revision(1).IsZero() {
+	if LocalRevision(1).IsZero() {
 		t.Fatal("non-zero revision reported IsZero")
 	}
 }
 
 func TestRevisionNext(t *testing.T) {
-	if got, want := ZeroRevision.Next(), Revision(1); got != want {
+	if got, want := ZeroLocalRevision.Next(), LocalRevision(1); got != want {
 		t.Fatalf("Next() = %d, want %d", got, want)
 	}
 }
 
 func TestRevisionNextPanicsOnOverflow(t *testing.T) {
-	panicassert.RequireMessage(t, "snapshot: revision overflow", func() {
-		_ = Revision(^uint64(0)).Next()
+	panicassert.RequireMessage(t, "snapshot: local revision overflow", func() {
+		_ = LocalRevision(^uint64(0)).Next()
 	})
 }
 
 func TestRevisionChangedSince(t *testing.T) {
-	if Revision(5).ChangedSince(5) {
+	if LocalRevision(5).ChangedSince(5) {
 		t.Fatal("same revision reported changed")
 	}
 
-	if !Revision(5).ChangedSince(4) {
+	if !LocalRevision(5).ChangedSince(4) {
 		t.Fatal("different revision reported unchanged")
 	}
 }

@@ -18,9 +18,9 @@ import "sync"
 
 var (
 	benchmarkSinkMu            sync.Mutex
-	benchmarkIntSnapshotSink   Snapshot[int]
-	benchmarkIntStampedSink    Stamped[int]
-	benchmarkSliceSnapshotSink Snapshot[[]string]
-	benchmarkSliceStampedSink  Stamped[[]string]
-	benchmarkRevisionSink      Revision
+	benchmarkIntSnapshotSink   Snapshot[LocalRevision, int]
+	benchmarkIntStampedSink    Stamped[LocalRevision, int]
+	benchmarkSliceSnapshotSink Snapshot[LocalRevision, []string]
+	benchmarkSliceStampedSink  Stamped[LocalRevision, []string]
+	benchmarkRevisionSink      LocalRevision
 )

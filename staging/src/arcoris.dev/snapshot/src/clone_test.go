@@ -20,9 +20,9 @@ import (
 	panicassert "arcoris.dev/testutil/panic"
 )
 
-func TestIdentity(t *testing.T) {
-	if got, want := Identity("value"), "value"; got != want {
-		t.Fatalf("Identity() = %q, want %q", got, want)
+func TestIdentityClone(t *testing.T) {
+	if got, want := IdentityClone("value"), "value"; got != want {
+		t.Fatalf("IdentityClone() = %q, want %q", got, want)
 	}
 }
 

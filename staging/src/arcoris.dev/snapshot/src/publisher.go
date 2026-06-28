@@ -28,9 +28,9 @@ import (
 // handler registries, immutable routing tables, and precomputed dispatch plans.
 // Reads use an atomic pointer load and do not clone the value.
 //
-// Writes are serialized so each commit advances the source-local revision and
-// stores the corresponding record as one ordered publication. Reads remain
-// lock-free by loading the latest published record pointer.
+// Writes are serialized so each commit advances the package-managed local
+// revision and stores the corresponding record as one ordered publication.
+// Reads remain lock-free by loading the latest published record pointer.
 //
 // Publisher does not freeze, clone, or deep-copy values. Values passed to
 // Publish or PublishStamped must be treated as immutable after publication. If T
@@ -52,12 +52,12 @@ type Publisher[T any] struct {
 	// store it before another goroutine stores an older reserved revision.
 	mu sync.Mutex
 
-	// nextRevision is the latest source-local revision assigned to a published
-	// record.
+	// nextRevision is the latest package-managed local revision assigned to a
+	// published record.
 	//
 	// nextRevision is protected by mu. Readers do not read this field; they load
 	// the revision from the latest immutable record through ptr.
-	nextRevision Revision
+	nextRevision LocalRevision
 
 	// clock provides local publication timestamps for Stamped values.
 	//
@@ -76,8 +76,8 @@ type Publisher[T any] struct {
 // Once a record is stored in Publisher.ptr, it must never be mutated. Readers may
 // load and use records without locks.
 type record[T any] struct {
-	// revision is the source-local revision assigned at publication time.
-	revision Revision
+	// revision is the package-managed local revision assigned at publication time.
+	revision LocalRevision
 
 	// updated is the local publication time.
 	updated time.Time

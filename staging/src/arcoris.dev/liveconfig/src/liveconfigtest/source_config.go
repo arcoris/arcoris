@@ -31,12 +31,12 @@ func NewEmptyConfigSource(opts ...snapshot.Option) *ControlledSource[Config] {
 }
 
 // PublishConfig clones cfg and publishes it to src.
-func PublishConfig(src *ControlledSource[Config], cfg Config) snapshot.Snapshot[Config] {
+func PublishConfig(src *ControlledSource[Config], cfg Config) snapshot.Snapshot[snapshot.LocalRevision, Config] {
 	return src.Publish(CloneConfig(cfg))
 }
 
 // PublishConfigStamped clones cfg and publishes it to src with timestamp
 // metadata.
-func PublishConfigStamped(src *ControlledSource[Config], cfg Config) snapshot.Stamped[Config] {
+func PublishConfigStamped(src *ControlledSource[Config], cfg Config) snapshot.Stamped[snapshot.LocalRevision, Config] {
 	return src.PublishStamped(CloneConfig(cfg))
 }

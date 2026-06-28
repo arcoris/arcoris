@@ -59,12 +59,12 @@ func NewEmptyControlledSource[T any](opts ...snapshot.Option) *ControlledSource[
 }
 
 // Publish publishes val and returns the resulting lightweight snapshot.
-func (s *ControlledSource[T]) Publish(val T) snapshot.Snapshot[T] {
+func (s *ControlledSource[T]) Publish(val T) snapshot.Snapshot[snapshot.LocalRevision, T] {
 	return s.PublishStamped(val).Snapshot()
 }
 
 // PublishStamped publishes val and returns the resulting stamped snapshot.
-func (s *ControlledSource[T]) PublishStamped(val T) snapshot.Stamped[T] {
+func (s *ControlledSource[T]) PublishStamped(val T) snapshot.Stamped[snapshot.LocalRevision, T] {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -75,8 +75,8 @@ func (s *ControlledSource[T]) PublishStamped(val T) snapshot.Stamped[T] {
 //
 // When vals is empty, PublishMany returns the current snapshot without
 // publishing a new revision.
-func (s *ControlledSource[T]) PublishMany(vals ...T) snapshot.Snapshot[T] {
-	var snap snapshot.Snapshot[T]
+func (s *ControlledSource[T]) PublishMany(vals ...T) snapshot.Snapshot[snapshot.LocalRevision, T] {
+	var snap snapshot.Snapshot[snapshot.LocalRevision, T]
 	if len(vals) == 0 {
 		return s.Snapshot()
 	}
@@ -87,28 +87,28 @@ func (s *ControlledSource[T]) PublishMany(vals ...T) snapshot.Snapshot[T] {
 }
 
 // Snapshot returns the latest lightweight snapshot.
-func (s *ControlledSource[T]) Snapshot() snapshot.Snapshot[T] {
+func (s *ControlledSource[T]) Snapshot() snapshot.Snapshot[snapshot.LocalRevision, T] {
 	pub := s.publisherOrNil()
 	if pub == nil {
-		return snapshot.Snapshot[T]{}
+		return snapshot.Snapshot[snapshot.LocalRevision, T]{}
 	}
 	return pub.Snapshot()
 }
 
 // Stamped returns the latest stamped snapshot.
-func (s *ControlledSource[T]) Stamped() snapshot.Stamped[T] {
+func (s *ControlledSource[T]) Stamped() snapshot.Stamped[snapshot.LocalRevision, T] {
 	pub := s.publisherOrNil()
 	if pub == nil {
-		return snapshot.Stamped[T]{}
+		return snapshot.Stamped[snapshot.LocalRevision, T]{}
 	}
 	return pub.Stamped()
 }
 
-// Revision returns the latest source-local revision.
-func (s *ControlledSource[T]) Revision() snapshot.Revision {
+// LocalRevision returns the latest source-local revision.
+func (s *ControlledSource[T]) Revision() snapshot.LocalRevision {
 	pub := s.publisherOrNil()
 	if pub == nil {
-		return snapshot.ZeroRevision
+		return snapshot.ZeroLocalRevision
 	}
 	return pub.Revision()
 }

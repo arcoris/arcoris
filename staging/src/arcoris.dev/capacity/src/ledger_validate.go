@@ -30,7 +30,7 @@ func (l *Ledger) requireReady() {
 // advanceRevision records one completed scalar ledger mutation.
 func (l *Ledger) advanceRevision() {
 	for {
-		current := snapshot.Revision(l.revision.Load())
+		current := snapshot.LocalRevision(l.revision.Load())
 		next := current.Next()
 		if l.revision.CompareAndSwap(uint64(current), uint64(next)) {
 			return

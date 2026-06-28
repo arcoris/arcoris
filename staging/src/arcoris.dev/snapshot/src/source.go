@@ -14,32 +14,33 @@
 
 package snapshot
 
-// Source is a read-only provider of lightweight snapshots.
+// Source is an always-available provider of lightweight snapshots.
 //
-// Source is a consumer-facing interface. Functions that only need to read the
-// current state should accept Source[T] rather than depending on a concrete Store
-// or Publisher implementation.
-type Source[T any] interface {
+// Source should be used for components such as Store and Publisher that can
+// return a snapshot immediately after construction. Sources that may not be
+// ready should implement Reader instead.
+type Source[R comparable, T any] interface {
 	// Snapshot returns the source's current lightweight snapshot.
-	Snapshot() Snapshot[T]
+	Snapshot() Snapshot[R, T]
 }
 
-// StampedSource is a read-only provider of stamped snapshots.
+// StampedSource is an always-available provider of stamped snapshots.
 //
 // StampedSource should be used when consumers need local update time metadata in
-// addition to the value and revision.
-type StampedSource[T any] interface {
+// addition to the value and revision. Sources that may not be ready should
+// implement StampedReader instead.
+type StampedSource[R comparable, T any] interface {
 	// Stamped returns the source's current stamped snapshot.
-	Stamped() Stamped[T]
+	Stamped() Stamped[R, T]
 }
 
-// RevisionSource exposes the current source-local revision without requiring the
-// caller to read the value.
+// RevisionSource exposes the current revision without requiring the caller to
+// read a value.
 //
 // RevisionSource is useful for cheap change checks. It does not imply a global
 // ordering across independent sources.
-type RevisionSource interface {
+type RevisionSource[R comparable] interface {
 	// Revision returns the latest committed or published revision known to the
 	// source.
-	Revision() Revision
+	Revision() R
 }

@@ -20,9 +20,9 @@ import (
 )
 
 func TestStampedZeroValue(t *testing.T) {
-	var stamped Stamped[string]
+	var stamped Stamped[LocalRevision, string]
 
-	if !stamped.IsZeroRevision() {
+	if !stamped.Revision.IsZero() {
 		t.Fatalf("zero Stamped revision = %d, want zero", stamped.Revision)
 	}
 	if !stamped.Updated.IsZero() {
@@ -34,24 +34,42 @@ func TestStampedZeroValue(t *testing.T) {
 }
 
 func TestStampedRevisionHelpers(t *testing.T) {
-	stamped := Stamped[string]{Revision: Revision(3), Updated: time.Unix(1, 0), Value: "value"}
+	stamped := Stamped[LocalRevision, string]{Revision: LocalRevision(3), Updated: time.Unix(1, 0), Value: "value"}
 
-	if stamped.IsZeroRevision() {
+	if stamped.Revision.IsZero() {
 		t.Fatal("non-zero stamped revision reported zero")
 	}
 
-	if stamped.ChangedSince(Revision(3)) {
+	if stamped.ChangedSince(LocalRevision(3)) {
 		t.Fatal("stamped changed since same revision")
 	}
 
-	if !stamped.ChangedSince(Revision(2)) {
+	if !stamped.ChangedSince(LocalRevision(2)) {
 		t.Fatal("stamped did not change since different revision")
+	}
+}
+
+func TestStampedCarriesCustomRevisionType(t *testing.T) {
+	stamped := Stamped[testRevision, string]{
+		Revision: testRevision("domain-r2"),
+		Updated:  time.Unix(1, 0),
+		Value:    "value",
+	}
+
+	if got, want := stamped.Revision, testRevision("domain-r2"); got != want {
+		t.Fatalf("Revision = %q, want %q", got, want)
+	}
+	if stamped.ChangedSince(testRevision("domain-r2")) {
+		t.Fatal("custom revision changed since same revision")
+	}
+	if !stamped.ChangedSince(testRevision("domain-r1")) {
+		t.Fatal("custom revision did not change since different revision")
 	}
 }
 
 func TestStampedAge(t *testing.T) {
 	updated := time.Unix(10, 0)
-	stamped := Stamped[string]{Revision: Revision(1), Updated: updated, Value: "value"}
+	stamped := Stamped[LocalRevision, string]{Revision: LocalRevision(1), Updated: updated, Value: "value"}
 
 	if got, want := stamped.Age(updated.Add(5*time.Second)), 5*time.Second; got != want {
 		t.Fatalf("Age() = %s, want %s", got, want)
@@ -60,7 +78,7 @@ func TestStampedAge(t *testing.T) {
 
 func TestStampedWithValuePreservesMetadata(t *testing.T) {
 	updated := time.Unix(10, 0)
-	stamped := Stamped[string]{Revision: Revision(8), Updated: updated, Value: "old"}
+	stamped := Stamped[LocalRevision, string]{Revision: LocalRevision(8), Updated: updated, Value: "old"}
 	got := stamped.WithValue("new")
 
 	if got.Revision != stamped.Revision {
@@ -75,7 +93,7 @@ func TestStampedWithValuePreservesMetadata(t *testing.T) {
 }
 
 func TestStampedSnapshot(t *testing.T) {
-	stamped := Stamped[string]{Revision: Revision(4), Updated: time.Unix(10, 0), Value: "value"}
+	stamped := Stamped[LocalRevision, string]{Revision: LocalRevision(4), Updated: time.Unix(10, 0), Value: "value"}
 	snap := stamped.Snapshot()
 
 	if snap.Revision != stamped.Revision {

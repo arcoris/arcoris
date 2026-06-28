@@ -155,7 +155,7 @@ func TestCloneSnapshotCopiesEmbeddedReportChecks(t *testing.T) {
 		t.Fatalf("Updated = %v, want %v", cloned.Updated, source.Updated)
 	}
 	if cloned.Revision != source.Revision {
-		t.Fatalf("Revision = %d, want %d", cloned.Revision, source.Revision)
+		t.Fatalf("LocalRevision = %d, want %d", cloned.Revision, source.Revision)
 	}
 	if cloned.Stale != source.Stale {
 		t.Fatalf("Stale = %v, want %v", cloned.Stale, source.Stale)

@@ -16,38 +16,57 @@ package snapshot
 
 import "testing"
 
-func TestSnapshotZeroValue(t *testing.T) {
-	var snap Snapshot[string]
+type testRevision string
 
-	if !snap.IsZeroRevision() {
+func TestSnapshotZeroValue(t *testing.T) {
+	var snap Snapshot[LocalRevision, string]
+
+	if !snap.Revision.IsZero() {
 		t.Fatalf("zero Snapshot revision = %d, want zero", snap.Revision)
 	}
 	if got, want := snap.Value, ""; got != want {
 		t.Fatalf("zero Snapshot value = %q, want %q", got, want)
 	}
-	if !snap.ChangedSince(Revision(1)) {
+	if !snap.ChangedSince(LocalRevision(1)) {
 		t.Fatal("zero Snapshot should differ from a committed revision")
 	}
 }
 
 func TestSnapshotRevisionHelpers(t *testing.T) {
-	snap := Snapshot[string]{Revision: Revision(2), Value: "value"}
+	snap := Snapshot[LocalRevision, string]{Revision: LocalRevision(2), Value: "value"}
 
-	if snap.IsZeroRevision() {
+	if snap.Revision.IsZero() {
 		t.Fatal("non-zero snapshot revision reported zero")
 	}
 
-	if snap.ChangedSince(Revision(2)) {
+	if snap.ChangedSince(LocalRevision(2)) {
 		t.Fatal("snapshot changed since same revision")
 	}
 
-	if !snap.ChangedSince(Revision(1)) {
+	if !snap.ChangedSince(LocalRevision(1)) {
 		t.Fatal("snapshot did not change since different revision")
 	}
 }
 
+func TestSnapshotCarriesCustomRevisionType(t *testing.T) {
+	snap := Snapshot[testRevision, string]{
+		Revision: testRevision("domain-r2"),
+		Value:    "value",
+	}
+
+	if got, want := snap.Revision, testRevision("domain-r2"); got != want {
+		t.Fatalf("Revision = %q, want %q", got, want)
+	}
+	if snap.ChangedSince(testRevision("domain-r2")) {
+		t.Fatal("custom revision changed since same revision")
+	}
+	if !snap.ChangedSince(testRevision("domain-r1")) {
+		t.Fatal("custom revision did not change since different revision")
+	}
+}
+
 func TestSnapshotWithValuePreservesRevision(t *testing.T) {
-	snap := Snapshot[string]{Revision: Revision(7), Value: "old"}
+	snap := Snapshot[LocalRevision, string]{Revision: LocalRevision(7), Value: "old"}
 	got := snap.WithValue("new")
 
 	if got.Revision != snap.Revision {

@@ -26,21 +26,21 @@ func (b *stubBudget) TryAdmitRetry() Decision {
 	return Decision{
 		Allowed: true,
 		Reason:  ReasonAllowed,
-		Snapshot: snapshot.Snapshot[Snapshot]{
-			Revision: snapshot.ZeroRevision.Next(),
+		Snapshot: snapshot.Snapshot[snapshot.LocalRevision, Snapshot]{
+			Revision: snapshot.ZeroLocalRevision.Next(),
 			Value:    b.snap,
 		},
 	}
 }
 
-func (b *stubBudget) Snapshot() snapshot.Snapshot[Snapshot] {
-	return snapshot.Snapshot[Snapshot]{
-		Revision: snapshot.ZeroRevision.Next(),
+func (b *stubBudget) Snapshot() snapshot.Snapshot[snapshot.LocalRevision, Snapshot] {
+	return snapshot.Snapshot[snapshot.LocalRevision, Snapshot]{
+		Revision: snapshot.ZeroLocalRevision.Next(),
 		Value:    b.snap,
 	}
 }
 
 var _ OriginalRecorder = (*stubBudget)(nil)
 var _ RetryAdmitter = (*stubBudget)(nil)
-var _ snapshot.Source[Snapshot] = (*stubBudget)(nil)
+var _ snapshot.Source[snapshot.LocalRevision, Snapshot] = (*stubBudget)(nil)
 var _ Budget = (*stubBudget)(nil)

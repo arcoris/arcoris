@@ -99,7 +99,7 @@ func waitForSnapshotWhere(
 	}
 }
 
-func waitForRevision(t *testing.T, r *Runner, target health.Target, rev snapshot.Revision) Snapshot {
+func waitForRevision(t *testing.T, r *Runner, target health.Target, rev snapshot.LocalRevision) Snapshot {
 	t.Helper()
 
 	return waitForSnapshotWhere(t, r, target, func(snap Snapshot) bool {
@@ -131,7 +131,7 @@ func stepUntilRevision(
 	clk *clock.FakeClock,
 	r *Runner,
 	target health.Target,
-	rev snapshot.Revision,
+	rev snapshot.LocalRevision,
 	interval time.Duration,
 ) Snapshot {
 	t.Helper()

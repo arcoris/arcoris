@@ -21,17 +21,17 @@ import "arcoris.dev/snapshot"
 // The returned value is the underlying capacity.Ledger snapshot. It is safe to
 // store or compare as a value. It describes local in-flight capacity only; it
 // does not include health, routing, scheduling, metrics, or distributed state.
-func (b *Bulkhead) Snapshot() snapshot.Snapshot[Snapshot] {
+func (b *Bulkhead) Snapshot() snapshot.Snapshot[snapshot.LocalRevision, Snapshot] {
 	b.requireReady()
 	return b.ledger.Snapshot()
 }
 
-// Revision returns the latest committed bulkhead capacity revision.
+// LocalRevision returns the latest committed bulkhead capacity revision.
 //
 // Revisions are source-local to this Bulkhead. They are useful for cheap change
 // detection by consumers observing the same Bulkhead, but they are not a global
 // ordering across components.
-func (b *Bulkhead) Revision() snapshot.Revision {
+func (b *Bulkhead) Revision() snapshot.LocalRevision {
 	b.requireReady()
 	return b.ledger.Revision()
 }

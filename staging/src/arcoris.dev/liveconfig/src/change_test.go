@@ -79,8 +79,8 @@ func TestChangeStateMethods(t *testing.T) {
 
 func TestChangeCarriesPreviousAndCurrentSnapshots(t *testing.T) {
 	change := Change[string]{
-		Previous: snapshot.Snapshot[string]{Revision: 1, Value: "prev"},
-		Current:  snapshot.Snapshot[string]{Revision: 2, Value: "cur"},
+		Previous: snapshot.Snapshot[snapshot.LocalRevision, string]{Revision: 1, Value: "prev"},
+		Current:  snapshot.Snapshot[snapshot.LocalRevision, string]{Revision: 2, Value: "cur"},
 		Changed:  true,
 		Reason:   ChangeReasonPublished,
 	}
@@ -101,8 +101,8 @@ func TestChangeRevisionRelationship(t *testing.T) {
 		{
 			name: "changed",
 			change: Change[string]{
-				Previous: snapshot.Snapshot[string]{Revision: 1, Value: "prev"},
-				Current:  snapshot.Snapshot[string]{Revision: 2, Value: "cur"},
+				Previous: snapshot.Snapshot[snapshot.LocalRevision, string]{Revision: 1, Value: "prev"},
+				Current:  snapshot.Snapshot[snapshot.LocalRevision, string]{Revision: 2, Value: "cur"},
 				Changed:  true,
 				Reason:   ChangeReasonPublished,
 			},
@@ -110,8 +110,8 @@ func TestChangeRevisionRelationship(t *testing.T) {
 		{
 			name: "equal",
 			change: Change[string]{
-				Previous: snapshot.Snapshot[string]{Revision: 1, Value: "prev"},
-				Current:  snapshot.Snapshot[string]{Revision: 1, Value: "prev"},
+				Previous: snapshot.Snapshot[snapshot.LocalRevision, string]{Revision: 1, Value: "prev"},
+				Current:  snapshot.Snapshot[snapshot.LocalRevision, string]{Revision: 1, Value: "prev"},
 				Changed:  false,
 				Reason:   ChangeReasonEqual,
 			},

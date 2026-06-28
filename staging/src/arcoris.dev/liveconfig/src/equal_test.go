@@ -53,7 +53,7 @@ func TestEqualFuncTrueSuppressesPublication(t *testing.T) {
 		t.Fatal("Apply().Changed = true, want false")
 	}
 	if got := h.Revision(); got != prev.Revision {
-		t.Fatalf("Revision() = %d, want %d", got, prev.Revision)
+		t.Fatalf("LocalRevision() = %d, want %d", got, prev.Revision)
 	}
 }
 
@@ -188,7 +188,7 @@ func TestApplyEqualNoopDoesNotAdvanceRevision(t *testing.T) {
 		t.Fatalf("Current.Revision = %d, want %d", change.Current.Revision, prev)
 	}
 	if got := h.Revision(); got != prev {
-		t.Fatalf("Revision() = %d, want %d", got, prev)
+		t.Fatalf("LocalRevision() = %d, want %d", got, prev)
 	}
 }
 
@@ -230,6 +230,6 @@ func TestConcurrentEqualApplyDoesNotAdvanceRevision(t *testing.T) {
 	})
 
 	if got := h.Revision(); got != prev {
-		t.Fatalf("Revision() = %d, want %d", got, prev)
+		t.Fatalf("LocalRevision() = %d, want %d", got, prev)
 	}
 }

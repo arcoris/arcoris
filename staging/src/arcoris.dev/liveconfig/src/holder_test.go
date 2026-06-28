@@ -151,9 +151,9 @@ func newTestHolder(t *testing.T, initial testConfig, opts ...Option[testConfig])
 }
 
 var (
-	benchmarkSnapshotSink snapshot.Snapshot[testConfig]
-	benchmarkStampedSink  snapshot.Stamped[testConfig]
-	benchmarkRevisionSink snapshot.Revision
+	benchmarkSnapshotSink snapshot.Snapshot[snapshot.LocalRevision, testConfig]
+	benchmarkStampedSink  snapshot.Stamped[snapshot.LocalRevision, testConfig]
+	benchmarkRevisionSink snapshot.LocalRevision
 	benchmarkChangeSink   Change[testConfig]
 	benchmarkErrorSink    error
 	benchmarkSinkMu       sync.Mutex
@@ -196,7 +196,7 @@ func benchmarkConfigWithTags(n int) testConfig {
 }
 
 type snapshotLocal struct {
-	snapshot snapshot.Snapshot[testConfig]
+	snapshot snapshot.Snapshot[snapshot.LocalRevision, testConfig]
 }
 
 func (l snapshotLocal) keep() {
@@ -206,7 +206,7 @@ func (l snapshotLocal) keep() {
 }
 
 type stampedLocal struct {
-	stamped snapshot.Stamped[testConfig]
+	stamped snapshot.Stamped[snapshot.LocalRevision, testConfig]
 }
 
 func (l stampedLocal) keep() {
@@ -216,7 +216,7 @@ func (l stampedLocal) keep() {
 }
 
 type revisionLocal struct {
-	revision snapshot.Revision
+	revision snapshot.LocalRevision
 }
 
 func (l revisionLocal) keep() {
@@ -316,7 +316,7 @@ func requirePanic(t *testing.T, fn func()) {
 	fn()
 }
 
-func assertTestSnapshot(t *testing.T, got, want snapshot.Snapshot[testConfig]) {
+func assertTestSnapshot(t *testing.T, got, want snapshot.Snapshot[snapshot.LocalRevision, testConfig]) {
 	t.Helper()
 	if got.Revision != want.Revision || !equalTestConfig(got.Value, want.Value) {
 		t.Fatalf("Snapshot() = %#v, want %#v", got, want)

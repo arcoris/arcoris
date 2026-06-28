@@ -29,7 +29,7 @@ type Decision struct {
 	Reason Reason
 
 	// Snapshot is the revisioned retry-budget state associated with the decision.
-	Snapshot snapshot.Snapshot[Snapshot]
+	Snapshot snapshot.Snapshot[snapshot.LocalRevision, Snapshot]
 }
 
 // IsAllowed reports whether d admits the retry attempt.
@@ -51,7 +51,7 @@ func (d Decision) IsValid() bool {
 	if !d.Reason.IsValid() {
 		return false
 	}
-	if d.Snapshot.IsZeroRevision() {
+	if d.Snapshot.Revision.IsZero() {
 		return false
 	}
 	if !d.Snapshot.Value.IsValid() {

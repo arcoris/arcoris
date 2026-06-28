@@ -17,20 +17,20 @@ package snapshot
 import "testing"
 
 func TestStoreImplementsSourceInterfaces(t *testing.T) {
-	var _ Source[string] = (*Store[string])(nil)
-	var _ StampedSource[string] = (*Store[string])(nil)
-	var _ RevisionSource = (*Store[string])(nil)
+	var _ Source[LocalRevision, string] = (*Store[string])(nil)
+	var _ StampedSource[LocalRevision, string] = (*Store[string])(nil)
+	var _ RevisionSource[LocalRevision] = (*Store[string])(nil)
 }
 
 func TestPublisherImplementsSourceInterfaces(t *testing.T) {
-	var _ Source[string] = (*Publisher[string])(nil)
-	var _ StampedSource[string] = (*Publisher[string])(nil)
-	var _ RevisionSource = (*Publisher[string])(nil)
+	var _ Source[LocalRevision, string] = (*Publisher[string])(nil)
+	var _ StampedSource[LocalRevision, string] = (*Publisher[string])(nil)
+	var _ RevisionSource[LocalRevision] = (*Publisher[string])(nil)
 }
 
 func TestSourceReadsStore(t *testing.T) {
-	store := NewStore("value", Identity[string])
-	read := func(src Source[string]) Snapshot[string] {
+	store := NewStore("value", IdentityClone[string])
+	read := func(src Source[LocalRevision, string]) Snapshot[LocalRevision, string] {
 		return src.Snapshot()
 	}
 

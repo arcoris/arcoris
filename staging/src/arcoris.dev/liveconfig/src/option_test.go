@@ -99,7 +99,7 @@ func TestWithEqualUsesConfiguredEqual(t *testing.T) {
 		t.Fatal("Apply().Changed = true, want false")
 	}
 	if got := h.Revision(); got != prev.Revision {
-		t.Fatalf("Revision() = %d, want %d", got, prev.Revision)
+		t.Fatalf("LocalRevision() = %d, want %d", got, prev.Revision)
 	}
 }
 

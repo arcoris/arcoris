@@ -21,7 +21,7 @@ import (
 
 // update commits report as the latest observation for target.
 //
-// The per-target snapshot.Store assigns Revision and Updated. The return value
+// The per-target snapshot.Store assigns LocalRevision and Updated. The return value
 // is false when target is not configured or report does not form a valid
 // observation for target.
 //

@@ -17,7 +17,7 @@ package snapshot
 import "testing"
 
 func BenchmarkStoreSnapshotSmallValue(b *testing.B) {
-	store := NewStore(42, Identity[int])
+	store := NewStore(42, IdentityClone[int])
 
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -26,7 +26,7 @@ func BenchmarkStoreSnapshotSmallValue(b *testing.B) {
 }
 
 func BenchmarkStoreStampedSmallValue(b *testing.B) {
-	store := NewStore(42, Identity[int])
+	store := NewStore(42, IdentityClone[int])
 
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -35,7 +35,7 @@ func BenchmarkStoreStampedSmallValue(b *testing.B) {
 }
 
 func BenchmarkStoreRevision(b *testing.B) {
-	store := NewStore(42, Identity[int])
+	store := NewStore(42, IdentityClone[int])
 
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -44,13 +44,13 @@ func BenchmarkStoreRevision(b *testing.B) {
 }
 
 func BenchmarkStoreSnapshotParallel(b *testing.B) {
-	store := NewStore(42, Identity[int])
+	store := NewStore(42, IdentityClone[int])
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	b.RunParallel(func(pb *testing.PB) {
-		var snap Snapshot[int]
+		var snap Snapshot[LocalRevision, int]
 		for pb.Next() {
 			snap = store.Snapshot()
 		}
@@ -61,13 +61,13 @@ func BenchmarkStoreSnapshotParallel(b *testing.B) {
 }
 
 func BenchmarkStoreStampedParallel(b *testing.B) {
-	store := NewStore(42, Identity[int])
+	store := NewStore(42, IdentityClone[int])
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	b.RunParallel(func(pb *testing.PB) {
-		var stamped Stamped[int]
+		var stamped Stamped[LocalRevision, int]
 		for pb.Next() {
 			stamped = store.Stamped()
 		}
@@ -78,7 +78,7 @@ func BenchmarkStoreStampedParallel(b *testing.B) {
 }
 
 func BenchmarkStoreReplaceSmallValue(b *testing.B) {
-	store := NewStore(0, Identity[int])
+	store := NewStore(0, IdentityClone[int])
 
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -87,7 +87,7 @@ func BenchmarkStoreReplaceSmallValue(b *testing.B) {
 }
 
 func BenchmarkStoreReplaceStampedSmallValue(b *testing.B) {
-	store := NewStore(0, Identity[int])
+	store := NewStore(0, IdentityClone[int])
 
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -96,13 +96,13 @@ func BenchmarkStoreReplaceStampedSmallValue(b *testing.B) {
 }
 
 func BenchmarkStoreReplaceParallel(b *testing.B) {
-	store := NewStore(0, Identity[int])
+	store := NewStore(0, IdentityClone[int])
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	b.RunParallel(func(pb *testing.PB) {
-		var snap Snapshot[int]
+		var snap Snapshot[LocalRevision, int]
 		for pb.Next() {
 			snap = store.Replace(1)
 		}
@@ -113,7 +113,7 @@ func BenchmarkStoreReplaceParallel(b *testing.B) {
 }
 
 func BenchmarkStoreUpdateSmallValue(b *testing.B) {
-	store := NewStore(0, Identity[int])
+	store := NewStore(0, IdentityClone[int])
 
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -124,7 +124,7 @@ func BenchmarkStoreUpdateSmallValue(b *testing.B) {
 }
 
 func BenchmarkStoreUpdateStampedSmallValue(b *testing.B) {
-	store := NewStore(0, Identity[int])
+	store := NewStore(0, IdentityClone[int])
 
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -165,13 +165,13 @@ func BenchmarkStoreReplaceSlice100(b *testing.B) {
 }
 
 func BenchmarkStoreUpdateParallel(b *testing.B) {
-	store := NewStore(0, Identity[int])
+	store := NewStore(0, IdentityClone[int])
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	b.RunParallel(func(pb *testing.PB) {
-		var snap Snapshot[int]
+		var snap Snapshot[LocalRevision, int]
 		for pb.Next() {
 			snap = store.Update(func(v int) int {
 				return v + 1

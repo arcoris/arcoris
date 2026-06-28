@@ -18,7 +18,7 @@ package stamp
 //
 // It intentionally has no ordering helpers. Higher layers may attach storage
 // semantics, but api/meta treats it as an opaque scalar: not globally
-// comparable, not a number, and not snapshot.Revision.
+// comparable, not a number, and not snapshot.LocalRevision.
 type ResourceVersion string
 
 // String returns the opaque resource version text.

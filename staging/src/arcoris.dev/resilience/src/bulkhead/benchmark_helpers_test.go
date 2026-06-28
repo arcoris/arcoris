@@ -19,7 +19,7 @@ import "arcoris.dev/snapshot"
 var (
 	benchmarkLease       *Lease
 	benchmarkObservation Observation
-	benchmarkSnapshot    snapshot.Snapshot[Snapshot]
-	benchmarkRevision    snapshot.Revision
+	benchmarkSnapshot    snapshot.Snapshot[snapshot.LocalRevision, Snapshot]
+	benchmarkRevision    snapshot.LocalRevision
 	benchmarkOK          bool
 )

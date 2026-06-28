@@ -39,12 +39,12 @@ type RetryAdmitter interface {
 
 // Budget is the common contract for retry budget implementations.
 //
-// Budget embeds snapshot.Source[Snapshot] instead of defining a package-local
+// Budget embeds snapshot.Source[snapshot.LocalRevision, Snapshot] instead of defining a package-local
 // Source interface. Revisioned snapshot publication belongs to arcoris.dev/snapshot;
 // this package only defines the retry-budget domain value carried by that
 // generic snapshot.
 type Budget interface {
 	OriginalRecorder
 	RetryAdmitter
-	snapshot.Source[Snapshot]
+	snapshot.Source[snapshot.LocalRevision, Snapshot]
 }

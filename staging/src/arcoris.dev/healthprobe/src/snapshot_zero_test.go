@@ -22,7 +22,7 @@ import (
 	"arcoris.dev/snapshot"
 )
 
-func TestSnapshotZeroUsesZeroRevision(t *testing.T) {
+func TestSnapshotZeroUsesZeroLocalRevision(t *testing.T) {
 	t.Parallel()
 
 	var snap Snapshot
@@ -30,7 +30,7 @@ func TestSnapshotZeroUsesZeroRevision(t *testing.T) {
 	if !snap.IsValid() {
 		t.Fatal("zero Snapshot IsValid() = false, want true")
 	}
-	if snap.Revision != snapshot.ZeroRevision {
+	if snap.Revision != snapshot.ZeroLocalRevision {
 		t.Fatalf("zero Snapshot Revision = %d, want zero", snap.Revision)
 	}
 }

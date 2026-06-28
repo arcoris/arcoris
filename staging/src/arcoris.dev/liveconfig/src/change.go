@@ -45,14 +45,14 @@ import "arcoris.dev/snapshot"
 //     error, and Current.Revision equals Previous.Revision.
 type Change[T any] struct {
 	// Previous is the snapshot visible before the candidate was evaluated.
-	Previous snapshot.Snapshot[T]
+	Previous snapshot.Snapshot[snapshot.LocalRevision, T]
 
 	// Current is the snapshot visible after the candidate was evaluated.
 	//
 	// For rejected candidates and accepted equal candidates, Current is the same
 	// source revision as Previous. For published candidates, Current is the newly
 	// published snapshot.
-	Current snapshot.Snapshot[T]
+	Current snapshot.Snapshot[snapshot.LocalRevision, T]
 
 	// Changed reports whether Apply published a new source revision.
 	//

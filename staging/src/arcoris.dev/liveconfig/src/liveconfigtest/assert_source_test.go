@@ -21,8 +21,8 @@ import (
 )
 
 func TestSourceAssertionHelpersAcceptValidSources(t *testing.T) {
-	stamped := snapshot.Stamped[Config]{
-		Revision: snapshot.ZeroRevision.Next(),
+	stamped := snapshot.Stamped[snapshot.LocalRevision, Config]{
+		Revision: snapshot.ZeroLocalRevision.Next(),
 		Value:    NewConfig(),
 	}
 	RequireStampedNonZeroRevision(t, stamped)
@@ -30,7 +30,7 @@ func TestSourceAssertionHelpersAcceptValidSources(t *testing.T) {
 	RequireConfigStampedValue(t, stamped, NewConfig())
 
 	src := NewControlledSource(NewConfig())
-	RequireSourceRevision(t, src, snapshot.ZeroRevision.Next())
+	RequireSourceRevision(t, src, snapshot.ZeroLocalRevision.Next())
 	RequireSourceValue(t, src, NewConfig(), EqualConfig)
 	RequireConfigSourceValue(t, src, NewConfig())
 }

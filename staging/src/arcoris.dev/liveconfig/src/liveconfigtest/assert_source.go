@@ -18,7 +18,7 @@ import "arcoris.dev/snapshot"
 
 // RequireSourceRevision fails the test when src reports a different revision
 // than want.
-func RequireSourceRevision(t TestingT, src snapshot.RevisionSource, want snapshot.Revision) {
+func RequireSourceRevision(t TestingT, src snapshot.RevisionSource[snapshot.LocalRevision], want snapshot.LocalRevision) {
 	t.Helper()
 
 	if got := src.Revision(); got != want {
@@ -27,36 +27,36 @@ func RequireSourceRevision(t TestingT, src snapshot.RevisionSource, want snapsho
 }
 
 // RequireSourceValue fails the test when src.Snapshot().Value differs from want.
-func RequireSourceValue[T any](t TestingT, src snapshot.Source[T], want T, equal func(T, T) bool) {
+func RequireSourceValue[T any](t TestingT, src snapshot.Source[snapshot.LocalRevision, T], want T, equal func(T, T) bool) {
 	t.Helper()
 	RequireSnapshotValue(t, src.Snapshot(), want, equal)
 }
 
 // RequireConfigSourceValue fails the test when src.Snapshot().Value differs from
 // want according to EqualConfig.
-func RequireConfigSourceValue(t TestingT, src snapshot.Source[Config], want Config) {
+func RequireConfigSourceValue(t TestingT, src snapshot.Source[snapshot.LocalRevision, Config], want Config) {
 	t.Helper()
 	RequireSourceValue(t, src, want, EqualConfig)
 }
 
-// RequireStampedNonZeroRevision fails the test when stamped has ZeroRevision.
-func RequireStampedNonZeroRevision[T any](t TestingT, stamped snapshot.Stamped[T]) {
+// RequireStampedNonZeroRevision fails the test when stamped has ZeroLocalRevision.
+func RequireStampedNonZeroRevision[T any](t TestingT, stamped snapshot.Stamped[snapshot.LocalRevision, T]) {
 	t.Helper()
 
-	if stamped.IsZeroRevision() {
+	if stamped.Revision.IsZero() {
 		t.Fatalf("stamped revision is zero")
 	}
 }
 
 // RequireStampedValue fails the test when stamped.Value differs from want.
-func RequireStampedValue[T any](t TestingT, stamped snapshot.Stamped[T], want T, equal func(T, T) bool) {
+func RequireStampedValue[T any](t TestingT, stamped snapshot.Stamped[snapshot.LocalRevision, T], want T, equal func(T, T) bool) {
 	t.Helper()
 	RequireValue(t, stamped.Value, want, equal)
 }
 
 // RequireConfigStampedValue fails the test when stamped.Value differs from want
 // according to EqualConfig.
-func RequireConfigStampedValue(t TestingT, stamped snapshot.Stamped[Config], want Config) {
+func RequireConfigStampedValue(t TestingT, stamped snapshot.Stamped[snapshot.LocalRevision, Config], want Config) {
 	t.Helper()
 	RequireStampedValue(t, stamped, want, EqualConfig)
 }

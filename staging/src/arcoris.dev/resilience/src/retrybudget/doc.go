@@ -34,7 +34,7 @@
 //
 // Snapshots in this package are domain values. Revisioned publication and
 // read-only access use arcoris.dev/snapshot. Implementations should expose
-// snapshot.Source[Snapshot]. Mutable implementations may use
+// snapshot.Source[snapshot.LocalRevision, Snapshot]. Mutable implementations may use
 // snapshot.Publisher[Snapshot] or another snapshot source internally, depending
 // on their ownership and performance model.
 //

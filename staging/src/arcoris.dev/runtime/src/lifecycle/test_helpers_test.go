@@ -128,7 +128,7 @@ func assertSnapshotEqual(t *testing.T, got, want Snapshot) {
 		t.Fatalf("snapshot.State = %s, want %s", got.State, want.State)
 	}
 	if got.Revision != want.Revision {
-		t.Fatalf("snapshot.Revision = %d, want %d", got.Revision, want.Revision)
+		t.Fatalf("snapshot revision = %d, want %d", got.Revision, want.Revision)
 	}
 	assertTransitionEqual(t, got.LastTransition, want.LastTransition)
 	if want.FailureCause == nil {

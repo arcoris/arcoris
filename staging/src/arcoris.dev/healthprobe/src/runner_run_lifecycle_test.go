@@ -77,7 +77,7 @@ func TestRunnerRunCanRestartAfterStop(t *testing.T) {
 	waitForRunnerRunning(t, runner)
 	snap := stepUntilRevision(t, clk, runner, health.TargetReady, 1, interval)
 	if snap.Revision != 1 {
-		t.Fatalf("Revision = %d, want 1", snap.Revision)
+		t.Fatalf("LocalRevision = %d, want 1", snap.Revision)
 	}
 
 	secondCancel()

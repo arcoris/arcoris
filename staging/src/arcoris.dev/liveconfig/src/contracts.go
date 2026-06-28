@@ -24,6 +24,6 @@ import "arcoris.dev/snapshot"
 // revisions, but they cannot publish around Apply.
 type contractValue struct{}
 
-var _ snapshot.Source[contractValue] = (*Holder[contractValue])(nil)
-var _ snapshot.StampedSource[contractValue] = (*Holder[contractValue])(nil)
-var _ snapshot.RevisionSource = (*Holder[contractValue])(nil)
+var _ snapshot.Source[snapshot.LocalRevision, contractValue] = (*Holder[contractValue])(nil)
+var _ snapshot.StampedSource[snapshot.LocalRevision, contractValue] = (*Holder[contractValue])(nil)
+var _ snapshot.RevisionSource[snapshot.LocalRevision] = (*Holder[contractValue])(nil)

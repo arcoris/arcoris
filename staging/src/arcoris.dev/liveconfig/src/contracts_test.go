@@ -21,7 +21,7 @@ import (
 )
 
 func TestHolderImplementsSnapshotContracts(t *testing.T) {
-	var _ snapshot.Source[testConfig] = (*Holder[testConfig])(nil)
-	var _ snapshot.StampedSource[testConfig] = (*Holder[testConfig])(nil)
-	var _ snapshot.RevisionSource = (*Holder[testConfig])(nil)
+	var _ snapshot.Source[snapshot.LocalRevision, testConfig] = (*Holder[testConfig])(nil)
+	var _ snapshot.StampedSource[snapshot.LocalRevision, testConfig] = (*Holder[testConfig])(nil)
+	var _ snapshot.RevisionSource[snapshot.LocalRevision] = (*Holder[testConfig])(nil)
 }

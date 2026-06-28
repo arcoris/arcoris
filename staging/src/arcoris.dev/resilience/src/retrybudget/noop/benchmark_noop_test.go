@@ -23,8 +23,8 @@ import (
 
 var (
 	benchmarkDecision retrybudget.Decision
-	benchmarkSnapshot snapshot.Snapshot[retrybudget.Snapshot]
-	benchmarkRevision snapshot.Revision
+	benchmarkSnapshot snapshot.Snapshot[snapshot.LocalRevision, retrybudget.Snapshot]
+	benchmarkRevision snapshot.LocalRevision
 )
 
 func BenchmarkNoopTryAdmitRetry(b *testing.B) {

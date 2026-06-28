@@ -21,14 +21,14 @@ import (
 )
 
 func TestSnapshotAssertionHelpersAcceptValidSnapshots(t *testing.T) {
-	snap := snapshot.Snapshot[Config]{
-		Revision: snapshot.ZeroRevision.Next(),
+	snap := snapshot.Snapshot[snapshot.LocalRevision, Config]{
+		Revision: snapshot.ZeroLocalRevision.Next(),
 		Value:    NewConfig(),
 	}
 
 	RequireNonZeroRevision(t, snap)
-	RequireRevision(t, snap, snapshot.ZeroRevision.Next())
-	RequireChangedSince(t, snap, snapshot.ZeroRevision)
+	RequireRevision(t, snap, snapshot.ZeroLocalRevision.Next())
+	RequireChangedSince(t, snap, snapshot.ZeroLocalRevision)
 	RequireUnchangedSince(t, snap, snap.Revision)
 	RequireSnapshotValue(t, snap, NewConfig(), EqualConfig)
 }

@@ -66,7 +66,7 @@ func BenchmarkPublisherSnapshotParallel(b *testing.B) {
 	b.ResetTimer()
 
 	b.RunParallel(func(pb *testing.PB) {
-		var snap Snapshot[int]
+		var snap Snapshot[LocalRevision, int]
 		for pb.Next() {
 			snap = publisher.Snapshot()
 		}
@@ -84,7 +84,7 @@ func BenchmarkPublisherStampedParallel(b *testing.B) {
 	b.ResetTimer()
 
 	b.RunParallel(func(pb *testing.PB) {
-		var stamped Stamped[int]
+		var stamped Stamped[LocalRevision, int]
 		for pb.Next() {
 			stamped = publisher.Stamped()
 		}
@@ -119,7 +119,7 @@ func BenchmarkPublisherPublishParallel(b *testing.B) {
 	b.ResetTimer()
 
 	b.RunParallel(func(pb *testing.PB) {
-		var snap Snapshot[int]
+		var snap Snapshot[LocalRevision, int]
 		for pb.Next() {
 			snap = publisher.Publish(1)
 		}
@@ -146,7 +146,7 @@ func BenchmarkPublisherSnapshotWhilePublishing(b *testing.B) {
 	b.ResetTimer()
 
 	b.RunParallel(func(pb *testing.PB) {
-		var snap Snapshot[int]
+		var snap Snapshot[LocalRevision, int]
 		for pb.Next() {
 			snap = publisher.Snapshot()
 		}
@@ -177,7 +177,7 @@ func BenchmarkPublisherRevisionWhilePublishing(b *testing.B) {
 	b.ResetTimer()
 
 	b.RunParallel(func(pb *testing.PB) {
-		var rev Revision
+		var rev LocalRevision
 		for pb.Next() {
 			rev = publisher.Revision()
 		}

@@ -16,17 +16,17 @@ package liveconfigtest
 
 import "arcoris.dev/snapshot"
 
-// RequireNonZeroRevision fails the test when snap has ZeroRevision.
-func RequireNonZeroRevision[T any](t TestingT, snap snapshot.Snapshot[T]) {
+// RequireNonZeroRevision fails the test when snap has ZeroLocalRevision.
+func RequireNonZeroRevision[T any](t TestingT, snap snapshot.Snapshot[snapshot.LocalRevision, T]) {
 	t.Helper()
 
-	if snap.IsZeroRevision() {
+	if snap.Revision.IsZero() {
 		t.Fatalf("snapshot revision is zero")
 	}
 }
 
 // RequireRevision fails the test when snap has a different revision than want.
-func RequireRevision[T any](t TestingT, snap snapshot.Snapshot[T], want snapshot.Revision) {
+func RequireRevision[T any](t TestingT, snap snapshot.Snapshot[snapshot.LocalRevision, T], want snapshot.LocalRevision) {
 	t.Helper()
 
 	if snap.Revision != want {
@@ -35,7 +35,7 @@ func RequireRevision[T any](t TestingT, snap snapshot.Snapshot[T], want snapshot
 }
 
 // RequireChangedSince fails the test when snap has not changed since prev.
-func RequireChangedSince[T any](t TestingT, snap snapshot.Snapshot[T], prev snapshot.Revision) {
+func RequireChangedSince[T any](t TestingT, snap snapshot.Snapshot[snapshot.LocalRevision, T], prev snapshot.LocalRevision) {
 	t.Helper()
 
 	if !snap.ChangedSince(prev) {
@@ -44,7 +44,7 @@ func RequireChangedSince[T any](t TestingT, snap snapshot.Snapshot[T], prev snap
 }
 
 // RequireUnchangedSince fails the test when snap has changed since prev.
-func RequireUnchangedSince[T any](t TestingT, snap snapshot.Snapshot[T], prev snapshot.Revision) {
+func RequireUnchangedSince[T any](t TestingT, snap snapshot.Snapshot[snapshot.LocalRevision, T], prev snapshot.LocalRevision) {
 	t.Helper()
 
 	if snap.ChangedSince(prev) {
@@ -53,7 +53,7 @@ func RequireUnchangedSince[T any](t TestingT, snap snapshot.Snapshot[T], prev sn
 }
 
 // RequireSnapshotValue fails the test when snap.Value differs from want.
-func RequireSnapshotValue[T any](t TestingT, snap snapshot.Snapshot[T], want T, equal func(T, T) bool) {
+func RequireSnapshotValue[T any](t TestingT, snap snapshot.Snapshot[snapshot.LocalRevision, T], want T, equal func(T, T) bool) {
 	t.Helper()
 	RequireValue(t, snap.Value, want, equal)
 }

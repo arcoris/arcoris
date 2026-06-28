@@ -17,8 +17,8 @@ package snapshot
 // NewStore creates a Store containing initial.
 //
 // NewStore clones initial before storing it and commits that initial value at
-// revision 1. The clone function must be non-nil and must provide the ownership
-// isolation required by T.
+// LocalRevision(1). The clone function must be non-nil and must provide the
+// ownership isolation required by T.
 func NewStore[T any](initial T, clone CloneFunc[T], opts ...Option) *Store[T] {
 	clone = requireClone(clone)
 	cfg := newConfig(opts...)
@@ -27,7 +27,7 @@ func NewStore[T any](initial T, clone CloneFunc[T], opts ...Option) *Store[T] {
 		clone:    clone,
 		clock:    cfg.clock,
 		value:    clone(initial),
-		revision: ZeroRevision.Next(),
+		revision: ZeroLocalRevision.Next(),
 		updated:  cfg.clock.Now(),
 	}
 }

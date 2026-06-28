@@ -27,16 +27,16 @@ func TestNewReturnsBudget(t *testing.T) {
 	budget := New()
 
 	var _ retrybudget.Budget = budget
-	var _ snapshot.Source[retrybudget.Snapshot] = budget
-	var _ snapshot.RevisionSource = budget
+	var _ snapshot.Source[snapshot.LocalRevision, retrybudget.Snapshot] = budget
+	var _ snapshot.RevisionSource[snapshot.LocalRevision] = budget
 }
 
 func TestBudgetSnapshot(t *testing.T) {
 	budget := New()
 	snap := budget.Snapshot()
 
-	if snap.Revision != snapshot.ZeroRevision.Next() {
-		t.Fatalf("Snapshot().Revision = %d, want %d", snap.Revision, snapshot.ZeroRevision.Next())
+	if snap.Revision != snapshot.ZeroLocalRevision.Next() {
+		t.Fatalf("Snapshot().Revision = %d, want %d", snap.Revision, snapshot.ZeroLocalRevision.Next())
 	}
 	if !snap.Value.IsValid() {
 		t.Fatalf("Snapshot().Value is invalid: %+v", snap.Value)
@@ -114,8 +114,8 @@ func TestBudgetTryAdmitRetryDoesNotChangeSnapshot(t *testing.T) {
 func TestBudgetRevision(t *testing.T) {
 	budget := New()
 
-	if got, want := budget.Revision(), snapshot.ZeroRevision.Next(); got != want {
-		t.Fatalf("Revision() = %d, want %d", got, want)
+	if got, want := budget.Revision(), snapshot.ZeroLocalRevision.Next(); got != want {
+		t.Fatalf("LocalRevision() = %d, want %d", got, want)
 	}
 }
 
@@ -149,7 +149,7 @@ func TestBudgetConcurrentUse(t *testing.T) {
 					t.Errorf("Snapshot invalid: %+v", snap)
 				}
 				if rev := budget.Revision(); rev.IsZero() {
-					t.Error("Revision returned zero")
+					t.Error("LocalRevision returned zero")
 				}
 			}
 		}()

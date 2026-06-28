@@ -17,9 +17,9 @@ package snapshot
 // Snapshot returns the latest lightweight snapshot.
 //
 // Snapshot is lock-free. If no value has been published, Snapshot returns the
-// zero Snapshot[T]. The returned value is not cloned; it is the immutable value
-// stored in the latest published record.
-func (p *Publisher[T]) Snapshot() Snapshot[T] {
+// zero Snapshot[LocalRevision, T]. The returned value is not cloned; it is the
+// immutable value stored in the latest published record.
+func (p *Publisher[T]) Snapshot() Snapshot[LocalRevision, T] {
 	stamped := p.Stamped()
 	return stamped.Snapshot()
 }
@@ -27,14 +27,14 @@ func (p *Publisher[T]) Snapshot() Snapshot[T] {
 // Stamped returns the latest stamped snapshot.
 //
 // Stamped is lock-free. If no value has been published, Stamped returns the zero
-// Stamped[T]. The returned value is not cloned.
-func (p *Publisher[T]) Stamped() Stamped[T] {
+// Stamped[LocalRevision, T]. The returned value is not cloned.
+func (p *Publisher[T]) Stamped() Stamped[LocalRevision, T] {
 	rec := p.ptr.Load()
 	if rec == nil {
-		return Stamped[T]{}
+		return Stamped[LocalRevision, T]{}
 	}
 
-	return Stamped[T]{
+	return Stamped[LocalRevision, T]{
 		Revision: rec.revision,
 		Updated:  rec.updated,
 		Value:    rec.value,
@@ -43,11 +43,11 @@ func (p *Publisher[T]) Stamped() Stamped[T] {
 
 // Revision returns the revision of the latest visible published record.
 //
-// Revision returns ZeroRevision before the first Publish.
-func (p *Publisher[T]) Revision() Revision {
+// Revision returns ZeroLocalRevision before the first Publish.
+func (p *Publisher[T]) Revision() LocalRevision {
 	rec := p.ptr.Load()
 	if rec == nil {
-		return ZeroRevision
+		return ZeroLocalRevision
 	}
 
 	return rec.revision

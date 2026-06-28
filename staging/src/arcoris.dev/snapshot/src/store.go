@@ -29,9 +29,9 @@ import (
 // returned from Store must not affect Store's internal state when the CloneFunc is
 // correct.
 //
-// Store starts at revision 1 because NewStore commits the initial value. Use a
-// value-level container such as maybe.Maybe[T] when the logical state can be
-// absent.
+// Store starts at LocalRevision(1) because NewStore commits the initial value.
+// Use a value-level container such as maybe.Maybe[T] when the logical state can
+// be absent.
 //
 // Store must be created with NewStore. The zero value is invalid because Store
 // requires a CloneFunc and an initial committed value.
@@ -53,8 +53,8 @@ type Store[T any] struct {
 	// value is the currently committed internal value owned by the Store.
 	value T
 
-	// revision is the source-local revision of value.
-	revision Revision
+	// revision is the package-managed local revision of value.
+	revision LocalRevision
 
 	// updated is the local time at which value was committed.
 	updated time.Time

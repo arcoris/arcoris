@@ -58,7 +58,7 @@ func TestLimiterSnapshotAndRevision(t *testing.T) {
 
 	requireValidSnapshot(t, snap)
 	if snap.Revision != rev {
-		t.Fatalf("Revision() = %d, want snapshot revision %d", rev, snap.Revision)
+		t.Fatalf("LocalRevision() = %d, want snapshot revision %d", rev, snap.Revision)
 	}
 	if snap.Value.Kind != retrybudget.KindFixedWindow {
 		t.Fatalf("Kind = %s, want %s", snap.Value.Kind, retrybudget.KindFixedWindow)
@@ -96,6 +96,6 @@ func TestLimiterPublishLockedAdvancesRevision(t *testing.T) {
 		t.Fatalf("publishLocked revision = %d, want different from %d", snap.Revision, prev)
 	}
 	if limiter.Revision() != snap.Revision {
-		t.Fatalf("Revision() = %d, want %d", limiter.Revision(), snap.Revision)
+		t.Fatalf("LocalRevision() = %d, want %d", limiter.Revision(), snap.Revision)
 	}
 }

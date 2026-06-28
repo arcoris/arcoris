@@ -21,7 +21,7 @@ import (
 )
 
 func ExampleStore() {
-	store := snapshot.NewStore("starting", snapshot.Identity[string])
+	store := snapshot.NewStore("starting", snapshot.IdentityClone[string])
 
 	store.Replace("running")
 	snap := store.Snapshot()

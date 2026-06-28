@@ -70,7 +70,7 @@ func TestRunnerRunWaitsForScheduleDelayWhenInitialProbeDisabled(t *testing.T) {
 
 	snap := stepUntilRevision(t, clk, runner, health.TargetReady, 1, interval)
 	if snap.Revision != 1 {
-		t.Fatalf("Revision = %d, want 1", snap.Revision)
+		t.Fatalf("LocalRevision = %d, want 1", snap.Revision)
 	}
 
 	cancel()
@@ -99,10 +99,10 @@ func TestRunnerRunScheduleDrivenProbeIncrementsRevision(t *testing.T) {
 	second := stepUntilRevision(t, clk, runner, health.TargetReady, 2, interval)
 
 	if first.Revision != 1 {
-		t.Fatalf("first Revision = %d, want 1", first.Revision)
+		t.Fatalf("first LocalRevision = %d, want 1", first.Revision)
 	}
 	if second.Revision != 2 {
-		t.Fatalf("second Revision = %d, want 2", second.Revision)
+		t.Fatalf("second LocalRevision = %d, want 2", second.Revision)
 	}
 	if !second.Updated.After(first.Updated) {
 		t.Fatalf("second Updated = %v, want after %v", second.Updated, first.Updated)
@@ -132,10 +132,10 @@ func TestRunnerRunUsesScheduleDelays(t *testing.T) {
 	second := stepUntilRevision(t, clk, runner, health.TargetReady, 2, 3*time.Second)
 
 	if first.Revision != 1 {
-		t.Fatalf("first Revision = %d, want 1", first.Revision)
+		t.Fatalf("first LocalRevision = %d, want 1", first.Revision)
 	}
 	if second.Revision != 2 {
-		t.Fatalf("second Revision = %d, want 2", second.Revision)
+		t.Fatalf("second LocalRevision = %d, want 2", second.Revision)
 	}
 	if !second.Updated.After(first.Updated) {
 		t.Fatalf("second Updated = %v, want after %v", second.Updated, first.Updated)
@@ -165,7 +165,7 @@ func TestRunnerRunAcceptsZeroScheduleDelay(t *testing.T) {
 		t.Fatal("Snapshot() ok = false, want true")
 	}
 	if snap.Revision != 1 {
-		t.Fatalf("Revision = %d, want 1", snap.Revision)
+		t.Fatalf("LocalRevision = %d, want 1", snap.Revision)
 	}
 }
 
@@ -190,7 +190,7 @@ func TestRunnerRunInitialProbeBeforeScheduleDelay(t *testing.T) {
 
 	snap := waitForRevision(t, runner, health.TargetReady, 1)
 	if snap.Revision != 1 {
-		t.Fatalf("Revision = %d, want 1", snap.Revision)
+		t.Fatalf("LocalRevision = %d, want 1", snap.Revision)
 	}
 
 	cancel()

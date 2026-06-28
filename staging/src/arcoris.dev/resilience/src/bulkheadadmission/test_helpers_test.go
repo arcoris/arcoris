@@ -43,7 +43,7 @@ func requireObservationValue(
 
 func requireSnapshotValue(
 	t *testing.T,
-	snap snapshot.Snapshot[bulkhead.Snapshot],
+	snap snapshot.Snapshot[snapshot.LocalRevision, bulkhead.Snapshot],
 	limit bulkhead.Amount,
 	reserved bulkhead.Amount,
 	available bulkhead.Amount,

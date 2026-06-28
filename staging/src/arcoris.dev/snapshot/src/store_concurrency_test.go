@@ -48,7 +48,7 @@ func TestStoreConcurrentSnapshotAndReplace(t *testing.T) {
 }
 
 func TestStoreConcurrentSnapshotAndUpdate(t *testing.T) {
-	store := NewStore(0, Identity[int])
+	store := NewStore(0, IdentityClone[int])
 
 	var wg sync.WaitGroup
 	for i := 0; i < 16; i++ {

@@ -39,13 +39,13 @@ func validDeniedDecision() retrybudget.Decision {
 	}
 }
 
-func validSnapshot(exhausted bool, retry uint64) snapshot.Snapshot[retrybudget.Snapshot] {
+func validSnapshot(exhausted bool, retry uint64) snapshot.Snapshot[snapshot.LocalRevision, retrybudget.Snapshot] {
 	available := uint64(1)
 	if exhausted {
 		available = 0
 	}
-	return snapshot.Snapshot[retrybudget.Snapshot]{
-		Revision: snapshot.ZeroRevision.Next(),
+	return snapshot.Snapshot[snapshot.LocalRevision, retrybudget.Snapshot]{
+		Revision: snapshot.ZeroLocalRevision.Next(),
 		Value: retrybudget.Snapshot{
 			Kind: retrybudget.KindFixedWindow,
 			Attempts: retrybudget.AttemptsSnapshot{

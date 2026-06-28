@@ -25,10 +25,10 @@ func TestNewPublishesInitialConfig(t *testing.T) {
 	h := newTestHolder(t, testConfig{Name: "initial", Limit: 3, Tags: []string{"a"}})
 
 	snap := h.Snapshot()
-	if snap.IsZeroRevision() {
+	if snap.Revision.IsZero() {
 		t.Fatal("Snapshot revision is zero")
 	}
-	if got, want := snap.Revision, snapshot.ZeroRevision.Next(); got != want {
+	if got, want := snap.Revision, snapshot.ZeroLocalRevision.Next(); got != want {
 		t.Fatalf("Snapshot revision = %d, want %d", got, want)
 	}
 	if got, want := snap.Value.Name, "initial"; got != want {
@@ -109,8 +109,8 @@ func TestNewPublishesNormalizedInitialConfig(t *testing.T) {
 
 func TestNewSuccessfulHolderStartsAtRevisionOne(t *testing.T) {
 	h := newTestHolder(t, testConfig{Name: "initial"})
-	if got, want := h.Revision(), snapshot.ZeroRevision.Next(); got != want {
-		t.Fatalf("Revision() = %d, want %d", got, want)
+	if got, want := h.Revision(), snapshot.ZeroLocalRevision.Next(); got != want {
+		t.Fatalf("LocalRevision() = %d, want %d", got, want)
 	}
 }
 

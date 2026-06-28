@@ -36,7 +36,7 @@ func TestNilHolderPanics(t *testing.T) {
 			},
 		},
 		{
-			name: "Revision",
+			name: "LocalRevision",
 			call: func() {
 				var h *Holder[testConfig]
 				_ = h.Revision()
@@ -78,7 +78,7 @@ func TestZeroValueHolderPanics(t *testing.T) {
 	}{
 		{name: "Snapshot", call: func(h *Holder[testConfig]) { _ = h.Snapshot() }},
 		{name: "Stamped", call: func(h *Holder[testConfig]) { _ = h.Stamped() }},
-		{name: "Revision", call: func(h *Holder[testConfig]) { _ = h.Revision() }},
+		{name: "LocalRevision", call: func(h *Holder[testConfig]) { _ = h.Revision() }},
 		{name: "LastError", call: func(h *Holder[testConfig]) { _ = h.LastError() }},
 		{name: "Apply", call: func(h *Holder[testConfig]) { _, _ = h.Apply(testConfig{}) }},
 	}

@@ -29,7 +29,7 @@ import (
 //
 // A zero limit is valid and closes the bulkhead until a later SetLimit raises
 // capacity again.
-func (b *Bulkhead) SetLimit(limit Amount) snapshot.Snapshot[Snapshot] {
+func (b *Bulkhead) SetLimit(limit Amount) snapshot.Snapshot[snapshot.LocalRevision, Snapshot] {
 	b.requireReady()
 	return b.ledger.SetLimitObserved(capacity.Amount(limit))
 }

@@ -18,7 +18,7 @@ package snapshot
 // snapshot.
 //
 // Replace clones next before storing it and advances the revision exactly once.
-func (s *Store[T]) Replace(next T) Snapshot[T] {
+func (s *Store[T]) Replace(next T) Snapshot[LocalRevision, T] {
 	return s.ReplaceStamped(next).Snapshot()
 }
 
@@ -29,13 +29,12 @@ func (s *Store[T]) Replace(next T) Snapshot[T] {
 // once, and records the local commit time using the configured PassiveClock. If
 // cloning before commit panics or revision overflow is detected, the current
 // Store value is left unchanged.
-func (s *Store[T]) ReplaceStamped(next T) Stamped[T] {
-	stored := s.clone(next)
-	returned := s.clone(stored)
-
+func (s *Store[T]) ReplaceStamped(next T) Stamped[LocalRevision, T] {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	stored := s.clone(next)
+	returned := s.clone(stored)
 	rev := s.revision.Next()
 	updated := s.clock.Now()
 
@@ -43,7 +42,7 @@ func (s *Store[T]) ReplaceStamped(next T) Stamped[T] {
 	s.revision = rev
 	s.updated = updated
 
-	return Stamped[T]{
+	return Stamped[LocalRevision, T]{
 		Revision: rev,
 		Updated:  updated,
 		Value:    returned,

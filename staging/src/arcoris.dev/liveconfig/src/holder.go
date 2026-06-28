@@ -24,7 +24,7 @@ import (
 // policy domain.
 //
 // A Holder serializes write-side Apply calls with mu, publishes accepted values
-// through a snapshot.Publisher, and exposes Snapshot, Stamped, and Revision as
+// through a snapshot.Publisher, and exposes Snapshot, Stamped, and LocalRevision as
 // read-side methods. Reads are delegated to the publisher and do not mutate
 // holder state or execute validation, normalization, or source reload logic.
 // This keeps read paths cheap and makes the holder suitable for read-mostly
@@ -55,7 +55,7 @@ type Holder[T any] struct {
 	cfg config[T]
 
 	// pub publishes accepted immutable configuration values for read-side
-	// Snapshot, Stamped, and Revision calls.
+	// Snapshot, Stamped, and LocalRevision calls.
 	pub *snapshot.Publisher[T]
 
 	// lastErr is the last rejected Apply error. Successful changed and no-op

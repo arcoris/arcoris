@@ -22,7 +22,7 @@ import "arcoris.dev/snapshot"
 // bug because it means the caller lost track of the live protected section. Use
 // TryRelease when idempotent cleanup is required. The returned snapshot is read
 // after the release and is a diagnostic observation under concurrent mutation.
-func (l *Lease) Release() snapshot.Snapshot[Snapshot] {
+func (l *Lease) Release() snapshot.Snapshot[snapshot.LocalRevision, Snapshot] {
 	l.requireReady()
 	if !l.release() {
 		panic(ErrLeaseReleased)
@@ -36,7 +36,7 @@ func (l *Lease) Release() snapshot.Snapshot[Snapshot] {
 // On first release, TryRelease returns the resulting snapshot with true. On
 // later calls, it leaves capacity unchanged and returns the current snapshot with
 // false. Snapshots are observations, not global serialization barriers.
-func (l *Lease) TryRelease() (snapshot.Snapshot[Snapshot], bool) {
+func (l *Lease) TryRelease() (snapshot.Snapshot[snapshot.LocalRevision, Snapshot], bool) {
 	l.requireReady()
 	ok := l.release()
 

@@ -21,7 +21,7 @@ import "arcoris.dev/snapshot"
 // Snapshot delegates to the internal snapshot.Publisher. It does not take the
 // Holder write mutex, does not clone the value, and does not update LastError.
 // The returned Value must be treated as immutable.
-func (h *Holder[T]) Snapshot() snapshot.Snapshot[T] {
+func (h *Holder[T]) Snapshot() snapshot.Snapshot[snapshot.LocalRevision, T] {
 	requireHolder(h)
 	return h.pub.Snapshot()
 }
@@ -30,16 +30,16 @@ func (h *Holder[T]) Snapshot() snapshot.Snapshot[T] {
 //
 // Stamped includes the local publication time assigned when the current value
 // was accepted. It has the same immutability and read-side behavior as Snapshot.
-func (h *Holder[T]) Stamped() snapshot.Stamped[T] {
+func (h *Holder[T]) Stamped() snapshot.Stamped[snapshot.LocalRevision, T] {
 	requireHolder(h)
 	return h.pub.Stamped()
 }
 
-// Revision returns the current source-local configuration revision.
+// LocalRevision returns the current source-local configuration revision.
 //
-// Revision is a cheap read-side change check for consumers that do not need the
+// LocalRevision is a cheap read-side change check for consumers that do not need the
 // value itself. The revision is local to this holder.
-func (h *Holder[T]) Revision() snapshot.Revision {
+func (h *Holder[T]) Revision() snapshot.LocalRevision {
 	requireHolder(h)
 	return h.pub.Revision()
 }

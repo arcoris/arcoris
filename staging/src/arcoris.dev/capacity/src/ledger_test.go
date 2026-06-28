@@ -23,8 +23,8 @@ import (
 )
 
 func TestLedgerImplementsSnapshotSources(t *testing.T) {
-	var _ snapshot.Source[capacity.Snapshot] = (*capacity.Ledger)(nil)
-	var _ snapshot.RevisionSource = (*capacity.Ledger)(nil)
+	var _ snapshot.Source[snapshot.LocalRevision, capacity.Snapshot] = (*capacity.Ledger)(nil)
+	var _ snapshot.RevisionSource[snapshot.LocalRevision] = (*capacity.Ledger)(nil)
 }
 
 func TestLedgerSnapshotRevisionAndSetLimit(t *testing.T) {
@@ -160,7 +160,7 @@ func TestLedgerLimitShrinkCreatesDebtUntilRelease(t *testing.T) {
 	}
 }
 
-func requireRevisionAdvanced(t *testing.T, before snapshot.Revision, after snapshot.Revision) {
+func requireRevisionAdvanced(t *testing.T, before snapshot.LocalRevision, after snapshot.LocalRevision) {
 	t.Helper()
 
 	if after == before {
@@ -168,7 +168,7 @@ func requireRevisionAdvanced(t *testing.T, before snapshot.Revision, after snaps
 	}
 }
 
-func requireRevisionEqual(t *testing.T, want snapshot.Revision, got snapshot.Revision, operation string) {
+func requireRevisionEqual(t *testing.T, want snapshot.LocalRevision, got snapshot.LocalRevision, operation string) {
 	t.Helper()
 
 	if got != want {

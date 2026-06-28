@@ -98,7 +98,7 @@ func TestNormalizerErrorRejectsCandidate(t *testing.T) {
 		t.Fatalf("Current revision = %d, want %d", change.Current.Revision, prev.Revision)
 	}
 	if h.Revision() != prev.Revision {
-		t.Fatalf("Revision() = %d, want %d", h.Revision(), prev.Revision)
+		t.Fatalf("LocalRevision() = %d, want %d", h.Revision(), prev.Revision)
 	}
 	if got, want := h.Snapshot().Value.Name, "initial"; got != want {
 		t.Fatalf("current name = %q, want %q", got, want)

@@ -87,14 +87,14 @@ func (l *Ledger) TryRelease(amount Amount) bool {
 }
 
 // ReleaseObserved returns raw accounting capacity and then reads a snapshot.
-func (l *Ledger) ReleaseObserved(amount Amount) snapshot.Snapshot[Snapshot] {
+func (l *Ledger) ReleaseObserved(amount Amount) snapshot.Snapshot[snapshot.LocalRevision, Snapshot] {
 	l.Release(amount)
 
 	return l.Snapshot()
 }
 
 // TryReleaseObserved returns raw accounting capacity, a snapshot, and the outcome.
-func (l *Ledger) TryReleaseObserved(amount Amount) (snapshot.Snapshot[Snapshot], bool) {
+func (l *Ledger) TryReleaseObserved(amount Amount) (snapshot.Snapshot[snapshot.LocalRevision, Snapshot], bool) {
 	ok := l.TryRelease(amount)
 
 	return l.Snapshot(), ok

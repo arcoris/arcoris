@@ -24,7 +24,7 @@ import "arcoris.dev/health"
 // read boundary using Runner's configured clock.
 //
 // store.snapshot returns an unstaled public Snapshot built from
-// snapshot.Stamped[observation]. Runner then adds Stale because staleness depends
+// snapshot.Stamped[snapshot.LocalRevision, observation]. Runner then adds Stale because staleness depends
 // on the read time and stale-after window, not only on the committed value.
 func (r *Runner) Snapshot(target health.Target) (Snapshot, bool) {
 	if r == nil || !target.IsConcrete() || !containsTarget(r.targets, target) {

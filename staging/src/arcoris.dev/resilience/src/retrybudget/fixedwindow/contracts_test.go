@@ -23,6 +23,6 @@ import (
 
 func TestLimiterImplementsContracts(t *testing.T) {
 	var _ retrybudget.Budget = (*Limiter)(nil)
-	var _ snapshot.Source[retrybudget.Snapshot] = (*Limiter)(nil)
-	var _ snapshot.RevisionSource = (*Limiter)(nil)
+	var _ snapshot.Source[snapshot.LocalRevision, retrybudget.Snapshot] = (*Limiter)(nil)
+	var _ snapshot.RevisionSource[snapshot.LocalRevision] = (*Limiter)(nil)
 }

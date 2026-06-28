@@ -28,8 +28,8 @@ var (
 	benchmarkVectorReserveSink  *capacity.VectorReservation
 	benchmarkObservationSink    capacity.Observation
 	benchmarkVectorObserveSink  capacity.VectorObservation
-	benchmarkScalarSnapshotSink snapshot.Snapshot[capacity.Snapshot]
-	benchmarkVectorSnapshotSink snapshot.Snapshot[capacity.VectorSnapshot]
+	benchmarkScalarSnapshotSink snapshot.Snapshot[snapshot.LocalRevision, capacity.Snapshot]
+	benchmarkVectorSnapshotSink snapshot.Snapshot[snapshot.LocalRevision, capacity.VectorSnapshot]
 )
 
 var benchmarkResourceNames = []string{

@@ -34,7 +34,7 @@ import (
 //
 // Snapshot is an explicit observation built from atomic values. Under concurrent
 // mutation, the returned scalar value is internally valid but the revision and
-// value are not a mutex-protected transaction. Snapshot and Revision are useful
+// value are not a mutex-protected transaction. Snapshot and LocalRevision are useful
 // for diagnostics and source-local change checks; they are not distributed or
 // transactional ordering mechanisms.
 //
@@ -63,7 +63,7 @@ type Ledger struct {
 func NewLedger(limit Amount) *Ledger {
 	ledger := &Ledger{}
 	ledger.limit.Store(limit.Uint64())
-	ledger.revision.Store(uint64(snapshot.ZeroRevision.Next()))
+	ledger.revision.Store(uint64(snapshot.ZeroLocalRevision.Next()))
 
 	return ledger
 }
@@ -89,7 +89,7 @@ func (l *Ledger) SetLimit(limit Amount) {
 }
 
 // SetLimitObserved replaces the scalar capacity limit and then reads a snapshot.
-func (l *Ledger) SetLimitObserved(limit Amount) snapshot.Snapshot[Snapshot] {
+func (l *Ledger) SetLimitObserved(limit Amount) snapshot.Snapshot[snapshot.LocalRevision, Snapshot] {
 	l.SetLimit(limit)
 
 	return l.Snapshot()
@@ -100,10 +100,10 @@ func (l *Ledger) SetLimitObserved(limit Amount) snapshot.Snapshot[Snapshot] {
 // Snapshot is safe for concurrent use. The returned Snapshot value is internally
 // valid. Under concurrent mutation, revision, limit, and reserved are atomic
 // observations rather than one mutex-protected transaction.
-func (l *Ledger) Snapshot() snapshot.Snapshot[Snapshot] {
+func (l *Ledger) Snapshot() snapshot.Snapshot[snapshot.LocalRevision, Snapshot] {
 	l.requireReady()
 
-	return snapshot.Snapshot[Snapshot]{
+	return snapshot.Snapshot[snapshot.LocalRevision, Snapshot]{
 		Revision: l.Revision(),
 		Value: NewSnapshot(
 			Amount(l.limit.Load()),
@@ -112,13 +112,13 @@ func (l *Ledger) Snapshot() snapshot.Snapshot[Snapshot] {
 	}
 }
 
-// Revision returns the latest observed ledger revision.
+// LocalRevision returns the latest observed ledger revision.
 //
 // Revisions are source-local. They advance after successful accounting
 // mutations and are useful for diagnostics and change checks, not strict global
 // ordering.
-func (l *Ledger) Revision() snapshot.Revision {
+func (l *Ledger) Revision() snapshot.LocalRevision {
 	l.requireReady()
 
-	return snapshot.Revision(l.revision.Load())
+	return snapshot.LocalRevision(l.revision.Load())
 }

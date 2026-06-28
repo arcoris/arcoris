@@ -51,7 +51,7 @@ func TestStampedReturnsPublishedTimestamp(t *testing.T) {
 	}
 
 	stamped := h.Stamped()
-	if stamped.IsZeroRevision() {
+	if stamped.Revision.IsZero() {
 		t.Fatal("Stamped().Revision is zero")
 	}
 	if stamped.Updated.IsZero() {
@@ -69,7 +69,7 @@ func TestRevisionReturnsCurrentRevision(t *testing.T) {
 	h := newTestHolder(t, testConfig{Name: "initial"})
 
 	if got, want := h.Revision(), h.Snapshot().Revision; got != want {
-		t.Fatalf("Revision() = %d, want %d", got, want)
+		t.Fatalf("LocalRevision() = %d, want %d", got, want)
 	}
 }
 
@@ -249,9 +249,9 @@ func TestConcurrentSnapshotAndApply(t *testing.T) {
 		t.Fatalf("Apply() error = %v", err)
 	}
 
-	want := snapshot.Revision(1 + writers)
+	want := snapshot.LocalRevision(1 + writers)
 	if got := h.Revision(); got != want {
-		t.Fatalf("Revision() = %d, want %d", got, want)
+		t.Fatalf("LocalRevision() = %d, want %d", got, want)
 	}
 }
 

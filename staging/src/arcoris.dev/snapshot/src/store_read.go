@@ -18,7 +18,7 @@ package snapshot
 //
 // The returned value is cloned from the Store's internal value. Mutating the
 // returned value must not affect Store when the Store's CloneFunc is correct.
-func (s *Store[T]) Snapshot() Snapshot[T] {
+func (s *Store[T]) Snapshot() Snapshot[LocalRevision, T] {
 	stamped := s.Stamped()
 	return stamped.Snapshot()
 }
@@ -27,19 +27,19 @@ func (s *Store[T]) Snapshot() Snapshot[T] {
 //
 // Stamped returns a cloned value and the local time at which the current value
 // was committed.
-func (s *Store[T]) Stamped() Stamped[T] {
+func (s *Store[T]) Stamped() Stamped[LocalRevision, T] {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	return Stamped[T]{
+	return Stamped[LocalRevision, T]{
 		Revision: s.revision,
 		Updated:  s.updated,
 		Value:    s.clone(s.value),
 	}
 }
 
-// Revision returns the Store's current source-local revision.
-func (s *Store[T]) Revision() Revision {
+// Revision returns the Store's current package-managed local revision.
+func (s *Store[T]) Revision() LocalRevision {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 

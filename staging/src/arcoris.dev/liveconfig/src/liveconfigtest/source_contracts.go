@@ -20,6 +20,6 @@ import "arcoris.dev/snapshot"
 // liveconfig.Holder. Keeping the assertions in their own file makes the package
 // boundary explicit: tests can depend on snapshot.Source interfaces instead of a
 // concrete helper when they only need read behavior.
-var _ snapshot.Source[Config] = (*ControlledSource[Config])(nil)
-var _ snapshot.StampedSource[Config] = (*ControlledSource[Config])(nil)
-var _ snapshot.RevisionSource = (*ControlledSource[Config])(nil)
+var _ snapshot.Source[snapshot.LocalRevision, Config] = (*ControlledSource[Config])(nil)
+var _ snapshot.StampedSource[snapshot.LocalRevision, Config] = (*ControlledSource[Config])(nil)
+var _ snapshot.RevisionSource[snapshot.LocalRevision] = (*ControlledSource[Config])(nil)

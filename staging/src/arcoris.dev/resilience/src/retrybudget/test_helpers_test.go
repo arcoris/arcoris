@@ -48,9 +48,9 @@ func validSnapshotValue() Snapshot {
 	}
 }
 
-func validGenericSnapshot() snapshot.Snapshot[Snapshot] {
-	return snapshot.Snapshot[Snapshot]{
-		Revision: snapshot.ZeroRevision.Next(),
+func validGenericSnapshot() snapshot.Snapshot[snapshot.LocalRevision, Snapshot] {
+	return snapshot.Snapshot[snapshot.LocalRevision, Snapshot]{
+		Revision: snapshot.ZeroLocalRevision.Next(),
 		Value:    validSnapshotValue(),
 	}
 }

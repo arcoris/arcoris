@@ -32,6 +32,6 @@ func TestBulkheadRevisionMatchesSnapshotRevision(t *testing.T) {
 
 	b := New(1)
 	if got, want := b.Revision(), b.Snapshot().Revision; got != want {
-		t.Fatalf("Revision() = %d, want %d", got, want)
+		t.Fatalf("LocalRevision() = %d, want %d", got, want)
 	}
 }

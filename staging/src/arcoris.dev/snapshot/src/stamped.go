@@ -14,63 +14,55 @@
 
 package snapshot
 
-import (
-	"time"
-)
+import "time"
 
 // Stamped is a point-in-time value with local update time metadata.
 //
-// Updated is the local time at which the source committed or published Value. It
-// is not a distributed timestamp and does not imply cluster-wide ordering. It is
-// also not necessarily the time at which a domain event was originally observed;
-// domain packages must model observation time explicitly when they need it.
-type Stamped[T any] struct {
-	// Revision is the source-local revision of Value.
-	Revision Revision
+// R is the authoritative revision type for the source. Updated is local
+// publication metadata. It is not a distributed timestamp and does not imply
+// cluster-wide ordering or domain event time.
+type Stamped[R comparable, T any] struct {
+	// Revision is the source or domain revision at which Value was observed.
+	Revision R
 
 	// Updated is the local commit or publication time of Value.
 	Updated time.Time
 
-	// Value is the typed value observed at Revision.
+	// Value is the typed read-model value observed at Revision.
 	Value T
 }
 
-// IsZeroRevision reports whether the stamped snapshot has ZeroRevision.
-func (s Stamped[T]) IsZeroRevision() bool {
-	return s.Revision.IsZero()
-}
-
-// ChangedSince reports whether the stamped snapshot revision differs from
-// revision.
-func (s Stamped[T]) ChangedSince(rev Revision) bool {
-	return s.Revision.ChangedSince(rev)
+// ChangedSince reports whether the stamped snapshot revision differs from prev.
+//
+// The check is equality-based for the same reason as Snapshot.ChangedSince.
+func (s Stamped[R, T]) ChangedSince(prev R) bool {
+	return s.Revision != prev
 }
 
 // Age returns the duration from Updated to now.
 //
 // Age accepts now explicitly so callers can use their own clock policy and avoid
 // hidden reads from the runtime clock.
-func (s Stamped[T]) Age(now time.Time) time.Duration {
+func (s Stamped[R, T]) Age(now time.Time) time.Duration {
 	return now.Sub(s.Updated)
+}
+
+// Snapshot drops Updated and returns the lightweight snapshot representation.
+func (s Stamped[R, T]) Snapshot() Snapshot[R, T] {
+	return Snapshot[R, T]{
+		Revision: s.Revision,
+		Value:    s.Value,
+	}
 }
 
 // WithValue returns a stamped snapshot with the same Revision and Updated time
 // and a different Value.
 //
-// The method does not clone either value.
-func (s Stamped[T]) WithValue(val T) Stamped[T] {
-	return Stamped[T]{
+// WithValue does not clone either value.
+func (s Stamped[R, T]) WithValue(value T) Stamped[R, T] {
+	return Stamped[R, T]{
 		Revision: s.Revision,
 		Updated:  s.Updated,
-		Value:    val,
-	}
-}
-
-// Snapshot drops the Updated timestamp and returns the lightweight snapshot
-// representation of s.
-func (s Stamped[T]) Snapshot() Snapshot[T] {
-	return Snapshot[T]{
-		Revision: s.Revision,
-		Value:    s.Value,
+		Value:    value,
 	}
 }

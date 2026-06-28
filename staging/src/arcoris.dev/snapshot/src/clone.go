@@ -19,7 +19,7 @@ package snapshot
 // CloneFunc is explicit because generic Go code cannot know how to safely copy
 // arbitrary values. Structs containing slices, maps, pointers, or mutable nested
 // state usually need a domain-specific clone function. Immutable or copy-safe
-// values may use Identity.
+// values may use IdentityClone.
 //
 // A CloneFunc should behave like a pure ownership copy. It should not depend on
 // call count, mutate unrelated external state, or retain aliases that break Store
@@ -35,12 +35,12 @@ package snapshot
 // again for the returned stamped snapshot.
 type CloneFunc[T any] func(T) T
 
-// Identity returns value unchanged.
+// IdentityClone returns value unchanged.
 //
-// Identity is appropriate only for immutable or copy-safe values. It must not be
-// used for values whose maps, slices, pointers, buffers, or other mutable fields
-// could be mutated by readers after a snapshot is returned.
-func Identity[T any](val T) T {
+// IdentityClone is appropriate only for immutable or copy-safe values. It must
+// not be used for values whose maps, slices, pointers, buffers, or other mutable
+// fields could be mutated by readers after a snapshot is returned.
+func IdentityClone[T any](val T) T {
 	return val
 }
 

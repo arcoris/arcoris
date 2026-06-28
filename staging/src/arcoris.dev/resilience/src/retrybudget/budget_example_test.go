@@ -23,13 +23,13 @@ import (
 )
 
 type exampleBudget struct {
-	snap snapshot.Snapshot[retrybudget.Snapshot]
+	snap snapshot.Snapshot[snapshot.LocalRevision, retrybudget.Snapshot]
 }
 
 func newExampleBudget() *exampleBudget {
 	return &exampleBudget{
-		snap: snapshot.Snapshot[retrybudget.Snapshot]{
-			Revision: snapshot.ZeroRevision.Next(),
+		snap: snapshot.Snapshot[snapshot.LocalRevision, retrybudget.Snapshot]{
+			Revision: snapshot.ZeroLocalRevision.Next(),
 			Value: retrybudget.Snapshot{
 				Kind: retrybudget.KindNoop,
 				Capacity: retrybudget.CapacitySnapshot{
@@ -47,7 +47,7 @@ func (b *exampleBudget) TryAdmitRetry() retrybudget.Decision {
 	return retrybudget.Decision{Allowed: true, Reason: retrybudget.ReasonAllowed, Snapshot: b.snap}
 }
 
-func (b *exampleBudget) Snapshot() snapshot.Snapshot[retrybudget.Snapshot] {
+func (b *exampleBudget) Snapshot() snapshot.Snapshot[snapshot.LocalRevision, retrybudget.Snapshot] {
 	return b.snap
 }
 

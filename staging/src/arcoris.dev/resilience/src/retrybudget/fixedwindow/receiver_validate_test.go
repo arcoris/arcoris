@@ -30,7 +30,7 @@ func TestLimiterNilReceiverPanics(t *testing.T) {
 		{name: "RecordOriginal", call: func() { limiter.RecordOriginal() }},
 		{name: "TryAdmitRetry", call: func() { _ = limiter.TryAdmitRetry() }},
 		{name: "Snapshot", call: func() { _ = limiter.Snapshot() }},
-		{name: "Revision", call: func() { _ = limiter.Revision() }},
+		{name: "LocalRevision", call: func() { _ = limiter.Revision() }},
 	}
 
 	for _, tt := range tests {
@@ -51,7 +51,7 @@ func TestLimiterZeroValueReceiverPanics(t *testing.T) {
 		{name: "RecordOriginal", call: func() { limiter.RecordOriginal() }},
 		{name: "TryAdmitRetry", call: func() { _ = limiter.TryAdmitRetry() }},
 		{name: "Snapshot", call: func() { _ = limiter.Snapshot() }},
-		{name: "Revision", call: func() { _ = limiter.Revision() }},
+		{name: "LocalRevision", call: func() { _ = limiter.Revision() }},
 	}
 
 	for _, tt := range tests {

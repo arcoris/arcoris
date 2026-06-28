@@ -28,7 +28,7 @@ package liveconfig
 //
 // If a validator returns an error, Apply returns ChangeReasonValidateFailed,
 // preserves the previous last-good value, records LastError, and does not
-// advance Revision. If a validator panics, the panic propagates and the previous
+// advance LocalRevision. If a validator panics, the panic propagates and the previous
 // last-good value and LastError remain visible.
 type Validator[T any] func(T) error
 

@@ -17,7 +17,7 @@ package snapshot
 // Publish publishes next and returns the resulting lightweight snapshot.
 //
 // Publish does not clone next. Callers must not mutate next after publication.
-func (p *Publisher[T]) Publish(next T) Snapshot[T] {
+func (p *Publisher[T]) Publish(next T) Snapshot[LocalRevision, T] {
 	return p.PublishStamped(next).Snapshot()
 }
 
@@ -28,7 +28,7 @@ func (p *Publisher[T]) Publish(next T) Snapshot[T] {
 // record, and returns the published stamped snapshot. Concurrent publish calls
 // are serialized so readers cannot observe revision rollback. If revision
 // overflow is detected, PublishStamped panics before storing a new record.
-func (p *Publisher[T]) PublishStamped(next T) Stamped[T] {
+func (p *Publisher[T]) PublishStamped(next T) Stamped[LocalRevision, T] {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -43,7 +43,7 @@ func (p *Publisher[T]) PublishStamped(next T) Stamped[T] {
 	p.nextRevision = rev
 	p.ptr.Store(rec)
 
-	return Stamped[T]{
+	return Stamped[LocalRevision, T]{
 		Revision: rev,
 		Updated:  updated,
 		Value:    next,

@@ -62,7 +62,7 @@ type Snapshot struct {
 	// local to one Runner and one target. It is not a global ordering,
 	// distributed resource version, persistence version, lease epoch, or fencing
 	// token.
-	Revision snapshot.Revision
+	Revision snapshot.LocalRevision
 
 	// Updated is the time at which the per-target snapshot store committed
 	// Report.

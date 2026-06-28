@@ -122,7 +122,7 @@ func TestApplyChangeInvariantMatrix(t *testing.T) {
 				t.Fatalf("Current.Revision = %d, want previous revision %d", change.Current.Revision, change.Previous.Revision)
 			}
 			if got := h.Revision(); got != change.Current.Revision {
-				t.Fatalf("Revision() = %d, want %d", got, change.Current.Revision)
+				t.Fatalf("LocalRevision() = %d, want %d", got, change.Current.Revision)
 			}
 			assertTestSnapshot(t, h.Snapshot(), change.Current)
 			if !equalTestConfig(change.Current.Value, tt.current) {
@@ -162,7 +162,7 @@ func TestApplyPublishesValidConfig(t *testing.T) {
 		t.Fatalf("Current revision = %d, want %d", got, want)
 	}
 	if got, want := h.Revision(), change.Current.Revision; got != want {
-		t.Fatalf("Revision() = %d, want %d", got, want)
+		t.Fatalf("LocalRevision() = %d, want %d", got, want)
 	}
 	if got, want := h.Snapshot().Value.Name, "next"; got != want {
 		t.Fatalf("current name = %q, want %q", got, want)
@@ -477,8 +477,8 @@ func TestConcurrentPublishedApplyAdvancesOncePerSuccess(t *testing.T) {
 		return err
 	})
 
-	if got, want := h.Revision(), snapshot.Revision(1+writers); got != want {
-		t.Fatalf("Revision() = %d, want %d", got, want)
+	if got, want := h.Revision(), snapshot.LocalRevision(1+writers); got != want {
+		t.Fatalf("LocalRevision() = %d, want %d", got, want)
 	}
 }
 
@@ -491,7 +491,7 @@ func TestConcurrentRejectedApplyDoesNotAdvanceRevision(t *testing.T) {
 	})
 
 	if got := h.Revision(); got != prev {
-		t.Fatalf("Revision() = %d, want %d", got, prev)
+		t.Fatalf("LocalRevision() = %d, want %d", got, prev)
 	}
 	if got, want := h.Snapshot().Value.Name, "initial"; got != want {
 		t.Fatalf("Snapshot().Value.Name = %q, want %q", got, want)
@@ -508,7 +508,7 @@ func TestConcurrentInvalidApplyKeepsLastGood(t *testing.T) {
 
 	cur := h.Snapshot()
 	if cur.Revision != prev.Revision {
-		t.Fatalf("Revision() = %d, want %d", cur.Revision, prev.Revision)
+		t.Fatalf("LocalRevision() = %d, want %d", cur.Revision, prev.Revision)
 	}
 	if got, want := cur.Value.Name, "initial"; got != want {
 		t.Fatalf("current name = %q, want %q", got, want)
@@ -534,14 +534,14 @@ func TestConcurrentMixedApplyKeepsValidLastGoodSnapshot(t *testing.T) {
 	})
 
 	snap := h.Snapshot()
-	if snap.IsZeroRevision() {
+	if snap.Revision.IsZero() {
 		t.Fatal("Snapshot().Revision is zero")
 	}
 	if snap.Value.Limit < 0 {
 		t.Fatalf("Snapshot().Value.Limit = %d, want non-negative", snap.Value.Limit)
 	}
-	if got, want := h.Revision(), snapshot.Revision(1+published.Load()); got != want {
-		t.Fatalf("Revision() = %d, want %d", got, want)
+	if got, want := h.Revision(), snapshot.LocalRevision(1+published.Load()); got != want {
+		t.Fatalf("LocalRevision() = %d, want %d", got, want)
 	}
 }
 
