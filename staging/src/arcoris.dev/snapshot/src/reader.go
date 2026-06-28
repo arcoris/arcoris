@@ -14,18 +14,21 @@
 
 package snapshot
 
-// Reader is a fallible provider of lightweight snapshots.
+// SnapshotReader is a fallible provider of lightweight snapshots.
 //
-// Reader should be used for sources that are not always ready, for example a
-// read model that cannot produce a meaningful snapshot until an initial
-// replacement has been applied.
-type Reader[R comparable, T any] interface {
+// SnapshotReader should be used for sources that are not always ready, for
+// example a read model that cannot produce a meaningful snapshot until an
+// initial replacement has been applied.
+type SnapshotReader[R comparable, T any] interface {
 	// ReadSnapshot returns the source's current lightweight snapshot or an error
 	// explaining why no snapshot is currently available.
 	ReadSnapshot() (Snapshot[R, T], error)
 }
 
 // StampedReader is a fallible provider of stamped snapshots.
+//
+// StampedReader is the stamped counterpart to SnapshotReader for sources that
+// may be temporarily not ready.
 type StampedReader[R comparable, T any] interface {
 	// ReadStamped returns the source's current stamped snapshot or an error
 	// explaining why no stamped snapshot is currently available.
@@ -33,6 +36,9 @@ type StampedReader[R comparable, T any] interface {
 }
 
 // RevisionReader is a fallible provider of current revisions.
+//
+// RevisionReader lets not-ready sources expose revision reads without
+// fabricating a zero revision.
 type RevisionReader[R comparable] interface {
 	// ReadRevision returns the source's current revision or an error explaining
 	// why no revision is currently available.

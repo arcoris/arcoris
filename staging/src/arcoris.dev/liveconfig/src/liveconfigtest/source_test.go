@@ -26,7 +26,7 @@ func TestControlledSourcePublishesInitialSnapshot(t *testing.T) {
 	src := NewControlledSource(CloneConfig(cfg))
 
 	snap := src.Snapshot()
-	RequireNonZeroRevision(t, snap)
+	RequireNonZeroLocalRevision(t, snap)
 	RequireConfigEqual(t, snap.Value, cfg)
 	RequireSourceRevision(t, src, snap.Revision)
 	RequireConfigSourceValue(t, src, cfg)
@@ -80,7 +80,7 @@ func TestZeroValueControlledSource(t *testing.T) {
 	}
 
 	snap := src.Publish(NewConfigVersion(1))
-	RequireNonZeroRevision(t, snap)
+	RequireNonZeroLocalRevision(t, snap)
 	RequireConfigEqual(t, src.Current(), NewConfigVersion(1))
 }
 

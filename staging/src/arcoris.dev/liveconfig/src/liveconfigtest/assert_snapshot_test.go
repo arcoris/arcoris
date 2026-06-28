@@ -26,7 +26,7 @@ func TestSnapshotAssertionHelpersAcceptValidSnapshots(t *testing.T) {
 		Value:    NewConfig(),
 	}
 
-	RequireNonZeroRevision(t, snap)
+	RequireNonZeroLocalRevision(t, snap)
 	RequireRevision(t, snap, snapshot.ZeroLocalRevision.Next())
 	RequireChangedSince(t, snap, snapshot.ZeroLocalRevision)
 	RequireUnchangedSince(t, snap, snap.Revision)

@@ -18,7 +18,7 @@ package snapshot
 //
 // Source should be used for components such as Store and Publisher that can
 // return a snapshot immediately after construction. Sources that may not be
-// ready should implement Reader instead.
+// ready should implement SnapshotReader instead.
 type Source[R comparable, T any] interface {
 	// Snapshot returns the source's current lightweight snapshot.
 	Snapshot() Snapshot[R, T]

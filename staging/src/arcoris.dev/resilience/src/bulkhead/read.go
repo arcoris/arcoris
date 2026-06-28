@@ -26,7 +26,7 @@ func (b *Bulkhead) Snapshot() snapshot.Snapshot[snapshot.LocalRevision, Snapshot
 	return b.ledger.Snapshot()
 }
 
-// LocalRevision returns the latest committed bulkhead capacity revision.
+// Revision returns the latest committed bulkhead capacity revision.
 //
 // Revisions are source-local to this Bulkhead. They are useful for cheap change
 // detection by consumers observing the same Bulkhead, but they are not a global

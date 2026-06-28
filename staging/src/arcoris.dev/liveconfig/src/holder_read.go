@@ -35,10 +35,10 @@ func (h *Holder[T]) Stamped() snapshot.Stamped[snapshot.LocalRevision, T] {
 	return h.pub.Stamped()
 }
 
-// LocalRevision returns the current source-local configuration revision.
+// Revision returns the current source-local configuration revision.
 //
-// LocalRevision is a cheap read-side change check for consumers that do not need the
-// value itself. The revision is local to this holder.
+// Revision is a cheap read-side change check for consumers that do not need the
+// value itself. The returned revision is local to this holder.
 func (h *Holder[T]) Revision() snapshot.LocalRevision {
 	requireHolder(h)
 	return h.pub.Revision()

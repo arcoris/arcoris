@@ -25,7 +25,7 @@ func TestSourceAssertionHelpersAcceptValidSources(t *testing.T) {
 		Revision: snapshot.ZeroLocalRevision.Next(),
 		Value:    NewConfig(),
 	}
-	RequireStampedNonZeroRevision(t, stamped)
+	RequireStampedNonZeroLocalRevision(t, stamped)
 	RequireStampedValue(t, stamped, NewConfig(), EqualConfig)
 	RequireConfigStampedValue(t, stamped, NewConfig())
 

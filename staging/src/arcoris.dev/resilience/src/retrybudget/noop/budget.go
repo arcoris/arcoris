@@ -59,7 +59,7 @@ func (Budget) Snapshot() snapshot.Snapshot[snapshot.LocalRevision, retrybudget.S
 	return staticSnapshot()
 }
 
-// LocalRevision returns the stable revision used by the noop snapshot source.
+// Revision returns the stable revision used by the noop snapshot source.
 func (Budget) Revision() snapshot.LocalRevision {
 	return staticRevision()
 }

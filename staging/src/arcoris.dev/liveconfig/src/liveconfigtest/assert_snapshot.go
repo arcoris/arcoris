@@ -16,8 +16,8 @@ package liveconfigtest
 
 import "arcoris.dev/snapshot"
 
-// RequireNonZeroRevision fails the test when snap has ZeroLocalRevision.
-func RequireNonZeroRevision[T any](t TestingT, snap snapshot.Snapshot[snapshot.LocalRevision, T]) {
+// RequireNonZeroLocalRevision fails the test when snap has ZeroLocalRevision.
+func RequireNonZeroLocalRevision[T any](t TestingT, snap snapshot.Snapshot[snapshot.LocalRevision, T]) {
 	t.Helper()
 
 	if snap.Revision.IsZero() {

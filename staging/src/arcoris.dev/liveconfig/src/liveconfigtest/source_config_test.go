@@ -34,6 +34,6 @@ func TestConfigSourceStampedPublication(t *testing.T) {
 
 	stamped := PublishConfigStamped(src, NewConfigVersion(1))
 
-	RequireStampedNonZeroRevision(t, stamped)
+	RequireStampedNonZeroLocalRevision(t, stamped)
 	RequireConfigStampedValue(t, stamped, NewConfigVersion(1))
 }

@@ -29,7 +29,7 @@ func (l *Limiter) Snapshot() snapshot.Snapshot[snapshot.LocalRevision, retrybudg
 	return l.published.Snapshot()
 }
 
-// LocalRevision returns the latest published source-local revision.
+// Revision returns the latest published source-local revision.
 func (l *Limiter) Revision() snapshot.LocalRevision {
 	l.requireReady()
 	return l.published.Revision()

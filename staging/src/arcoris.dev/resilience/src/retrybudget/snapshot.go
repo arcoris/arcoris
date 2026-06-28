@@ -16,9 +16,9 @@ package retrybudget
 
 // Snapshot is the domain state published by a retry budget implementation.
 //
-// Snapshot intentionally does not contain a revision field. Revisions are owned
-// by arcoris.dev/snapshot and are carried by snapshot.Snapshot[snapshot.LocalRevision, Snapshot]. This
-// keeps retry-budget state as a plain domain value and preserves one shared
+// Snapshot intentionally does not contain a revision field. Source-local
+// revisions are carried by snapshot.Snapshot[snapshot.LocalRevision, Snapshot].
+// This keeps retry-budget state as a plain domain value and preserves one shared
 // snapshot mechanism across resilience components.
 type Snapshot struct {
 	// Kind identifies the implementation that produced this snapshot.

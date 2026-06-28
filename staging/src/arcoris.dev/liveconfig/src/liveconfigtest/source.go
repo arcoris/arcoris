@@ -104,7 +104,7 @@ func (s *ControlledSource[T]) Stamped() snapshot.Stamped[snapshot.LocalRevision,
 	return pub.Stamped()
 }
 
-// LocalRevision returns the latest source-local revision.
+// Revision returns the latest source-local revision.
 func (s *ControlledSource[T]) Revision() snapshot.LocalRevision {
 	pub := s.publisherOrNil()
 	if pub == nil {

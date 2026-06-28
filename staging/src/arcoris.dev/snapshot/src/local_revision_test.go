@@ -20,7 +20,7 @@ import (
 	panicassert "arcoris.dev/testutil/panic"
 )
 
-func TestRevisionIsZero(t *testing.T) {
+func TestLocalRevisionZeroConstantIsZero(t *testing.T) {
 	if !ZeroLocalRevision.IsZero() {
 		t.Fatal("ZeroLocalRevision must report IsZero")
 	}
@@ -30,19 +30,19 @@ func TestRevisionIsZero(t *testing.T) {
 	}
 }
 
-func TestRevisionNext(t *testing.T) {
+func TestLocalRevisionNext(t *testing.T) {
 	if got, want := ZeroLocalRevision.Next(), LocalRevision(1); got != want {
 		t.Fatalf("Next() = %d, want %d", got, want)
 	}
 }
 
-func TestRevisionNextPanicsOnOverflow(t *testing.T) {
+func TestLocalRevisionNextPanicsOnOverflow(t *testing.T) {
 	panicassert.RequireMessage(t, "snapshot: local revision overflow", func() {
 		_ = LocalRevision(^uint64(0)).Next()
 	})
 }
 
-func TestRevisionChangedSince(t *testing.T) {
+func TestLocalRevisionChangedSince(t *testing.T) {
 	if LocalRevision(5).ChangedSince(5) {
 		t.Fatal("same revision reported changed")
 	}

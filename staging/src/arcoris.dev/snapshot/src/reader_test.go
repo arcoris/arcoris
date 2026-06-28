@@ -17,7 +17,7 @@ package snapshot
 import "testing"
 
 func TestFallibleSourceInterfaces(t *testing.T) {
-	var _ Reader[testRevision, string] = fallibleStringSource{}
+	var _ SnapshotReader[testRevision, string] = fallibleStringSource{}
 	var _ StampedReader[testRevision, string] = fallibleStringSource{}
 	var _ RevisionReader[testRevision] = fallibleStringSource{}
 }

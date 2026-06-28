@@ -113,7 +113,7 @@ func (l *VectorLedger) Snapshot() snapshot.Snapshot[snapshot.LocalRevision, Vect
 	return l.snapshotLocked()
 }
 
-// LocalRevision returns the latest committed vector ledger revision.
+// Revision returns the latest committed vector ledger revision.
 func (l *VectorLedger) Revision() snapshot.LocalRevision {
 	l.requireNonNil()
 

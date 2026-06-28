@@ -112,7 +112,7 @@ func (l *Ledger) Snapshot() snapshot.Snapshot[snapshot.LocalRevision, Snapshot] 
 	}
 }
 
-// LocalRevision returns the latest observed ledger revision.
+// Revision returns the latest observed ledger revision.
 //
 // Revisions are source-local. They advance after successful accounting
 // mutations and are useful for diagnostics and change checks, not strict global

@@ -39,8 +39,8 @@ func RequireConfigSourceValue(t TestingT, src snapshot.Source[snapshot.LocalRevi
 	RequireSourceValue(t, src, want, EqualConfig)
 }
 
-// RequireStampedNonZeroRevision fails the test when stamped has ZeroLocalRevision.
-func RequireStampedNonZeroRevision[T any](t TestingT, stamped snapshot.Stamped[snapshot.LocalRevision, T]) {
+// RequireStampedNonZeroLocalRevision fails the test when stamped has ZeroLocalRevision.
+func RequireStampedNonZeroLocalRevision[T any](t TestingT, stamped snapshot.Stamped[snapshot.LocalRevision, T]) {
 	t.Helper()
 
 	if stamped.Revision.IsZero() {
