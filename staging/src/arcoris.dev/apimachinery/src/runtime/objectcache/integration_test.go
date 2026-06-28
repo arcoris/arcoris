@@ -71,6 +71,13 @@ func TestCacheIntegrationWithReflectorAndObservableStore(t *testing.T) {
 		result, err := cache.Query(query)
 		return err == nil && len(result.Items) == 1 && result.Items[0].Key.Equal(key)
 	})
+	updatedSnapshot, err := cache.ReadSnapshot()
+	requireNoError(t, err)
+	if updatedSnapshot.Revision != updatedSnapshot.Value.Revision() {
+		t.Fatalf("snapshot revision = %s, view revision = %s", updatedSnapshot.Revision, updatedSnapshot.Value.Revision())
+	}
+	updatedViewResult := updatedSnapshot.Value.Query(query)
+	requireListOrder(t, updatedViewResult, key)
 
 	previous, err := cache.PreviousLive(key, updated.Revision)
 	requireNoError(t, err)
@@ -89,6 +96,15 @@ func TestCacheIntegrationWithReflectorAndObservableStore(t *testing.T) {
 	if len(result.Items) != 0 {
 		t.Fatalf("Query() items = %d; want 0 after delete", len(result.Items))
 	}
+	deletedSnapshot, err := cache.ReadSnapshot()
+	requireNoError(t, err)
+	deletedViewResult := deletedSnapshot.Value.Query(query)
+	if len(deletedViewResult.Items) != 0 {
+		t.Fatalf("new snapshot Query() items = %d; want 0 after delete", len(deletedViewResult.Items))
+	}
+	stableViewResult := updatedSnapshot.Value.Query(query)
+	requireListOrder(t, stableViewResult, key)
+
 	historical, err := cache.GetAt(key, updated.Revision)
 	requireNoError(t, err)
 	if !historical.Found || desiredString(t, historical.State) != "updated" {

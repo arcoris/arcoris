@@ -39,13 +39,18 @@ func (c *Cache) Query(predicate objectquery.Predicate) (objectstore.ListResult, 
 		return objectstore.ListResult{}, ErrNotReady
 	}
 
+	return c.latest.queryResult(predicate), nil
+}
+
+// queryResult evaluates predicate over latest live items in deterministic order.
+func (col collection) queryResult(predicate objectquery.Predicate) objectstore.ListResult {
 	var items []objectstore.ListItem
-	for _, key := range c.latest.order {
-		item := c.latest.items[key]
+	for _, key := range col.order {
+		item := col.items[key]
 		if predicate.Match(item) {
 			items = append(items, item.Clone())
 		}
 	}
 
-	return objectstore.ListResult{Items: items, Revision: c.latest.revision}, nil
+	return objectstore.ListResult{Items: items, Revision: col.revision}
 }

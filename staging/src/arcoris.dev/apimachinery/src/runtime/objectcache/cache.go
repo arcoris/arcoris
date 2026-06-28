@@ -18,10 +18,7 @@ import (
 	"sync"
 
 	"arcoris.dev/apimachinery/api/objectstore"
-	"arcoris.dev/apimachinery/runtime/objectreflector"
 )
-
-var _ objectreflector.Sink = (*Cache)(nil)
 
 // Cache is a concurrency-safe materialized read model for one object collection.
 //

@@ -17,11 +17,11 @@
 //
 // # Model
 //
-// Cache implements runtime/objectreflector.Sink. A reflector installs complete
+// Cache implements the reflector sink contract. A reflector installs complete
 // collection reads through Replace and then applies committed objectstore.Change
 // values through ApplyChange. The cache owns detached materialized latest state
-// and, when configured, bounded per-object history of observed live versions
-// and tombstones.
+// and, when configured, bounded per-object history of observed live versions and
+// tombstones.
 //
 // # Boundaries
 //
@@ -41,6 +41,19 @@
 // Query indexes are intentionally deferred. Future private indexes may use
 // objectquery planning hints to narrow candidates, but they must still confirm
 // every result with Predicate.Match and must not change semantics.
+//
+// # Snapshots
+//
+// ReadSnapshot returns a detached View wrapped in
+// snapshot.Snapshot[objectstore.Revision, View]. The snapshot revision is the
+// objectstore collection revision, and it is the same revision returned by
+// View.Revision.
+//
+// View provides stable Get, List, and Query reads over the latest live
+// collection at one revision. It does not include per-object history records,
+// tombstones, or future cache mutations. Historical point reads remain Cache
+// methods through GetAt and PreviousLive; View does not reconstruct historical
+// collection states.
 //
 // # History
 //

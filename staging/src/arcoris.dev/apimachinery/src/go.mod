@@ -3,3 +3,7 @@ module arcoris.dev/apimachinery
 go 1.25
 
 toolchain go1.25.9
+
+require arcoris.dev/snapshot v0.0.0
+
+replace arcoris.dev/snapshot => ../../snapshot/src
