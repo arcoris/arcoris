@@ -1,0 +1,135 @@
+// Copyright 2026 The ARCORIS Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package objectworkqueue
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"testing"
+	"time"
+
+	apiidentity "arcoris.dev/apimachinery/api/identity"
+	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
+	"arcoris.dev/apimachinery/api/objectstore"
+)
+
+func requireNoError(t testing.TB, err error) {
+	t.Helper()
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func requireErrorIs(t testing.TB, err error, target error) {
+	t.Helper()
+
+	if !errors.Is(err, target) {
+		t.Fatalf("error = %v; want errors.Is(%v)", err, target)
+	}
+}
+
+func newTestQueue(t testing.TB, capacity int) *Queue {
+	t.Helper()
+
+	queue, err := New(Options{Capacity: capacity})
+	requireNoError(t, err)
+
+	return queue
+}
+
+func testItem(id int) Item {
+	return Item{Key: testKey(id)}
+}
+
+func testKey(id int) objectstore.Key {
+	return objectstore.MustKey(
+		apiidentity.GroupVersionResource{
+			Group:    apiidentity.Group("control.arcoris.dev"),
+			Version:  apiidentity.Version("v1"),
+			Resource: apiidentity.Resource("workers"),
+		},
+		metaidentity.ObjectName{
+			Namespace: metaidentity.Namespace("default"),
+			Name:      metaidentity.Name(fmt.Sprintf("worker-%d", id)),
+		},
+	)
+}
+
+func requireItem(t testing.TB, got Item, want Item) {
+	t.Helper()
+
+	if !got.Key.Equal(want.Key) {
+		t.Fatalf("item = %s; want %s", got.Key, want.Key)
+	}
+}
+
+func requireStats(t testing.TB, queue *Queue, queued int, processing int) {
+	t.Helper()
+
+	stats := queue.Stats()
+	if stats.Queued != queued || stats.Processing != processing {
+		t.Fatalf("stats = %#v; want queued=%d processing=%d", stats, queued, processing)
+	}
+	if stats.Queued+stats.Processing > stats.Capacity {
+		t.Fatalf("stats = %#v; queued+processing exceeds capacity", stats)
+	}
+}
+
+func waitResult(t testing.TB, ch <-chan error) error {
+	t.Helper()
+
+	select {
+	case err := <-ch:
+		return err
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for result")
+		return nil
+	}
+}
+
+func waitItem(t testing.TB, ch <-chan itemResult) itemResult {
+	t.Helper()
+
+	select {
+	case result := <-ch:
+		return result
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for item")
+		return itemResult{}
+	}
+}
+
+func requireClosed(t testing.TB, ch <-chan struct{}) {
+	t.Helper()
+
+	select {
+	case <-ch:
+	default:
+		t.Fatalf("channel is open; want closed")
+	}
+}
+
+func withTimeout(t testing.TB) (context.Context, context.CancelFunc) {
+	t.Helper()
+
+	return context.WithTimeout(context.Background(), 2*time.Second)
+}
+
+type itemResult struct {
+	item Item
+	err  error
+}
