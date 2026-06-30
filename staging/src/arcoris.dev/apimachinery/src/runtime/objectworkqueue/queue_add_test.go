@@ -28,6 +28,7 @@ func TestTryAddEnqueuesNewItem(t *testing.T) {
 		t.Fatalf("Len() = %d; want 1", queue.Len())
 	}
 	requireStats(t, queue, 1, 0)
+	requireInvariants(t, queue)
 }
 
 func TestTryAddDuplicateQueuedItemDoesNotIncreaseLen(t *testing.T) {
@@ -38,6 +39,7 @@ func TestTryAddDuplicateQueuedItemDoesNotIncreaseLen(t *testing.T) {
 	requireNoError(t, queue.TryAdd(item))
 
 	requireStats(t, queue, 1, 0)
+	requireInvariants(t, queue)
 }
 
 func TestTryAddDuplicateProcessingItemMarksDirty(t *testing.T) {
@@ -52,6 +54,7 @@ func TestTryAddDuplicateProcessingItemMarksDirty(t *testing.T) {
 	requireNoError(t, queue.Done(item))
 
 	requireStats(t, queue, 1, 0)
+	requireInvariants(t, queue)
 	got, err = queue.Get(context.Background())
 	requireNoError(t, err)
 	requireItem(t, got, item)
@@ -69,6 +72,7 @@ func TestTryAddDuplicateProcessingDirtyItemDoesNotEnqueueMultipleCopies(t *testi
 	requireNoError(t, queue.Done(item))
 
 	requireStats(t, queue, 1, 0)
+	requireInvariants(t, queue)
 	_, err = queue.Get(context.Background())
 	requireNoError(t, err)
 	requireStats(t, queue, 0, 1)
@@ -87,6 +91,7 @@ func TestTryAddDuplicateTrackedItemWhenFullSucceeds(t *testing.T) {
 	requireNoError(t, queue.TryAdd(item))
 
 	requireNoError(t, queue.TryAdd(item))
+	requireInvariants(t, queue)
 }
 
 func TestAddEnqueuesNewItemAndDuplicateQueuedItemSucceeds(t *testing.T) {
@@ -97,6 +102,7 @@ func TestAddEnqueuesNewItemAndDuplicateQueuedItemSucceeds(t *testing.T) {
 	requireNoError(t, queue.Add(context.Background(), item))
 
 	requireStats(t, queue, 1, 0)
+	requireInvariants(t, queue)
 }
 
 func TestAddDuplicateProcessingItemMarksDirty(t *testing.T) {
@@ -110,6 +116,7 @@ func TestAddDuplicateProcessingItemMarksDirty(t *testing.T) {
 	requireNoError(t, queue.Done(item))
 
 	requireStats(t, queue, 1, 0)
+	requireInvariants(t, queue)
 }
 
 func TestAddWaitsWhenFullAndSucceedsAfterDoneFreesCapacity(t *testing.T) {
@@ -128,6 +135,7 @@ func TestAddWaitsWhenFullAndSucceedsAfterDoneFreesCapacity(t *testing.T) {
 	requireNoError(t, queue.Done(first))
 	requireNoError(t, waitResult(t, result))
 	requireStats(t, queue, 1, 0)
+	requireInvariants(t, queue)
 }
 
 func TestAddReturnsContextErrorWhenCancelledWhileWaiting(t *testing.T) {

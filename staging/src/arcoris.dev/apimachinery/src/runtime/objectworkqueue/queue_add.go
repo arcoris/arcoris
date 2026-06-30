@@ -19,12 +19,16 @@ import "context"
 // Add records item as pending work, blocking while capacity is full.
 //
 // Add coalesces duplicate queued items. If item is processing, Add marks it
-// dirty so Done will requeue it. A nil ctx is treated as context.Background.
+// dirty so Done will requeue it. Add rejects invalid items before waiting for
+// capacity. A nil ctx is treated as context.Background.
 func (q *Queue) Add(ctx context.Context, item Item) error {
 	if q == nil {
 		return ErrInvalidQueue
 	}
 	ctx = normalizeContext(ctx)
+	if err := validateItem(item); err != nil {
+		return err
+	}
 
 	for {
 		q.mu.Lock()
@@ -48,10 +52,14 @@ func (q *Queue) Add(ctx context.Context, item Item) error {
 //
 // TryAdd returns ErrFull only when item is new and the queue has no remaining
 // capacity. Duplicate tracked items still succeed because they do not increase
-// tracked cardinality.
+// tracked cardinality. TryAdd rejects invalid items before inspecting queue
+// capacity.
 func (q *Queue) TryAdd(item Item) error {
 	if q == nil {
 		return ErrInvalidQueue
+	}
+	if err := validateItem(item); err != nil {
+		return err
 	}
 
 	q.mu.Lock()

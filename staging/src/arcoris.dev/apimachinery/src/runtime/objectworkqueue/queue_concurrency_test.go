@@ -139,25 +139,40 @@ func TestBlockedAddAndGetWaitersWakeOnShutDown(t *testing.T) {
 	requireErrorIs(t, waitItem(t, getResult).err, ErrShutDown)
 }
 
-func TestConcurrentAddAndDoneDoNotRace(t *testing.T) {
-	for i := range 100 {
+func TestConcurrentAddAndDoneLeavesItemQueued(t *testing.T) {
+	for i := range 1000 {
 		queue := newTestQueue(t, 2)
 		item := testItem(i)
 		requireNoError(t, queue.Add(context.Background(), item))
 		_, err := queue.Get(context.Background())
 		requireNoError(t, err)
 
+		start := make(chan struct{})
+		errs := make(chan error, 2)
 		var wg sync.WaitGroup
 		wg.Add(2)
 		go func() {
 			defer wg.Done()
-			_ = queue.Add(context.Background(), item)
+			<-start
+			errs <- queue.Add(context.Background(), item)
 		}()
 		go func() {
 			defer wg.Done()
-			_ = queue.Done(item)
+			<-start
+			errs <- queue.Done(item)
 		}()
+		close(start)
 		wg.Wait()
+		close(errs)
+
+		for err := range errs {
+			requireNoError(t, err)
+		}
+		requireStats(t, queue, 1, 0)
+		requireInvariants(t, queue)
+		got, err := queue.Get(context.Background())
+		requireNoError(t, err)
+		requireItem(t, got, item)
 	}
 }
 

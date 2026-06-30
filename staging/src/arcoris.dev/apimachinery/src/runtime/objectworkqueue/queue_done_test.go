@@ -29,6 +29,7 @@ func TestDoneForCleanProcessingItemRemovesTrackingAndFreesCapacity(t *testing.T)
 	requireNoError(t, queue.Done(item))
 
 	requireStats(t, queue, 0, 0)
+	requireInvariants(t, queue)
 	requireNoError(t, queue.TryAdd(testItem(2)))
 }
 
@@ -57,6 +58,7 @@ func TestDoneForDirtyProcessingItemRequeuesIt(t *testing.T) {
 	requireNoError(t, queue.Done(item))
 
 	requireStats(t, queue, 1, 0)
+	requireInvariants(t, queue)
 	got, err := queue.Get(context.Background())
 	requireNoError(t, err)
 	requireItem(t, got, item)
@@ -74,6 +76,7 @@ func TestRepeatedAddWhileProcessingRequeuesOnlyOneCopy(t *testing.T) {
 	requireNoError(t, queue.Done(item))
 
 	requireStats(t, queue, 1, 0)
+	requireInvariants(t, queue)
 	_, err = queue.Get(context.Background())
 	requireNoError(t, err)
 	requireStats(t, queue, 0, 1)
@@ -97,6 +100,7 @@ func TestDirtyRequeueAppendsToFIFOBack(t *testing.T) {
 	got, err = queue.Get(context.Background())
 	requireNoError(t, err)
 	requireItem(t, got, first)
+	requireInvariants(t, queue)
 }
 
 func TestDoneDirtyItemAfterShutDownRemovesInsteadOfRequeueing(t *testing.T) {
@@ -111,6 +115,21 @@ func TestDoneDirtyItemAfterShutDownRemovesInsteadOfRequeueing(t *testing.T) {
 	requireNoError(t, queue.Done(item))
 
 	requireStats(t, queue, 0, 0)
+	requireInvariants(t, queue)
 	_, err = queue.Get(context.Background())
 	requireErrorIs(t, err, ErrShutDown)
+}
+
+func TestDoneUsesKeyIdentity(t *testing.T) {
+	queue := newTestQueue(t, 1)
+	item := testItem(1)
+	equivalent := Item{Key: item.Key}
+	requireNoError(t, queue.Add(context.Background(), item))
+	_, err := queue.Get(context.Background())
+	requireNoError(t, err)
+
+	requireNoError(t, queue.Done(equivalent))
+
+	requireStats(t, queue, 0, 0)
+	requireInvariants(t, queue)
 }

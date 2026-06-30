@@ -18,7 +18,8 @@ package objectworkqueue
 type Options struct {
 	// Capacity is the maximum number of distinct tracked items.
 	//
-	// Tracked items are queued plus processing items. Duplicate Add or TryAdd
-	// calls for already tracked items do not consume additional capacity.
+	// Both queued and processing items count toward Capacity. Duplicate Add or
+	// TryAdd calls for an already tracked item do not consume additional
+	// capacity.
 	Capacity int
 }

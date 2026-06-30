@@ -22,13 +22,17 @@
 // Add calls coalesce into one tracked item, and Get hands distinct queued items
 // to callers in FIFO order.
 //
+// Item keys must be structurally valid objectstore keys. Add, TryAdd, and Done
+// reject invalid items before queue state is inspected or mutated.
+//
 // Queue tracks in-flight processing. If Add is called for an item while that
 // item is processing, the item becomes dirty. Done requeues dirty processing
 // items unless the queue is shutting down. This preserves the central invariant
 // that work observed during processing is not lost.
 //
 // Capacity bounds distinct tracked items, not Add calls. Tracked items are the
-// sum of queued and processing items.
+// sum of queued and processing items. Duplicate Add or TryAdd calls for an
+// already tracked item do not consume additional capacity.
 //
 // # Boundaries
 //

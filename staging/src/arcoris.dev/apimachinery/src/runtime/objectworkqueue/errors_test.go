@@ -23,6 +23,7 @@ func TestSentinelErrorsAreMatchable(t *testing.T) {
 	for _, target := range []error{
 		ErrInvalidCapacity,
 		ErrInvalidQueue,
+		ErrInvalidItem,
 		ErrFull,
 		ErrShutDown,
 		ErrNotProcessing,

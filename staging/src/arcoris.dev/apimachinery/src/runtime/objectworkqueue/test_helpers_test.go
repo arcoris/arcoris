@@ -89,6 +89,53 @@ func requireStats(t testing.TB, queue *Queue, queued int, processing int) {
 	}
 }
 
+func requireInvariants(t testing.TB, queue *Queue) {
+	t.Helper()
+
+	queue.mu.Lock()
+	defer queue.mu.Unlock()
+
+	if queue.order.Len() > len(queue.items) {
+		t.Fatalf("queued=%d tracked=%d; queued exceeds tracked", queue.order.Len(), len(queue.items))
+	}
+
+	queued := 0
+	processing := 0
+	for id, entry := range queue.items {
+		if keyForItem(entry.item) != id {
+			t.Fatalf("entry key = %s; want %s", keyForItem(entry.item), id)
+		}
+
+		switch entry.state {
+		case stateQueued:
+			queued++
+			if entry.elem == nil {
+				t.Fatalf("queued entry %s has nil elem", id)
+			}
+			if entry.dirty {
+				t.Fatalf("queued entry %s is dirty", id)
+			}
+		case stateProcessing:
+			processing++
+			if entry.elem != nil {
+				t.Fatalf("processing entry %s has list elem", id)
+			}
+		default:
+			t.Fatalf("entry %s state = %d; want known state", id, entry.state)
+		}
+	}
+
+	if queued != queue.order.Len() {
+		t.Fatalf("queued=%d order=%d; want equal", queued, queue.order.Len())
+	}
+	if queued+processing != len(queue.items) {
+		t.Fatalf("queued=%d processing=%d tracked=%d; want equal", queued, processing, len(queue.items))
+	}
+	if len(queue.items) > queue.capacity {
+		t.Fatalf("tracked=%d capacity=%d; capacity exceeded", len(queue.items), queue.capacity)
+	}
+}
+
 func waitResult(t testing.TB, ch <-chan error) error {
 	t.Helper()
 

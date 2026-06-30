@@ -14,19 +14,24 @@
 
 package objectworkqueue
 
-// signalNotEmptyLocked wakes waiters observing q.notEmpty.
+// signalNotEmptyLocked broadcasts that queued work may now be available.
+//
+// The queue uses close-and-replace channels as condition notifications so Add
+// and Get can wait with caller contexts without spawning cancellation bridge
+// goroutines. Higher layers should still bound their worker counts because
+// every signal wakes all waiters observing the previous channel.
 func (q *Queue) signalNotEmptyLocked() {
 	close(q.notEmpty)
 	q.notEmpty = make(chan struct{})
 }
 
-// signalNotFullLocked wakes waiters observing q.notFull.
+// signalNotFullLocked broadcasts that tracked capacity may now be available.
 func (q *Queue) signalNotFullLocked() {
 	close(q.notFull)
 	q.notFull = make(chan struct{})
 }
 
-// signalAllLocked wakes both item and capacity waiters.
+// signalAllLocked broadcasts both item-availability and capacity changes.
 func (q *Queue) signalAllLocked() {
 	q.signalNotEmptyLocked()
 	q.signalNotFullLocked()

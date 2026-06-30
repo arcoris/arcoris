@@ -14,10 +14,23 @@
 
 package objectworkqueue
 
-import "arcoris.dev/apimachinery/api/objectstore"
+import (
+	"errors"
+
+	"arcoris.dev/apimachinery/api/objectstore"
+)
 
 // Item is one object-keyed unit of reconciliation work.
 type Item struct {
-	// Key identifies the object whose reconciliation should be attempted.
+	// Key identifies the object whose reconciliation should be attempted. Add,
+	// TryAdd, and Done reject items whose Key is not a valid objectstore key.
 	Key objectstore.Key
+}
+
+// validateItem checks the object identity boundary before queue state changes.
+func validateItem(item Item) error {
+	if err := objectstore.ValidateKey(item.Key); err != nil {
+		return errors.Join(ErrInvalidItem, err)
+	}
+	return nil
 }

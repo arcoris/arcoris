@@ -18,10 +18,14 @@ package objectworkqueue
 //
 // Done removes clean processing items from tracking. Dirty processing items are
 // requeued at the FIFO back unless the queue is shutting down. During shutdown,
-// dirty processing items are removed instead of requeued.
+// dirty processing items are removed instead of requeued. Done rejects invalid
+// items before looking up processing state.
 func (q *Queue) Done(item Item) error {
 	if q == nil {
 		return ErrInvalidQueue
+	}
+	if err := validateItem(item); err != nil {
+		return err
 	}
 
 	q.mu.Lock()

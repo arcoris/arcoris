@@ -23,6 +23,9 @@ var (
 	// ErrInvalidQueue reports a nil Queue receiver on an error-returning method.
 	ErrInvalidQueue = errors.New("objectworkqueue: invalid queue")
 
+	// ErrInvalidItem reports an item whose object key is structurally invalid.
+	ErrInvalidItem = errors.New("objectworkqueue: invalid item")
+
 	// ErrFull reports that TryAdd cannot add a new distinct item because the
 	// queue is at capacity.
 	ErrFull = errors.New("objectworkqueue: full")

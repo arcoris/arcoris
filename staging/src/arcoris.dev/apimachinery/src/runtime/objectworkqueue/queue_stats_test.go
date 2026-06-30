@@ -69,4 +69,5 @@ func TestTrackedCountNeverExceedsCapacity(t *testing.T) {
 	if stats.Queued+stats.Processing > stats.Capacity {
 		t.Fatalf("stats = %#v; queued+processing exceeds capacity", stats)
 	}
+	requireInvariants(t, queue)
 }
