@@ -29,20 +29,21 @@ func (q *Queue) Done(item Item) error {
 	}
 
 	q.mu.Lock()
-	defer q.mu.Unlock()
-
 	id := keyForItem(item)
 	e, ok := q.items[id]
 	if !ok || e.state != stateProcessing {
+		q.mu.Unlock()
 		return ErrNotProcessing
 	}
 
 	if e.dirty && !q.shutDown {
 		q.enqueueLocked(e)
+		q.mu.Unlock()
 		return nil
 	}
 
 	delete(q.items, id)
 	q.signalNotFullLocked()
+	q.mu.Unlock()
 	return nil
 }

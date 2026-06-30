@@ -16,11 +16,27 @@ package objectworkqueue
 
 import "testing"
 
-func TestSignalNotEmptyLockedClosesAndReplacesChannel(t *testing.T) {
+func TestSignalNotEmptyLockedSkipsChannelWithoutWaiters(t *testing.T) {
 	queue := newTestQueue(t, 1)
 
 	queue.mu.Lock()
 	ch := queue.notEmpty
+	queue.signalNotEmptyLocked()
+	replacement := queue.notEmpty
+	queue.mu.Unlock()
+
+	if replacement == ch {
+		return
+	}
+	t.Fatalf("notEmpty channel was replaced without waiters")
+}
+
+func TestSignalNotEmptyLockedClosesAndReplacesChannelWithWaiters(t *testing.T) {
+	queue := newTestQueue(t, 1)
+
+	queue.mu.Lock()
+	ch := queue.notEmpty
+	queue.notEmptyWaiters = 1
 	queue.signalNotEmptyLocked()
 	replacement := queue.notEmpty
 	queue.mu.Unlock()
@@ -31,11 +47,27 @@ func TestSignalNotEmptyLockedClosesAndReplacesChannel(t *testing.T) {
 	}
 }
 
-func TestSignalNotFullLockedClosesAndReplacesChannel(t *testing.T) {
+func TestSignalNotFullLockedSkipsChannelWithoutWaiters(t *testing.T) {
 	queue := newTestQueue(t, 1)
 
 	queue.mu.Lock()
 	ch := queue.notFull
+	queue.signalNotFullLocked()
+	replacement := queue.notFull
+	queue.mu.Unlock()
+
+	if replacement == ch {
+		return
+	}
+	t.Fatalf("notFull channel was replaced without waiters")
+}
+
+func TestSignalNotFullLockedClosesAndReplacesChannelWithWaiters(t *testing.T) {
+	queue := newTestQueue(t, 1)
+
+	queue.mu.Lock()
+	ch := queue.notFull
+	queue.notFullWaiters = 1
 	queue.signalNotFullLocked()
 	replacement := queue.notFull
 	queue.mu.Unlock()
@@ -46,12 +78,14 @@ func TestSignalNotFullLockedClosesAndReplacesChannel(t *testing.T) {
 	}
 }
 
-func TestSignalAllLockedClosesAndReplacesBothChannels(t *testing.T) {
+func TestSignalAllLockedClosesAndReplacesBothChannelsWithWaiters(t *testing.T) {
 	queue := newTestQueue(t, 1)
 
 	queue.mu.Lock()
 	notEmpty := queue.notEmpty
 	notFull := queue.notFull
+	queue.notEmptyWaiters = 1
+	queue.notFullWaiters = 1
 	queue.signalAllLocked()
 	newNotEmpty := queue.notEmpty
 	newNotFull := queue.notFull

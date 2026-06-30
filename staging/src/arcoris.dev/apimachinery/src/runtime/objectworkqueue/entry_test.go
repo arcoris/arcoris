@@ -22,7 +22,7 @@ func TestEntryStateValuesAreNonZero(t *testing.T) {
 	}
 }
 
-func TestEntryTracksItemStateDirtyAndElement(t *testing.T) {
+func TestEntryTracksItemStateDirtyAndLinks(t *testing.T) {
 	item := testItem(1)
 	entry := &entry{item: item, state: stateProcessing, dirty: true}
 
@@ -35,7 +35,7 @@ func TestEntryTracksItemStateDirtyAndElement(t *testing.T) {
 	if !entry.dirty {
 		t.Fatalf("entry dirty = false; want true")
 	}
-	if entry.elem != nil {
-		t.Fatalf("entry elem = %#v; want nil", entry.elem)
+	if entry.prev != nil || entry.next != nil {
+		t.Fatalf("entry links = %p,%p; want nil", entry.prev, entry.next)
 	}
 }

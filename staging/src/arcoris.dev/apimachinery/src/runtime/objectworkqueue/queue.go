@@ -14,10 +14,7 @@
 
 package objectworkqueue
 
-import (
-	"container/list"
-	"sync"
-)
+import "sync"
 
 // Queue is a bounded, deduplicating, object-keyed work queue.
 //
@@ -35,14 +32,26 @@ type Queue struct {
 	// notFull is closed and replaced whenever tracked capacity may be available.
 	notFull chan struct{}
 
+	// notEmptyWaiters counts callers currently waiting on notEmpty.
+	notEmptyWaiters int
+
+	// notFullWaiters counts callers currently waiting on notFull.
+	notFullWaiters int
+
 	// capacity is the maximum number of distinct tracked items.
 	capacity int
 
 	// shutDown records that the queue no longer accepts or schedules new work.
 	shutDown bool
 
-	// order stores queued entries in FIFO order.
-	order list.List
+	// head is the oldest queued entry in the intrusive FIFO.
+	head *entry
+
+	// tail is the newest queued entry in the intrusive FIFO.
+	tail *entry
+
+	// queued is the number of entries linked into the FIFO.
+	queued int
 
 	// items stores every tracked entry, including queued and processing items.
 	items map[keyID]*entry
@@ -98,7 +107,7 @@ func (q *Queue) trackedLocked() int {
 
 // queuedLocked returns the number of FIFO-waiting items.
 func (q *Queue) queuedLocked() int {
-	return q.order.Len()
+	return q.queued
 }
 
 // processingLocked returns the number of in-flight items.
@@ -110,6 +119,14 @@ func (q *Queue) processingLocked() int {
 func (q *Queue) enqueueLocked(e *entry) {
 	e.state = stateQueued
 	e.dirty = false
-	e.elem = q.order.PushBack(e)
+	e.prev = q.tail
+	e.next = nil
+	if q.tail == nil {
+		q.head = e
+	} else {
+		q.tail.next = e
+	}
+	q.tail = e
+	q.queued++
 	q.signalNotEmptyLocked()
 }

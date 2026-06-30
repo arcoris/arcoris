@@ -95,8 +95,38 @@ func requireInvariants(t testing.TB, queue *Queue) {
 	queue.mu.Lock()
 	defer queue.mu.Unlock()
 
-	if queue.order.Len() > len(queue.items) {
-		t.Fatalf("queued=%d tracked=%d; queued exceeds tracked", queue.order.Len(), len(queue.items))
+	if queue.queued > len(queue.items) {
+		t.Fatalf("queued=%d tracked=%d; queued exceeds tracked", queue.queued, len(queue.items))
+	}
+	if (queue.head == nil) != (queue.tail == nil) {
+		t.Fatalf("head=%p tail=%p; want both nil or both non-nil", queue.head, queue.tail)
+	}
+
+	linked := 0
+	seen := make(map[*entry]struct{})
+	var prev *entry
+	for entry := queue.head; entry != nil; entry = entry.next {
+		if _, ok := seen[entry]; ok {
+			t.Fatalf("entry %s appears in FIFO more than once", entry.item.Key)
+		}
+		seen[entry] = struct{}{}
+		if entry.prev != prev {
+			t.Fatalf("entry %s prev=%p; want %p", entry.item.Key, entry.prev, prev)
+		}
+		if entry.state != stateQueued {
+			t.Fatalf("linked entry %s state=%d; want queued", entry.item.Key, entry.state)
+		}
+		if entry.dirty {
+			t.Fatalf("linked entry %s is dirty", entry.item.Key)
+		}
+		prev = entry
+		linked++
+	}
+	if prev != queue.tail {
+		t.Fatalf("last linked entry=%p tail=%p; want equal", prev, queue.tail)
+	}
+	if linked != queue.queued {
+		t.Fatalf("linked=%d queued=%d; want equal", linked, queue.queued)
 	}
 
 	queued := 0
@@ -109,24 +139,27 @@ func requireInvariants(t testing.TB, queue *Queue) {
 		switch entry.state {
 		case stateQueued:
 			queued++
-			if entry.elem == nil {
-				t.Fatalf("queued entry %s has nil elem", id)
+			if _, ok := seen[entry]; !ok {
+				t.Fatalf("queued entry %s is not linked", id)
 			}
 			if entry.dirty {
 				t.Fatalf("queued entry %s is dirty", id)
 			}
 		case stateProcessing:
 			processing++
-			if entry.elem != nil {
-				t.Fatalf("processing entry %s has list elem", id)
+			if _, ok := seen[entry]; ok {
+				t.Fatalf("processing entry %s is linked", id)
+			}
+			if entry.prev != nil || entry.next != nil {
+				t.Fatalf("processing entry %s has links", id)
 			}
 		default:
 			t.Fatalf("entry %s state = %d; want known state", id, entry.state)
 		}
 	}
 
-	if queued != queue.order.Len() {
-		t.Fatalf("queued=%d order=%d; want equal", queued, queue.order.Len())
+	if queued != queue.queued {
+		t.Fatalf("queued=%d queue.queued=%d; want equal", queued, queue.queued)
 	}
 	if queued+processing != len(queue.items) {
 		t.Fatalf("queued=%d processing=%d tracked=%d; want equal", queued, processing, len(queue.items))

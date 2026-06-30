@@ -38,12 +38,11 @@ func (q *Queue) Add(ctx context.Context, item Item) error {
 			return err
 		}
 		ch := q.notFull
+		q.notFullWaiters++
 		q.mu.Unlock()
 
-		select {
-		case <-ch:
-		case <-ctx.Done():
-			return ctx.Err()
+		if err := q.waitNotFull(ctx, ch); err != nil {
+			return err
 		}
 	}
 }
@@ -63,9 +62,8 @@ func (q *Queue) TryAdd(item Item) error {
 	}
 
 	q.mu.Lock()
-	defer q.mu.Unlock()
-
 	err, done := q.addLocked(item, false)
+	q.mu.Unlock()
 	if !done {
 		return ErrFull
 	}

@@ -55,6 +55,26 @@ func BenchmarkTryAddDuplicateQueued(b *testing.B) {
 	}
 }
 
+func BenchmarkTryAddDuplicateProcessing(b *testing.B) {
+	queue := newBenchQueue(b, 1)
+	item := testItem(1)
+	if err := queue.TryAdd(item); err != nil {
+		b.Fatal(err)
+	}
+	if _, err := queue.Get(context.Background()); err != nil {
+		b.Fatal(err)
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		if err := queue.TryAdd(item); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 func BenchmarkAddGetDoneSerial(b *testing.B) {
 	queue := newBenchQueue(b, 1)
 	item := testItem(1)
@@ -197,6 +217,30 @@ func BenchmarkStats(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		_ = queue.Stats()
+	}
+}
+
+func BenchmarkValidateItem(b *testing.B) {
+	item := testItem(1)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		if err := validateItem(item); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkKeyForItem(b *testing.B) {
+	item := testItem(1)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = keyForItem(item)
 	}
 }
 

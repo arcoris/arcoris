@@ -14,8 +14,6 @@
 
 package objectworkqueue
 
-import "container/list"
-
 // entry is the mutable state for one tracked object key.
 type entry struct {
 	// item is the original public work item associated with this entry.
@@ -27,8 +25,11 @@ type entry struct {
 	// dirty records that Add was called while item was processing.
 	dirty bool
 
-	// elem points into queue order while queued and is nil while processing.
-	elem *list.Element
+	// prev points to the previous queued entry while this entry is queued.
+	prev *entry
+
+	// next points to the next queued entry while this entry is queued.
+	next *entry
 }
 
 // entryState is the private tracked-item state machine.

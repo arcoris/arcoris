@@ -14,19 +14,29 @@
 
 package objectworkqueue
 
+import "context"
+
 // signalNotEmptyLocked broadcasts that queued work may now be available.
 //
 // The queue uses close-and-replace channels as condition notifications so Add
 // and Get can wait with caller contexts without spawning cancellation bridge
-// goroutines. Higher layers should still bound their worker counts because
-// every signal wakes all waiters observing the previous channel.
+// goroutines. Channels are replaced only while waiters exist, keeping hot paths
+// allocation-light when no caller is blocked. Higher layers should still bound
+// their worker counts because every signal wakes all waiters observing the
+// previous channel.
 func (q *Queue) signalNotEmptyLocked() {
+	if q.notEmptyWaiters == 0 {
+		return
+	}
 	close(q.notEmpty)
 	q.notEmpty = make(chan struct{})
 }
 
 // signalNotFullLocked broadcasts that tracked capacity may now be available.
 func (q *Queue) signalNotFullLocked() {
+	if q.notFullWaiters == 0 {
+		return
+	}
 	close(q.notFull)
 	q.notFull = make(chan struct{})
 }
@@ -35,4 +45,32 @@ func (q *Queue) signalNotFullLocked() {
 func (q *Queue) signalAllLocked() {
 	q.signalNotEmptyLocked()
 	q.signalNotFullLocked()
+}
+
+// waitNotEmpty waits for a not-empty signal or context cancellation.
+func (q *Queue) waitNotEmpty(ctx context.Context, ch <-chan struct{}) error {
+	err := wait(ctx, ch)
+	q.mu.Lock()
+	q.notEmptyWaiters--
+	q.mu.Unlock()
+	return err
+}
+
+// waitNotFull waits for a not-full signal or context cancellation.
+func (q *Queue) waitNotFull(ctx context.Context, ch <-chan struct{}) error {
+	err := wait(ctx, ch)
+	q.mu.Lock()
+	q.notFullWaiters--
+	q.mu.Unlock()
+	return err
+}
+
+// wait observes one notification channel with caller-owned cancellation.
+func wait(ctx context.Context, ch <-chan struct{}) error {
+	select {
+	case <-ch:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }

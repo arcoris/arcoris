@@ -29,8 +29,7 @@ func (q *Queue) Get(ctx context.Context) (Item, error) {
 
 	for {
 		q.mu.Lock()
-		if q.order.Len() > 0 {
-			item := q.getLocked()
+		if item, ok := q.popLocked(); ok {
 			q.mu.Unlock()
 			return item, nil
 		}
@@ -39,24 +38,33 @@ func (q *Queue) Get(ctx context.Context) (Item, error) {
 			return Item{}, ErrShutDown
 		}
 		ch := q.notEmpty
+		q.notEmptyWaiters++
 		q.mu.Unlock()
 
-		select {
-		case <-ch:
-		case <-ctx.Done():
-			return Item{}, ctx.Err()
+		if err := q.waitNotEmpty(ctx, ch); err != nil {
+			return Item{}, err
 		}
 	}
 }
 
-// getLocked removes the oldest queued entry and marks it processing.
-func (q *Queue) getLocked() Item {
-	elem := q.order.Front()
-	q.order.Remove(elem)
+// popLocked removes the oldest queued entry and marks it processing.
+func (q *Queue) popLocked() (Item, bool) {
+	e := q.head
+	if e == nil {
+		return Item{}, false
+	}
 
-	e := elem.Value.(*entry)
+	q.head = e.next
+	if q.head == nil {
+		q.tail = nil
+	} else {
+		q.head.prev = nil
+	}
+	q.queued--
+
+	e.prev = nil
+	e.next = nil
 	e.state = stateProcessing
-	e.elem = nil
 
-	return e.item
+	return e.item, true
 }
