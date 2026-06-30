@@ -53,10 +53,18 @@ type Queue struct {
 	// queued is the number of entries linked into the FIFO.
 	queued int
 
-	// free is a queue-local free list of previously tracked entries.
+	// free is a queue-local free list of untracked entries retained for reuse.
+	//
+	// Free entries are not present in items, are not linked into the FIFO, and
+	// must be reset to zero Item, zero state, and dirty=false before retention.
+	// The free list is guarded by mu and bounded by queue capacity because only
+	// entries that previously counted toward tracked capacity can be released.
 	free *entry
 
-	// freeCount is the number of entries in free.
+	// freeCount is the number of entries reachable from free.
+	//
+	// freeCount is an internal invariant aid. Free entries are implementation
+	// detail storage and must not affect public Stats or Len observations.
 	freeCount int
 
 	// items stores every tracked entry, including queued and processing items.
@@ -138,6 +146,9 @@ func (q *Queue) enqueueLocked(e *entry) {
 }
 
 // acquireEntryLocked returns an untracked entry initialized for item.
+//
+// The returned entry is no longer on the free list. Callers must insert it into
+// items before exposing it through the FIFO state machine.
 func (q *Queue) acquireEntryLocked(item Item) *entry {
 	e := q.free
 	if e == nil {
@@ -155,6 +166,10 @@ func (q *Queue) acquireEntryLocked(item Item) *entry {
 }
 
 // releaseEntryLocked moves an untracked entry onto the queue-local free list.
+//
+// Callers must remove e from items and the FIFO before release. The reset keeps
+// retained entries visibly distinct from queued or processing entries in
+// invariant checks and prevents stale object keys from staying reachable.
 func (q *Queue) releaseEntryLocked(e *entry) {
 	e.item = Item{}
 	e.state = 0
