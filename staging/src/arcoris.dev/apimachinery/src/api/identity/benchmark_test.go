@@ -54,6 +54,78 @@ func BenchmarkGroupVersionResourcePathValidate(b *testing.B) {
 	}
 }
 
+func BenchmarkGroupVersionResourceValidateValid(b *testing.B) {
+	identity := GroupVersionResource{
+		Group:    Group("control.arcoris.dev"),
+		Version:  Version("v1"),
+		Resource: Resource("workers"),
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		if err := identity.Validate(); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkGroupVersionValidateValid(b *testing.B) {
+	identity := GroupVersion{
+		Group:   Group("control.arcoris.dev"),
+		Version: Version("v1"),
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		if err := identity.Validate(); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkResourceValidateValid(b *testing.B) {
+	value := Resource("workers")
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		if err := value.Validate(); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkGroupValidateValid(b *testing.B) {
+	value := Group("control.arcoris.dev")
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		if err := value.Validate(); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkVersionValidateValid(b *testing.B) {
+	value := Version("v1")
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		if err := value.Validate(); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 func BenchmarkGroupVersionResourcePathString(b *testing.B) {
 	identity := GroupVersionResourcePath{
 		Group:       Group("control.arcoris.dev"),

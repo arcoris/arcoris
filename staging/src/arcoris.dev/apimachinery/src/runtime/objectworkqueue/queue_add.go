@@ -94,7 +94,7 @@ func (q *Queue) addLocked(item Item, wait bool) (error, bool) {
 		return ErrFull, true
 	}
 
-	e := &entry{item: item}
+	e := q.acquireEntryLocked(item)
 	q.items[id] = e
 	q.enqueueLocked(e)
 	return nil, true

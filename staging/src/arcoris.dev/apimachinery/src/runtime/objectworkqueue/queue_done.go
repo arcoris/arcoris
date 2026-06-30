@@ -43,6 +43,7 @@ func (q *Queue) Done(item Item) error {
 	}
 
 	delete(q.items, id)
+	q.releaseEntryLocked(e)
 	q.signalNotFullLocked()
 	q.mu.Unlock()
 	return nil

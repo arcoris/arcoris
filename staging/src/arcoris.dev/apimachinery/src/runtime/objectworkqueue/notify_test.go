@@ -14,7 +14,10 @@
 
 package objectworkqueue
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func TestSignalNotEmptyLockedSkipsChannelWithoutWaiters(t *testing.T) {
 	queue := newTestQueue(t, 1)
@@ -96,4 +99,192 @@ func TestSignalAllLockedClosesAndReplacesBothChannelsWithWaiters(t *testing.T) {
 	if newNotEmpty == notEmpty || newNotFull == notFull {
 		t.Fatalf("signalAllLocked did not replace both channels")
 	}
+}
+
+func TestNotEmptyWaiterCountReturnsToZeroAfterSignal(t *testing.T) {
+	queue := newTestQueue(t, 1)
+	result := make(chan itemResult, 1)
+	go func() {
+		item, err := queue.Get(context.Background())
+		result <- itemResult{item: item, err: err}
+	}()
+	waitUntil(t, func() bool {
+		queue.mu.Lock()
+		defer queue.mu.Unlock()
+		return queue.notEmptyWaiters == 1
+	})
+
+	item := testItem(1)
+	requireNoError(t, queue.Add(context.Background(), item))
+	got := waitItem(t, result)
+	requireNoError(t, got.err)
+	requireItem(t, got.item, item)
+	waitUntil(t, func() bool {
+		queue.mu.Lock()
+		defer queue.mu.Unlock()
+		return queue.notEmptyWaiters == 0
+	})
+}
+
+func TestNotFullWaiterCountReturnsToZeroAfterSignal(t *testing.T) {
+	queue := newTestQueue(t, 1)
+	first := testItem(1)
+	second := testItem(2)
+	requireNoError(t, queue.Add(context.Background(), first))
+	_, err := queue.Get(context.Background())
+	requireNoError(t, err)
+
+	result := make(chan error, 1)
+	go func() {
+		result <- queue.Add(context.Background(), second)
+	}()
+	waitUntil(t, func() bool {
+		queue.mu.Lock()
+		defer queue.mu.Unlock()
+		return queue.notFullWaiters == 1
+	})
+
+	requireNoError(t, queue.Done(first))
+	requireNoError(t, waitResult(t, result))
+	waitUntil(t, func() bool {
+		queue.mu.Lock()
+		defer queue.mu.Unlock()
+		return queue.notFullWaiters == 0
+	})
+}
+
+func TestNotEmptyWaiterCountReturnsToZeroAfterContextCancel(t *testing.T) {
+	queue := newTestQueue(t, 1)
+	ctx, cancel := context.WithCancel(context.Background())
+	result := make(chan itemResult, 1)
+	go func() {
+		item, err := queue.Get(ctx)
+		result <- itemResult{item: item, err: err}
+	}()
+	waitUntil(t, func() bool {
+		queue.mu.Lock()
+		defer queue.mu.Unlock()
+		return queue.notEmptyWaiters == 1
+	})
+
+	cancel()
+	requireErrorIs(t, waitItem(t, result).err, context.Canceled)
+	waitUntil(t, func() bool {
+		queue.mu.Lock()
+		defer queue.mu.Unlock()
+		return queue.notEmptyWaiters == 0
+	})
+}
+
+func TestNotFullWaiterCountReturnsToZeroAfterContextCancel(t *testing.T) {
+	queue := newTestQueue(t, 1)
+	first := testItem(1)
+	second := testItem(2)
+	requireNoError(t, queue.Add(context.Background(), first))
+	_, err := queue.Get(context.Background())
+	requireNoError(t, err)
+	ctx, cancel := context.WithCancel(context.Background())
+	result := make(chan error, 1)
+	go func() {
+		result <- queue.Add(ctx, second)
+	}()
+	waitUntil(t, func() bool {
+		queue.mu.Lock()
+		defer queue.mu.Unlock()
+		return queue.notFullWaiters == 1
+	})
+
+	cancel()
+	requireErrorIs(t, waitResult(t, result), context.Canceled)
+	waitUntil(t, func() bool {
+		queue.mu.Lock()
+		defer queue.mu.Unlock()
+		return queue.notFullWaiters == 0
+	})
+}
+
+func TestManyBlockedGetWaitersWakeOnShutDown(t *testing.T) {
+	queue := newTestQueue(t, 1)
+	results := make(chan error, 8)
+	for range 8 {
+		go func() {
+			_, err := queue.Get(context.Background())
+			results <- err
+		}()
+	}
+	waitUntil(t, func() bool {
+		queue.mu.Lock()
+		defer queue.mu.Unlock()
+		return queue.notEmptyWaiters == 8
+	})
+
+	queue.ShutDown()
+	for range 8 {
+		requireErrorIs(t, waitResult(t, results), ErrShutDown)
+	}
+	waitUntil(t, func() bool {
+		queue.mu.Lock()
+		defer queue.mu.Unlock()
+		return queue.notEmptyWaiters == 0
+	})
+}
+
+func TestManyBlockedAddWaitersWakeOnShutDown(t *testing.T) {
+	queue := newTestQueue(t, 1)
+	first := testItem(1)
+	requireNoError(t, queue.Add(context.Background(), first))
+	_, err := queue.Get(context.Background())
+	requireNoError(t, err)
+	results := make(chan error, 8)
+	for i := range 8 {
+		item := testItem(i + 2)
+		go func() {
+			results <- queue.Add(context.Background(), item)
+		}()
+	}
+	waitUntil(t, func() bool {
+		queue.mu.Lock()
+		defer queue.mu.Unlock()
+		return queue.notFullWaiters == 8
+	})
+
+	queue.ShutDown()
+	for range 8 {
+		requireErrorIs(t, waitResult(t, results), ErrShutDown)
+	}
+	waitUntil(t, func() bool {
+		queue.mu.Lock()
+		defer queue.mu.Unlock()
+		return queue.notFullWaiters == 0
+	})
+}
+
+func TestRepeatedSignalsWithSlowWaiterDoNotBreakFutureWaiters(t *testing.T) {
+	queue := newTestQueue(t, 2)
+
+	queue.mu.Lock()
+	ch := queue.notEmpty
+	queue.notEmptyWaiters = 1
+	queue.signalNotEmptyLocked()
+	queue.signalNotEmptyLocked()
+	queue.notEmptyWaiters--
+	queue.mu.Unlock()
+	requireClosed(t, ch)
+
+	result := make(chan itemResult, 1)
+	go func() {
+		item, err := queue.Get(context.Background())
+		result <- itemResult{item: item, err: err}
+	}()
+	waitUntil(t, func() bool {
+		queue.mu.Lock()
+		defer queue.mu.Unlock()
+		return queue.notEmptyWaiters == 1
+	})
+
+	item := testItem(1)
+	requireNoError(t, queue.Add(context.Background(), item))
+	got := waitItem(t, result)
+	requireNoError(t, got.err)
+	requireItem(t, got.item, item)
 }

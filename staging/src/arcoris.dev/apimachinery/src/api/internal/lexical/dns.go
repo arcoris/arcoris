@@ -14,10 +14,7 @@
 
 package lexical
 
-import (
-	"fmt"
-	"strings"
-)
+import "fmt"
 
 const (
 	// MaxDNS1123LabelLength is the DNS single-label byte limit.
@@ -70,14 +67,19 @@ func ValidateDNS1123Subdomain(value string) *Violation {
 		)
 	}
 
-	labels := strings.Split(value, ".")
-	for _, label := range labels {
-		if label == "" {
+	start := 0
+	for i := 0; i <= len(value); i++ {
+		if i != len(value) && value[i] != '.' {
+			continue
+		}
+
+		if i == start {
 			return violation(ReasonInvalidForm, "DNS subdomain must not contain empty DNS labels")
 		}
-		if err := ValidateDNS1123Label(label); err != nil {
+		if err := ValidateDNS1123Label(value[start:i]); err != nil {
 			return err
 		}
+		start = i + 1
 	}
 
 	return nil
@@ -89,11 +91,21 @@ func ValidateQualifiedDNS1123Subdomain(value string) *Violation {
 	if err := ValidateDNS1123Subdomain(value); err != nil {
 		return err
 	}
-	if !strings.Contains(value, ".") {
+	if !containsByte(value, '.') {
 		return violation(
 			ReasonInvalidForm,
 			"qualified DNS subdomain must contain at least one dot",
 		)
 	}
 	return nil
+}
+
+// containsByte reports whether value contains b without allocating.
+func containsByte(value string, b byte) bool {
+	for i := 0; i < len(value); i++ {
+		if value[i] == b {
+			return true
+		}
+	}
+	return false
 }

@@ -53,6 +53,12 @@ type Queue struct {
 	// queued is the number of entries linked into the FIFO.
 	queued int
 
+	// free is a queue-local free list of previously tracked entries.
+	free *entry
+
+	// freeCount is the number of entries in free.
+	freeCount int
+
 	// items stores every tracked entry, including queued and processing items.
 	items map[keyID]*entry
 }
@@ -129,4 +135,32 @@ func (q *Queue) enqueueLocked(e *entry) {
 	q.tail = e
 	q.queued++
 	q.signalNotEmptyLocked()
+}
+
+// acquireEntryLocked returns an untracked entry initialized for item.
+func (q *Queue) acquireEntryLocked(item Item) *entry {
+	e := q.free
+	if e == nil {
+		return &entry{item: item}
+	}
+
+	q.free = e.next
+	q.freeCount--
+	e.item = item
+	e.state = 0
+	e.dirty = false
+	e.prev = nil
+	e.next = nil
+	return e
+}
+
+// releaseEntryLocked moves an untracked entry onto the queue-local free list.
+func (q *Queue) releaseEntryLocked(e *entry) {
+	e.item = Item{}
+	e.state = 0
+	e.dirty = false
+	e.prev = nil
+	e.next = q.free
+	q.free = e
+	q.freeCount++
 }

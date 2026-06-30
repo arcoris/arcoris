@@ -131,7 +131,12 @@ func requireInvariants(t testing.TB, queue *Queue) {
 
 	queued := 0
 	processing := 0
+	tracked := make(map[*entry]struct{})
 	for id, entry := range queue.items {
+		if _, ok := tracked[entry]; ok {
+			t.Fatalf("entry %s is tracked more than once", id)
+		}
+		tracked[entry] = struct{}{}
 		if keyForItem(entry.item) != id {
 			t.Fatalf("entry key = %s; want %s", keyForItem(entry.item), id)
 		}
@@ -167,6 +172,40 @@ func requireInvariants(t testing.TB, queue *Queue) {
 	if len(queue.items) > queue.capacity {
 		t.Fatalf("tracked=%d capacity=%d; capacity exceeded", len(queue.items), queue.capacity)
 	}
+
+	free := 0
+	seenFree := make(map[*entry]struct{})
+	for entry := queue.free; entry != nil; entry = entry.next {
+		if _, ok := seenFree[entry]; ok {
+			t.Fatalf("free entry appears more than once")
+		}
+		seenFree[entry] = struct{}{}
+		if _, ok := seen[entry]; ok {
+			t.Fatalf("free entry is linked in FIFO")
+		}
+		if _, ok := tracked[entry]; ok {
+			t.Fatalf("free entry is still tracked")
+		}
+		if entry.state != 0 {
+			t.Fatalf("free entry state=%d; want zero", entry.state)
+		}
+		if entry.dirty {
+			t.Fatalf("free entry is dirty")
+		}
+		if entry.item != (Item{}) {
+			t.Fatalf("free entry item=%#v; want zero", entry.item)
+		}
+		if entry.prev != nil {
+			t.Fatalf("free entry has prev link")
+		}
+		free++
+	}
+	if free != queue.freeCount {
+		t.Fatalf("free=%d freeCount=%d; want equal", free, queue.freeCount)
+	}
+	if len(queue.items)+queue.freeCount > queue.capacity {
+		t.Fatalf("tracked=%d free=%d capacity=%d; retained entries exceed capacity", len(queue.items), queue.freeCount, queue.capacity)
+	}
 }
 
 func waitResult(t testing.TB, ch <-chan error) error {
@@ -201,6 +240,19 @@ func requireClosed(t testing.TB, ch <-chan struct{}) {
 	default:
 		t.Fatalf("channel is open; want closed")
 	}
+}
+
+func waitUntil(t testing.TB, fn func() bool) {
+	t.Helper()
+
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if fn() {
+			return
+		}
+		time.Sleep(time.Millisecond)
+	}
+	t.Fatalf("timed out waiting for condition")
 }
 
 func withTimeout(t testing.TB) (context.Context, context.CancelFunc) {
