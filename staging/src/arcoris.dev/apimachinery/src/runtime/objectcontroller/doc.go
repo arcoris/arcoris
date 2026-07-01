@@ -33,11 +33,14 @@
 //
 // The controller does not recover panics from user reconciliation. After a
 // successful Queue.Get, Queue.Done is attempted from a deferred path before a
-// reconciliation panic continues through the worker goroutine.
+// reconciliation panic continues through the worker goroutine. Because
+// reconciliation is executed inside worker goroutines during Run, a panic is
+// not converted into a Run return value. Panic recovery, panic-to-error
+// conversion, logging, and retry policy belong outside this package.
 //
 // This package intentionally does not implement retry, backoff, rate limiting,
 // delayed queues, scheduler policy, task groups, capacity fitting, object
 // writes, finalizers, admission, metrics, tracing, logging, leader election,
-// reflector lifecycle, event handler registries, or controller-runtime-style
-// request mapping.
+// reflector lifecycle, event handler registries, panic policy hooks, or
+// controller-runtime-style request mapping.
 package objectcontroller

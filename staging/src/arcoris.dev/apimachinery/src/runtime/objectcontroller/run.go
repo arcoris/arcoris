@@ -30,6 +30,9 @@ import (
 // first fatal worker error. After the first fatal error, Run cancels the worker
 // context and waits for every worker before returning. Run observes queue
 // shutdown but never initiates it.
+//
+// Run does not recover reconciliation panics. A panic from a worker goroutine
+// remains a panic in that goroutine rather than a returned error.
 func (c *Controller) Run(ctx context.Context) error {
 	if c == nil {
 		return ErrInvalidController

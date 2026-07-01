@@ -168,6 +168,67 @@ func TestRunDoesNotShutDownQueue(t *testing.T) {
 	}
 }
 
+func TestRunReturnsReconcileErrorAfterDone(t *testing.T) {
+	reconcileErr := errors.New("reconcile failed")
+	queue := &recordingQueue{items: []objectworkqueue.Item{testItem(1)}}
+	controller, err := New(
+		Options{Workers: 1},
+		queue,
+		&fakeSnapshotSource{snapshot: testSnapshot(t, 1)},
+		&fakeReconciler{result: objectreconciler.Failure(reconcileErr)},
+	)
+	requireNoError(t, err)
+
+	requireErrorSame(t, controller.Run(context.Background()), reconcileErr)
+	if queue.doneCount() != 1 {
+		t.Fatalf("Done calls = %d; want 1", queue.doneCount())
+	}
+}
+
+func TestRunReturnsDoneErrorAfterSuccessfulReconcile(t *testing.T) {
+	doneErr := errors.New("done failed")
+	queue := &recordingQueue{
+		items:   []objectworkqueue.Item{testItem(1)},
+		doneErr: doneErr,
+	}
+	controller, err := New(
+		Options{Workers: 1},
+		queue,
+		&fakeSnapshotSource{snapshot: testSnapshot(t, 1)},
+		&fakeReconciler{result: objectreconciler.Success()},
+	)
+	requireNoError(t, err)
+
+	requireErrorSame(t, controller.Run(context.Background()), doneErr)
+	if queue.doneCount() != 1 {
+		t.Fatalf("Done calls = %d; want 1", queue.doneCount())
+	}
+}
+
+func TestRunReturnsJoinedReconcileAndDoneErrors(t *testing.T) {
+	reconcileErr := errors.New("reconcile failed")
+	doneErr := errors.New("done failed")
+	queue := &recordingQueue{
+		items:   []objectworkqueue.Item{testItem(1)},
+		doneErr: doneErr,
+	}
+	controller, err := New(
+		Options{Workers: 1},
+		queue,
+		&fakeSnapshotSource{snapshot: testSnapshot(t, 1)},
+		&fakeReconciler{result: objectreconciler.Failure(reconcileErr)},
+	)
+	requireNoError(t, err)
+
+	err = controller.Run(context.Background())
+
+	requireErrorIs(t, err, reconcileErr)
+	requireErrorIs(t, err, doneErr)
+	if queue.doneCount() != 1 {
+		t.Fatalf("Done calls = %d; want 1", queue.doneCount())
+	}
+}
+
 type blockingQueue struct {
 	mu       sync.Mutex
 	gets     int
