@@ -82,6 +82,21 @@
 // objectstore.Delete. The returned State is the deleted live state and keeps the
 // previous live revision. Result.Revision is the tombstone commit revision.
 //
+// # Write capability contracts
+//
+// Creator, Applier, ObservedUpdater, MetadataPatcher, Deleter, and Writer name
+// lifecycle write capabilities without adding behavior. They are interface-only
+// contracts for code that should depend on a narrow operation set instead of a
+// concrete Executor. A component that only applies Desired state can accept
+// Applier. A component that only updates Observed state can accept
+// ObservedUpdater. Metadata-only code can accept MetadataPatcher. Writer is the
+// complete write capability set.
+//
+// These contracts do not define retries, batching, background execution,
+// request cloning, additional error mapping, or Get/List reader paths.
+// Implementations return their own errors directly and own their own context,
+// concurrency, and request ownership guarantees.
+//
 // # Apply create-on-missing policy
 //
 // Apply creates missing objects by design. This is server-side-apply-like
