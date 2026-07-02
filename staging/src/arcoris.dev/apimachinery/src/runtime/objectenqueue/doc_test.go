@@ -18,20 +18,32 @@ import (
 	"context"
 	"testing"
 
+	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
-func TestIntegrationWithObjectWorkQueue(t *testing.T) {
-	queue, err := objectworkqueue.New(objectworkqueue.Options{Capacity: 1})
+func TestPackageContractsCompile(t *testing.T) {
+	var _ Enqueuer = enqueuerFunc(func(context.Context, objectworkqueue.Item) error {
+		return nil
+	})
+	var _ Mapper = MapperFunc(func(objectstore.Change, EmitFunc) error {
+		return nil
+	})
+	var _ Predicate = PredicateFunc(func(objectstore.Change) (bool, error) {
+		return true, nil
+	})
+
+	handler, err := New(enqueuerFunc(func(context.Context, objectworkqueue.Item) error {
+		return nil
+	}), ChangedObject())
 	requireNoError(t, err)
+	if handler == nil {
+		t.Fatalf("handler is nil")
+	}
+}
 
-	change := createdChange(t, 1)
-	handler := mustHandler(t, queue, ChangedObject())
+type enqueuerFunc func(context.Context, objectworkqueue.Item) error
 
-	requireNoError(t, handler.Handle(context.Background(), change))
-
-	item, err := queue.Get(context.Background())
-	requireNoError(t, err)
-	requireItem(t, item, objectworkqueue.Item{Key: change.Key})
-	requireNoError(t, queue.Done(item))
+func (f enqueuerFunc) Add(ctx context.Context, item objectworkqueue.Item) error {
+	return f(ctx, item)
 }

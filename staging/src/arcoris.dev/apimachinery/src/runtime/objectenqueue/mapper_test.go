@@ -16,9 +16,17 @@ package objectenqueue
 
 import (
 	"errors"
+	"fmt"
+	"sync"
 	"testing"
 
+	apiidentity "arcoris.dev/apimachinery/api/identity"
+	"arcoris.dev/apimachinery/api/meta"
+	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
+	"arcoris.dev/apimachinery/api/object"
+	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/objectstore"
+	"arcoris.dev/apimachinery/api/value"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
@@ -107,5 +115,114 @@ func TestMapperFuncDelegates(t *testing.T) {
 	}
 	if !called {
 		t.Fatalf("mapper function was not called")
+	}
+}
+
+type pointerMapper struct{}
+
+func (*pointerMapper) Map(objectstore.Change, EmitFunc) error {
+	return nil
+}
+
+type recordingMapper struct {
+	mu      sync.Mutex
+	changes []objectstore.Change
+}
+
+func (m *recordingMapper) Map(change objectstore.Change, _ EmitFunc) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.changes = append(m.changes, change)
+
+	return nil
+}
+
+func (m *recordingMapper) callCount() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return len(m.changes)
+}
+
+func (m *recordingMapper) onlyChange(t testing.TB) objectstore.Change {
+	t.Helper()
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if len(m.changes) != 1 {
+		t.Fatalf("changes = %d; want 1", len(m.changes))
+	}
+
+	return m.changes[0]
+}
+
+func createdChange(t testing.TB, id int) objectstore.Change {
+	t.Helper()
+
+	key := testKey(id)
+	change, err := objectstore.NewCreatedChange(key, testState(key, 1, "created"))
+	requireNoError(t, err)
+
+	return change
+}
+
+func updatedChange(t testing.TB, id int) objectstore.Change {
+	t.Helper()
+
+	key := testKey(id)
+	change, err := objectstore.NewUpdatedChange(
+		key,
+		testState(key, 1, "before"),
+		testState(key, 2, "after"),
+	)
+	requireNoError(t, err)
+
+	return change
+}
+
+func deletedChange(t testing.TB, id int) objectstore.Change {
+	t.Helper()
+
+	key := testKey(id)
+	change, err := objectstore.NewDeletedChange(key, testState(key, 1, "deleted"), 2)
+	requireNoError(t, err)
+
+	return change
+}
+
+func testKey(id int) objectstore.Key {
+	return objectstore.MustKey(testResource(), metaidentity.ObjectName{
+		Namespace: metaidentity.Namespace("default"),
+		Name:      metaidentity.Name(fmt.Sprintf("unit-%d", id)),
+	})
+}
+
+func testResource() apiidentity.GroupVersionResource {
+	return apiidentity.GroupVersionResource{
+		Group:    apiidentity.Group("control.arcoris.dev"),
+		Version:  apiidentity.Version("v1"),
+		Resource: apiidentity.Resource("units"),
+	}
+}
+
+func testState(key objectstore.Key, revision objectstore.Revision, desired string) objectstore.State {
+	return objectstore.State{
+		Object: object.NewObserved[value.Value, value.Value](
+			meta.FromGroupVersionKind(apiidentity.GroupVersionKind{
+				Group:   key.Resource.Group,
+				Version: key.Resource.Version,
+				Kind:    apiidentity.Kind("Unit"),
+			}),
+			meta.ObjectMeta{
+				Name:      key.Object.Name,
+				Namespace: key.Object.Namespace,
+			},
+			value.StringValue(desired),
+			value.StringValue("observed-"+desired),
+		),
+		Ownership: objectownership.EmptyState(),
+		Revision:  revision,
 	}
 }

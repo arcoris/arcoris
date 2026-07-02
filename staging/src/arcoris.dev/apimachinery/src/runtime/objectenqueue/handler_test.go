@@ -17,17 +17,10 @@ package objectenqueue
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"testing"
 
-	apiidentity "arcoris.dev/apimachinery/api/identity"
-	"arcoris.dev/apimachinery/api/meta"
-	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
-	"arcoris.dev/apimachinery/api/object"
-	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/objectstore"
-	"arcoris.dev/apimachinery/api/value"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
@@ -197,100 +190,6 @@ func TestHandleConcurrentCalls(t *testing.T) {
 
 type contextKey struct{}
 
-type pointerMapper struct{}
-
-func (*pointerMapper) Map(objectstore.Change, EmitFunc) error {
-	return nil
-}
-
-type recordingQueue struct {
-	mu       sync.Mutex
-	err      error
-	contexts []context.Context
-	items    []objectworkqueue.Item
-}
-
-func (q *recordingQueue) Add(ctx context.Context, item objectworkqueue.Item) error {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	q.contexts = append(q.contexts, ctx)
-	q.items = append(q.items, item)
-
-	return q.err
-}
-
-func (q *recordingQueue) callCount() int {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	return len(q.items)
-}
-
-func (q *recordingQueue) requireContexts(t testing.TB, want ...context.Context) {
-	t.Helper()
-
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	if len(q.contexts) != len(want) {
-		t.Fatalf("contexts = %d; want %d", len(q.contexts), len(want))
-	}
-	for i := range want {
-		if q.contexts[i] != want[i] {
-			t.Fatalf("context[%d] = %p; want %p", i, q.contexts[i], want[i])
-		}
-	}
-}
-
-func (q *recordingQueue) requireItems(t testing.TB, want ...objectworkqueue.Item) {
-	t.Helper()
-
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	if len(q.items) != len(want) {
-		t.Fatalf("items = %d; want %d", len(q.items), len(want))
-	}
-	for i := range want {
-		requireItem(t, q.items[i], want[i])
-	}
-}
-
-type recordingMapper struct {
-	mu      sync.Mutex
-	changes []objectstore.Change
-}
-
-func (m *recordingMapper) Map(change objectstore.Change, _ EmitFunc) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.changes = append(m.changes, change)
-
-	return nil
-}
-
-func (m *recordingMapper) callCount() int {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	return len(m.changes)
-}
-
-func (m *recordingMapper) onlyChange(t testing.TB) objectstore.Change {
-	t.Helper()
-
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if len(m.changes) != 1 {
-		t.Fatalf("changes = %d; want 1", len(m.changes))
-	}
-
-	return m.changes[0]
-}
-
 func mustHandler(t testing.TB, queue Enqueuer, mapper Mapper) *Handler {
 	t.Helper()
 
@@ -298,105 +197,4 @@ func mustHandler(t testing.TB, queue Enqueuer, mapper Mapper) *Handler {
 	requireNoError(t, err)
 
 	return handler
-}
-
-func createdChange(t testing.TB, id int) objectstore.Change {
-	t.Helper()
-
-	key := testKey(id)
-	change, err := objectstore.NewCreatedChange(key, testState(key, 1, "created"))
-	requireNoError(t, err)
-
-	return change
-}
-
-func updatedChange(t testing.TB, id int) objectstore.Change {
-	t.Helper()
-
-	key := testKey(id)
-	change, err := objectstore.NewUpdatedChange(
-		key,
-		testState(key, 1, "before"),
-		testState(key, 2, "after"),
-	)
-	requireNoError(t, err)
-
-	return change
-}
-
-func deletedChange(t testing.TB, id int) objectstore.Change {
-	t.Helper()
-
-	key := testKey(id)
-	change, err := objectstore.NewDeletedChange(key, testState(key, 1, "deleted"), 2)
-	requireNoError(t, err)
-
-	return change
-}
-
-func testKey(id int) objectstore.Key {
-	return objectstore.MustKey(testResource(), metaidentity.ObjectName{
-		Namespace: metaidentity.Namespace("default"),
-		Name:      metaidentity.Name(fmt.Sprintf("worker-%d", id)),
-	})
-}
-
-func testResource() apiidentity.GroupVersionResource {
-	return apiidentity.GroupVersionResource{
-		Group:    apiidentity.Group("control.arcoris.dev"),
-		Version:  apiidentity.Version("v1"),
-		Resource: apiidentity.Resource("workers"),
-	}
-}
-
-func testState(key objectstore.Key, revision objectstore.Revision, desired string) objectstore.State {
-	return objectstore.State{
-		Object: object.NewObserved[value.Value, value.Value](
-			meta.FromGroupVersionKind(apiidentity.GroupVersionKind{
-				Group:   key.Resource.Group,
-				Version: key.Resource.Version,
-				Kind:    apiidentity.Kind("Unit"),
-			}),
-			meta.ObjectMeta{
-				Name:      key.Object.Name,
-				Namespace: key.Object.Namespace,
-			},
-			value.StringValue(desired),
-			value.StringValue("observed-"+desired),
-		),
-		Ownership: objectownership.EmptyState(),
-		Revision:  revision,
-	}
-}
-
-func requireNoError(t testing.TB, err error) {
-	t.Helper()
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
-func requireErrorIs(t testing.TB, err error, target error) {
-	t.Helper()
-
-	if !errors.Is(err, target) {
-		t.Fatalf("error = %v; want errors.Is(%v)", err, target)
-	}
-}
-
-func requireItem(t testing.TB, got objectworkqueue.Item, want objectworkqueue.Item) {
-	t.Helper()
-
-	if !got.Key.Equal(want.Key) {
-		t.Fatalf("item = %s; want %s", got.Key, want.Key)
-	}
-}
-
-func requireChange(t testing.TB, got objectstore.Change, want objectstore.Change) {
-	t.Helper()
-
-	if got.Kind != want.Kind || got.Revision != want.Revision || !got.Key.Equal(want.Key) {
-		t.Fatalf("change identity = %#v; want %#v", got, want)
-	}
 }

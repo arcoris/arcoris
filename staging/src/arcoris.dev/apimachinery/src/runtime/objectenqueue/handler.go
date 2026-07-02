@@ -16,15 +16,16 @@ package objectenqueue
 
 import (
 	"context"
-	"reflect"
 
 	"arcoris.dev/apimachinery/api/objectstore"
-	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
 // Handler maps committed object changes and enqueues the resulting work items.
 type Handler struct {
-	queue  Enqueuer
+	// queue is the producer-side enqueue target used by emitted items.
+	queue Enqueuer
+
+	// mapper owns the change-to-item mapping policy for this handler.
 	mapper Mapper
 }
 
@@ -46,33 +47,8 @@ func (h *Handler) Handle(ctx context.Context, change objectstore.Change) error {
 		return ErrInvalidHandler
 	}
 
-	var emitErr error
-	emit := func(item objectworkqueue.Item) error {
-		if emitErr != nil {
-			return emitErr
-		}
-		emitErr = h.queue.Add(ctx, item)
-		return emitErr
-	}
+	emitter := handlerEmitter{ctx: ctx, queue: h.queue}
+	mapErr := h.mapper.Map(change, emitter.emit)
 
-	mapErr := h.mapper.Map(change, emit)
-	if emitErr != nil {
-		return emitErr
-	}
-
-	return mapErr
-}
-
-func isNilInterface(v any) bool {
-	if v == nil {
-		return true
-	}
-
-	value := reflect.ValueOf(v)
-	switch value.Kind() {
-	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
-		return value.IsNil()
-	default:
-		return false
-	}
+	return emitter.result(mapErr)
 }

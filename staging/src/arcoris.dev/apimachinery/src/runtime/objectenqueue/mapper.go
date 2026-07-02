@@ -41,6 +41,7 @@ func ChangedObject() Mapper {
 	return MapperFunc(mapChangedObject)
 }
 
+// mapChangedObject validates the committed change and emits its affected key.
 func mapChangedObject(change objectstore.Change, emit EmitFunc) error {
 	if err := change.Validate(); err != nil {
 		return err
