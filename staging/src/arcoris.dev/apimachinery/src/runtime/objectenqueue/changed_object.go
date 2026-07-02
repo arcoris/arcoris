@@ -15,35 +15,27 @@
 package objectenqueue
 
 import (
-	"context"
-	"testing"
-
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
-func TestPackageContractsCompile(t *testing.T) {
-	var _ Enqueuer = enqueuerFunc(func(context.Context, objectworkqueue.Item) error {
-		return nil
-	})
-	var _ Mapper = MapperFunc(func(objectstore.Change, EmitFunc) error {
-		return nil
-	})
-	var _ Predicate = PredicateFunc(func(objectstore.Change) (bool, error) {
-		return true, nil
-	})
-
-	handler, err := New(enqueuerFunc(func(context.Context, objectworkqueue.Item) error {
-		return nil
-	}), ChangedObject())
-	requireNoError(t, err)
-	if handler == nil {
-		t.Fatalf("handler is nil")
-	}
+// ChangedObject returns a mapper that enqueues the object affected by a change.
+//
+// The mapper validates the committed change through objectstore.Change.Validate
+// and then emits exactly one item for change.Key. It does not inspect payload
+// fields, clone the change, or apply query semantics.
+func ChangedObject() Mapper {
+	return MapperFunc(mapChangedObject)
 }
 
-type enqueuerFunc func(context.Context, objectworkqueue.Item) error
+// mapChangedObject validates the committed change and emits its affected key.
+func mapChangedObject(change objectstore.Change, emit EmitFunc) error {
+	if err := change.Validate(); err != nil {
+		return err
+	}
+	if emit == nil {
+		return ErrNilEmit
+	}
 
-func (f enqueuerFunc) Add(ctx context.Context, item objectworkqueue.Item) error {
-	return f(ctx, item)
+	return emit(objectworkqueue.Item{Key: change.Key})
 }

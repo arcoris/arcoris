@@ -16,13 +16,15 @@
 // reconciliation work.
 //
 // The package is a small producer-side bridge between api/objectstore.Change
-// and runtime/objectworkqueue.Item. It does not consume watch streams, mutate
-// caches, run controller loops, reconcile objects, retry failures, rate limit
-// producers, or own queue shutdown.
+// and runtime/objectworkqueue.Item. Query-based filtering is delegated to
+// api/objectquery.Predicate.ProjectChange. objectenqueue does not consume watch
+// streams, mutate caches, run controller loops, reconcile objects, write
+// objects, retry failures, rate limit producers, delay work, or own queue
+// shutdown.
 //
 // objectstore.Change remains the value-level transition contract for committed
-// store changes. objectworkqueue remains responsible for bounded storage,
-// deduplication, blocking Add behavior, processing state, and dirty requeue
-// semantics. objectenqueue only maps changes and forwards the mapped items to
-// an Enqueuer.
+// store changes. The watch contract package owns stream continuity.
+// objectworkqueue remains responsible for bounded storage, deduplication,
+// blocking Add behavior, processing state, and dirty requeue semantics.
+// objectenqueue only maps changes and forwards the mapped items to an Enqueuer.
 package objectenqueue

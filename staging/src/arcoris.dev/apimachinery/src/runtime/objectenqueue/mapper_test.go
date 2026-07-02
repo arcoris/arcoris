@@ -23,68 +23,13 @@ import (
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 	"arcoris.dev/apimachinery/api/meta"
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
+	"arcoris.dev/apimachinery/api/meta/labels"
 	"arcoris.dev/apimachinery/api/object"
 	"arcoris.dev/apimachinery/api/objectownership"
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/api/value"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
-
-func TestChangedObjectNilEmit(t *testing.T) {
-	err := ChangedObject().Map(createdChange(t, 1), nil)
-	requireErrorIs(t, err, ErrNilEmit)
-}
-
-func TestChangedObjectRejectsInvalidChange(t *testing.T) {
-	var emitted bool
-	err := ChangedObject().Map(objectstore.Change{}, func(objectworkqueue.Item) error {
-		emitted = true
-		return nil
-	})
-
-	requireErrorIs(t, err, objectstore.ErrInvalidChange)
-	if emitted {
-		t.Fatalf("emitted item for invalid change")
-	}
-}
-
-func TestChangedObjectEmitsChangedKey(t *testing.T) {
-	tests := []struct {
-		name   string
-		change objectstore.Change
-	}{
-		{name: "created", change: createdChange(t, 1)},
-		{name: "updated", change: updatedChange(t, 2)},
-		{name: "deleted", change: deletedChange(t, 3)},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var got []objectworkqueue.Item
-			err := ChangedObject().Map(tt.change, func(item objectworkqueue.Item) error {
-				got = append(got, item)
-				return nil
-			})
-
-			requireNoError(t, err)
-			if len(got) != 1 {
-				t.Fatalf("items = %d; want 1", len(got))
-			}
-			requireItem(t, got[0], objectworkqueue.Item{Key: tt.change.Key})
-		})
-	}
-}
-
-func TestChangedObjectPropagatesEmitError(t *testing.T) {
-	wantErr := errors.New("emit failed")
-	err := ChangedObject().Map(createdChange(t, 1), func(objectworkqueue.Item) error {
-		return wantErr
-	})
-
-	if err != wantErr {
-		t.Fatalf("error = %v; want %v", err, wantErr)
-	}
-}
 
 func TestMapperFuncNil(t *testing.T) {
 	var mapper MapperFunc
@@ -115,6 +60,38 @@ func TestMapperFuncDelegates(t *testing.T) {
 	}
 	if !called {
 		t.Fatalf("mapper function was not called")
+	}
+}
+
+func requireNoError(t testing.TB, err error) {
+	t.Helper()
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func requireErrorIs(t testing.TB, err error, target error) {
+	t.Helper()
+
+	if !errors.Is(err, target) {
+		t.Fatalf("error = %v; want errors.Is(%v)", err, target)
+	}
+}
+
+func requireItem(t testing.TB, got objectworkqueue.Item, want objectworkqueue.Item) {
+	t.Helper()
+
+	if !got.Key.Equal(want.Key) {
+		t.Fatalf("item = %s; want %s", got.Key, want.Key)
+	}
+}
+
+func requireChange(t testing.TB, got objectstore.Change, want objectstore.Change) {
+	t.Helper()
+
+	if got.Kind != want.Kind || got.Revision != want.Revision || !got.Key.Equal(want.Key) {
+		t.Fatalf("change identity = %#v; want %#v", got, want)
 	}
 }
 
@@ -208,6 +185,11 @@ func testResource() apiidentity.GroupVersionResource {
 }
 
 func testState(key objectstore.Key, revision objectstore.Revision, desired string) objectstore.State {
+	labelSet, err := labels.FromStrings(map[string]string{"env": desired})
+	if err != nil {
+		panic(err)
+	}
+
 	return objectstore.State{
 		Object: object.NewObserved[value.Value, value.Value](
 			meta.FromGroupVersionKind(apiidentity.GroupVersionKind{
@@ -218,6 +200,7 @@ func testState(key objectstore.Key, revision objectstore.Revision, desired strin
 			meta.ObjectMeta{
 				Name:      key.Object.Name,
 				Namespace: key.Object.Namespace,
+				Labels:    labelSet,
 			},
 			value.StringValue(desired),
 			value.StringValue("observed-"+desired),

@@ -15,78 +15,23 @@
 package objectenqueue
 
 import (
-	"context"
-	"sync"
+	"errors"
 	"testing"
 
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
-func TestEnqueuerIntegrationWithObjectWorkQueue(t *testing.T) {
-	queue, err := objectworkqueue.New(objectworkqueue.Options{Capacity: 1})
-	requireNoError(t, err)
+var _ Enqueuer = (*objectworkqueue.Queue)(nil)
 
-	change := createdChange(t, 1)
-	handler := mustHandler(t, queue, ChangedObject())
+func TestEmitFuncReturnsDelegateError(t *testing.T) {
+	wantErr := errors.New("emit failed")
+	emit := EmitFunc(func(objectworkqueue.Item) error {
+		return wantErr
+	})
 
-	requireNoError(t, handler.Handle(context.Background(), change))
+	err := emit(objectworkqueue.Item{Key: testKey(1)})
 
-	item, err := queue.Get(context.Background())
-	requireNoError(t, err)
-	requireItem(t, item, objectworkqueue.Item{Key: change.Key})
-	requireNoError(t, queue.Done(item))
-}
-
-type recordingQueue struct {
-	mu       sync.Mutex
-	err      error
-	contexts []context.Context
-	items    []objectworkqueue.Item
-}
-
-func (q *recordingQueue) Add(ctx context.Context, item objectworkqueue.Item) error {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	q.contexts = append(q.contexts, ctx)
-	q.items = append(q.items, item)
-
-	return q.err
-}
-
-func (q *recordingQueue) callCount() int {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	return len(q.items)
-}
-
-func (q *recordingQueue) requireContexts(t testing.TB, want ...context.Context) {
-	t.Helper()
-
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	if len(q.contexts) != len(want) {
-		t.Fatalf("contexts = %d; want %d", len(q.contexts), len(want))
-	}
-	for i := range want {
-		if q.contexts[i] != want[i] {
-			t.Fatalf("context[%d] = %p; want %p", i, q.contexts[i], want[i])
-		}
-	}
-}
-
-func (q *recordingQueue) requireItems(t testing.TB, want ...objectworkqueue.Item) {
-	t.Helper()
-
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	if len(q.items) != len(want) {
-		t.Fatalf("items = %d; want %d", len(q.items), len(want))
-	}
-	for i := range want {
-		requireItem(t, q.items[i], want[i])
+	if err != wantErr {
+		t.Fatalf("error = %v; want %v", err, wantErr)
 	}
 }

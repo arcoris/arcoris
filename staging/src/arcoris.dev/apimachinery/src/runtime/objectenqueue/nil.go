@@ -16,7 +16,10 @@ package objectenqueue
 
 import "reflect"
 
-// isNilInterface reports whether v is nil or an interface holding a typed nil value.
+// isNilInterface reports whether v is nil or an interface holding a typed nil.
+//
+// Constructors use this helper to reject direct nil interfaces and typed nil
+// implementations consistently without making every public dependency concrete.
 func isNilInterface(v any) bool {
 	if v == nil {
 		return true

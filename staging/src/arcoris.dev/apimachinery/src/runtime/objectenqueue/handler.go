@@ -22,14 +22,17 @@ import (
 
 // Handler maps committed object changes and enqueues the resulting work items.
 type Handler struct {
-	// queue is the producer-side enqueue target used by emitted items.
+	// queue is the producer-side enqueue target used by emitted work items.
 	queue Enqueuer
 
-	// mapper owns the change-to-item mapping policy for this handler.
+	// mapper owns the change-to-work mapping policy for this handler.
 	mapper Mapper
 }
 
 // New constructs a Handler from an enqueue target and a mapper.
+//
+// New validates only local wiring. It does not validate future changes, start
+// workers, consume watches, or touch queue state.
 func New(queue Enqueuer, mapper Mapper) (*Handler, error) {
 	if isNilInterface(queue) {
 		return nil, ErrNilQueue
@@ -42,6 +45,10 @@ func New(queue Enqueuer, mapper Mapper) (*Handler, error) {
 }
 
 // Handle maps change and forwards each emitted item to the handler queue.
+//
+// Handle keeps no mutable per-call state on Handler. If the configured queue
+// and mapper are safe for concurrent use, concurrent Handle calls are safe too.
+// The ctx value is passed through to Enqueuer.Add unchanged.
 func (h *Handler) Handle(ctx context.Context, change objectstore.Change) error {
 	if h == nil || isNilInterface(h.queue) || isNilInterface(h.mapper) {
 		return ErrInvalidHandler

@@ -16,10 +16,12 @@ package objectenqueue
 
 import (
 	"arcoris.dev/apimachinery/api/objectstore"
-	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
 // Mapper maps one committed object change to zero or more reconciliation items.
+//
+// Mapper owns mapping policy only. It should not consume watch streams, mutate
+// caches, run reconciliation, or call queue APIs directly.
 type Mapper interface {
 	Map(objectstore.Change, EmitFunc) error
 }
@@ -28,27 +30,12 @@ type Mapper interface {
 type MapperFunc func(objectstore.Change, EmitFunc) error
 
 // Map calls f with change and emit.
+//
+// A nil MapperFunc is treated as missing wiring and returns ErrNilMapper.
 func (f MapperFunc) Map(change objectstore.Change, emit EmitFunc) error {
 	if f == nil {
 		return ErrNilMapper
 	}
 
 	return f(change, emit)
-}
-
-// ChangedObject returns a mapper that enqueues the object affected by a change.
-func ChangedObject() Mapper {
-	return MapperFunc(mapChangedObject)
-}
-
-// mapChangedObject validates the committed change and emits its affected key.
-func mapChangedObject(change objectstore.Change, emit EmitFunc) error {
-	if err := change.Validate(); err != nil {
-		return err
-	}
-	if emit == nil {
-		return ErrNilEmit
-	}
-
-	return emit(objectworkqueue.Item{Key: change.Key})
 }

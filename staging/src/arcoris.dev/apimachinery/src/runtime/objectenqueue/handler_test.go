@@ -190,6 +190,60 @@ func TestHandleConcurrentCalls(t *testing.T) {
 
 type contextKey struct{}
 
+type recordingQueue struct {
+	mu       sync.Mutex
+	err      error
+	contexts []context.Context
+	items    []objectworkqueue.Item
+}
+
+func (q *recordingQueue) Add(ctx context.Context, item objectworkqueue.Item) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	q.contexts = append(q.contexts, ctx)
+	q.items = append(q.items, item)
+
+	return q.err
+}
+
+func (q *recordingQueue) callCount() int {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	return len(q.items)
+}
+
+func (q *recordingQueue) requireContexts(t testing.TB, want ...context.Context) {
+	t.Helper()
+
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	if len(q.contexts) != len(want) {
+		t.Fatalf("contexts = %d; want %d", len(q.contexts), len(want))
+	}
+	for i := range want {
+		if q.contexts[i] != want[i] {
+			t.Fatalf("context[%d] = %p; want %p", i, q.contexts[i], want[i])
+		}
+	}
+}
+
+func (q *recordingQueue) requireItems(t testing.TB, want ...objectworkqueue.Item) {
+	t.Helper()
+
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	if len(q.items) != len(want) {
+		t.Fatalf("items = %d; want %d", len(q.items), len(want))
+	}
+	for i := range want {
+		requireItem(t, q.items[i], want[i])
+	}
+}
+
 func mustHandler(t testing.TB, queue Enqueuer, mapper Mapper) *Handler {
 	t.Helper()
 

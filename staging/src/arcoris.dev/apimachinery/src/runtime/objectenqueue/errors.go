@@ -21,8 +21,6 @@ var (
 	ErrNilQueue = errors.New("objectenqueue: nil queue")
 	// ErrNilMapper reports that mapping behavior was not provided.
 	ErrNilMapper = errors.New("objectenqueue: nil mapper")
-	// ErrNilPredicate reports that filtering behavior was not provided.
-	ErrNilPredicate = errors.New("objectenqueue: nil predicate")
 	// ErrNilEmit reports that a mapper was invoked without an emit callback.
 	ErrNilEmit = errors.New("objectenqueue: nil emit")
 	// ErrInvalidHandler reports that a Handler is nil or missing dependencies.

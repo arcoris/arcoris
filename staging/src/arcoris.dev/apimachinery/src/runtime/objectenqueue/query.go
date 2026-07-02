@@ -14,38 +14,28 @@
 
 package objectenqueue
 
-import "arcoris.dev/apimachinery/api/objectstore"
+import (
+	"arcoris.dev/apimachinery/api/objectquery"
+	"arcoris.dev/apimachinery/api/objectstore"
+)
 
-// Predicate decides whether a committed object change should be mapped.
-type Predicate interface {
-	Match(objectstore.Change) (bool, error)
-}
-
-// PredicateFunc adapts a function to Predicate.
-type PredicateFunc func(objectstore.Change) (bool, error)
-
-// Match calls f with change.
-func (f PredicateFunc) Match(change objectstore.Change) (bool, error) {
-	if f == nil {
-		return false, ErrNilPredicate
-	}
-
-	return f(change)
-}
-
-// Filter returns a mapper that runs mapper only when predicate matches.
-func Filter(predicate Predicate, mapper Mapper) Mapper {
+// FilterQuery returns a mapper that delegates change membership to predicate.
+//
+// FilterQuery uses objectquery.Predicate.ProjectChange as the semantic source
+// of truth. Entered, Updated, and Left projections all call mapper because each
+// can require reconciliation work. Only Ignored projections are skipped.
+func FilterQuery(predicate objectquery.Predicate, mapper Mapper) Mapper {
 	return MapperFunc(func(change objectstore.Change, emit EmitFunc) error {
-		if isNilInterface(predicate) {
-			return ErrNilPredicate
-		}
 		if isNilInterface(mapper) {
 			return ErrNilMapper
 		}
 
-		ok, err := predicate.Match(change)
-		if err != nil || !ok {
+		projection, err := predicate.ProjectChange(change)
+		if err != nil {
 			return err
+		}
+		if projection.Kind == objectquery.ChangeProjectionIgnored {
+			return nil
 		}
 
 		return mapper.Map(change, emit)

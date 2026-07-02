@@ -20,7 +20,10 @@ import (
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
-// handlerEmitter adapts Handler queue state into the emit callback passed to a Mapper.
+// handlerEmitter is the per-Handle adapter from Mapper emission to queue Add.
+//
+// It is intentionally allocated on the stack inside Handle so Handler itself
+// remains stateless across concurrent calls.
 type handlerEmitter struct {
 	// ctx is forwarded unchanged to Enqueuer.Add.
 	ctx context.Context
@@ -28,11 +31,15 @@ type handlerEmitter struct {
 	// queue receives every mapped objectworkqueue.Item.
 	queue Enqueuer
 
-	// err stores the first queue error so later emit calls return the same error.
+	// err records the first Add error and prevents later Add attempts.
 	err error
 }
 
 // emit forwards item to the queue unless a previous emit already failed.
+//
+// Once Add fails, later emit calls return the first error without calling Add
+// again. This enforces Handler's "stop on first enqueue error" contract even if
+// a mapper ignores an earlier emit error.
 func (e *handlerEmitter) emit(item objectworkqueue.Item) error {
 	if e.err != nil {
 		return e.err
@@ -43,7 +50,10 @@ func (e *handlerEmitter) emit(item objectworkqueue.Item) error {
 	return e.err
 }
 
-// result gives queue errors precedence over mapper return errors.
+// result gives Add errors precedence over the Mapper return error.
+//
+// A queue error means an item failed to enter the work queue; that failure is
+// more specific than a mapper's final return value.
 func (e *handlerEmitter) result(mapErr error) error {
 	if e.err != nil {
 		return e.err

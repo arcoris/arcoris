@@ -15,31 +15,35 @@
 package objectenqueue
 
 import (
+	"context"
 	"testing"
 
 	"arcoris.dev/apimachinery/api/objectstore"
+	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
-func TestIsNilInterface(t *testing.T) {
+func TestIntegrationWithObjectWorkQueue(t *testing.T) {
 	tests := []struct {
-		name string
-		in   any
-		want bool
+		name   string
+		change objectstore.Change
 	}{
-		{name: "nil", in: nil, want: true},
-		{name: "typed nil pointer", in: (*recordingQueue)(nil), want: true},
-		{name: "typed nil func", in: MapperFunc(nil), want: true},
-		{name: "non-nil pointer", in: &recordingQueue{}, want: false},
-		{name: "non-nil func", in: MapperFunc(func(objectstore.Change, EmitFunc) error { return nil }), want: false},
-		{name: "value", in: struct{}{}, want: false},
+		{name: "created", change: createdChange(t, 1)},
+		{name: "updated", change: updatedChange(t, 2)},
+		{name: "deleted", change: deletedChange(t, 3)},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := isNilInterface(tt.in)
-			if got != tt.want {
-				t.Fatalf("isNilInterface(%T) = %v; want %v", tt.in, got, tt.want)
-			}
+			queue, err := objectworkqueue.New(objectworkqueue.Options{Capacity: 1})
+			requireNoError(t, err)
+
+			handler := mustHandler(t, queue, ChangedObject())
+			requireNoError(t, handler.Handle(context.Background(), tt.change))
+
+			item, err := queue.Get(context.Background())
+			requireNoError(t, err)
+			requireItem(t, item, objectworkqueue.Item{Key: tt.change.Key})
+			requireNoError(t, queue.Done(item))
 		})
 	}
 }

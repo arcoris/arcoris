@@ -21,9 +21,17 @@ import (
 )
 
 // Enqueuer accepts object-keyed reconciliation work.
+//
+// The interface intentionally exposes only Add. Producers using objectenqueue
+// should not decide queue shutdown, bypass blocking Add semantics with TryAdd,
+// or inspect queue diagnostics.
 type Enqueuer interface {
 	Add(context.Context, objectworkqueue.Item) error
 }
 
 // EmitFunc emits one mapped reconciliation item.
+//
+// Mapper implementations call EmitFunc during Map for each item they want to
+// enqueue. Returning an error should stop further mapping in well-behaved
+// mappers.
 type EmitFunc func(objectworkqueue.Item) error
