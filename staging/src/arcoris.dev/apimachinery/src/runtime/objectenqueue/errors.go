@@ -25,4 +25,8 @@ var (
 	ErrNilEmit = errors.New("objectenqueue: nil emit")
 	// ErrInvalidHandler reports that a Handler is nil or missing dependencies.
 	ErrInvalidHandler = errors.New("objectenqueue: invalid handler")
+	// ErrNilListItemMapper reports that listed object mapping behavior was not provided.
+	ErrNilListItemMapper = errors.New("objectenqueue: nil list item mapper")
+	// ErrInvalidReflectorSink reports that a ReflectorSink is nil or missing dependencies.
+	ErrInvalidReflectorSink = errors.New("objectenqueue: invalid reflector sink")
 )
