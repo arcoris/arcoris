@@ -33,7 +33,7 @@ func New(
 	if source == nil {
 		return nil, ErrNilSource
 	}
-	if sink == nil {
+	if isNilSink(sink) {
 		return nil, ErrNilSink
 	}
 	if err := objectstore.ValidateListRequest(collection); err != nil {

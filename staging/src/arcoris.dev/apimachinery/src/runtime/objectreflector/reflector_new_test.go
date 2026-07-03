@@ -35,6 +35,7 @@ func TestNewValidation(t *testing.T) {
 	}{
 		{name: "nil source", source: nil, collection: testCollection(), sink: sink, target: ErrNilSource},
 		{name: "nil sink", source: source, collection: testCollection(), sink: nil, target: ErrNilSink},
+		{name: "typed nil sink", source: source, collection: testCollection(), sink: (*recordingSink)(nil), target: ErrNilSink},
 		{name: "invalid collection", source: source, collection: objectstore.ListRequest{}, sink: sink, target: objectstore.ErrInvalidListRequest},
 		{name: "nil option", source: source, collection: testCollection(), sink: sink, options: []Option{nil}, target: ErrInvalidOption},
 	}

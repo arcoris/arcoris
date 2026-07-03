@@ -24,6 +24,10 @@ var (
 	ErrNilSource = errors.New("nil object reflector source")
 	// ErrNilSink reports construction with no destination sink.
 	ErrNilSink = errors.New("nil object reflector sink")
+	// ErrNoSinks reports FanoutSink construction with no destination sinks.
+	ErrNoSinks = errors.New("no object reflector sinks")
+	// ErrInvalidFanoutSink reports a nil or internally corrupted FanoutSink.
+	ErrInvalidFanoutSink = errors.New("invalid object reflector fanout sink")
 	// ErrInvalidOption reports a malformed option supplied to New.
 	ErrInvalidOption = errors.New("invalid object reflector option")
 	// ErrAlreadyRunning reports a concurrent Run call on the same Reflector.
