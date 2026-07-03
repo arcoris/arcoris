@@ -12,59 +12,55 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package objectreflector
+package objectreflectorsink
 
 import (
 	"context"
 
 	"arcoris.dev/apimachinery/api/objectstore"
 	storewatchapi "arcoris.dev/apimachinery/api/objectstorewatch"
+	"arcoris.dev/apimachinery/runtime/objectreflector"
 )
 
-// FanoutSink forwards each reflected sink operation to multiple sinks in order.
+// Fanout forwards each reflected sink operation to multiple sinks in order.
 //
-// FanoutSink is a sequential Sink combinator. It does not clone operation
-// payloads, retry failed calls, add atomicity across sinks, or repair partial
-// success. The first downstream error stops the operation and is returned
-// unchanged; reflector relist behavior remains the repair boundary.
-//
-// Sinks are called in the order configured by NewFanoutSink. Wiring that
-// updates a read model and then exposes work should generally pass the read
-// model sink first, so workers can observe the reflected state before work is
-// made visible.
-type FanoutSink struct {
+// Fanout is a sequential objectreflector.Sink combinator. It does not clone
+// operation payloads, retry failed calls, add atomicity across sinks, or repair
+// partial success. The first downstream error stops the operation and is
+// returned unchanged.
+type Fanout struct {
 	// sinks is the immutable ordered sink list installed at construction time.
-	sinks []Sink
+	sinks []objectreflector.Sink
 }
 
-// NewFanoutSink constructs a Sink that forwards Replace and ApplyChange calls
-// to sinks in the configured order.
-func NewFanoutSink(sinks ...Sink) (*FanoutSink, error) {
+// NewFanout constructs a Sink that forwards Replace and ApplyChange calls to
+// sinks in the configured order.
+func NewFanout(sinks ...objectreflector.Sink) (*Fanout, error) {
 	if len(sinks) == 0 {
 		return nil, ErrNoSinks
 	}
 
-	ordered := make([]Sink, len(sinks))
+	ordered := make([]objectreflector.Sink, len(sinks))
 	for i, sink := range sinks {
 		if isNilSink(sink) {
-			return nil, ErrNilSink
+			return nil, objectreflector.ErrNilSink
 		}
 		ordered[i] = sink
 	}
 
-	return &FanoutSink{sinks: ordered}, nil
+	return &Fanout{sinks: ordered}, nil
 }
 
 // Replace forwards a complete collection read to every configured sink.
 //
 // Calls are made sequentially in constructor order. Replace stops at the first
 // sink error and returns that error unchanged.
-func (s *FanoutSink) Replace(ctx context.Context, read storewatchapi.CollectionRead) error {
-	if err := s.validate(); err != nil {
+func (f *Fanout) Replace(ctx context.Context, read storewatchapi.CollectionRead) error {
+	if err := f.validate(); err != nil {
 		return err
 	}
 
-	for _, sink := range s.sinks {
+	for _, sink := range f.sinks {
 		if err := sink.Replace(ctx, read); err != nil {
 			return err
 		}
@@ -78,12 +74,12 @@ func (s *FanoutSink) Replace(ctx context.Context, read storewatchapi.CollectionR
 //
 // Calls are made sequentially in constructor order. ApplyChange stops at the
 // first sink error and returns that error unchanged.
-func (s *FanoutSink) ApplyChange(ctx context.Context, change objectstore.Change) error {
-	if err := s.validate(); err != nil {
+func (f *Fanout) ApplyChange(ctx context.Context, change objectstore.Change) error {
+	if err := f.validate(); err != nil {
 		return err
 	}
 
-	for _, sink := range s.sinks {
+	for _, sink := range f.sinks {
 		if err := sink.ApplyChange(ctx, change); err != nil {
 			return err
 		}
@@ -94,17 +90,17 @@ func (s *FanoutSink) ApplyChange(ctx context.Context, change objectstore.Change)
 
 // validate checks that the receiver still contains a usable ordered sink list.
 //
-// NewFanoutSink performs the same validation for normal construction. This
+// NewFanout performs the same validation for normal construction. This
 // defensive check keeps nil receivers and package-internal corruptions from
 // producing delayed panics in reflector control flow.
-func (s *FanoutSink) validate() error {
-	if s == nil || len(s.sinks) == 0 {
-		return ErrInvalidFanoutSink
+func (f *Fanout) validate() error {
+	if f == nil || len(f.sinks) == 0 {
+		return ErrInvalidFanout
 	}
 
-	for _, sink := range s.sinks {
+	for _, sink := range f.sinks {
 		if isNilSink(sink) {
-			return ErrInvalidFanoutSink
+			return ErrInvalidFanout
 		}
 	}
 
