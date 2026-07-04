@@ -24,8 +24,12 @@
 // That order makes reflected state visible in the read model before matching
 // work is made visible to controller workers.
 //
-// This package is a composition layer only. It constructs components, but does
-// not own their lifecycle, launch goroutines, shut down queues, retry failures,
-// requeue work, write objects, emit telemetry, recover panics, or implement
-// scheduling policy.
+// RunSameObject coordinates the lifecycle for one already assembled SameObject
+// graph. It starts the reflector and controller, shuts down the queue when the
+// producer side exits or when the controller side fails, cancels the sibling
+// component, and waits for both sides before returning.
+//
+// This package is intentionally not a manager. It does not register multiple
+// controllers, retry, restart, requeue, supervise policy, write objects, patch
+// status, emit telemetry, recover panics, or implement scheduling policy.
 package objectcontrollerwiring
