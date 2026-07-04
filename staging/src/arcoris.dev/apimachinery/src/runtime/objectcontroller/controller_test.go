@@ -72,14 +72,20 @@ type fakeReconciler struct {
 	result     objectreconciler.Result
 	panicValue any
 	calls      int
+	requests   []objectreconciler.Request
 	snaps      []objectreconciler.Snapshot
 	started    chan struct{}
 	block      <-chan struct{}
 }
 
-func (r *fakeReconciler) Reconcile(ctx context.Context, snap objectreconciler.Snapshot) objectreconciler.Result {
+func (r *fakeReconciler) Reconcile(
+	ctx context.Context,
+	request objectreconciler.Request,
+	snap objectreconciler.Snapshot,
+) objectreconciler.Result {
 	r.mu.Lock()
 	r.calls++
+	r.requests = append(r.requests, request)
 	r.snaps = append(r.snaps, snap)
 	started := r.started
 	block := r.block
@@ -111,6 +117,13 @@ func (r *fakeReconciler) callCount() int {
 	defer r.mu.Unlock()
 
 	return r.calls
+}
+
+func (r *fakeReconciler) reconcilerRequests() []objectreconciler.Request {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	return append([]objectreconciler.Request(nil), r.requests...)
 }
 
 func (r *fakeReconciler) snapshots() []objectreconciler.Snapshot {

@@ -45,7 +45,8 @@ func TestWorkerReturnsGetError(t *testing.T) {
 }
 
 func TestWorkerProcessesItemAndCallsDone(t *testing.T) {
-	queue := &recordingQueue{items: []objectworkqueue.Item{testItem(1)}}
+	item := testItem(1)
+	queue := &recordingQueue{items: []objectworkqueue.Item{item}}
 	reconciler := &fakeReconciler{result: objectreconciler.Success()}
 	controller := &Controller{
 		queue:      queue,
@@ -60,6 +61,20 @@ func TestWorkerProcessesItemAndCallsDone(t *testing.T) {
 	}
 	if queue.doneCount() != 1 {
 		t.Fatalf("Done calls = %d; want 1", queue.doneCount())
+	}
+	requests := reconciler.reconcilerRequests()
+	if len(requests) != 1 {
+		t.Fatalf("reconciler requests = %d; want 1", len(requests))
+	}
+	if !requests[0].Key.Equal(item.Key) {
+		t.Fatalf("request key = %#v; want %#v", requests[0].Key, item.Key)
+	}
+	doneItems := queue.completedItems()
+	if len(doneItems) != 1 {
+		t.Fatalf("completed items = %d; want 1", len(doneItems))
+	}
+	if !doneItems[0].Key.Equal(item.Key) {
+		t.Fatalf("completed item key = %#v; want %#v", doneItems[0].Key, item.Key)
 	}
 }
 

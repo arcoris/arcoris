@@ -22,11 +22,11 @@ import "context"
 // package does not enforce idempotency and does not recover panics from
 // Reconcile.
 type Reconciler interface {
-	// Reconcile executes one read-only attempt over snap and returns its
-	// result.
+	// Reconcile executes one read-only attempt for request over snap and
+	// returns its result.
 	//
-	// Reconcile receives a stable objectcache view at snap.Revision. It should
-	// observe ctx for cancellation, but this package does not interrupt a
-	// running call.
-	Reconcile(context.Context, Snapshot) Result
+	// Reconcile receives request unchanged from ReconcileOnce and a stable
+	// objectcache view at snap.Revision. It should observe ctx for cancellation,
+	// but this package does not interrupt a running call.
+	Reconcile(context.Context, Request, Snapshot) Result
 }

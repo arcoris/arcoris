@@ -12,30 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package objectcontroller
+package objectreconciler
 
 import (
-	"context"
-	"errors"
+	"testing"
 
-	"arcoris.dev/apimachinery/runtime/objectreconciler"
-	"arcoris.dev/apimachinery/runtime/objectworkqueue"
+	"arcoris.dev/apimachinery/api/objectstore"
 )
 
-// processItem reconciles one item and attempts Done exactly once.
-func (c *Controller) processItem(ctx context.Context, item objectworkqueue.Item) (err error) {
-	request := objectreconciler.Request{Key: item.Key}
+func TestRequestValidateAcceptsValidKey(t *testing.T) {
+	request := testRequest(1)
 
-	defer func() {
-		doneErr := c.queue.Done(item)
-		if err == nil {
-			err = doneErr
-			return
-		}
-		if doneErr != nil {
-			err = errors.Join(err, doneErr)
-		}
-	}()
+	err := request.Validate()
 
-	return objectreconciler.ReconcileOnce(ctx, request, c.source, c.reconciler).Err
+	requireNoError(t, err)
+	if !request.IsValid() {
+		t.Fatalf("IsValid() = false; want true")
+	}
+}
+
+func TestRequestValidateRejectsInvalidKey(t *testing.T) {
+	request := Request{}
+
+	err := request.Validate()
+
+	requireErrorIs(t, err, ErrInvalidRequest)
+	requireErrorIs(t, err, objectstore.ErrInvalidKey)
+	if request.IsValid() {
+		t.Fatalf("IsValid() = true; want false")
+	}
 }

@@ -20,18 +20,18 @@ import "context"
 //
 // A nil ReconcileFunc is treated as a wiring error and returns
 // ErrNilReconciler instead of panicking.
-type ReconcileFunc func(context.Context, Snapshot) Result
+type ReconcileFunc func(context.Context, Request, Snapshot) Result
 
-// Reconcile calls f with ctx and snap.
+// Reconcile calls f with ctx, request, and snap.
 //
 // Reconcile returns ErrNilReconciler when f is nil. It otherwise returns the
 // function result as-is and does not recover panics.
-func (f ReconcileFunc) Reconcile(ctx context.Context, snap Snapshot) Result {
+func (f ReconcileFunc) Reconcile(ctx context.Context, request Request, snap Snapshot) Result {
 	if f == nil {
 		return Failure(ErrNilReconciler)
 	}
 
-	return f(ctx, snap)
+	return f(ctx, request, snap)
 }
 
 // isNilReconciler reports whether reconciler is absent, including the typed nil

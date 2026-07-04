@@ -26,4 +26,13 @@ var (
 	// ReconcileFunc also returns ErrNilReconciler when the function value is
 	// nil.
 	ErrNilReconciler = errors.New("objectreconciler: nil reconciler")
+
+	// ErrInvalidRequest reports a malformed reconciliation request.
+	ErrInvalidRequest = errors.New("objectreconciler: invalid request")
 )
+
+// invalidRequestError preserves ErrInvalidRequest while retaining the lower
+// objectstore validation cause.
+func invalidRequestError(cause error) error {
+	return errors.Join(ErrInvalidRequest, cause)
+}

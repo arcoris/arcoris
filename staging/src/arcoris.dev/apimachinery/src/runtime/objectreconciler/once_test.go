@@ -29,7 +29,7 @@ func TestReconcileOncePanicsOnNilContext(t *testing.T) {
 		}
 	}()
 
-	_ = ReconcileOnce(nil, &fakeSource{}, &recordingReconciler{})
+	_ = ReconcileOnce(nil, testRequest(1), &fakeSource{}, &recordingReconciler{})
 }
 
 func TestReconcileOnceReturnsCancelledContextBeforeSourceRead(t *testing.T) {
@@ -38,9 +38,24 @@ func TestReconcileOnceReturnsCancelledContextBeforeSourceRead(t *testing.T) {
 	source := &fakeSource{snapshot: readySourceSnapshot(t, 1)}
 	reconciler := &recordingReconciler{}
 
-	result := ReconcileOnce(ctx, source, reconciler)
+	result := ReconcileOnce(ctx, Request{}, source, reconciler)
 
 	requireErrorIs(t, result.Err, context.Canceled)
+	if source.reads != 0 {
+		t.Fatalf("source reads = %d; want 0", source.reads)
+	}
+	if reconciler.calls != 0 {
+		t.Fatalf("reconciler calls = %d; want 0", reconciler.calls)
+	}
+}
+
+func TestReconcileOnceRejectsInvalidRequestBeforeSourceRead(t *testing.T) {
+	source := &fakeSource{snapshot: readySourceSnapshot(t, 1)}
+	reconciler := &recordingReconciler{}
+
+	result := ReconcileOnce(context.Background(), Request{}, source, reconciler)
+
+	requireErrorIs(t, result.Err, ErrInvalidRequest)
 	if source.reads != 0 {
 		t.Fatalf("source reads = %d; want 0", source.reads)
 	}
@@ -52,9 +67,10 @@ func TestReconcileOnceReturnsCancelledContextBeforeSourceRead(t *testing.T) {
 func TestReconcileOnceRejectsNilSourceAndReconciler(t *testing.T) {
 	reconciler := &recordingReconciler{}
 	source := &fakeSource{snapshot: readySourceSnapshot(t, 1)}
+	request := testRequest(1)
 
-	requireErrorIs(t, ReconcileOnce(context.Background(), nil, reconciler).Err, ErrNilSource)
-	requireErrorIs(t, ReconcileOnce(context.Background(), source, nil).Err, ErrNilReconciler)
+	requireErrorIs(t, ReconcileOnce(context.Background(), request, nil, reconciler).Err, ErrNilSource)
+	requireErrorIs(t, ReconcileOnce(context.Background(), request, source, nil).Err, ErrNilReconciler)
 	if source.reads != 0 {
 		t.Fatalf("source reads = %d; want 0", source.reads)
 	}
@@ -67,7 +83,7 @@ func TestReconcileOnceWithNilReconcileFuncReturnsNilReconcilerError(t *testing.T
 	var fn ReconcileFunc
 	source := &fakeSource{snapshot: readySourceSnapshot(t, 1)}
 
-	result := ReconcileOnce(context.Background(), source, fn)
+	result := ReconcileOnce(context.Background(), testRequest(1), source, fn)
 
 	requireErrorIs(t, result.Err, ErrNilReconciler)
 	if source.reads != 0 {
@@ -80,7 +96,7 @@ func TestReconcileOncePreservesSourceErrorAndSkipsReconcile(t *testing.T) {
 	source := &fakeSource{err: readErr}
 	reconciler := &recordingReconciler{}
 
-	result := ReconcileOnce(context.Background(), source, reconciler)
+	result := ReconcileOnce(context.Background(), testRequest(1), source, reconciler)
 
 	if result.Err != readErr {
 		t.Fatalf("Err = %v; want %v", result.Err, readErr)
@@ -95,7 +111,7 @@ func TestReconcileOncePreservesObjectCacheNotReady(t *testing.T) {
 	requireNoError(t, err)
 	reconciler := &recordingReconciler{}
 
-	result := ReconcileOnce(context.Background(), cache, reconciler)
+	result := ReconcileOnce(context.Background(), testRequest(1), cache, reconciler)
 
 	requireErrorIs(t, result.Err, objectcache.ErrNotReady)
 	if reconciler.calls != 0 {
@@ -107,8 +123,9 @@ func TestReconcileOnceCallsReconcilerOnceWithSourceSnapshot(t *testing.T) {
 	sourceSnapshot := readySourceSnapshot(t, 9)
 	source := &fakeSource{snapshot: sourceSnapshot}
 	reconciler := &recordingReconciler{result: Success()}
+	request := testRequest(7)
 
-	result := ReconcileOnce(context.Background(), source, reconciler)
+	result := ReconcileOnce(context.Background(), request, source, reconciler)
 
 	if result.Failed() {
 		t.Fatalf("result = %#v; want success", result)
@@ -118,6 +135,9 @@ func TestReconcileOnceCallsReconcilerOnceWithSourceSnapshot(t *testing.T) {
 	}
 	if reconciler.calls != 1 {
 		t.Fatalf("reconciler calls = %d; want 1", reconciler.calls)
+	}
+	if !reconciler.request.Key.Equal(request.Key) {
+		t.Fatalf("reconciler request = %#v; want %#v", reconciler.request, request)
 	}
 	if reconciler.snap.Revision != sourceSnapshot.Revision {
 		t.Fatalf("reconciler revision = %s; want %s", reconciler.snap.Revision, sourceSnapshot.Revision)
@@ -137,7 +157,7 @@ func TestReconcileOnceCancelledAfterReadSkipsReconcile(t *testing.T) {
 	}
 	reconciler := &recordingReconciler{}
 
-	result := ReconcileOnce(ctx, source, reconciler)
+	result := ReconcileOnce(ctx, testRequest(1), source, reconciler)
 
 	requireErrorIs(t, result.Err, context.Canceled)
 	if source.reads != 1 {
@@ -153,7 +173,7 @@ func TestReconcileOnceReturnsUserResultAsIs(t *testing.T) {
 	source := &fakeSource{snapshot: readySourceSnapshot(t, 2)}
 	reconciler := &recordingReconciler{result: Failure(userErr)}
 
-	result := ReconcileOnce(context.Background(), source, reconciler)
+	result := ReconcileOnce(context.Background(), testRequest(1), source, reconciler)
 
 	if result.Err != userErr {
 		t.Fatalf("Err = %v; want %v", result.Err, userErr)
@@ -161,7 +181,7 @@ func TestReconcileOnceReturnsUserResultAsIs(t *testing.T) {
 	requireErrorIs(t, result.Err, userErr)
 }
 
-func TestReconcileOnceDoesNotRecoverPanic(t *testing.T) {
+func TestReconcileOncePropagatesPanic(t *testing.T) {
 	defer func() {
 		if got := recover(); got != "boom" {
 			t.Fatalf("recover() = %#v; want boom", got)
@@ -170,8 +190,9 @@ func TestReconcileOnceDoesNotRecoverPanic(t *testing.T) {
 
 	_ = ReconcileOnce(
 		context.Background(),
+		testRequest(1),
 		&fakeSource{snapshot: readySourceSnapshot(t, 1)},
-		ReconcileFunc(func(context.Context, Snapshot) Result {
+		ReconcileFunc(func(context.Context, Request, Snapshot) Result {
 			panic("boom")
 		}),
 	)

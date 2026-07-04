@@ -52,7 +52,7 @@ func TestNewAcceptsValidDependencies(t *testing.T) {
 		Options{Workers: 2},
 		&recordingQueue{},
 		&fakeSnapshotSource{snapshot: testSnapshot(t, 1)},
-		objectreconciler.ReconcileFunc(func(context.Context, objectreconciler.Snapshot) objectreconciler.Result {
+		objectreconciler.ReconcileFunc(func(context.Context, objectreconciler.Request, objectreconciler.Snapshot) objectreconciler.Result {
 			return objectreconciler.Success()
 		}),
 	)

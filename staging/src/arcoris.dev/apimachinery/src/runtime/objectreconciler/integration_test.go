@@ -27,8 +27,12 @@ func TestReconcileOnceWithReadyObjectCache(t *testing.T) {
 
 	result := ReconcileOnce(
 		context.Background(),
+		testRequest(1),
 		cache,
-		ReconcileFunc(func(ctx context.Context, snap Snapshot) Result {
+		ReconcileFunc(func(ctx context.Context, request Request, snap Snapshot) Result {
+			if !request.Key.Equal(testRequest(1).Key) {
+				t.Fatalf("request = %#v; want test request", request)
+			}
 			got = snap
 			return Success()
 		}),
@@ -49,7 +53,7 @@ func TestReconcileOnceWithNotReadyObjectCache(t *testing.T) {
 	cache, err := objectcache.New(testCollection())
 	requireNoError(t, err)
 
-	result := ReconcileOnce(context.Background(), cache, ReconcileFunc(func(context.Context, Snapshot) Result {
+	result := ReconcileOnce(context.Background(), testRequest(1), cache, ReconcileFunc(func(context.Context, Request, Snapshot) Result {
 		t.Fatal("reconciler should not be called")
 		return Success()
 	}))

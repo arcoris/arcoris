@@ -80,6 +80,13 @@ func (q *recordingQueue) doneCount() int {
 	return len(q.doneItems)
 }
 
+func (q *recordingQueue) completedItems() []objectworkqueue.Item {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	return append([]objectworkqueue.Item(nil), q.doneItems...)
+}
+
 func (q *recordingQueue) getCallCount() int {
 	q.mu.Lock()
 	defer q.mu.Unlock()

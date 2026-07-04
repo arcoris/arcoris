@@ -155,7 +155,7 @@ func TestRunWaitsForWorkersBeforeReturning(t *testing.T) {
 
 func TestRunDoesNotShutDownQueue(t *testing.T) {
 	queue := &blockingQueue{}
-	controller, err := New(Options{Workers: 1}, queue, &fakeSnapshotSource{}, objectreconciler.ReconcileFunc(func(context.Context, objectreconciler.Snapshot) objectreconciler.Result {
+	controller, err := New(Options{Workers: 1}, queue, &fakeSnapshotSource{}, objectreconciler.ReconcileFunc(func(context.Context, objectreconciler.Request, objectreconciler.Snapshot) objectreconciler.Result {
 		return objectreconciler.Success()
 	}))
 	requireNoError(t, err)

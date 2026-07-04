@@ -275,7 +275,11 @@ type benchReconciler struct {
 	calls  atomic.Int64
 }
 
-func (r *benchReconciler) Reconcile(context.Context, objectreconciler.Snapshot) objectreconciler.Result {
+func (r *benchReconciler) Reconcile(
+	context.Context,
+	objectreconciler.Request,
+	objectreconciler.Snapshot,
+) objectreconciler.Result {
 	r.calls.Add(1)
 	return r.result
 }

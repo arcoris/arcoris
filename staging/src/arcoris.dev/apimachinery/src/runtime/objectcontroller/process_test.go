@@ -74,13 +74,53 @@ func TestWorkerAttemptsDoneBeforePanicPropagates(t *testing.T) {
 	_ = controller.processItem(context.Background(), testItem(1))
 }
 
+func TestProcessItemPassesItemKeyAsReconcilerRequest(t *testing.T) {
+	item := testItem(7)
+	reconciler := &fakeReconciler{result: objectreconciler.Success()}
+	controller := &Controller{
+		queue:      &recordingQueue{},
+		source:     &fakeSnapshotSource{snapshot: testSnapshot(t, 1)},
+		reconciler: reconciler,
+	}
+
+	requireNoError(t, controller.processItem(context.Background(), item))
+
+	requests := reconciler.reconcilerRequests()
+	if len(requests) != 1 {
+		t.Fatalf("reconciler requests = %d; want 1", len(requests))
+	}
+	if !requests[0].Key.Equal(item.Key) {
+		t.Fatalf("request key = %#v; want %#v", requests[0].Key, item.Key)
+	}
+}
+
+func TestProcessItemCallsDoneWhenRequestValidationFails(t *testing.T) {
+	queue := &recordingQueue{}
+	source := &fakeSnapshotSource{snapshot: testSnapshot(t, 1)}
+	controller := &Controller{
+		queue:      queue,
+		source:     source,
+		reconciler: &fakeReconciler{},
+	}
+
+	err := controller.processItem(context.Background(), objectworkqueue.Item{})
+
+	requireErrorIs(t, err, objectreconciler.ErrInvalidRequest)
+	if queue.doneCount() != 1 {
+		t.Fatalf("Done calls = %d; want 1", queue.doneCount())
+	}
+	if source.callCount() != 0 {
+		t.Fatalf("source calls = %d; want 0", source.callCount())
+	}
+}
+
 func TestProcessItemReturnsDoneErrorWhenReconcileSucceeds(t *testing.T) {
 	doneErr := errors.New("done failed")
 	queue := &recordingQueue{doneErr: doneErr}
 	controller := &Controller{
 		queue:  queue,
 		source: &fakeSnapshotSource{snapshot: testSnapshot(t, 1)},
-		reconciler: objectreconciler.ReconcileFunc(func(context.Context, objectreconciler.Snapshot) objectreconciler.Result {
+		reconciler: objectreconciler.ReconcileFunc(func(context.Context, objectreconciler.Request, objectreconciler.Snapshot) objectreconciler.Result {
 			return objectreconciler.Success()
 		}),
 	}

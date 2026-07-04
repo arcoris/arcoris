@@ -17,27 +17,28 @@
 //
 // # Model
 //
-// One reconciliation attempt consumes exactly one detached objectcache.View at
-// exactly one objectstore.Revision. ReconcileOnce reads a snapshot from a
-// SnapshotSource, converts it into this package's Snapshot value, calls a user
-// Reconciler synchronously, and returns the user's Result.
+// One reconciliation attempt consumes exactly one Request and exactly one
+// detached objectcache.View at exactly one objectstore.Revision. ReconcileOnce
+// validates the request, reads a snapshot from a SnapshotSource, converts it
+// into this package's Snapshot value, calls a user Reconciler synchronously, and
+// returns the user's Result.
 //
 // The intended runtime chain is:
 //
-//	objectreflector -> objectcache -> objectreconciler -> future objectcontroller
+//	object reflector -> sink fanout(read model, enqueue sink) -> work queue -> controller -> reconciler
 //
 // # Boundaries
 //
 // This package is intentionally read-only. User reconcilers should be
 // idempotent and context-aware, but this package does not enforce idempotency,
-// recover panics, write objects, patch status, schedule work, retry failures, or
-// run background loops.
+// recover panics, write objects, patch status, enqueue work, schedule work,
+// retry failures, complete queued work, or run background loops.
 //
 // # Non-goals
 //
-// This package does not implement watches, queues, workers, controllers, retry
-// policy, backoff, metrics, tracing, panic recovery, event handlers, lifecycle,
-// storage mutation, admission, validation, finalizers, scheduling policy, or
-// leader election. Future objectworkqueue and objectcontroller packages may
+// This package does not implement watch consumption, enqueueing, worker loops,
+// retry policy, backoff, metrics, tracing, panic recovery, event handlers,
+// lifecycle mutation, storage mutation, admission, validation, finalizers,
+// scheduling policy, or leader election. Adjacent queue and controller layers
 // decide when and how often reconciliation attempts run.
 package objectreconciler

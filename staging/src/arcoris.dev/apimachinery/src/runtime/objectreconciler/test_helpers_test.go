@@ -17,9 +17,11 @@ package objectreconciler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	apiidentity "arcoris.dev/apimachinery/api/identity"
+	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
 	"arcoris.dev/apimachinery/api/objectstore"
 	storewatchapi "arcoris.dev/apimachinery/api/objectstorewatch"
 	"arcoris.dev/apimachinery/runtime/objectcache"
@@ -51,6 +53,17 @@ func testCollection() objectstore.ListRequest {
 		},
 		Scope: objectstore.AllNamespaces(),
 	}
+}
+
+func testKey(id int) objectstore.Key {
+	return objectstore.MustKey(testCollection().Resource, metaidentity.ObjectName{
+		Namespace: "default",
+		Name:      metaidentity.Name(fmt.Sprintf("worker-%d", id)),
+	})
+}
+
+func testRequest(id int) Request {
+	return Request{Key: testKey(id)}
 }
 
 func readyCache(t testing.TB, revision objectstore.Revision) *objectcache.Cache {
@@ -100,15 +113,17 @@ func (s *fakeSource) ReadSnapshot() (snapshot.Snapshot[objectstore.Revision, obj
 }
 
 type recordingReconciler struct {
-	result Result
-	calls  int
-	ctx    context.Context
-	snap   Snapshot
+	result  Result
+	calls   int
+	ctx     context.Context
+	request Request
+	snap    Snapshot
 }
 
-func (r *recordingReconciler) Reconcile(ctx context.Context, snap Snapshot) Result {
+func (r *recordingReconciler) Reconcile(ctx context.Context, request Request, snap Snapshot) Result {
 	r.calls++
 	r.ctx = ctx
+	r.request = request
 	r.snap = snap
 	return r.result
 }
