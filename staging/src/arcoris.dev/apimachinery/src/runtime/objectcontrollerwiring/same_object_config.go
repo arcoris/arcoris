@@ -19,6 +19,7 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 	storewatchapi "arcoris.dev/apimachinery/api/objectstorewatch"
 	"arcoris.dev/apimachinery/runtime/objectcontroller"
+	"arcoris.dev/apimachinery/runtime/objectindex"
 	"arcoris.dev/apimachinery/runtime/objectreconciler"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
@@ -53,4 +54,11 @@ type SameObjectConfig struct {
 	// Predicate selects which reflected objects produce same-object work.
 	// The zero Predicate means all objects.
 	Predicate objectquery.Predicate
+
+	// Indexes are optional prebuilt secondary indexes for Collection.
+	//
+	// NewSameObject installs indexes after the cache sink and before the enqueue
+	// sink. Mappers can close over these same index instances when they need
+	// read-side reverse lookups; SameObject itself still emits same-key work.
+	Indexes []*objectindex.Index
 }

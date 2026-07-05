@@ -31,4 +31,9 @@ var (
 	// component required by RunMultiSource to coordinate all reflectors, the
 	// shared queue, and the controller lifecycle.
 	ErrInvalidMultiSource = errors.New("objectcontrollerwiring: invalid multi-source graph")
+
+	// ErrNilIndex reports a nil prebuilt object index in graph input config.
+	// Index construction remains owned by runtime/objectindex; wiring only
+	// validates that configured index sinks can be installed into fanout order.
+	ErrNilIndex = errors.New("objectcontrollerwiring: nil index")
 )

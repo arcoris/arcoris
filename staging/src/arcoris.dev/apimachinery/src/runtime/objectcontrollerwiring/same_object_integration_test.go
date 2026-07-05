@@ -32,6 +32,7 @@ import (
 	"arcoris.dev/apimachinery/api/value"
 	"arcoris.dev/apimachinery/runtime/objectcontroller"
 	"arcoris.dev/apimachinery/runtime/objectcontrollerwiring"
+	"arcoris.dev/apimachinery/runtime/objectindex"
 	"arcoris.dev/apimachinery/runtime/objectreconciler"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
@@ -81,6 +82,44 @@ func TestSameObjectSmokeUsesCacheBeforeEnqueueAndPredicate(t *testing.T) {
 	if stats.Queued != 0 || stats.Processing != 0 {
 		t.Fatalf("queue stats = %#v; want drained queue", stats)
 	}
+}
+
+func TestSameObjectIndexesObserveReplaceBeforeWorkIsQueued(t *testing.T) {
+	key := wiringKey("worker-a")
+	watchErr := errors.New("watch opened")
+	index := newWiringDesiredIndex(t)
+	config := objectcontrollerwiring.SameObjectConfig{
+		Source: &scriptedListerWatcher{
+			listReads: []storewatchapi.CollectionRead{
+				wiringRead(t, 10, wiringItem(key, 1, "group-a")),
+			},
+			watches: []watchScript{
+				{err: watchErr},
+			},
+		},
+		Collection: wiringCollection(),
+		Reconciler: &recordingReconciler{},
+		Queue: objectworkqueue.Options{
+			Capacity: 4,
+		},
+		Controller: objectcontroller.Options{
+			Workers: 1,
+		},
+		Indexes: []*objectindex.Index{index},
+	}
+	wiring, err := objectcontrollerwiring.NewSameObject(config)
+	requireNoError(t, err)
+
+	requireErrorIs(t, wiring.Reflector().Run(context.Background()), watchErr)
+
+	requireWiringIndexKeys(t, index, "desired", "group-a", key)
+	requireSnapshotContains(t, readSameObjectCacheSnapshot(t, wiring), key, 1)
+	item, err := wiring.Queue().Get(context.Background())
+	requireNoError(t, err)
+	if !item.Key.Equal(key) {
+		t.Fatalf("queued key = %#v; want %#v", item.Key, key)
+	}
+	requireNoError(t, wiring.Queue().Done(item))
 }
 
 type reconciliationRecord struct {
@@ -187,6 +226,63 @@ func requireSnapshotContains(
 	}
 	if result.State.Revision != revision {
 		t.Fatalf("snapshot state revision = %s; want %s", result.State.Revision, revision)
+	}
+}
+
+func readSameObjectCacheSnapshot(
+	t testing.TB,
+	wiring *objectcontrollerwiring.SameObject,
+) objectreconciler.Snapshot {
+	t.Helper()
+
+	snapshot, err := wiring.Cache().ReadSnapshot()
+	requireNoError(t, err)
+
+	return objectreconciler.Snapshot{
+		View:     snapshot.Value,
+		Revision: snapshot.Revision,
+	}
+}
+
+func newWiringDesiredIndex(t testing.TB) *objectindex.Index {
+	t.Helper()
+
+	index, err := objectindex.New(objectindex.Definition{
+		Name: "desired",
+		Extractor: objectindex.ExtractorFunc(
+			func(item objectstore.ListItem, emit objectindex.EmitFunc) error {
+				desired, ok := item.State.Object.Desired.AsString()
+				if !ok {
+					return errors.New("desired is not string")
+				}
+
+				return emit(objectindex.Value(desired))
+			},
+		),
+	})
+	requireNoError(t, err)
+
+	return index
+}
+
+func requireWiringIndexKeys(
+	t testing.TB,
+	index *objectindex.Index,
+	name objectindex.Name,
+	value objectindex.Value,
+	want ...objectstore.Key,
+) {
+	t.Helper()
+
+	keys, err := index.Lookup(name, value)
+	requireNoError(t, err)
+	if len(keys) != len(want) {
+		t.Fatalf("index keys = %d; want %d: %#v", len(keys), len(want), keys)
+	}
+	for i, key := range want {
+		if !keys[i].Equal(key) {
+			t.Fatalf("index key %d = %#v; want %#v", i, keys[i], key)
+		}
 	}
 }
 

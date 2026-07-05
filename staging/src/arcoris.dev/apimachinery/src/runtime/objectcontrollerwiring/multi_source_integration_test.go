@@ -22,6 +22,7 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/runtime/objectcache"
 	"arcoris.dev/apimachinery/runtime/objectenqueue"
+	"arcoris.dev/apimachinery/runtime/objectindex"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
@@ -82,6 +83,53 @@ func TestMultiSourceSecondaryMappedInputFeedsSharedController(t *testing.T) {
 	requireMappedRecordSnapshotContains(t, records[0], targetKey, 1)
 	requireMappedRecordSnapshotMissing(t, records[0], sourceKey)
 	requireCacheContains(t, graph.Secondary()[0].Cache(), sourceKey, 2)
+
+	cancel()
+	requireMultiSourceRunResult(t, result, context.Canceled)
+}
+
+func TestMultiSourceSecondaryMapperUsesInputIndex(t *testing.T) {
+	targetKey := runTestKey("target")
+	sourceKey := runTestKey("source")
+	secondaryIndex := newDesiredObjectIndex(t)
+	reconciler := newMappedRecordingReconciler()
+	primary := &runTestListerWatcher{
+		read:        runTestRead(t, 1, runTestItem(targetKey, 1, "target")),
+		stream:      runTestWaitingStream(),
+		watchCalled: make(chan struct{}),
+	}
+	secondary := &runTestListerWatcher{
+		read:        runTestRead(t, 2, runTestItem(sourceKey, 2, "source")),
+		stream:      runTestWaitingStream(),
+		watchCalled: make(chan struct{}),
+	}
+	secondaryConfig := mappedInputConfig(
+		secondary,
+		listItemMapperUsingIndexToEmitTarget(secondaryIndex, "desired", "source", targetKey),
+		zeroChangeMapper(),
+	)
+	secondaryConfig.Indexes = []*objectindex.Index{secondaryIndex}
+	graph := newMultiSourceIntegrationGraph(
+		t,
+		primary,
+		[]InputConfig{secondaryConfig},
+		zeroListItemMapper(),
+		zeroChangeMapper(),
+		reconciler,
+	)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	result := runMultiSourceAsync(ctx, graph)
+	waitForSignal(t, primary.watchCalled)
+	waitForSignal(t, secondary.watchCalled)
+
+	records := reconciler.waitForRecords(t, 1)
+	requireMappedRecordKeys(t, records, targetKey)
+	requireMappedRecordSnapshotContains(t, records[0], targetKey, 1)
+	requireMappedRecordSnapshotMissing(t, records[0], sourceKey)
+	requireCacheContains(t, graph.Secondary()[0].Cache(), sourceKey, 2)
+	requireObjectIndexKeys(t, secondaryIndex, "desired", "source", sourceKey)
 
 	cancel()
 	requireMultiSourceRunResult(t, result, context.Canceled)
@@ -295,6 +343,25 @@ func mappedInputConfig(
 		Listed:     listed,
 		Changed:    changed,
 	}
+}
+
+func listItemMapperUsingIndexToEmitTarget(
+	index *objectindex.Index,
+	name objectindex.Name,
+	value objectindex.Value,
+	target objectstore.Key,
+) objectenqueue.ListItemMapper {
+	return objectenqueue.ListItemMapperFunc(func(_ objectstore.ListItem, emit objectenqueue.EmitFunc) error {
+		keys, err := index.Lookup(name, value)
+		if err != nil {
+			return err
+		}
+		if len(keys) == 0 {
+			return errors.New("index lookup did not find source key")
+		}
+
+		return emitKeys([]objectstore.Key{target}, emit)
+	})
 }
 
 func requireMappedRecordSnapshotMissing(t testing.TB, record mappedRecord, key objectstore.Key) {

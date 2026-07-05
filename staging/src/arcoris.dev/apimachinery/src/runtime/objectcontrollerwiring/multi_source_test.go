@@ -21,6 +21,7 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/runtime/objectcontroller"
 	"arcoris.dev/apimachinery/runtime/objectenqueue"
+	"arcoris.dev/apimachinery/runtime/objectindex"
 	"arcoris.dev/apimachinery/runtime/objectreflector"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
@@ -54,6 +55,36 @@ func TestNewMultiSourceAcceptsPrimaryPlusSecondaryConfigs(t *testing.T) {
 	}
 	if got := len(graph.Inputs()); got != 3 {
 		t.Fatalf("inputs = %d; want 3", got)
+	}
+}
+
+func TestNewMultiSourceAcceptsPrimaryInputIndexes(t *testing.T) {
+	index := newDesiredObjectIndex(t)
+	config := validMultiSourceConfig()
+	config.Primary.Indexes = []*objectindex.Index{index}
+
+	graph, err := NewMultiSource(config)
+	requireNoError(t, err)
+
+	indexes := graph.Primary().Indexes()
+	if len(indexes) != 1 || indexes[0] != index {
+		t.Fatalf("primary indexes = %#v; want configured index", indexes)
+	}
+}
+
+func TestNewMultiSourceAcceptsSecondaryInputIndexes(t *testing.T) {
+	index := newDesiredObjectIndex(t)
+	config := validMultiSourceConfig()
+	secondary := validInputConfig(&runTestListerWatcher{})
+	secondary.Indexes = []*objectindex.Index{index}
+	config.Secondary = []InputConfig{secondary}
+
+	graph, err := NewMultiSource(config)
+	requireNoError(t, err)
+
+	indexes := graph.Secondary()[0].Indexes()
+	if len(indexes) != 1 || indexes[0] != index {
+		t.Fatalf("secondary indexes = %#v; want configured index", indexes)
 	}
 }
 
@@ -111,6 +142,13 @@ func TestNewMultiSourceRejectsInvalidConfigThroughDownstreamErrors(t *testing.T)
 			target: objectenqueue.ErrNilMapper,
 		},
 		{
+			name: "nil primary index",
+			mutate: func(config *MultiSourceConfig) {
+				config.Primary.Indexes = []*objectindex.Index{nil}
+			},
+			target: ErrNilIndex,
+		},
+		{
 			name: "nil secondary source",
 			mutate: func(config *MultiSourceConfig) {
 				secondary := validInputConfig(&runTestListerWatcher{})
@@ -145,6 +183,15 @@ func TestNewMultiSourceRejectsInvalidConfigThroughDownstreamErrors(t *testing.T)
 				config.Secondary = []InputConfig{secondary}
 			},
 			target: objectenqueue.ErrNilMapper,
+		},
+		{
+			name: "nil secondary index",
+			mutate: func(config *MultiSourceConfig) {
+				secondary := validInputConfig(&runTestListerWatcher{})
+				secondary.Indexes = []*objectindex.Index{nil}
+				config.Secondary = []InputConfig{secondary}
+			},
+			target: ErrNilIndex,
 		},
 		{
 			name: "nil reconciler",

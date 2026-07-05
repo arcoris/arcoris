@@ -26,9 +26,15 @@
 // watched input plus optional secondary watched inputs into one shared queue and
 // one controller.
 //
-// SameObject intentionally installs the cache sink before the enqueue sink.
-// That order makes reflected state visible in the read model before matching
-// work is made visible to controller workers.
+// Inputs may optionally include prebuilt runtime/objectindex indexes. Wiring
+// never constructs indexes from definitions, registers index names, or performs
+// lookup policy. Callers own index construction and may close over those same
+// index instances inside objectenqueue mappers.
+//
+// Every input fanout is ordered as cache, indexes, then enqueue. That order
+// makes reflected state visible in the read model and configured indexes before
+// matching work is made visible to controller workers. Indexes do not replace
+// objectcache and do not change objectreconciler.Snapshot semantics.
 //
 // MappedObject's cache is the watched source collection cache. A mapped
 // reconciler receives a target Request together with a snapshot of that source
@@ -48,6 +54,7 @@
 // drains them, and this package connects producer completion to queue shutdown.
 //
 // This package is intentionally not a manager. It does not register multiple
-// controllers, retry, restart, requeue, supervise policy, write objects, patch
-// status, emit telemetry, recover panics, or implement scheduling policy.
+// controllers, plan indexed queries, retry, restart, requeue, supervise policy,
+// write objects, patch status, emit telemetry, recover panics, or implement
+// scheduling policy.
 package objectcontrollerwiring

@@ -21,6 +21,7 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/runtime/objectcontroller"
 	"arcoris.dev/apimachinery/runtime/objectenqueue"
+	"arcoris.dev/apimachinery/runtime/objectindex"
 	"arcoris.dev/apimachinery/runtime/objectreflector"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
@@ -43,6 +44,35 @@ func TestNewMappedObjectAcceptsValidConfig(t *testing.T) {
 	}
 	if graph.Controller() == nil {
 		t.Fatal("Controller() is nil")
+	}
+}
+
+func TestNewMappedObjectAcceptsIndexes(t *testing.T) {
+	index := newDesiredObjectIndex(t)
+	config := validMappedObjectConfig()
+	config.Indexes = []*objectindex.Index{index}
+
+	graph, err := NewMappedObject(config)
+	requireNoError(t, err)
+
+	indexes := graph.Indexes()
+	if len(indexes) != 1 || indexes[0] != index {
+		t.Fatalf("Indexes() = %#v; want configured index", indexes)
+	}
+}
+
+func TestMappedObjectIndexesReturnsDetachedSlice(t *testing.T) {
+	index := newDesiredObjectIndex(t)
+	config := validMappedObjectConfig()
+	config.Indexes = []*objectindex.Index{index}
+	graph, err := NewMappedObject(config)
+	requireNoError(t, err)
+
+	indexes := graph.Indexes()
+	indexes[0] = nil
+
+	if graph.Indexes()[0] == nil {
+		t.Fatal("Indexes() exposed internal slice")
 	}
 }
 
@@ -101,6 +131,13 @@ func TestNewMappedObjectRejectsInvalidConfigThroughDownstreamErrors(t *testing.T
 			},
 			target: objectcontroller.ErrInvalidWorkers,
 		},
+		{
+			name: "nil index",
+			mutate: func(config *MappedObjectConfig) {
+				config.Indexes = []*objectindex.Index{nil}
+			},
+			target: ErrNilIndex,
+		},
 	}
 
 	for _, tt := range tests {
@@ -129,6 +166,9 @@ func TestMappedObjectGettersReturnNilForNilReceiver(t *testing.T) {
 	}
 	if graph.Controller() != nil {
 		t.Fatal("Controller() is not nil")
+	}
+	if graph.Indexes() != nil {
+		t.Fatal("Indexes() is not nil")
 	}
 }
 

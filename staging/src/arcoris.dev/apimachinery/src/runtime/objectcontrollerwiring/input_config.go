@@ -19,6 +19,7 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 	storewatchapi "arcoris.dev/apimachinery/api/objectstorewatch"
 	"arcoris.dev/apimachinery/runtime/objectenqueue"
+	"arcoris.dev/apimachinery/runtime/objectindex"
 )
 
 // InputConfig describes one watched input collection in a multi-source graph.
@@ -43,4 +44,10 @@ type InputConfig struct {
 
 	// Changed maps committed changes to work items for the shared queue.
 	Changed objectenqueue.Mapper
+
+	// Indexes are optional prebuilt secondary indexes for this input collection.
+	//
+	// Each index observes only this input's reflected collection. MultiSource
+	// does not merge indexes across inputs or expose a graph-wide index registry.
+	Indexes []*objectindex.Index
 }

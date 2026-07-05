@@ -21,6 +21,7 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 	"arcoris.dev/apimachinery/runtime/objectcontroller"
 	"arcoris.dev/apimachinery/runtime/objectcontrollerwiring"
+	"arcoris.dev/apimachinery/runtime/objectindex"
 	"arcoris.dev/apimachinery/runtime/objectreflector"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
@@ -43,6 +44,35 @@ func TestNewSameObjectAcceptsValidConfig(t *testing.T) {
 	}
 	if wiring.Controller() == nil {
 		t.Fatal("Controller() is nil")
+	}
+}
+
+func TestNewSameObjectAcceptsIndexes(t *testing.T) {
+	index := newSameObjectTestIndex(t)
+	config := validSameObjectConfig()
+	config.Indexes = []*objectindex.Index{index}
+
+	wiring, err := objectcontrollerwiring.NewSameObject(config)
+	requireNoError(t, err)
+
+	indexes := wiring.Indexes()
+	if len(indexes) != 1 || indexes[0] != index {
+		t.Fatalf("Indexes() = %#v; want configured index", indexes)
+	}
+}
+
+func TestSameObjectIndexesReturnsDetachedSlice(t *testing.T) {
+	index := newSameObjectTestIndex(t)
+	config := validSameObjectConfig()
+	config.Indexes = []*objectindex.Index{index}
+	wiring, err := objectcontrollerwiring.NewSameObject(config)
+	requireNoError(t, err)
+
+	indexes := wiring.Indexes()
+	indexes[0] = nil
+
+	if wiring.Indexes()[0] == nil {
+		t.Fatal("Indexes() exposed internal slice")
 	}
 }
 
@@ -87,6 +117,13 @@ func TestNewSameObjectRejectsInvalidConfigThroughDownstreamErrors(t *testing.T) 
 			},
 			target: objectcontroller.ErrInvalidWorkers,
 		},
+		{
+			name: "nil index",
+			mutate: func(config *objectcontrollerwiring.SameObjectConfig) {
+				config.Indexes = []*objectindex.Index{nil}
+			},
+			target: objectcontrollerwiring.ErrNilIndex,
+		},
 	}
 
 	for _, tt := range tests {
@@ -116,6 +153,9 @@ func TestSameObjectGettersReturnNilForNilReceiver(t *testing.T) {
 	if wiring.Controller() != nil {
 		t.Fatal("Controller() is not nil")
 	}
+	if wiring.Indexes() != nil {
+		t.Fatal("Indexes() is not nil")
+	}
 }
 
 func validSameObjectConfig() objectcontrollerwiring.SameObjectConfig {
@@ -130,6 +170,22 @@ func validSameObjectConfig() objectcontrollerwiring.SameObjectConfig {
 			Workers: 1,
 		},
 	}
+}
+
+func newSameObjectTestIndex(t testing.TB) *objectindex.Index {
+	t.Helper()
+
+	index, err := objectindex.New(objectindex.Definition{
+		Name: "empty",
+		Extractor: objectindex.ExtractorFunc(
+			func(objectstore.ListItem, objectindex.EmitFunc) error {
+				return nil
+			},
+		),
+	})
+	requireNoError(t, err)
+
+	return index
 }
 
 func requireNoError(t testing.TB, err error) {

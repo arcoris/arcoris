@@ -15,9 +15,11 @@
 package objectcontrollerwiring
 
 import (
+	"errors"
 	"testing"
 
 	"arcoris.dev/apimachinery/runtime/objectenqueue"
+	"arcoris.dev/apimachinery/runtime/objectindex"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
@@ -41,6 +43,64 @@ func TestNewInputAcceptsValidConfig(t *testing.T) {
 	}
 }
 
+func TestNewInputAcceptsIndexes(t *testing.T) {
+	index := newDesiredObjectIndex(t)
+	queue, err := objectworkqueue.New(objectworkqueue.Options{Capacity: 4})
+	requireNoError(t, err)
+
+	input, err := newInput(InputConfig{
+		Source:     &runTestListerWatcher{},
+		Collection: runTestCollection(),
+		Listed:     objectenqueue.ListedObject(),
+		Changed:    objectenqueue.ChangedObject(),
+		Indexes:    []*objectindex.Index{index},
+	}, queue)
+	requireNoError(t, err)
+
+	indexes := input.Indexes()
+	if len(indexes) != 1 || indexes[0] != index {
+		t.Fatalf("Indexes() = %#v; want configured index", indexes)
+	}
+}
+
+func TestNewInputRejectsNilIndex(t *testing.T) {
+	queue, err := objectworkqueue.New(objectworkqueue.Options{Capacity: 4})
+	requireNoError(t, err)
+
+	_, err = newInput(InputConfig{
+		Source:     &runTestListerWatcher{},
+		Collection: runTestCollection(),
+		Listed:     objectenqueue.ListedObject(),
+		Changed:    objectenqueue.ChangedObject(),
+		Indexes:    []*objectindex.Index{nil},
+	}, queue)
+
+	if !errors.Is(err, ErrNilIndex) {
+		t.Fatalf("error = %v; want ErrNilIndex", err)
+	}
+}
+
+func TestInputIndexesReturnsDetachedSlice(t *testing.T) {
+	index := newDesiredObjectIndex(t)
+	queue, err := objectworkqueue.New(objectworkqueue.Options{Capacity: 4})
+	requireNoError(t, err)
+	input, err := newInput(InputConfig{
+		Source:     &runTestListerWatcher{},
+		Collection: runTestCollection(),
+		Listed:     objectenqueue.ListedObject(),
+		Changed:    objectenqueue.ChangedObject(),
+		Indexes:    []*objectindex.Index{index},
+	}, queue)
+	requireNoError(t, err)
+
+	indexes := input.Indexes()
+	indexes[0] = nil
+
+	if input.Indexes()[0] == nil {
+		t.Fatal("Indexes() exposed internal slice")
+	}
+}
+
 func TestInputGettersReturnNilForNilReceiver(t *testing.T) {
 	var input *Input
 
@@ -49,5 +109,8 @@ func TestInputGettersReturnNilForNilReceiver(t *testing.T) {
 	}
 	if input.Reflector() != nil {
 		t.Fatal("Reflector() is not nil")
+	}
+	if input.Indexes() != nil {
+		t.Fatal("Indexes() is not nil")
 	}
 }

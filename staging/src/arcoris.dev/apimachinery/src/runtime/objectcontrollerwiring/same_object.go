@@ -18,8 +18,8 @@ import (
 	"arcoris.dev/apimachinery/runtime/objectcache"
 	"arcoris.dev/apimachinery/runtime/objectcontroller"
 	"arcoris.dev/apimachinery/runtime/objectenqueue"
+	"arcoris.dev/apimachinery/runtime/objectindex"
 	"arcoris.dev/apimachinery/runtime/objectreflector"
-	"arcoris.dev/apimachinery/runtime/objectreflectorsink"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
@@ -33,6 +33,8 @@ type SameObject struct {
 	cache *objectcache.Cache
 	// queue receives same-object work emitted by the enqueue sink.
 	queue *objectworkqueue.Queue
+	// indexes observe reflected state after cache and before enqueue.
+	indexes []*objectindex.Index
 	// reflector drives source reads and changes into cache and enqueue sinks.
 	reflector *objectreflector.Reflector
 	// controller consumes queue items and invokes the configured reconciler.
@@ -44,13 +46,13 @@ type SameObject struct {
 // The assembled graph is:
 //
 //	objectreflector
-//	  -> objectreflectorsink.Fanout(objectcache.Cache, objectenqueue.ReflectorSink)
+//	  -> objectreflectorsink.Fanout(objectcache.Cache, indexes..., objectenqueue.ReflectorSink)
 //	  -> objectworkqueue.Queue
 //	  -> objectcontroller.Controller
 //
-// The fanout order is part of the contract. Cache is installed before the
-// enqueue sink so a controller worker can observe the reflected state in its
-// cache snapshot when it receives the corresponding object work item.
+// The fanout order is part of the contract. Cache is installed first, optional
+// indexes second, and enqueue last so a controller worker and any mapper-owned
+// index lookups observe the reflected state before work becomes visible.
 func NewSameObject(config SameObjectConfig) (*SameObject, error) {
 	cache, err := objectcache.New(config.Collection)
 	if err != nil {
@@ -72,7 +74,7 @@ func NewSameObject(config SameObjectConfig) (*SameObject, error) {
 		return nil, err
 	}
 
-	fanout, err := objectreflectorsink.NewFanout(cache, enqueueSink)
+	fanout, indexes, err := newInputFanout(cache, config.Indexes, enqueueSink)
 	if err != nil {
 		return nil, err
 	}
@@ -90,6 +92,7 @@ func NewSameObject(config SameObjectConfig) (*SameObject, error) {
 	return &SameObject{
 		cache:      cache,
 		queue:      queue,
+		indexes:    indexes,
 		reflector:  reflector,
 		controller: controller,
 	}, nil
@@ -107,6 +110,19 @@ func (w *SameObject) Cache() *objectcache.Cache {
 	return w.cache
 }
 
+// Indexes returns the optional secondary indexes installed for w.
+//
+// A nil receiver returns nil. The returned slice is detached; index pointers
+// are intentionally shared because callers close over the same instances for
+// direct Lookup calls.
+func (w *SameObject) Indexes() []*objectindex.Index {
+	if w == nil {
+		return nil
+	}
+
+	return append([]*objectindex.Index(nil), w.indexes...)
+}
+
 // Queue returns the bounded work queue assembled for w.
 //
 // The returned queue is the same queue used by the enqueue sink and controller.
@@ -122,8 +138,8 @@ func (w *SameObject) Queue() *objectworkqueue.Queue {
 
 // Reflector returns the collection reflector assembled for w.
 //
-// The reflector is configured with a fanout sink whose first sink is Cache and
-// whose second sink enqueues same-object work.
+// The reflector is configured with fanout ordered as cache, then indexes, then
+// enqueue.
 func (w *SameObject) Reflector() *objectreflector.Reflector {
 	if w == nil {
 		return nil

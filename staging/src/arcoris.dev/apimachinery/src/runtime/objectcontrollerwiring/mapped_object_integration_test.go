@@ -25,6 +25,7 @@ import (
 	"arcoris.dev/apimachinery/api/objectwatch"
 	"arcoris.dev/apimachinery/runtime/objectcontroller"
 	"arcoris.dev/apimachinery/runtime/objectenqueue"
+	"arcoris.dev/apimachinery/runtime/objectindex"
 	"arcoris.dev/apimachinery/runtime/objectreconciler"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
@@ -60,6 +61,84 @@ func TestMappedObjectInitialListMapsToMultipleRequestsAndChangeMapsToRequest(t *
 	records = reconciler.waitForRecords(t, 3)
 	requireMappedRecordKeys(t, records[2:3], targetZ)
 	requireMappedRecordSnapshotContains(t, records[2], sourceKey, 2)
+
+	cancel()
+	requireErrorIs(t, readMappedRunResult(t, result), context.Canceled)
+}
+
+func TestMappedObjectListedMapperUsesConfiguredIndex(t *testing.T) {
+	sourceKey := runTestKey("source")
+	index := newDesiredObjectIndex(t)
+	reconciler := newMappedRecordingReconciler()
+	source := &runTestListerWatcher{
+		read:        runTestRead(t, 1, runTestItem(sourceKey, 1, "source")),
+		stream:      runTestWaitingStream(),
+		watchCalled: make(chan struct{}),
+	}
+	graph := newMappedIntegrationGraphWithIndexes(
+		t,
+		source,
+		reconciler,
+		[]*objectindex.Index{index},
+		listItemMapperFromIndex(index, "desired", "source"),
+		zeroChangeMapper(),
+	)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	result := runMappedObjectAsync(ctx, graph)
+	waitForSignal(t, source.watchCalled)
+
+	records := reconciler.waitForRecords(t, 1)
+	requireMappedRecordKeys(t, records, sourceKey)
+	requireMappedRecordSnapshotContains(t, records[0], sourceKey, 1)
+
+	cancel()
+	requireErrorIs(t, readMappedRunResult(t, result), context.Canceled)
+}
+
+func TestMappedObjectChangedMapperObservesUpdatedIndex(t *testing.T) {
+	sourceKey := runTestKey("source")
+	index := newDesiredObjectIndex(t)
+	stream := newMappedWatchStream()
+	reconciler := newMappedRecordingReconciler()
+	source := &runTestListerWatcher{
+		read:        runTestRead(t, 1, runTestItem(sourceKey, 1, "source")),
+		stream:      stream,
+		watchCalled: make(chan struct{}),
+	}
+	graph := newMappedIntegrationGraphWithIndexes(
+		t,
+		source,
+		reconciler,
+		[]*objectindex.Index{index},
+		zeroListItemMapper(),
+		objectenqueue.MapperFunc(func(_ objectstore.Change, emit objectenqueue.EmitFunc) error {
+			keys, err := index.Lookup("desired", "source-updated")
+			if err != nil {
+				return err
+			}
+			oldKeys, err := index.Lookup("desired", "source")
+			if err != nil {
+				return err
+			}
+			if len(oldKeys) != 0 {
+				return errors.New("old index value still has keys")
+			}
+
+			return emitKeys(keys, emit)
+		}),
+	)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	result := runMappedObjectAsync(ctx, graph)
+	waitForSignal(t, source.watchCalled)
+
+	stream.send(t, mappedChangedEvent(t, updatedMappedChange(t, sourceKey, 1, 2)))
+	records := reconciler.waitForRecords(t, 1)
+	requireMappedRecordKeys(t, records, sourceKey)
+	requireMappedRecordSnapshotContains(t, records[0], sourceKey, 2)
 
 	cancel()
 	requireErrorIs(t, readMappedRunResult(t, result), context.Canceled)
@@ -127,6 +206,68 @@ func TestMappedObjectReturnsChangedMapperError(t *testing.T) {
 	requireErrorIs(t, err, mapperErr)
 }
 
+func TestMappedObjectIndexFailureStopsEnqueueOnReplace(t *testing.T) {
+	sourceKey := runTestKey("source")
+	index, extractorErr := newFailingDesiredObjectIndex(t, "bad")
+	requireNoError(t, index.Replace(context.Background(), runTestRead(t, 1, runTestItem(sourceKey, 1, "good"))))
+	listedCalls := 0
+	source := &runTestListerWatcher{
+		read: runTestRead(t, 2, runTestItem(sourceKey, 2, "bad")),
+	}
+	graph := newMappedIntegrationGraphWithIndexes(
+		t,
+		source,
+		newMappedRecordingReconciler(),
+		[]*objectindex.Index{index},
+		objectenqueue.ListItemMapperFunc(func(objectstore.ListItem, objectenqueue.EmitFunc) error {
+			listedCalls++
+			return nil
+		}),
+		zeroChangeMapper(),
+	)
+
+	err := RunMappedObject(context.Background(), graph)
+
+	requireErrorIs(t, err, extractorErr)
+	if listedCalls != 0 {
+		t.Fatalf("listed mapper calls = %d; want 0", listedCalls)
+	}
+	requireObjectIndexKeys(t, index, "desired", "good", sourceKey)
+	requireObjectIndexKeys(t, index, "desired", "bad")
+}
+
+func TestMappedObjectIndexFailureStopsEnqueueOnApplyChange(t *testing.T) {
+	sourceKey := runTestKey("source")
+	index, extractorErr := newFailingDesiredObjectIndex(t, "source-updated")
+	stream := newMappedWatchStream()
+	stream.send(t, mappedChangedEvent(t, updatedMappedChange(t, sourceKey, 1, 2)))
+	changedCalls := 0
+	source := &runTestListerWatcher{
+		read:   runTestRead(t, 1, runTestItem(sourceKey, 1, "source")),
+		stream: stream,
+	}
+	graph := newMappedIntegrationGraphWithIndexes(
+		t,
+		source,
+		newMappedRecordingReconciler(),
+		[]*objectindex.Index{index},
+		zeroListItemMapper(),
+		objectenqueue.MapperFunc(func(objectstore.Change, objectenqueue.EmitFunc) error {
+			changedCalls++
+			return nil
+		}),
+	)
+
+	err := RunMappedObject(context.Background(), graph)
+
+	requireErrorIs(t, err, extractorErr)
+	if changedCalls != 0 {
+		t.Fatalf("changed mapper calls = %d; want 0", changedCalls)
+	}
+	requireObjectIndexKeys(t, index, "desired", "source", sourceKey)
+	requireObjectIndexKeys(t, index, "desired", "source-updated")
+}
+
 func newMappedIntegrationGraph(
 	t testing.TB,
 	source *runTestListerWatcher,
@@ -152,6 +293,60 @@ func newMappedIntegrationGraph(
 	requireNoError(t, err)
 
 	return graph
+}
+
+func newMappedIntegrationGraphWithIndexes(
+	t testing.TB,
+	source *runTestListerWatcher,
+	reconciler objectreconciler.Reconciler,
+	indexes []*objectindex.Index,
+	listed objectenqueue.ListItemMapper,
+	changed objectenqueue.Mapper,
+) *MappedObject {
+	t.Helper()
+
+	graph, err := NewMappedObject(MappedObjectConfig{
+		Source:     source,
+		Collection: runTestCollection(),
+		Reconciler: reconciler,
+		Queue: objectworkqueue.Options{
+			Capacity: 8,
+		},
+		Controller: objectcontroller.Options{
+			Workers: 1,
+		},
+		Indexes: indexes,
+		Listed:  listed,
+		Changed: changed,
+	})
+	requireNoError(t, err)
+
+	return graph
+}
+
+func listItemMapperFromIndex(
+	index *objectindex.Index,
+	name objectindex.Name,
+	value objectindex.Value,
+) objectenqueue.ListItemMapper {
+	return objectenqueue.ListItemMapperFunc(func(_ objectstore.ListItem, emit objectenqueue.EmitFunc) error {
+		keys, err := index.Lookup(name, value)
+		if err != nil {
+			return err
+		}
+
+		return emitKeys(keys, emit)
+	})
+}
+
+func emitKeys(keys []objectstore.Key, emit objectenqueue.EmitFunc) error {
+	for _, key := range keys {
+		if err := emit(objectworkqueue.Item{Key: key}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // listItemMapperForKeys models source-list mapping without involving query or

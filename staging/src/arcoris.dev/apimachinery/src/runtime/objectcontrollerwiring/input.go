@@ -17,8 +17,8 @@ package objectcontrollerwiring
 import (
 	"arcoris.dev/apimachinery/runtime/objectcache"
 	"arcoris.dev/apimachinery/runtime/objectenqueue"
+	"arcoris.dev/apimachinery/runtime/objectindex"
 	"arcoris.dev/apimachinery/runtime/objectreflector"
-	"arcoris.dev/apimachinery/runtime/objectreflectorsink"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
@@ -30,16 +30,18 @@ import (
 type Input struct {
 	// cache stores this input collection only.
 	cache *objectcache.Cache
+	// indexes observe this input collection after cache and before enqueue.
+	indexes []*objectindex.Index
 	// reflector drives this input source into cache and shared-queue enqueue.
 	reflector *objectreflector.Reflector
 }
 
 // newInput assembles one watched input against an already-created shared queue.
 //
-// The input fanout is always cache first and enqueue sink second. That preserves
-// the same visibility invariant as SameObject and MappedObject for every input:
-// an emitted work item is visible only after this input's cache has observed the
-// reflected state that produced it.
+// The input fanout is always cache first, indexes second, and enqueue last.
+// That preserves the visibility invariant for every input: emitted work is
+// visible only after this input's read-side sinks have observed the reflected
+// state that produced it.
 func newInput(config InputConfig, queue *objectworkqueue.Queue) (*Input, error) {
 	cache, err := objectcache.New(config.Collection)
 	if err != nil {
@@ -56,7 +58,7 @@ func newInput(config InputConfig, queue *objectworkqueue.Queue) (*Input, error) 
 		return nil, err
 	}
 
-	fanout, err := objectreflectorsink.NewFanout(cache, enqueueSink)
+	fanout, indexes, err := newInputFanout(cache, config.Indexes, enqueueSink)
 	if err != nil {
 		return nil, err
 	}
@@ -68,6 +70,7 @@ func newInput(config InputConfig, queue *objectworkqueue.Queue) (*Input, error) 
 
 	return &Input{
 		cache:     cache,
+		indexes:   indexes,
 		reflector: reflector,
 	}, nil
 }
@@ -85,11 +88,23 @@ func (i *Input) Cache() *objectcache.Cache {
 	return i.cache
 }
 
+// Indexes returns the optional secondary indexes installed for this input.
+//
+// A nil receiver returns nil. The returned slice is detached, while each index
+// pointer is the caller-provided instance installed into this input's fanout.
+func (i *Input) Indexes() []*objectindex.Index {
+	if i == nil {
+		return nil
+	}
+
+	return append([]*objectindex.Index(nil), i.indexes...)
+}
+
 // Reflector returns the reflector assembled for this input.
 //
-// The reflector is configured with input-local fanout ordered as cache first
-// and enqueue sink second, so work from this input is visible only after the
-// input cache observes the reflected state.
+// The reflector is configured with input-local fanout ordered as cache, then
+// indexes, then enqueue, so work from this input is visible only after its
+// read-side sinks observe the reflected state.
 func (i *Input) Reflector() *objectreflector.Reflector {
 	if i == nil {
 		return nil

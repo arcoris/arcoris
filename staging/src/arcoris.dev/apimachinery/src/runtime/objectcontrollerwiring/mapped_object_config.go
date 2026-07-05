@@ -20,6 +20,7 @@ import (
 	storewatchapi "arcoris.dev/apimachinery/api/objectstorewatch"
 	"arcoris.dev/apimachinery/runtime/objectcontroller"
 	"arcoris.dev/apimachinery/runtime/objectenqueue"
+	"arcoris.dev/apimachinery/runtime/objectindex"
 	"arcoris.dev/apimachinery/runtime/objectreconciler"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
@@ -80,4 +81,11 @@ type MappedObjectConfig struct {
 	// query may still need to emit cleanup work; that decision belongs to the
 	// mapper and objectenqueue projection semantics.
 	Changed objectenqueue.Mapper
+
+	// Indexes are optional prebuilt secondary indexes for Collection.
+	//
+	// NewMappedObject installs indexes between cache and enqueue. Caller-provided
+	// mappers may close over the same index instances and call Lookup while
+	// mapping; this package never interprets index names or values.
+	Indexes []*objectindex.Index
 }

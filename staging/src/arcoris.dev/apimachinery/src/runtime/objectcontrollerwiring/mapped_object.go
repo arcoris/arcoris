@@ -18,8 +18,8 @@ import (
 	"arcoris.dev/apimachinery/runtime/objectcache"
 	"arcoris.dev/apimachinery/runtime/objectcontroller"
 	"arcoris.dev/apimachinery/runtime/objectenqueue"
+	"arcoris.dev/apimachinery/runtime/objectindex"
 	"arcoris.dev/apimachinery/runtime/objectreflector"
-	"arcoris.dev/apimachinery/runtime/objectreflectorsink"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
@@ -35,6 +35,8 @@ type MappedObject struct {
 	cache *objectcache.Cache
 	// queue receives work items emitted by the caller-provided source mappers.
 	queue *objectworkqueue.Queue
+	// indexes observe source state before caller-provided mappers emit work.
+	indexes []*objectindex.Index
 	// reflector drives the source list-watch stream into cache and enqueue sinks.
 	reflector *objectreflector.Reflector
 	// controller consumes mapped queue items and invokes the configured reconciler.
@@ -46,14 +48,14 @@ type MappedObject struct {
 // The assembled graph is:
 //
 //	objectreflector
-//	  -> objectreflectorsink.Fanout(objectcache.Cache, objectenqueue.ReflectorSink)
+//	  -> objectreflectorsink.Fanout(objectcache.Cache, indexes..., objectenqueue.ReflectorSink)
 //	  -> objectworkqueue.Queue
 //	  -> objectcontroller.Controller
 //
 // Cache stores the watched source collection. Listed and Changed decide which
-// mapped keys are enqueued. The fanout order stays cache first, enqueue second,
-// so mapped reconciliations observe the reflected source state that produced
-// their work items.
+// mapped keys are enqueued. The fanout order stays cache first, indexes second,
+// enqueue last, so mappers can use indexes that already include the reflected
+// state that produced their work items.
 func NewMappedObject(config MappedObjectConfig) (*MappedObject, error) {
 	cache, err := objectcache.New(config.Collection)
 	if err != nil {
@@ -75,7 +77,7 @@ func NewMappedObject(config MappedObjectConfig) (*MappedObject, error) {
 		return nil, err
 	}
 
-	fanout, err := objectreflectorsink.NewFanout(cache, enqueueSink)
+	fanout, indexes, err := newInputFanout(cache, config.Indexes, enqueueSink)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +95,7 @@ func NewMappedObject(config MappedObjectConfig) (*MappedObject, error) {
 	return &MappedObject{
 		cache:      cache,
 		queue:      queue,
+		indexes:    indexes,
 		reflector:  reflector,
 		controller: controller,
 	}, nil
@@ -112,6 +115,18 @@ func (w *MappedObject) Cache() *objectcache.Cache {
 	return w.cache
 }
 
+// Indexes returns the optional secondary indexes installed for w.
+//
+// A nil receiver returns nil. The returned slice is detached; the index
+// instances are shared with caller-owned mapper closures by design.
+func (w *MappedObject) Indexes() []*objectindex.Index {
+	if w == nil {
+		return nil
+	}
+
+	return append([]*objectindex.Index(nil), w.indexes...)
+}
+
 // Queue returns the bounded mapped-work queue assembled for w.
 //
 // The returned queue is shared by the enqueue sink and controller. MappedObject
@@ -127,9 +142,9 @@ func (w *MappedObject) Queue() *objectworkqueue.Queue {
 
 // Reflector returns the source-collection reflector assembled for w.
 //
-// The reflector is configured with fanout ordered as cache first and enqueue
-// sink second. That ordering is the reason mapped reconcilers can observe the
-// reflected source state before they process mapped requests from the queue.
+// The reflector is configured with fanout ordered as cache, indexes, then
+// enqueue. That ordering lets mapped mappers and reconcilers observe reflected
+// source state before mapped requests are processed from the queue.
 func (w *MappedObject) Reflector() *objectreflector.Reflector {
 	if w == nil {
 		return nil
