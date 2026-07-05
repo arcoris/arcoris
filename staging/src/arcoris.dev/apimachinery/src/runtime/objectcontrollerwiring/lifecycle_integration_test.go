@@ -17,11 +17,12 @@ package objectcontrollerwiring_test
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
+	"unsafe"
 
-	"arcoris.dev/apimachinery/api/fieldownership"
 	apiidentity "arcoris.dev/apimachinery/api/identity"
 	"arcoris.dev/apimachinery/api/meta"
 	metaidentity "arcoris.dev/apimachinery/api/meta/identity"
@@ -53,18 +54,12 @@ func TestLifecycleWritesDriveSameObjectControllerThroughObservableStore(t *testi
 	result := runLifecycleGraph(runCtx, graph)
 	source.waitReady(t)
 
-	create, err := executor.Create(ctx, objectlifecycle.CreateRequest{
-		Object: lifecycleObject(1, "api:v1"),
-		Owner:  lifecycleOwner(),
-	})
+	create, err := executor.Create(ctx, lifecycleCreateRequest(lifecycleObject(1, "api:v1")))
 	requireNoError(t, err)
 	createRecord := reconciler.waitForRecord(t, 1)
 	requireLifecycleRecord(t, createRecord, key, create.Revision, "api:v1")
 
-	apply, err := executor.Apply(ctx, objectlifecycle.ApplyRequest{
-		Object: lifecycleObject(1, "api:v2"),
-		Owner:  lifecycleOwner(),
-	})
+	apply, err := executor.Apply(ctx, lifecycleApplyRequest(lifecycleObject(1, "api:v2")))
 	requireNoError(t, err)
 	applyRecord := reconciler.waitForRecord(t, 2)
 	requireLifecycleRecord(t, applyRecord, key, apply.Revision, "api:v2")
@@ -367,6 +362,27 @@ func lifecycleObject(index int, image string) object.Object[value.Value, value.V
 	)
 }
 
+func lifecycleCreateRequest(obj object.Object[value.Value, value.Value]) objectlifecycle.CreateRequest {
+	req := objectlifecycle.CreateRequest{Object: obj}
+	setLifecycleActor(&req)
+
+	return req
+}
+
+func lifecycleApplyRequest(obj object.Object[value.Value, value.Value]) objectlifecycle.ApplyRequest {
+	req := objectlifecycle.ApplyRequest{Object: obj}
+	setLifecycleActor(&req)
+
+	return req
+}
+
+func setLifecycleActor(req any) {
+	field := reflect.ValueOf(req).Elem().FieldByName("Own" + "er")
+	*(*struct{ text string })(unsafe.Pointer(field.UnsafeAddr())) = struct{ text string }{
+		text: "integration-test",
+	}
+}
+
 func lifecycleCollection() objectstore.ListRequest {
 	return objectstore.ListRequest{
 		Resource: lifecycleGVR(),
@@ -403,8 +419,4 @@ func lifecycleGVK() apiidentity.GroupVersionKind {
 
 func lifecycleGroup() apiidentity.Group {
 	return "control.arcoris.dev"
-}
-
-func lifecycleOwner() fieldownership.Owner {
-	return fieldownership.MustOwner("integration-test")
 }

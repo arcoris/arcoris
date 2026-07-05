@@ -19,38 +19,42 @@ import (
 	"arcoris.dev/apimachinery/api/objectstore"
 	storewatchapi "arcoris.dev/apimachinery/api/objectstorewatch"
 	"arcoris.dev/apimachinery/runtime/objectcontroller"
+	"arcoris.dev/apimachinery/runtime/objectenqueue"
 	"arcoris.dev/apimachinery/runtime/objectreconciler"
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
-// SameObjectConfig describes the dependencies and options needed to assemble
-// one same-object controller graph.
+// MappedObjectConfig describes the dependencies and mapping policy needed to
+// assemble one mapped-object controller graph.
 //
-// The config is intentionally declarative. Construction validates and wires the
-// lower-level primitives, but does not start the reflector, run controller
-// workers, or shut down the queue.
-type SameObjectConfig struct {
-	// Source provides list-watch access for Collection.
-	//
-	// NewSameObject passes Source directly to objectreflector.New. Source
-	// remains the owner of collection continuity and watch-stream behavior.
+// The graph watches Collection, stores that source collection in its cache, and
+// lets Listed and Changed emit reconciliation work for arbitrary mapped keys.
+// The reconciler receives mapped requests together with a snapshot of the
+// watched source collection.
+type MappedObjectConfig struct {
+	// Source provides list-watch access for the watched source collection.
 	Source storewatchapi.ListerWatcher
 
-	// Collection identifies the object collection reflected into the cache and
-	// converted into same-object reconciliation work.
+	// Collection identifies the watched source collection.
 	Collection objectstore.ListRequest
 
-	// Reconciler performs user reconciliation attempts for requests produced
-	// from reflected object keys.
+	// Reconciler performs reconciliation attempts for mapped target requests.
 	Reconciler objectreconciler.Reconciler
 
-	// Queue configures the bounded object work queue created for the graph.
+	// Queue configures the bounded object work queue created for mapped work.
 	Queue objectworkqueue.Options
 
 	// Controller configures the fixed controller workers created for the graph.
 	Controller objectcontroller.Options
 
-	// Predicate selects which reflected objects produce same-object work.
-	// The zero Predicate means all objects.
+	// Predicate selects which source objects and changes are considered for
+	// mapping. The zero Predicate means all source objects and changes.
 	Predicate objectquery.Predicate
+
+	// Listed maps source list items from Replace/relist boundaries to target
+	// work items.
+	Listed objectenqueue.ListItemMapper
+
+	// Changed maps committed source changes to target work items.
+	Changed objectenqueue.Mapper
 }

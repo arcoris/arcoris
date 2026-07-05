@@ -23,19 +23,19 @@ import (
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
-// SameObject is an assembled same-object controller runtime graph.
+// MappedObject is an assembled mapped-object controller runtime graph.
 //
-// SameObject is deliberately passive. It exposes the components created by
-// NewSameObject, but does not start them, shut them down, or mutate wiring after
+// MappedObject is passive like SameObject. It exposes the assembled components
+// but does not start them, shut them down, or mutate mapping policy after
 // construction.
-type SameObject struct {
+type MappedObject struct {
 	cache      *objectcache.Cache
 	queue      *objectworkqueue.Queue
 	reflector  *objectreflector.Reflector
 	controller *objectcontroller.Controller
 }
 
-// NewSameObject assembles the standard same-object controller graph.
+// NewMappedObject assembles a mapped-object controller graph.
 //
 // The assembled graph is:
 //
@@ -44,10 +44,11 @@ type SameObject struct {
 //	  -> objectworkqueue.Queue
 //	  -> objectcontroller.Controller
 //
-// The fanout order is part of the contract. Cache is installed before the
-// enqueue sink so a controller worker can observe the reflected state in its
-// cache snapshot when it receives the corresponding object work item.
-func NewSameObject(config SameObjectConfig) (*SameObject, error) {
+// Cache stores the watched source collection. Listed and Changed decide which
+// mapped keys are enqueued. The fanout order stays cache first, enqueue second,
+// so mapped reconciliations observe the reflected source state that produced
+// their work items.
+func NewMappedObject(config MappedObjectConfig) (*MappedObject, error) {
 	cache, err := objectcache.New(config.Collection)
 	if err != nil {
 		return nil, err
@@ -61,8 +62,8 @@ func NewSameObject(config SameObjectConfig) (*SameObject, error) {
 	enqueueSink, err := objectenqueue.NewReflectorSink(objectenqueue.ReflectorSinkConfig{
 		Queue:     queue,
 		Predicate: config.Predicate,
-		Listed:    objectenqueue.ListedObject(),
-		Changed:   objectenqueue.ChangedObject(),
+		Listed:    config.Listed,
+		Changed:   config.Changed,
 	})
 	if err != nil {
 		return nil, err
@@ -83,7 +84,7 @@ func NewSameObject(config SameObjectConfig) (*SameObject, error) {
 		return nil, err
 	}
 
-	return &SameObject{
+	return &MappedObject{
 		cache:      cache,
 		queue:      queue,
 		reflector:  reflector,
@@ -91,11 +92,8 @@ func NewSameObject(config SameObjectConfig) (*SameObject, error) {
 	}, nil
 }
 
-// Cache returns the materialized read model assembled for w.
-//
-// A nil receiver returns nil so callers can inspect optional wiring values
-// without defensive nil checks around the accessor itself.
-func (w *SameObject) Cache() *objectcache.Cache {
+// Cache returns the source-collection read model assembled for w.
+func (w *MappedObject) Cache() *objectcache.Cache {
 	if w == nil {
 		return nil
 	}
@@ -103,12 +101,8 @@ func (w *SameObject) Cache() *objectcache.Cache {
 	return w.cache
 }
 
-// Queue returns the bounded work queue assembled for w.
-//
-// The returned queue is the same queue used by the enqueue sink and controller.
-// SameObject does not own shutdown policy; RunSameObject coordinates that when
-// requested.
-func (w *SameObject) Queue() *objectworkqueue.Queue {
+// Queue returns the bounded mapped-work queue assembled for w.
+func (w *MappedObject) Queue() *objectworkqueue.Queue {
 	if w == nil {
 		return nil
 	}
@@ -116,11 +110,8 @@ func (w *SameObject) Queue() *objectworkqueue.Queue {
 	return w.queue
 }
 
-// Reflector returns the collection reflector assembled for w.
-//
-// The reflector is configured with a fanout sink whose first sink is Cache and
-// whose second sink enqueues same-object work.
-func (w *SameObject) Reflector() *objectreflector.Reflector {
+// Reflector returns the source-collection reflector assembled for w.
+func (w *MappedObject) Reflector() *objectreflector.Reflector {
 	if w == nil {
 		return nil
 	}
@@ -129,10 +120,7 @@ func (w *SameObject) Reflector() *objectreflector.Reflector {
 }
 
 // Controller returns the worker lifecycle controller assembled for w.
-//
-// The controller consumes Queue and reconciles against Cache as its snapshot
-// source.
-func (w *SameObject) Controller() *objectcontroller.Controller {
+func (w *MappedObject) Controller() *objectcontroller.Controller {
 	if w == nil {
 		return nil
 	}

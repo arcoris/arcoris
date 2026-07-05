@@ -16,6 +16,14 @@ package objectcontrollerwiring
 
 import "errors"
 
-// ErrInvalidSameObject reports a malformed SameObject graph passed to
-// RunSameObject.
-var ErrInvalidSameObject = errors.New("objectcontrollerwiring: invalid same-object graph")
+var (
+	// ErrInvalidSameObject reports a SameObject graph that is missing a component
+	// required by RunSameObject to coordinate reflector, queue, and controller
+	// lifecycle.
+	ErrInvalidSameObject = errors.New("objectcontrollerwiring: invalid same-object graph")
+
+	// ErrInvalidMappedObject reports a MappedObject graph that is missing a
+	// component required by RunMappedObject to coordinate reflector, queue, and
+	// controller lifecycle.
+	ErrInvalidMappedObject = errors.New("objectcontrollerwiring: invalid mapped-object graph")
+)

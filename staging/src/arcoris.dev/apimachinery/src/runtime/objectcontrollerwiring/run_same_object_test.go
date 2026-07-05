@@ -308,6 +308,8 @@ type runTestResult struct {
 	err error
 }
 
+// runSameObjectAsync lets tests observe whether RunSameObject returns while a
+// fake reflector stream or reconciler is deliberately held open.
 func runSameObjectAsync(ctx context.Context, graph *SameObject) <-chan runTestResult {
 	result := make(chan runTestResult, 1)
 	go func() {
@@ -378,12 +380,22 @@ func newRunTestGraph(
 	return graph
 }
 
+// runTestListerWatcher is a deterministic source for runner tests.
+//
+// It returns one configured collection read and then either opens a configured
+// stream or returns a configured watch error. The optional watch gates let tests
+// force a precise ordering between source failure and controller reconciliation
+// without sleeps.
 type runTestListerWatcher struct {
 	mu sync.Mutex
 
-	read            storewatchapi.CollectionRead
-	listErr         error
-	stream          objectwatch.Stream
+	read    storewatchapi.CollectionRead
+	listErr error
+	stream  objectwatch.Stream
+
+	// watchWait honors context cancellation while waiting; watchWaitStrict is
+	// used only in tests that must prove a fatal source error wins the race
+	// before runner-initiated cancellation can mask it.
 	watchWait       <-chan struct{}
 	watchWaitStrict <-chan struct{}
 	watchErr        error
@@ -452,6 +464,9 @@ func (s *runTestListerWatcher) callCounts() (int, int) {
 	return s.listCalls, s.watchCalls
 }
 
+// runTestWaitingWatchStream behaves like an open watch with no events. It exits
+// only when the runner cancels its context, which makes sibling cancellation
+// observable without introducing timing assumptions.
 type runTestWaitingWatchStream struct {
 	done chan struct{}
 	once sync.Once
@@ -472,6 +487,8 @@ func (s *runTestWaitingWatchStream) Close() error {
 	return nil
 }
 
+// runTestHeldStream enters Next and then waits for an explicit release. Tests
+// use it to prove RunSameObject waits for the slower side before returning.
 type runTestHeldStream struct {
 	entered chan struct{}
 	done    chan struct{}
@@ -491,6 +508,9 @@ func (s *runTestHeldStream) Close() error {
 	return nil
 }
 
+// runTestReconciler records the request and snapshot delivered by the real
+// controller path. Optional gates let tests place reconciliation on either side
+// of runner cancellation without changing production components.
 type runTestReconciler struct {
 	mu sync.Mutex
 

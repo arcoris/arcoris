@@ -12,22 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package objectcontrollerwiring assembles common object controller runtime
+// Package objectcontrollerwiring assembles small object-controller runtime
 // graphs from lower-level apimachinery primitives.
 //
-// The package does not replace the lower-level packages. It records safe wiring
-// patterns so controller authors do not repeat ordering-sensitive setup by
-// hand. SameObject wires reflected object changes to reconciliation requests for
-// the same object key.
+// The package is a narrow composition layer. It does not replace the component
+// packages it wires together; it records the ordering-sensitive setup that
+// should be shared by controllers with the same shape.
+//
+// SameObject wires reflected object state and committed changes to
+// reconciliation requests for the same object key. MappedObject wires reflected
+// source objects to reconciliation requests produced by caller-provided
+// objectenqueue mappers; one source item or change may emit zero, one, or many
+// target work items.
 //
 // SameObject intentionally installs the cache sink before the enqueue sink.
 // That order makes reflected state visible in the read model before matching
 // work is made visible to controller workers.
 //
-// RunSameObject coordinates the lifecycle for one already assembled SameObject
-// graph. It starts the reflector and controller, shuts down the queue when the
-// producer side exits or when the controller side fails, cancels the sibling
-// component, and waits for both sides before returning.
+// MappedObject's cache is the watched source collection cache. A mapped
+// reconciler receives a target Request together with a snapshot of that source
+// collection. The package does not add target caches or implicit secondary read
+// paths.
+//
+// RunSameObject and RunMappedObject coordinate one already assembled graph.
+// They start the reflector and controller together, shut down the queue when
+// either side exits, cancel the sibling component, and wait for both sides
+// before returning. This is the graph-level producer/consumer boundary: the
+// reflector produces queue items, the controller drains them, and this package
+// is the first layer that is allowed to connect producer completion to queue
+// shutdown.
 //
 // This package is intentionally not a manager. It does not register multiple
 // controllers, retry, restart, requeue, supervise policy, write objects, patch
