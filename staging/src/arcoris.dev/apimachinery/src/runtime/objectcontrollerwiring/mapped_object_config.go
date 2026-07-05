@@ -24,24 +24,40 @@ import (
 	"arcoris.dev/apimachinery/runtime/objectworkqueue"
 )
 
-// MappedObjectConfig describes the dependencies and mapping policy needed to
-// assemble one mapped-object controller graph.
+// MappedObjectConfig describes the dependencies and mapping policy for one
+// mapped-object controller graph.
 //
 // The graph watches Collection, stores that source collection in its cache, and
 // lets Listed and Changed emit reconciliation work for arbitrary mapped keys.
 // The reconciler receives mapped requests together with a snapshot of the
-// watched source collection.
+// watched source collection. Construction validates by delegating to the
+// lower-level primitives; this package does not reinterpret their option or
+// dependency errors.
 type MappedObjectConfig struct {
 	// Source provides list-watch access for the watched source collection.
+	//
+	// Source is passed directly to objectreflector.New. It remains responsible
+	// for list/watch continuity, retained history, and watch stream behavior.
 	Source storewatchapi.ListerWatcher
 
-	// Collection identifies the watched source collection.
+	// Collection identifies the watched source collection reflected into Cache.
+	//
+	// MappedObject does not infer or validate any target collection from mapped
+	// output keys. The queue accepts objectworkqueue.Item values emitted by the
+	// configured mappers.
 	Collection objectstore.ListRequest
 
 	// Reconciler performs reconciliation attempts for mapped target requests.
+	//
+	// Reconciler receives objectreconciler.Request values produced by the queue
+	// and snapshots of Collection. Any additional target-state dependencies are
+	// explicit reconciler dependencies, not part of this wiring helper.
 	Reconciler objectreconciler.Reconciler
 
 	// Queue configures the bounded object work queue created for mapped work.
+	//
+	// The queue bounds distinct pending mapped requests, regardless of how many
+	// source objects emitted those requests.
 	Queue objectworkqueue.Options
 
 	// Controller configures the fixed controller workers created for the graph.
@@ -53,8 +69,15 @@ type MappedObjectConfig struct {
 
 	// Listed maps source list items from Replace/relist boundaries to target
 	// work items.
+	//
+	// Listed is used only by objectenqueue.ReflectorSink.Replace. It may emit
+	// zero, one, or many work items for each listed source object.
 	Listed objectenqueue.ListItemMapper
 
 	// Changed maps committed source changes to target work items.
+	//
+	// Changed is used only by objectenqueue.ReflectorSink.ApplyChange. Leaving a
+	// query may still need to emit cleanup work; that decision belongs to the
+	// mapper and objectenqueue projection semantics.
 	Changed objectenqueue.Mapper
 }

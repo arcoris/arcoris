@@ -23,6 +23,10 @@ import "context"
 // reflector and controller together, shuts down the queue when either side
 // exits, cancels the sibling component, waits for both sides, and preserves
 // fatal component errors.
+//
+// The function panics when ctx is nil, matching the lower-level runtime
+// components. It validates only the handles it coordinates directly; the
+// assembled controller already owns its snapshot source dependency.
 func RunMappedObject(ctx context.Context, graph *MappedObject) error {
 	if ctx == nil {
 		panic("objectcontrollerwiring: nil context")
@@ -34,9 +38,9 @@ func RunMappedObject(ctx context.Context, graph *MappedObject) error {
 	return runGraph(ctx, graph.Queue(), graph.Reflector(), graph.Controller())
 }
 
-// validateRunnableMappedObject checks only the components directly coordinated
-// by RunMappedObject. The source cache itself is owned by the assembled
-// controller as its snapshot source.
+// validateRunnableMappedObject keeps runner validation narrow. A graph is
+// runnable when the queue can be shut down, the reflector can be canceled, and
+// the controller can drain the queue.
 func validateRunnableMappedObject(graph *MappedObject) error {
 	if graph == nil ||
 		graph.Queue() == nil ||

@@ -30,6 +30,10 @@ import (
 // The helper owns the shared shutdown policy: once either side exits, no more
 // producer work should be accepted, the sibling side should be canceled, and
 // the controller should be allowed to drain already queued items.
+//
+// The helper deliberately runs only one reflector/controller pair. It is not a
+// higher-level supervisor: it does not restart components, classify domain
+// errors, or recover panics.
 func runGraph(
 	ctx context.Context,
 	queue *objectworkqueue.Queue,
@@ -40,6 +44,8 @@ func runGraph(
 	defer cancel()
 
 	var shutdown sync.Once
+	// stopGraph is shared by both result paths so queue shutdown is performed
+	// exactly once even if both components return at nearly the same time.
 	stopGraph := func() {
 		shutdown.Do(func() {
 			queue.ShutDown()
@@ -65,6 +71,8 @@ func runGraph(
 	return graphRunError(ctx, firstFatal, secondFatal)
 }
 
+// graphRunResult keeps component completion reports uniform while preserving
+// each component's error unchanged until classification.
 type graphRunResult struct {
 	err error
 }
@@ -102,6 +110,9 @@ func fatalAfterRunnerCancel(ctx context.Context, err error) error {
 	return err
 }
 
+// graphRunError turns classified component failures into the public runner
+// result. Parent cancellation is reported only when no component produced a
+// more specific fatal error.
 func graphRunError(ctx context.Context, first error, second error) error {
 	switch {
 	case first != nil && second != nil:

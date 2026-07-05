@@ -157,6 +157,9 @@ func newMappedTestGraph(
 	return graph
 }
 
+// validMappedObjectConfig keeps constructor tests focused on one invalid field
+// at a time. The mappers intentionally emit no work because constructor tests
+// care only about graph assembly and downstream validation.
 func validMappedObjectConfig() MappedObjectConfig {
 	return MappedObjectConfig{
 		Source:     &runTestListerWatcher{},

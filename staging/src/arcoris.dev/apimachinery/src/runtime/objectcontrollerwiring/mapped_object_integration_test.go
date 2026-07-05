@@ -154,6 +154,9 @@ func newMappedIntegrationGraph(
 	return graph
 }
 
+// listItemMapperForKeys models source-list mapping without involving query or
+// target lookup behavior. Each listed source item produces the same fixed
+// target keys so tests can assert queue/controller delivery precisely.
 func listItemMapperForKeys(keys ...objectstore.Key) objectenqueue.ListItemMapper {
 	return objectenqueue.ListItemMapperFunc(func(_ objectstore.ListItem, emit objectenqueue.EmitFunc) error {
 		for _, key := range keys {
@@ -166,6 +169,9 @@ func listItemMapperForKeys(keys ...objectstore.Key) objectenqueue.ListItemMapper
 	})
 }
 
+// changeMapperForKeys is the ApplyChange companion to listItemMapperForKeys.
+// It verifies that changed-source mapping travels through the reflector sink,
+// real queue, and controller path rather than through direct queue injection.
 func changeMapperForKeys(keys ...objectstore.Key) objectenqueue.Mapper {
 	return objectenqueue.MapperFunc(func(_ objectstore.Change, emit objectenqueue.EmitFunc) error {
 		for _, key := range keys {
@@ -178,34 +184,46 @@ func changeMapperForKeys(keys ...objectstore.Key) objectenqueue.Mapper {
 	})
 }
 
+// zeroListItemMapper proves that "no mapped work" is a valid list-boundary
+// result, not an error or an implicit same-object fallback.
 func zeroListItemMapper() objectenqueue.ListItemMapper {
 	return objectenqueue.ListItemMapperFunc(func(objectstore.ListItem, objectenqueue.EmitFunc) error {
 		return nil
 	})
 }
 
+// zeroChangeMapper proves that an admitted change may intentionally produce no
+// mapped target work.
 func zeroChangeMapper() objectenqueue.Mapper {
 	return objectenqueue.MapperFunc(func(objectstore.Change, objectenqueue.EmitFunc) error {
 		return nil
 	})
 }
 
+// listItemMapperError injects a fatal Replace-path mapping error while keeping
+// the source read itself valid.
 func listItemMapperError(err error) objectenqueue.ListItemMapper {
 	return objectenqueue.ListItemMapperFunc(func(objectstore.ListItem, objectenqueue.EmitFunc) error {
 		return err
 	})
 }
 
+// changeMapperError injects a fatal ApplyChange-path mapping error after cache
+// preconditions have been satisfied.
 func changeMapperError(err error) objectenqueue.Mapper {
 	return objectenqueue.MapperFunc(func(objectstore.Change, objectenqueue.EmitFunc) error {
 		return err
 	})
 }
 
+// mappedRunResult gives asynchronous runner tests a buffered, leak-free handoff
+// for the final RunMappedObject error.
 type mappedRunResult struct {
 	err error
 }
 
+// runMappedObjectAsync starts the real runner and lets tests coordinate it with
+// watch events or cancellation.
 func runMappedObjectAsync(ctx context.Context, graph *MappedObject) <-chan mappedRunResult {
 	result := make(chan mappedRunResult, 1)
 	go func() {
@@ -215,6 +233,8 @@ func runMappedObjectAsync(ctx context.Context, graph *MappedObject) <-chan mappe
 	return result
 }
 
+// readMappedRunResult bounds broken-test hangs without making successful tests
+// depend on wall-clock timing.
 func readMappedRunResult(t testing.TB, result <-chan mappedRunResult) error {
 	t.Helper()
 
@@ -227,12 +247,17 @@ func readMappedRunResult(t testing.TB, result <-chan mappedRunResult) error {
 	}
 }
 
+// mappedWatchStream is a tiny deterministic watch stream for integration tests.
+// Events are pushed by the test, and cancellation exits Next exactly like a
+// real reflector watch would.
 type mappedWatchStream struct {
 	events chan objectwatch.Event
 	once   sync.Once
 	done   chan struct{}
 }
 
+// newMappedWatchStream creates a one-event buffered stream so a test can queue
+// the first event before the reflector reaches Next.
 func newMappedWatchStream() *mappedWatchStream {
 	return &mappedWatchStream{
 		events: make(chan objectwatch.Event, 1),
@@ -240,6 +265,8 @@ func newMappedWatchStream() *mappedWatchStream {
 	}
 }
 
+// send publishes one committed watch event and fails fast if the runner is not
+// able to receive test input.
 func (s *mappedWatchStream) send(t testing.TB, event objectwatch.Event) {
 	t.Helper()
 
@@ -250,6 +277,7 @@ func (s *mappedWatchStream) send(t testing.TB, event objectwatch.Event) {
 	}
 }
 
+// Next implements objectwatch.Stream for mappedWatchStream.
 func (s *mappedWatchStream) Next(ctx context.Context) (objectwatch.Event, error) {
 	select {
 	case event := <-s.events:
@@ -260,20 +288,29 @@ func (s *mappedWatchStream) Next(ctx context.Context) (objectwatch.Event, error)
 	}
 }
 
+// Close implements objectwatch.Stream. The test stream has no external
+// resource to release, so Close is intentionally a no-op.
 func (s *mappedWatchStream) Close() error {
 	return nil
 }
 
+// mappedRecordingReconciler records requests and snapshots observed through the
+// real controller path. The changed channel advances on every record so tests
+// can wait without polling.
 type mappedRecordingReconciler struct {
 	mu      sync.Mutex
 	changed chan struct{}
 	records []mappedRecord
 }
 
+// newMappedRecordingReconciler prepares an empty recorder with an initial wait
+// channel.
 func newMappedRecordingReconciler() *mappedRecordingReconciler {
 	return &mappedRecordingReconciler{changed: make(chan struct{})}
 }
 
+// Reconcile records the exact request and stable snapshot passed by
+// objectcontroller, then reports success so the queue can call Done normally.
 func (r *mappedRecordingReconciler) Reconcile(
 	_ context.Context,
 	request objectreconciler.Request,
@@ -288,6 +325,8 @@ func (r *mappedRecordingReconciler) Reconcile(
 	return objectreconciler.Success()
 }
 
+// waitForRecords returns a copy of all records once at least count records have
+// arrived.
 func (r *mappedRecordingReconciler) waitForRecords(t testing.TB, count int) []mappedRecord {
 	t.Helper()
 
@@ -310,6 +349,8 @@ func (r *mappedRecordingReconciler) waitForRecords(t testing.TB, count int) []ma
 	}
 }
 
+// recordCount reports the current number of reconciliation records without
+// exposing the recorder's mutable slice.
 func (r *mappedRecordingReconciler) recordCount() int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -317,11 +358,14 @@ func (r *mappedRecordingReconciler) recordCount() int {
 	return len(r.records)
 }
 
+// mappedRecord captures the two values that prove objectcontroller delivered a
+// mapped request against the expected source snapshot.
 type mappedRecord struct {
 	request  objectreconciler.Request
 	snapshot objectreconciler.Snapshot
 }
 
+// requireMappedRecordKeys asserts mapped target delivery order.
 func requireMappedRecordKeys(t testing.TB, records []mappedRecord, want ...objectstore.Key) {
 	t.Helper()
 
@@ -335,6 +379,9 @@ func requireMappedRecordKeys(t testing.TB, records []mappedRecord, want ...objec
 	}
 }
 
+// requireMappedRecordSnapshotContains asserts cache-before-enqueue behavior by
+// checking that the reconciler snapshot already contains the reflected source
+// object revision that produced mapped work.
 func requireMappedRecordSnapshotContains(
 	t testing.TB,
 	record mappedRecord,
@@ -353,6 +400,9 @@ func requireMappedRecordSnapshotContains(
 	}
 }
 
+// updatedMappedChange builds a cache-valid update change for sourceKey. The
+// before state mirrors the initial list fixture so objectcache accepts the
+// transition before the Changed mapper is exercised.
 func updatedMappedChange(
 	t testing.TB,
 	key objectstore.Key,
@@ -368,6 +418,8 @@ func updatedMappedChange(
 	)
 }
 
+// mappedChangedEvent wraps a committed objectstore.Change in the real watch
+// event type expected by objectreflector.
 func mappedChangedEvent(t testing.TB, change objectstore.Change) objectwatch.Event {
 	t.Helper()
 

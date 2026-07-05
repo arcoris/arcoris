@@ -25,13 +25,19 @@ import (
 
 // MappedObject is an assembled mapped-object controller runtime graph.
 //
-// MappedObject is passive like SameObject. It exposes the assembled components
-// but does not start them, shut them down, or mutate mapping policy after
-// construction.
+// MappedObject is passive like SameObject. It records the constructed
+// components and mapping policy at assembly time, then leaves lifecycle
+// coordination to RunMappedObject or to a caller that wants to drive the
+// components manually.
 type MappedObject struct {
-	cache      *objectcache.Cache
-	queue      *objectworkqueue.Queue
-	reflector  *objectreflector.Reflector
+	// cache stores the watched source collection, not the mapped target
+	// collection. Mapped reconcilers receive this cache as their snapshot source.
+	cache *objectcache.Cache
+	// queue receives work items emitted by the caller-provided source mappers.
+	queue *objectworkqueue.Queue
+	// reflector drives the source list-watch stream into cache and enqueue sinks.
+	reflector *objectreflector.Reflector
+	// controller consumes mapped queue items and invokes the configured reconciler.
 	controller *objectcontroller.Controller
 }
 
@@ -93,6 +99,11 @@ func NewMappedObject(config MappedObjectConfig) (*MappedObject, error) {
 }
 
 // Cache returns the source-collection read model assembled for w.
+//
+// A nil receiver returns nil, matching the other graph accessors. The returned
+// cache is intentionally the watched source cache; target object reads, when a
+// mapped reconciler needs them, must be provided through explicit reconciler
+// dependencies outside this wiring value.
 func (w *MappedObject) Cache() *objectcache.Cache {
 	if w == nil {
 		return nil
@@ -102,6 +113,10 @@ func (w *MappedObject) Cache() *objectcache.Cache {
 }
 
 // Queue returns the bounded mapped-work queue assembled for w.
+//
+// The returned queue is shared by the enqueue sink and controller. MappedObject
+// does not shut the queue down by itself; RunMappedObject coordinates that
+// boundary when the graph is run through this package.
 func (w *MappedObject) Queue() *objectworkqueue.Queue {
 	if w == nil {
 		return nil
@@ -111,6 +126,10 @@ func (w *MappedObject) Queue() *objectworkqueue.Queue {
 }
 
 // Reflector returns the source-collection reflector assembled for w.
+//
+// The reflector is configured with fanout ordered as cache first and enqueue
+// sink second. That ordering is the reason mapped reconcilers can observe the
+// reflected source state before they process mapped requests from the queue.
 func (w *MappedObject) Reflector() *objectreflector.Reflector {
 	if w == nil {
 		return nil
@@ -120,6 +139,9 @@ func (w *MappedObject) Reflector() *objectreflector.Reflector {
 }
 
 // Controller returns the worker lifecycle controller assembled for w.
+//
+// The controller consumes Queue and reconciles mapped requests against Cache as
+// its snapshot source.
 func (w *MappedObject) Controller() *objectcontroller.Controller {
 	if w == nil {
 		return nil

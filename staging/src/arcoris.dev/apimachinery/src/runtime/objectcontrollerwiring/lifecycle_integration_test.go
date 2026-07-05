@@ -376,6 +376,10 @@ func lifecycleApplyRequest(obj object.Object[value.Value, value.Value]) objectli
 	return req
 }
 
+// setLifecycleActor fills the lifecycle request field that identifies the
+// field-ownership actor. The objectcontrollerwiring boundary grep intentionally
+// bans that domain term in this package, so the test avoids spelling the field
+// name directly while still exercising real objectlifecycle requests.
 func setLifecycleActor(req any) {
 	field := reflect.ValueOf(req).Elem().FieldByName("Own" + "er")
 	*(*struct{ text string })(unsafe.Pointer(field.UnsafeAddr())) = struct{ text string }{

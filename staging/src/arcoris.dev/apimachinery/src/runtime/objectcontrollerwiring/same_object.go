@@ -29,9 +29,13 @@ import (
 // NewSameObject, but does not start them, shut them down, or mutate wiring after
 // construction.
 type SameObject struct {
-	cache      *objectcache.Cache
-	queue      *objectworkqueue.Queue
-	reflector  *objectreflector.Reflector
+	// cache stores the reflected collection and serves controller snapshots.
+	cache *objectcache.Cache
+	// queue receives same-object work emitted by the enqueue sink.
+	queue *objectworkqueue.Queue
+	// reflector drives source reads and changes into cache and enqueue sinks.
+	reflector *objectreflector.Reflector
+	// controller consumes queue items and invokes the configured reconciler.
 	controller *objectcontroller.Controller
 }
 
