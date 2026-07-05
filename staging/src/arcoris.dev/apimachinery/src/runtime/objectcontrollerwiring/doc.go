@@ -19,11 +19,12 @@
 // packages it wires together; it records the ordering-sensitive setup that
 // should be shared by controllers with the same shape.
 //
-// SameObject wires reflected object state and committed changes to
-// reconciliation requests for the same object key. MappedObject wires reflected
-// source objects to reconciliation requests produced by caller-provided
-// objectenqueue mappers; one source item or change may emit zero, one, or many
-// target work items.
+// SameObject wires one watched source to reconciliation requests for the same
+// object key. MappedObject wires one watched source to reconciliation requests
+// produced by caller-provided objectenqueue mappers; one source item or change
+// may emit zero, one, or many target work items. MultiSource wires a primary
+// watched input plus optional secondary watched inputs into one shared queue and
+// one controller.
 //
 // SameObject intentionally installs the cache sink before the enqueue sink.
 // That order makes reflected state visible in the read model before matching
@@ -34,13 +35,17 @@
 // collection. The package does not add target caches or implicit secondary read
 // paths.
 //
-// RunSameObject and RunMappedObject coordinate one already assembled graph.
-// They start the reflector and controller together, shut down the queue when
-// either side exits, cancel the sibling component, and wait for both sides
-// before returning. This is the graph-level producer/consumer boundary: the
-// reflector produces queue items, the controller drains them, and this package
-// is the first layer that is allowed to connect producer completion to queue
-// shutdown.
+// MultiSource uses the primary input cache as the controller snapshot source.
+// Secondary input caches remain separate and are not merged into
+// objectreconciler.Snapshot. Reconcilers that need secondary or target state
+// should receive those dependencies explicitly.
+//
+// RunSameObject, RunMappedObject, and RunMultiSource coordinate one already
+// assembled graph. They start the reflector or reflectors and controller
+// together, shut down the queue when any component exits, cancel sibling
+// components, and wait for everything before returning. This is the graph-level
+// producer/consumer boundary: reflectors produce queue items, the controller
+// drains them, and this package connects producer completion to queue shutdown.
 //
 // This package is intentionally not a manager. It does not register multiple
 // controllers, retry, restart, requeue, supervise policy, write objects, patch

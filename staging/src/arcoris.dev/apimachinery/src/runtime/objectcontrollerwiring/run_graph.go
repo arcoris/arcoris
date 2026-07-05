@@ -40,6 +40,21 @@ func runGraph(
 	reflector *objectreflector.Reflector,
 	controller *objectcontroller.Controller,
 ) error {
+	return runComponents(ctx, queue, controller, reflector)
+}
+
+// runComponents coordinates one controller with one or more producer
+// reflectors.
+//
+// Any reflector exit ends the graph because the controller no longer has a
+// complete input set. The shared queue is shut down exactly once, then the
+// controller drains already queued work before returning.
+func runComponents(
+	ctx context.Context,
+	queue *objectworkqueue.Queue,
+	controller *objectcontroller.Controller,
+	reflectors ...*objectreflector.Reflector,
+) error {
 	runCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -53,10 +68,14 @@ func runGraph(
 		})
 	}
 
-	results := make(chan graphRunResult, 2)
-	go func() {
-		results <- graphRunResult{err: reflector.Run(runCtx)}
-	}()
+	componentCount := 1 + len(reflectors)
+	results := make(chan graphRunResult, componentCount)
+	for _, reflector := range reflectors {
+		reflector := reflector
+		go func() {
+			results <- graphRunResult{err: reflector.Run(runCtx)}
+		}()
+	}
 	go func() {
 		results <- graphRunResult{err: controller.Run(runCtx)}
 	}()
@@ -65,10 +84,13 @@ func runGraph(
 	firstFatal := fatalBeforeRunnerCancel(ctx, first.err)
 	stopGraph()
 
-	second := <-results
-	secondFatal := fatalAfterRunnerCancel(ctx, second.err)
+	fatals := []error{firstFatal}
+	for i := 1; i < componentCount; i++ {
+		result := <-results
+		fatals = append(fatals, fatalAfterRunnerCancel(ctx, result.err))
+	}
 
-	return graphRunError(ctx, firstFatal, secondFatal)
+	return graphRunError(ctx, fatals...)
 }
 
 // graphRunResult keeps component completion reports uniform while preserving
@@ -113,17 +135,14 @@ func fatalAfterRunnerCancel(ctx context.Context, err error) error {
 // graphRunError turns classified component failures into the public runner
 // result. Parent cancellation is reported only when no component produced a
 // more specific fatal error.
-func graphRunError(ctx context.Context, first error, second error) error {
-	switch {
-	case first != nil && second != nil:
-		return errors.Join(first, second)
-	case first != nil:
-		return first
-	case second != nil:
-		return second
-	case ctx.Err() != nil:
-		return ctx.Err()
-	default:
-		return nil
+func graphRunError(ctx context.Context, fatals ...error) error {
+	err := errors.Join(fatals...)
+	if err != nil {
+		return err
 	}
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
+	return nil
 }

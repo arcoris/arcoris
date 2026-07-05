@@ -26,4 +26,9 @@ var (
 	// component required by RunMappedObject to coordinate reflector, queue, and
 	// controller lifecycle.
 	ErrInvalidMappedObject = errors.New("objectcontrollerwiring: invalid mapped-object graph")
+
+	// ErrInvalidMultiSource reports a MultiSource graph that is missing a
+	// component required by RunMultiSource to coordinate all reflectors, the
+	// shared queue, and the controller lifecycle.
+	ErrInvalidMultiSource = errors.New("objectcontrollerwiring: invalid multi-source graph")
 )
